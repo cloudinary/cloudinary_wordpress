@@ -35,14 +35,14 @@
 	background-color: #ccc;
 }
 
-.wp-media-buttons a.cloudinary_add_media {
-	margin-left: 30px;
-	font-weight: bold;
-	font-size: 14px;
-	color: #1f416d;
-	background: url("../images/edit_icon.png") no-repeat scroll 0 -2px transparent;
-	padding-left: 27px;
-	padding-top: 2px;
+.wp-media-buttons a.cloudinary_add_media,
+.wp-media-buttons a.cloudinary_add_media:hover,
+.wp-media-buttons a.cloudinary_add_media:active,
+.wp-media-buttons a.cloudinary_add_media:visited {
+	background-image: url("../images/edit_icon.png");
+	background-repeat: no-repeat;
+	background-position: 2px center;
+	padding-left: 33px;
 }
 
 .wp-media-buttons span.cloudinary_message {
