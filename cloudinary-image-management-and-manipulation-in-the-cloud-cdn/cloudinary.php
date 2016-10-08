@@ -496,7 +496,7 @@ class CloudinaryPlugin
     if (!$xdmremote) return "";
 
     echo $this->init_media_lib_integration($xdmremote, false) .
-         '<a href="#" class="cloudinary_add_media" id="' . esc_attr( $editor_id ) . '-add_media" ' .
+         '<a href="#" class="cloudinary_add_media button" id="' . esc_attr( $editor_id ) . '-add_media" ' .
          'title="' . esc_attr__( 'Add Media from Cloudinary' ) . '">' . __('Cloudinary Upload/Insert') . '</a><span class="cloudinary_message"></span>';
   }
   
