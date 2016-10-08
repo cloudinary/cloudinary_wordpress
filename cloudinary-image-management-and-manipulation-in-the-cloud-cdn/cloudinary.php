@@ -492,12 +492,13 @@ class CloudinaryPlugin
   }
   
   function media_cloudinary($editor_id = 'content') {
+    $context = apply_filters('media_buttons_context', __('Cloudinary Upload/Insert'));
     $xdmremote = $this->prepare_cloudinary_media_lib_url("wp_post");
     if (!$xdmremote) return "";
 
     echo $this->init_media_lib_integration($xdmremote, false) .
          '<a href="#" class="cloudinary_add_media button" id="' . esc_attr( $editor_id ) . '-add_media" ' .
-         'title="' . esc_attr__( 'Add Media from Cloudinary' ) . '">' . __('Cloudinary Upload/Insert') . '</a><span class="cloudinary_message"></span>';
+         'title="' . esc_attr__( 'Add Media from Cloudinary' ) . '">' . $context . '</a><span class="cloudinary_message"></span>';
   }
   
   function media_lib_add_upload_column( $cols ) {
