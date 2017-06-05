@@ -13,6 +13,7 @@
                 "colors" => Cloudinary::option_get($options, "colors"),
                 "use_filename" => Cloudinary::option_get($options, "use_filename"),
                 "type" => Cloudinary::option_get($options, "type"),
+                "folder" => Cloudinary::option_get($options, "folder"),
                 "eager" => CloudinaryUploader::build_eager(Cloudinary::option_get($options, "eager")),
                 "headers" => CloudinaryUploader::build_custom_headers(Cloudinary::option_get($options, "headers")),
                 "tags" => implode(",", Cloudinary::build_array(Cloudinary::option_get($options, "tags"))));
