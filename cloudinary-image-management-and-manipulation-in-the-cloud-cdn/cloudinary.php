@@ -565,7 +565,7 @@ class CloudinaryPlugin
     } else {
       $attachment_id = NULL;      
     }
-    $this->register_image($result["url"], $post_parent, $attachment_id, $attachment, $result["width"], $result["height"]);
+    $this->register_image($result["seruce_url"], $post_parent, $attachment_id, $attachment, $result["width"], $result["height"]);
     if ($migrate) {
       $errors = array();
       $this->update_image_src_all($attachment_id, $result, $old_url, $result["url"], TRUE, $errors);
