@@ -29,7 +29,7 @@ function cloudinary_include_assets() {
 
 class CloudinaryPlugin
 {
-  function __construct() {
+  public function __construct() {
     $this->cloudinary_upgrade();
     register_uninstall_hook('uninstall.php', '');
 
@@ -50,32 +50,42 @@ class CloudinaryPlugin
     add_action('wp_ajax_cloudinary_register_image', array($this, 'ajax_register_image'));
   }
 
-  public function CloudinaryPlugin() {
-    // Backwards compatibility.
+  /**
+   * Backwards compatibility.
+   */
+  public function CloudinaryPlugin()
+  {
     self::__construct();
   }
 
-  function ajax_register_image() {
-    $result = array();
+  /**
+   * Called from client side when user adds image to Cloudinary
+   *
+   * wp_send_json prints json result and dies(exits) immediately
+   *
+   */
+  function ajax_register_image()
+  {
     if ( empty($_POST) || !check_admin_referer('cloudinary_register_image') ) {
-       $result = array("message" => 'Sorry, your nonce did not verify.', "error" => TRUE);
-    } else {
-      $post_id = $_POST["post_id"];
-      $attachment_id =& $_POST["attachment_id"];
-      $url = $_POST["url"];
-      if (!empty($post_id) && !current_user_can('edit_post', $post_id) ) {
-        $result = array("message" => 'Permission denied.', "error" => TRUE);
-      } else if (!empty($attachment_id) && !current_user_can('edit_post', $attachment_id) ) {
-        $result = array("message" => 'Permission denied.', "error" => TRUE);
-      } else if (empty($url)) {
-        $result = array("message" => 'Missing URL.', "error" => TRUE);
-      } else {
-        $id = $this->register_image($url, $post_id, $attachment_id, NULL, $_POST["width"], $_POST["height"]);
-        $result = array("success"=>TRUE, "attachment_id"=>$id);
-      }
+	    wp_send_json(array( "message" => 'Sorry, your nonce did not verify.', "error" => true ));
     }
-    echo json_encode($result);
-    die();
+
+    $post_id        = $_POST["post_id"];
+    $attachment_id  =&$_POST["attachment_id"];
+    $url            = $_POST["url"];
+
+    if (!empty($post_id) && !current_user_can('edit_post', $post_id) ) {
+	    wp_send_json(array("message" => 'Permission denied.', "error" => true));
+    }
+    if (!empty($attachment_id) && !current_user_can('edit_post', $attachment_id) ) {
+	    wp_send_json(array("message" => 'Permission denied.', "error" => true));
+    }
+    if (empty($url)) {
+	    wp_send_json(array("message" => 'Missing URL.', "error" => true));
+    }
+
+    $id = $this->register_image($url, $post_id, $attachment_id, null, $_POST["width"], $_POST["height"]);
+    wp_send_json(array("success"=>true, "attachment_id"=>$id));
   }
 
   function register_image($url, $post_id, $attachment_id, $original_attachment, $width, $height) {
@@ -84,18 +94,18 @@ class CloudinaryPlugin
     $mime_types = array("png"=>"image/png", "jpg"=>"image/jpeg", "pdf"=>"application/pdf", "gif"=>"image/gif", "bmp"=>"image/bmp");
     $type = $mime_types[$info["extension"]];
     #$api = new CloudinaryApi();
-    #$info = $api->resource($public_id, array("image_metadata"=>TRUE, "derived"=>FALSE));
+    #$info = $api->resource($public_id, array("image_metadata"=>true, "derived"=>false));
     #$meta = $this->extract_metadata($info["image_metadata"]);
-    $meta = NULL;
+    $meta = null;
     if ($original_attachment) {
       $md = wp_get_attachment_metadata($attachment_id);
       $meta = $md["image_meta"];
       $title = $original_attachment->post_title;
       $caption = $original_attachment->post_content;
     } else {
-      $title = NULL;
-      $caption = NULL;
-      $meta = NULL;
+      $title    = null;
+      $caption  = null;
+      $meta     = null;
     }
     if (!$title) $title = $public_id;
     if (!$caption) $caption = '';
@@ -124,7 +134,7 @@ class CloudinaryPlugin
     // Save the data
     $id = wp_insert_attachment($attachment, $url, $post_id);
     if ( !is_wp_error($id) ) {
-      $metadata = array("image_meta" => $meta, "width" => $width, "height" => $height, "cloudinary"=>TRUE);
+      $metadata = array("image_meta" => $meta, "width" => $width, "height" => $height, "cloudinary"=>true);
       wp_update_attachment_metadata( $id,  $metadata);
     }
     return $id;
@@ -146,7 +156,7 @@ class CloudinaryPlugin
 
     $response = wp_remote_get($url);
     if ($response["response"]["code"] != 200) {
-      $error = $repsonse["headers"]["x-cld-error"];
+      $error = $response["headers"]["x-cld-error"];
       if (!$error) $error = "Unable to migrate away $url";
       return $public_id . ' cannot be migrate away. ' . $error ;
     }
@@ -158,7 +168,7 @@ class CloudinaryPlugin
     $attachment = array(
       "ID" => $attach_id,
       'guid' => $uploads['url'] . "/" . $filename,
-      "cloudinary" => NULL
+      "cloudinary" => null
     );
     $attrs = array('post_mime_type', 'post_title', 'post_content', 'post_status', 'post_author', 'post_name', 'post_date');
     foreach ($attrs as $key) {
@@ -173,14 +183,14 @@ class CloudinaryPlugin
     $attach_data = wp_generate_attachment_metadata( $attach_id, $fullpathfilename );
     wp_update_attachment_metadata( $attach_id,  $attach_data );
 
-    $new_src = wp_get_attachment_image_src($attach_id, NULL);
+    $new_src = wp_get_attachment_image_src($attach_id, null);
     $errors = array();
-    $this->update_image_src_all($attach_id, $attach_data, $url, $new_src[0], FALSE, $errors);
+    $this->update_image_src_all($attach_id, $attach_data, $url, $new_src[0], false, $errors);
     if (count($errors) > 0) {
       return "Cannot migrate the following posts - " . implode(", ", array_keys($errors));
     }
 
-    return NULL;
+    return null;
   }
 
   function extract_metadata($remote_meta) {
@@ -240,10 +250,10 @@ class CloudinaryPlugin
       $meta['shutter_speed'] = (string) wp_exif_frac2dec( $remote_meta['ExposureTime'] );
     return $meta;
 
-    foreach ( array( 'title', 'caption', 'credit', 'copyright', 'camera', 'iso' ) as $key ) {
-      if ( $meta[ $key ] && ! seems_utf8( $meta[ $key ] ) )
-        $meta[ $key ] = utf8_encode( $meta[ $key ] );
-    }
+//    foreach ( array( 'title', 'caption', 'credit', 'copyright', 'camera', 'iso' ) as $key ) {
+//      if ( $meta[ $key ] && ! seems_utf8( $meta[ $key ] ) )
+//        $meta[ $key ] = utf8_encode( $meta[ $key ] );
+//    }
   }
 
   function extract_meta_value($info, $keys, $default='') {
@@ -259,6 +269,7 @@ class CloudinaryPlugin
     if (isset($this->sizes)) return $this->sizes;
     // make thumbnails and other intermediate sizes
     global $_wp_additional_image_sizes;
+    $sizes = array();
 
     foreach ( get_intermediate_image_sizes() as $s ) {
       $sizes[$s] = array( 'width' => '', 'height' => '', 'crop' => false );
@@ -288,49 +299,83 @@ class CloudinaryPlugin
     return $url;
   }
 
+  /**
+   * Build Cloudinary URL for resized image
+   *
+   * @param string         $url - original image url
+   * @param array          $metadata - original image metadata
+   * @param string|array   $size - target size. Can be array with width, height parameters, or
+   *                               string with predefined sizes, see $this->get_wp_sizes for available values
+   *
+   * @return false|array Array containing the image URL, width, height, and boolean for whether
+   *                     the image is an intermediate size. False on failure.
+   */
   function build_resize_url($url, $metadata, $size) {
-    if (preg_match('#(.*?)/(v[0-9]+/.*)$#', $url, $matches)) {
-      if (!$size) {
-        return array($url, $metadata["width"], $metadata["height"], true);
-      }
-      if (is_array($size)) {
-        $wanted = array("width" => $size[0], "height" => $size[1]);
-        $crop = false;
-      } else {
-        $sizes = $this->get_wp_sizes();
-        $wanted = $sizes[$size];
-        $crop = $wanted["crop"];
-      }
-      $transformation = "";
-      $src_w = $dst_w = $metadata["width"];
-      $src_h = $dst_h = $metadata["height"];
-      if ($crop) {
-        $resized = image_resize_dimensions($metadata['width'], $metadata['height'], $wanted['width'], $wanted['height'], true);
-        if ($resized) {
-          list ($dst_x, $dst_y, $src_x, $src_y, $dst_w, $dst_h, $src_w, $src_h) = $resized;
-          $transformation = "c_crop,h_$src_h,w_$src_w,x_$src_x,y_$src_y/";
-        }
-      }
-
-      list($width, $height) = image_constrain_size_for_editor($dst_w, $dst_h, $size);
-      if ($width != $src_w || $height != $src_h) {
-        $transformation = $transformation . "h_$height,w_$width/";
-      }
-
-      $url = "$matches[1]/$transformation$matches[2]";
-      return array($url, $width, $height, true);
-    } else {
+    // Check if this is a Cloudinary URL
+    if (!preg_match('#(.*?)/(v[0-9]+/.*)$#', $url, $matches)) {
       return false;
     }
+
+    if (!$size) {
+      return array($url, $metadata["width"], $metadata["height"], false);
+    }
+
+    if (is_string($size)) {
+        $available_sizes = $this->get_wp_sizes();
+        if($size === 'full' || !array_key_exists($size, $available_sizes)) {
+            // unsupported custom size, or full image, return as is, indicating that it was not changed
+            return array($url, $metadata["width"], $metadata["height"], false);
+        }
+
+        $wanted = $available_sizes[$size];
+        $crop = $wanted["crop"];
+    }
+    elseif (is_array($size)) {
+      $wanted = array("width" => $size[0], "height" => $size[1]);
+      $crop = false;
+    }
+    else{
+        // unsupported argument
+        return false;
+    }
+
+    $transformation = "";
+    $src_w = $dst_w = $metadata["width"];
+    $src_h = $dst_h = $metadata["height"];
+    if ($crop) {
+      $resized = image_resize_dimensions($metadata['width'], $metadata['height'], $wanted['width'], $wanted['height'], true);
+      if ($resized) {
+        list ($dst_x, $dst_y, $src_x, $src_y, $dst_w, $dst_h, $src_w, $src_h) = $resized;
+        $transformation = "c_crop,h_$src_h,w_$src_w,x_$src_x,y_$src_y/";
+      }
+    }
+
+    list($width, $height) = image_constrain_size_for_editor($dst_w, $dst_h, $size);
+    if ($width != $src_w || $height != $src_h) {
+      $transformation = $transformation . "h_$height,w_$width/";
+    }
+
+    $url = "$matches[1]/$transformation$matches[2]";
+
+    return array($url, $width, $height, true);
   }
+
+  /**
+   * Filter for image_downsize wordpress function
+   *
+   * See https://codex.wordpress.org/Function_Reference/image_downsize
+   *
+   * @return false|array Array containing the image URL, width, height, and boolean for whether
+   *                     the image is an intermediate size. False on failure.
+   */
   function remote_resize($dummy, $post_id, $size) {
     $url = wp_get_attachment_url($post_id);
     $metadata = wp_get_attachment_metadata($post_id);
-    if (Cloudinary::option_get($metadata, "cloudinary")) {
-      return $this->build_resize_url($url, $metadata, $size);
-    } else {
-      return FALSE;
+    if (!Cloudinary::option_get($metadata, "cloudinary")) {
+        return false;
     }
+
+    return $this->build_resize_url($url, $metadata, $size);
   }
 
   /* Upgrade */
@@ -372,7 +417,7 @@ class CloudinaryPlugin
     $library_item = CLOUDINARY_UNIQUE_ID . "/library.php";
 
     $main_action = $this->configured() ? $library_item : $settings_item;
-    add_menu_page('Cloudinary Menu', 'Cloudinary', 'manage_options', $main_action, NULL, plugins_url(CLOUDINARY_UNIQUE_ID . '/images/favicon.png'));
+    add_menu_page('Cloudinary Menu', 'Cloudinary', 'manage_options', $main_action, null, plugins_url(CLOUDINARY_UNIQUE_ID . '/images/favicon.png'));
     add_submenu_page($main_action, "Cloudinary Media Library", "Media library", 'publish_pages', $main_action);
     add_submenu_page($main_action, "Cloudinary Settings", "Settings", 'manage_options', $settings_item);
   }
@@ -386,8 +431,8 @@ class CloudinaryPlugin
       if ($this->configured()){
         update_option('cloudinary_url', $cloudinary_url);
         $url = $this->prepare_cloudinary_media_lib_url("check");
-        $args = array("method"=>"GET", "timeout"=>5, "redirection"=>5, "httpversion"=>"1.0", "blocking"=>TRUE, "headers"=>array(),
-                      "body"=>null, "cookies"=>array(), "sslverify"=>FALSE);
+        $args = array("method"=>"GET", "timeout"=>5, "redirection"=>5, "httpversion"=>"1.0", "blocking"=>true, "headers"=>array(),
+                      "body"=>null, "cookies"=>array(), "sslverify"=>false);
         $response = wp_remote_get($url, $args);
         if (is_wp_error( $response )) {
           echo 'Cannot access Cloudinary (error ' . $response->get_error_message() . ") - Verify your CLOUDINARY_URL";
@@ -418,7 +463,7 @@ class CloudinaryPlugin
     preg_match_all('~<img.*?>~i', $post->post_content, $images);
     foreach ($images[0] as $img) {
       if (preg_match('~class *= *["\']([^"\']+)["\']~i', $img, $class) && preg_match('~wp-image-(\d+)~i', $class[1], $id) && $id[1]==$attachment_id) {
-        $wanted_size = NULL;
+        $wanted_size = null;
         if (preg_match('~size-([a-zA-Z0-9_\-]+)~i', $class[1], $size)) {
           if (isset($this->sizes[$size[1]])) {
             $wanted_size = $size[1];
@@ -430,8 +475,8 @@ class CloudinaryPlugin
               continue; # Skip
             } else {
               error_log("Cannot automatically migrate image - non-standard image size detected " . $size[1]);
-              $errors[$post->ID] = TRUE;
-              return FALSE;
+              $errors[$post->ID] = true;
+              return false;
             }
           }
         }
@@ -448,16 +493,15 @@ class CloudinaryPlugin
             if ($old_img_src) {
               if ($old_img_src != $src[1]) {
                 error_log("Cannot automatically migrate image - non-standard image url detected " . $src[1] . " expected $old_img_src requested size $wanted_size");
-                $errors[$post->ID] = TRUE;
-                return FALSE;
+                $errors[$post->ID] = true;
+                return false;
               }
               if (!isset($wanted_size)) $wanted_size = "full";
               list($new_img_src) = image_downsize($attachment_id, $wanted_size);
-              print_r(array($old_img_src, $wanted_size, $new_img_src, $src[1]));
               if (!$new_img_src) {
                 error_log("Cannot automatically migrate image - failed to downsize " . $src[1] . " to " . $wanted_size);
-                $errors[$post->ID] = TRUE;
-                return FALSE;
+                $errors[$post->ID] = true;
+                return false;
               }
               $post_content = str_replace($src[1], $new_img_src, $post_content);
             }
@@ -470,7 +514,7 @@ class CloudinaryPlugin
     if ($post_content != $post->post_content) {
       return wp_update_post(array("post_content"=>$post_content, "ID"=>$post->ID));
     }
-    return FALSE;
+    return false;
   }
 
   function init_media_lib_integration($xdmremote, $autoShow) {
@@ -500,6 +544,8 @@ class CloudinaryPlugin
     echo $this->init_media_lib_integration($xdmremote, false) .
          '<a href="#" class="cloudinary_add_media" id="' . esc_attr( $editor_id ) . '-add_media" ' .
          'title="' . esc_attr__( 'Add Media from Cloudinary' ) . '">' . $context . '</a><span class="cloudinary_message"></span>';
+
+    return null;
   }
 
   function media_lib_add_upload_column( $cols ) {
@@ -543,52 +589,51 @@ class CloudinaryPlugin
     if (Cloudinary::option_get($md, "cloudinary")) {
       return "Already uploaded to Cloudinary";
     }
-    if (empty($md)) {
-      $attachment = get_post($attachment_id);
-      $full_path = $attachment->guid;
-      if (empty($full_path)) {
-        return "Unsupported attachment type";
-      }
-    } else {
-      $img_path = $md['file'];
-      $img_ex = explode('/',$img_path);
-      $img_name = explode('.',$img_ex['2']);
 
-      $upload_dir = wp_upload_dir();
-      $full_path = $upload_dir['basedir'].'/'.$img_path;
+    $attachment = get_post($attachment_id);
+
+    if (!empty($md)) {
+      $full_path = wp_upload_dir()['basedir'] . DIRECTORY_SEPARATOR . $md['file'];
+    } else {
+	  $full_path = $attachment->guid;
+	  if (empty($full_path)) {
+	    return "Unsupported attachment type";
+	  }
     }
+
     try {
-      $result = CloudinaryUploader::upload($full_path,array('use_filename'=>TRUE));
+      $result = CloudinaryUploader::upload($full_path, array('use_filename'=>true));
     } catch(Exception $e) {
       return $e->getMessage();
     }
-    $post_parent = NULL;
+
+    $post_parent = null;
     if ($migrate) {
-      if (!$attachment) $attachment = get_post($attachment_id);
       $old_url = wp_get_attachment_url($attachment_id);
       $post_parent = $attachment->post_parent;
     } else {
-      $attachment_id = NULL;
+      $attachment_id = null;
     }
+
     $this->register_image($result["secure_url"], $post_parent, $attachment_id, $attachment, $result["width"], $result["height"]);
+
     if ($migrate) {
       $errors = array();
-      $this->update_image_src_all($attachment_id, $result, $old_url, $result["url"], TRUE, $errors);
+      $this->update_image_src_all($attachment_id, $result, $old_url, $result["url"], true, $errors);
       if (count($errors) > 0) {
         return "Cannot migrate the following posts - " . implode(", ", $errors);
       }
     }
 
-    return NULL;
+    return null;
   }
 
   function media_lib_upload_action() {
     $wp_list_table = _get_list_table('WP_Media_List_Table');
-    $pagenum = $wp_list_table->get_pagenum();
     $action = $wp_list_table->current_action();
-    global $pagenow;
     $sendback = wp_get_referer();
 
+    global $pagenow;
     if($pagenow == 'upload.php' && isset($_REQUEST['cloud_upload']) && (int) $_REQUEST['cloud_upload']) {
       if (!$this->configured()) {
          echo "Please setup environment to upload images to cloudinary";
@@ -597,7 +642,7 @@ class CloudinaryPlugin
 
       check_admin_referer('bulk-media');
       // Single image upload
-      $error = $this->upload_to_cloudinary($_REQUEST['cloud_upload'], TRUE);
+      $error = $this->upload_to_cloudinary($_REQUEST['cloud_upload'], true);
       $_REQUEST = array();
       if ($error) {
         $errors = array($error=>1);
@@ -617,15 +662,18 @@ class CloudinaryPlugin
 
       // Multiple images upload
       check_admin_referer('bulk-media');
+
+      $post_ids = array();
       if ( isset($_REQUEST['media'] ) ) {
         $post_ids = $_REQUEST['media'];
       } elseif ( isset( $_REQUEST['ids'] ) ) {
         $post_ids = explode( ',', $_REQUEST['ids'] );
       }
+
       $successes = 0;
       $errors = array();
       foreach( $post_ids as $k =>  $post_id ) {
-        $error = $action === 'upload_cloudinary' ? $this->upload_to_cloudinary($post_id, TRUE) : $this->migrate_away($post_id);
+        $error = $action === 'upload_cloudinary' ? $this->upload_to_cloudinary($post_id, true) : $this->migrate_away($post_id);
         if ($error) {
           if (isset($errors[$error])) {
             $errors[$error] += 1;
@@ -675,7 +723,7 @@ class CloudinaryPlugin
   }
 
   function prepare_cloudinary_media_lib_url($mode) {
-    if (!$this->configured()) return NULL;
+    if (!$this->configured()) return null;
     $params = array("timestamp" => time(), "mode"=>$mode, "plugin_version"=>cloudinary_VERSION);
     $params["signature"] = Cloudinary::api_sign_request($params, Cloudinary::config_get("api_secret"));
     $params["api_key"] = Cloudinary::config_get("api_key");
