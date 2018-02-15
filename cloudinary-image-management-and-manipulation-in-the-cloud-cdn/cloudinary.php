@@ -93,9 +93,6 @@ class CloudinaryPlugin
     $public_id = $info["filename"];
     $mime_types = array("png"=>"image/png", "jpg"=>"image/jpeg", "pdf"=>"application/pdf", "gif"=>"image/gif", "bmp"=>"image/bmp");
     $type = $mime_types[$info["extension"]];
-    #$api = new CloudinaryApi();
-    #$info = $api->resource($public_id, array("image_metadata"=>true, "derived"=>false));
-    #$meta = $this->extract_metadata($info["image_metadata"]);
     $meta = null;
     if ($original_attachment) {
       $md = wp_get_attachment_metadata($attachment_id);
@@ -193,7 +190,15 @@ class CloudinaryPlugin
     return null;
   }
 
+  /**
+   * @deprecated
+   * Convert metadata from cloudinary response to plugin-friendly format
+   *
+   * @param array $remote_meta    - metadata returned by Cloudinary API
+   * @return array                - extracted metadata
+   */
   function extract_metadata($remote_meta) {
+    trigger_error('Method ' . __METHOD__ . ' is deprecated', E_USER_DEPRECATED);
     $meta = array(
             'aperture' => 0,
             'credit' => '',
@@ -248,15 +253,15 @@ class CloudinaryPlugin
       $meta['focal_length'] = (string) wp_exif_frac2dec( $remote_meta['FocalLength'] );
     if ( ! empty($remote_meta['ExposureTime'] ) )
       $meta['shutter_speed'] = (string) wp_exif_frac2dec( $remote_meta['ExposureTime'] );
-    return $meta;
 
-//    foreach ( array( 'title', 'caption', 'credit', 'copyright', 'camera', 'iso' ) as $key ) {
-//      if ( $meta[ $key ] && ! seems_utf8( $meta[ $key ] ) )
-//        $meta[ $key ] = utf8_encode( $meta[ $key ] );
-//    }
+    return $meta;
   }
 
+  /**
+   * @deprecated
+   */
   function extract_meta_value($info, $keys, $default='') {
+    trigger_error('Method ' . __METHOD__ . ' is deprecated', E_USER_DEPRECATED);
     foreach ($keys as $key) {
       if ( ! empty($info[$key] ) ) {
         return trim($info[$key]);
@@ -322,8 +327,8 @@ class CloudinaryPlugin
 
     if (is_string($size)) {
         $available_sizes = $this->get_wp_sizes();
-        if($size === 'full' || !array_key_exists($size, $available_sizes)) {
-            // unsupported custom size, or full image, return as is, indicating that it was not changed
+        // Unsupported custom size or 'full' image return as is, indicating that it was not changed
+        if(!array_key_exists($size, $available_sizes)) {
             return array($url, $metadata["width"], $metadata["height"], false);
         }
 
@@ -335,7 +340,7 @@ class CloudinaryPlugin
       $crop = false;
     }
     else{
-        // unsupported argument
+        // Unsupported argument
         return false;
     }
 
