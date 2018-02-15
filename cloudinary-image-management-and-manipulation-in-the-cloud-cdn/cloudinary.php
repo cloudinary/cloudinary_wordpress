@@ -8,14 +8,13 @@ Version:  1.1.9
 Author: Cloudinary Ltd.
 Author URI: http://cloudinary.com/
 */
+require_once plugin_dir_path( __FILE__ ) . 'autoload.php';
+
 define('cloudinary_VERSION', '1.1.9');
 define('cloudinary_PLUGIN_URL', plugin_dir_url( __FILE__ ));
-require plugin_dir_path( __FILE__ ) . "cloudinary_api.php" ;
-require plugin_dir_path( __FILE__ ) . "api.php" ;
-require plugin_dir_path( __FILE__ ) . "uploader.php" ;
-
 define ('CLOUDINARY_BASE_URL', "https://cloudinary.com");
 define ('CLOUDINARY_UNIQUE_ID', "cloudinary-image-management-and-manipulation-in-the-cloud-cdn");
+define ('CLOUDINARY_USER_PLATFORM_TEMPLATE', "CloudinaryWordPress/%s (WordPress %s)");
 
 function cloudinary_include_assets() {
   $cloudinary_js_dir = plugins_url('/js', __FILE__);
@@ -408,7 +407,19 @@ class CloudinaryPlugin
     $cloudinary_url = get_option('cloudinary_url');
     if($cloudinary_url){
       Cloudinary::config_from_url($cloudinary_url);
+      Cloudinary::$USER_PLATFORM = self::get_user_platform();
     }
+  }
+
+  /**
+   * Provides USER_PLATFORM string that is prepended to USER_AGENT string that is passed to the Cloudinary servers.
+   *
+   * Sample value: CloudinaryWordPress/1.2.3 (WordPress 4.5.6)
+   *
+   * @return string USER_PLATFORM
+   */
+  private static function get_user_platform(){
+    return sprintf(CLOUDINARY_USER_PLATFORM_TEMPLATE, cloudinary_VERSION, get_bloginfo('version'));
   }
 
   function configured() {
@@ -613,7 +624,7 @@ class CloudinaryPlugin
     }
 
     try {
-      $result = CloudinaryUploader::upload($full_path, array('use_filename'=>true));
+      $result = \Cloudinary\Uploader::upload($full_path,array('use_filename'=>true));
     } catch(Exception $e) {
       return $e->getMessage();
     }
