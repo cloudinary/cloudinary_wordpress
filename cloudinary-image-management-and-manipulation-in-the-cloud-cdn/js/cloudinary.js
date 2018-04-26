@@ -17,8 +17,7 @@ jQuery(function() {
       height: json.height,
       post_id: jQuery('#post_ID').val()
     };
-    jQuery.post(ajaxurl, data, function(response) {
-      var json = JSON.parse(response);
+    jQuery.post(ajaxurl, data, function(json) {
       if (json.error) {
         alert(json.message);
       } else {
@@ -57,8 +56,7 @@ jQuery(function() {
       if (match) data.attachment_id = match[1];      
     }
     
-    jQuery.post(ajaxurl, data, function(response) {
-      var json = JSON.parse(response);
+    jQuery.post(ajaxurl, data, function(json) {
       if (json.error) {
         alert(json.message);
         if (data.attachment_id) {
