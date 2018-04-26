@@ -161,6 +161,9 @@ N/A
 
 == Changelog ==
 
+= 1.1.9 (26 Apr 2018) =
+* Fix "Cloudinary Upload/Insert" functionality
+
 = 1.1.8 (22 Apr 2018) =
 * Fix PHP errors( notices) in DEBUG mode.
 * Fix "tinyMCE is not defined" JS error when TinyMCE is not loaded.

@@ -3,7 +3,7 @@
 class Cloudinary {
     private static $config = NULL;
     const SHARED_CDN = "d3jpl91pxevbkh.cloudfront.net";
-    const USER_AGENT = "cld-wp-1.1.8";
+    const USER_AGENT = "cld-wp-1.1.9";
     public static $JS_CONFIG_PARAMS = array("api_key", "cloud_name", "private_cdn", "secure_distribution", "cdn_subdomain");
 
     public static function config($values = NULL) {
