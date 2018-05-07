@@ -630,7 +630,7 @@ class CloudinaryPlugin
 
     if ($migrate) {
       $errors = array();
-      $this->update_image_src_all($attachment_id, $result, $old_url, $result["url"], true, $errors);
+      $this->update_image_src_all($attachment_id, $result, $old_url, $result["secure_url"], true, $errors);
       if (count($errors) > 0) {
         return "Cannot migrate the following posts - " . implode(", ", $errors);
       }
