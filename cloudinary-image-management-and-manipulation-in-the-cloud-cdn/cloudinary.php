@@ -454,11 +454,17 @@ class CloudinaryPlugin
   }
 
   function update_image_src_all($attachment_id, $attachment_metadata, $old_url, $new_url, $migrate_in, &$errors) {
-    $posts = get_posts(array("post_type"=>"any", 'numberposts' => -1, "post_status"=>'publish,pending,draft,auto-draft,future,private'));
-    foreach($posts as $post) {
-      if (strpos($post->post_content, "wp-image-$attachment_id") !== false) {
-        $this->update_image_src($post, $attachment_id, $attachment_metadata, $old_url, $new_url, $migrate_in, $errors);
-      }
+    $query = new WP_Query(
+      array(
+        'post_type' => 'any',
+        'post_status' => 'publish,pending,draft,auto-draft,future,private',
+        's' => "wp-image-{$attachment_id}"
+      )
+    );
+
+    while ($query->have_posts()) {
+      $query->the_post();
+      $this->update_image_src($query->post, $attachment_id, $attachment_metadata, $old_url, $new_url, $migrate_in, $errors);
     }
   }
 
