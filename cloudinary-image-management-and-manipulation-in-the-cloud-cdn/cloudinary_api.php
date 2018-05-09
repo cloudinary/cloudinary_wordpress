@@ -170,9 +170,17 @@ class Cloudinary {
         $secure_distribution = Cloudinary::option_consume($options, "secure_distribution", Cloudinary::config_get("secure_distribution"));
         $cdn_subdomain = Cloudinary::option_consume($options, "cdn_subdomain", Cloudinary::config_get("cdn_subdomain"));
         $cname = Cloudinary::option_consume($options, "cname", Cloudinary::config_get("cname"));
+        $sign_url = Cloudinary::option_consume($options, "sign_url", Cloudinary::config_get("sign_url"));
 
         $original_source = $source;
         if (!$source) return $original_source;
+
+        $signature = NULL;
+        if ($sign_url) {
+          $to_sign = implode("/", array_filter(array($transformation, $source_to_sign)));
+          $signature = str_replace(array('+','/','='), array('-','_',''), base64_encode(sha1($to_sign . $api_secret, TRUE)));
+          $signature = 's--' . substr($signature, 0, 8) . '--';
+        }
 
         if (preg_match("/^https?:\//i", $source)) {
           if ($type == "upload" || $type == "asset") return $original_source;
@@ -199,7 +207,7 @@ class Cloudinary {
         if (!$private_cdn) $prefix .= "/" . $cloud_name;
 
         return preg_replace("/([^:])\/+/", "$1/", implode("/", array($prefix, $resource_type,
-         $type, $transformation, $version ? "v" . $version : "", $source)));
+         $type, $signature, $transformation, $version ? "v" . $version : "", $source)));
     }
 
     // Based on http://stackoverflow.com/a/1734255/526985
