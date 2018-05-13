@@ -161,6 +161,13 @@ N/A
 
 == Changelog ==
 
+= 1.1.10 (17 May 2018)
+ * Fix memory exhaustion in "Upload to Cloudinary" functionality
+ * Fix "Cloudinary Upload/Insert" button compatibility and style
+ * Fix `url` and `secure_url` inconsistency
+ * Add handling of WP_Error
+ * Add cloudinary_php v1.10.0 to WordPress plugin
+
 = 1.1.9 (26 Apr 2018) =
 * Fix "Cloudinary Upload/Insert" functionality
 
