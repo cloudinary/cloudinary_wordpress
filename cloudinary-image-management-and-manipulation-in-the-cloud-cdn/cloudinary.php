@@ -48,6 +48,11 @@ class CloudinaryPlugin
         add_filter('image_downsize', array($this, 'remote_resize'), 1, 3);
 
         add_action('wp_ajax_cloudinary_register_image', array($this, 'ajax_register_image'));
+
+        if (class_exists('WP_CLI')) {
+            $command = new Cloudinary\Cli($this);
+            \WP_CLI::add_command('cloudinary-import', $command);
+        }
     }
 
     /**
