@@ -143,7 +143,7 @@ jQuery(function() {
   if (typeof(tinyMCE) != 'undefined')
     register_edit_image();
   
-  jQuery(document) .on('click', '.cloudinary_add_media', function() {
+  jQuery(document).on('click', '.cloudinary_add_media', function() {
     jQuery('.cloudinary_message').html('');
   	jQuery('#cloudinary-library').show();
   	update_window_dimensions();
