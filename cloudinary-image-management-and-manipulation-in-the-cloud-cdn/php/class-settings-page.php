@@ -175,7 +175,7 @@ class Settings_Page implements Component\Assets, Component\Config, Component\Set
 	 *
 	 * @since 0.1
 	 *
-	 * @param string $tab          The tab to register the section fields for.
+	 * @param array  $tab          The tab to register the section fields for.
 	 * @param string $setting_slug The slug of the setting to register section for.
 	 */
 	private function register_section_fields( $tab, $setting_slug ) {

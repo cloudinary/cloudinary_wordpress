@@ -7,17 +7,10 @@
 
 namespace Cloudinary;
 
-global $cloudinary_plugin;
+define( 'CLDN_ASSET_DEBUG', defined( 'DEBUG_SCRIPTS' ) ? '' : '.min' );
 
-if ( ! defined( 'DEBUG_SCRIPTS' ) ) {
-	define( 'CLDN_ASSET_DEBUG', '.min' );
-} else {
-	define( 'CLDN_ASSET_DEBUG', '' );
-}
-
+require_once ABSPATH . 'wp-admin/includes/plugin.php';
 require_once __DIR__ . '/php/class-plugin.php';
-
-$cloudinary_plugin = new Plugin();
 
 /**
  * Cloudinary Plugin Instance
@@ -25,7 +18,12 @@ $cloudinary_plugin = new Plugin();
  * @return Plugin
  */
 function get_plugin_instance() {
-	global $cloudinary_plugin;
+	static $cloudinary_plugin;
 
+	if ( ! isset( $cloudinary_plugin ) ) {
+		$cloudinary_plugin = new Plugin();
+	}
 	return $cloudinary_plugin;
 }
+
+get_plugin_instance();

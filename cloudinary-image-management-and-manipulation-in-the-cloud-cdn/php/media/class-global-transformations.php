@@ -197,7 +197,7 @@ class Global_Transformations {
 	 *
 	 * @param string $type The type to get.
 	 *
-	 * @return array
+	 * @return string
 	 */
 	public function get_taxonomy_transformations( $type ) {
 		$return_transformations = '';
@@ -265,7 +265,7 @@ class Global_Transformations {
 	/**
 	 * Check if the post has any public taxonomies.
 	 *
-	 * @param \WP_POST $post The post to check.
+	 * @param \WP_Post $post The post to check.
 	 *
 	 * @return bool
 	 */

@@ -95,7 +95,6 @@ class Plugin {
 	 * Plugin_Base constructor.
 	 */
 	public function __construct() {
-		require_once ABSPATH . 'wp-admin/includes/plugin.php';
 		$plugin              = get_plugin_data( CLDN_CORE );
 		$location            = $this->locate_plugin();
 		$this->slug          = ! empty( $plugin['TextDomain'] ) ? $plugin['TextDomain'] : $location['dir_basename'];
@@ -288,7 +287,7 @@ class Plugin {
 	 */
 	public function admin_notices() {
 		/**
-		 * @var $components Notice[]
+		 * @var Notice[] $components
 		 *
 		 * An array of classes that implement the Notice interface.
 		 */

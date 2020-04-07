@@ -368,7 +368,7 @@ class Media implements Setup {
 	 * @param array  $transformations The transformation set to check.
 	 * @param string $type            The type of transformation to check for.
 	 *
-	 * @return bool
+	 * @return int|false
 	 */
 	public function get_transformation( $transformations, $type ) {
 		foreach ( $transformations as $index => $transformation ) {
@@ -549,7 +549,7 @@ class Media implements Setup {
 	 * @param bool         $breakpoint      Flag url is a breakpoint URL to stop re-applying default transformations.
 	 * @param bool         $clean           Flag to present a clean url (With out a WP size variable.
 	 *
-	 * @return string The converted URL.
+	 * @return string|false The converted URL.
 	 */
 	public function cloudinary_url( $attachment_id, $size = array(), $transformations = array(), $cloudinary_id = null, $breakpoint = false, $clean = false ) {
 
@@ -706,9 +706,8 @@ class Media implements Setup {
 	 * @param int          $attachment_id The ID of the attachment.
 	 * @param string|array $size          The requested size of the image.
 	 *
-	 * @return array The image array of size and url.
+	 * @return array|null The image array of size and url.
 	 * @uses filter:image_downsize
-	 *
 	 */
 	public function filter_downsize( $image, $attachment_id, $size ) {
 		// Don't do this while saving.

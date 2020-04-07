@@ -273,7 +273,7 @@ class Push_Sync {
 	 *
 	 * @param int|\WP_Post $attachment The attachment to get the required sync type for.
 	 *
-	 * @return string
+	 * @return string|\WP_Error
 	 */
 	private function get_sync_type( $attachment ) {
 		if ( is_numeric( $attachment ) ) {
@@ -333,7 +333,10 @@ class Push_Sync {
 			$file = get_attached_file( $post->ID );
 			if ( empty( $file ) ) {
 				return new \WP_Error( 'attachment_no_file', __( 'Attachment did not have a file.', 'cloudinary' ) );
-			} elseif ( ! file_exists( $file ) ) {
+			}
+
+			if ( ! file_exists( $file ) ) {
+				$file_size = 0;
 				// May be an old upload type.
 				$src = get_post_meta( $post->ID, '_wp_attached_file', true );
 				if ( $this->plugin->components['media']->is_cloudinary_url( $src ) ) {
@@ -347,8 +350,6 @@ class Push_Sync {
 						}
 						$file      = get_attached_file( $post->ID );
 						$file_size = filesize( $file );
-					} else {
-						$file_size = 0;
 					}
 				}
 			} else {
@@ -394,7 +395,7 @@ class Push_Sync {
 				'public_id'       => $public_id,
 				'context'         => array(
 					'caption' => esc_attr( $post->post_title ),
-					'alt'     => $post->_wp_attachment_image_alt,
+					'alt'     => get_post_meta( $post->ID, '_wp_attachment_image_alt', true ),
 				),
 			);
 
@@ -439,9 +440,9 @@ class Push_Sync {
 			/**
 			 * Filter the options to allow other plugins to add requested options for uploading.
 			 *
-			 * @param array    $options The options array.
-			 * @param \WP_Post $post    The attachment post.
-			 * @param \Cloudinary\Sync The sync object instance.
+			 * @param array            $options  The options array.
+			 * @param \WP_Post         $post     The attachment post.
+			 * @param \Cloudinary\Sync $instance The sync object instance.
 			 *
 			 * @return array
 			 */
