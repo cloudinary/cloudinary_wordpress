@@ -20,7 +20,7 @@ require_once __DIR__ . '/php/class-plugin.php';
 function get_plugin_instance() {
 	static $cloudinary_plugin;
 
-	if ( ! isset( $cloudinary_plugin ) ) {
+	if ( null === $cloudinary_plugin ) {
 		$cloudinary_plugin = new Plugin();
 	}
 	return $cloudinary_plugin;
