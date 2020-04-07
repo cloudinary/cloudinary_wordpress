@@ -1,0 +1,16 @@
+includes:
+    - vendor/szepeviktor/phpstan-wordpress/extension.neon
+parameters:
+    level: max
+    inferPrivatePropertyTypeFromConstructor: true
+    autoload_files:
+        - cloudinary.php
+    paths:
+        - php/
+    excludes_analyse:
+       - php/templates/
+    ignoreErrors:
+        # Uses func_get_args()
+        - '#^Function apply_filters(_ref_array)? invoked with [34567] parameters, 2 required\.$#'
+        # Api::__call()
+        - '#^Call to an undefined method Cloudinary\\Connect\\Api::ping\(\)\.$#'
