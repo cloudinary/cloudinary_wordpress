@@ -1288,7 +1288,7 @@ class Media implements Setup {
 	 * Setup the hooks and base_url if configured.
 	 */
 	public function setup() {
-		if ( $this->plugin->config['connect'] ) {
+		if ( $this->plugin->config['connect'] && $this->plugin->components['connect']->api ) {
 
 			$this->base_url               = $this->plugin->components['connect']->api->cloudinary_url( '/' );
 			$this->credentials            = $this->plugin->components['connect']->get_credentials();
