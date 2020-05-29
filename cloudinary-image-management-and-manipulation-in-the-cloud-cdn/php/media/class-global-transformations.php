@@ -170,7 +170,7 @@ class Global_Transformations {
 				// check screen context.
 				switch ( $screen->base ) {
 					case 'term':
-						$term_id         = filter_input( INPUT_GET, 'tag_ID', FILTER_DEFAULT );
+						$term_id         = filter_input( INPUT_GET, 'tag_ID', FILTER_SANITIZE_STRING );
 						$transformations = $this->get_term_transformations( $term_id, $type );
 						break;
 					case 'toplevel_page_cloudinary':

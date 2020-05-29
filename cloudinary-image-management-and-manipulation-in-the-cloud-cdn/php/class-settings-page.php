@@ -827,7 +827,7 @@ class Settings_Page implements Component\Assets, Component\Config, Component\Set
 		}
 		$tab = filter_input( INPUT_GET, 'tab', FILTER_SANITIZE_STRING );
 		if ( ! $this->validate_tab( $tab ) ) { // Tab is invalid or not set, check if in a POST.
-			$tab = filter_input( INPUT_POST, 'tab', FILTER_DEFAULT );
+			$tab = filter_input( INPUT_POST, 'tab', FILTER_SANITIZE_STRING );
 			if ( ! $this->validate_tab( $tab ) ) { // Tab is invalid or not set, load the default/first tab.
 				$tab = array_keys( $page['tabs'] );
 				$tab = array_shift( $tab );
