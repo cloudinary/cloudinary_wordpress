@@ -9,7 +9,6 @@ namespace Cloudinary;
 
 define( 'CLDN_ASSET_DEBUG', defined( 'DEBUG_SCRIPTS' ) ? '' : '.min' );
 
-require_once ABSPATH . 'wp-admin/includes/plugin.php';
 require_once __DIR__ . '/php/class-plugin.php';
 
 /**
