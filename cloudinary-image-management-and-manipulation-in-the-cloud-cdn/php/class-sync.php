@@ -113,7 +113,7 @@ class Sync implements Setup, Assets {
 	 *
 	 * @param int $post_id The post id to generate a signature for.
 	 *
-	 * @return string
+	 * @return array
 	 */
 	public function generate_signature( $post_id ) {
 		$upload               = $this->managers['push']->prepare_upload( $post_id );

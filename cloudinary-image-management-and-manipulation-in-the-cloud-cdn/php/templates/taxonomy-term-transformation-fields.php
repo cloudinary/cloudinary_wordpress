@@ -35,5 +35,4 @@ wp_add_inline_script( 'cloudinary', 'var CLD_GLOBAL_TRANSFORMATIONS = CLD_GLOBAL
 			?>
 		</td>
 	</tr>
-<?php endforeach; ?>
-
+<?php endforeach;

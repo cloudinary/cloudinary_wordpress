@@ -129,13 +129,13 @@ class Api {
 	 *
 	 * @var string|null
 	 */
-	private $pending_url = array();
+	private $pending_url = null;
 
 	/**
 	 * API constructor.
 	 *
 	 * @param \Cloudinary\Connect $connect The connect object.
-	 * @param string The plugin version.
+	 * @param string $version The plugin version.
 	 */
 	public function __construct( $connect, $version ) {
 		$this->credentials = $connect->get_credentials();
@@ -294,6 +294,7 @@ class Api {
 		$chunk_size     = 20000000;
 		$index          = 0;
 		$file_size      = filesize( $file );
+		$result         = array();
 		while ( ! feof( $src ) ) {
 			$current_loc = $index * $chunk_size;
 			if ( $current_loc >= $file_size ) {
@@ -325,7 +326,6 @@ class Api {
 		}
 
 		return $result;
-
 	}
 
 	/**
@@ -496,7 +496,7 @@ class Api {
 	 *
 	 * @param array $args Array of parameters to sign.
 	 *
-	 * @return array|\WP_Error
+	 * @return string
 	 */
 	public function sign( $args ) {
 
@@ -545,7 +545,7 @@ class Api {
 	 * @param array  $args   The optional arguments to send.
 	 * @param string $method The call HTTP method.
 	 *
-	 * @return array|\WP_Error
+	 * @return array|string|\WP_Error
 	 */
 	private function call( $url, $args = array(), $method = 'get' ) {
 		$args['method']     = strtoupper( $method );
@@ -572,11 +572,13 @@ class Api {
 		if ( is_wp_error( $request ) ) {
 			return $request;
 		}
+
 		$body   = wp_remote_retrieve_body( $request );
 		$result = json_decode( $body, ARRAY_A );
 		if ( empty( $result ) && ! empty( $body ) ) {
 			return $body; // not json.
 		}
+
 		if ( ! empty( $result['error'] ) && ! empty( $result['error']['message'] ) ) {
 			return new \WP_Error( $request['response']['code'], $result['error']['message'] );
 		}

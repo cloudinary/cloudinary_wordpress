@@ -170,7 +170,7 @@ class Global_Transformations {
 				// check screen context.
 				switch ( $screen->base ) {
 					case 'term':
-						$term_id         = filter_input( INPUT_GET, 'tag_ID', FILTER_DEFAULT );
+						$term_id         = filter_input( INPUT_GET, 'tag_ID', FILTER_SANITIZE_STRING );
 						$transformations = $this->get_term_transformations( $term_id, $type );
 						break;
 					case 'toplevel_page_cloudinary':
@@ -197,7 +197,7 @@ class Global_Transformations {
 	 *
 	 * @param string $type The type to get.
 	 *
-	 * @return array
+	 * @return string
 	 */
 	public function get_taxonomy_transformations( $type ) {
 		$return_transformations = '';
@@ -265,7 +265,7 @@ class Global_Transformations {
 	/**
 	 * Check if the post has any public taxonomies.
 	 *
-	 * @param \WP_POST $post The post to check.
+	 * @param \WP_Post $post The post to check.
 	 *
 	 * @return bool
 	 */

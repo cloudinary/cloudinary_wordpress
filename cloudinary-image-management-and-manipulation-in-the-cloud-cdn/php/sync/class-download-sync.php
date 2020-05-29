@@ -117,7 +117,7 @@ class Download_Sync {
 	/**
 	 * Prepare and sync down an asset stored remotely.
 	 *
-	 * @param $attachment_id
+	 * @param string $attachment_id
 	 *
 	 * @return array|\WP_Error
 	 */
