@@ -157,7 +157,7 @@ class Connect implements Config, Setup, Notice {
 		}
 
 		// Pattern match to ensure validity of the provided url
-		if ( ! preg_match( '~^(?:CLOUDINARY_URL=)?cloudinary://[0-9]+:[A-Za-z_0-9-]+@[\da-f]+~', $data['cloudinary_url'] ) ) {
+		if ( ! preg_match( '~^(?:CLOUDINARY_URL=)?cloudinary://[0-9]+:[A-Za-z_0-9-]+@[A-Za-z0-9-]+~', $data['cloudinary_url'] ) ) {
 			add_settings_error(
 				'cloudinary_connect',
 				'format_mismatch',
