@@ -940,13 +940,14 @@ class Media implements Setup {
 	 *
 	 * @param array  $asset     The asset arrah data.
 	 * @param string $public_id The cloudinary public id.
+	 * @param string $file_path The URL to use as a file path.
+	 * @param int    $id        ID of the attachment to update. 
 	 *
 	 * @return int|\WP_Error
 	 */
-	private function create_attachment( $asset, $public_id ) {
+	private function create_or_update_attachment( $asset, $public_id, $file_path, $id = null ) {
 
 		// Create an attachment post.
-		$file_path        = $asset['secure_url'];
 		$file_name        = basename( $file_path );
 		$file_type        = wp_check_filetype( $file_name, null );
 		$attachment_title = sanitize_file_name( pathinfo( $file_name, PATHINFO_FILENAME ) );
@@ -956,12 +957,18 @@ class Media implements Setup {
 			'post_content'   => '',
 			'post_status'    => 'inherit',
 		);
+
+		if ( $id ) {
+			$post_args['ID'] = $id;
+		}
+		
 		// Disable Upload_Sync to avoid sync loop.
 		add_filter( 'cloudinary_upload_sync_enabled', '__return_false' );
+		
 		// Create the attachment.
 		$attachment_id = wp_insert_attachment( $post_args, false );
+		$sync_key      = $public_id;
 
-		$sync_key = $public_id;
 		// Capture public_id. Use core update_post_meta since this attachment data doesnt exist yet.
 		update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
 		if ( ! empty( $asset['transformations'] ) ) {
@@ -969,10 +976,13 @@ class Media implements Setup {
 			$sync_key .= wp_json_encode( $asset['transformations'] );
 			update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], $asset['transformations'] );
 		}
+
 		// create a trackable key in post meta.
 		update_post_meta( $attachment_id, '_' . md5( $sync_key ), true );
+
 		// record a base to ensure primary isn't deleted.
 		update_post_meta( $attachment_id, '_' . md5( $public_id ), true );
+
 		// Capture the ALT Text.
 		if ( ! empty( $asset['context']['custom']['alt'] ) ) {
 			$alt_text = wp_strip_all_tags( $asset['context']['custom']['alt'] );
@@ -1010,60 +1020,55 @@ class Media implements Setup {
 	 */
 	public function down_sync_asset() {
 		$nonce = filter_input( INPUT_POST, 'nonce', FILTER_SANITIZE_STRING );
-		if ( wp_verify_nonce( $nonce, 'wp_rest' ) ) {
 
-			$args  = array(
-				'asset' => array(
-					'flags' => FILTER_REQUIRE_ARRAY,
-				),
-			);
-			$data  = filter_input_array( INPUT_POST, $args );
-			$asset = $data['asset'];
-
-			$public_id = filter_var( $asset['public_id'], FILTER_SANITIZE_STRING );
-			$format    = filter_var( $asset['format'], FILTER_SANITIZE_STRING );
-			$sync_key  = $public_id;
-
-			$src = filter_var( $asset['secure_url'], FILTER_SANITIZE_URL );
-			$url = $src;
-			if ( ! empty( $asset['derived'] ) ) {
-				$url = $asset['derived'][0]['secure_url'];
-			}
-			$transformations = $this->get_transformations_from_string( $url );
-			if ( ! empty( $transformations ) ) {
-				$sync_key                .= wp_json_encode( $transformations );
-				$asset['transformations'] = $transformations;
-			}
-			// Check Format and url extension.
-			$file_info = pathinfo( $url );
-			if ( $format !== $file_info['extension'] ) {
-				// Format transformation.
-				$this->set_transformation( $transformations, 'fetch_format', $file_info['extension'] );
-				$url = $file_info['dirname'] . '/' . $file_info['filename'] . '.' . $file_info['extension'];
-			}
-			// Try to find the Attachment ID in context meta data.
-			$attachment_id = $this->get_id_from_sync_key( $sync_key );
-
-			if ( empty( $attachment_id ) ) {
-				$attachment_id = $this->create_attachment( $asset, $public_id );
-				$return        = array(
-					'fetch'         => rest_url( REST_API::BASE . '/asset' ),
-					'uploading'     => true,
-					'src'           => $src,
-					'url'           => $url,
-					'filename'      => basename( $src ),
-					'attachment_id' => $attachment_id,
-				);
-			} else {
-				$return              = wp_prepare_attachment_for_js( $attachment_id );
-				$return['public_id'] = $public_id;
-			}
-			$return['transformations'] = $transformations;
-
-			wp_send_json_success( $return );
+		if ( ! wp_verify_nonce( $nonce, 'wp_rest' ) ) {
+			return wp_send_json_error();
 		}
 
-		return wp_send_json_error();
+		$args  = array(
+			'asset' => array(
+				'flags' => FILTER_REQUIRE_ARRAY,
+			),
+		);
+
+		$data  = filter_input_array( INPUT_POST, $args );
+		$asset = $data['asset'];
+
+		$public_id = filter_var( $asset['public_id'], FILTER_SANITIZE_STRING );
+		$format    = filter_var( $asset['format'], FILTER_SANITIZE_STRING );
+		$sync_key  = $public_id;
+
+		$src = filter_var( $asset['secure_url'], FILTER_SANITIZE_URL );
+		$url = ! empty( $asset['derived'] ) ? $asset['derived'][0]['secure_url'] : $src;
+
+		$transformations = $this->get_transformations_from_string( $url );
+
+		if ( ! empty( $transformations ) ) {
+			$sync_key                .= wp_json_encode( $transformations );
+			$asset['transformations'] = $transformations;
+		}
+		
+		// Check Format and url extension.
+		$file_info = pathinfo( $url );
+		if ( $format !== $file_info['extension'] ) {
+			// Format transformation.
+			$this->set_transformation( $transformations, 'fetch_format', $file_info['extension'] );
+			$url = $file_info['dirname'] . '/' . $file_info['filename'] . '.' . $file_info['extension'];
+		}
+
+		$attachment_id = $this->get_id_from_sync_key( $sync_key );
+		$attachment_id = $this->create_or_update_attachment( $asset, $public_id, $url, $attachment_id );
+
+		wp_send_json_success( array(
+			'fetch'           => rest_url( REST_API::BASE . '/asset' ),
+			'uploading'       => true,
+			'src'             => $src,
+			'url'             => $url,
+			'filename'        => basename( $src ),
+			'attachment_id'   => $attachment_id,
+			'transformations' => $transformations,
+			'public_id'       => $public_id,
+		) );
 	}
 
 	/**
