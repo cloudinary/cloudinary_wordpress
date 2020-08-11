@@ -1,11 +1,11 @@
 <?php
 
-function myguten_register_meta() {
+function overwrite_transformations_featured_image() {
     register_meta( 'post', 'overwrite_transformations_featured_image', array(
         'show_in_rest' => true,
-        'single' => true,
-        'type' => 'boolean',
+        'single'       => true,
+        'type'         => 'boolean',
     ) );
 }
 
-add_action( 'init', 'myguten_register_meta' );
+add_action( 'init', 'overwrite_transformations_featured_image' );
