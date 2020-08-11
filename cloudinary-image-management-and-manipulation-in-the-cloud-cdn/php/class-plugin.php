@@ -12,6 +12,8 @@ use Cloudinary\Component\Config;
 use Cloudinary\Component\Notice;
 use Cloudinary\Component\Setup;
 
+require __DIR__ . '/functions.php';
+
 /**
  * Main plugin bootstrap file.
  */
