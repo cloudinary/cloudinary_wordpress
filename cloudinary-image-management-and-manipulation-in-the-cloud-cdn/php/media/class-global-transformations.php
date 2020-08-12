@@ -457,6 +457,53 @@ class Global_Transformations {
 	}
 
 	/**
+	 * Register meta for featured image transformations overwriting.
+	 */
+	public function overwrite_transformations_featured_image() {
+		register_meta( 'post', 'overwrite_transformations_featured_image', array(
+			'show_in_rest' => true,
+			'single'       => true,
+			'default'	   => false,
+			'type'         => 'boolean',
+			'description'  => 'Flag on whether transformation should be overwriten for a featured image.',
+		) );
+	}
+
+	/**
+	 * Add checkbox to override transformations for featured image.
+	 *
+	 * @param strinng $content
+	 * @param int     $post_id
+	 * 
+	 * @return string
+	 */
+	public function classic_overwrite_transformations_featured_image( $content, $post_id ) {
+		$field_id    = 'overwrite_transformations_featured_image';
+		$field_value = esc_attr( get_post_meta( $post_id, $field_id, true ) );
+		$field_text  = esc_html__( 'Overwrite Transformations', 'cloudinary' );
+		$field_state = checked( $field_value, 1, false);
+	
+		$field_label = sprintf(
+			'<p><label for="%1$s"><input type="checkbox" name="%1$s" id="%1$s" value="%2$s" %3$s> %4$s</label></p>',
+			$field_id, $field_value, $field_state, $field_text
+		);
+	
+		return $content .= $field_label;
+	}
+
+	/**
+	 * Updates appropriate meta for overwriting transformations of a featured image.
+	 *
+	 * @param int $post_id
+	 */
+	public function save_overwrite_transformations_featured_image( $post_id ) {
+		$field_id    = 'overwrite_transformations_featured_image';
+		$field_value = filter_input_array( INPUT_POST, array( $field_id => FILTER_SANITIZE_NUMBER_INT ) );
+
+		update_post_meta( $post_id, $field_id, (int) $field_value[ $field_id ] );
+	}
+
+	/**
 	 * Setup hooks for the filters.
 	 */
 	public function setup_hooks() {
@@ -475,5 +522,10 @@ class Global_Transformations {
 		// Add ordering metaboxes.
 		add_action( 'add_meta_boxes', array( $this, 'taxonomy_ordering' ), 10, 2 );
 		add_action( 'save_post', array( $this, 'save_taxonomy_ordering' ), 10, 1 );
+
+		// Add featured image overwrite transformations
+		add_action( 'init', array( $this, 'overwrite_transformations_featured_image' ) );
+		add_action( 'save_post', array( $this, 'save_overwrite_transformations_featured_image' ), 10, 3 );
+		add_filter( 'admin_post_thumbnail_html', array( $this, 'classic_overwrite_transformations_featured_image' ), 10, 2 );
 	}
 }

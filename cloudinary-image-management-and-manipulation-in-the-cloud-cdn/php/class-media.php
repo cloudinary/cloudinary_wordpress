@@ -1313,40 +1313,6 @@ class Media implements Setup {
 	}
 
 	/**
-	 * Add checkbox to override transformations for featured image.
-	 *
-	 * @param strinng $content
-	 * @param int     $post_id
-	 * 
-	 * @return string
-	 */
-	public function overwrite_transformations_featured_image( $content, $post_id ) {
-		$field_id    = 'overwrite_transformations_featured_image';
-		$field_value = esc_attr( get_post_meta( $post_id, $field_id, true ) );
-		$field_text  = esc_html__( 'Overwrite Transformations', 'cloudinary' );
-		$field_state = checked( $field_value, 1, false);
-	
-		$field_label = sprintf(
-			'<p><label for="%1$s"><input type="checkbox" name="%1$s" id="%1$s" value="%2$s" %3$s> %4$s</label></p>',
-			$field_id, $field_value, $field_state, $field_text
-		);
-	
-		return $content .= $field_label;
-	}
-
-	/**
-	 * Updates appropriate meta for overwriting transformations of a featured image.
-	 *
-	 * @param int $post_id
-	 */
-	public function save_overwrite_transformations_featured_image( $post_id ) {
-		$field_id    = 'overwrite_transformations_featured_image';
-		$field_value = filter_input_array( INPUT_POST, array( $field_id => FILTER_SANITIZE_NUMBER_INT ) );
-
-		update_post_meta( $post_id, $field_id, (int) $field_value[ $field_id ] );
-	}
-
-	/**
 	 * Setup the hooks and base_url if configured.
 	 */
 	public function setup() {
@@ -1381,10 +1347,6 @@ class Media implements Setup {
 			// Filter and action the custom column.
 			add_filter( 'manage_media_columns', array( $this, 'media_column' ) );
 			add_action( 'manage_media_custom_column', array( $this, 'media_column_value' ), 10, 2 );
-
-			// Featured image (classic editor) override transformations toggle
-			add_filter( 'admin_post_thumbnail_html', array( $this, 'overwrite_transformations_featured_image' ), 10, 2 );
-			add_action( 'save_post', array( $this, 'save_overwrite_transformations_featured_image' ), 10, 3 );
 		}
 	}
 }
