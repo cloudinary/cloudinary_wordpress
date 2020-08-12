@@ -52,6 +52,11 @@ class Global_Transformations {
 	const META_APPLY_KEY = 'cloudinary_apply_type';
 
 	/**
+	 * Holds the overwrite transformations for featured images meta key.
+	 */
+	const META_FEATURED_IMAGE_TRANSFORMATIONS_KEY = 'overwrite_transformations_featured_image';
+
+	/**
 	 * Global Transformations constructor.
 	 *
 	 * @param \Cloudinary\Media $media The plugin.
@@ -460,7 +465,7 @@ class Global_Transformations {
 	 * Register meta for featured image transformations overwriting.
 	 */
 	public function overwrite_transformations_featured_image() {
-		register_meta( 'post', 'overwrite_transformations_featured_image', array(
+		register_meta( 'post', self::META_FEATURED_IMAGE_TRANSFORMATIONS_KEY, array(
 			'show_in_rest' => true,
 			'single'       => true,
 			'default'	   => false,
@@ -478,14 +483,14 @@ class Global_Transformations {
 	 * @return string
 	 */
 	public function classic_overwrite_transformations_featured_image( $content, $post_id ) {
-		$field_id    = 'overwrite_transformations_featured_image';
-		$field_value = esc_attr( get_post_meta( $post_id, $field_id, true ) );
+		$field_value = esc_attr( get_post_meta( $post_id, self::META_FEATURED_IMAGE_TRANSFORMATIONS_KEY, true ) );
 		$field_text  = esc_html__( 'Overwrite Transformations', 'cloudinary' );
 		$field_state = checked( $field_value, 1, false);
 	
 		$field_label = sprintf(
-			'<p><label for="%1$s"><input type="checkbox" name="%1$s" id="%1$s" value="%2$s" %3$s> %4$s</label></p>',
-			$field_id, $field_value, $field_state, $field_text
+			'<input type="hidden" name="%1$s" id="%1$s" />' . 
+			'<p><label for="%1$s"><input type="checkbox" name="%1$s" id="%1$s" value="1" %3$s /> %4$s</label></p>',
+			self::META_FEATURED_IMAGE_TRANSFORMATIONS_KEY, $field_value, $field_state, $field_text
 		);
 	
 		return $content .= $field_label;
@@ -497,10 +502,19 @@ class Global_Transformations {
 	 * @param int $post_id
 	 */
 	public function save_overwrite_transformations_featured_image( $post_id ) {
-		$field_id    = 'overwrite_transformations_featured_image';
-		$field_value = filter_input_array( INPUT_POST, array( $field_id => FILTER_SANITIZE_NUMBER_INT ) );
+		$field_value = filter_input_array( INPUT_POST, array( 
+			self::META_FEATURED_IMAGE_TRANSFORMATIONS_KEY => FILTER_SANITIZE_NUMBER_INT 
+		) );
 
-		update_post_meta( $post_id, $field_id, (int) $field_value[ $field_id ] );
+		if ( ! $field_value || ! $field_value[ self::META_FEATURED_IMAGE_TRANSFORMATIONS_KEY ]  ) {
+			return;
+		}
+
+		update_post_meta( 
+			$post_id, 
+			self::META_FEATURED_IMAGE_TRANSFORMATIONS_KEY, 
+			(int) $field_value[ self::META_FEATURED_IMAGE_TRANSFORMATIONS_KEY ] 
+		);
 	}
 
 	/**
@@ -524,7 +538,7 @@ class Global_Transformations {
 		add_action( 'save_post', array( $this, 'save_taxonomy_ordering' ), 10, 1 );
 
 		// Add featured image overwrite transformations
-		add_action( 'init', array( $this, 'overwrite_transformations_featured_image' ) );
+		add_action( 'wp_loaded', array( $this, 'overwrite_transformations_featured_image' ) );
 		add_action( 'save_post', array( $this, 'save_overwrite_transformations_featured_image' ), 10, 3 );
 		add_filter( 'admin_post_thumbnail_html', array( $this, 'classic_overwrite_transformations_featured_image' ), 10, 2 );
 	}

@@ -1,47 +1,53 @@
-const withState = wp.compose.withState;	
-const withSelect = wp.data.withSelect;	
-const withDispatch = wp.data.withDispatch;
-const { ToggleControl } = wp.components;
+(() => {
+  if ( ! wp.compose ) return;
 
-const StatefulToggle = ( { meta, updateOverrideFeaturedImage } ) => (
-  <ToggleControl 
-    label="Overwrite Transformations" 
-    checked={ meta.overwrite_transformations_featured_image } 
-    onChange={ ( enabled ) =>  updateOverrideFeaturedImage( enabled, meta ) } 
-  />
-);
+  const withState = wp.compose.withState;	
+  const withSelect = wp.data.withSelect;	
+  const withDispatch = wp.data.withDispatch;
+  const { ToggleControl } = wp.components;
 
-const ComposedToggle = wp.compose.compose( [
-  withState( ( value ) => { isChecked: value } ),
+  const StatefulToggle = ( { meta, updateOverrideFeaturedImage } ) => {
+    return (
+      <ToggleControl 
+        label="Overwrite Transformations" 
+        checked={ meta.overwrite_transformations_featured_image } 
+        onChange={ ( enabled ) =>  updateOverrideFeaturedImage( enabled, meta ) } 
+      />
+    );
+  };
 
-  withSelect( ( select ) => {
-      const currentMeta = select( 'core/editor' ).getCurrentPostAttribute( 'meta' );
-      const editedMeta = select( 'core/editor' ).getEditedPostAttribute( 'meta' );
+  const ComposedToggle = wp.compose.compose( [
+    withState( ( value ) => ({ isChecked: value }) ),
 
-      return { meta: { ...currentMeta, ...editedMeta } };
-  } ),
+    withSelect( ( select ) => {
+        const currentMeta = select( 'core/editor' ).getCurrentPostAttribute( 'meta' );
+        const editedMeta = select( 'core/editor' ).getEditedPostAttribute( 'meta' );
 
-  withDispatch( ( dispatch ) => ( {
-      updateOverrideFeaturedImage( value, meta ) {
-          meta = {
-              ...meta,
-              overwrite_transformations_featured_image: value,
-          };
+        return { meta: { ...currentMeta, ...editedMeta } };
+    } ),
 
-          dispatch( 'core/editor' ).editPost( { meta } );
-      },
-  } ) ),
-] )( StatefulToggle );
+    withDispatch( ( dispatch ) => ( {
+        updateOverrideFeaturedImage( value, meta ) {
+            meta = {
+                ...meta,
+                overwrite_transformations_featured_image: value,
+            };
 
-const wrapPostFeaturedImage = ( OriginalComponent ) => ( props ) => (
-  <div>
-    <ComposedToggle />
-    <OriginalComponent {...props} />
-  </div>
-);
+            dispatch( 'core/editor' ).editPost( { meta } );
+        },
+    } ) ),
+  ] )( StatefulToggle );
 
-wp.hooks.addFilter( 
-  'editor.PostFeaturedImage', 
-  'cloudinary/overwrite-transformations-featured-image', 
-  wrapPostFeaturedImage
-);
+  const wrapPostFeaturedImage = ( OriginalComponent ) => ( props ) => (
+    <>
+      <ComposedToggle />
+      <OriginalComponent {...props} />
+    </>
+  );
+
+  wp.hooks.addFilter( 
+    'editor.PostFeaturedImage', 
+    'cloudinary/overwrite-transformations-featured-image', 
+    wrapPostFeaturedImage
+  );
+})()

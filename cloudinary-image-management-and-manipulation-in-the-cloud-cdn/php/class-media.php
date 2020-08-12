@@ -522,8 +522,10 @@ class Media implements Setup {
 		// Clean out empty parts, and join into a sectioned string.
 		$new_transformations = array_filter( $new_transformations );
 		$new_transformations = implode( '/', $new_transformations );
+
 		// Take sectioned string, and create a transformation array set.
 		$transformations = $this->get_transformations_from_string( $new_transformations );
+
 		/**
 		 * Filter the default cloudinary transformations.
 		 *
@@ -556,14 +558,18 @@ class Media implements Setup {
 		if ( empty( $cloudinary_id ) ) {
 			$cloudinary_id = $this->cloudinary_id( $attachment_id );
 		}
+
 		if ( false === $cloudinary_id ) {
 			return false;
 		}
+
 		if ( empty( $transformations ) ) {
 			$transformations = $this->get_transformation_from_meta( $attachment_id );
 		}
+
 		// Get the attachment resource type.
 		$resource_type = wp_attachment_is( 'image', $attachment_id ) ? 'image' : 'video';
+
 		// Setup initial args for cloudinary_url.
 		$pre_args = array(
 			'secure'        => is_ssl(),
@@ -588,6 +594,7 @@ class Media implements Setup {
 		 * @return array
 		 */
 		$pre_args['transformation'] = apply_filters( 'cloudinary_transformations', $transformations, $attachment_id );
+
 		// Defaults are only to be added on front, main images ( not breakpoints, since these are adapted down), and videos.
 		if ( ( ! defined( 'REST_REQUEST' ) || false === REST_REQUEST ) && ! is_admin() && false === $overwrite_transformations ) {
 			$pre_args['transformation'] = $this->apply_default_transformations( $pre_args['transformation'], $resource_type );
@@ -734,7 +741,12 @@ class Media implements Setup {
 			if ( is_array( $intermediate ) ) {
 				// Found an intermediate size.
 				$image = array(
-					$this->convert_url( $intermediate['url'], $attachment_id, array(), false ),
+					$this->convert_url(
+						$intermediate['url'], 
+						$attachment_id, 
+						array(), 
+						$this->overwrite_transformations_for_featured_image( $attachment_id, false ) 
+					),
 					$intermediate['width'],
 					$intermediate['height'],
 					true,
@@ -761,6 +773,7 @@ class Media implements Setup {
 		if ( $this->is_cloudinary_url( $url ) ) {
 			return $url; // Already is a cloudinary URL, just return.
 		}
+
 		$size = $this->get_crop( $url, $attachment_id );
 
 		return $this->cloudinary_url( $attachment_id, $size, $transformations, null, $overwrite_transformations, true );
@@ -786,8 +799,13 @@ class Media implements Setup {
 		$transformations = $this->get_transformations_from_string( $image_src );
 		// Use Cloudinary breakpoints for same ratio.
 
-		if ( 'on' === $this->plugin->config['settings']['global_transformations']['enable_breakpoints'] && wp_image_matches_ratio( $image_meta['width'], $image_meta['height'], $size_array[0], $size_array[1] ) ) {
+		if ( 
+			'on' === $this->plugin->config['settings']['global_transformations']['enable_breakpoints'] && 
+			wp_image_matches_ratio( $image_meta['width'], $image_meta['height'], $size_array[0], $size_array[1] ) 
+		) {
 			$meta = $this->get_post_meta( $attachment_id, Sync::META_KEYS['breakpoints'], true );
+			$override_transformations = $this->overwrite_transformations_for_featured_image( $attachment_id, true );
+
 			if ( ! empty( $meta ) ) {
 				// Since srcset is primary and src is a fallback, we need to set the first srcset with the main image.
 				$sources = array(
@@ -815,7 +833,7 @@ class Media implements Setup {
 						'width' => $breakpoint['width'],
 					);
 					$sources[ $breakpoint['width'] ] = array(
-						'url'        => $this->cloudinary_url( $attachment_id, $size, $transformations, $cloudinary_id, true ),
+						'url'        => $this->cloudinary_url( $attachment_id, $size, $transformations, $cloudinary_id, $override_transformations ),
 						'descriptor' => 'w',
 						'value'      => $breakpoint['width'],
 					);
@@ -838,14 +856,40 @@ class Media implements Setup {
 				'value'      => $size,
 			);
 		}
+
 		// Use current sources, but convert the URLS.
 		foreach ( $sources as &$source ) {
 			if ( ! $this->is_cloudinary_url( $source['url'] ) ) {
-				$source['url'] = $this->convert_url( $source['url'], $attachment_id, $transformations, true ); // Overwrite transformations applied, since the $transformations includes globals from the primary URL.
+				$source['url'] = $this->convert_url( 
+					$source['url'], 
+					$attachment_id, 
+					$transformations, 
+					$override_transformations
+				); // Overwrite transformations applied, since the $transformations includes globals from the primary URL.
 			}
 		}
 
 		return $sources;
+	}
+
+	/**
+	 * Whether to overwrite transformations for featured image.
+	 *
+	 * @param int    $attachment_id
+	 * @param bool   $default
+	 * 
+	 * @return bool
+	 */
+	protected function overwrite_transformations_for_featured_image( $attachment_id, $default ) {
+		if ( get_post_thumbnail_id() === $attachment_id ) {
+			return (bool) get_post_meta( 
+				get_post()->ID, 
+				Global_Transformations::META_FEATURED_IMAGE_TRANSFORMATIONS_KEY, 
+				true 
+			);
+		}
+
+		return $default;
 	}
 
 	/**
