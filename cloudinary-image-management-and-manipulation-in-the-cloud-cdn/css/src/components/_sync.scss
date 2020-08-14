@@ -51,13 +51,17 @@
 		margin-top : 10px;
 	}
 
-	.button.stop-sync, .button.start-sync {
+	.button.stop-sync, .button.start-sync, .button.start-resync {
 		display : none;
 		padding : 0 16px;
 
 		.dashicons {
 			line-height : 2.2em;
 		}
+	}
+
+	.button.start-resync {
+		display: inline-block;
 	}
 
 	.progress-text {

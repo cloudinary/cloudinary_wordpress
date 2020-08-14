@@ -36,6 +36,9 @@ if ( ! $this->plugin->components['sync']->managers['queue']->is_running() ) {
 				<span class="dashicons dashicons-yes"></span> <?php esc_html_e( 'All assets are synced', 'cloudinary' ); ?>
 			</div>
 		</div>
+		<button type="submit" name="submit" id="resync" class="button button-hero start-resync">
+			<span class="dashicons dashicons-update-alt"></span> <?php esc_html_e( 'Re-Sync all media to Cloudinary', 'cloudinary' ); ?>
+		</button>
 	<?php else : ?>
 		<div id="setting-error-connection" class="settings-error render-trigger" data-event="sync.error">
 			<p>

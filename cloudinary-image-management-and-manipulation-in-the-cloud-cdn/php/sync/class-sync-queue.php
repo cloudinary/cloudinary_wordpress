@@ -81,10 +81,11 @@ class Sync_Queue {
 	 *
 	 * @return array|mixed
 	 */
-	public function get_queue() {
+	public function get_queue( $rebuild_queue = false ) {
 		wp_cache_delete( self::$queue_key, 'options' );
 		$queue = get_option( self::$queue_key, array() );
-		if ( empty( $queue ) ) {
+
+		if ( empty( $queue ) || $rebuild_queue ) {
 			$queue = $this->build_queue();
 		}
 
@@ -189,8 +190,8 @@ class Sync_Queue {
 	 *
 	 * @return array
 	 */
-	public function get_queue_status() {
-		$queue   = $this->get_queue();
+	public function get_queue_status( $rebuild_queue = false ) {
+		$queue   = $this->get_queue( $rebuild_queue );
 		$pending = 0;
 		foreach ( $this->threads as $thread ) {
 			$pending += count( $queue[ $thread ] );
@@ -243,20 +244,21 @@ class Sync_Queue {
 			'post_status'         => 'inherit',
 			'posts_per_page'      => 1000, // phpcs:ignore
 			'fields'              => 'ids',
-			'meta_query'          => array( // phpcs:ignore
-				'relation' => 'AND',
-				array(
-					'key'     => Sync::META_KEYS['sync_error'],
-					'compare' => 'NOT EXISTS',
-				),
-				array(
-					'key'     => Sync::META_KEYS['public_id'],
-					'compare' => 'NOT EXISTS',
-				),
-			),
 			'ignore_sticky_posts' => false,
 			'no_found_rows'       => true,
 		);
+
+		$args['meta_query'] = apply_filters( 'cloudinary_queue_assets_query', array( // phpcs:ignore
+			'relation' => 'AND',
+			array(
+				'key'     => Sync::META_KEYS['sync_error'],
+				'compare' => 'NOT EXISTS',
+			),
+			array(
+				'key'     => Sync::META_KEYS['public_id'],
+				'compare' => 'NOT EXISTS',
+			),
+		) );
 
 		$attachments = new \WP_Query( $args );
 		$ids         = $attachments->get_posts();

@@ -171,9 +171,20 @@ class Push_Sync {
 	 * @return \WP_REST_Response
 	 */
 	public function rest_start_sync( \WP_REST_Request $request ) {
-
 		$stop   = $request->get_param( 'stop' );
-		$status = $this->queue->get_queue_status();
+		$resync = (bool) $request->get_param( 'resync' );
+
+		if ( $resync ) {
+			add_filter( 'cloudinary_queue_assets_query', function () {
+				return array(
+					'key'     => Sync::META_KEYS['sync_error'],
+					'compare' => 'NOT EXISTS',
+				);
+			} );
+		}
+
+		$status = $this->queue->get_queue_status( $resync );
+
 		if ( empty( $status['pending'] ) || ! empty( $stop ) ) {
 			$this->queue->stop_queue();
 
@@ -193,7 +204,6 @@ class Push_Sync {
 	 * @return array
 	 */
 	public function process_assets( $attachments = array() ) {
-
 		$stat = array();
 		// If a single specified ID, push and return response.
 		$ids = array_map( 'intval', (array) $attachments );
@@ -225,7 +235,7 @@ class Push_Sync {
 	}
 
 	/**
-	 * Process assets to sync vai WP REST API.
+	 * Process assets to sync via WP REST API.
 	 *
 	 * @param \WP_REST_Request $request The request.
 	 *

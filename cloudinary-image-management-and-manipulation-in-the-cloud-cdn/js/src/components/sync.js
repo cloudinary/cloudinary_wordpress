@@ -3,6 +3,7 @@
 const Sync = {
 	progress: document.getElementById( 'progress-wrapper' ),
 	submitButton: document.getElementById( 'submit' ),
+	resyncButton: document.getElementById( 'resync' ),
 	stopButton: document.getElementById( 'stop-sync' ),
 	completed: document.getElementById( 'completed-notice' ),
 	show: 'inline-block',
@@ -46,9 +47,9 @@ const Sync = {
 			Sync._updateUI( data );
 		} );
 	},
-	pushAttachments: function pushAttachments() {
-		var self = this,
-			url = cloudinaryApi.restUrl + 'cloudinary/v1/sync';
+	pushAttachments: function pushAttachments( e ) {
+		var isResync = e.currentTarget.id === 'resync';
+		var url = cloudinaryApi.restUrl + 'cloudinary/v1/sync' + ( isResync ? '?resync=1' : '' );
 
 		Sync.isRunning = true;
 		Sync.progress.style.display = Sync.show;
@@ -97,7 +98,7 @@ const Sync = {
 		e.preventDefault();
 		Sync.stopButton.style.display = Sync.show;
 		Sync.submitButton.style.display = Sync.hide;
-		Sync.pushAttachments();
+		Sync.pushAttachments( e );
 	},
 	_reset: function _reset( e ) {
 		Sync.submitButton.style.display = Sync.hide;
@@ -122,5 +123,6 @@ export default Sync;
 Sync._init( function() {
 	Sync._reset();
 	Sync.submitButton.addEventListener( 'click', Sync._start );
+	Sync.resyncButton.addEventListener( 'click', Sync._start );
 	Sync.stopButton.addEventListener( 'click', Sync.stopSync );
 } );
