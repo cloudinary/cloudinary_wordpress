@@ -506,9 +506,18 @@ class Global_Transformations {
 	 * @param int $post_id
 	 */
 	public function save_overwrite_transformations_featured_image( $post_id ) {
-		$field_value = filter_input_array( INPUT_POST, array( 
-			self::META_FEATURED_IMAGE_TRANSFORMATIONS_KEY => FILTER_SANITIZE_NUMBER_INT 
-		) );
+		$field_value = filter_input_array(
+			INPUT_POST,
+			array(
+				self::META_FEATURED_IMAGE_KEY => FILTER_SANITIZE_NUMBER_INT
+			)
+		);
+
+		if ( ! $field_value || ! $field_value[ self::META_FEATURED_IMAGE_KEY ] ) {
+			delete_post_meta(
+				$post_id,
+				self::META_FEATURED_IMAGE_KEY
+			);
 
 			return;
 		}
