@@ -31,7 +31,7 @@
         updateOverrideFeaturedImage( value, meta ) {
             meta = {
                 ...meta,
-                overwrite_transformations_featured_image: value,
+                cloudinary_ignore_transformations_featured: value,
             };
 
             dispatch( 'core/editor' ).editPost( { meta } );
