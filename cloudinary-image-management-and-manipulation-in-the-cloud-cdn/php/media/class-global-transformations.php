@@ -463,34 +463,38 @@ class Global_Transformations {
 
 	/**
 	 * Register meta for featured image transformations overwriting.
+	 *
+	 * @return void
 	 */
 	public function overwrite_transformations_featured_image() {
-		register_meta( 'post', self::META_FEATURED_IMAGE_TRANSFORMATIONS_KEY, array(
-			'show_in_rest' => true,
-			'single'       => true,
-			'default'	   => false,
-			'type'         => 'boolean',
-			'description'  => 'Flag on whether transformation should be overwriten for a featured image.',
-		) );
+		register_meta(
+			'post',
+			self::META_FEATURED_IMAGE_KEY,
+			array(
+				'show_in_rest' => true,
+				'single'       => true,
+				'default'      => false,
+				'type'         => 'boolean',
+				'description'  => esc_html__( 'Flag on whether transformation should be overwritten for a featured image.', 'cloudinary' ),
+			)
+		);
 	}
 
 	/**
 	 * Add checkbox to override transformations for featured image.
 	 *
-	 * @param strinng $content
-	 * @param int     $post_id
+	 * @param string $content
+	 * @param int    $post_id
 	 * 
 	 * @return string
 	 */
 	public function classic_overwrite_transformations_featured_image( $content, $post_id ) {
-		$field_value = esc_attr( get_post_meta( $post_id, self::META_FEATURED_IMAGE_TRANSFORMATIONS_KEY, true ) );
-		$field_text  = esc_html__( 'Overwrite Transformations', 'cloudinary' );
-		$field_state = checked( $field_value, 1, false);
-	
+		$field_value = get_post_meta( $post_id, self::META_FEATURED_IMAGE_KEY, true );
 		$field_label = sprintf(
-			'<input type="hidden" name="%1$s" id="%1$s" />' . 
-			'<p><label for="%1$s"><input type="checkbox" name="%1$s" id="%1$s" value="1" %3$s /> %4$s</label></p>',
-			self::META_FEATURED_IMAGE_TRANSFORMATIONS_KEY, $field_value, $field_state, $field_text
+			'<p><label for="%1$s"><input type="checkbox" name="%1$s" id="%1$s" value="1" %2$s /> %3$s</label></p>',
+			esc_attr( self::META_FEATURED_IMAGE_KEY ),
+			checked( $field_value, 1, false ),
+			esc_html__( 'Overwrite Transformations', 'cloudinary' )
 		);
 	
 		return $content .= $field_label;
@@ -506,14 +510,13 @@ class Global_Transformations {
 			self::META_FEATURED_IMAGE_TRANSFORMATIONS_KEY => FILTER_SANITIZE_NUMBER_INT 
 		) );
 
-		if ( ! $field_value || ! $field_value[ self::META_FEATURED_IMAGE_TRANSFORMATIONS_KEY ]  ) {
 			return;
 		}
 
 		update_post_meta( 
 			$post_id, 
-			self::META_FEATURED_IMAGE_TRANSFORMATIONS_KEY, 
-			(int) $field_value[ self::META_FEATURED_IMAGE_TRANSFORMATIONS_KEY ] 
+			self::META_FEATURED_IMAGE_KEY,
+			(int) $field_value[ self::META_FEATURED_IMAGE_KEY ]
 		);
 	}
 
