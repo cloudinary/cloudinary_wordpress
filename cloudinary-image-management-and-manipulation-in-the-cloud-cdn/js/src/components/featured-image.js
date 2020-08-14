@@ -1,16 +1,17 @@
 (() => {
   if ( ! wp.compose ) return;
 
-  const withState = wp.compose.withState;	
-  const withSelect = wp.data.withSelect;	
+  const withState = wp.compose.withState;
+  const withSelect = wp.data.withSelect;
   const withDispatch = wp.data.withDispatch;
   const { ToggleControl } = wp.components;
+  const { __ } = wp.i18n;
 
   const StatefulToggle = ( { meta, updateOverrideFeaturedImage } ) => {
     return (
       <ToggleControl 
-        label="Overwrite Transformations" 
-        checked={ meta.overwrite_transformations_featured_image } 
+        label={ __( 'Overwrite Transformations', 'cloudinary' ) }
+        checked={ meta.cloudinary_ignore_transformations_featured }
         onChange={ ( enabled ) =>  updateOverrideFeaturedImage( enabled, meta ) } 
       />
     );
