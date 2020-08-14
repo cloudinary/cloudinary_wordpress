@@ -745,7 +745,7 @@ class Media implements Setup {
 						$intermediate['url'], 
 						$attachment_id, 
 						array(), 
-						$this->overwrite_transformations_for_featured_image( $attachment_id, false ) 
+						false
 					),
 					$intermediate['width'],
 					$intermediate['height'],
@@ -804,7 +804,6 @@ class Media implements Setup {
 			wp_image_matches_ratio( $image_meta['width'], $image_meta['height'], $size_array[0], $size_array[1] ) 
 		) {
 			$meta = $this->get_post_meta( $attachment_id, Sync::META_KEYS['breakpoints'], true );
-			$override_transformations = $this->overwrite_transformations_for_featured_image( $attachment_id, true );
 
 			if ( ! empty( $meta ) ) {
 				// Since srcset is primary and src is a fallback, we need to set the first srcset with the main image.
@@ -833,7 +832,7 @@ class Media implements Setup {
 						'width' => $breakpoint['width'],
 					);
 					$sources[ $breakpoint['width'] ] = array(
-						'url'        => $this->cloudinary_url( $attachment_id, $size, $transformations, $cloudinary_id, $override_transformations ),
+						'url'        => $this->cloudinary_url( $attachment_id, $size, $transformations, $cloudinary_id, true ),
 						'descriptor' => 'w',
 						'value'      => $breakpoint['width'],
 					);
@@ -864,32 +863,12 @@ class Media implements Setup {
 					$source['url'], 
 					$attachment_id, 
 					$transformations, 
-					$override_transformations
+					true
 				); // Overwrite transformations applied, since the $transformations includes globals from the primary URL.
 			}
 		}
 
 		return $sources;
-	}
-
-	/**
-	 * Whether to overwrite transformations for featured image.
-	 *
-	 * @param int    $attachment_id
-	 * @param bool   $default
-	 * 
-	 * @return bool
-	 */
-	protected function overwrite_transformations_for_featured_image( $attachment_id, $default ) {
-		if ( get_post_thumbnail_id() === $attachment_id ) {
-			return (bool) get_post_meta( 
-				get_post()->ID, 
-				Global_Transformations::META_FEATURED_IMAGE_TRANSFORMATIONS_KEY, 
-				true 
-			);
-		}
-
-		return $default;
 	}
 
 	/**
@@ -1168,6 +1147,31 @@ class Media implements Setup {
 	}
 
 	/**
+	 * Maybe bypass applying transformation to featured images.
+	 *
+	 * @param array $transformations The global transformations.
+	 * @param int   $attachment_id   The attachment ID.
+	 *
+	 * @return array
+	 */
+	public function maybe_skip_transformations_feature_image( $transformations, $attachment_id ) {
+		if ( get_post_thumbnail_id() === $attachment_id ) {
+			$override_transformations = (bool) get_post_meta(
+				get_post()->ID,
+				Global_Transformations::META_FEATURED_IMAGE_KEY,
+				true
+			);
+
+			if ( $override_transformations ) {
+				return array();
+			}
+
+		}
+
+		return $transformations;
+	}
+
+	/**
 	 * Sanitize the Cloudinary Folder, and if empty, return the sanitized default.
 	 *
 	 * @param string $value The value to sanitize.
@@ -1388,9 +1392,13 @@ class Media implements Setup {
 			add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
 			add_filter( 'image_downsize', array( $this, 'filter_downsize' ), 10, 3 );
 
+			// Filter feature image
+			add_filter( 'cloudinary_transformations', array( $this, 'maybe_skip_transformations_feature_image' ), 10, 2 );
+
 			// Filter and action the custom column.
 			add_filter( 'manage_media_columns', array( $this, 'media_column' ) );
 			add_action( 'manage_media_custom_column', array( $this, 'media_column_value' ), 10, 2 );
+
 		}
 	}
 }
