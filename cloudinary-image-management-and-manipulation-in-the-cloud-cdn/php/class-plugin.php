@@ -22,7 +22,7 @@ class Plugin {
 	 *
 	 * @since   0.1
 	 *
-	 * @var     array
+	 * @var     Media[]|Sync[]|Settings_Page[]|REST_API[]|Connect[]
 	 */
 	public $components;
 	/**

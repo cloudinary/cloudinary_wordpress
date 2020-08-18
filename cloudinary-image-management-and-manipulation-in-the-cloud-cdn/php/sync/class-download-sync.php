@@ -26,6 +26,20 @@ class Download_Sync {
 	private $plugin;
 
 	/**
+	 * Holds the Media component.
+	 *
+	 * @var \Cloudinary\Media
+	 */
+	protected $media;
+
+	/**
+	 * Holds the Sync component.
+	 *
+	 * @var \Cloudinary\Sync
+	 */
+	protected $sync;
+
+	/**
 	 * Download_Sync constructor.
 	 *
 	 * @param \Cloudinary\Plugin $plugin The plugin.
@@ -80,8 +94,6 @@ class Download_Sync {
 	 *
 	 * @param int    $attachment_id The attachment ID.
 	 * @param string $error         The error text to return.
-	 *
-	 * @return \WP_Error
 	 */
 	public function handle_failed_download( $attachment_id, $error ) {
 		// @todo: Place a handler to catch the error for logging.
@@ -103,10 +115,9 @@ class Download_Sync {
 
 		$attachment_id   = $request->get_param( 'attachment_id' );
 		$file_path       = $request->get_param( 'src' );
-		$file_name       = $request->get_param( 'filename' );
 		$transformations = (array) $request->get_param( 'transformations' );
 
-		$response = $this->download_asset( $attachment_id, $file_path, $file_name, $transformations );
+		$response = $this->import_asset( $attachment_id, $file_path, $transformations );
 		if ( is_wp_error( $response ) ) {
 			$this->handle_failed_download( $attachment_id, $response->get_error_message() );
 		}
@@ -168,40 +179,34 @@ class Download_Sync {
 			}
 		}
 
-		return $this->download_asset( $attachment_id, $file, basename( $file ), $media->get_transformations_from_string( $file ) );
+		return $this->download_asset( $attachment_id, $file );
 	}
 
 	/**
 	 * Download an attachment source to the file system.
 	 *
-	 * @param int        $attachment_id The attachment ID.
-	 * @param string     $file_path     The path of the file.
-	 * @param string     $file_name     The filename.
-	 * @param array|null $transformations
+	 * @param int    $attachment_id The attachment ID.
+	 * @param string $source        The optional source to download.
 	 *
 	 * @return array|\WP_Error
 	 */
-	public function download_asset( $attachment_id, $file_path, $file_name, $transformations = null ) {
-
-		// Get the image and update the attachment.
-		require_once ABSPATH . WPINC . '/class-http.php';
-		require_once ABSPATH . 'wp-admin/includes/file.php';
+	public function download_asset( $attachment_id, $source = null ) {
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 		require_once ABSPATH . 'wp-admin/includes/media.php';
-
-		// Fetch the asset.
+		if ( empty( $source ) ) {
+			$cloudinary_id = $this->media->get_cloudinary_id( $attachment_id );
+			$source        = $this->media->cloudinary_url( $attachment_id, array(), array(), $cloudinary_id );
+		}
+		$file_name = basename( $source );
 		try {
 			// Prime a file to stream to.
 			$upload = wp_upload_bits( $file_name, null, 'temp' );
 			if ( ! empty( $upload['error'] ) ) {
 				return new \WP_Error( 'download_error', $upload['error'] );
 			}
-			// If the public_id of an asset includes a file extension, a derived item will have the extension duplicated, but not in the source URL.
-			// This creates a 404. So, instead, we get the actual file name, and use that over the file name that the source url has.
-			$source_path = dirname( $file_path );
 			// Stream file to primed file.
 			$response = wp_safe_remote_get(
-				$source_path . '/' . $file_name,
+				$source,
 				array(
 					'timeout'  => 300, // phpcs:ignore
 					'stream'   => true,
@@ -225,10 +230,58 @@ class Download_Sync {
 
 			// Prepare the asset.
 			update_attached_file( $attachment_id, $upload['file'] );
+			$old_meta = wp_get_attachment_metadata( $attachment_id );
 			ob_start(); // Catch possible errors in WordPress's ID3 module when setting meta for transformed videos.
 			$meta            = wp_generate_attachment_metadata( $attachment_id, $upload['file'] );
-			$captured_errors = ob_get_clean();
+			$captured_errors = ob_get_clean(); // Capture issues.
+			// Be sure to record v2 meta.
+			if ( ! empty( $old_meta[ Sync::META_KEYS['cloudinary'] ] ) ) {
+				$meta[ Sync::META_KEYS['cloudinary'] ] = $old_meta[ Sync::META_KEYS['cloudinary'] ];
+			}
 			wp_update_attachment_metadata( $attachment_id, $meta );
+			// Update the folder synced flag.
+			$public_id         = $this->media->get_public_id( $attachment_id );
+			$asset_folder      = strpos( $public_id, '/' ) ? dirname( $public_id ) : '/';
+			$cloudinary_folder = untrailingslashit( $this->media->get_cloudinary_folder() );
+			if ( $asset_folder === $cloudinary_folder ) {
+				$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['folder_sync'], true );
+			}
+			// Generate signatures.
+			$this->sync->set_signature_item( $attachment_id, 'options' );
+			$this->sync->set_signature_item( $attachment_id, 'cloud_name' );
+			$this->sync->set_signature_item( $attachment_id, 'suffix' );
+			$this->sync->set_signature_item( $attachment_id, 'download' );
+			$this->sync->set_signature_item( $attachment_id, 'file' );
+			$this->sync->set_signature_item( $attachment_id, 'folder' );
+
+		} catch ( \Exception $e ) {
+			return new \WP_Error( 'download_error', $e->getMessage() );
+		}
+
+		return $upload;
+	}
+
+	/**
+	 * Download an attachment source to the file system.
+	 *
+	 * @param int        $attachment_id The attachment ID.
+	 * @param string     $file_path     The path of the file.
+	 * @param array|null $transformations
+	 *
+	 * @return array|\WP_Error
+	 */
+	public function import_asset( $attachment_id, $file_path, $transformations = null ) {
+
+		// Get the image and update the attachment.
+		require_once ABSPATH . WPINC . '/class-http.php';
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+
+		// Fetch the asset.
+		try {
+			// Prime a file to stream to.
+			$upload = $this->download_asset( $attachment_id, $file_path );
 
 		} catch ( \Exception $e ) {
 			return new \WP_Error( 'download_error', $e->getMessage() );
@@ -236,10 +289,6 @@ class Download_Sync {
 
 		$attachment = wp_prepare_attachment_for_js( $attachment_id );
 
-		// Log errors if captured.
-		if ( ! empty( $captured_errors ) ) {
-			$attachment['_captured_errors'] = $captured_errors;
-		}
 		// Do transformations.
 		if ( 'image' === $attachment['type'] ) {
 			// Get the cloudinary_id from public_id not Media::cloudinary_id().
@@ -256,5 +305,14 @@ class Download_Sync {
 		);
 
 		return $response;
+	}
+
+	/**
+	 * Setup this component.
+	 */
+	public function setup() {
+		// Setup components.
+		$this->media = $this->plugin->components['media'];
+		$this->sync  = $this->plugin->components['sync'];
 	}
 }

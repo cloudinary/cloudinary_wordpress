@@ -257,6 +257,15 @@ class Connect implements Config, Setup, Notice {
 	}
 
 	/**
+	 * Get the cloud name if set.
+	 *
+	 * @return string|null
+	 */
+	public function get_cloud_name() {
+		return $this->credentials['cloud_name'] ? $this->credentials['cloud_name'] : null;
+	}
+
+	/**
 	 * Set the config credentials from an array.
 	 *
 	 * @param array $data The config array data.
@@ -364,7 +373,7 @@ class Connect implements Config, Setup, Notice {
 					$value = $this->usage[ $type ]['usage'];
 				} elseif ( 'used_percent' === $stat && isset( $this->usage[ $type ]['credits_usage'] ) ) {
 					// Calculate percentage based on credit limit and usage.
-					$value = round( $this->usage[ $type ]['credits_usage']/$this->usage['credits']['limit'] * 100, 2 );
+					$value = round( $this->usage[ $type ]['credits_usage'] / $this->usage['credits']['limit'] * 100, 2 );
 				}
 			}
 		}

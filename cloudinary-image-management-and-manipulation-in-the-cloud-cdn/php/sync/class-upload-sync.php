@@ -33,18 +33,32 @@ class Upload_Sync {
 	private $pusher;
 
 	/**
+	 * Holds the main Sync Class.
+	 *
+	 * @var \Cloudinary\Sync
+	 */
+	protected $sync;
+
+	/**
+	 * Holds the Connect Class.
+	 *
+	 * @var \Cloudinary\Connect
+	 */
+	protected $connect;
+
+	/**
+	 * Holds the Media Class.
+	 *
+	 * @var \Cloudinary\Media
+	 */
+	protected $media;
+
+	/**
 	 * This feature is enabled.
 	 *
 	 * @var bool
 	 */
 	private $enabled;
-
-	/**
-	 * Holds a list of unsynced images to push on end.
-	 *
-	 * @var array
-	 */
-	private $to_sync = array();
 
 	/**
 	 * Upload_Sync constructor.
@@ -63,14 +77,6 @@ class Upload_Sync {
 	 * Register any hooks that this component needs.
 	 */
 	private function register_hooks() {
-		// Add action to upload.
-		add_action( 'add_attachment', array( $this, 'push_on_upload' ), 10 );
-		// Action Cloudinary id for on-demand upload sync.
-		add_action( 'cloudinary_id', array( $this, 'prep_on_demand_upload' ), 9, 2 );
-		// Show sync status.
-		add_filter( 'cloudinary_media_status', array( $this, 'filter_status' ), 10, 2 );
-		// Hook for on demand upload push.
-		add_action( 'shutdown', array( $this, 'init_background_upload' ) );
 		// Hook into auto upload sync.
 		add_filter( 'cloudinary_on_demand_sync_enabled', array( $this, 'auto_sync_enabled' ), 10, 2 );
 		// Handle bulk and inline actions.
@@ -97,7 +103,7 @@ class Upload_Sync {
 	 * @return array
 	 */
 	function add_inline_action( $actions, $post ) {
-		if ( current_user_can( 'delete_post', $post->ID ) ) {
+		if ( $this->media->is_media( $post->ID ) && current_user_can( 'delete_post', $post->ID ) ) {
 			$action_url = add_query_arg(
 				array(
 					'action'   => 'cloudinary-push',
@@ -110,17 +116,15 @@ class Upload_Sync {
 				$actions['cloudinary-push'] = sprintf(
 					'<a href="%s" aria-label="%s">%s</a>',
 					$action_url,
-					/* translators: %s: Attachment title. */
-					esc_attr( sprintf( __( 'Push to Cloudinary &#8220;%s&#8221;' ), 'asd' ) ),
-					__( 'Push to Cloudinary', 'cloudinary' )
+					esc_attr__( 'Push to Cloudinary', 'cloudinary' ),
+					esc_html__( 'Push to Cloudinary', 'cloudinary' )
 				);
 			} else {
 				$actions['cloudinary-push'] = sprintf(
 					'<a href="%s" aria-label="%s">%s</a>',
 					$action_url,
-					/* translators: %s: Attachment title. */
-					esc_attr( sprintf( __( 'Push to Cloudinary &#8220;%s&#8221;' ), 'asd' ) ),
-					__( 'Re-sync to Cloudinary', 'cloudinary' )
+					esc_attr__( 'Re-sync to Cloudinary', 'cloudinary' ),
+					esc_html__( 'Re-sync to Cloudinary', 'cloudinary' )
 				);
 			}
 		}
@@ -142,14 +146,8 @@ class Upload_Sync {
 		switch ( $action ) {
 			case 'cloudinary-push' :
 				foreach ( $post_ids as $post_id ) {
-					delete_post_meta( $post_id, Sync::META_KEYS['sync_error'] );
-					delete_post_meta( $post_id, Sync::META_KEYS['public_id'] );
-					delete_post_meta( $post_id, Sync::META_KEYS['pending'] );
-					delete_post_meta( $post_id, Sync::META_KEYS['downloading'] );
-					delete_post_meta( $post_id, Sync::META_KEYS['syncing'] );
-					$file = get_attached_file( $post_id );
-					wp_generate_attachment_metadata( $post_id, $file );
-					$this->prep_upload( $post_id );
+					$this->sync->set_signature_item( $post_id, 'file', '' );
+					$this->sync->add_to_sync( $post_id );
 				}
 				break;
 		}
@@ -180,154 +178,156 @@ class Upload_Sync {
 	}
 
 	/**
-	 * Push new attachment to Cloudinary on upload.
-	 *
-	 * @param int $post_id The post.
-	 */
-	public function push_on_upload( $post_id ) {
-
-		// Only if this is a media file and feature is enabled.
-		if ( $this->plugin->components['media']->is_media( $post_id ) && apply_filters( 'cloudinary_upload_sync_enabled', $this->enabled ) ) {
-			// Lets do the background upload to keep the upload window as fast as possible.
-			update_post_meta( $post_id, '_cloudinary_pending', time() ); // Make sure it doesn't get resynced.
-			$params = array(
-				'attachment_ids' => array( $post_id ),
-			);
-			$this->plugin->components['api']->background_request( 'process', $params );
-		}
-	}
-
-	/**
 	 * Setup this component.
 	 */
 	public function setup() {
 		if ( empty( $this->pusher ) ) {
-			$this->pusher = $this->plugin->components['sync']->managers['push'];
+			$this->pusher  = $this->plugin->components['sync']->managers['push'];
+			$this->sync    = $this->plugin->components['sync'];
+			$this->connect = $this->plugin->components['connect'];
+			$this->media   = $this->plugin->components['media'];
 		}
 		$this->register_hooks();
 	}
 
 	/**
-	 * Prepare an attachment without a cloudinary id, for background, on-demand push.
+	 * Upload an asset to Cloudinary.
 	 *
-	 * @param string|bool $cloudinary_id The public ID for a cloudinary asset.
-	 * @param int         $attachment_id The local attachment ID.
+	 * @param int $attachment_id The attachment ID.
 	 *
-	 * @return string
+	 * @return array|\WP_Error
 	 */
-	public function prep_on_demand_upload( $cloudinary_id, $attachment_id ) {
-		$attachment_id = intval( $attachment_id );
-		if ( $attachment_id && false === $cloudinary_id ) {
-			// Check that this has not already been prepared for upload.
-			if ( ! $this->is_pending( $attachment_id ) && apply_filters( 'cloudinary_on_demand_sync_enabled', $this->enabled, $attachment_id ) ) {
-				$max_size = ( wp_attachment_is_image( $attachment_id ) ? 'max_image_size' : 'max_video_size' );
-				$file     = get_attached_file( $attachment_id );
-				// Get the file size to make sure it can exist in cloudinary.
-				if ( ! empty( $this->plugin->components['connect']->usage[ $max_size ] ) && file_exists( $file ) && filesize( $file ) < $this->plugin->components['connect']->usage[ $max_size ] ) {
-					$this->add_to_sync( $attachment_id );
-				} else {
-					// Check if the src is a url.
-					$file = get_post_meta( $attachment_id, '_wp_attached_file', true );
-					if ( $this->plugin->components['media']->is_cloudinary_url( $file ) ) {
-						// Download sync.
-						$this->add_to_sync( $attachment_id );
-					}
+	public function upload_asset( $attachment_id ) {
+
+		$type      = $this->sync->get_sync_type( $attachment_id );
+		$options   = $this->media->get_upload_options( $attachment_id );
+		$public_id = $options['public_id'];
+
+		// Add the suffix before uploading.
+		if ( $this->media->get_public_id( $attachment_id ) === $public_id ) {
+			// Only apply the saved suffix if the public_id is the same. This is to allow filtered ID's a change to have a suffix removed.
+			$options['public_id'] .= $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['suffix'], true );
+		} else {
+			// If the public_id has been changed, remove the saved suffix.
+			$this->media->delete_post_meta( $attachment_id, Sync::META_KEYS['suffix'] );
+		}
+
+		// Run the upload Call.
+		$result = $this->connect->api->upload( $attachment_id, $options );
+
+		if ( ! is_wp_error( $result ) ) {
+
+			// Check that this wasn't an existing.
+			if ( ! empty( $result['existing'] ) ) {
+				// Check to see if this is the same image.
+				$version = (int) $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['version'], true );
+				if ( $version !== $result['version'] ) {
+					// New image with the same name.
+					// Add a suffix and try again.
+					$suffix = '_' . $attachment_id . substr( strrev( uniqid() ), 0, 5 );
+					$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['suffix'], $suffix );
+
+					return $this->upload_asset( $attachment_id );
 				}
 			}
+
+
+			// Set folder Synced.
+			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['folder_sync'], $this->media->is_folder_synced( $attachment_id ) );
+			// Set public_id.
+			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
+			// Set version.
+			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['version'], $result['version'] );
+			// Update signature for all that use the same method.
+			$this->sync->sync_signature_by_type( $attachment_id, $type );
+			// Update options and public_id as well (full sync)
+			$this->sync->set_signature_item( $attachment_id, 'options' );
+			$this->sync->set_signature_item( $attachment_id, 'public_id' );
+
+			$this->update_breakpoints( $attachment_id, $result );
+			$this->update_content( $attachment_id );
 		}
 
-		return $cloudinary_id;
+		return $result;
 	}
 
 	/**
-	 * Prep an attachment for upload.
+	 * Update an assets context..
 	 *
-	 * @param int $attachment_id The attachment ID to prep for upload.
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return array|\WP_Error
 	 */
-	public function prep_upload( $attachment_id ) {
-		$max_size = ( wp_attachment_is_image( $attachment_id ) ? 'max_image_size' : 'max_video_size' );
-		$file     = get_attached_file( $attachment_id );
-		// Get the file size to make sure it can exist in cloudinary.
-		if ( file_exists( $file ) && filesize( $file ) < $this->plugin->components['connect']->usage[ $max_size ] ) {
-			$this->add_to_sync( $attachment_id );
+	public function context_update( $attachment_id ) {
+		// dynamic sync type..
+		$type    = $this->sync->get_sync_type( $attachment_id );
+		$options = $this->media->get_upload_options( $attachment_id );
+		$result  = $this->connect->api->context( $options );
+
+		if ( ! is_wp_error( $result ) ) {
+			$this->sync->set_signature_item( $attachment_id, $type );
+			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $options['public_id'] );
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Perform an explicit update to Cloudinary.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return array|\WP_Error|bool
+	 */
+	public function explicit_update( $attachment_id ) {
+		// Explicit update.
+		$type = $this->sync->get_sync_type( $attachment_id );
+		$args = $this->media->get_breakpoint_options( $attachment_id );
+		if ( ! empty( $args ) ) {
+			$result = $this->connect->api->explicit( $args );
+			if ( ! is_wp_error( $result ) ) {
+				$this->update_breakpoints( $attachment_id, $result );
+			}
 		} else {
-			// Check if the src is a url.
-			$file = get_post_meta( $attachment_id, '_wp_attached_file', true );
-			if ( $this->plugin->components['media']->is_cloudinary_url( $file ) ) {
-				// Download sync.
-				$this->add_to_sync( $attachment_id );
+			$this->update_breakpoints( $attachment_id, array() );
+			$result = true;
+		}
+		$this->sync->set_signature_item( $attachment_id, $type );
+
+		return $result;
+	}
+
+	/**
+	 * Update breakpoints for an asset.
+	 *
+	 * @param int   $attachment_id The attachment ID.
+	 * @param array $breakpoints   Structure of the breakpoints.
+	 */
+	public function update_breakpoints( $attachment_id, $breakpoints ) {
+
+		if ( ! empty( $this->plugin->config['settings']['global_transformations']['enable_breakpoints'] ) ) {
+			if ( ! empty( $breakpoints['responsive_breakpoints'] ) ) { // Images only.
+				$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['breakpoints'], $breakpoints['responsive_breakpoints'][0]['breakpoints'] );
+			} elseif ( wp_attachment_is_image( $attachment_id ) ) {
+				$this->media->delete_post_meta( $attachment_id, Sync::META_KEYS['breakpoints'] );
 			}
+			$this->sync->set_signature_item( $attachment_id, 'breakpoints' );
 		}
 	}
 
 	/**
-	 * Add an attachment ID to the to_sync array.
+	 * Trigger an update on content that contains the same attachment ID to allow filters to capture and process.
 	 *
-	 * @param int $attachment_id The attachment ID to add.
+	 * @param int $attachment_id The attachment id to find and init an update.
 	 */
-	public function add_to_sync( $attachment_id ) {
-		if ( ! in_array( $attachment_id, $this->to_sync, true ) ) {
-			// Flag image as pending to prevent duplicate upload.
-			update_post_meta( $attachment_id, Sync::META_KEYS['pending'], time() );
-			$this->plugin->components['media']->update_post_meta( $attachment_id, Sync::META_KEYS['folder_sync'], true );
-			$this->to_sync[] = $attachment_id;
-		}
-	}
-
-	/**
-	 * Check if the attachment is pending an upload sync.
-	 *
-	 * @param int $attachment_id The attachment ID to check.
-	 *
-	 * @return bool
-	 */
-	public function is_pending( $attachment_id ) {
-		// Check if it's not already in the to sync array.
-		if ( ! in_array( $attachment_id, $this->to_sync, true ) ) {
-			$is_pending = $this->plugin->components['media']->get_post_meta( $attachment_id, Sync::META_KEYS['pending'], true );
-			if ( empty( $is_pending ) || $is_pending < time() - 5 * 60 ) {
-				// No need to delete pending meta, since it will be updated with the new timestamp anyway.
-				return false;
+	private function update_content( $attachment_id ) {
+		// Search and update link references in content.
+		$content_search = new \WP_Query( array( 's' => 'wp-image-' . $attachment_id, 'fields' => 'ids', 'posts_per_page' => 1000 ) );
+		if ( ! empty( $content_search->found_posts ) ) {
+			$content_posts = array_unique( $content_search->get_posts() ); // ensure post only gets updated once.
+			foreach ( $content_posts as $content_id ) {
+				wp_update_post( array( 'ID' => $content_id ) ); // Trigger an update, internal filters will filter out remote URLS.
 			}
-		}
-
-		return true;
-	}
-
-	/**
-	 * Checks the status of the media item.
-	 *
-	 * @param array $status        Array of state and note.
-	 * @param int   $attachment_id The attachment id.
-	 *
-	 * @return array
-	 */
-	public function filter_status( $status, $attachment_id ) {
-
-		if ( $this->is_pending( $attachment_id ) ) {
-			$status['state'] = 'warning';
-			$status['note']  = __( 'Upload sync pending', 'cloudinary' );
-		}
-
-		// Check if there's an error.
-		$has_error = $this->plugin->components['media']->get_post_meta( $attachment_id, Sync::META_KEYS['sync_error'], true );
-		if ( ! empty( $has_error ) ) {
-			$status['state'] = 'error';
-			$status['note']  = $has_error;
-		}
-
-		return $status;
-	}
-
-	/**
-	 * Initialize the background sync on requested images needing to be synced.
-	 */
-	public function init_background_upload() {
-		if ( ! empty( $this->to_sync ) ) {
-			$params = array(
-				'attachment_ids' => $this->to_sync,
-			);
-			$this->plugin->components['api']->background_request( 'process', $params );
 		}
 	}
 }

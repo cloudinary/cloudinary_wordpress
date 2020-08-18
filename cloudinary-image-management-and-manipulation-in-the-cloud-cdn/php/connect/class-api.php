@@ -177,7 +177,8 @@ class Api {
 	/**
 	 * Generate a transformation string.
 	 *
-	 * @param array $options The transformation options to generate from.
+	 * @param array  $options The transformation options to generate from.
+	 * @param string $type    The asset Type.
 	 *
 	 * @return string
 	 */
@@ -186,7 +187,7 @@ class Api {
 		$transformations      = array_map(
 			function ( $item ) use ( $transformation_index ) {
 				$transform = array();
-				if ( is_string ( $item ) ) {
+				if ( is_string( $item ) ) {
 					return $item;
 				}
 
@@ -229,17 +230,19 @@ class Api {
 	public function cloudinary_url( $public_id, $args = array(), $size = array(), $clean = false ) {
 		$defaults = array(
 			'resource_type' => 'image',
+			'version'       => 'v1',
 		);
 		$args     = wp_parse_args( array_filter( $args ), $defaults );
-
+		// Correct Audio to Video.
+		if ( 'audio' === $args['resource_type'] ) {
+			$args['resource_type'] = 'video';
+		}
 		// check for version.
 		if ( ! empty( $args['version'] ) && is_numeric( $args['version'] ) ) {
 			$args['version'] = 'v' . $args['version'];
-		} else {
-			$args['version'] = 'v1';
 		}
 
-		// Determine if we're dealing with a fetched 
+		// Determine if we're dealing with a fetched.
 		// ...or uploaded image and update the URL accordingly.
 		$asset_endpoint = filter_var( $public_id, FILTER_VALIDATE_URL ) ? 'fetch' : 'upload';
 
@@ -270,19 +273,37 @@ class Api {
 	}
 
 	/**
-	 * Upload a large asset in chunks.
+	 * Get the details of an asset by public ID.
 	 *
-	 * @param string $file Path to the file.
-	 * @param array  $args Array of upload options.
+	 * @param string $public_id The public_id to check.
+	 * @param string $type      The asset type.
 	 *
 	 * @return array|\WP_Error
 	 */
-	public function upload_large( $file, $args ) {
+	public function get_asset_details( $public_id, $type ) {
+		$url = $this->url( 'resources', $type . '/upload/' . $public_id, true );
+
+		return $this->call( $url, array( 'body' => array() ), 'get' );
+	}
+
+	/**
+	 * Upload a large asset in chunks.
+	 *
+	 * @param int   $attachment_id The attachment ID.
+	 * @param array $args          Array of upload options.
+	 *
+	 * @return array|\WP_Error
+	 */
+	public function upload_large( $attachment_id, $args ) {
+		// Ensure we have the right file.
+		if ( empty( $args['file'] ) ) {
+			$args['file'] = get_attached_file( $attachment_id );
+		}
 		$tempfile = false;
-		if ( false !== strpos( $file, 'vip://' ) ) {
-			$file = $this->create_local_copy( $file );
-			if ( is_wp_error( $file ) ) {
-				return $file;
+		if ( false !== strpos( $args['file'], 'vip://' ) ) {
+			$args['file'] = $this->create_local_copy( $args['file'] );
+			if ( is_wp_error( $args['file'] ) ) {
+				return $args['file'];
 			}
 			$tempfile = true;
 		}
@@ -299,12 +320,12 @@ class Api {
 		}
 
 		// Since WP_Filesystem doesn't have a fread, we need to do it manually. However we'll still use it for writing.
-		$src            = fopen( $file, 'r' ); // phpcs:ignore
-		$temp_file_name = wp_tempnam( uniqid( time() ) . '.' . pathinfo( $file, PATHINFO_EXTENSION ) );
+		$src            = fopen( $args['file'], 'r' ); // phpcs:ignore
+		$temp_file_name = wp_tempnam( uniqid( time() ) . '.' . pathinfo( $args['file'], PATHINFO_EXTENSION ) );
 		$upload_id      = substr( sha1( uniqid( $this->credentials['api_secret'] . wp_rand() ) ), 0, 16 );
 		$chunk_size     = 20000000;
 		$index          = 0;
-		$file_size      = filesize( $file );
+		$file_size      = filesize( $args['file'] );
 		while ( ! feof( $src ) ) {
 			$current_loc = $index * $chunk_size;
 			if ( $current_loc >= $file_size ) {
@@ -318,12 +339,12 @@ class Api {
 			$temp_file_size = filesize( $temp_file_name );
 			$range          = 'bytes ' . $current_loc . '-' . ( $current_loc + $temp_file_size - 1 ) . '/' . $file_size;
 
-			$headers = array(
+			$headers      = array(
 				'Content-Range'      => $range,
 				'X-Unique-Upload-Id' => $upload_id,
 			);
-
-			$result = $this->upload( $temp_file_name, $args, $headers );
+			$args['file'] = $temp_file_name;
+			$result       = $this->upload( $temp_file_name, $args, $headers );
 			if ( is_wp_error( $result ) ) {
 				break;
 			}
@@ -332,7 +353,7 @@ class Api {
 		fclose( $src ); //phpcs:ignore
 		unlink( $temp_file_name ); //phpcs:ignore
 		if ( true === $tempfile ) {
-			unlink( $file ); //phpcs:ignore
+			unlink( $args['file'] ); //phpcs:ignore
 		}
 
 		return $result;
@@ -342,30 +363,50 @@ class Api {
 	/**
 	 * Upload an asset.
 	 *
-	 * @param string $file    Path to the file.
-	 * @param array  $args    Array of upload options.
-	 * @param array  $headers Additional headers to use in upload.
+	 * @param int   $attachment_id Attachment ID to upload.
+	 * @param array $args          Array of upload options.
+	 * @param array $headers       Additional headers to use in upload.
 	 *
 	 * @return array|\WP_Error
 	 */
-	public function upload( $file, $args, $headers = array() ) {
-		$tempfile = false;
-		if ( false !== strpos( $file, 'vip://' ) ) {
-			$file = $this->create_local_copy( $file );
-			if ( is_wp_error( $file ) ) {
-				return $file;
-			}
-			$tempfile = true;
-		}
-		$resource = ! empty( $args['resource_type'] ) ? $args['resource_type'] : 'image';
-		$url      = $this->url( $resource, 'upload', true );
-		$args     = $this->clean_args( $args );
-		// Attach File.
-		if ( function_exists( 'curl_file_create' ) ) {
-			$args['file'] = curl_file_create( $file ); // phpcs:ignore
-			$args['file']->setPostFilename( $file );
+	public function upload( $attachment_id, $args, $headers = array() ) {
+
+		$resource            = ! empty( $args['resource_type'] ) ? $args['resource_type'] : 'image';
+		$url                 = $this->url( $resource, 'upload', true );
+		$args                = $this->clean_args( $args );
+		$disable_https_fetch = get_transient( '_cld_disable_http_upload' );
+
+		// Check if we can try http file upload.
+		if ( empty( $headers ) && empty( $disable_https_fetch ) ) {
+			$args['file'] = wp_get_attachment_url( $attachment_id );
 		} else {
-			$args['file'] = '@' . $file;
+			// We should have the file in args at this point, but if the transient was set, it will be defaulting here.
+			if ( empty( $args['file'] ) ) {
+				$args['file'] = get_attached_file( $attachment_id );
+			}
+			// Headers indicate chunked upload.
+			if ( empty( $headers ) ) {
+				$size = filesize( $args['file'] );
+				if ( 'video' === $resource || $size > 100000000 ) {
+					return $this->upload_large( $attachment_id, $args );
+				}
+			}
+			$tempfile = false;
+			if ( false !== strpos( $args['file'], 'vip://' ) ) {
+				$args['file'] = $this->create_local_copy( $args['file'] );
+				if ( is_wp_error( $args['file'] ) ) {
+					return $args['file'];
+				}
+				$tempfile = true;
+			}
+			// Attach File.
+			if ( function_exists( 'curl_file_create' ) ) {
+				$file         = $args['file'];
+				$args['file'] = curl_file_create( $file ); // phpcs:ignore
+				$args['file']->setPostFilename( $file );
+			} else {
+				$args['file'] = '@' . $args['file'];
+			}
 		}
 
 		$call_args = array(
@@ -374,8 +415,25 @@ class Api {
 		);
 
 		$result = $this->call( $url, $call_args, 'post' );
+		// Hook in flag to allow for non accessible URLS.
+		if ( is_wp_error( $result ) ) {
+			$error = $result->get_error_message();
+			/**
+			 * If there's an error and the file is a URL in the error message,
+			 * it's likely due to CURL or the location does not support URL file attachments.
+			 * In this case, we'll flag and disable it and try again with a local file.
+			 */
+			if ( empty( $disable_https_fetch ) && false !== strpos( $error, $args['file'] ) ) {
+				// URLS are not remotely available, try again as a file.
+				set_transient( '_cld_disable_http_upload', true, DAY_IN_SECONDS );
+				// Remove URL file.
+				unset( $args['file'] );
+
+				return $this->upload( $attachment_id, $args );
+			}
+		}
 		if ( true === $tempfile ) {
-			unlink( $file ); //phpcs:ignore
+			unlink( $args['file'] ); //phpcs:ignore
 		}
 
 		return $result;
@@ -434,12 +492,11 @@ class Api {
 	/**
 	 * Context update of an asset.
 	 *
-	 * @param string $file Filename of file. Ignored in this instance since it's a dynamic method call.
-	 * @param array  $args Array of options to update.
+	 * @param array $args Array of options to update.
 	 *
 	 * @return array|\WP_Error
 	 */
-	public function context( $file, $args ) {
+	public function context( $args ) {
 
 		$url     = $this->url( $args['resource_type'], 'context', true );
 		$options = array(

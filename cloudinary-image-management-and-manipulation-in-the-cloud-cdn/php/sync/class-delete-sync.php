@@ -57,15 +57,15 @@ class Delete_Sync {
 			// The args are indexed, list them in named variables to better understand.
 			list( $request_cap, , $post_id ) = $args;
 
-			if ( 'delete_post' === $request_cap && ! empty( $all_caps['delete_posts'] ) && 'attachment' === get_post_type( $post_id ) ) {
+			if ( $this->plugin->components['media']->is_media( $post_id ) && 'delete_post' === $request_cap && ! empty( $all_caps['delete_posts'] ) ) {
 
 				// Check if is pending.
-				if ( ! $this->plugin->components['sync']->is_synced( $post_id ) && $this->plugin->components['sync']->managers['upload']->is_pending( $post_id ) ) {
+				if ( ! $this->plugin->components['sync']->is_synced( $post_id ) && $this->plugin->components['sync']->is_pending( $post_id ) ) {
 					// Check for errors.
 					$has_error = $this->plugin->components['media']->get_post_meta( $post_id, Sync::META_KEYS['sync_error'], true );
 					if ( empty( $has_error ) ) {
 						$all_caps['delete_posts'] = false;
-						$action = filter_input( INPUT_GET, 'action', FILTER_SANITIZE_STRING );
+						$action                   = filter_input( INPUT_GET, 'action', FILTER_SANITIZE_STRING );
 						if ( ! empty( $action ) && '-1' !== $action ) {
 							wp_die( esc_html__( 'Sorry, you can’t delete an asset until it has fully synced with Cloudinary. Try again once syncing is complete.', 'cloudinary' ) );
 						}
@@ -100,7 +100,7 @@ class Delete_Sync {
 			$parts             = explode( '/', $public_id );
 			$cloudinary_folder = $this->plugin->config['settings']['sync_media']['cloudinary_folder'] ? $this->plugin->config['settings']['sync_media']['cloudinary_folder'] : '';
 			if ( $cloudinary_folder === $parts[0] ) {
-				$type    = $this->plugin->components['sync']->managers['push']->get_resource_type( $post_id );
+				$type    = $this->plugin->components['media']->get_media_type( $post_id );
 				$options = array(
 					'public_id'  => $public_id,
 					'invalidate' => true, // clear from CDN cache as well.
