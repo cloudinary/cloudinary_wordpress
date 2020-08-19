@@ -54,7 +54,7 @@ class Global_Transformations {
 	/**
 	 * Holds the overwrite transformations for featured images meta key.
 	 */
-	const META_FEATURED_IMAGE_KEY = 'cloudinary_ignore_transformations_featured';
+	const META_FEATURED_IMAGE_KEY = '_overwrite_featured_transformations';
 
 	/**
 	 * Global Transformations constructor.
@@ -466,16 +466,19 @@ class Global_Transformations {
 	 *
 	 * @return void
 	 */
-	public function overwrite_transformations_featured_image() {
+	public function register_featured_overwrite() {
 		register_meta(
 			'post',
 			self::META_FEATURED_IMAGE_KEY,
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'default'      => false,
-				'type'         => 'boolean',
-				'description'  => esc_html__( 'Flag on whether transformation should be overwritten for a featured image.', 'cloudinary' ),
+				'show_in_rest'  => true,
+				'single'        => true,
+				'default'       => false,
+				'type'          => 'boolean',
+				'description'   => esc_html__( 'Flag on whether transformation should be overwritten for a featured image.', 'cloudinary' ),
+				'auth_callback' => function () {
+					return current_user_can( 'edit_posts' );
+				},
 			)
 		);
 	}
@@ -483,21 +486,26 @@ class Global_Transformations {
 	/**
 	 * Add checkbox to override transformations for featured image.
 	 *
-	 * @param string $content
-	 * @param int    $post_id
-	 * 
+	 * @param string $content       The content to be saved.
+	 * @param int    $post_id       The post ID.
+	 * @param int    $attachment_id The ID of the attachment.
+	 *
 	 * @return string
 	 */
-	public function classic_overwrite_transformations_featured_image( $content, $post_id ) {
-		$field_value = get_post_meta( $post_id, self::META_FEATURED_IMAGE_KEY, true );
-		$field_label = sprintf(
-			'<p><label for="%1$s"><input type="checkbox" name="%1$s" id="%1$s" value="1" %2$s /> %3$s</label></p>',
-			esc_attr( self::META_FEATURED_IMAGE_KEY ),
-			checked( $field_value, 1, false ),
-			esc_html__( 'Overwrite Transformations', 'cloudinary' )
-		);
-	
-		return $content .= $field_label;
+	public function classic_overwrite_transformations_featured_image( $content, $post_id, $attachment_id ) {
+		if ( ! empty( $attachment_id ) ) {
+			// Get the current value.
+			$field_value = get_post_meta( $post_id, self::META_FEATURED_IMAGE_KEY, true );
+			// Add hidden field and checkbox to the HTML.
+			$content .= sprintf(
+				'<p><label for="%1$s"><input type="hidden" name="%1$s" value="0" /><input type="checkbox" name="%1$s" id="%1$s" value="1" %2$s /> %3$s</label></p>',
+				esc_attr( self::META_FEATURED_IMAGE_KEY ),
+				checked( $field_value, 1, false ),
+				esc_html__( 'Overwrite Transformations', 'cloudinary' )
+			);
+		}
+
+		return $content;
 	}
 
 	/**
@@ -506,27 +514,10 @@ class Global_Transformations {
 	 * @param int $post_id
 	 */
 	public function save_overwrite_transformations_featured_image( $post_id ) {
-		$field_value = filter_input_array(
-			INPUT_POST,
-			array(
-				self::META_FEATURED_IMAGE_KEY => FILTER_SANITIZE_NUMBER_INT
-			)
-		);
-
-		if ( ! $field_value || ! $field_value[ self::META_FEATURED_IMAGE_KEY ] ) {
-			delete_post_meta(
-				$post_id,
-				self::META_FEATURED_IMAGE_KEY
-			);
-
-			return;
+		$field_value = filter_input( INPUT_POST, self::META_FEATURED_IMAGE_KEY, FILTER_VALIDATE_BOOLEAN );
+		if ( ! is_null( $field_value ) ) {
+			update_post_meta( $post_id, self::META_FEATURED_IMAGE_KEY, $field_value );
 		}
-
-		update_post_meta( 
-			$post_id, 
-			self::META_FEATURED_IMAGE_KEY,
-			(int) $field_value[ self::META_FEATURED_IMAGE_KEY ]
-		);
 	}
 
 	/**
@@ -545,13 +536,13 @@ class Global_Transformations {
 			$taxonomies
 		);
 
-		// Add ordering metaboxes.
+		// Add ordering metaboxes and featured overwrite.
 		add_action( 'add_meta_boxes', array( $this, 'taxonomy_ordering' ), 10, 2 );
 		add_action( 'save_post', array( $this, 'save_taxonomy_ordering' ), 10, 1 );
-
-		// Add featured image overwrite transformations
-		add_action( 'wp_loaded', array( $this, 'overwrite_transformations_featured_image' ) );
 		add_action( 'save_post', array( $this, 'save_overwrite_transformations_featured_image' ), 10, 3 );
-		add_filter( 'admin_post_thumbnail_html', array( $this, 'classic_overwrite_transformations_featured_image' ), 10, 2 );
+		add_filter( 'admin_post_thumbnail_html', array( $this, 'classic_overwrite_transformations_featured_image' ), 10, 3 );
+
+		// Register Meta.
+		$this->register_featured_overwrite();
 	}
 }

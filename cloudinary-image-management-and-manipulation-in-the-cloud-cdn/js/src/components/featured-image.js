@@ -1,54 +1,68 @@
-(() => {
-  if ( ! wp.compose ) return;
+/* global window wp */
 
-  const withState = wp.compose.withState;
-  const withSelect = wp.data.withSelect;
-  const withDispatch = wp.data.withDispatch;
-  const { ToggleControl } = wp.components;
-  const { __ } = wp.i18n;
+import { __ } from '@wordpress/i18n';
 
-  const StatefulToggle = ( { meta, updateOverrideFeaturedImage } ) => {
+import { ToggleControl, PanelBody } from '@wordpress/components';
+import { withSelect, withDispatch } from '@wordpress/data';
+
+// Set our component.
+let FeaturedTransformationsToggle = ( props ) => {
+
     return (
-      <ToggleControl 
-        label={ __( 'Overwrite Transformations', 'cloudinary' ) }
-        checked={ meta.cloudinary_ignore_transformations_featured }
-        onChange={ ( enabled ) =>  updateOverrideFeaturedImage( enabled, meta ) } 
-      />
+        <>
+            <ToggleControl
+                label={ __( 'Overwrite Transformations', 'cloudinary' ) }
+                checked={ props.overwrite_featured_transformations }
+                onChange={ ( value ) => props.setOverwrite( value ) }
+            />
+        </>
     );
-  };
+};
 
-  const ComposedToggle = wp.compose.compose( [
-    withState( ( value ) => ({ isChecked: value }) ),
+// Setup our properties.
+FeaturedTransformationsToggle = withSelect( ( select, ownProps ) => ( {
+    overwrite_featured_transformations: select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ '_overwrite_featured_transformations' ] ?? false,
+} ) )( FeaturedTransformationsToggle );
 
-    withSelect( ( select ) => {
-        const currentMeta = select( 'core/editor' ).getCurrentPostAttribute( 'meta' );
-        const editedMeta = select( 'core/editor' ).getEditedPostAttribute( 'meta' );
+// Setup our update method.
+FeaturedTransformationsToggle = withDispatch(
+    ( dispatch ) => {
+        return {
+            setOverwrite: ( value ) => {
+                dispatch( 'core/editor' ).editPost( { meta: { _overwrite_featured_transformations: value } } );
+            }
+        };
+    }
+)( FeaturedTransformationsToggle );
 
-        return { meta: { ...currentMeta, ...editedMeta } };
-    } ),
+// Hook in and add our component.
+const cldFilterFeatured = ( BlockEdit ) => {
+    return ( props ) => {
+        // We only need this on a MediaUpload component that has a value.
+        return (
+            <>
+                <BlockEdit { ...props }  />
+                { !! props.value &&
+                    <FeaturedTransformationsToggle { ...props } />
+                }
+            </>
+        );
+    };
+};
 
-    withDispatch( ( dispatch ) => ( {
-        updateOverrideFeaturedImage( value, meta ) {
-            meta = {
-                ...meta,
-                cloudinary_ignore_transformations_featured: value,
-            };
+// Setup an init wrapper.
+const Featured = {
+    _init: function() {
+        // Add it to Media Upload to allow for deeper connection with getting
+        // the media object, to determine if an asset has transformations.
+        // Also adds deeper support for other image types within Guttenberg.
+        // @todo: find other locations (i.e Video poster).
+        wp.hooks.addFilter( 'editor.MediaUpload', 'cloudinary/filter-featured-image', cldFilterFeatured );
+    },
+};
 
-            dispatch( 'core/editor' ).editPost( { meta } );
-        },
-    } ) ),
-  ] )( StatefulToggle );
+// Push Init.
+Featured._init();
 
-  const wrapPostFeaturedImage = ( OriginalComponent ) => ( props ) => (
-    <>
-      <ComposedToggle />
-      <OriginalComponent {...props} />
-    </>
-  );
-
-  wp.hooks.addFilter( 
-    'editor.PostFeaturedImage', 
-    'cloudinary/overwrite-transformations-featured-image', 
-    wrapPostFeaturedImage
-  );
-})()
+// Export to keep it in scope.
+export default Featured;

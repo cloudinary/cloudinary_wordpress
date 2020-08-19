@@ -112,6 +112,13 @@ class Media implements Setup {
 	private $max_width;
 
 	/**
+	 * Flag to determine if the Featured Image is currently being rendered.
+	 *
+	 * @var bool|int
+	 */
+	private $doing_featured_image = false;
+
+	/**
 	 * Media constructor.
 	 *
 	 * @param Plugin $plugin The global plugin instance.
@@ -554,10 +561,8 @@ class Media implements Setup {
 		// Clean out empty parts, and join into a sectioned string.
 		$new_transformations = array_filter( $new_transformations );
 		$new_transformations = implode( '/', $new_transformations );
-
 		// Take sectioned string, and create a transformation array set.
 		$transformations = $this->get_transformations_from_string( $new_transformations );
-
 		/**
 		 * Filter the default cloudinary transformations.
 		 *
@@ -589,19 +594,15 @@ class Media implements Setup {
 
 		if ( ! ( $cloudinary_id ) ) {
 			$cloudinary_id = $this->cloudinary_id( $attachment_id );
-
 			if ( ! $cloudinary_id ) {
 				return null;
 			}
 		}
-
 		if ( empty( $transformations ) ) {
 			$transformations = $this->get_transformation_from_meta( $attachment_id );
 		}
-
 		// Get the attachment resource type.
 		$resource_type = $this->get_media_type( $attachment_id );
-    
 		// Setup initial args for cloudinary_url.
 		$pre_args = array(
 			'secure'        => is_ssl(),
@@ -626,7 +627,6 @@ class Media implements Setup {
 		 * @return array
 		 */
 		$pre_args['transformation'] = apply_filters( 'cloudinary_transformations', $transformations, $attachment_id );
-
 		// Defaults are only to be added on front, main images ( not breakpoints, since these are adapted down), and videos.
 		if ( ( ! defined( 'REST_REQUEST' ) || false === REST_REQUEST ) && ! is_admin() && false === $overwrite_transformations ) {
 			$pre_args['transformation'] = $this->apply_default_transformations( $pre_args['transformation'], $resource_type );
@@ -804,17 +804,13 @@ class Media implements Setup {
 		$cloudinary_id = $this->cloudinary_id( $attachment_id );
 
 		if ( $cloudinary_id ) {
+			$overwrite         = $this->maybe_overwrite_featured_image( $attachment_id );
 			$this->in_downsize = true;
 			$intermediate      = image_get_intermediate_size( $attachment_id, $size );
 			if ( is_array( $intermediate ) ) {
 				// Found an intermediate size.
 				$image = array(
-					$this->convert_url(
-						$intermediate['url'], 
-						$attachment_id, 
-						array(), 
-						false
-					),
+					$this->convert_url( $intermediate['url'], $attachment_id, array(), $overwrite ),
 					$intermediate['width'],
 					$intermediate['height'],
 					true,
@@ -841,7 +837,6 @@ class Media implements Setup {
 		if ( $this->is_cloudinary_url( $url ) ) {
 			return $url; // Already is a cloudinary URL, just return.
 		}
-
 		$size = $this->get_crop( $url, $attachment_id );
 
 		return $this->cloudinary_url( $attachment_id, $size, $transformations, null, $overwrite_transformations, true );
@@ -867,12 +862,8 @@ class Media implements Setup {
 		$transformations = $this->get_transformations_from_string( $image_src );
 		// Use Cloudinary breakpoints for same ratio.
 
-		if ( 
-			'on' === $this->plugin->config['settings']['global_transformations']['enable_breakpoints'] && 
-			wp_image_matches_ratio( $image_meta['width'], $image_meta['height'], $size_array[0], $size_array[1] ) 
-		) {
+		if ( 'on' === $this->plugin->config['settings']['global_transformations']['enable_breakpoints'] && wp_image_matches_ratio( $image_meta['width'], $image_meta['height'], $size_array[0], $size_array[1] ) ) {
 			$meta = $this->get_post_meta( $attachment_id, Sync::META_KEYS['breakpoints'], true );
-
 			if ( ! empty( $meta ) ) {
 				// Since srcset is primary and src is a fallback, we need to set the first srcset with the main image.
 				$sources = array(
@@ -923,16 +914,10 @@ class Media implements Setup {
 				'value'      => $size,
 			);
 		}
-
 		// Use current sources, but convert the URLS.
 		foreach ( $sources as &$source ) {
 			if ( ! $this->is_cloudinary_url( $source['url'] ) ) {
-				$source['url'] = $this->convert_url( 
-					$source['url'], 
-					$attachment_id, 
-					$transformations, 
-					true
-				); // Overwrite transformations applied, since the $transformations includes globals from the primary URL.
+				$source['url'] = $this->convert_url( $source['url'], $attachment_id, $transformations, true ); // Overwrite transformations applied, since the $transformations includes globals from the primary URL.
 			}
 		}
 
@@ -1214,31 +1199,6 @@ class Media implements Setup {
 				<?php
 			}
 		}
-	}
-
-	/**
-	 * Maybe bypass applying transformation to featured images.
-	 *
-	 * @param array $transformations The global transformations.
-	 * @param int   $attachment_id   The attachment ID.
-	 *
-	 * @return array
-	 */
-	public function maybe_skip_transformations_feature_image( $transformations, $attachment_id ) {
-		if ( get_post_thumbnail_id() === $attachment_id ) {
-			$override_transformations = (bool) get_post_meta(
-				get_post()->ID,
-				Global_Transformations::META_FEATURED_IMAGE_KEY,
-				true
-			);
-
-			if ( $override_transformations ) {
-				return array();
-			}
-
-		}
-
-		return $transformations;
 	}
 
 	/**
@@ -1549,6 +1509,35 @@ class Media implements Setup {
 	}
 
 	/**
+	 * Check if the current image is to be have the transformations overwritten.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function maybe_overwrite_featured_image( $attachment_id ) {
+		$overwrite = false;
+		if ( $this->doing_featured_image && $this->doing_featured_image === $attachment_id ) {
+			$overwrite = (bool) $this->get_post_meta( get_the_ID(), Global_Transformations::META_FEATURED_IMAGE_KEY, true );
+		}
+
+		return $overwrite;
+	}
+
+	/**
+	 * Set the flag indicating if the featured image is being done.
+	 *
+	 * @param int $post_id       The current post ID.
+	 * @param int $attachment_id The thumbnail ID.
+	 */
+	public function set_doing_featured( $post_id, $attachment_id ) {
+		$this->doing_featured_image = $attachment_id;
+		add_action( 'end_fetch_post_thumbnail_html', function () {
+			$this->doing_featured_image = false;
+		} );
+	}
+
+	/**
 	 * Setup the hooks and base_url if configured.
 	 */
 	public function setup() {
@@ -1582,13 +1571,12 @@ class Media implements Setup {
 			add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
 			add_filter( 'image_downsize', array( $this, 'filter_downsize' ), 10, 3 );
 
-			// Filter feature image
-			add_filter( 'cloudinary_transformations', array( $this, 'maybe_skip_transformations_feature_image' ), 10, 2 );
-
 			// Filter and action the custom column.
 			add_filter( 'manage_media_columns', array( $this, 'media_column' ) );
 			add_action( 'manage_media_custom_column', array( $this, 'media_column_value' ), 10, 2 );
 
+			// Hook into Featured Image cycle.
+			add_action( 'begin_fetch_post_thumbnail_html', array( $this, 'set_doing_featured' ), 10, 2 );
 		}
 	}
 }
