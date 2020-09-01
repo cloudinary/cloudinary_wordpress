@@ -378,7 +378,7 @@ class Video {
 			ob_start();
 			?>
 			var cldVideos = <?php echo wp_json_encode( $cld_videos ); ?>;
-
+			
 			for ( var videoInstance in cldVideos ) {
 				var cldConfig = cldVideos[ videoInstance ];
 				var cldId = 'cloudinary-video-' + videoInstance;
@@ -400,13 +400,35 @@ class Video {
 							videoElement.src.indexOf( '<?php echo esc_js( $this->config['video_freeform'] ) ?>' ) === -1 &&
 							! cldVideos[videoInstance]['overwrite_transformations']
 						) {
-							videoElement.src = videoElement.src.replace(
+							var videoOriginalSrc = videoElement.src;
+							var videoSrc = videoOriginalSrc.replace(
 								'upload/',
 								'upload/<?php echo esc_js( $this->config['video_freeform'] ) ?>/'
 							);
+
+							fetch( videoSrc ).then( function( res ) {
+								var headers = '';
+								res.headers.forEach(function(header) { headers += header.toLowerCase(); });
+
+								if ( res.ok === true && res.status === 200 ) {
+									videoElement.src = videoSrc;
+								} else if ( 
+									headers.indexOf( 'cld-error' ) !== -1 && 
+									headers.indexOf( 'video is too large' ) !== -1 
+								) {
+									fetch( '<?php echo rest_url('cloudinary/v1/video_explicit_upload') ?>', {
+										method: 'POST',
+										body: JSON.stringify({ 
+											eager: '<?php echo esc_js( $this->config['video_freeform'] ) ?>',
+											public_id: cldVideos[ videoInstance ].publicId,
+										})
+									} )
+
+									videoElement.src = videoOriginalSrc;
+								}
+							} );
 						}
 						<?php endif ?>
-
 					}
 				}
 			} );
@@ -424,7 +446,14 @@ class Video {
 	 * Enqueue BLock Assets
 	 */
 	public function enqueue_block_assets() {
-		wp_enqueue_script( 'cloudinary-block', $this->media->plugin->dir_url . 'js/block-editor.js', null, $this->media->plugin->version, true );
+		wp_enqueue_script( 
+			'cloudinary-block', 
+			$this->media->plugin->dir_url . 'js/block-editor.js', 
+			null, 
+			$this->media->plugin->version, 
+			true 
+		);
+
 		wp_add_inline_script( 'cloudinary-block', 'var CLD_VIDEO_PLAYER = ' . wp_json_encode( $this->config ), 'before' );
 	}
 
@@ -483,14 +512,7 @@ class Video {
 		
 		add_action( 'wp_print_styles', array( $this, 'init_player' ) );
 		add_action( 'wp_footer', array( $this, 'print_video_scripts' ) );
-
-		add_filter( 'cloudinary_converted_url', function ( $url, $attachment_id ) {
-			return 'LMFAO';
-			if ( ! wp_attachment_is( 'video', $attachment_id ) ) {
-				return $url;
-			}
-
-		}, 9, 2 );
+		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
 
 		// Add inline scripts for gutenberg.
 		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_block_assets' ) );

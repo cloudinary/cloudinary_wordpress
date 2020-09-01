@@ -515,9 +515,9 @@ class Api {
 	 *
 	 * @return array|\WP_Error
 	 */
-	public function explicit( $args ) {
+	public function explicit( $args, $type = 'image' ) {
 
-		$url  = $this->url( 'image', 'explicit', true );
+		$url  = $this->url( $type, 'explicit', true );
 		$args = $this->clean_args( $args );
 
 		return $this->call( $url, array( 'body' => $args ), 'post' );

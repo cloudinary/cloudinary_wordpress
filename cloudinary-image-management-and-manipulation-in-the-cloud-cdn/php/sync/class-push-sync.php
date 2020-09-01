@@ -134,6 +134,12 @@ class Push_Sync {
 			'args'     => array(),
 		);
 
+		$endpoints['video_explicit_upload'] = array(
+			'method'   => \WP_REST_Server::CREATABLE,
+			'callback' => array( $this, 'rest_video_explicit_upload' ),
+			'args'     => array(),
+		);
+
 		return $endpoints;
 	}
 
@@ -161,6 +167,24 @@ class Push_Sync {
 				'data'    => $this->queue->get_queue_status(),
 			)
 		);
+	}
+
+	/**
+	 * Send an explicit request for large videos so that transformations can be applied async.
+	 *
+	 * @param \WP_REST_Request $request
+	 * 
+	 * @return \WP_REST_Response
+	 */
+	public function rest_video_explicit_upload( \WP_REST_Request $request ) {
+		$req_body = json_decode( $request->get_body(), true );
+
+		$req_body['eager_async'] = 1;
+		$req_body['type']		 = 'upload';
+
+		$this->connect->api->explicit( $req_body, 'video' );
+
+		rest_ensure_response('ok');
 	}
 
 	/**
