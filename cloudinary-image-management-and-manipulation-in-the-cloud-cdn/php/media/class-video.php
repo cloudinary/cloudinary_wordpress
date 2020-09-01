@@ -313,10 +313,12 @@ class Video {
 			$args['overwrite_transformations'] = $overwrite_transformations;
 
 			$cloudinary_url  = $this->media->cloudinary_url( $attachment_id, false, false, null, $overwrite_transformations );
+
 			// Bail replacing the video URL for cases where it doesn't exist.
 			// Cases are, for instance, when the file size is larger than the API limits — free accounts.
 			if ( ! empty( $cloudinary_url ) ) {
 				$transformations = $this->media->get_transformations_from_string( $cloudinary_url, 'video' );
+	
 				if ( ! empty( $transformations ) ) {
 					$args['transformation'] = $transformations;
 				}
@@ -481,6 +483,14 @@ class Video {
 		
 		add_action( 'wp_print_styles', array( $this, 'init_player' ) );
 		add_action( 'wp_footer', array( $this, 'print_video_scripts' ) );
+
+		add_filter( 'cloudinary_converted_url', function ( $url, $attachment_id ) {
+			return 'LMFAO';
+			if ( ! wp_attachment_is( 'video', $attachment_id ) ) {
+				return $url;
+			}
+
+		}, 9, 2 );
 
 		// Add inline scripts for gutenberg.
 		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_block_assets' ) );

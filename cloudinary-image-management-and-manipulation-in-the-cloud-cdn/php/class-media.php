@@ -597,7 +597,7 @@ class Media implements Setup {
 	 *
 	 * @return array The array of found transformations within the string.
 	 */
-	public function get_transformations_from_string( $str, $type = 'image' ) {
+	public function get_transformations_from_string( $str, $type = 'image', $return_string = false ) {
 
 		$params = \Cloudinary\Connect\Api::$transformation_index[ $type ];
 
@@ -612,13 +612,17 @@ class Media implements Setup {
 				$item = trim( $item );
 				foreach ( $params as $param => $type ) {
 					if ( substr( $item, 0, strlen( $param ) + 1 ) === $param . '_' ) {
-						$transformations[ $index ][ $type ] = substr( $item, strlen( $param ) + 1 );
+						if ( $return_string === false ) {
+							$transformations[ $index ][ $type ] = substr( $item, strlen( $param ) + 1 );
+						} else {
+							$transformations[] = $item;
+						}
 					}
 				}
 			}
 		}
 
-		return array_values( $transformations ); // Reset the keys.
+		return $return_string ? implode( ',', $transformations ) : array_values( $transformations );
 	}
 
 	/**
