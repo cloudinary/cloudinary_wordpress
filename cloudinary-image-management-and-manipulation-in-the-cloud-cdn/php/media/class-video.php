@@ -199,14 +199,14 @@ class Video {
 		// If not CLD video init, return default.
 		if ( false === $this->player_enabled ) {
 			return $html;
-		};
-		// Check for override flag.
-		$overwrite_transformations = false;
-		if ( ! empty( $attr['cldoverwrite'] ) ) {
-			$overwrite_transformations = true;
 		}
+
+		// Check for override flag.
+		$overwrite_transformations = ! empty( $attr['cldoverwrite'] );
+
 		// Check for a cloudinary url, or prep sync if not found.
 		$cloudinary_url = $this->media->cloudinary_url( $attr['id'], false, false, null, $overwrite_transformations );
+
 		if ( ! $this->media->plugin->components['sync']->is_synced( $attr['id'] ) ) {
 			// If the asset is not synced, then the metadata will not be complete since v1 didn't save any.
 			// Return html for now since cloudinary_url will queue it up for syncing in the background.
@@ -214,8 +214,8 @@ class Video {
 		}
 
 		// Queue video.
-		$video           = wp_get_attachment_metadata( $attr['id'] );
 		$transformations = $this->media->get_transformations_from_string( $cloudinary_url, 'video' );
+		$video           = wp_get_attachment_metadata( $attr['id'] );
 		$args            = array();
 
 		if ( isset( $attr['autoplay'] ) ) {
@@ -244,6 +244,24 @@ class Video {
 
 		// Replace with video tag.
 		return '<video class="cld-fluid" id="cloudinary-video-' . esc_attr( $instance ) . '"' . $size . '></video>';
+	}
+
+	/**
+	 * Makes an explicit video API call in order to eagerly tranform a video.
+	 *
+	 * @param array $args
+	 * 
+	 * @return array The API response.
+	 */
+	public function queue_eager_video( array $args ) {
+		if ( ! isset( $args['eager'], $args['public_id'] ) ) {
+			return new \WP_Error('bad_args', 'The "eager" and "public_id" args are required');
+		}
+
+		$args['eager_async'] = 1;
+		$args['type']		 = 'upload';
+
+		return $this->media->plugin->components['connect']->api->explicit( $args, 'video' );
 	}
 
 	/**
@@ -329,6 +347,23 @@ class Video {
 					$new_tag = str_replace( 'src="' . $url . '"', 'id="cloudinary-video-' . esc_attr( $instance ) . '"', $tag );
 					$content = str_replace( $tag, $new_tag, $content );
 				} else {
+					$res 		 = wp_remote_get( $cloudinary_url );
+					$res_headers = wp_remote_retrieve_headers( $res );
+
+					if ( 
+						isset( $res_headers['x-cld-error'] ) && 
+						false !== strpos( $res_headers['x-cld-error'], 'Video is too large' ) 
+					) {
+						$transformations = $this->media->get_transformations_from_string( $cloudinary_url, 'video', true );
+						
+						$res = $this->queue_eager_video( array(
+							'eager' 	=> $transformations,
+							'public_id'	=> $this->media->get_public_id( $attachment_id ),
+						) );
+							
+						$cloudinary_url = $res['secure_url'];
+					}
+
 					// Just replace URL.
 					$content = str_replace( $url, $cloudinary_url, $content );
 				}
@@ -337,6 +372,7 @@ class Video {
 
 		return $content;
 	}
+	
 
 	/**
 	 * Output init scripts in footer for videos.
@@ -412,17 +448,19 @@ class Video {
 
 								if ( res.ok === true && res.status === 200 ) {
 									videoElement.src = videoSrc;
-								} else if ( 
-									headers.indexOf( 'cld-error' ) !== -1 && 
-									headers.indexOf( 'video is too large' ) !== -1 
-								) {
-									fetch( '<?php echo rest_url('cloudinary/v1/video_explicit_upload') ?>', {
-										method: 'POST',
-										body: JSON.stringify({ 
-											eager: '<?php echo esc_js( $this->config['video_freeform'] ) ?>',
-											public_id: cldVideos[ videoInstance ].publicId,
-										})
-									} )
+								} else {
+									if ( 
+										headers.indexOf( 'cld-error' ) !== -1 && 
+										headers.indexOf( 'video is too large' ) !== -1 
+									) {
+										fetch( '<?php echo rest_url('cloudinary/v1/video_explicit_upload') ?>', {
+											method: 'POST',
+											body: JSON.stringify({ 
+												eager: '<?php echo esc_js( $this->config['video_freeform'] ) ?>',
+												public_id: cldVideos[ videoInstance ].publicId,
+											})
+										} )
+									}
 
 									videoElement.src = videoOriginalSrc;
 								}

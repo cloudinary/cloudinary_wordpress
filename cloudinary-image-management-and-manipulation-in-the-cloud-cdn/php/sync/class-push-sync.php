@@ -179,10 +179,7 @@ class Push_Sync {
 	public function rest_video_explicit_upload( \WP_REST_Request $request ) {
 		$req_body = json_decode( $request->get_body(), true );
 
-		$req_body['eager_async'] = 1;
-		$req_body['type']		 = 'upload';
-
-		$this->connect->api->explicit( $req_body, 'video' );
+		$this->media->video->queue_eager_video( $req_body );
 
 		rest_ensure_response('ok');
 	}
