@@ -488,7 +488,7 @@ class Media implements Setup {
 			$additional_sizes = wp_get_additional_image_sizes();
 			foreach ( $meta['sizes'] as $size_name => $size ) {
 				if ( $file === $size['file'] ) {
-					$cropped = false;
+					$cropped = ! wp_image_matches_ratio( $meta['width'], $meta['height'], $size['width'], $size['height'] ); // If the new size is different ratio, fill.
 					if ( isset( $additional_sizes[ $size_name ]['crop'] ) ) {
 						$cropped = $additional_sizes[ $size_name ]['crop'];
 					}
@@ -1081,28 +1081,6 @@ class Media implements Setup {
 		}
 
 		return $sources;
-	}
-
-	/**
-	 * Alter the image sizes metadata to match the Cloudinary ID so that WordPress can detect a matched source for responsive breakpoints.
-	 *
-	 * @param array  $image_meta    The image metadata array.
-	 * @param array  $size_array    The size array.
-	 * @param string $image_src     The image src.
-	 * @param int    $attachment_id The attachment ID.
-	 *
-	 * @return array
-	 */
-	public function match_responsive_sources( $image_meta, $size_array, $image_src, $attachment_id ) {
-		if ( wp_attachment_is_image( $attachment_id ) && ! empty( $image_meta['sizes'] ) ) {
-			$cloudinary_id = $this->cloudinary_id( $attachment_id );
-			if ( $cloudinary_id ) {
-				// Set the file to the Cloudinary ID so that it will be matched.
-				$image_meta['file'] = $cloudinary_id;
-			}
-		}
-
-		return $image_meta;
 	}
 
 	/**
@@ -1789,8 +1767,6 @@ class Media implements Setup {
 
 			// Filter live URLS. (functions that return a URL).
 			add_filter( 'wp_calculate_image_srcset', array( $this, 'image_srcset' ), 10, 5 );
-			add_filter( 'wp_calculate_image_srcset_meta', array( $this, 'match_responsive_sources' ), 10, 4 );
-			add_filter( 'wp_get_attachment_metadata', array( $this, 'match_file_name_with_cloudinary_source' ), 10, 2 );
 			add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
 			add_filter( 'image_downsize', array( $this, 'filter_downsize' ), 10, 3 );
 
@@ -1801,24 +1777,5 @@ class Media implements Setup {
 			// Hook into Featured Image cycle.
 			add_action( 'begin_fetch_post_thumbnail_html', array( $this, 'set_doing_featured' ), 10, 2 );
 		}
-	}
-
-	/**
-	 * Ensure the file in image meta is the same as the Cloudinary ID.
-	 *
-	 * @param array $image_meta    Meta information of the attachment.
-	 * @param int   $attachment_id The attachment ID.
-	 *
-	 * @return array
-	 */
-	public function match_file_name_with_cloudinary_source( $image_meta, $attachment_id ) {
-		if ( $this->has_public_id( $attachment_id ) ) {
-			$cld_file = 'v' . $this->get_cloudinary_version( $attachment_id ) . '/' . $this->get_cloudinary_id( $attachment_id );
-			if ( false === strpos( $image_meta['file'], $cld_file ) ) {
-				$image_meta['file'] = $cld_file;
-			}
-		}
-
-		return $image_meta;
 	}
 }

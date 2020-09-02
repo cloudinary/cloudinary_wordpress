@@ -326,8 +326,10 @@ class Filter {
 				$transformations = $this->media->get_transformations_from_string( $args['cld_params'] );
 			}
 
-			// Get the WP size from the class name.
-			$wp_size = $this->get_size_from_image_tag( $asset );
+			// Get the size.
+			$wp_size = $this->media->get_crop( $url, $attachment_id );
+
+			// If there is no size, check the tag.
 			if ( false === $wp_size ) {
 				// No class name, so get size from the width and height tags.
 				$wp_size = $this->get_crop_from_image_tag( $asset );
@@ -336,7 +338,7 @@ class Filter {
 				}
 			}
 
-			// Get a cloudinary URL.
+			// Get a Cloudinary URL.
 			$clean                     = ! is_admin(); // Front facing images must not contain a wpsize url variable.
 			$classes                   = $this->get_classes( $asset ); // check if this is a transformation overwrite.
 			$overwrite_transformations = false;
@@ -699,7 +701,7 @@ class Filter {
 		// Filter URLS within content.
 		add_action( 'wp_insert_post_data', array( $this, 'filter_out_cloudinary' ) );
 		add_filter( 'the_editor_content', array( $this, 'filter_out_local' ) );
-		add_filter( 'the_content', array( $this, 'filter_out_local' ), 9 ); // Early to hook before responsive srcsets.
+		add_filter( 'the_content', array( $this, 'filter_out_local' ) );
 		add_filter( 'wp_prepare_attachment_for_js', array( $this, 'filter_attachment_for_js' ), 11 );
 
 		// Add support for custom header.
