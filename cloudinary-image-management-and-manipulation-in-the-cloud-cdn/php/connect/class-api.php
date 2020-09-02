@@ -587,25 +587,30 @@ class Api {
 	 *
 	 * @param string $name Name of method to call.
 	 * @param array  $args Array of parameters to pass to call.
+	 * 						 0: Function to execute when calling this endpoint.
+	 * 						 1: HTTP method for calling this endpoint. Default: GET.
+	 *						 2: Request body (array).
+	 *						 3: Whether to retrieve the response body or response headers.
 	 *
 	 * @return array|\WP_Error
 	 */
 	public function __call( $name, $args ) {
 		$function = null;
+
 		if ( ! empty( $args[0] ) ) {
 			$function = $args[0];
 		}
+
 		$url       = $this->url( $name, $function, true );
-		$method    = 'get';
+		$method    = ! empty( $args[1] ) ? $args[1] : 'get';
+		$headers   = ! empty( $args[3] ) ? $args[3] : false; 
 		$send_args = array( 'body' => $args );
-		if ( ! empty( $args[1] ) ) {
-			$method = $args[1];
-		}
+
 		if ( ! empty( $args[2] ) ) {
 			$send_args['body'] = $args[2];
 		}
 
-		return $this->call( $url, $send_args, $method );
+		return $this->call( $url, $send_args, $method, $headers );
 	}
 
 	/**
@@ -658,13 +663,14 @@ class Api {
 	/**
 	 * Calls the API request.
 	 *
-	 * @param string $url    The url to call.
-	 * @param array  $args   The optional arguments to send.
-	 * @param string $method The call HTTP method.
+	 * @param string $url    		 The url to call.
+	 * @param array  $args   		 The optional arguments to send.
+	 * @param string $method 		 The call HTTP method.
+	 * @param bool   $return_headers Return the response headers instead.
 	 *
 	 * @return array|\WP_Error
 	 */
-	private function call( $url, $args = array(), $method = 'get' ) {
+	private function call( $url, $args = array(), $method = 'get', $return_headers = false ) {
 		$args['method']     = strtoupper( $method );
 		$args['user-agent'] = 'WordPress/' . get_bloginfo( 'version' ) . '; ' . get_bloginfo( 'url' ) . ' (' . $this->plugin_version . ')';
 		if ( 'GET' === $args['method'] ) {
@@ -689,7 +695,20 @@ class Api {
 		if ( is_wp_error( $request ) ) {
 			return $request;
 		}
-		$body   = wp_remote_retrieve_body( $request );
+
+		$body = wp_remote_retrieve_body( $request );
+
+		if ( $return_headers ) {
+			$headers = wp_remote_retrieve_headers( $request )->getAll();
+
+			// Return a WP_Error instance if the response status isn't 200
+			if ( isset( $headers['status'] ) && strpos( $headers['status'], '200' ) === false ) {
+				return new \WP_Error( 'headers', $headers['status'], $headers );
+			}
+
+			return $headers;
+		}
+
 		$result = json_decode( $body, ARRAY_A );
 		if ( empty( $result ) && ! empty( $body ) ) {
 			return $body; // not json.

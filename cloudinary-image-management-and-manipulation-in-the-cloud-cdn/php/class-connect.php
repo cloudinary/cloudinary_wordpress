@@ -211,6 +211,7 @@ class Connect implements Config, Setup, Notice {
 		if ( null === $signature ) {
 			return false;
 		}
+
 		// Get the last test transient.
 		if ( get_transient( $signature ) ) {
 			return true;
@@ -228,8 +229,8 @@ class Connect implements Config, Setup, Notice {
 		}
 
 		$api  = new Connect\Api( $this, $this->plugin->version );
-		$ping = $api->ping();
-
+		$ping = $api->ping(null, null, null, true);
+		
 		if ( is_wp_error( $ping ) || ( is_array( $ping ) && $ping['status'] !== 'ok' ) ) {
 			delete_option( self::META_KEYS['signature'] );
 
