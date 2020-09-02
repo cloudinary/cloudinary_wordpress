@@ -144,6 +144,7 @@ class Connect implements Config, Setup, Notice {
 	public function verify_connection( $data ) {
 		if ( empty( $data['cloudinary_url'] ) ) {
 			delete_option( self::META_KEYS['signature'] );
+			delete_option( self::META_KEYS['cname'] );
 
 			add_settings_error(
 				'cloudinary_connect',
@@ -158,9 +159,13 @@ class Connect implements Config, Setup, Notice {
 		$data['cloudinary_url'] = str_replace( 'CLOUDINARY_URL=', '', $data['cloudinary_url'] );
 		$current                = $this->plugin->config['settings']['connect'];
 
+		// Same URL, return original data.
 		if ( $current['cloudinary_url'] === $data['cloudinary_url'] ) {
 			return $data;
 		}
+
+		// Always clear out CNAME when re-saving.
+		delete_option( self::META_KEYS['cname'] );
 
 		// Pattern match to ensure validity of the provided url
 		if ( ! preg_match( '~' . self::CLOUDINARY_VARIABLE_REGEX . '~', $data['cloudinary_url'] ) ) {
@@ -183,9 +188,9 @@ class Connect implements Config, Setup, Notice {
 		}
 
 		// Check if the given URL has a cname and store it if present.
-		if ( preg_match( '/(?:@\w+)\/(([a-z0-9|-]+\.)*[a-z0-9|-]+\.[a-z]+)/', $data['cloudinary_url'], $cname ) ) {
-			$cname = filter_var( $cname[1], FILTER_VALIDATE_DOMAIN );
-			update_option( self::META_KEYS['cname'], $cname[1] );
+		$cname = $this->extract_cname( wp_parse_url( $data['cloudinary_url'] ) );
+		if ( $cname && $this->validate_domain( $cname ) ) {
+			update_option( self::META_KEYS['cname'], $cname );
 		}
 
 		add_settings_error(
@@ -211,7 +216,7 @@ class Connect implements Config, Setup, Notice {
 		if ( null === $signature ) {
 			return false;
 		}
-
+    
 		// Get the last test transient.
 		if ( get_transient( $signature ) ) {
 			return true;
@@ -280,22 +285,14 @@ class Connect implements Config, Setup, Notice {
 			return $result;
 		}
 
-		// Test if has a cname and is valid.
-		if ( ! empty( $test['path'] ) ) {
-			$cname = ltrim( $test['path'], '/' );
-			if ( defined( 'FILTER_VALIDATE_DOMAIN' ) ) {
-				$is_valid = filter_var( $cname, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME );
-			} else {
-				$cname    = 'https://' . $cname;
-				$is_valid = filter_var( $cname, FILTER_VALIDATE_URL );
-			}
+		$cname_str   = $this->extract_cname( $test );
+		$cname_valid = $this->validate_domain( $cname_str );
 
-			if ( ! substr_count( $is_valid, '.' ) || false === $is_valid ) {
-				$result['type']    = 'invalid_cname';
-				$result['message'] = __( 'CNAME is not a valid domain name.', 'cloudinary' );
+		if ( $cname_str && ( ! substr_count( $cname_valid, '.' ) || false === $cname_valid ) ) {
+			$result['type']    = 'invalid_cname';
+			$result['message'] = __( 'CNAME is not a valid domain name.', 'cloudinary' );
 
-				return $result;
-			}
+			return $result;
 		}
 
 		$this->config_from_url( $url );
@@ -312,6 +309,47 @@ class Connect implements Config, Setup, Notice {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Extracts the CNAME from a parsed connection URL.
+	 *
+	 * @param array $parsed_url
+	 * 
+	 * @return string|null
+	 */
+	protected function extract_cname( $parsed_url ) {
+		$cname = null;
+
+		if ( ! empty( $test['query'] ) ) {
+			$config_params = array();
+			wp_parse_str( $parsed_url['query'], $config_params );
+			$cname = isset( $config_params['cname'] ) ? $config_params['cname'] : $cname;
+		} elseif ( ! empty( $parsed_url['path'] ) ) {
+			$cname = ltrim( $parsed_url['path'], '/' );
+		}
+
+		return $cname;
+	}
+
+	/**
+	 * Safely validate a domain.
+	 *
+	 * @param string $domain
+	 * 
+	 * @return bool
+	 */
+	protected function validate_domain( $domain ) {
+		$is_valid = false;
+
+		if ( defined( 'FILTER_VALIDATE_DOMAIN' ) ) {
+			$is_valid = filter_var( $domain, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME );
+		} else {
+			$domain   = 'https://' . $domain;
+			$is_valid = filter_var( $domain, FILTER_VALIDATE_URL );
+		}
+
+		return $is_valid;
 	}
 
 	/**

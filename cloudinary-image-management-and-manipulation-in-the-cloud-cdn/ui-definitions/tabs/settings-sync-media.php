@@ -31,6 +31,12 @@ $struct = array(
 		),
 		'offload' => array(
 			'label'   => __( 'Storage', 'cloudinary' ),
+			'description' => sprintf(
+				// translators: Placeholders are <a> tags.
+				__( 'Choose where to store your assets. Assets stored in both Cloudinary and WordPress will enable local WordPress delivery if the Cloudinary plugin is disabled or uninstalled. Storing assets with WordPress in lower resolution will save on local WordPress storage and enable low resolution local WordPress delivery if the plugin is disabled. Storing assets with Cloudinary only will require additional steps to enable backwards compatibility. For help managing your storage, submit a %1$s support request.%2$s', 'cloudinary' ),
+				'<a href="https://support.cloudinary.com/hc/en-us/requests/new" target="_blank">',
+				'</a>'
+			),
 			'type'    => 'select',
 			'default' => 'dual_full',
 			'choices' => array(

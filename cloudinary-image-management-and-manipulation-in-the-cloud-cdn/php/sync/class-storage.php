@@ -100,7 +100,12 @@ class Storage implements Notice {
 			$field['description'] = __( 'Please ensure all media is fully synced before changing the environment variable URL.', 'cloudinary' );
 			if ( 'dual_full' !== $this->settings['offload'] ) {
 				$field['suffix']      = null;
-				$field['description'] = __( 'You can only change the environment variable URL when storage is set to "Cloudinary and WordPress" and all media has been fully synced.', 'cloudinary' );
+				$field['description'] = sprintf(
+					// translators: Placeholders are <a> tags.
+					__( 'You can’t currently change your environment variable as your storage setting is set to "Cloudinary only". Update your %1$s storage settings %2$s and sync your assets to WordPress storage to enable this setting.', 'cloudinary' ),
+					'<a href="https://support.cloudinary.com/hc/en-us/requests/new" target="_blank">',
+					'</a>'
+				);
 				$field['disabled']    = true;
 			}
 		}
@@ -196,6 +201,10 @@ class Storage implements Notice {
 		$this->sync->set_signature_item( $attachment_id, 'storage' );
 		$this->sync->set_signature_item( $attachment_id, 'breakpoints' );
 		$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['storage'], $this->settings['offload'] ); // Save the state.
+		// If bringing media back to WordPress, we need to trigger content update to allow unfiltered Cloudinary URL's to be filtered.
+		if ( ! empty( $previous_state ) && 'cld' !== $this->settings['offload'] ) {
+			$this->sync->managers['upload']->update_content( $attachment_id );
+		}
 	}
 
 	/**
@@ -225,13 +234,13 @@ class Storage implements Notice {
 		$note = __( 'Syncing', 'cloudinary' );
 		switch ( $this->settings['offload'] ) {
 			case 'cld':
-				$note = __( 'Removing local copies.', 'cloudinary' );
+				$note = __( 'Removing asset copy from local storage', 'cloudinary' );
 				break;
 			case 'dual_low':
-				$note = __( 'Reducing local resolutions', 'cloudinary' );
+				$note = __( 'Syncing low resolution asset to local storage', 'cloudinary' );
 				break;
 			case 'dual_full':
-				$note = __( 'Rebuilding local copies.', 'cloudinary' );
+				$note = __( 'Syncing asset to local storage', 'cloudinary' );
 				break;
 		}
 
@@ -251,25 +260,13 @@ class Storage implements Notice {
 			$bandwidth       = $this->connect->get_usage_stat( 'bandwidth', 'used_percent' );
 			if ( 100 <= $storage || 100 <= $transformations || 100 <= $bandwidth ) {
 
-				$html = array(
-					'<div>' . __( 'You have reached one or more of your quota limits. Soon media may not be delivered. Since all assets are on Cloudinary, this will result in broken images.' ) . '</div>',
-					'<div>' . __( 'To rectify this you have some options:' ) . '</div>',
-					'<ol>',
-					'<li>' . sprintf(
-						__(
-							'<a href="%1$s" target="_blank">%2$s</a>',
-							'cloudinary'
-						),
-						'https://cloudinary.com/console/lui/upgrade_options',
-						__( 'Upgrade your account', 'cloudinary' )
-					) . '</li>',
-					'<li>' . __( 'Set storage to Cloudinary low resolution on WordPress.' ) . '</li>',
-					'<li>' . __( 'Cloudinary and WordPress' ) . '</li>',
-					'</ol>',
-				);
-
 				$notices[] = array(
-					'message'     => implode( '', $html ),
+					'message'     => sprintf(
+						// translators: Placeholders are <a> tags.
+						__( 'You have reached one or more of your quota limits. Your Cloudinary media will soon stop being delivered. Your current storage setting is "Cloudinary only" and this will therefore result in broken links to media assets. To prevent any issues upgrade your account or change your %1$s storage settings.%2$s', 'cloudinary' ),
+						'<a href="' . esc_url( admin_url( 'admin.php?page=cld_sync_media' ) ) . '">',
+						'</a>'
+					),
 					'type'        => 'error',
 					'dismissible' => true,
 				);
@@ -311,7 +308,7 @@ class Storage implements Notice {
 		$this->sync     = $this->plugin->get_component( 'sync' );
 		$this->connect  = $this->plugin->get_component( 'connect' );
 		$this->media    = $this->plugin->get_component( 'media' );
-		$this->download = $this->sync->managers['download'] ? $this->sync->managers['download'] : new Download_Sync( $plugin );
+		$this->download = $this->sync->managers['download'] ? $this->sync->managers['download'] : new Download_Sync( $this->plugin );
 
 		if ( $this->is_ready() ) {
 			$defaults       = array(
@@ -332,8 +329,6 @@ class Storage implements Notice {
 			// Tag the deactivate button.
 			$plugin_file = pathinfo( dirname( CLDN_CORE ), PATHINFO_BASENAME ) . '/' . basename( CLDN_CORE );
 			add_filter( 'plugin_action_links_' . $plugin_file, array( $this, 'tag_deactivate_link' ) );
-
-
 		}
 	}
 }
