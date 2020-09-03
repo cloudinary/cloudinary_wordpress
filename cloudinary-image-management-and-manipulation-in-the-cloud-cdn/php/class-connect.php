@@ -79,7 +79,6 @@ class Connect implements Config, Setup, Notice {
 		'url'        => 'cloudinary_url',
 		'connect'    => 'cloudinary_connect',
 		'cache'      => 'cloudinary_settings_cache',
-		'cname'      => 'cloudinary_url_cname',
 	);
 
 	/**
@@ -144,7 +143,6 @@ class Connect implements Config, Setup, Notice {
 	public function verify_connection( $data ) {
 		if ( empty( $data['cloudinary_url'] ) ) {
 			delete_option( self::META_KEYS['signature'] );
-			delete_option( self::META_KEYS['cname'] );
 
 			add_settings_error(
 				'cloudinary_connect',
@@ -164,9 +162,6 @@ class Connect implements Config, Setup, Notice {
 			return $data;
 		}
 
-		// Always clear out CNAME when re-saving.
-		delete_option( self::META_KEYS['cname'] );
-
 		// Pattern match to ensure validity of the provided url
 		if ( ! preg_match( '~' . self::CLOUDINARY_VARIABLE_REGEX . '~', $data['cloudinary_url'] ) ) {
 			add_settings_error(
@@ -185,12 +180,6 @@ class Connect implements Config, Setup, Notice {
 			add_settings_error( 'cloudinary_connect', $result['type'], $result['message'], 'error' );
 
 			return $current;
-		}
-
-		// Check if the given URL has a cname and store it if present.
-		$cname = $this->extract_cname( wp_parse_url( $data['cloudinary_url'] ) );
-		if ( $cname && $this->validate_domain( $cname ) ) {
-			update_option( self::META_KEYS['cname'], $cname );
 		}
 
 		add_settings_error(
@@ -216,7 +205,7 @@ class Connect implements Config, Setup, Notice {
 		if ( null === $signature ) {
 			return false;
 		}
-		
+
 		// Get the last test transient.
 		if ( get_transient( $signature ) ) {
 			return true;
@@ -232,21 +221,19 @@ class Connect implements Config, Setup, Notice {
 		if ( md5( $current_url ) !== $signature ) {
 			return false;
 		}
-
+		$this->config_from_url( $current_url );
 		$api  = new Connect\Api( $this, $this->plugin->version );
 		$ping = $api->ping();
-
-		if ( is_wp_error( $ping ) || ( is_array( $ping ) && $ping['status'] !== 'ok' ) ) {
-			delete_option( self::META_KEYS['signature'] );
-
+		if ( is_wp_error( $ping ) ) {
 			$this->notices[] = array(
-				'message'     => __( 'You have been disconnected due to an account error.', 'cloudinary' ),
+				'message'     => ucwords( str_replace( '_', ' ', $ping->get_error_message() ) ),
 				'type'        => 'error',
 				'dismissible' => true,
 			);
 
 			return false;
 		}
+
 		// Set a 30 second transient to prevent continued pinging.
 		set_transient( $signature, true, 30 );
 
@@ -315,7 +302,7 @@ class Connect implements Config, Setup, Notice {
 	 * Extracts the CNAME from a parsed connection URL.
 	 *
 	 * @param array $parsed_url
-	 * 
+	 *
 	 * @return string|null
 	 */
 	protected function extract_cname( $parsed_url ) {
@@ -336,7 +323,7 @@ class Connect implements Config, Setup, Notice {
 	 * Safely validate a domain.
 	 *
 	 * @param string $domain
-	 * 
+	 *
 	 * @return bool
 	 */
 	protected function validate_domain( $domain ) {
@@ -415,6 +402,12 @@ class Connect implements Config, Setup, Notice {
 			if ( ! empty( $config_params ) ) {
 				$this->set_credentials( $config_params );
 			}
+		}
+
+		// Specifically set CNAME
+		$cname = $this->extract_cname( $parts );
+		if ( ! empty( $cname ) ) {
+			$this->set_credentials( array( 'cname' => $cname ) );
 		}
 	}
 
