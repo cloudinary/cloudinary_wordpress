@@ -79,6 +79,7 @@ class Connect implements Config, Setup, Notice {
 		'url'        => 'cloudinary_url',
 		'connect'    => 'cloudinary_connect',
 		'cache'      => 'cloudinary_settings_cache',
+		'status'     => 'cloudinary_status',
 	);
 
 	/**
@@ -94,6 +95,8 @@ class Connect implements Config, Setup, Notice {
 	public function __construct( Plugin $plugin ) {
 		$this->plugin = $plugin;
 		add_filter( 'pre_update_option_cloudinary_connect', array( $this, 'verify_connection' ) );
+		add_filter( 'cron_schedules', array( $this, 'get_status_schedule' ) );
+		add_action( 'cloudinary_status', array( $this, 'check_status' ) );
 	}
 
 	/**
@@ -206,11 +209,6 @@ class Connect implements Config, Setup, Notice {
 			return false;
 		}
 
-		// Get the last test transient.
-		if ( get_transient( $signature ) ) {
-			return true;
-		}
-
 		$connect_data = get_option( self::META_KEYS['connect'], [] );
 		$current_url  = isset( $connect_data['cloudinary_url'] ) ? $connect_data['cloudinary_url'] : null;
 
@@ -221,21 +219,26 @@ class Connect implements Config, Setup, Notice {
 		if ( md5( $current_url ) !== $signature ) {
 			return false;
 		}
-		$this->config_from_url( $current_url );
-		$api  = new Connect\Api( $this, $this->plugin->version );
-		$ping = $api->ping();
-		if ( is_wp_error( $ping ) ) {
-			$this->notices[] = array(
-				'message'     => ucwords( str_replace( '_', ' ', $ping->get_error_message() ) ),
-				'type'        => 'error',
-				'dismissible' => true,
-			);
+		
+		$status = get_option( self::META_KEYS['status'], null );
+		if ( is_wp_error( $status ) ) {
+			// Error, we stop here.
+			if ( ! isset( $this->notices['__status'] ) ) {
+				$error                     = ucwords( str_replace( '_', ' ', $status->get_error_message() ) );
+				$this->notices['__status'] = array(
+					'message'     => sprintf(
+					// translators: Placeholder refers the error from API.
+						__( 'Cloudinary Error: %s', 'cloudinary' ),
+						$error
+					),
+					'type'        => 'error',
+					'dismissible' => true,
+				);
+			}
 
 			return false;
 		}
 
-		// Set a 30 second transient to prevent continued pinging.
-		set_transient( $signature, true, 30 );
 
 		return true;
 	}
@@ -283,9 +286,7 @@ class Connect implements Config, Setup, Notice {
 		}
 
 		$this->config_from_url( $url );
-
-		$test        = new Connect\Api( $this, $this->plugin->version );
-		$test_result = $test->ping();
+		$test_result = check_status();
 
 		if ( is_wp_error( $test_result ) ) {
 			$result['type']    = 'connection_error';
@@ -296,6 +297,29 @@ class Connect implements Config, Setup, Notice {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Check the status of Cloudinary.
+	 *
+	 * @return array|\WP_Error
+	 */
+	public function check_status() {
+		$status = $this->test_ping();
+		update_option( self::META_KEYS['status'], $status );
+
+		return $status;
+	}
+
+	/**
+	 * Do a ping test on the API.
+	 *
+	 * @return array|\WP_Error
+	 */
+	public function test_ping() {
+		$test = new Connect\Api( $this, $this->plugin->version );
+
+		return $test->ping();
 	}
 
 	/**
@@ -423,6 +447,23 @@ class Connect implements Config, Setup, Notice {
 			$this->config_from_url( $config['cloudinary_url'] );
 			$this->api = new Connect\Api( $this, $this->plugin->version );
 			$this->usage_stats();
+			$this->setup_status_cron();
+		}
+	}
+
+	public function get_status_schedule( $schedules ) {
+		$schedules['every_minute'] = array(
+			'interval' => MINUTE_IN_SECONDS,
+			'display'  => __( 'Every Minute', 'cloudinary' ),
+		);
+
+		return $schedules;
+	}
+
+	protected function setup_status_cron() {
+		if ( false === wp_get_schedule( 'cloudinary_status' ) ) {
+			$now = current_time( 'timestamp' );
+			wp_schedule_event( $now + ( MINUTE_IN_SECONDS ), 'every_minute', 'cloudinary_status' );
 		}
 	}
 

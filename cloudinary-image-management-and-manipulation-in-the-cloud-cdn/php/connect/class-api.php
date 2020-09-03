@@ -143,6 +143,10 @@ class Api {
 	public function __construct( $connect, $version ) {
 		$this->credentials = $connect->get_credentials();
 		$this->plugin_version = $version;
+		// Use CNAME.
+		if ( ! empty( $this->credentials['cname'] ) ) {
+			$this->asset_url = $this->credentials['cname'];
+		}
 	}
 
 	/**
@@ -162,10 +166,6 @@ class Api {
 			$parts[] = $this->api_version;
 		} else {
 			$parts[] = $this->asset_url;
-		}
-		
-		if ( $cname = get_option( Connect::META_KEYS['cname'] ) ) {
-			$parts[0] = $cname;
 		}
 
 		if ( empty( $this->credentials['cname'] ) || $endpoint ) {
