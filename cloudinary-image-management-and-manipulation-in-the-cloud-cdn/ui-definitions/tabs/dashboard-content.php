@@ -35,9 +35,15 @@ $manage_text = sprintf(
 				</p>
 			</div>
 		<?php else : ?>
+			<?php if( ! $connection->disabled ) : ?>
 			<div class="settings-tab-section-fields-dashboard-success expanded">
 				<span class="dashicons dashicons-yes"></span> <?php esc_html_e( 'Connected to Cloudinary', 'cloudinary' ); ?>
 			</div>
+			<?php else: ?>
+				<div class="settings-tab-section-fields-dashboard-error expanded">
+					<span class="dashicons dashicons-no"></span> <?php esc_html_e( 'Cloudinary Account Disabled', 'cloudinary' ); ?>
+				</div>
+			<?php endif; ?>
 			<hr>
 			<div class="cloudinary-stats">
 				<strong><?php esc_html_e( $connection->get_usage_stat( 'plan' ) ); ?></strong> |

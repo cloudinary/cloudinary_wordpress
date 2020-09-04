@@ -75,6 +75,7 @@ class Sync implements Setup, Assets {
 		'syncing'        => '_cloudinary_syncing',
 		'downloading'    => '_cloudinary_downloading',
 		'process_log'    => '_process_log',
+		'storage'        => '_cloudinary_storage',
 	);
 
 	/**
@@ -165,12 +166,22 @@ class Sync implements Setup, Assets {
 	/**
 	 * Check if sync type is required for rendering a Cloudinary URL.
 	 *
-	 * @param string $type The type to check.
+	 * @param string $type          The type to check.
+	 * @param int    $attachment_id The attachment ID.
 	 *
 	 * @return bool
 	 */
-	public function is_required( $type ) {
-		return ! empty( $this->sync_base_struct[ $type ]['required'] );
+	public function is_required( $type, $attachment_id ) {
+		$return = false;
+		if ( isset( $this->sync_base_struct[ $type ]['required'] ) ) {
+			if ( is_callable( $this->sync_base_struct[ $type ]['required'] ) ) {
+				$return = call_user_func( $this->sync_base_struct[ $type ]['required'], $attachment_id );
+			} else {
+				$return = $this->sync_base_struct[ $type ]['required'];
+			}
+		}
+
+		return $return;
 	}
 
 	/**
@@ -233,7 +244,7 @@ class Sync implements Setup, Assets {
 	public function get_sync_version( $attachment_id ) {
 		$version = $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['plugin_version'], true );
 
-		return $version;
+		return $version !== $this->plugin->version;
 	}
 
 	/**
@@ -685,7 +696,7 @@ class Sync implements Setup, Assets {
 	public function is_pending( $attachment_id ) {
 		// Check if it's not already in the to sync array.
 		if ( ! in_array( $attachment_id, $this->to_sync, true ) ) {
-			$is_pending = $this->managers['media']->get_post_meta( $attachment_id, Sync::META_KEYS['pending'], true );
+			$is_pending = get_post_meta( $attachment_id, Sync::META_KEYS['pending'], true );
 			if ( empty( $is_pending ) || $is_pending < time() - 5 * 60 ) {
 				// No need to delete pending meta, since it will be updated with the new timestamp anyway.
 				return false;
@@ -703,7 +714,7 @@ class Sync implements Setup, Assets {
 	public function add_to_sync( $attachment_id ) {
 		if ( ! in_array( $attachment_id, $this->to_sync, true ) ) {
 			// Flag image as pending to prevent duplicate upload.
-			$this->managers['media']->update_post_meta( $attachment_id, Sync::META_KEYS['pending'], time() );
+			update_post_meta( $attachment_id, Sync::META_KEYS['pending'], time() );
 			$this->to_sync[] = $attachment_id;
 		}
 	}
@@ -736,6 +747,9 @@ class Sync implements Setup, Assets {
 
 		// Get the core meta.
 		$meta = wp_get_attachment_metadata( $attachment_id, true );
+		if ( ! is_array( $meta ) ) {
+			$meta = array();
+		}
 		if ( empty( $meta[ Sync::META_KEYS['cloudinary'] ] ) ) {
 			$meta[ Sync::META_KEYS['cloudinary'] ] = array();
 		}

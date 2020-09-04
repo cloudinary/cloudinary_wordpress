@@ -94,6 +94,12 @@ if ( wp.media && window.CLDN ) {
 											wp.Uploader.queue.reset();
 										}
 									}
+									if ( typeof asset.resync !== 'undefined' ) {
+										asset.resync.forEach( function( update_asset ){
+											let update_attach = attachment.get( update_asset.id );
+                                            update_attach.set( update_asset );
+										});
+									}
 									if ( typeof asset.fetch !== 'undefined' ) {
 
 										let attach = attachment.get( asset.attachment_id );

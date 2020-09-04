@@ -120,12 +120,14 @@ class Upload_Sync {
 					esc_html__( 'Push to Cloudinary', 'cloudinary' )
 				);
 			} else {
-				$actions['cloudinary-push'] = sprintf(
-					'<a href="%s" aria-label="%s">%s</a>',
-					$action_url,
-					esc_attr__( 'Re-sync to Cloudinary', 'cloudinary' ),
-					esc_html__( 'Re-sync to Cloudinary', 'cloudinary' )
-				);
+				if ( file_exists( get_attached_file( $post->ID ) ) ) {
+					$actions['cloudinary-push'] = sprintf(
+						'<a href="%s" aria-label="%s">%s</a>',
+						$action_url,
+						esc_attr__( 'Re-sync to Cloudinary', 'cloudinary' ),
+						esc_html__( 'Re-sync to Cloudinary', 'cloudinary' )
+					);
+				}
 			}
 		}
 
@@ -220,7 +222,7 @@ class Upload_Sync {
 			// Check that this wasn't an existing.
 			if ( ! empty( $result['existing'] ) ) {
 				// Check to see if this is the same image.
-				$version = (int) $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['version'], true );
+				$version = $this->media->get_cloudinary_version( $attachment_id );
 				if ( $version !== $result['version'] ) {
 					// New image with the same name.
 					// Add a suffix and try again.
@@ -238,6 +240,9 @@ class Upload_Sync {
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
 			// Set version.
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['version'], $result['version'] );
+			// Set traceable sync keys.
+			update_post_meta( $attachment_id, '_' . md5( $options['public_id'] ), true );
+			update_post_meta( $attachment_id, '_' . md5( 'base_' . $options['public_id'] ), true );
 			// Update signature for all that use the same method.
 			$this->sync->sync_signature_by_type( $attachment_id, $type );
 			// Update options and public_id as well (full sync)
@@ -320,7 +325,7 @@ class Upload_Sync {
 	 *
 	 * @param int $attachment_id The attachment id to find and init an update.
 	 */
-	private function update_content( $attachment_id ) {
+	public function update_content( $attachment_id ) {
 		// Search and update link references in content.
 		$content_search = new \WP_Query( array( 's' => 'wp-image-' . $attachment_id, 'fields' => 'ids', 'posts_per_page' => 1000 ) );
 		if ( ! empty( $content_search->found_posts ) ) {

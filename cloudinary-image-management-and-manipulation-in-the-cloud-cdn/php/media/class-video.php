@@ -279,7 +279,7 @@ class Video {
 			if ( false === $url ) {
 				continue;
 			}
-			$attachment_id = $this->media->get_id_from_url( $url );
+			$attachment_id = $this->media->filter->get_id_from_tag( $tag );
 			if ( empty( $attachment_id ) ) {
 				continue; // Missing or no attachment ID found.
 			}
@@ -450,6 +450,9 @@ class Video {
 			if ( ! empty( $source_block['attrs']['overwrite_transformations'] ) ) {
 				$classes .= ' cld-overwrite';
 			}
+			if ( ! empty( $source_block['attrs']['id'] ) ) {
+				$classes .= ' wp-video-' . $source_block['attrs']['id'];
+			}
 			foreach ( $block['innerContent'] as &$content ) {
 
 				$video_tags = $this->media->filter->get_media_tags( $content );
@@ -472,12 +475,13 @@ class Video {
 	 */
 	public function setup_hooks() {
 		add_filter( 'wp_video_shortcode_override', array( $this, 'filter_video_shortcode' ), 10, 2 );
-		// only filter video tags in front end.
+
 		if ( ! is_admin() ) {
 			add_filter( 'the_content', array( $this, 'filter_video_tags' ) );
 			// Filter for block rendering.
 			add_filter( 'render_block_data', array( $this, 'filter_video_block_pre_render' ), 10, 2 );
 		}
+		
 		add_action( 'wp_print_styles', array( $this, 'init_player' ) );
 		add_action( 'wp_footer', array( $this, 'print_video_scripts' ) );
 

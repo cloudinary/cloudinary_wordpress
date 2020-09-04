@@ -9,9 +9,15 @@
 if ( ! $this->plugin->components['sync']->managers['queue']->is_running() ) {
 	// Rebuild on load.
 	$this->plugin->components['sync']->managers['queue']->build_queue();
+} else {
+	// Check and confirm queue is in fact valid.
+	$this->plugin->components['sync']->managers['queue']->validate_queue();
 }
 
+
 ?>
+<button type="submit" class="button button-primary"><?php esc_html_e( 'Save Changes', 'cloudinary' ); ?></button>
+<hr/>
 <div class="sync settings-tab-section">
 	<h2><?php esc_html_e( 'Bulk-Sync WordPress Media with Cloudinary (optional)', 'cloudinary' ); ?></h2>
 
@@ -27,7 +33,7 @@ if ( ! $this->plugin->components['sync']->managers['queue']->is_running() ) {
 		</button>
 		<span id="progress-wrapper" class="sync-media-progress">
 			<span class="progress-text">
-				<img src="<?php echo esc_url( CLDN_URL . 'css/loading.svg'); ?>" alt="<?php esc_attr_e( 'Syncing…', 'cloudinary' ); ?>">
+				<img src="<?php echo esc_url( CLDN_URL . 'css/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Syncing…', 'cloudinary' ); ?>">
 				<?php esc_html_e( 'Syncing…', 'cloudinary' ); ?>
 			</span>
 		</span>

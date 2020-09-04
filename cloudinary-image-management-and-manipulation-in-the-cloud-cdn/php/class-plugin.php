@@ -11,6 +11,7 @@ use Cloudinary\Component\Assets;
 use Cloudinary\Component\Config;
 use Cloudinary\Component\Notice;
 use Cloudinary\Component\Setup;
+use Cloudinary\Sync\Storage;
 
 /**
  * Main plugin bootstrap file.
@@ -117,9 +118,29 @@ class Plugin {
 	public function init() {
 		$this->components['settings'] = new Settings_Page( $this );
 		$this->components['connect']  = new Connect( $this );
-		$this->components['sync']     = new Sync( $this );
-		$this->components['api']      = new REST_API( $this );
-		$this->components['media']    = new Media( $this );
+
+		if ( $this->components['connect'] && $this->components['connect']->is_connected() ) {
+			$this->components['sync']    = new Sync( $this );
+			$this->components['api']     = new REST_API( $this );
+			$this->components['media']   = new Media( $this );
+			$this->components['storage'] = new Storage( $this );
+		}
+	}
+
+	/**
+	 * Get a plugin component.
+	 *
+	 * @param $component
+	 *
+	 * @return \Cloudinary\Connect|\Cloudinary\Media|\Cloudinary\REST_API|\Cloudinary\Settings_Page|\Cloudinary\Sync|null
+	 */
+	public function get_component( $component ) {
+		$return = null;
+		if ( isset( $this->components[ $component ] ) ) {
+			$return = $this->components[ $component ];
+		}
+
+		return $return;
 	}
 
 	/**
@@ -148,6 +169,25 @@ class Plugin {
 		add_action( 'init', array( $this, 'register_assets' ), 10 );
 		add_action( 'admin_notices', array( $this, 'admin_notices' ) );
 		add_filter( 'plugin_row_meta', array( $this, 'force_visit_plugin_site_link' ), 10, 4 );
+		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
+	}
+
+	/**
+	 * Add endpoints to the \Cloudinary\REST_API::$endpoints array.
+	 *
+	 * @param array $endpoints Endpoints from the filter.
+	 *
+	 * @return array
+	 */
+	public function rest_endpoints( $endpoints ) {
+
+		$endpoints['dismiss_notice'] = array(
+			'method'   => \WP_REST_Server::CREATABLE,
+			'callback' => array( $this, 'rest_dismiss_notice' ),
+			'args'     => array(),
+		);
+
+		return $endpoints;
 	}
 
 	/**
@@ -271,7 +311,7 @@ class Plugin {
 		 * Component that implements Component\Setup.
 		 *
 		 * @var  Component\Setup $component
-		 */ 
+		 */
 		foreach ( $this->components as $key => $component ) {
 			if ( ! $this->is_setup_component( $component ) ) {
 				continue;
@@ -279,6 +319,18 @@ class Plugin {
 
 			$component->setup();
 		}
+	}
+
+	/**
+	 * Set a transient with the duration using a token as an identifier.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 */
+	public function rest_dismiss_notice( \WP_REST_Request $request ) {
+		$token    = $request->get_param( 'token' );
+		$duration = $request->get_param( 'duration' );
+
+		set_transient( $token, true, $duration );
 	}
 
 	/**
@@ -292,24 +344,34 @@ class Plugin {
 		 *
 		 * An array of classes that implement the Notice interface.
 		 */
-		$components = array_filter( $this->components, array( $this, 'is_notice_component' ) );
-		$default    = array(
+		$components              = array_filter( $this->components, array( $this, 'is_notice_component' ) );
+		$default                 = array(
 			'message'     => '',
 			'type'        => 'error',
 			'dismissible' => true,
+			'duration'    => 10, // Default dismissible duration is 10 Seconds for save notices etc...
 		);
+		$has_dismissible_notices = false;
 		foreach ( $components as $component ) {
 			$notices = $component->get_notices();
 			foreach ( $notices as $notice ) {
 				if ( ! empty( $notice ) && ! empty( $notice['message'] ) ) {
 					$notice = wp_parse_args( $notice, $default );
 					if ( true === $notice['dismissible'] ) {
-						$html = sprintf(
-							'<div class="notice-%1$s settings-error notice is-dismissible"><p><strong>%2$s</strong></p><button type="button" class="notice-dismiss"><span class="screen-reader-text">%3$s</span></button></div>',
-							esc_attr( $notice['type'] ),
-							$notice['message'],
-							__( 'Dismiss this notice.', 'cloudinary' )
-						);
+						// Convert the whole notice data into a string, and make it a hash.
+						// This allows the same notice to show if it has a change, i.e Quota limits change.
+						$notice_key = md5( wp_json_encode( $notice ) );
+						if ( ! get_transient( $notice_key ) ) {
+							$html = sprintf(
+								'<div class="notice-%1$s settings-error notice is-dismissible cld-notice" dismiss="alert" data-dismiss="%3$s" data-duration="%4$d"><p><strong>%2$s</strong></p></div>',
+								esc_attr( $notice['type'] ),
+								$notice['message'],
+								esc_attr( $notice_key ),
+								esc_attr( $notice['duration'] )
+							);
+							// Flag a dismissible notice has been shown.
+							$has_dismissible_notices = true;
+						}
 					} else {
 						$html = sprintf(
 							'<div class="notice-%1$s settings-error notice"><p><strong>%2$s</strong></p></div>',
@@ -320,6 +382,14 @@ class Plugin {
 					echo wp_kses_post( $html );
 				}
 			}
+		}
+		// Output notice endpoint data only if a dismissible notice has been shown.
+		if ( $has_dismissible_notices ) {
+			$args = array(
+				'url'   => rest_url( REST_API::BASE . '/dismiss_notice' ),
+				'nonce' => wp_create_nonce( 'wp_rest' ),
+			);
+			wp_add_inline_script( 'cloudinary', 'var CLDIS = ' . wp_json_encode( $args ), 'before' );
 		}
 	}
 

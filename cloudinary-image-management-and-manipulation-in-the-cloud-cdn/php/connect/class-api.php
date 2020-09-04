@@ -7,6 +7,9 @@
 
 namespace Cloudinary\Connect;
 
+use Cloudinary\Connect;
+use function Cloudinary\get_plugin_instance;
+
 /**
  * Class API.
  *
@@ -139,10 +142,11 @@ class Api {
 	 */
 	public function __construct( $connect, $version ) {
 		$this->credentials = $connect->get_credentials();
+		$this->plugin_version = $version;
+		// Use CNAME.
 		if ( ! empty( $this->credentials['cname'] ) ) {
 			$this->asset_url = $this->credentials['cname'];
 		}
-		$this->plugin_version = $version;
 	}
 
 	/**
@@ -156,15 +160,18 @@ class Api {
 	 */
 	public function url( $resource, $function = null, $endpoint = false ) {
 		$parts = array();
+
 		if ( $endpoint ) {
 			$parts[] = $this->api_url;
 			$parts[] = $this->api_version;
 		} else {
 			$parts[] = $this->asset_url;
 		}
+
 		if ( empty( $this->credentials['cname'] ) || $endpoint ) {
 			$parts[] = $this->credentials['cloud_name'];
 		}
+
 		$parts[] = $resource;
 		$parts[] = $function;
 
@@ -183,6 +190,9 @@ class Api {
 	 * @return string
 	 */
 	public static function generate_transformation_string( array $options, $type = 'image' ) {
+		if ( ! isset( self::$transformation_index[ $type ] ) ) {
+			return '';
+		}
 		$transformation_index = self::$transformation_index[ $type ];
 		$transformations      = array_map(
 			function ( $item ) use ( $transformation_index ) {
@@ -220,23 +230,26 @@ class Api {
 	/**
 	 * Generate a Cloudinary URL.
 	 *
-	 * @param string $public_id The Public ID to get a url for.
+	 * @param string|null $public_id The Public ID to get a url for.
 	 * @param array  $args      Additional args.
 	 * @param array  $size      The WP Size array.
 	 * @param bool   $clean     Flag to produce a non variable size url.
 	 *
 	 * @return string
 	 */
-	public function cloudinary_url( $public_id, $args = array(), $size = array(), $clean = false ) {
+	public function cloudinary_url( $public_id = null, $args = array(), $size = array(), $clean = false ) {
+
+		if ( null === $public_id ) {
+			return 'https://' . $this->url( null, null );
+		}
 		$defaults = array(
 			'resource_type' => 'image',
 			'version'       => 'v1',
 		);
 		$args     = wp_parse_args( array_filter( $args ), $defaults );
 		// Correct Audio to Video.
-		if ( 'audio' === $args['resource_type'] ) {
-			$args['resource_type'] = 'video';
-		}
+		$args['resource_type'] = $this->convert_resource_type( $args['resource_type'] );
+
 		// check for version.
 		if ( ! empty( $args['version'] ) && is_numeric( $args['version'] ) ) {
 			$args['version'] = 'v' . $args['version'];
@@ -260,6 +273,15 @@ class Api {
 			if ( true === $clean ) {
 				$size['clean'] = true;
 			}
+			if ( array_keys( $size ) == array( 0, 1 ) ) {
+				$size = array(
+					'width'  => $size[0],
+					'height' => $size[1],
+				);
+				if ( $size['width'] === $size['height'] ) {
+					$size['crop'] = 'fill';
+				}
+			}
 			$url_parts[] = self::generate_transformation_string( array( $size ) );
 		}
 
@@ -270,6 +292,26 @@ class Api {
 		$url_parts = array_filter( $url_parts );
 
 		return implode( '/', $url_parts );
+	}
+
+	/**
+	 * Convert the resource type into the usable Cloudinary type.
+	 *
+	 * @param string $type The type to convert.
+	 *
+	 * @return string
+	 */
+	public function convert_resource_type( $type ) {
+		$convert_resource_type = array(
+			'application' => 'image',
+			'audio'       => 'video',
+		);
+
+		if ( isset( $convert_resource_type[ $type ] ) ) {
+			$type = $convert_resource_type[ $type ];
+		}
+
+		return $type;
 	}
 
 	/**
@@ -372,13 +414,19 @@ class Api {
 	public function upload( $attachment_id, $args, $headers = array() ) {
 
 		$resource            = ! empty( $args['resource_type'] ) ? $args['resource_type'] : 'image';
+		$resource            = $this->convert_resource_type( $resource );
 		$url                 = $this->url( $resource, 'upload', true );
 		$args                = $this->clean_args( $args );
 		$disable_https_fetch = get_transient( '_cld_disable_http_upload' );
-
+		$file_url            = wp_get_attachment_url( $attachment_id );
+		$media               = get_plugin_instance()->get_component( 'media' );
+		if ( $media && $media->is_cloudinary_url( $file_url ) ) {
+			// If this is a Cloudinary URL, then we can use it to fetch from that location.
+			$disable_https_fetch = false;
+		}
 		// Check if we can try http file upload.
 		if ( empty( $headers ) && empty( $disable_https_fetch ) ) {
-			$args['file'] = wp_get_attachment_url( $attachment_id );
+			$args['file'] = $file_url;
 		} else {
 			// We should have the file in args at this point, but if the transient was set, it will be defaulting here.
 			if ( empty( $args['file'] ) ) {
@@ -418,12 +466,13 @@ class Api {
 		// Hook in flag to allow for non accessible URLS.
 		if ( is_wp_error( $result ) ) {
 			$error = $result->get_error_message();
+			$code = $result->get_error_code();
 			/**
 			 * If there's an error and the file is a URL in the error message,
 			 * it's likely due to CURL or the location does not support URL file attachments.
 			 * In this case, we'll flag and disable it and try again with a local file.
 			 */
-			if ( empty( $disable_https_fetch ) && false !== strpos( $error, $args['file'] ) ) {
+			if ( 404 !== $code && empty( $disable_https_fetch ) && false !== strpos( $error, $args['file'] ) ) {
 				// URLS are not remotely available, try again as a file.
 				set_transient( '_cld_disable_http_upload', true, DAY_IN_SECONDS );
 				// Remove URL file.

@@ -219,9 +219,7 @@ class Push_Sync {
 				$stat[ $attachment_id ][ $type ] = $this->sync->run_sync_method( $type, 'sync', $attachment_id );
 			}
 			// remove pending.
-			if ( $this->sync->is_pending( $attachment_id ) ) {
-				$this->media->delete_post_meta( $attachment_id, Sync::META_KEYS['pending'] );
-			}
+			delete_post_meta( $attachment_id, Sync::META_KEYS['pending'] );
 			// Record Process log.
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['process_log'], $stat[ $attachment_id ] );
 			// Remove processing flag.
