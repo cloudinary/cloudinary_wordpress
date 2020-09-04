@@ -235,12 +235,14 @@ class Sync_Queue {
 
 	/**
 	 * Validate the queue is up to date and populate with unsynced assets.
+	 * 
+	 * @param bool $rebuild_queue Force a queue rebuild.
 	 *
 	 * @return array Validated Queue.
 	 */
-	public function validate_queue() {
+	public function validate_queue( $rebuild_queue = false ) {
 
-		$queue = $this->get_queue();
+		$queue = $this->get_queue( $rebuild_queue );
 		if ( ! empty( $queue['processing'] ) ) {
 			foreach ( $queue['processing'] as $attachment_id ) {
 				if ( $this->plugin->get_component( 'sync' )->is_synced( $attachment_id ) ) {
@@ -248,7 +250,7 @@ class Sync_Queue {
 				}
 			}
 			// Get queue to get new version with marked processing.
-			$queue = $this->get_queue();
+			$queue = $this->get_queue( $rebuild_queue );
 		}
 		$args = array(
 			'post_type'           => 'attachment',
