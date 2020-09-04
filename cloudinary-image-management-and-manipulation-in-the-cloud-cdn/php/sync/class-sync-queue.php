@@ -190,7 +190,7 @@ class Sync_Queue {
 	 * @return array
 	 */
 	public function get_queue_status() {
-		$queue   = $this->get_queue();
+		$queue   = $this->validate_queue();
 		$pending = 0;
 		foreach ( $this->threads as $thread ) {
 			$pending += count( $queue[ $thread ] );
@@ -233,10 +233,22 @@ class Sync_Queue {
 	}
 
 	/**
-	 * Build the upload sync queue.
+	 * Validate the queue is up to date and populate with unsynced assets.
+	 *
+	 * @return array Validated Queue.
 	 */
-	public function build_queue() {
+	public function validate_queue() {
 
+		$queue = $this->get_queue();
+		if ( ! empty( $queue['processing'] ) ) {
+			foreach ( $queue['processing'] as $attachment_id ) {
+				if ( $this->plugin->get_component( 'sync' )->is_synced( $attachment_id ) ) {
+					$this->mark( $attachment_id, 'done' );
+				}
+			}
+			// Get queue to get new version with marked processing.
+			$queue = $this->get_queue();
+		}
 		$args = array(
 			'post_type'           => 'attachment',
 			'post_mime_type'      => array( 'image', 'video' ),
@@ -260,6 +272,34 @@ class Sync_Queue {
 
 		$attachments = new \WP_Query( $args );
 		$ids         = $attachments->get_posts();
+		// Reset Threads.
+		foreach ( $this->threads as $thread ) {
+			$queue[ $thread ]               = array();
+			$queue['run_status'][ $thread ] = array();
+		}
+		// Add items to pending queue.
+		if ( ! empty( $ids ) ) {
+			$chunk_size = ceil( count( $ids ) / count( $this->threads ) );
+			$chunks     = array_chunk( $ids, $chunk_size );
+			foreach ( $chunks as $index => $chunk ) {
+				$queue[ $this->threads[ $index ] ] = $chunk;
+				// Check thread is still running.
+				if ( $this->is_running() && ! $this->thread_running( $this->threads[ $index ] ) ) {
+					$this->start_thread( $this->threads[ $index ] );
+				}
+			}
+		}
+
+		$this->set_queue( $queue );
+
+		return $queue;
+	}
+
+	/**
+	 * Build the upload sync queue.
+	 */
+	public function build_queue() {
+
 		// Transform attachments.
 		$return = array(
 			'done'       => array(),
@@ -272,16 +312,8 @@ class Sync_Queue {
 			$return['run_status'][ $thread ] = array();
 		}
 
-		// Add items to pending queue.
-		if ( ! empty( $ids ) ) {
-			$chunk_size = ceil( count( $ids ) / count( $this->threads ) );
-			$chunks     = array_chunk( $ids, $chunk_size );
-			foreach ( $chunks as $index => $chunk ) {
-				$return[ $this->threads[ $index ] ] = $chunk;
-			}
-		}
-
 		$this->set_queue( $return );
+		$this->validate_queue();
 
 		return $return;
 	}

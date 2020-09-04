@@ -634,12 +634,13 @@ class Media implements Setup {
 	 * @return string Cloudinary URL.
 	 */
 	public function attachment_url( $url, $attachment_id ) {
+		// Previous v1 and Cloudinary only storage.
+		$previous_url = strpos( $url, untrailingslashit( $this->base_url ) );
+		if ( false !== $previous_url ) {
+			return substr( $url, $previous_url );
+		}
 		if ( ! doing_action( 'wp_insert_post_data' ) && false === $this->in_downsize ) {
-			// Previous v1.
-			$previous_url = strpos( $url, untrailingslashit( $this->base_url ) );
-			if ( false !== $previous_url ) {
-				$url = substr( $url, $previous_url );
-			} elseif ( $this->cloudinary_id( $attachment_id ) ) {
+			if ( $this->cloudinary_id( $attachment_id ) ) {
 				$url = $this->cloudinary_url( $attachment_id );
 			}
 		}
@@ -743,7 +744,7 @@ class Media implements Setup {
 		// Setup initial args for cloudinary_url.
 		$pre_args = array(
 			'secure'        => is_ssl(),
-			'version'       => $this->get_post_meta( $attachment_id, Sync::META_KEYS['version'], true ),
+			'version'       => $this->get_cloudinary_version( $attachment_id ),
 			'resource_type' => $resource_type,
 		);
 
@@ -1315,7 +1316,7 @@ class Media implements Setup {
 					update_post_meta( $asset['attachment_id'], '_wp_attachment_image_alt', $alt_text );
 				}
 				// Compare Version.
-				$current_version = (int) $this->get_post_meta( $asset['attachment_id'], Sync::META_KEYS['version'], true );
+				$current_version = $this->get_cloudinary_version( $asset['attachment_id'] );
 				if ( $current_version !== $asset['version'] ) {
 					// Difference version, remove files, and downsync new files related to this asset.
 					// If this is a different version, we should try find attachments with the base sync key and update the source.
@@ -1750,6 +1751,19 @@ class Media implements Setup {
 	}
 
 	/**
+	 * Get the cloudinary version of an attachment.
+	 *
+	 * @param int $attachment_id The attachment_ID.
+	 *
+	 * @return int
+	 */
+	public function get_cloudinary_version( $attachment_id ) {
+		$version = (int) $this->get_post_meta( $attachment_id, Sync::META_KEYS['version'], true );
+
+		return $version ? $version : 1;
+	}
+
+	/**
 	 * Setup the hooks and base_url if configured.
 	 */
 	public function setup() {
@@ -1780,7 +1794,7 @@ class Media implements Setup {
 			// Filter live URLS. (functions that return a URL).
 			add_filter( 'wp_calculate_image_srcset', array( $this, 'image_srcset' ), 10, 5 );
 			add_filter( 'wp_calculate_image_srcset_meta', array( $this, 'match_responsive_sources' ), 10, 4 );
-			add_filter( 'wp_get_attachment_metadata', array( $this, 'match_file_name_with_cloudinary_source' ) );
+			add_filter( 'wp_get_attachment_metadata', array( $this, 'match_file_name_with_cloudinary_source' ), 10, 2 );
 			add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
 			add_filter( 'image_downsize', array( $this, 'filter_downsize' ), 10, 3 );
 
@@ -1794,33 +1808,18 @@ class Media implements Setup {
 	}
 
 	/**
-	 * In certain situations when images had changes applied to them directly (ie. transformations)
-	 * on Cloudinary, when syncing to WordPress it will append a "-n" to the image file name.
-	 * This can cause a mismatch of file names when WordPress attempts to attach the
-	 * srcset attribute to the image. In this method, we account for this potential
-	 * situation and handle it accordingly by replacing this "-n" name with the original name.
+	 * Ensure the file in image meta is the same as the Cloudinary ID.
 	 *
-	 * @param array $image_meta Meta information of the attachment.
+	 * @param array $image_meta    Meta information of the attachment.
+	 * @param int   $attachment_id The attachment ID.
 	 *
 	 * @return array
 	 */
-	public function match_file_name_with_cloudinary_source( $image_meta ) {
-		if ( isset( $image_meta[ Sync::META_KEYS['cloudinary'] ] ) ) {
-			$extension = pathinfo( $image_meta['file'], PATHINFO_EXTENSION );
-			$cld_file  = $image_meta[ Sync::META_KEYS['cloudinary'] ][ Sync::META_KEYS['public_id'] ] . '.' . $extension;
-
+	public function match_file_name_with_cloudinary_source( $image_meta, $attachment_id ) {
+		if ( $this->has_public_id( $attachment_id ) ) {
+			$cld_file = 'v' . $this->get_cloudinary_version( $attachment_id ) . '/' . $this->get_cloudinary_id( $attachment_id );
 			if ( false === strpos( $image_meta['file'], $cld_file ) ) {
 				$image_meta['file'] = $cld_file;
-
-				// Match sizes to exclude sizes suffix.
-				if ( isset( $image_meta['sizes'] ) ) {
-					// Create backup sizes.
-					$image_meta['backup_sizes'] = $image_meta['sizes'];
-					// Match sizes to exclude sizes suffix.
-					foreach ( $image_meta['sizes'] as &$size ) {
-						$size['file'] = basename( $cld_file );
-					}
-				}
 			}
 		}
 

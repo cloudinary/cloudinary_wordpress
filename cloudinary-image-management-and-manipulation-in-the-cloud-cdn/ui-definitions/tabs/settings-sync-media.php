@@ -31,29 +31,18 @@ $struct = array(
 		),
 		'offload' => array(
 			'label'   => __( 'Storage', 'cloudinary' ),
+			'description' => sprintf(
+				// translators: Placeholders are <a> tags.
+				__( 'Choose where to store your assets. Assets stored in both Cloudinary and WordPress will enable local WordPress delivery if the Cloudinary plugin is disabled or uninstalled. Storing assets with WordPress in lower resolution will save on local WordPress storage and enable low resolution local WordPress delivery if the plugin is disabled. Storing assets with Cloudinary only will require additional steps to enable backwards compatibility. For help managing your storage, submit a %1$s support request.%2$s', 'cloudinary' ),
+				'<a href="https://support.cloudinary.com/hc/en-us/requests/new" target="_blank">',
+				'</a>'
+			),
 			'type'    => 'select',
 			'default' => 'dual_full',
-			'choices' => array(
-				'dual_full' => __( 'Cloudinary and WordPress', 'cloudinary' ),
-				'cld'       => __( 'Cloudinary only', 'cloudinary' ),
-				'dual_low'  => __( 'Cloudinary with low resolution on WordPress', 'cloudinary' ),
-			),
-		),
-		'low_res' => array(
-			'label'       => __( 'Low Resolution', 'cloudinary' ),
-			'description' => __( 'The compression quality to apply to local stored assets.', 'cloudinary' ),
-			'type'        => 'select',
 			'choices'     => array(
-				'40' => '40',
-				'20' => '20',
-				'10' => '10',
-				'5'  => '5',
-				'2'  => '2',
-			),
-			'default'     => '20',
-			'suffix'      => '%',
-			'condition'   => array(
-				'offload' => 'dual_low',
+				'dual_full' => __( 'Cloudinary and WordPress', 'cloudinary' ),
+				'dual_low'  => __( 'Cloudinary and WordPress (low resolution)', 'cloudinary' ),
+				'cld'       => __( 'Cloudinary only', 'cloudinary' ),
 			),
 		),
 	),

@@ -116,13 +116,12 @@ class Upgrade {
 					$this->media->delete_post_meta( $attachment_id, Sync::META_KEYS['sync_error'] ); // Remove any errors from upgrade. they are outdated.
 					$this->sync->set_signature_item( $attachment_id, 'folder' );
 				}
-				// Since it had a folder sync, it was already matched with existing, so set the suffix.
-				$this->sync->set_signature_item( $attachment_id, 'suffix' );
 			}
 		}
 		$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['plugin_version'], $this->media->plugin->version );
 		$this->sync->set_signature_item( $attachment_id, 'upgrade' );
 		$this->sync->set_signature_item( $attachment_id, 'public_id' );
+		$this->sync->set_signature_item( $attachment_id, 'storage' );
 		// Update Sync keys.
 		$sync_key        = $public_id;
 		$transformations = $this->media->get_transformation_from_meta( $attachment_id );

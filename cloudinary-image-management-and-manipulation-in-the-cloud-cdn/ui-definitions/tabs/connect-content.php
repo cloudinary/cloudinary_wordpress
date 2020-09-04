@@ -6,7 +6,7 @@
  */
 
 ?>
-<?php if ( ! empty( $this->plugin->config['connect'] ) ) : ?>
+<?php if ( $this->plugin->get_component( 'connect' )->is_connected() ) : ?>
 	<div class="settings-tab-section-card">
 		<div class="settings-tab-section-fields-dashboard-success">
 			<span class="dashicons dashicons-yes"></span> <strong><?php esc_html_e( 'Connected to Cloudinary', 'cloudinary' ); ?></strong>

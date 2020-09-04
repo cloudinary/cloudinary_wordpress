@@ -90,6 +90,11 @@
 						font-size : 1.2em;
 						color     : #5F5F5F;
 
+						&.expanded {
+							padding-top   : 40px;
+							margin-bottom : 25px;
+						}
+
 						.dashicons {
 							color : #AC0000;
 						}
@@ -108,7 +113,8 @@
 						color     : #23282d;
 
 						&.expanded {
-							padding-top : 40px;
+							padding-top   : 40px;
+							margin-bottom : 25px;
 						}
 
 						.dashicons {
@@ -210,29 +216,25 @@
 }
 
 .settings-warning {
-	display: inline-block;
-	padding: 5px 7px;
-	background-color: #e9faff;
-	border: 1px solid #ccd0d4;
-	border-left: 4px solid #00a0d2;
-	box-shadow: 0 1px 1px rgba(0,0,0,.04);
+	display          : inline-block;
+	padding          : 5px 7px;
+	background-color : #e9faff;
+	border           : 1px solid #ccd0d4;
+	border-left      : 4px solid #00a0d2;
+	box-shadow       : 0 1px 1px rgba(0, 0, 0, .04);
 }
 
 .field-radio {
 	input[type=radio].cld-field {
-		margin: 0;
-		margin-right: 5px;
+		margin       : 0;
+		margin-right : 5px;
 	}
 
 	label {
-		margin-right: 10px;
+		margin-right : 10px;
 	}
 }
 
 .settings-tab-section h2 {
-	margin: 0;
-}
-
-hr {
-	margin-top: 25px;
+	margin : 0;
 }
