@@ -336,6 +336,26 @@ class Sync implements Setup, Assets {
 	}
 
 	/**
+	 * Generates a signature based on whether or not the file exists.
+	 *
+	 * @param $attachment_id
+	 *
+	 * @return mixed|void
+	 */
+	public function generator_file_exists( $attachment_id ) {
+		$local_file  = get_attached_file( $attachment_id );
+		$file_exists = file_exists( $local_file );
+
+		/**
+		 * Filter to allow overriding the check if an attachment file exists.
+		 *
+		 * @var bool $file_exists   The flag if the file exists.
+		 * @var int  $attachment_id The attachment ID.
+		 */
+		return apply_filters( 'cloudinary_sync_download_file_exists', $file_exists, $attachment_id );
+	}
+
+	/**
 	 * Get built-in structures that form an assets entire sync state. This holds methods for building signatures for each state of synchronization.
 	 * These can be extended via 3rd parties by adding to the structures with custom types and generation and sync methods.
 	 */
@@ -352,12 +372,7 @@ class Sync implements Setup, Assets {
 				'realtime' => true,
 			),
 			'download'    => array(
-				'generate' => '__return_false',
-				'validate' => function ( $attachment_id ) {
-					$file = get_attached_file( $attachment_id );
-
-					return ! file_exists( $file );
-				},
+				'generate' => array( $this, 'generator_file_exists' ),
 				'priority' => 1,
 				'sync'     => array( $this->managers['download'], 'download_asset' ),
 				'state'    => 'info downloading',

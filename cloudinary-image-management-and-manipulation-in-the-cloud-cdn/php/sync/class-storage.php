@@ -84,6 +84,24 @@ class Storage implements Notice {
 		add_filter( 'cloudinary_sync_base_struct', array( $this, 'add_file_folder_validators' ) );
 		// Add sync storage checks.
 		add_filter( 'cloudinary_render_field', array( $this, 'maybe_disable_connect' ), 10, 2 );
+		// Ensure file exists return true when storage is Cloudinary Only.
+		add_filter( 'cloudinary_sync_download_file_exists', array( $this, 'file_exists_maybe' ), 10, 2 );
+	}
+
+	/**
+	 * Checks if file exists, if not stored on Cloudinary Only.
+	 *
+	 * @param bool $file_exists   Flag if file exists or not.
+	 * @param int  $attachment_id The attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function file_exists_maybe( $file_exists, $attachment_id ) {
+		if ( false === $file_exists && 'cld' === $this->settings['offload'] ) {
+			$file_exists = true;
+		}
+
+		return $file_exists;
 	}
 
 	/**
