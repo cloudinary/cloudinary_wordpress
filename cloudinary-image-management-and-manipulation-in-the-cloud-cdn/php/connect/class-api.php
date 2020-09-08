@@ -418,7 +418,7 @@ class Api {
 		$url                 = $this->url( $resource, 'upload', true );
 		$args                = $this->clean_args( $args );
 		$disable_https_fetch = get_transient( '_cld_disable_http_upload' );
-		$file_url            = wp_get_attachment_url( $attachment_id );
+		$file_url            = wp_get_original_image_url( $attachment_id );
 		$media               = get_plugin_instance()->get_component( 'media' );
 		if ( $media && $media->is_cloudinary_url( $file_url ) ) {
 			// If this is a Cloudinary URL, then we can use it to fetch from that location.
@@ -430,7 +430,7 @@ class Api {
 		} else {
 			// We should have the file in args at this point, but if the transient was set, it will be defaulting here.
 			if ( empty( $args['file'] ) ) {
-				$args['file'] = get_attached_file( $attachment_id );
+				$args['file'] = wp_get_original_image_path( $attachment_id );
 			}
 			// Headers indicate chunked upload.
 			if ( empty( $headers ) ) {
