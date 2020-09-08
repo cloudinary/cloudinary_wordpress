@@ -11,10 +11,10 @@ $autosync = $this->plugin->components['sync']->is_auto_sync_enabled();
 <?php if ( ! empty( $this->plugin->config['connect'] ) ) : ?>
 	<div id="auto-sync-alert" style="display:none;">
 		<p>
-			<?php esc_html_e( 'Enabling Auto Sync will result in slower loading times, but only once if the asset was not synced to Cloudinary yet. A way to avoid this one-time latency is by initiating a Bulk-Sync by pressing the button at the bottom of this page.', 'cloudinary' ) ?>
+			<?php esc_html_e( 'Enabling Auto Sync may result in a slower load time for each asset when first requested as this will trigger the sync with Cloudinary. To avoid this delay, sync all assets in advance using the Bulk Sync option.', 'cloudinary' ) ?>
 		</p>
 	</div>
-	<a href="#TB_inline?&inlineId=auto-sync-alert&height=90" title="<?php esc_attr_e( 'Warning', 'cloudinary' ) ?>" id="auto-sync-alert-btn" class="thickbox"></a>
+	<a href="#TB_inline?&inlineId=auto-sync-alert&height=100" title="<?php esc_attr_e( 'Auto Sync', 'cloudinary' ) ?>" id="auto-sync-alert-btn" class="thickbox"></a>
 	<div class="settings-tab-section-card">
 		<div class="settings-tab-section-fields-dashboard-success">
 			<?php if ( true === $autosync ) : ?>
