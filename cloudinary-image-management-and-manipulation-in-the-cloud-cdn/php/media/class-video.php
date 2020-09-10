@@ -258,9 +258,9 @@ class Video {
 			return new \WP_Error('bad_args', 'The "eager" and "public_id" args are required');
 		}
 
+		$args['type']        = 'upload';
 		$args['eager_async'] = 1;
-		$args['type']		 = 'upload';
-
+		
 		return $this->media->plugin->components['connect']->api->explicit( $args, 'video' );
 	}
 
@@ -347,7 +347,7 @@ class Video {
 					$new_tag = str_replace( 'src="' . $url . '"', 'id="cloudinary-video-' . esc_attr( $instance ) . '"', $tag );
 					$content = str_replace( $tag, $new_tag, $content );
 				} else {
-					$res 		 = wp_remote_get( $cloudinary_url );
+					$res 		 = wp_remote_head( $cloudinary_url );
 					$res_headers = wp_remote_retrieve_headers( $res );
 
 					if ( 
@@ -442,7 +442,7 @@ class Video {
 								'upload/<?php echo esc_js( $this->config['video_freeform'] ) ?>/'
 							);
 
-							fetch( videoSrc ).then( function( res ) {
+							fetch( videoSrc, { method: 'HEAD' } ).then( function( res ) {
 								var headers = '';
 								res.headers.forEach(function(header) { headers += header.toLowerCase(); });
 
