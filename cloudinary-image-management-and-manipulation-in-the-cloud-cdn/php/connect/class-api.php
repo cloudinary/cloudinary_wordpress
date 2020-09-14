@@ -511,7 +511,8 @@ class Api {
 	/**
 	 * Expicit update of an asset.
 	 *
-	 * @param array $args Array of options to update.
+	 * @param array  $args Array of options to update.
+	 * @param string $type The type of endpoint that's being called: 'video' or 'image'.
 	 *
 	 * @return array|\WP_Error
 	 */

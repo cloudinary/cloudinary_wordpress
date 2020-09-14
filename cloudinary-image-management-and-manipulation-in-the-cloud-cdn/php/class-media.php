@@ -157,8 +157,6 @@ class Media implements Setup {
 	 * @return array
 	 */
 	public function get_convertible_extensions() {
-
-
 		// Add preferred formats in future.
 		$base_types = array(
 			'psd'  => 'jpg',
@@ -592,8 +590,9 @@ class Media implements Setup {
 	/**
 	 * Convert a url param based transformation string into an array.
 	 *
-	 * @param string $str  The transformation string.
-	 * @param string $type The type of transformation string.
+	 * @param string $str           The transformation string.
+	 * @param string $type          The type of transformation string.
+	 * @param bool   $return_string Whether to return a string or an array of transformations.
 	 *
 	 * @return array The array of found transformations within the string.
 	 */
@@ -612,7 +611,7 @@ class Media implements Setup {
 				$item = trim( $item );
 				foreach ( $params as $param => $type ) {
 					if ( substr( $item, 0, strlen( $param ) + 1 ) === $param . '_' ) {
-						if ( $return_string === false ) {
+						if ( false === $return_string ) {
 							$transformations[ $index ][ $type ] = substr( $item, strlen( $param ) + 1 );
 						} else {
 							$transformations[] = $item;
@@ -680,7 +679,7 @@ class Media implements Setup {
 					$default['fetch_format'] = 'auto';
 				}
 				if ( isset( $global[ $type . '_quality' ] ) ) {
-					$default['quality'] = $global[ $type . '_quality' ] !== 'none' ? $global[ $type . '_quality' ] : null;
+					$default['quality'] = 'none' !== $global[ $type . '_quality' ] ? $global[ $type . '_quality' ] : null;
 				} else {
 					$default['quality'] = 'auto';
 				}
@@ -1270,9 +1269,12 @@ class Media implements Setup {
 
 		// Move all context data into the meta key.
 		if ( ! empty( $data['asset']['context'] ) ) {
-			array_walk_recursive( $data['asset']['context'], function ( $value, $key ) use ( &$asset ) {
-				$asset['meta'][ $key ] = filter_var( $value, FILTER_SANITIZE_STRING );
-			} );
+			array_walk_recursive(
+				$data['asset']['context'],
+				function ( $value, $key ) use ( &$asset ) {
+					$asset['meta'][ $key ] = filter_var( $value, FILTER_SANITIZE_STRING );
+				}
+			);
 		}
 
 		// Check for transformations.
@@ -1293,8 +1295,6 @@ class Media implements Setup {
 	public function down_sync_asset() {
 		$nonce = filter_input( INPUT_POST, 'nonce', FILTER_SANITIZE_STRING );
 		if ( wp_verify_nonce( $nonce, 'wp_rest' ) ) {
-
-
 			$asset = $this->get_asset_payload();
 			// Set a base array for pulling an asset if needed.
 			$base_return = array(
@@ -1745,9 +1745,12 @@ class Media implements Setup {
 	 */
 	public function set_doing_featured( $post_id, $attachment_id ) {
 		$this->doing_featured_image = $attachment_id;
-		add_action( 'end_fetch_post_thumbnail_html', function () {
-			$this->doing_featured_image = false;
-		} );
+		add_action(
+			'end_fetch_post_thumbnail_html',
+			function () {
+				$this->doing_featured_image = false;
+			}
+		);
 	}
 
 	/**

@@ -173,7 +173,7 @@ class Push_Sync {
 	 * Send an explicit request for large videos so that transformations can be applied async.
 	 *
 	 * @param \WP_REST_Request $request
-	 * 
+	 *
 	 * @return \WP_REST_Response
 	 */
 	public function rest_video_explicit_upload( \WP_REST_Request $request ) {
@@ -181,7 +181,7 @@ class Push_Sync {
 
 		$this->media->video->queue_eager_video( $req_body );
 
-		rest_ensure_response('ok');
+		rest_ensure_response( 'ok' );
 	}
 
 	/**

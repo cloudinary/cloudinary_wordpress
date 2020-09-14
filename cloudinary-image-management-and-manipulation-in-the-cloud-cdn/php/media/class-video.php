@@ -220,7 +220,7 @@ class Video {
 
 		if ( isset( $attr['autoplay'] ) ) {
 			$args['autoplay'] = 'true' === $attr['autoplay'];
-			$args['muted'] = 'true' === $attr['autoplay'];
+			$args['muted']    = 'true' === $attr['autoplay'];
 		}
 		if ( isset( $attr['loop'] ) ) {
 			$args['loop'] = 'true' === $attr['loop'];
@@ -250,17 +250,17 @@ class Video {
 	 * Makes an explicit video API call in order to eagerly tranform a video.
 	 *
 	 * @param array $args
-	 * 
-	 * @return array The API response.
+	 *
+	 * @return array|\WP_Error.
 	 */
 	public function queue_eager_video( array $args ) {
 		if ( ! isset( $args['eager'], $args['public_id'] ) ) {
-			return new \WP_Error('bad_args', 'The "eager" and "public_id" args are required');
+			return new \WP_Error( 'bad_args', 'The "eager" and "public_id" args are required' );
 		}
 
 		$args['type']        = 'upload';
 		$args['eager_async'] = 1;
-		
+
 		return $this->media->plugin->components['connect']->api->explicit( $args, 'video' );
 	}
 
@@ -304,7 +304,7 @@ class Video {
 			// Enable Autoplay for this video.
 			if ( false !== strpos( $tag, 'autoplay' ) ) {
 				$args['autoplayMode'] = $this->config['video_autoplay_mode']; // if on, use defined mode.
-				$args['muted'] = 'always' === $this->config['video_autoplay_mode'];
+				$args['muted']        = 'always' === $this->config['video_autoplay_mode'];
 			}
 			// Enable Loop.
 			if ( false !== strpos( $tag, 'loop' ) ) {
@@ -336,7 +336,7 @@ class Video {
 			// Cases are, for instance, when the file size is larger than the API limits — free accounts.
 			if ( ! empty( $cloudinary_url ) ) {
 				$transformations = $this->media->get_transformations_from_string( $cloudinary_url, 'video' );
-	
+
 				if ( ! empty( $transformations ) ) {
 					$args['transformation'] = $transformations;
 				}
@@ -347,21 +347,27 @@ class Video {
 					$new_tag = str_replace( 'src="' . $url . '"', 'id="cloudinary-video-' . esc_attr( $instance ) . '"', $tag );
 					$content = str_replace( $tag, $new_tag, $content );
 				} else {
-					$res 		 = wp_remote_head( $cloudinary_url );
+					$res         = wp_remote_head( $cloudinary_url );
 					$res_headers = wp_remote_retrieve_headers( $res );
 
-					if ( 
-						isset( $res_headers['x-cld-error'] ) && 
-						false !== strpos( $res_headers['x-cld-error'], 'Video is too large' ) 
+					if (
+						isset( $res_headers['x-cld-error'] ) &&
+						false !== strpos( $res_headers['x-cld-error'], 'Video is too large' )
 					) {
 						$transformations = $this->media->get_transformations_from_string( $cloudinary_url, 'video', true );
-						
-						$res = $this->queue_eager_video( array(
-							'eager' 	=> $transformations,
-							'public_id'	=> $this->media->get_public_id( $attachment_id ),
-						) );
-							
-						$cloudinary_url = $res['secure_url'];
+
+						$res = $this->queue_eager_video(
+							array(
+								'eager'     => $transformations,
+								'public_id' => $this->media->get_public_id( $attachment_id ),
+							)
+						);
+
+						if ( ! is_wp_error( $res ) ) {
+							$cloudinary_url = $res['secure_url'];
+						} else {
+							$cloudinary_url = str_replace( $transformations, '', $cloudinary_url );
+						}
 					}
 
 					// Just replace URL.
@@ -372,7 +378,7 @@ class Video {
 
 		return $content;
 	}
-	
+
 
 	/**
 	 * Output init scripts in footer for videos.
@@ -392,7 +398,7 @@ class Video {
 					'loop'        => 'on' === $this->config['video_loop'] ? true : false,
 				);
 
-				$valid_autoplay_modes = [ 'never', 'always', 'on-scroll' ];
+				$valid_autoplay_modes = array( 'never', 'always', 'on-scroll' );
 				if ( $default['autoplay'] && in_array( $this->config['video_autoplay_mode'], $valid_autoplay_modes, true ) ) {
 					$default['autoplayMode'] = $this->config['video_autoplay_mode'];
 				}
@@ -402,7 +408,7 @@ class Video {
 				if ( empty( $config['size'] ) && ! empty( $config['transformation'] ) && ! $this->media->get_crop_from_transformation( $config['transformation'] ) ) {
 					$config['fluid'] = true;
 				}
-				
+
 				$config['controls'] = 'on' === $this->config['video_controls'] ? true : false;
 				$cld_videos[ $instance ] = $config;
 			}
@@ -414,7 +420,7 @@ class Video {
 			ob_start();
 			?>
 			var cldVideos = <?php echo wp_json_encode( $cld_videos ); ?>;
-			
+
 			for ( var videoInstance in cldVideos ) {
 				var cldConfig = cldVideos[ videoInstance ];
 				var cldId = 'cloudinary-video-' + videoInstance;
@@ -430,16 +436,16 @@ class Video {
 					if ( videoElement.length === 1 ) {
 						videoElement = videoElement[0];
 						videoElement.style.width = '100%';
-						<?php if ( $this->config['video_freeform'] ): ?>
+						<?php if ( $this->config['video_freeform'] ) : ?>
 
 						if ( 
-							videoElement.src.indexOf( '<?php echo esc_js( $this->config['video_freeform'] ) ?>' ) === -1 &&
+							videoElement.src.indexOf( '<?php echo esc_js( $this->config['video_freeform'] ); ?>' ) === -1 &&
 							! cldVideos[videoInstance]['overwrite_transformations']
 						) {
 							var videoOriginalSrc = videoElement.src;
 							var videoSrc = videoOriginalSrc.replace(
 								'upload/',
-								'upload/<?php echo esc_js( $this->config['video_freeform'] ) ?>/'
+								'upload/<?php echo esc_js( $this->config['video_freeform'] ); ?>/'
 							);
 
 							fetch( videoSrc, { method: 'HEAD' } ).then( function( res ) {
@@ -453,10 +459,10 @@ class Video {
 										headers.indexOf( 'cld-error' ) !== -1 && 
 										headers.indexOf( 'video is too large' ) !== -1 
 									) {
-										fetch( '<?php echo rest_url('cloudinary/v1/video_explicit_upload') ?>', {
+										fetch( '<?php echo esc_url( rest_url( 'cloudinary/v1/video_explicit_upload' ) ); ?>', {
 											method: 'POST',
 											body: JSON.stringify({ 
-												eager: '<?php echo esc_js( $this->config['video_freeform'] ) ?>',
+												eager: '<?php echo esc_js( $this->config['video_freeform'] ); ?>',
 												public_id: cldVideos[ videoInstance ].publicId,
 											})
 										} )
@@ -484,12 +490,12 @@ class Video {
 	 * Enqueue BLock Assets
 	 */
 	public function enqueue_block_assets() {
-		wp_enqueue_script( 
-			'cloudinary-block', 
-			$this->media->plugin->dir_url . 'js/block-editor.js', 
-			null, 
-			$this->media->plugin->version, 
-			true 
+		wp_enqueue_script(
+			'cloudinary-block',
+			$this->media->plugin->dir_url . 'js/block-editor.js',
+			null,
+			$this->media->plugin->version,
+			true
 		);
 
 		wp_add_inline_script( 'cloudinary-block', 'var CLD_VIDEO_PLAYER = ' . wp_json_encode( $this->config ), 'before' );
@@ -531,7 +537,6 @@ class Video {
 					} else {
 						$content = str_replace( '<video ', '<video class="' . $classes . '" ', $content );
 					}
-
 				}
 			}
 		}
@@ -550,7 +555,7 @@ class Video {
 			// Filter for block rendering.
 			add_filter( 'render_block_data', array( $this, 'filter_video_block_pre_render' ), 10, 2 );
 		}
-		
+
 		add_action( 'wp_print_styles', array( $this, 'init_player' ) );
 		add_action( 'wp_footer', array( $this, 'print_video_scripts' ) );
 		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
