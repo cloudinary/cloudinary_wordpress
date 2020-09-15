@@ -21,7 +21,7 @@ const sharedConfig = {
 		minimizer: [
 			new TerserPlugin( {
 				parallel: true,
-				sourceMap: false,
+				sourceMap: true,
 				cache: true,
 				terserOptions: {
 					output: {
@@ -36,6 +36,7 @@ const sharedConfig = {
 };
 
 const cldCore = {
+	...defaultConfig,
 	...sharedConfig,
 	entry: {
 		'cloudinary': './js/src/main.js',
