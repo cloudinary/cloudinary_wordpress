@@ -20,9 +20,19 @@ let FeaturedTransformationsToggle = ( props ) => {
 };
 
 // Setup our properties.
-FeaturedTransformationsToggle = withSelect( ( select, ownProps ) => ( {
-    overwrite_featured_transformations: select( 'core/editor' ).getEditedPostAttribute( 'meta' )[ '_cloudinary_featured_overwrite' ] ?? false,
-} ) )( FeaturedTransformationsToggle );
+FeaturedTransformationsToggle = withSelect( ( select, ownProps ) => {
+    let editor = select( 'core/editor' );
+
+    if ( editor.getEditedPostAttribute( 'meta' ) ) {
+        return {
+            overwrite_featured_transformations: editor.getEditedPostAttribute( 'meta' )[ '_cloudinary_featured_overwrite' ] ?? false,
+        };
+    }
+
+    return {
+        overwrite_featured_transformations: false,
+    };
+} )( FeaturedTransformationsToggle );
 
 // Setup our update method.
 FeaturedTransformationsToggle = withDispatch(
