@@ -103,7 +103,10 @@ class Storage implements Notice {
 				$field['description'] = sprintf(
 					// translators: Placeholders are <a> tags.
 					__( 'You can’t currently change your environment variable as your storage setting is set to "Cloudinary only". Update your %1$s storage settings %2$s and sync your assets to WordPress storage to enable this setting.', 'cloudinary' ),
-					'<a href="https://support.cloudinary.com/hc/en-us/requests/new" target="_blank">',
+					sprintf(
+						'<a href="%s">',
+						add_query_arg( 'page', 'cld_sync_media', admin_url( 'admin.php' ) )
+					),
 					'</a>'
 				);
 				$field['disabled']    = true;
