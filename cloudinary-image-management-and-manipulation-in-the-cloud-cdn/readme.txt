@@ -1,21 +1,22 @@
-=== Cloudinary – Dynamic Image and Video Management ===
+=== Cloudinary – Image and Video Optimization, Manipulation, and Delivery ===
 Contributors: Cloudinary, XWP, Automattic
-Tags: images, videos, DAM, optimizations, CDN, media, gallery, photo, photos, picture, pictures, thumbnail, upload, admin, administration, api, cms, dashboard, editor, integration, manage, mobile, social-media
+Tags: image, video, DAM, optimization, CDN
 Requires at least: 4.7
-Tested up to: 5.4.1
+Tested up to: 5.4.2
 Requires PHP: 5.6
 Stable tag: trunk
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Cloudinary is the leading image, video, and rich media management solution that’s used by the world’s leading brands and innovative startups, now available as an easy plugin for WordPress.
+Use Cloudinary to efficiently create, manage and deliver images, videos, and other media, personalized and optimized for every device and channel.
 
 == Description ==
-Cloudinary makes automating your image, video, and rich media workflow easy, offering significant advantages over native WordPress capabilities. From upload to management to manipulation and optimization through delivery, all features are offered from within the plugin.
+Cloudinary makes automating your image, video, and rich media workflow easy, offering a variety of features. From media upload to image optimization, video transcoding and manipulation through delivery via global CDNs, everything is offered from within the plugin.
 
-Optimize your site performance and user experience with faster page load times, advanced auto-responsive delivery, and better visual experience. Automate quality and encoding settings, scale and crop images using AI to focus on the most important region, apply comprehensive transformations and effects, and deliver on any device in any resolution or pixel density.
+Optimize your site performance and user experience with faster page load times, advanced auto-responsive delivery, and better visual experience. Automate image quality and video encoding settings, scale and crop images using AI to focus on the most important region, apply comprehensive video and image manipulations and effects, and deliver optimized media experiences to any device in any resolution or pixel density. 
 
-And with an embedded digital asset management platform offering full DAM capabilities, you won’t need to leave your WordPress environment. Take full advantage of advanced search, AI tagging, automation, collections, structured metadata, and an intuitive UI making it much easier to manage all of your media in WordPress.
+And with advanced digital asset management capabilities available in the plugin, you won’t need to leave your WordPress environment. Take full advantage of advanced search, AI-based tagging, rich media editing, collections, structured metadata, and an intuitive UI as well as our Video and Image APIs for headless DAM functionality, making it much easier to manage all of your media in WordPress. 
+
 
 = Requirements =
 
@@ -51,18 +52,17 @@ And with an embedded digital asset management platform offering full DAM capabil
 * [FAQ](http://cloudinary.com/faq?utm_source=wp&utm_medium=wpmarketplace&utm_campaign=wpmarketplace)
 
 = Contributors & Developers =
-“Cloudinary – Dynamic Image and Video Management” is an open source software. The following people have contributed to this plugin:
+“Cloudinary – Image and Video Optimization, Manipulation, and Delivery” is an open source software. The following people have contributed to this plugin:
 [Cloudinary](https://profiles.wordpress.org/cloudinary/)
 [XWP](https://profiles.wordpress.org/xwp/)
 [Automattic](https://profiles.wordpress.org/automattic/)
-
 
 
 == Installation ==
 = Install from within wordpress =
 * Visit the plugins page within your dashboard and select `Add New`.
 * Search for `Cloudinary`.
-* Select `Cloudinary – Dynamic Image and Video Management` from the list.
+* Select "Cloudinary – Image and Video Optimization, Manipulation, and Delivery" from the list.
 * Activate `Cloudinary` from your Plugins page.
 * Go to `Setting up` below.
 
@@ -82,7 +82,6 @@ If you have two factor authentication configured for your account, you will need
 Your site is now setup to start using Cloudinary.
 
 
-
 == Frequently Asked Questions ==
 = Upgrade from v1=
 
@@ -92,9 +91,23 @@ Upgrade is seamless and requires no action from your side.
 = Does the plugin sync all of my media to Cloudinary? =
 
 The plugin will automatically sync all of your WordPress media to your Cloudinary account and start delivering assets from Cloudinary.
+Your assets in the WP storage will remain intact. 
 
 = Where can I find more info? =
+
 You can read the plugin [documentation](https://cloudinary.com/documentation/wordpress_integration?utm_source=wp&utm_medium=wpmarketplace&utm_campaign=wpmarketplace)
+
+= Compatibility with other Plugins/Themes =
+
+The following plugins/themes/page-builders might not be fully compatible with the Cloudinary plugin and advised to be tested side-by-side before enabling in production. 
+
+* Divi
+* Elementor
+* WPBakery
+* Goodlayers
+* Leopard
+* Cube Portfolio
+
 
 == Screenshots ==
 1. Streamline Your Creative Workflow
@@ -108,6 +121,22 @@ You can read the plugin [documentation](https://cloudinary.com/documentation/wor
 9. Easily Configure Your Account
 
 == Changelog ==
+
+= 2.1.9 (04 Aug 2020) = 
+
+Fixes and Improvements: 
+
+* Upgraded the Cloudinary video version
+* Added two new synced icons: Downloading and Syncing meta data
+* Minor UI improvements
+* Bug fixes:
+    - Fixed the $wpsize_!_cld_full! param that can be observed in the Cloudinary URL
+    - Fixed wrong calculation of quota credits vs percentage
+    - Fixed Upload error on files over 100mb from the previous version
+    - Fixed the Ability of Changing the Public Id
+    - Fixed Interaction with code blocks with filters that might cause “invalid content”
+    - Fixed Overwrite transformations on videos
+    - Fixed excessive backslash stripping
 
 = 2.1.2 (09 Jun 2020) = 
 

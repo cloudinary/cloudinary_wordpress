@@ -86,7 +86,9 @@ $manage_text = sprintf(
 			<video id="dashboard-player" controls class="cld-video-player cld-fluid"></video>
 		<?php endif; ?>
 		<h3><?php esc_html_e( 'More Actions', 'cloudinary' ); ?></h3>
-		<p><span class="dashicons dashicons-image-crop"></span> <?php echo wp_kses_post( $manage_text ); ?></p>
+		<?php if ( $connection && $connection->is_connected() ): ?>
+			<p><span class="dashicons dashicons-image-crop"></span> <?php echo wp_kses_post( $manage_text ); ?></p>
+		<?php endif; ?>
 		<p><span class="dashicons dashicons-welcome-learn-more"></span>
 			<a href="https://cloudinary.com/documentation/wordpress_integration" target="_blank"> <?php esc_html_e( 'Learn more about getting started' ); ?></a></p>
 	</div>

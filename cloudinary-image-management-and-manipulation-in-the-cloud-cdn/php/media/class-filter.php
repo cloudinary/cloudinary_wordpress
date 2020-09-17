@@ -548,6 +548,19 @@ class Filter {
 			$content                = $data['content']['raw'];
 			$data['content']['raw'] = $this->filter_out_local( $content );
 
+			// Handle meta if missing due to custom-fields not being supported.
+			if ( ! isset( $data['meta'] ) ) {
+				$data['meta'] = $request->get_param( 'meta' );
+				if ( null === $data['meta'] ) {
+					// If null, meta param doesn't exist, so it's not a save edit, but a load edit.
+					$disable = get_post_meta( $post->ID, Global_Transformations::META_FEATURED_IMAGE_KEY, true );
+					// Add the value to the data meta.
+					$data['meta'][ Global_Transformations::META_FEATURED_IMAGE_KEY ] = $disable;
+				} else {
+					// If the param was found, its a save edit, to update the meta data.
+					update_post_meta( $post->ID, Global_Transformations::META_FEATURED_IMAGE_KEY, (bool) $data['meta'] );
+				}
+			}
 			$response->set_data( $data );
 		}
 
@@ -716,7 +729,12 @@ class Filter {
 		$filter = $this;
 		array_map(
 			function ( $type ) use ( $filter ) {
-				add_filter( 'rest_prepare_' . $type, array( $filter, 'pre_filter_rest_content' ), 10, 3 );
+				$post_type = get_post_type_object( $type );
+				// Check if this is a rest supported type.
+				if ( true === $post_type->show_in_rest ) {
+					// Add filter only to rest supported types.
+					add_filter( 'rest_prepare_' . $type, array( $filter, 'pre_filter_rest_content' ), 10, 3 );
+				}
 			},
 			$types
 		);
