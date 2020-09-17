@@ -696,7 +696,7 @@ class Sync implements Setup, Assets {
 	public function is_pending( $attachment_id ) {
 		// Check if it's not already in the to sync array.
 		if ( ! in_array( $attachment_id, $this->to_sync, true ) ) {
-			$is_pending = get_post_meta( $attachment_id, Sync::META_KEYS['pending'], true );
+			$is_pending = get_post_meta( $attachment_id, self::META_KEYS['pending'], true );
 			if ( empty( $is_pending ) || $is_pending < time() - 5 * 60 ) {
 				// No need to delete pending meta, since it will be updated with the new timestamp anyway.
 				return false;
@@ -714,7 +714,7 @@ class Sync implements Setup, Assets {
 	public function add_to_sync( $attachment_id ) {
 		if ( ! in_array( $attachment_id, $this->to_sync, true ) ) {
 			// Flag image as pending to prevent duplicate upload.
-			update_post_meta( $attachment_id, Sync::META_KEYS['pending'], time() );
+			update_post_meta( $attachment_id, self::META_KEYS['pending'], time() );
 			$this->to_sync[] = $attachment_id;
 		}
 	}
@@ -750,15 +750,15 @@ class Sync implements Setup, Assets {
 		if ( ! is_array( $meta ) ) {
 			$meta = array();
 		}
-		if ( empty( $meta[ Sync::META_KEYS['cloudinary'] ] ) ) {
-			$meta[ Sync::META_KEYS['cloudinary'] ] = array();
+		if ( empty( $meta[ self::META_KEYS['cloudinary'] ] ) ) {
+			$meta[ self::META_KEYS['cloudinary'] ] = array();
 		}
 		// Set the specific value.
 		if ( is_null( $value ) ) {
 			// Generate a new value based on generator.
 			$value = $this->generate_type_signature( $type, $attachment_id );
 		}
-		$meta[ Sync::META_KEYS['cloudinary'] ][ Sync::META_KEYS['signature'] ][ $type ] = $value;
+		$meta[ self::META_KEYS['cloudinary'] ][ self::META_KEYS['signature'] ][ $type ] = $value;
 		wp_update_attachment_metadata( $attachment_id, $meta );
 	}
 

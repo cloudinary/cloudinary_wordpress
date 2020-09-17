@@ -140,6 +140,12 @@ class Push_Sync {
 			'args'     => array(),
 		);
 
+		$endpoints['video_explicit_upload_callback'] = array(
+			'method'   => \WP_REST_Server::CREATABLE,
+			'callback' => array( $this, 'rest_video_explicit_upload_callback' ),
+			'args'     => array(),
+		);
+
 		return $endpoints;
 	}
 
@@ -179,9 +185,42 @@ class Push_Sync {
 	public function rest_video_explicit_upload( \WP_REST_Request $request ) {
 		$req_body = json_decode( $request->get_body(), true );
 
-		$this->media->video->queue_eager_video( $req_body );
+		if ( ! $this->plugin->components['sync']->is_pending( $req_body['attachment_id'] ) ) {
+			$res = $this->media->video->queue_eager_video( $req_body );
+			return rest_ensure_response( ! is_wp_error( $res ) ? 'ok' : 'error' );
+		}
 
-		rest_ensure_response( 'ok' );
+		return rest_ensure_response( 'pending' );
+	}
+
+	/**
+	 * Wait for Cloudinary's response on the eager sync status.
+	 *
+	 * @param \WP_REST_Request $request
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function rest_video_explicit_upload_callback( \WP_REST_Request $request ) {
+		if ( ! $request->get_body() ) {
+			return;
+		}
+
+		$body = json_decode( $request->get_body(), true );
+
+		if ( ! isset( $body['eager'][0]['status'] ) && isset( $body['public_id'], $body['eager'][0]['secure_url'] ) ) {
+			$sync_key        = $body['public_id'];
+			$transformations = $this->media->get_transformations_from_string( $body['eager']['secure_url'] );
+
+			if ( ! empty( $transformations ) ) {
+				$sync_key .= wp_json_encode( $transformations );
+			}
+
+			$attachment_id = $this->media->get_id_from_sync_key( $sync_key );
+			delete_post_meta( $attachment_id, Sync::META_KEYS['pending'] );
+		} else {
+			// do something? we'll see.
+			error_log( 'an error has occurred: ' . $body['public_id'] );
+		}
 	}
 
 	/**

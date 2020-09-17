@@ -7,6 +7,8 @@
 
 namespace Cloudinary\Media;
 
+use Cloudinary\Sync;
+
 /**
  * Class Video.
  *
@@ -254,14 +256,25 @@ class Video {
 	 * @return array|\WP_Error.
 	 */
 	public function queue_eager_video( array $args ) {
-		if ( ! isset( $args['eager'], $args['public_id'] ) ) {
-			return new \WP_Error( 'bad_args', 'The "eager" and "public_id" args are required' );
+		if ( ! isset( $args['eager'], $args['public_id'], $args['attachment_id'] ) ) {
+			return new \WP_Error( 'bad_args', 'The "eager", "public_id" and "attachment_id" args are required' );
 		}
 
-		$args['type']        = 'upload';
-		$args['eager_async'] = 1;
+		$attachment_id = $args['attachment_id'];
+		unset( $args['attachment_id'] );
 
-		return $this->media->plugin->components['connect']->api->explicit( $args, 'video' );
+		$args['type']                   = 'upload';
+		$args['eager_async']            = 1;
+		$args['eager_notification_url'] = rest_url( 'cloudinary/v1/video_explicit_upload_callback' );
+
+		$req = $this->media->plugin->components['connect']->api->explicit( $args, 'video' );
+
+		if ( is_wp_error( $req ) ) {
+			return $req;
+		}
+
+		// Make asset a pending one.
+		update_post_meta( $attachment_id, Sync::META_KEYS['pending'], time() );
 	}
 
 	/**
@@ -347,27 +360,31 @@ class Video {
 					$new_tag = str_replace( 'src="' . $url . '"', 'id="cloudinary-video-' . esc_attr( $instance ) . '"', $tag );
 					$content = str_replace( $tag, $new_tag, $content );
 				} else {
-					$res         = wp_remote_head( $cloudinary_url );
-					$res_headers = wp_remote_retrieve_headers( $res );
+					$transformations = $this->media->get_transformations_from_string( $cloudinary_url, 'video', true );
 
-					if (
-						isset( $res_headers['x-cld-error'] ) &&
-						false !== strpos( $res_headers['x-cld-error'], 'Video is too large' )
-					) {
-						$transformations = $this->media->get_transformations_from_string( $cloudinary_url, 'video', true );
+					if ( ! $this->media->plugin->components['sync']->is_pending( $attachment_id ) ) {
+						$res         = wp_remote_head( $cloudinary_url );
+						$res_headers = wp_remote_retrieve_headers( $res );
 
-						$res = $this->queue_eager_video(
-							array(
-								'eager'     => $transformations,
-								'public_id' => $this->media->get_public_id( $attachment_id ),
-							)
-						);
+						if (
+							isset( $res_headers['x-cld-error'] ) &&
+							false !== strpos( $res_headers['x-cld-error'], 'Video is too large' )
+						) {
+							$res = $this->queue_eager_video(
+								array(
+									'eager'         => $transformations,
+									'public_id'     => $this->media->get_public_id( $attachment_id ),
+									'attachment_id' => $attachment_id,
+								)
+							);
 
-						if ( ! is_wp_error( $res ) ) {
-							$cloudinary_url = $res['secure_url'];
-						} else {
-							$cloudinary_url = str_replace( $transformations, '', $cloudinary_url );
+							if ( ! is_wp_error( $res ) ) {
+								$cloudinary_url = $res['secure_url'];
+							}
 						}
+					} else {
+						// We are processing this video.
+						$cloudinary_url = str_replace( $transformations, '', $cloudinary_url );
 					}
 
 					// Just replace URL.
@@ -389,13 +406,14 @@ class Video {
 
 			$cld_videos = array();
 			foreach ( $this->attachments as $instance => $video ) {
-				// @todo - ping the URL to ensure it has transformation available, else update an eager.
 				$cloudinary_id = $this->media->get_public_id( $video['id'] );
 				$default       = array(
-					'publicId'    => $cloudinary_id,
-					'sourceTypes' => array( $video['format'] ), // @todo Make this based on eager items as mentioned above.
-					'autoplay'    => 'off' !== $this->config['video_autoplay_mode'] ? true : false,
-					'loop'        => 'on' === $this->config['video_loop'] ? true : false,
+					'attachmentId' => $video['id'],
+					'publicId'     => $cloudinary_id,
+					'sourceTypes'  => array( $video['format'] ), // @todo Make this based on eager items as mentioned above.
+					'autoplay'     => 'off' !== $this->config['video_autoplay_mode'] ? true : false,
+					'loop'         => 'on' === $this->config['video_loop'] ? true : false,
+					'pending'      => $this->media->plugin->components['sync']->is_pending( $video['id'] ),
 				);
 
 				$valid_autoplay_modes = array( 'never', 'always', 'on-scroll' );
@@ -409,7 +427,7 @@ class Video {
 					$config['fluid'] = true;
 				}
 
-				$config['controls'] = 'on' === $this->config['video_controls'] ? true : false;
+				$config['controls']      = 'on' === $this->config['video_controls'] ? true : false;
 				$cld_videos[ $instance ] = $config;
 			}
 
@@ -440,7 +458,8 @@ class Video {
 
 						if ( 
 							videoElement.src.indexOf( '<?php echo esc_js( $this->config['video_freeform'] ); ?>' ) === -1 &&
-							! cldVideos[videoInstance]['overwrite_transformations']
+							! cldVideos[videoInstance]['overwrite_transformations'] && 
+							! cldVideos[videoInstance]['pending']
 						) {
 							var videoOriginalSrc = videoElement.src;
 							var videoSrc = videoOriginalSrc.replace(
@@ -464,6 +483,7 @@ class Video {
 											body: JSON.stringify({ 
 												eager: '<?php echo esc_js( $this->config['video_freeform'] ); ?>',
 												public_id: cldVideos[ videoInstance ].publicId,
+												attachment_id: cldVideos[ videoInstance ].attachmentId
 											})
 										} )
 									}
