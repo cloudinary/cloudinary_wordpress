@@ -590,13 +590,12 @@ class Media implements Setup {
 	/**
 	 * Convert a url param based transformation string into an array.
 	 *
-	 * @param string $str           The transformation string.
-	 * @param string $type          The type of transformation string.
-	 * @param bool   $return_string Whether to return a string or an array of transformations.
+	 * @param string $str  The transformation string.
+	 * @param string $type The type of transformation string.
 	 *
 	 * @return array The array of found transformations within the string.
 	 */
-	public function get_transformations_from_string( $str, $type = 'image', $return_string = false ) {
+	public function get_transformations_from_string( $str, $type = 'image' ) {
 
 		$params = \Cloudinary\Connect\Api::$transformation_index[ $type ];
 
@@ -611,17 +610,13 @@ class Media implements Setup {
 				$item = trim( $item );
 				foreach ( $params as $param => $type ) {
 					if ( substr( $item, 0, strlen( $param ) + 1 ) === $param . '_' ) {
-						if ( false === $return_string ) {
-							$transformations[ $index ][ $type ] = substr( $item, strlen( $param ) + 1 );
-						} else {
-							$transformations[] = $item;
-						}
+						$transformations[ $index ][ $type ] = substr( $item, strlen( $param ) + 1 );
 					}
 				}
 			}
 		}
 
-		return $return_string ? implode( ',', $transformations ) : array_values( $transformations );
+		return array_values( $transformations );
 	}
 
 	/**

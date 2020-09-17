@@ -8,6 +8,7 @@
 namespace Cloudinary\Media;
 
 use Cloudinary\Sync;
+use Cloudinary\Connect\Api;
 
 /**
  * Class Video.
@@ -343,7 +344,7 @@ class Video {
 			}
 			$args['overwrite_transformations'] = $overwrite_transformations;
 
-			$cloudinary_url  = $this->media->cloudinary_url( $attachment_id, false, false, null, $overwrite_transformations );
+			$cloudinary_url = $this->media->cloudinary_url( $attachment_id, false, false, null, $overwrite_transformations );
 
 			// Bail replacing the video URL for cases where it doesn't exist.
 			// Cases are, for instance, when the file size is larger than the API limits — free accounts.
@@ -360,7 +361,8 @@ class Video {
 					$new_tag = str_replace( 'src="' . $url . '"', 'id="cloudinary-video-' . esc_attr( $instance ) . '"', $tag );
 					$content = str_replace( $tag, $new_tag, $content );
 				} else {
-					$transformations = $this->media->get_transformations_from_string( $cloudinary_url, 'video', true );
+					$transformations = array_filter( $this->media->get_transformations_from_string( $cloudinary_url, 'video' ) );
+					$transformations = Api::generate_transformation_string( $transformations );
 
 					if ( ! $this->media->plugin->components['sync']->is_pending( $attachment_id ) ) {
 						$res         = wp_remote_head( $cloudinary_url );
@@ -383,7 +385,7 @@ class Video {
 							}
 						}
 					} else {
-						// We are processing this video.
+						// We are processing this video, so serve the transformation-less version.
 						$cloudinary_url = str_replace( $transformations, '', $cloudinary_url );
 					}
 
