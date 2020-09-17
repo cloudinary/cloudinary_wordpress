@@ -558,7 +558,7 @@ class Filter {
 					$data['meta'][ Global_Transformations::META_FEATURED_IMAGE_KEY ] = $disable;
 				} else {
 					// If the param was found, its a save edit, to update the meta data.
-					update_post_meta( $post->ID, Global_Transformations::META_FEATURED_IMAGE_KEY, (bool) $data['meta'] );
+					update_post_meta( $post->ID, Global_Transformations::META_FEATURED_IMAGE_KEY, (bool) $data['meta'][ Global_Transformations::META_FEATURED_IMAGE_KEY ] );
 				}
 			}
 			$response->set_data( $data );
