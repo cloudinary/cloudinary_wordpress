@@ -216,11 +216,16 @@ class Push_Sync {
 			}
 
 			$attachment_id = $this->media->get_id_from_sync_key( $sync_key );
-			delete_post_meta( $attachment_id, Sync::META_KEYS['pending'] );
+
+			if ( $attachment_id ) {
+				delete_post_meta( $attachment_id, Sync::META_KEYS['pending'] );
+			}
 		} else {
 			// do something? we'll see.
 			error_log( 'an error has occurred: ' . $body['public_id'] );
 		}
+
+		return rest_ensure_response( 'ok' );
 	}
 
 	/**
