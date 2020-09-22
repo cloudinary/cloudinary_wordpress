@@ -201,12 +201,14 @@ class Push_Sync {
 	 * @return \WP_REST_Response
 	 */
 	public function rest_video_explicit_upload_callback( \WP_REST_Request $request ) {
-		if ( ! $request->get_body() ) {
-			return;
+		// Validate the signature provided by Cloudinary.
+		if ( ! $this->plugin->components['connect']->api->validate_signature( $request->get_headers(), $request->get_body() ) ) {
+			error_log( 'could not verify cloudinary signature' );
+			return new \WP_Error('non-matching signtures', '', array( 'status' => 401 ));
 		}
 
-		$body = json_decode( $request->get_body(), true );
-
+		$body = $request->get_json_params();
+		
 		if ( ! isset( $body['eager'][0]['status'] ) && isset( $body['public_id'], $body['eager'][0]['secure_url'] ) ) {
 			$sync_key        = $body['public_id'];
 			$transformations = $this->media->get_transformations_from_string( $body['eager']['secure_url'] );
@@ -221,7 +223,6 @@ class Push_Sync {
 				delete_post_meta( $attachment_id, Sync::META_KEYS['pending'] );
 			}
 		} else {
-			// do something? we'll see.
 			error_log( 'an error has occurred: ' . $body['public_id'] );
 		}
 

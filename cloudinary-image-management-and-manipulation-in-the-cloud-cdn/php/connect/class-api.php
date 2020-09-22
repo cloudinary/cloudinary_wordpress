@@ -642,6 +642,28 @@ class Api {
 	}
 
 	/**
+	 * Validates Cloudinary-sent signatures.
+	 *
+	 * @param array  $headers         The response headers array.
+	 * @param string $upload_response The respnse body as a string (unparsed).
+	 * 
+	 * @return bool
+	 */
+	public function validate_signature($headers, $upload_response) {
+		$payload = $upload_response . $headers['x_cld_timestamp'][0] . $this->credentials['api_secret'];
+
+		if ( sha1( $payload ) !== $headers['x_cld_signature'][0] ) {
+			return false;
+		}
+
+		if ( $headers['x_cld_timestamp'][0] <= strtotime( '-2 hours' ) ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
 	 * Set the POSTFIELDS to the correct array type, not the string based.
 	 *
 	 * @param \Requests_Transport_cURL $handle  The transport handle to set.
