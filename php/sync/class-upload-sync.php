@@ -344,7 +344,7 @@ class Upload_Sync {
 	 */
 	public function update_content( $attachment_id ) {
 		// Search and update link references in content.
-		$content_search = new \WP_Query( array( 's' => 'wp-image-' . $attachment_id, 'fields' => 'ids', 'posts_per_page' => 1000 ) );
+		$content_search = new \WP_Query( array( 's' => 'wp-image-' . $attachment_id, 'fields' => 'ids', 'posts_per_page' => 1000 ) ); // phpcs:ignore WordPress.WP.PostsPerPage
 		if ( ! empty( $content_search->found_posts ) ) {
 			$content_posts = array_unique( $content_search->get_posts() ); // ensure post only gets updated once.
 			foreach ( $content_posts as $content_id ) {

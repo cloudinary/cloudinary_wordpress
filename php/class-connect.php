@@ -102,7 +102,7 @@ class Connect implements Config, Setup, Notice {
 	public function __construct( Plugin $plugin ) {
 		$this->plugin = $plugin;
 		add_filter( 'pre_update_option_cloudinary_connect', array( $this, 'verify_connection' ) );
-		add_filter( 'cron_schedules', array( $this, 'get_status_schedule' ) );
+		add_filter( 'cron_schedules', array( $this, 'get_status_schedule' ) ); // phpcs:ignore WordPress.WP.CronInterval
 		add_action( 'cloudinary_status', array( $this, 'check_status' ) );
 	}
 
