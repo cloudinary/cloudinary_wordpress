@@ -201,7 +201,8 @@ class Push_Sync {
 		foreach ( $ids as $attachment_id ) {
 			// Flag attachment as being processed.
 			update_post_meta( $attachment_id, Sync::META_KEYS['syncing'], time() );
-			while ( $type = $this->sync->get_sync_type( $attachment_id, false ) ) {
+			$type = $this->sync->get_sync_type( $attachment_id, false );
+			while ( $type ) {
 				if ( isset( $stat[ $attachment_id ][ $type ] ) ) {
 					// Loop prevention.
 					break;
@@ -267,7 +268,8 @@ class Push_Sync {
 		$queue  = $this->queue->get_thread_queue( $thread );
 
 		if ( ! empty( $queue ) && $this->queue->is_running() ) {
-			while ( $attachment_id = $this->queue->get_post( $thread ) ) {
+			$attachment_id = $this->queue->get_post( $thread );
+			while ( $attachment_id ) {
 				$this->process_assets( $attachment_id );
 				$this->queue->mark( $attachment_id, 'done' );
 			}
