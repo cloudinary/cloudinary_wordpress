@@ -38,4 +38,3 @@ $show_desc = true;
 		</td>
 	</tr>
 <?php endforeach; ?>
-
