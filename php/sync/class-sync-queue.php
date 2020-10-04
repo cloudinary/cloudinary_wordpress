@@ -117,13 +117,13 @@ class Sync_Queue {
 			if ( ! empty( $queue[ $thread ] ) ) {
 				$id                    = array_shift( $queue[ $thread ] );
 				$queue['processing'][] = $id;
-				$queue['last_update']  = current_time( 'timestamp' );
+				$queue['last_update']  = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
 
 				if ( ! empty( $queue['run_status'][ $thread ]['last_update'] ) ) {
-					$queue['run_status'][ $thread ]['posts'][] = current_time( 'timestamp' ) - $queue['run_status'][ $thread ]['last_update'];
+					$queue['run_status'][ $thread ]['posts'][] = current_time( 'timestamp' ) - $queue['run_status'][ $thread ]['last_update']; // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
 					$queue['run_status'][ $thread ]['average'] = round( array_sum( $queue['run_status'][ $thread ]['posts'] ) / count( $queue['run_status'][ $thread ]['posts'] ), 2 );
 				}
-				$queue['run_status'][ $thread ]['last_update'] = current_time( 'timestamp' );
+				$queue['run_status'][ $thread ]['last_update'] = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
 
 				$this->set_queue( $queue );
 			}
@@ -143,7 +143,7 @@ class Sync_Queue {
 		$running = false;
 		if ( in_array( $thread, $this->threads, true ) ) {
 			$queue = $this->get_queue();
-			$now   = current_time( 'timestamp' );
+			$now   = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
 			if ( $this->is_running() && ! empty( $queue[ $thread ] ) && $now - $queue['run_status'][ $thread ]['last_update'] < $this->cron_start_offset ) {
 				$running = true;
 			}
@@ -160,14 +160,13 @@ class Sync_Queue {
 	 */
 	public function mark( $id, $type = 'done' ) {
 		$queue                = $this->get_queue();
-		$queue['last_update'] = current_time( 'timestamp' );
+		$queue['last_update'] = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
 		$key                  = array_search( (int) $id, $queue['processing'], true );
 		if ( false !== $key ) {
 			unset( $queue['processing'][ $key ] );
 			if ( ! in_array( $id, $queue[ $type ], true ) ) {
 				$queue[ $type ][] = $id;
 			}
-
 		}
 
 		$this->set_queue( $queue );
@@ -360,8 +359,8 @@ class Sync_Queue {
 			return $status;
 		}
 		// Mark as started.
-		$queue['started']     = current_time( 'timestamp' );
-		$queue['last_update'] = current_time( 'timestamp' );
+		$queue['started']     = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
+		$queue['last_update'] = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
 
 		$this->set_queue( $queue );
 
@@ -408,7 +407,7 @@ class Sync_Queue {
 	 * Schedule a resume queue check.
 	 */
 	protected function schedule_resume() {
-		$now = current_time( 'timestamp' );
+		$now = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
 		wp_schedule_single_event( $now + $this->cron_frequency, 'cloudinary_resume_queue' );
 	}
 

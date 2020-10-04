@@ -126,7 +126,7 @@ class Connect implements Config, Setup, Notice {
 
 			// sign maybe.
 			if ( ! empty( $this->credentials['user_email'] ) ) {
-				$timestamp                        = current_time( 'timestamp' );
+				$timestamp                        = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
 				$params['mloptions']['username']  = $this->credentials['user_email'];
 				$params['mloptions']['timestamp'] = (string) $timestamp;
 				$query                            = array(
@@ -495,7 +495,7 @@ class Connect implements Config, Setup, Notice {
 	 */
 	protected function setup_status_cron() {
 		if ( false === wp_get_schedule( 'cloudinary_status' ) ) {
-			$now = current_time( 'timestamp' );
+			$now = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
 			wp_schedule_event( $now + ( MINUTE_IN_SECONDS ), 'every_minute', 'cloudinary_status' );
 		}
 	}
