@@ -15,11 +15,12 @@ module.exports = function( grunt ) {
 			dist: {
 				src: [
 					'css/**',
-					'js/**',
+					'js/**.js',
 					'php/**',
 					'ui-definitions/**',
 					'*.php',
 					'readme.txt',
+					'!**/src/**'
 				],
 				dest: '<%= dist_dir %>',
 				expand: true,
