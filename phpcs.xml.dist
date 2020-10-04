@@ -2,7 +2,7 @@
 <ruleset name="WordPress coding standards">
 	<config name="ignore_warnings_on_exit" value="1" /><!-- Ignore warnings for now. -->
 
-    <file>.</file><!-- Lint all PHP files by default. -->
+	<file>.</file><!-- Lint all PHP files by default. -->
 
 	<arg name="basepath" value="." /><!-- Show file paths relative to the project root. -->
 	<arg name="extensions" value="php" />
@@ -10,9 +10,7 @@
 	<arg value="s" /><!-- Show sniff codes in all reports. -->
 
 	<!-- Includes WordPress-Core, WordPress-Docs and WordPress-Extra rulesets. -->
-	<rule ref="WordPress">
-		<type>warning</type><!-- TODO Remove this after fixing all warnings. -->
-	</rule>
+	<rule ref="WordPress" />
 
 	<!-- Include WP VIP coding standard checks -->
 	<rule ref="WordPress-VIP-Go" />
