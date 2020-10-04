@@ -70,6 +70,7 @@
 		"grunt-contrib-copy": "1.0.0",
 		"grunt-wp-deploy": "2.1.2",
 		"husky": "^4.3.0",
+		"load-grunt-tasks": "^5.1.0",
 		"loading-attribute-polyfill": "^1.5.4",
 		"lodash": "4.17.19",
 		"mini-css-extract-plugin": "0.7.0",
