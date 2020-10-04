@@ -334,8 +334,8 @@ class Settings_Page implements Component\Assets, Component\Config, Component\Set
 						<?php checked( $key, $value ); ?>
 							value="<?php echo esc_attr( $key ); ?>"
 					/>
-					<label for="<?php echo esc_attr( $field['label_for'] . '_' . $key ); ?>"><?php esc_html_e( $option ); ?></label>
-				<?php
+					<label for="<?php echo esc_attr( $field['label_for'] . '_' . $key ); ?>"><?php echo esc_html( $option ); ?></label>
+					<?php
 				endforeach;
 				break;
 			case 'textarea':

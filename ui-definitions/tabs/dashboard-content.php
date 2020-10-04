@@ -46,25 +46,25 @@ $manage_text = sprintf(
 			<?php endif; ?>
 			<hr>
 			<div class="cloudinary-stats">
-				<strong><?php esc_html_e( $connection->get_usage_stat( 'plan' ) ); ?></strong> |
+				<strong><?php echo esc_html( $connection->get_usage_stat( 'plan' ) ); ?></strong> |
 				<?php if ( false !== $connection->get_usage_stat( 'credits', 'limit' ) ) : ?>
 					<span class="cloudinary-stat" title="<?php esc_attr_e( 'Credits', 'cloudinary' ); ?>">
-					<span class="dashicons dashicons-marker"></span> <?php esc_html_e( number_format_i18n( $connection->get_usage_stat( 'credits', 'limit' ) ) ); ?>
-					<span class="cloudinary-percent"> <?php esc_html_e( $connection->get_usage_stat( 'credits', 'used_percent' ) . '%' ); ?></span> |
+					<span class="dashicons dashicons-marker"></span> <?php echo esc_html( number_format_i18n( $connection->get_usage_stat( 'credits', 'limit' ) ) ); ?>
+					<span class="cloudinary-percent"> <?php echo esc_html( $connection->get_usage_stat( 'credits', 'used_percent' ) . '%' ); ?></span> |
 				</span>
 				<?php endif; ?>
 
 				<span class="cloudinary-stat" title="<?php esc_attr_e( 'Storage', 'cloudinary' ); ?>">
-					<span class="dashicons dashicons-cloud"></span> <?php esc_html_e( size_format( $connection->get_usage_stat( 'storage', 'limit' ) ) ); ?>
-					<span class="cloudinary-percent"> <?php esc_html_e( $connection->get_usage_stat( 'storage', 'used_percent' ) . '%' ); ?></span> |
+					<span class="dashicons dashicons-cloud"></span> <?php echo esc_html( size_format( $connection->get_usage_stat( 'storage', 'limit' ) ) ); ?>
+					<span class="cloudinary-percent"> <?php echo esc_html( $connection->get_usage_stat( 'storage', 'used_percent' ) . '%' ); ?></span> |
 				</span>
 				<span class="cloudinary-stat" title="<?php esc_attr_e( 'Transformations', 'cloudinary' ); ?>">
-					<span class="dashicons dashicons-image-filter"></span> <?php esc_html_e( number_format_i18n( $connection->get_usage_stat( 'transformations', 'limit' ) ) ); ?>
-					<span class="cloudinary-percent success"> <?php esc_html_e( $connection->get_usage_stat( 'transformations', 'used_percent' ) . '%' ); ?></span> |
+					<span class="dashicons dashicons-image-filter"></span> <?php echo esc_html( number_format_i18n( $connection->get_usage_stat( 'transformations', 'limit' ) ) ); ?>
+					<span class="cloudinary-percent success"> <?php echo esc_html( $connection->get_usage_stat( 'transformations', 'used_percent' ) . '%' ); ?></span> |
 				</span>
 				<span class="cloudinary-stat" title="<?php esc_attr_e( 'Bandwidth', 'cloudinary' ); ?>">
-					<span class="dashicons dashicons-dashboard"></span> <?php esc_html_e( size_format( $connection->get_usage_stat( 'bandwidth', 'limit' ) ) ); ?>
-					<span class="cloudinary-percent success"> <?php esc_html_e( $connection->get_usage_stat( 'bandwidth', 'used_percent' ) . '%' ); ?></span>
+					<span class="dashicons dashicons-dashboard"></span> <?php echo esc_html( size_format( $connection->get_usage_stat( 'bandwidth', 'limit' ) ) ); ?>
+					<span class="cloudinary-percent success"> <?php echo esc_html( $connection->get_usage_stat( 'bandwidth', 'used_percent' ) . '%' ); ?></span>
 				</span>
 			</div>
 			<hr>
