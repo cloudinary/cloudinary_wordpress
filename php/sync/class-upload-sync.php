@@ -105,7 +105,7 @@ class Upload_Sync {
 	 *
 	 * @return array
 	 */
-	function add_inline_action( $actions, $post ) {
+	public function add_inline_action( $actions, $post ) {
 		if ( $this->media->is_media( $post->ID ) && current_user_can( 'delete_post', $post->ID ) ) {
 			$action_url = add_query_arg(
 				array(
