@@ -157,6 +157,8 @@ class Storage implements Notice {
 	/**
 	 * Generate a signature for this sync type.
 	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
 	 * @return string
 	 */
 	public function generate_signature( $attachment_id ) {
@@ -226,7 +228,7 @@ class Storage implements Notice {
 	/**
 	 * Remove all local files from an asset/attachment.
 	 *
-	 * @param $attachment_id
+	 * @param int $attachment_id The attachment ID.
 	 *
 	 * @return bool
 	 */

@@ -172,7 +172,7 @@ class Connect implements Config, Setup, Notice {
 			return $data;
 		}
 
-		// Pattern match to ensure validity of the provided url
+		// Pattern match to ensure validity of the provided url.
 		if ( ! preg_match( '~' . self::CLOUDINARY_VARIABLE_REGEX . '~', $data['cloudinary_url'] ) ) {
 			add_settings_error(
 				'cloudinary_connect',
@@ -348,7 +348,7 @@ class Connect implements Config, Setup, Notice {
 	/**
 	 * Extracts the CNAME from a parsed connection URL.
 	 *
-	 * @param array $parsed_url
+	 * @param array $parsed_url Parsed URL.
 	 *
 	 * @return string|null
 	 */
@@ -369,7 +369,7 @@ class Connect implements Config, Setup, Notice {
 	/**
 	 * Safely validate a domain.
 	 *
-	 * @param string $domain
+	 * @param string $domain The domain.
 	 *
 	 * @return bool
 	 */
@@ -451,7 +451,7 @@ class Connect implements Config, Setup, Notice {
 			}
 		}
 
-		// Specifically set CNAME
+		// Specifically set CNAME.
 		$cname = $this->extract_cname( $parts );
 		if ( ! empty( $cname ) ) {
 			$this->set_credentials( array( 'cname' => $cname ) );

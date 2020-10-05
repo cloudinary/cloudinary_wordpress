@@ -130,7 +130,7 @@ class Plugin {
 	/**
 	 * Get a plugin component.
 	 *
-	 * @param $component
+	 * @param mixed $component The component.
 	 *
 	 * @return \Cloudinary\Connect|\Cloudinary\Media|\Cloudinary\REST_API|\Cloudinary\Settings_Page|\Cloudinary\Sync|null
 	 */

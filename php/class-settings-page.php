@@ -476,7 +476,7 @@ class Settings_Page implements Component\Assets, Component\Config, Component\Set
 						$field,
 						static function ( $field_value ) {
 							// WP 4.9 compatibility, as _sanitize_text_fields() didn't have this check yet, and this prevents an error.
-							// @see https://github.com/WordPress/wordpress-develop/blob/b30baca3ca2feb7f44b3615262ca55fcd87ae232/src/wp-includes/formatting.php#L5307
+							// @see https://github.com/WordPress/wordpress-develop/blob/b30baca3ca2feb7f44b3615262ca55fcd87ae232/src/wp-includes/formatting.php#L5307.
 							if ( is_object( $field_value ) || is_array( $field_value ) ) {
 								return '';
 							}

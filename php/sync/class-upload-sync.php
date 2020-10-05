@@ -262,7 +262,7 @@ class Upload_Sync {
 			update_post_meta( $attachment_id, '_' . md5( 'base_' . $options['public_id'] ), true );
 			// Update signature for all that use the same method.
 			$this->sync->sync_signature_by_type( $attachment_id, $type );
-			// Update options and public_id as well (full sync)
+			// Update options and public_id as well (full sync).
 			$this->sync->set_signature_item( $attachment_id, 'options' );
 			$this->sync->set_signature_item( $attachment_id, 'public_id' );
 

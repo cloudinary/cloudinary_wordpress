@@ -347,7 +347,7 @@ class Sync implements Setup, Assets {
 
 		$base_struct = array(
 			'upgrade'     => array(
-				'generate' => array( $this, 'get_sync_version' ), // Method to generate a signature. Which
+				'generate' => array( $this, 'get_sync_version' ), // Method to generate a signature.
 				'validate' => array( $this, 'been_synced' ),
 				'priority' => 0,
 				'sync'     => array( $this->managers['media']->upgrade, 'convert_cloudinary_version' ),
@@ -398,7 +398,7 @@ class Sync implements Setup, Assets {
 					return false === $public_id;
 				},
 				'priority' => 20,
-				'sync'     => array( $this->managers['media']->upgrade, 'convert_cloudinary_version' ), // Rename
+				'sync'     => array( $this->managers['media']->upgrade, 'convert_cloudinary_version' ), // Rename.
 				'state'    => 'info syncing',
 				'note'     => __( 'Updating metadata', 'cloudinary' ),
 				'required' => true,
@@ -621,7 +621,7 @@ class Sync implements Setup, Assets {
 	public function validate_sync_type( $type, $attachment_id ) {
 		// Validate that this sync type applied (for optional types like upgrade).
 		if ( false === $this->run_sync_method( $type, 'validate', $attachment_id ) ) {
-			// If invalid, save the new signature
+			// If invalid, save the new signature.
 			$this->set_signature_item( $attachment_id, $type );
 
 			$type = $this->get_sync_type( $attachment_id, false ); // Set cache to false to get the new signature.
@@ -749,7 +749,7 @@ class Sync implements Setup, Assets {
 	 *
 	 * @param int    $attachment_id The attachment ID.
 	 * @param string $type          The sync type.
-	 * @param null   $value
+	 * @param null   $value         The value.
 	 */
 	public function set_signature_item( $attachment_id, $type, $value = null ) {
 

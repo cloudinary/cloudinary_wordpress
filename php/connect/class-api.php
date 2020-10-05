@@ -137,7 +137,7 @@ class Api {
 	 * API constructor.
 	 *
 	 * @param \Cloudinary\Connect $connect The connect object.
-	 * @param string The plugin version.
+	 * @param string              $version The plugin version.
 	 */
 	public function __construct( $connect, $version ) {
 		$this->credentials    = $connect->get_credentials();

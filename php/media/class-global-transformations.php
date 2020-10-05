@@ -514,7 +514,7 @@ class Global_Transformations {
 	/**
 	 * Updates appropriate meta for overwriting transformations of a featured image.
 	 *
-	 * @param int $post_id
+	 * @param int $post_id The post ID.
 	 */
 	public function save_overwrite_transformations_featured_image( $post_id ) {
 		$field_value = filter_input( INPUT_POST, self::META_FEATURED_IMAGE_KEY, FILTER_VALIDATE_BOOLEAN );

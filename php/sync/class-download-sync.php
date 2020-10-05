@@ -128,7 +128,7 @@ class Download_Sync {
 	/**
 	 * Prepare and sync down an asset stored remotely.
 	 *
-	 * @param $attachment_id
+	 * @param int $attachment_id The attachment ID.
 	 *
 	 * @return array|\WP_Error
 	 */
@@ -264,9 +264,9 @@ class Download_Sync {
 	/**
 	 * Download an attachment source to the file system.
 	 *
-	 * @param int        $attachment_id The attachment ID.
-	 * @param string     $file_path     The path of the file.
-	 * @param array|null $transformations
+	 * @param int        $attachment_id   The attachment ID.
+	 * @param string     $file_path       The path of the file.
+	 * @param array|null $transformations The transformations.
 	 *
 	 * @return array|\WP_Error
 	 */
