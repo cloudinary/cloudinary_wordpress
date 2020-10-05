@@ -4,6 +4,7 @@
  *
  * @package Cloudinary
  */
+
 wp_enqueue_style( 'cld-player' );
 wp_enqueue_script( 'cld-player' );
 

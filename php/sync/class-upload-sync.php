@@ -85,13 +85,16 @@ class Upload_Sync {
 		add_filter( 'media_row_actions', array( $this, 'add_inline_action' ), 10, 2 );
 
 		// Add Bulk actions.
-		add_filter( 'bulk_actions-upload', function ( $actions ) {
-			$cloudinary_actions = array(
-				'cloudinary-push' => __( 'Push to Cloudinary', 'cloudinary' ),
-			);
+		add_filter(
+			'bulk_actions-upload',
+			function ( $actions ) {
+				$cloudinary_actions = array(
+					'cloudinary-push' => __( 'Push to Cloudinary', 'cloudinary' ),
+				);
 
-			return array_merge( $cloudinary_actions, $actions );
-		} );
+				return array_merge( $cloudinary_actions, $actions );
+			}
+		);
 	}
 
 	/**
@@ -146,7 +149,7 @@ class Upload_Sync {
 	public function handle_bulk_actions( $location, $action, $post_ids ) {
 
 		switch ( $action ) {
-			case 'cloudinary-push' :
+			case 'cloudinary-push':
 				foreach ( $post_ids as $post_id ) {
 					$this->sync->set_signature_item( $post_id, 'file', '' );
 					$this->sync->add_to_sync( $post_id );
@@ -344,7 +347,13 @@ class Upload_Sync {
 	 */
 	public function update_content( $attachment_id ) {
 		// Search and update link references in content.
-		$content_search = new \WP_Query( array( 's' => 'wp-image-' . $attachment_id, 'fields' => 'ids', 'posts_per_page' => 1000 ) ); // phpcs:ignore WordPress.WP.PostsPerPage
+		$content_search = new \WP_Query(
+			array(
+				's'              => 'wp-image-' . $attachment_id,
+				'fields'         => 'ids',
+				'posts_per_page' => 1000, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page
+			)
+		); // phpcs:ignore WordPress.WP.PostsPerPage
 		if ( ! empty( $content_search->found_posts ) ) {
 			$content_posts = array_unique( $content_search->get_posts() ); // ensure post only gets updated once.
 			foreach ( $content_posts as $content_id ) {

@@ -340,9 +340,9 @@ class Plugin {
 	 */
 	public function admin_notices() {
 		/**
-		 * @var $components Notice[]
-		 *
 		 * An array of classes that implement the Notice interface.
+		 *
+		 * @var $components Notice[]
 		 */
 		$components              = array_filter( $this->components, array( $this, 'is_notice_component' ) );
 		$default                 = array(
@@ -520,7 +520,8 @@ class Plugin {
 	 */
 	public function force_visit_plugin_site_link( $plugin_meta, $plugin_file, $plugin_data, $status ) {
 		if ( 'Cloudinary' === $plugin_data['Name'] ) {
-			$plugin_site_link = sprintf( '<a href="%s">%s</a>',
+			$plugin_site_link = sprintf(
+				'<a href="%s">%s</a>',
 				esc_url( $plugin_data['PluginURI'] ),
 				__( 'Visit plugin site' )
 			);

@@ -686,7 +686,7 @@ class Media implements Setup {
 					$default['fetch_format'] = 'auto';
 				}
 				if ( isset( $global[ $type . '_quality' ] ) ) {
-					$default['quality'] = $global[ $type . '_quality' ] !== 'none' ? $global[ $type . '_quality' ] : null;
+					$default['quality'] = 'none' !== $global[ $type . '_quality' ] ? $global[ $type . '_quality' ] : null;
 				} else {
 					$default['quality'] = 'auto';
 				}
@@ -985,7 +985,6 @@ class Media implements Setup {
 	 *
 	 * @return array The image array of size and url.
 	 * @uses filter:image_downsize
-	 *
 	 */
 	public function filter_downsize( $image, $attachment_id, $size ) {
 		// Don't do this while saving.
@@ -1281,22 +1280,25 @@ class Media implements Setup {
 			$asset['url'] = filter_var( $data['asset']['derived'][0]['secure_url'], FILTER_SANITIZE_URL );
 		}
 
-		//convert_media_extension
+		// convert_media_extension.
 		if ( ! $this->is_file_compatible( $asset['url'] ) ) {
 			$asset['url'] = $this->convert_media_extension( $asset['url'] );
 		}
 
 		// Move all context data into the meta key.
 		if ( ! empty( $data['asset']['context'] ) ) {
-			array_walk_recursive( $data['asset']['context'], function ( $value, $key ) use ( &$asset ) {
-				$asset['meta'][ $key ] = filter_var( $value, FILTER_SANITIZE_STRING );
-			} );
+			array_walk_recursive(
+				$data['asset']['context'],
+				function ( $value, $key ) use ( &$asset ) {
+					$asset['meta'][ $key ] = filter_var( $value, FILTER_SANITIZE_STRING );
+				}
+			);
 		}
 
 		// Check for transformations.
 		$transformations = $this->get_transformations_from_string( $asset['url'] );
 		if ( ! empty( $transformations ) ) {
-			$asset['sync_key']        .= wp_json_encode( $transformations );
+			$asset['sync_key']       .= wp_json_encode( $transformations );
 			$asset['transformations'] = $transformations;
 		}
 		// Attempt to find attachment ID.
@@ -1773,9 +1775,12 @@ class Media implements Setup {
 	 */
 	public function set_doing_featured( $post_id, $attachment_id ) {
 		$this->doing_featured_image = (int) $attachment_id;
-		add_action( 'end_fetch_post_thumbnail_html', function () {
-			$this->doing_featured_image = false;
-		} );
+		add_action(
+			'end_fetch_post_thumbnail_html',
+			function () {
+				$this->doing_featured_image = false;
+			}
+		);
 	}
 
 	/**

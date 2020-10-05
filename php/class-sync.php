@@ -300,11 +300,11 @@ class Sync implements Setup, Assets {
 	/**
 	 * Register a new sync type.
 	 *
-	 * @param string         $type        Sync type key. Must not exceed 20 characters and may
-	 *                                    only contain lowercase alphanumeric characters, dashes,
-	 *                                    and underscores. See sanitize_key()
-	 * @param array          $structure   {
-	 *                                    Array of arguments for registering a sync type.
+	 * @param string $type        Sync type key. Must not exceed 20 characters and may
+	 *                            only contain lowercase alphanumeric characters, dashes,
+	 *                            and underscores. See sanitize_key().
+	 * @param array  $structure   {
+	 *                            Array of arguments for registering a sync type.
 	 *
 	 * @type   callable      $generate    Callback method that generates the values to be used to sign a state.
 	 *                                    Returns a string or array.
@@ -650,7 +650,7 @@ class Sync implements Setup, Assets {
 			$sync_type = $this->get_sync_type( $attachment_id );
 			if ( ! empty( $sync_type ) && isset( $this->sync_base_struct[ $sync_type ] ) ) {
 				// check process log in case theres an error.
-				$log = $this->managers['media']->get_post_meta( $attachment_id, Sync::META_KEYS['process_log'] );
+				$log = $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['process_log'] );
 				if ( ! empty( $log[ $sync_type ] ) && is_wp_error( $log[ $sync_type ] ) ) {
 					// Use error instead of sync note.
 					$status['state'] = 'error';
@@ -666,7 +666,7 @@ class Sync implements Setup, Assets {
 
 
 			// Check if there's an error.
-			$has_error = $this->managers['media']->get_post_meta( $attachment_id, Sync::META_KEYS['sync_error'], true );
+			$has_error = $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['sync_error'], true );
 			if ( ! empty( $has_error ) && $this->get_sync_type( $attachment_id ) ) {
 				$status['state'] = 'error';
 				$status['note']  = $has_error;
@@ -704,7 +704,7 @@ class Sync implements Setup, Assets {
 	public function is_pending( $attachment_id ) {
 		// Check if it's not already in the to sync array.
 		if ( ! in_array( $attachment_id, $this->to_sync, true ) ) {
-			$is_pending = get_post_meta( $attachment_id, Sync::META_KEYS['pending'], true );
+			$is_pending = get_post_meta( $attachment_id, self::META_KEYS['pending'], true );
 			if ( empty( $is_pending ) || $is_pending < time() - 5 * 60 ) {
 				// No need to delete pending meta, since it will be updated with the new timestamp anyway.
 				return false;
@@ -722,7 +722,7 @@ class Sync implements Setup, Assets {
 	public function add_to_sync( $attachment_id ) {
 		if ( ! in_array( $attachment_id, $this->to_sync, true ) ) {
 			// Flag image as pending to prevent duplicate upload.
-			update_post_meta( $attachment_id, Sync::META_KEYS['pending'], time() );
+			update_post_meta( $attachment_id, self::META_KEYS['pending'], time() );
 			$this->to_sync[] = $attachment_id;
 		}
 	}
@@ -758,8 +758,8 @@ class Sync implements Setup, Assets {
 		if ( ! is_array( $meta ) ) {
 			$meta = array();
 		}
-		if ( empty( $meta[ Sync::META_KEYS['cloudinary'] ] ) ) {
-			$meta[ Sync::META_KEYS['cloudinary'] ] = array();
+		if ( empty( $meta[ self::META_KEYS['cloudinary'] ] ) ) {
+			$meta[ self::META_KEYS['cloudinary'] ] = array();
 		}
 		// Set the specific value.
 		if ( is_null( $value ) ) {

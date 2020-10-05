@@ -35,11 +35,11 @@ $manage_text = sprintf(
 				</p>
 			</div>
 		<?php else : ?>
-			<?php if( ! $connection->disabled ) : ?>
+			<?php if ( ! $connection->disabled ) : ?>
 			<div class="settings-tab-section-fields-dashboard-success expanded">
 				<span class="dashicons dashicons-yes"></span> <?php esc_html_e( 'Connected to Cloudinary', 'cloudinary' ); ?>
 			</div>
-			<?php else: ?>
+			<?php else : ?>
 				<div class="settings-tab-section-fields-dashboard-error expanded">
 					<span class="dashicons dashicons-no"></span> <?php esc_html_e( 'Cloudinary Account Disabled', 'cloudinary' ); ?>
 				</div>
@@ -95,8 +95,8 @@ $manage_text = sprintf(
 </div>
 <?php if ( ! empty( $video_url ) ) : ?>
 	<script type="application/javascript">
-        document.addEventListener( 'DOMContentLoaded', function() {
-            samplePlayer.source( <?php echo esc_url( $video_url ); ?> );
-        } );
+		document.addEventListener( 'DOMContentLoaded', function() {
+			samplePlayer.source( <?php echo esc_url( $video_url ); ?> );
+		} );
 	</script>
 <?php endif; ?>

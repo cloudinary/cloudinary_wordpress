@@ -109,7 +109,7 @@ class Storage implements Notice {
 					),
 					'</a>'
 				);
-				$field['disabled']    = true;
+				$field['disabled'] = true;
 			}
 		}
 

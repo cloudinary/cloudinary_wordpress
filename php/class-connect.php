@@ -216,7 +216,7 @@ class Connect implements Config, Setup, Notice {
 			return false;
 		}
 
-		$connect_data = get_option( self::META_KEYS['connect'], [] );
+		$connect_data = get_option( self::META_KEYS['connect'], array() );
 		$current_url  = isset( $connect_data['cloudinary_url'] ) ? $connect_data['cloudinary_url'] : null;
 
 		if ( null === $current_url ) {
@@ -279,7 +279,7 @@ class Connect implements Config, Setup, Notice {
 		$valid = array_filter(
 			array_keys( $test ),
 			function ( $a ) {
-				return in_array( $a, [ 'scheme', 'host', 'user', 'pass' ], true );
+				return in_array( $a, array( 'scheme', 'host', 'user', 'pass' ), true );
 			}
 		);
 
@@ -620,7 +620,7 @@ class Connect implements Config, Setup, Notice {
 					continue;
 				}
 				$usage = $this->get_usage_stat( $stat, 'used_percent' );
-				if ( empty ( $usage ) ) {
+				if ( empty( $usage ) ) {
 					continue;
 				}
 				$link      = null;
@@ -640,7 +640,7 @@ class Connect implements Config, Setup, Notice {
 					continue;
 				}
 				// translators: Placeholders are URLS and percentage values.
-				$message         = sprintf(
+				$message = sprintf(
 					/* translators: %1$s quota size, %2$s amount in percent, %3$s link URL, %4$s link anchor text. */
 					__(
 						'<span class="dashicons dashicons-cloudinary"></span> You are %2$s of the way through your monthly quota for %1$s on your Cloudinary account. If you exceed your quota, the Cloudinary plugin will be deactivated until your next billing cycle and your media assets will be served from your WordPress Media Library. You may wish to <a href="%3$s" target="_blank">%4$s</a> and increase your quota to ensure you maintain full functionality.',

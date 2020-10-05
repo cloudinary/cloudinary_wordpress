@@ -145,7 +145,7 @@ class Download_Sync {
 				if ( $val === $media->credentials['cloud_name'] ) {
 					return false;
 				}
-				if ( in_array( $val, [ 'image', 'video', 'upload' ], true ) ) {
+				if ( in_array( $val, array( 'image', 'video', 'upload' ), true ) ) {
 					return false;
 				}
 				$transformation_maybe = $media->get_transformations_from_string( $val );

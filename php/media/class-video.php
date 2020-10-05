@@ -220,7 +220,7 @@ class Video {
 
 		if ( isset( $attr['autoplay'] ) ) {
 			$args['autoplay'] = 'true' === $attr['autoplay'];
-			$args['muted'] = 'true' === $attr['autoplay'];
+			$args['muted']    = 'true' === $attr['autoplay'];
 		}
 		if ( isset( $attr['loop'] ) ) {
 			$args['loop'] = 'true' === $attr['loop'];
@@ -286,7 +286,7 @@ class Video {
 			// Enable Autoplay for this video.
 			if ( false !== strpos( $tag, 'autoplay' ) ) {
 				$args['autoplayMode'] = $this->config['video_autoplay_mode']; // if on, use defined mode.
-				$args['muted'] = 'always' === $this->config['video_autoplay_mode'];
+				$args['muted']        = 'always' === $this->config['video_autoplay_mode'];
 			}
 			// Enable Loop.
 			if ( false !== strpos( $tag, 'loop' ) ) {
@@ -312,7 +312,7 @@ class Video {
 			}
 			$args['overwrite_transformations'] = $overwrite_transformations;
 
-			$cloudinary_url  = $this->media->cloudinary_url( $attachment_id, false, false, null, $overwrite_transformations );
+			$cloudinary_url = $this->media->cloudinary_url( $attachment_id, false, false, null, $overwrite_transformations );
 			// Bail replacing the video URL for cases where it doesn't exist.
 			// Cases are, for instance, when the file size is larger than the API limits — free accounts.
 			if ( ! empty( $cloudinary_url ) ) {
@@ -354,7 +354,7 @@ class Video {
 					'loop'        => 'on' === $this->config['video_loop'] ? true : false,
 				);
 
-				$valid_autoplay_modes = [ 'never', 'always', 'on-scroll' ];
+				$valid_autoplay_modes = array( 'never', 'always', 'on-scroll' );
 				if ( $default['autoplay'] && in_array( $this->config['video_autoplay_mode'], $valid_autoplay_modes, true ) ) {
 					$default['autoplayMode'] = $this->config['video_autoplay_mode'];
 				}
@@ -365,7 +365,7 @@ class Video {
 					$config['fluid'] = true;
 				}
 				
-				$config['controls'] = 'on' === $this->config['video_controls'] ? true : false;
+				$config['controls']      = 'on' === $this->config['video_controls'] ? true : false;
 				$cld_videos[ $instance ] = $config;
 			}
 
@@ -392,15 +392,15 @@ class Video {
 					if ( videoElement.length === 1 ) {
 						videoElement = videoElement[0];
 						videoElement.style.width = '100%';
-						<?php if ( $this->config['video_freeform'] ): ?>
+						<?php if ( $this->config['video_freeform'] ) : ?>
 
 						if ( 
-							videoElement.src.indexOf( '<?php echo esc_js( $this->config['video_freeform'] ) ?>' ) === -1 &&
+							videoElement.src.indexOf( '<?php echo esc_js( $this->config['video_freeform'] ); ?>' ) === -1 &&
 							! cldVideos[videoInstance]['overwrite_transformations']
 						) {
 							videoElement.src = videoElement.src.replace(
 								'upload/',
-								'upload/<?php echo esc_js( $this->config['video_freeform'] ) ?>/'
+								'upload/<?php echo esc_js( $this->config['video_freeform'] ); ?>/'
 							);
 						}
 						<?php endif ?>
@@ -461,8 +461,7 @@ class Video {
 						$content = str_replace( 'class="', 'class="' . $classes . ' ', $content );
 					} else {
 						$content = str_replace( '<video ', '<video class="' . $classes . '" ', $content );
-					}
-
+					}               
 				}
 			}
 		}

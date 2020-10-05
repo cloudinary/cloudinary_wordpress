@@ -73,7 +73,7 @@ class Upgrade {
 					$cloud_name = md5( $val );
 					continue;
 				}
-				if ( in_array( $val, [ 'image', 'video', 'upload' ], true ) ) {
+				if ( in_array( $val, array( 'image', 'video', 'upload' ), true ) ) {
 					continue;
 				}
 				$transformation_maybe = $media->get_transformations_from_string( $val );
@@ -144,13 +144,16 @@ class Upgrade {
 
 		// Add a redirection to the new plugin settings, from the old plugin.
 		if ( is_admin() ) {
-			add_action( 'admin_menu', function () {
-				global $plugin_page;
-				if ( ! empty( $plugin_page ) && false !== strpos( $plugin_page, 'cloudinary-image-management-and-manipulation-in-the-cloud-cdn' ) ) {
-					wp_safe_redirect( admin_url( '?page=cloudinary' ) );
-					die;
-				}
-			} );
+			add_action(
+				'admin_menu',
+				function () {
+					global $plugin_page;
+					if ( ! empty( $plugin_page ) && false !== strpos( $plugin_page, 'cloudinary-image-management-and-manipulation-in-the-cloud-cdn' ) ) {
+						wp_safe_redirect( admin_url( '?page=cloudinary' ) );
+						die;
+					}
+				} 
+			);
 		}
 	}
 }

@@ -381,7 +381,6 @@ class Filter {
 	 *
 	 * @return array
 	 * @uses filter:wp_prepare_attachment_for_js
-	 *
 	 */
 	public function filter_attachment_for_js( $attachment ) {
 		$cloudinary_id = $this->media->get_cloudinary_id( $attachment['id'] );
@@ -424,7 +423,6 @@ class Filter {
 	 *
 	 * @return \WP_REST_Response
 	 * @uses filter:rest_prepare_attachment
-	 *
 	 */
 	public function filter_attachment_for_rest( $attachment ) {
 		if ( ! isset( $attachment->data['id'] ) ) {
@@ -437,7 +435,8 @@ class Filter {
 			$attachment->data['source_url'] = $this->media->cloudinary_url( $attachment->data['id'], false );
 		}
 
-		if ( $has_transformations = ! empty( $this->media->get_transformation_from_meta( $attachment->data['id'] ) ) ) {
+		$has_transformations = ! empty( $this->media->get_transformation_from_meta( $attachment->data['id'] ) );
+		if ( $has_transformations ) {
 			$attachment->data['transformations'] = $has_transformations;
 		}
 
