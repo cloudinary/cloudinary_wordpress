@@ -767,10 +767,10 @@ class Sync implements Setup, Assets {
 			$value = $this->generate_type_signature( $type, $attachment_id );
 		}
 		// Ensure we have an array.
-		if ( empty( $meta[ Sync::META_KEYS['cloudinary'] ][ Sync::META_KEYS['signature'] ] ) || ! is_array( $meta[ Sync::META_KEYS['cloudinary'] ][ Sync::META_KEYS['signature'] ] ) ) {
-			$meta[ Sync::META_KEYS['cloudinary'] ][ Sync::META_KEYS['signature'] ] = array();
+		if ( empty( $meta[ self::META_KEYS['cloudinary'] ][ self::META_KEYS['signature'] ] ) || ! is_array( $meta[ self::META_KEYS['cloudinary'] ][ self::META_KEYS['signature'] ] ) ) {
+			$meta[ self::META_KEYS['cloudinary'] ][ self::META_KEYS['signature'] ] = array();
 		}
-		$meta[ Sync::META_KEYS['cloudinary'] ][ Sync::META_KEYS['signature'] ][ $type ] = $value;
+		$meta[ self::META_KEYS['cloudinary'] ][ self::META_KEYS['signature'] ][ $type ] = $value;
 		wp_update_attachment_metadata( $attachment_id, $meta );
 	}
 
