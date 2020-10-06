@@ -347,7 +347,7 @@ class Filter {
 					// Add in the class name.
 					$new_tag = str_replace( '/>', ' class="wp-image-' . $attachment_id . '"/>', $new_tag );
 				}
-				// Apply lazy loading attribute
+				// Apply lazy loading attribute.
 				if ( apply_filters( 'wp_lazy_loading_enabled', true ) && false === strpos( $new_tag, 'loading="lazy"' ) ) {
 					$new_tag = str_replace( '/>', ' loading="lazy" />', $new_tag );
 				}

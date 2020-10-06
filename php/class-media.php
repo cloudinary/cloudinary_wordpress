@@ -730,7 +730,6 @@ class Media implements Setup {
 	 * @param array        $transformations           Set of transformations to apply to this url.
 	 * @param string       $cloudinary_id             Optional forced cloudinary ID.
 	 * @param bool         $overwrite_transformations Flag url is a breakpoint URL to stop re-applying default transformations.
-	 * @param bool         $clean                     Flag to present a clean url (With out a WP size variable.
 	 *
 	 * @return string The converted URL.
 	 */

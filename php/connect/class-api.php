@@ -228,7 +228,6 @@ class Api {
 	 * @param string|null $public_id The Public ID to get a url for.
 	 * @param array       $args      Additional args.
 	 * @param array       $size      The WP Size array.
-	 * @param bool        $clean     Flag to produce a non variable size url.
 	 *
 	 * @return string
 	 */
