@@ -163,7 +163,7 @@ class Storage implements Notice {
 	 */
 	public function generate_signature( $attachment_id ) {
 		$file_exists = true;
-		if ( $this->settings['offload'] !== 'cld' ) {
+		if ( 'cld' !== $this->settings['offload'] ) {
 			$attachment_file = get_attached_file( $attachment_id );
 			if ( ! file_exists( $attachment_file ) ) {
 				$file_exists = $attachment_file;
