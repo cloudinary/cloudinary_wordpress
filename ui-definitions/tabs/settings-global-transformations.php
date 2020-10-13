@@ -133,7 +133,7 @@ $struct = array(
 			'suffix'      => '<a href="https://cloudinary.com/documentation/image_transformation_reference#quality_parameter" target="_blank"><span class="dashicons dashicons-info"></span></a>',
 		),
 		'image_freeform'     => array(
-			'label'             => __( 'Image Transformation String', 'cloudinary' ),
+			'label'             => __( 'Image transformations', 'cloudinary' ),
 			'description'       => sprintf(
 				// translators: Placeholders are <a> tags.
 				__( 'The set of transformations to apply to all image assets, as a URL transformation string. %1$sImage transformation reference%2$s.%3$s<span class="settings-warning"><strong>Note</strong>: When updating transformations, all relevant assets will have new transformations applied; This may cause an increase in your Cloudinary usage.</span>', 'cloudinary' ),

@@ -99,7 +99,7 @@ $struct = array(
 			),
 		),
 		'video_freeform'      => array(
-			'label'             => __( 'Video Transformation String', 'cloudinary' ),
+			'label'             => __( 'Video transformations', 'cloudinary' ),
 			'description'       => sprintf(
 				// translators: Placeholders are <a> tags.
 				__( 'The set of transformations to apply to all video assets, as a URL transformation string. %1$sVideo transformation reference%2$s.%3$s<span class="settings-warning"><strong>Note</strong>: When updating transformations, all relevant assets will have new transformations applied; This may cause an increase in your Cloudinary usage.</span>', 'cloudinary' ),

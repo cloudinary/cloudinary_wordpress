@@ -7,7 +7,10 @@
 	"require-dev": {
 		"wp-coding-standards/wpcs": "^2.3",
 		"automattic/vipwpcs": "^2.2",
-		"dealerdirect/phpcodesniffer-composer-installer": "^0.6.2"
+		"dealerdirect/phpcodesniffer-composer-installer": "^0.6.2",
+		"phpunit/phpunit": "^5.0",
+		"roots/wordpress": "^5.0",
+		"wp-phpunit/wp-phpunit": "^5.0"
 	},
 	"config": {
 		"platform": {
@@ -20,6 +23,7 @@
 		],
 		"lint-fix": [
 			"phpcbf"
-		]
+		],
+		"test": "phpunit"
 	}
 }

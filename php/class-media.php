@@ -488,7 +488,7 @@ class Media implements Setup {
 			$additional_sizes = wp_get_additional_image_sizes();
 			foreach ( $meta['sizes'] as $size_name => $size ) {
 				if ( $file === $size['file'] ) {
-					$cropped = false;
+					$cropped = ! wp_image_matches_ratio( $meta['width'], $meta['height'], $size['width'], $size['height'] );
 					if ( isset( $additional_sizes[ $size_name ]['crop'] ) ) {
 						$cropped = $additional_sizes[ $size_name ]['crop'];
 					}
@@ -1229,6 +1229,12 @@ class Media implements Setup {
 		// record a base to ensure primary isn't deleted.
 		update_post_meta( $attachment_id, '_' . md5( 'base_' . $public_id ), true );
 
+		// Capture the ALT Text.
+		if ( ! empty( $asset['meta']['alt'] ) ) {
+			$alt_text = wp_strip_all_tags( $asset['meta']['alt'] );
+			update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt_text );
+		}
+
 		return $attachment_id;
 	}
 
@@ -1634,12 +1640,14 @@ class Media implements Setup {
 			if ( ! empty( $transformations ) ) {
 				$breakpoints['transformation'] = Api::generate_transformation_string( $transformations );
 			}
-			$breakpoints = array(
+			$breakpoints              = array(
 				'public_id'              => $this->get_public_id( $attachment_id ),
 				'type'                   => 'upload',
 				'responsive_breakpoints' => $breakpoint_options,
 				'context'                => $this->get_context_options( $attachment_id ),
 			);
+			// Check for suffix.
+			$breakpoints['public_id'] .= $this->get_post_meta( $attachment_id, Sync::META_KEYS['suffix'], true );
 
 		}
 
@@ -1677,8 +1685,13 @@ class Media implements Setup {
 		 * @return array
 		 */
 		$context_options = apply_filters( 'cloudinary_context_options', $context_options, get_post( $attachment_id ), $this );
+		foreach ( $context_options as $option => &$value ) {
+			$value = str_replace( '=', '\=', $value );
+			$value = str_replace( '|', '\|', $value );
+			$value = $option . '=' . $value;
+		}
 
-		return http_build_query( $context_options, null, '|' );
+		return implode( '|', $context_options );
 	}
 
 	/**

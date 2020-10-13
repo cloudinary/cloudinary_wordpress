@@ -238,3 +238,32 @@
 .settings-tab-section h2 {
 	margin : 0;
 }
+
+.cloudinary-collapsible {
+	width: 95%;
+	padding: 10px;
+	margin: 20px 0;
+	background-color: #fff;
+	border: 1px solid #ccd0d4;
+	box-shadow: 0 1px 1px rgba(0,0,0,.04);
+	box-sizing: border-box;
+
+	&__toggle {
+		cursor: pointer;
+		display: flex;
+		justify-content: space-between;
+		
+		h2 { 
+			margin: 0 !important;
+		}
+
+		button {
+			border: none;
+			margin: 0;
+			padding: 0;
+			width: auto;
+			background-color: inherit;
+			cursor: pointer;
+		}
+	}
+}

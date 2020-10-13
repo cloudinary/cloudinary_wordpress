@@ -5,6 +5,7 @@
 
 // Components
 import 'loading-attribute-polyfill';
+import './components/taxonomies';
 import settings from './components/settings-page';
 import sync from './components/sync';
 import widget from './components/widget';
