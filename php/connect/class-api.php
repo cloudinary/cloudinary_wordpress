@@ -7,7 +7,6 @@
 
 namespace Cloudinary\Connect;
 
-use Cloudinary\Connect;
 use function Cloudinary\get_plugin_instance;
 
 /**
@@ -678,7 +677,7 @@ class Api {
 		}
 
 		// Set a long-ish timeout since uploads can be 20mb+.
-		$args['timeout'] = 60; // phpcs:ignore
+		$args['timeout'] = 600; // phpcs:ignore
 
 		$request = wp_remote_request( $url, $args );
 		if ( is_wp_error( $request ) ) {
