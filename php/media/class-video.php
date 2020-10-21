@@ -7,6 +7,9 @@
 
 namespace Cloudinary\Media;
 
+use Cloudinary\Connect\Api;
+use Cloudinary\Sync;
+
 /**
  * Class Video.
  *
@@ -316,11 +319,31 @@ class Video {
 			// Bail replacing the video URL for cases where it doesn't exist.
 			// Cases are, for instance, when the file size is larger than the API limits — free accounts.
 			if ( ! empty( $cloudinary_url ) ) {
+				$video           = wp_get_attachment_metadata( $attachment_id );
 				$transformations = $this->media->get_transformations_from_string( $cloudinary_url, 'video' );
+				$base_format     = pathinfo( $cloudinary_url, PATHINFO_EXTENSION );
+				if ( $video['fileformat'] !== $base_format ) {
+					$transformations[]['fetch_format'] = $video['fileformat'];
+				}
+				// Check if this video URL is eagered.
 				if ( ! empty( $transformations ) ) {
+					$eagers          = (array) $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['video_eagers'], true );
+					$eagers          = array_filter( $eagers );
+					$eager_signature = md5( Api::generate_transformation_string( $transformations, 'video' ) );
+					if ( ! in_array( $eager_signature, $eagers, true ) ) {
+						$pending_eagers = (array) $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['pending_eagers'], true );
+						$pending_eagers = array_filter( $pending_eagers );
+						if ( ! isset( $pending_eagers[ $eager_signature ] ) ) {
+							$pending_eagers[ $eager_signature ] = $transformations;
+							$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['pending_eagers'], $pending_eagers );
+						}
+						// Queue up for syncing.
+						$this->media->sync->add_to_sync( $attachment_id );
+						continue; // skip this video, and deliver from local.
+					}
+
 					$args['transformation'] = $transformations;
 				}
-				$video = wp_get_attachment_metadata( $attachment_id );
 				if ( $this->player_enabled() ) {
 					$instance = $this->queue_video_config( $attachment_id, $url, $video['fileformat'], $args );
 					// Remove src and replace with an ID.
@@ -364,7 +387,7 @@ class Video {
 				if ( empty( $config['size'] ) && ! empty( $config['transformation'] ) && ! $this->media->get_crop_from_transformation( $config['transformation'] ) ) {
 					$config['fluid'] = true;
 				}
-				
+
 				$config['controls']      = 'on' === $this->config['video_controls'] ? true : false;
 				$cld_videos[ $instance ] = $config;
 			}
@@ -394,7 +417,7 @@ class Video {
 						videoElement.style.width = '100%';
 						<?php if ( $this->config['video_freeform'] ) : ?>
 
-						if ( 
+						if (
 							videoElement.src.indexOf( '<?php echo esc_js( $this->config['video_freeform'] ); ?>' ) === -1 &&
 							! cldVideos[videoInstance]['overwrite_transformations']
 						) {
@@ -461,7 +484,7 @@ class Video {
 						$content = str_replace( 'class="', 'class="' . $classes . ' ', $content );
 					} else {
 						$content = str_replace( '<video ', '<video class="' . $classes . '" ', $content );
-					}               
+					}
 				}
 			}
 		}
@@ -480,7 +503,7 @@ class Video {
 			// Filter for block rendering.
 			add_filter( 'render_block_data', array( $this, 'filter_video_block_pre_render' ), 10, 2 );
 		}
-		
+
 		add_action( 'wp_print_styles', array( $this, 'init_player' ) );
 		add_action( 'wp_footer', array( $this, 'print_video_scripts' ) );
 

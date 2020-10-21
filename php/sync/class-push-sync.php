@@ -134,7 +134,89 @@ class Push_Sync {
 			'args'     => array(),
 		);
 
+		$endpoints['eager/(?P<id>[\d]+)'] = array(
+			'method'              => \WP_REST_Server::CREATABLE,
+			'callback'            => array( $this, 'capture_eager' ),
+			'args'                => array(),
+			'permission_callback' => array( $this, 'validate_request' ),
+		);
+
 		return $endpoints;
+	}
+
+	/**
+	 * Validate the incoming request.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 *
+	 * @return bool
+	 */
+	public function validate_request( \WP_REST_Request $request ) {
+		$timestamp = $request->get_header( 'X-Cld-Timestamp' );
+		$body      = $request->get_body();
+		$compare   = sha1( $body . $timestamp . $this->connect->api->credentials['api_secret'] );
+		$signature = $request->get_header( 'X-Cld-Signature' );
+
+		return $compare === $signature;
+	}
+
+	/**
+	 * Capture eagers for a video.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 *
+	 * @return int
+	 */
+	public function capture_eager( \WP_REST_Request $request ) {
+
+		$attachment_id = (int) $request->get_param( 'id' );
+		$body          = $request->get_body();
+		$data          = json_decode( $body, ARRAY_A );
+
+		// Precess eagers if found.
+		if ( ! empty( $data['eager'] ) ) {
+			$this->process_eagers( $attachment_id, $data['eager'] );
+		}
+
+		return $attachment_id;
+	}
+
+	/**
+	 * Process captured eagers.
+	 *
+	 * @param int   $attachment_id The attachment.
+	 * @param array $data          Array of eagers/derivatives.
+	 */
+	public function process_eagers( $attachment_id, $data ) {
+		$updated        = false;
+		$eagers         = (array) $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['video_eagers'], true );
+		$pending_eagers = (array) $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['pending_eagers'], true );
+		foreach ( $data as $eager ) {
+			if ( empty( $eager['status'] ) && ! empty( $eager['transformation'] ) ) {
+				$signature = md5( $eager['transformation'] );
+				if ( isset( $pending_eagers[ $signature ] ) ) {
+					unset( $pending_eagers[ $signature ] );
+					$updated = true;
+				}
+				if ( ! in_array( $signature, $eagers ) ) {
+					$eagers[] = $signature;
+					$updated  = true;
+				}
+			}
+		}
+		// Update what was done.
+		$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['video_eagers'], $eagers );
+		$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['pending_eagers'], $pending_eagers );
+		if ( true === $updated ) {
+			// Only update signature if something happened.
+			$this->sync->set_signature_item( $attachment_id, 'eager_video' );
+			// Remove processing flags.
+			delete_post_meta( $attachment_id, Sync::META_KEYS['pending'] );
+			delete_post_meta( $attachment_id, Sync::META_KEYS['syncing'] );
+		}
+
+		// Return true if pending is empty, indicating completed.
+		return empty( $pending_eagers );
 	}
 
 	/**
@@ -203,7 +285,7 @@ class Push_Sync {
 			update_post_meta( $attachment_id, Sync::META_KEYS['syncing'], time() );
 			$type = $this->sync->get_sync_type( $attachment_id, false );
 			while ( $type ) {
-				if ( isset( $stat[ $attachment_id ][ $type ] ) ) {
+				if ( isset( $stat[ $attachment_id ] ) && isset( $stat[ $attachment_id ][ $type ] ) ) {
 					// Loop prevention.
 					break;
 				}

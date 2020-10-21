@@ -32,7 +32,7 @@ class Connect implements Config, Setup, Notice {
 	 *
 	 * @since   0.1
 	 *
-	 * @var     \Cloudinary\Api
+	 * @var     \Cloudinary\Connect\Api
 	 */
 	public $api;
 

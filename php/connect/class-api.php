@@ -511,8 +511,11 @@ class Api {
 	 * @return array|\WP_Error
 	 */
 	public function explicit( $args ) {
-
-		$url  = $this->url( 'image', 'explicit', true );
+		$type = 'image';
+		if ( ! empty( $args['resource_type'] ) ) {
+			$type = $args['resource_type'];
+		}
+		$url  = $this->url( $type, 'explicit', true );
 		$args = $this->clean_args( $args );
 
 		return $this->call( $url, array( 'body' => $args ), 'post' );
