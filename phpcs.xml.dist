@@ -15,6 +15,12 @@
 	<!-- Includes WordPress-Core, WordPress-Docs and WordPress-Extra rulesets. -->
 	<rule ref="WordPress" />
 
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array" value="cloudinary" />
+		</properties>
+	</rule>
+
 	<!-- Include WP VIP coding standard checks -->
 	<rule ref="WordPress-VIP-Go" />
 	<rule ref="WordPressVIPMinimum" />
