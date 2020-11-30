@@ -653,7 +653,7 @@ class Settings_Page implements Component\Assets, Component\Config, Component\Set
 	 */
 	public function get_ui() {
 		$defaults = array(
-			'save_button_label' => __( 'Save Changes' ),
+			'save_button_label' => __( 'Save Changes', 'cloudinary' ),
 			'capability'        => 'manage_options',
 			'tabs'              => array(),
 		);

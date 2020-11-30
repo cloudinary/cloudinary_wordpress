@@ -37,7 +37,7 @@ $struct = array(
 				'enable_breakpoints' => true,
 			),
 			// translators: Placeholders are numerical ranges or min and max.
-			'suffix'            => sprintf( __( 'Valid values: %1$d – %2$d.' ), 3, 200 ),
+			'suffix'            => sprintf( __( 'Valid values: %1$d – %2$d.', 'cloudinary' ), 3, 200 ),
 		),
 		'bytes_step'         => array(
 			'label'       => __( 'Byte step', 'cloudinary' ),
@@ -144,7 +144,7 @@ $struct = array(
 			'contextual'        => true, // Flags the field to be used in a contextual basis. i.e. taxonomies.
 			'context'           => 'image',
 			'sanitize_callback' => 'trim',
-			'error_notice'      => __( 'Format and Quality cannot be used in free form.' ),
+			'error_notice'      => __( 'Format and Quality cannot be used in free form.', 'cloudinary' ),
 			'type'              => 'textarea',
 		),
 		'image_preview'      => array(

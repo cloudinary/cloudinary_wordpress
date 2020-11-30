@@ -111,7 +111,7 @@ $struct = array(
 			'contextual'        => true, // Flags the field to be used in a contextual basis. i.e. taxonomies.
 			'context'           => 'video',
 			'sanitize_callback' => 'trim',
-			'error_notice'      => __( 'Format and Quality cannot be used in free form.' ),
+			'error_notice'      => __( 'Format and Quality cannot be used in free form.', 'cloudinary' ),
 		),
 		'video_preview'       => array(
 			'label'      => __( 'Preview', 'cloudinary' ),

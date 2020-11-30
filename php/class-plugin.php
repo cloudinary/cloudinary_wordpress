@@ -161,13 +161,13 @@ final class Plugin {
 		$slug           = $this->slug . '_temp'; // @todo use the real slug when ready to implement.
 		$params         = array(
 			'version'    => $this->version,
-			'page_title' => __( 'Testing Settings' ),
-			'menu_title' => __( 'Testing Settings' ),
+			'page_title' => __( 'Testing Settings', 'cloudinary' ),
+			'menu_title' => __( 'Testing Settings', 'cloudinary' ),
 			'capability' => 'manage_options',
 			'icon'       => 'dashicons-cloudinary',
 			'pages'      => array(
 				$slug     => array(
-					'page_title' => __( 'Example Settings' ),
+					'page_title' => __( 'Example Settings', 'cloudinary' ),
 					'menu_title' => __( 'Example', 'cloudinary' ),
 					'tabs'       => array(
 						'first_tab'  => array(
@@ -217,7 +217,7 @@ final class Plugin {
 					),
 				),
 				'connect' => array(
-					'page_title'     => __( 'More' ),
+					'page_title'     => __( 'More', 'cloudinary' ),
 					'menu_title'     => 'More',
 					'type'           => 'page',
 					'success_notice' => 'Updated as requested.',
@@ -638,7 +638,7 @@ final class Plugin {
 			$plugin_site_link = sprintf(
 				'<a href="%s">%s</a>',
 				esc_url( $plugin_data['PluginURI'] ),
-				__( 'Visit plugin site' )
+				__( 'Visit plugin site', 'cloudinary' )
 			);
 			if ( ! in_array( $plugin_site_link, $plugin_meta, true ) ) {
 				$plugin_meta[] = $plugin_site_link;

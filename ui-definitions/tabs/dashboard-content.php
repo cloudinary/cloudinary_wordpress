@@ -98,7 +98,7 @@ $manage_text = sprintf(
 			<p><span class="dashicons dashicons-image-crop"></span> <?php echo wp_kses_post( $manage_text ); ?></p>
 		<?php endif; ?>
 		<p><span class="dashicons dashicons-welcome-learn-more"></span>
-			<a href="https://cloudinary.com/documentation/wordpress_integration" target="_blank"> <?php esc_html_e( 'Learn more about getting started' ); ?></a></p>
+			<a href="https://cloudinary.com/documentation/wordpress_integration" target="_blank"> <?php esc_html_e( 'Learn more about getting started', 'cloudinary' ); ?></a></p>
 	</div>
 </div>
 <?php if ( ! empty( $video_url ) ) : ?>
