@@ -8,6 +8,7 @@
 namespace Cloudinary\UI\Component;
 
 use Cloudinary\UI\Component;
+use Cloudinary\Settings\Setting;
 
 /**
  * Class Component
@@ -19,7 +20,7 @@ class Panel extends Component {
 	/**
 	 * Gets the active child setting.
 	 *
-	 * @return \Cloudinary\Settings\Setting
+	 * @return Setting
 	 */
 	protected function get_active_setting() {
 		$active_setting = '_tmp_fallback';

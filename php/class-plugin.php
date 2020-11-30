@@ -19,7 +19,7 @@ use Cloudinary\Deactivation;
 /**
  * Main plugin bootstrap file.
  */
-class Plugin {
+final class Plugin {
 
 	/**
 	 * Holds the components of the plugin

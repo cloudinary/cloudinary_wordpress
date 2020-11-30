@@ -37,7 +37,7 @@ class Page extends Panel {
 	protected function tab_bar() {
 		$html[] = $this->start_tabs();
 		$active = $this->get_active_setting();
-		$url    = admin_url( 'admin.php?page=' . $this->setting->get_parent()->get_slug() );
+		$url    = add_query_arg( array( 'page' => $this->setting->get_parent()->get_slug() ), admin_url( 'admin.php' ) );
 		foreach ( $this->setting->get_settings() as $setting ) {
 			$url       = add_query_arg( array( 'tab' => $setting->get_slug() ), $url );
 			$link_atts = array(
@@ -50,7 +50,7 @@ class Page extends Panel {
 				$link_atts['class'][] = 'active';
 			}
 			$html[] = '<a ' . $this->build_attributes( $link_atts ) . ' >';
-			$html[] = $setting->get_param( 'title', 'asdasd' );
+			$html[] = $setting->get_param( 'title' );
 			$html[] = '</a>';
 		}
 		$html[] = $this->end_tabs();
@@ -86,7 +86,7 @@ class Page extends Panel {
 			wp_nonce_field( $option_name . '-options', '_wpnonce', true, false ),
 		);
 
-		if ( $this->setting->has_param( 'has_tabs' ) && 1 < $this->setting->get_setting_slugs() ) {
+		if ( $this->setting->has_parent() && $this->setting->has_param( 'has_tabs' ) && 1 < $this->setting->get_setting_slugs() ) {
 			$html[] = $this->tab_bar();
 		}
 

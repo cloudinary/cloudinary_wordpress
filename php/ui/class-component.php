@@ -174,7 +174,7 @@ class Component {
 	 * @return string
 	 */
 	public function sanitize_value( $value ) {
-		return sanitize_text_field( $value );
+		return wp_kses_post( $value );
 	}
 
 	/**

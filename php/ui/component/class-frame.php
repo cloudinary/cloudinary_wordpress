@@ -25,7 +25,4 @@ class Frame extends Component {
 	public function render() {
 		return $this->settings();
 	}
-
-
 }
-

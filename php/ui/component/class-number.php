@@ -7,15 +7,14 @@
 
 namespace Cloudinary\UI\Component;
 
-use Cloudinary\UI;
+use Cloudinary\UI\Component;
 
 /**
  * Class Number Component
  *
  * @package Cloudinary\UI
  */
-class Number extends UI\Component {
-
+class Number extends Component {
 
 	/**
 	 * Creates the Content/Input HTML.
@@ -31,8 +30,6 @@ class Number extends UI\Component {
 			$atts['required'] = 'required';
 		}
 
-
 		return '<input ' . $this->build_attributes( $atts ) . ' />';
 	}
-
 }

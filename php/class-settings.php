@@ -8,6 +8,7 @@
 namespace Cloudinary;
 
 use Cloudinary\Settings\Setting;
+use WP_Screen;
 
 /**
  * Settings Class.
@@ -49,10 +50,6 @@ class Settings {
 	protected $current_tab;
 
 	/**
-	 * Holds the primary slug.
-	 */
-
-	/**
 	 * Initiate the settings object.
 	 */
 	protected function __construct() {
@@ -77,7 +74,7 @@ class Settings {
 				}
 				$sub_setting->set_param( 'header', $setting->get_param( 'header' ) );
 				$sub_setting->set_param( 'footer', $setting->get_param( 'footer' ) );
-				$capability                  = $sub_setting->get_param( 'cabability', $setting->get_param( 'capability' ) );
+				$capability                  = $sub_setting->get_param( 'capability', $setting->get_param( 'capability' ) );
 				$page_handle                 = add_submenu_page( $setting->get_slug(), $sub_setting->get_param( 'page_title', $setting->get_param( 'page_title' ) ), $sub_setting->get_param( 'menu_title', $setting->get_param( 'menu_title' ) ), $capability, $sub_setting->get_slug(), $render_function, $sub_setting->get_param( 'position' ) );
 				$this->pages[ $page_handle ] = $sub_setting;
 				$sub_setting->set_param( 'page_handle', $page_handle );
@@ -95,12 +92,12 @@ class Settings {
 	/**
 	 * Get the currently active page.
 	 *
-	 * @return \Cloudinary\Settings\Setting
+	 * @return Setting
 	 */
 	public function get_active_page() {
-		$screen = \get_current_screen();
-		$page   = null;
-		if ( $screen instanceof \WP_Screen && isset( $this->pages[ $screen->id ] ) ) {
+		$screen = get_current_screen();
+		$page   = $this->settings;
+		if ( $screen instanceof WP_Screen && isset( $this->pages[ $screen->id ] ) ) {
 			$page = $this->pages[ $screen->id ];
 		}
 
@@ -128,7 +125,7 @@ class Settings {
 	 * @param string $slug   The setting slug.
 	 * @param array  $params The settings params.
 	 *
-	 * @return \Cloudinary\Settings\Setting
+	 * @return Setting
 	 */
 	public static function create_setting( $slug, $params = array() ) {
 		if ( is_null( self::$instance ) ) {

@@ -18,15 +18,13 @@
 		"package": "npm run build && grunt package",
 		"deploy": "npm run build && grunt deploy",
 		"deploy-assets": "grunt deploy-assets",
-
 		"docker": "docker-compose run --rm -u 1000 --workdir=/var/www/html/wp-content/plugins/cloudinary wordpress",
 		"env:logs": "bin/logs.sh",
 		"env:start": "bin/start.sh",
 		"env:stop": "bin/stop.sh",
-
 		"test": "npm-run-all --parallel test:php",
 		"test-with-coverage": "npm-run-all --parallel test:php:coverage",
-		"test:php" : "bin/phpunit.sh",
+		"test:php": "bin/phpunit.sh",
 		"test:php:coverage": "bin/phpunit.sh coverage",
 		"wp": "docker-compose exec -u xfs cli",
 		"xdebug:status": "bin/xdebug.sh status",

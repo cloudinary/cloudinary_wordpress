@@ -71,16 +71,12 @@ class Setting {
 	 * @param string       $slug   The setting slug.
 	 * @param array        $params The setting params.
 	 * @param null|Setting $parent $the parent setting.
-	 *
-	 * @return $this
 	 */
 	public function __construct( $slug, $params = array(), $parent = null ) {
 		$this->slug           = $slug;
 		$this->parent         = $parent;
 		$this->setting_params = $this->get_settings_params();
 		$this->setup_setting( $params );
-
-		return $this;
 	}
 
 	/**
@@ -227,7 +223,7 @@ class Setting {
 	 *
 	 * @param string $slug The setting slug to get.
 	 *
-	 * @return Setting|null
+	 * @return Setting
 	 */
 	public function get_setting( $slug ) {
 		$setting = null;
@@ -245,7 +241,7 @@ class Setting {
 	 *
 	 * @param string $slug The setting slug to get.
 	 *
-	 * @return Setting|null
+	 * @return Setting
 	 */
 	public function find_setting( $slug ) {
 		$setting = null;
@@ -309,7 +305,7 @@ class Setting {
 	 */
 	protected function register_setting() {
 		$option_group = $this->get_option_name();
-		if ( ! is_null( $option_group ) && ! $this->has_settings() && ! $this->get_parent()->has_param( 'setting_registered' ) ) {
+		if ( ! is_null( $option_group ) && $this->get_parent() && ! $this->has_settings() && ! $this->get_parent()->has_param( 'setting_registered' ) ) {
 			$args = array(
 				'type'              => 'array',
 				'description'       => $this->get_param( 'description' ),
@@ -353,11 +349,10 @@ class Setting {
 		if ( $value !== $old_value ) {
 			if ( is_wp_error( $value ) ) {
 				add_settings_error( $setting_slug, 'setting_notice', $value->get_error_message(), 'error' );
-
-				return $old_value;
+				$value = $old_value;
 			} else {
 				$setting = $this->get_root_setting()->find_setting( $setting_slug );
-				$notice  = $setting->get_param( 'success_notice', __( 'Settings updated successfully' ) );
+				$notice  = $setting->get_param( 'success_notice', __( 'Settings updated successfully', 'cloudinary' ) );
 				add_settings_error( $setting_slug, 'setting_notice', $notice, 'updated' );
 			}
 		}
