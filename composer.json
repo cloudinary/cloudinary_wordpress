@@ -8,8 +8,7 @@
 	"config": {
 		"sort-packages": true,
 		"platform": {
-			"php": "7.4.2",
-			"ext-filter": "7.1"
+			"php": "5.6.20"
 		}
 	},
 	"require": {
@@ -39,7 +38,7 @@
 			"if [ ! -f .env ]; then cp .env.dist .env; fi"
 		],
 		"lint": [
-			"phpcs -v"
+			"phpcs"
 		],
 		"fix": [
 			"phpcbf"
