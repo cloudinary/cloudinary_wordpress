@@ -39,7 +39,7 @@
 			"if [ ! -f .env ]; then cp .env.dist .env; fi"
 		],
 		"lint": [
-			"phpcs --standard=phpcs.xml.dist"
+			"phpcs --ignore=*/vendor/*"
 		],
 		"fix": [
 			"phpcbf"
