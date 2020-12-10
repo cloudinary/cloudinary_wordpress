@@ -27,12 +27,12 @@ npm-debug.log
 # Dev
 /vendor/
 /dev-lib/
-phpcs.xml
 
 # Tests
 tests/data/
 tests/includes/
 coverage/html/
+bin/local-dev/mysql
 
 # ENV files
 .env
@@ -41,3 +41,5 @@ coverage/html/
 .vscode
 cloudinary-image-management-and-manipulation-in-the-cloud-cdn
 cloudinary-image-management-and-manipulation-in-the-cloud-cdn.zip
+bin/local-dev/wordpress/html
+coverage

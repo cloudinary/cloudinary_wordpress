@@ -1,13 +1,9 @@
 <?xml version="1.0"?>
-<ruleset name="WordPress coding standards">
-	<config name="ignore_warnings_on_exit" value="1" /><!-- Ignore warnings for now. -->
-
-	<file>.</file><!-- Lint all PHP files by default. -->
-
-	<arg name="basepath" value="." /><!-- Show file paths relative to the project root. -->
+<ruleset name="Cloudinary Coding Standards">
 	<arg name="extensions" value="php" />
 	<arg name="colors" />
-	<arg value="s" /><!-- Show sniff codes in all reports. -->
+	<arg name="parallel" value="16" />
+	<arg value="s" />
 
 	<!-- Includes WordPress-Core, WordPress-Docs and WordPress-Extra rulesets. -->
 	<rule ref="WordPress" />
@@ -16,7 +12,11 @@
 	<rule ref="WordPress-VIP-Go" />
 	<rule ref="WordPressVIPMinimum" />
 
-	<exclude-pattern>/node_modules/</exclude-pattern>
-	<exclude-pattern>/vendor/</exclude-pattern>
-	<exclude-pattern>/build/</exclude-pattern>
+	<file>.</file>
+
+	<exclude-pattern>*/assets/*</exclude-pattern>
+	<exclude-pattern>*/bin/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+	<exclude-pattern>*/tests/*</exclude-pattern>
+	<exclude-pattern>*/vendor/*</exclude-pattern>
 </ruleset>

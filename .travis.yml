@@ -2,26 +2,52 @@ dist: xenial
 
 language: php
 
+services:
+  - mysql
+  - docker
+
+addons:
+  apt:
+    packages:
+      - libxml2-utils
+
 before_install:
   - nvm install
   - nvm use
 
 install:
   - npm install
+  - export DEV_LIB_PATH=vendor/xwp/wp-dev-lib/scripts
+  - export DIFF_HEAD=HEAD
+  - source "$DEV_LIB_PATH/travis.install.sh"
+
+before_script:
+  - phpenv config-rm xdebug.ini || echo "xdebug.ini does not exist."
+
+script:
+  - source "$DEV_LIB_PATH/travis.script.sh"
+
+after_script:
+  - source "$DEV_LIB_PATH/travis.after_script.sh"
 
 jobs:
-
+  fast_finish: true
   include:
-
-    - php: "5.6"
+    - stage: Linting
+      name: PHPCS
+      php: "7.4"
       script:
         - npm run lint
         - npm run build
 
-    - php: "7.4"
-      script:
-        - npm run lint
-        - npm run build
+    - stage: Testing
+      name: PHP unit tests (5.6, WordPress trunk)
+      php: "5.6"
+      env: WP_VERSION=trunk DEV_LIB_ONLY=phpunit
+
+    - name: PHP unit tests (7.4, WordPress trunk)
+      php: "7.4"
+      env: WP_VERSION=trunk DEV_LIB_ONLY=phpunit
 
 notifications:
   email: false
@@ -29,4 +55,8 @@ notifications:
 cache:
   npm: true
   directories:
-    - "$HOME/.composer/cache"
+    - $HOME/.composer/cache
+    - $HOME/.jest-cache
+    - $HOME/.npm
+    - $HOME/.nvm/.cache
+    - $HOME/phpunit-bin
