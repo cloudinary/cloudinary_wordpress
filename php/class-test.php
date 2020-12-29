@@ -154,26 +154,6 @@ class Test extends Settings_Component {
 						),
 					),
 				),
-				'react_test' => array(
-					'type'       => 'page',
-					'page_title' => __( 'React', 'cloudinary' ),
-					array(
-						'type'  => 'panel',
-						'title' => __( 'React example', 'cloudinary' ),
-						'icon'  => $this->plugin->dir_url . 'css/video.svg',
-						array(
-							'type'   => 'react',
-							'slug'   => 'gallery',
-							'script' => array(
-								'slug' => 'gallery-widget',
-								'src'  => $this->plugin->dir_url . 'js/gallery.js',
-							),
-						),
-					),
-					array(
-						'type' => 'submit',
-					),
-				),
 				'col_test'   => array(
 					'type'       => 'page',
 					'page_title' => __( 'Columns', 'cloudinary' ),

@@ -92,6 +92,7 @@ class Gallery {
 		}
 
 		$this->setup_hooks();
+		$this->setup_settings();
 	}
 
 	/**
@@ -306,5 +307,33 @@ class Gallery {
 		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
 		add_action( 'enqueue_block_editor_assets', array( $this, 'block_editor_scripts_styles' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_gallery_library' ) );
+	}
+
+	/**
+	 * Add gallery settings to media page.
+	 */
+	protected function setup_settings() {
+		$media_settings = $this->media->get_settings();
+		$gallery        = array(
+			'type'       => 'page',
+			'page_title' => __( 'Gallery Settings', 'cloudinary' ),
+			array(
+				'type'  => 'panel',
+				'title' => __( 'Gallery Settings', 'cloudinary' ),
+				'icon'  => $this->media->plugin->dir_url . 'css/gallery.svg',
+				array(
+					'type'   => 'react',
+					'slug'   => 'gallery',
+					'script' => array(
+						'slug' => 'gallery-widget',
+						'src'  => $this->media->plugin->dir_url . 'js/gallery.js',
+					),
+				),
+			),
+			array(
+				'type' => 'submit',
+			),
+		);
+		$media_settings->create_setting( 'gallery', $gallery, $media_settings );
 	}
 }
