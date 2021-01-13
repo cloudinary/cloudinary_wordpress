@@ -156,11 +156,11 @@ $settings = array(
 
 				),
 				array(
-					'type'         => 'text',
-					'slug'         => 'video_freeform',
-					'title'        => __( 'Custom transformation', 'cloudinary' ),
-					'tooltip_text' => __( 'The set of transformations to apply to all video assets, as a URL transformation string.', 'cloudinary' ),
-					'attributes'   => array(
+					'type'           => 'text',
+					'slug'           => 'video_freeform',
+					'title'          => __( 'Custom transformation', 'cloudinary' ),
+					'tooltip_text'   => __( 'The set of transformations to apply to all video assets, as a URL transformation string.', 'cloudinary' ),
+					'attributes'     => array(
 						'data-context' => 'video',
 						'placeholder'  => 'fps_15-25,ac_none',
 					),

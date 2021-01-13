@@ -72,7 +72,7 @@ class React extends Text {
 				'ver'       => $this->setting->get_root_setting()->get_param( 'version' ),
 				'in_footer' => true,
 			);
-			$script = wp_parse_args( $this->setting->get_param( 'script' ), $script_default );
+			$script         = wp_parse_args( $this->setting->get_param( 'script' ), $script_default );
 			wp_enqueue_script( $script['slug'], $script['src'], $script['depts'], $script['ver'], $script['in_footer'] );
 		}
 
