@@ -160,30 +160,7 @@ class Global_Transformations {
 	 * @param string $type    The default transformations type.
 	 *
 	 * @return array
-	 private function get_term_transformations( $term_id, $type ) {
-	 $meta_data = array();
-	 foreach ( $this->taxonomy_fields[ $type ] as $setting ) {
-	 $slug     = $setting->get_slug();
-	 $meta_key = self::META_ORDER_KEY . '_' . $slug;
-	 $value    = get_term_meta( $term_id, $meta_key, true );
-	 $setting->set_value( $value );
-	 $meta_data[ $slug ] = $value;
-	 }
-
-	 Clear out empty items.
-	 $meta_data = array_filter( $meta_data );
-
-	 return $meta_data;
-	 }*/
-
-		/**
-		 * Get transformations for a term.
-		 *
-		 * @param int    $term_id The term ID to get transformations for.
-		 * @param string $type    The default transformations type.
-		 *
-		 * @return array
-		 */
+	 */
 	private function get_term_transformations( $term_id, $type ) {
 		$keys      = array_keys( $this->taxonomy_fields );
 		$meta_data = array();
