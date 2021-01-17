@@ -55,4 +55,30 @@ class Utils {
 
 		return $setting;
 	}
+
+	/**
+	 * Detects array keys with dot notation and expands them to form a new multi-dimensional array.
+	 *
+	 * @param array  $input     The array that will be processed.
+	 * @param string $separator Separator string.
+	 * @return array
+	 */
+	public static function expand_dot_notation( array $input, $separator = '.' ) {
+		$result = array();
+		foreach ( $input as $key => $value ) {
+			if ( is_array( $value ) ) {
+				$value = self::expand_dot_notation( $value );
+			}
+
+			foreach ( array_reverse( explode( $separator, $key ) ) as $inner_key ) {
+				$value = array( $inner_key => $value );
+			}
+
+			// phpcs:ignore
+			/** @noinspection SlowArrayOperationsInLoopInspection */
+			$result = array_merge_recursive( $result, $value );
+		}
+
+		return $result;
+	}
 }

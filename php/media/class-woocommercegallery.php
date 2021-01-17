@@ -42,7 +42,7 @@ class WooCommerceGallery {
 
 		if ( $assets ) {
 			$json_assets = wp_json_encode( $assets );
-			wp_add_inline_script( Gallery::GALLERY_LIBRARY_HANDLE, "cloudinaryGalleryConfig.mediaAssets = JSON.parse( '{$json_assets}' );" );
+			wp_add_inline_script( Gallery::GALLERY_LIBRARY_HANDLE, "CLD_GALLERY_CONFIG.mediaAssets = {$json_assets};" );
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*global CLD_THEME_COLORS, cloudinaryGalleryConfig */
+/*global CLD_THEME_COLORS, CLD_GALLERY_CONFIG */
 
 import React from 'react';
 import Dot from 'dot-object';
@@ -11,7 +11,7 @@ import {
 } from '../gallery-block/utils';
 
 const { cloudName, mediaAssets, ...attributes } = toBlockAttributes(
-	new Dot( '_' ).dot( cloudinaryGalleryConfig )
+	new Dot( '_' ).dot( CLD_GALLERY_CONFIG )
 );
 
 const parsedAttrs = {};

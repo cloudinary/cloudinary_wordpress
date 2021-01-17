@@ -12,11 +12,7 @@ const Notices = {
 					dismiss[ 0 ].addEventListener( 'click', ( ev ) => {
 						notice.style.height = notice.offsetHeight + 'px';
 						ev.preventDefault();
-						// Give the event a slight delay to allow the height to
-						// be set for the animation to trigger.
-						setTimeout( function () {
-							self._dismiss( notice );
-						}, 5 );
+						self._dismiss( notice );
 					} );
 				}
 			} );
@@ -25,11 +21,10 @@ const Notices = {
 	_dismiss( notice ) {
 		const token = notice.dataset.dismiss;
 		const duration = parseInt( notice.dataset.duration );
+
 		notice.classList.add( 'dismissed' );
-		notice.style.height = '0px';
-		setTimeout( function () {
-			notice.remove();
-		}, 400 );
+		notice.remove();
+
 		if ( 0 < duration ) {
 			wp.ajax.send( {
 				url: CLDIS.url,

@@ -1,22 +1,20 @@
-/* global cloudinaryGalleryConfig */
+/* global CLD_GALLERY_CONFIG */
 
-const configElements = document.querySelectorAll(
-	'[data-cloudinary-gallery-config]'
-);
+( () => {
+	/**
+	 * A way to catch the galleryWidget function which comes from the `cloudinary` object.
+	 * The `cloudinary` object is later overwritten by the video player library by Cloudinary,
+	 * which effectively removes the gallery widget library from the page.
+	 */
+	const { galleryWidget } = cloudinary;
 
-if ( configElements.length ) {
-	configElements.forEach( function ( el ) {
-		const configJson = decodeURIComponent(
-			el.getAttribute( 'data-cloudinary-gallery-config' )
-		);
-		const options = JSON.parse( configJson );
-		options.container = '.' + options.container;
-		cloudinary.galleryWidget( options ).render();
+	window.addEventListener( 'load', function () {
+		if (
+			document.querySelector( '.woocommerce-page' ) &&
+			CLD_GALLERY_CONFIG &&
+			CLD_GALLERY_CONFIG?.mediaAssets?.length
+		) {
+			galleryWidget( CLD_GALLERY_CONFIG ).render();
+		}
 	} );
-} else if (
-	document.querySelector( '.woocommerce-page' ) &&
-	cloudinaryGalleryConfig &&
-	cloudinaryGalleryConfig?.mediaAssets?.length
-) {
-	cloudinary.galleryWidget( cloudinaryGalleryConfig ).render();
-}
+} )();

@@ -67,13 +67,13 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 						onChange={ ( value ) => {
 							setAttributes( {
 								displayProps_mode: value.type,
-								displayProps_columns: value.columns,
+								displayProps_columns: value.columns || 1,
 							} );
 						} }
 						icon={ item.icon }
 						current={ {
 							type: attributes.displayProps_mode,
-							columns: attributes.displayProps_columns,
+							columns: attributes.displayProps_columns || 1,
 						} }
 					>
 						{ item.label }

@@ -157,7 +157,7 @@ class Gallery {
 		);
 
 		$json_config = wp_json_encode( $this->get_config() );
-		wp_add_inline_script( self::GALLERY_LIBRARY_HANDLE, "var cloudinaryGalleryConfig = JSON.parse( '{$json_config}' );" );
+		wp_add_inline_script( self::GALLERY_LIBRARY_HANDLE, "var CLD_GALLERY_CONFIG = {$json_config};" );
 
 		wp_enqueue_script(
 			'cloudinary-gallery-init',
@@ -195,7 +195,7 @@ class Gallery {
 		wp_enqueue_script( $script['slug'], $script['src'], $asset['dependencies'], $asset['version'], $script['in_footer'] );
 
 		$color_palette = wp_json_encode( current( (array) get_theme_support( 'editor-color-palette' ) ) );
-		wp_add_inline_script( $script['slug'], "var CLD_THEME_COLORS = JSON.parse( '$color_palette' );", 'before' );
+		wp_add_inline_script( $script['slug'], "var CLD_THEME_COLORS = $color_palette;", 'before' );
 	}
 
 	/**
@@ -237,14 +237,7 @@ class Gallery {
 			true
 		);
 
-		wp_localize_script(
-			'cloudinary-gallery-block-js',
-			'cloudinaryGalleryApi',
-			array(
-				'endpoint' => rest_url( REST_API::BASE . '/image_data' ),
-				'nonce'    => wp_create_nonce( 'wp_rest' ),
-			)
-		);
+		wp_add_inline_script( 'cloudinary-gallery-block-js', 'var CLD_REST_ENDPOINT = "/' . REST_API::BASE . '";', 'before' );
 	}
 
 	/**
@@ -399,6 +392,47 @@ class Gallery {
 	}
 
 	/**
+	 * Inits the cloudinary gallery using block attributes.
+	 *
+	 * @param string $content The post content.
+	 * @param array  $block   Block data.
+	 *
+	 * @return string
+	 */
+	public function prepare_block_render( $content, $block ) {
+		if ( 'cloudinary/gallery' !== $block['blockName'] ) {
+			return $content;
+		}
+
+		$attributes = Utils::expand_dot_notation( $block['attrs'], '_' );
+		$attributes = array_merge( self::$default_config, $attributes );
+
+		// Gallery without images. Don't render.
+		if ( empty( $attributes['selectedImages'] ) ) {
+			return $content;
+		}
+
+		$attributes['mediaAssets'] = $attributes['selectedImages'];
+		$attributes['cloudName']   = $this->media->plugin->components['connect']->get_cloud_name();
+		unset( $attributes['selectedImages'], $attributes['customSettings'] );
+
+		ob_start();
+		?>
+		<script>
+			window.addEventListener( 'load', function () {
+				if ( cloudinary?.galleryWidget ) {
+					var attributes = <?php echo wp_json_encode( $attributes ); ?>;
+					attributes.container = '.' + attributes.container;
+					cloudinary.galleryWidget( attributes ).render();
+				}
+			}, false );
+		</script>
+		<?php
+
+		return $content . ob_get_clean();
+	}
+
+	/**
 	 * Setup hooks for the gallery.
 	 */
 	public function setup_hooks() {
@@ -406,6 +440,7 @@ class Gallery {
 		add_action( 'enqueue_block_editor_assets', array( $this, 'block_editor_scripts_styles' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_gallery_library' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
+		add_filter( 'render_block', array( $this, 'prepare_block_render' ), 10, 2 );
 
 		// Register Settings.
 		$this->register_settings();

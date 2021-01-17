@@ -1,4 +1,4 @@
-/* global cloudinaryGalleryApi cloudinaryGalleryConfig */
+/* global cloudinaryGalleryApi CLD_GALLERY_CONFIG CLD_REST_ENDPOINT */
 
 /**
  * External dependencies
@@ -9,6 +9,7 @@ import Dot from 'dot-object';
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
+import apiFetch from '@wordpress/api-fetch';
 import { Spinner } from '@wordpress/components';
 import '@wordpress/components/build-style/style.css';
 import { useEffect, useMemo, useState } from '@wordpress/element';
@@ -43,9 +44,7 @@ const Edit = ( { setAttributes, attributes, className, isSelected } ) => {
 		const defaultAttrs = {};
 
 		// eslint-disable-next-line no-unused-vars
-		const { container, ...flattenedAttrs } = dot.dot(
-			cloudinaryGalleryConfig
-		);
+		const { container, ...flattenedAttrs } = dot.dot( CLD_GALLERY_CONFIG );
 
 		Object.keys( flattenedAttrs ).forEach( ( attr ) => {
 			if ( ! attributes[ attr ] ) {
@@ -70,17 +69,16 @@ const Edit = ( { setAttributes, attributes, className, isSelected } ) => {
 		setLoading( true );
 
 		try {
-			const res = await fetch( cloudinaryGalleryApi.endpoint, {
+			const selectedImages = await apiFetch( {
+				path: CLD_REST_ENDPOINT + '/image_data',
 				method: 'POST',
-				body: JSON.stringify( { images } ),
-				headers: {
-					'X-WP-Nonce': cloudinaryGalleryApi.nonce,
-				},
+				data: { images },
 			} );
 
-			const selectedImages = await res.json();
 			setAttributes( { selectedImages } );
 		} catch {
+			setLoading( false );
+
 			setErrorMessage(
 				__(
 					'Could not load selected images. Please try again.',
