@@ -445,7 +445,7 @@ class Video {
 		if ( ! empty( $this->config['video_limit_bitrate'] ) ) {
 			$default['bit_rate'] = $this->config['video_bitrate'] . 'k';
 		}
-		if ( true === $this->config['video_optimization'] ) {
+		if ( ! empty( $this->config['video_optimization'] ) && true === $this->config['video_optimization'] ) {
 			if ( 'auto' === $this->config['video_format'] ) {
 				$default['fetch_format'] = 'auto';
 			}
