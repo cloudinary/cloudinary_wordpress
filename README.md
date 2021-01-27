@@ -12,6 +12,13 @@ The plugin is publicly available at: [https://wordpress.org/plugins/cloudinary-i
 
 This Git repository is the development repository, while there's a mirror public SVN repository of the actual released WordPress plugin version: [https://plugins.svn.wordpress.org/cloudinary-image-management-and-manipulation-in-the-cloud-cdn/](https://plugins.svn.wordpress.org/cloudinary-image-management-and-manipulation-in-the-cloud-cdn/)
 
+
+> **Deprecation Note**
+> The legacy WordPress Plugin version (v1.x) will be deprecated as of **February 1st, 2021**, after which support, updates and bug fixes for the legacy plugin will continue in limited fashion. 
+> The legacy plugin will be made obsolete on **August 1st, 2021** (end-of-life date), meaning, Version 1.x of the plugin will no longer function after that date.
+> We ask that you update to our latest WordPress Plugin v2.x before the August 1st deadline. 
+
+
 ## Additional resources
 
 Additional resources are available at:
