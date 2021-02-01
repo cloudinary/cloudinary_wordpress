@@ -899,7 +899,7 @@ class Sync implements Setup, Assets {
 					'type'        => 'sync',
 					'title'       => __( 'Bulk sync all your WordPress assets to Cloudinary', 'cloudinary' ),
 					'tooltip_off' => __( 'Manual sync is enabled. Individual assets must be synced manually using the WordPress Media Library.', 'cloudinary' ),
-					'tooltip_on'  => __( "An optional one-time operation to by manually push all media to Cloudinary that was stored in your WordPress Media Library prior to activation of the Cloudinary plugin. Please note that there is a limit of 1000 images at a time so your server doesn't get overloaded.", 'cloudinary' ),
+					'tooltip_on'  => __( 'An optional one-time operation to manually synchronize all WordPress Media to Cloudinary.', 'cloudinary' ),
 					'queue'       => $this->managers['queue'],
 				),
 				array(
