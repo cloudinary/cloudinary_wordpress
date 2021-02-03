@@ -256,30 +256,30 @@ class Gallery {
 		foreach ( $images as $index => $image ) {
 			$image_id = is_int( $image ) ? $image : $image['id'];
 
-			$transformations      = null;
-			$image_data[ $index ] = array();
+			$transformations = null;
+			$data            = array();
 
 			// Send back the attachment id.
-			$image_data[ $index ]['attachmentId'] = $image_id;
+			$data['attachmentId'] = $image_id;
 
 			// Fetch the public id by either syncing NOW or getting the current public id.
-			if ( ! $this->media->sync->is_synced( $image_id ) ) {
+			if ( ! $this->media->has_public_id( $image_id ) ) {
 				$res = $this->media->sync->managers['upload']->upload_asset( $image_id );
 
-				if ( ! is_wp_error( $res ) ) {
-					$image_data[ $index ]['publicId'] = $this->media->get_public_id_from_url( $res['url'] );
-					$transformations                  = $this->media->get_transformations_from_string( $res['url'] );
+				if ( is_wp_error( $res ) ) {
+					// Skip and move on to the next image as this is unlikely to get synced.
+					continue;
 				}
-			} else {
-				$image_data[ $index ]['publicId'] = $this->media->get_public_id( $image_id, true );
-
-				$image_url       = is_int( $image ) ? $this->media->cloudinary_url( $image_id ) : $image['url'];
-				$transformations = $this->media->get_transformations_from_string( $image_url );
 			}
-
+			// If synced now, the ID will be available in the meta.
+			$data['publicId'] = $this->media->get_public_id( $image_id, true );
+			$transformations  = $this->media->get_transformation_from_meta( $image_id );
 			if ( $transformations ) {
-				$image_data[ $index ]['transformation'] = array( 'transformation' => $transformations );
+				$data['transformation'] = array( 'transformation' => $transformations );
 			}
+
+			// Add to output array.
+			$image_data[] = $data;
 		}
 
 		return $image_data;
