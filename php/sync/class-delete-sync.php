@@ -66,7 +66,7 @@ class Delete_Sync {
 					if ( empty( $has_error ) ) {
 						$all_caps['delete_posts'] = false;
 						$action                   = filter_input( INPUT_GET, 'action', FILTER_SANITIZE_STRING );
-						if ( ! empty( $action ) && '-1' !== $action ) {
+						if ( ! empty( $action ) && 'delete' === $action ) {
 							wp_die( esc_html__( 'Sorry, you can’t delete an asset until it has fully synced with Cloudinary. Try again once syncing is complete.', 'cloudinary' ) );
 						}
 					}
