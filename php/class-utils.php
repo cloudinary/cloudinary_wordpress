@@ -62,6 +62,7 @@ class Utils {
 	 *
 	 * @param array  $input     The array that will be processed.
 	 * @param string $separator Separator string.
+	 *
 	 * @return array
 	 */
 	public static function expand_dot_notation( array $input, $separator = '.' ) {
@@ -104,5 +105,28 @@ class Utils {
 	 */
 	public static function is_webstory_post_type( $post_type ) {
 		return class_exists( Story_Post_Type::class ) && Story_Post_Type::POST_TYPE_SLUG === $post_type;
+	}
+
+	/**
+	 * Get all the attributes from an HTML tag.
+	 *
+	 * @param string $tag HTML tag to get attributes from.
+	 *
+	 * @return array
+	 */
+	public static function get_tag_attributes( $tag ) {
+		$tag    = strstr( $tag, ' ', false );
+		$tag    = trim( $tag, '> ' );
+		$args   = shortcode_parse_atts( $tag );
+		$return = array();
+		foreach ( $args as $key => $value ) {
+			if ( is_int( $key ) ) {
+				$return[ $value ] = 'true';
+				continue;
+			}
+			$return[ $key ] = $value;
+		}
+
+		return $return;
 	}
 }

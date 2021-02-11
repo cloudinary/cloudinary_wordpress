@@ -590,6 +590,41 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Get transformations for an attachment to use in a final URL.
+	 *
+	 * @param int   $attachment_id             The attachment ID.
+	 * @param array $transformations           Base/starter set of transformations.
+	 * @param bool  $overwrite_transformations Flag to indicate if default transformations should not be applied.
+	 *
+	 * @return array
+	 */
+	public function get_transformations( $attachment_id, $transformations = array(), $overwrite_transformations = false ) {
+		// If not provided, get transformations from the attachment meta.
+		if ( empty( $transformations ) ) {
+			$transformations = $this->get_transformation_from_meta( $attachment_id );
+		}
+		if ( false === $overwrite_transformations ) {
+			$overwrite_transformations = $this->maybe_overwrite_featured_image( $attachment_id );
+		}
+		/**
+		 * Filter the Cloudinary transformations.
+		 *
+		 * @param array $transformations Array of transformation options.
+		 * @param int   $attachment_id   The id of the asset.
+		 *
+		 * @return array
+		 */
+		$transformations = apply_filters( 'cloudinary_transformations', $transformations, $attachment_id );
+
+		// Defaults are only to be added on front, main images ( not breakpoints, since these are adapted down), and videos.
+		if ( false === $overwrite_transformations && ! is_admin() ) {
+			$transformations = $this->apply_default_transformations( $transformations, $this->get_media_type( $attachment_id ) );
+		}
+
+		return $transformations;
+	}
+
+	/**
 	 * Extract the crop size part of a transformation that was done in the DAM widget.
 	 *
 	 * @param array      $transformations The transformations to get crop from.
@@ -704,7 +739,10 @@ class Media extends Settings_Component implements Setup {
 	 * @return array
 	 */
 	public function apply_default_transformations( array $transformations, $type = 'image' ) {
-
+		// Allow filter to bypass defaults.
+		if ( false === apply_filters( 'cloudinary_apply_default_transformations', true ) ) {
+			return $transformations;
+		}
 		// Base image level.
 		$new_transformations = array(
 			'image'  => Api::generate_transformation_string( $transformations, $type ),
@@ -806,10 +844,10 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Generate a Cloudinary URL based on attachment ID and required size.
 	 *
-	 * @param int          $attachment_id The id of the attachment.
-	 * @param array|string $size The wp size to set for the URL.
-	 * @param array        $transformations Set of transformations to apply to this url.
-	 * @param string       $cloudinary_id Optional forced cloudinary ID.
+	 * @param int          $attachment_id             The id of the attachment.
+	 * @param array|string $size                      The wp size to set for the URL.
+	 * @param array        $transformations           Set of transformations to apply to this url.
+	 * @param string       $cloudinary_id             Optional forced cloudinary ID.
 	 * @param bool         $overwrite_transformations Flag url is a breakpoint URL to stop re-applying default transformations.
 	 *
 	 * @return string The converted URL.
@@ -821,9 +859,7 @@ class Media extends Settings_Component implements Setup {
 				return null;
 			}
 		}
-		if ( empty( $transformations ) ) {
-			$transformations = $this->get_transformation_from_meta( $attachment_id );
-		}
+
 		// Get the attachment resource type.
 		$resource_type = $this->get_media_type( $attachment_id );
 		// Setup initial args for cloudinary_url.
@@ -834,24 +870,9 @@ class Media extends Settings_Component implements Setup {
 		);
 
 		$size = $this->prepare_size( $attachment_id, $size );
-		if ( false === $overwrite_transformations ) {
-			$overwrite_transformations = $this->maybe_overwrite_featured_image( $attachment_id );
-		}
-		/**
-		 * Filter the Cloudinary transformations.
-		 *
-		 * @param array $transformations Array of transformation options.
-		 * @param int   $attachment_id   The id of the asset.
-		 *
-		 * @return array
-		 */
-		$pre_args['transformation']    = apply_filters( 'cloudinary_transformations', $transformations, $attachment_id );
-		$apply_default_transformations = apply_filters( 'cloudinary_apply_default_transformations', true );
 
-		// Defaults are only to be added on front, main images ( not breakpoints, since these are adapted down), and videos.
-		if ( true === $apply_default_transformations && false === $overwrite_transformations && ! is_admin() ) {
-			$pre_args['transformation'] = $this->apply_default_transformations( $pre_args['transformation'], $resource_type );
-		}
+		// Prepare transformations.
+		$pre_args['transformation'] = $this->get_transformations( $attachment_id, $transformations, $overwrite_transformations );
 
 		// Make a copy as not to destroy the options in \Cloudinary::cloudinary_url().
 		$args = $pre_args;
@@ -1399,14 +1420,14 @@ class Media extends Settings_Component implements Setup {
 		// Check for transformations.
 		$transformations = $this->get_transformations_from_string( $asset['url'] );
 		if ( ! empty( $transformations ) ) {
-			$asset['sync_key']       .= wp_json_encode( $transformations );
+			$asset['sync_key']        .= wp_json_encode( $transformations );
 			$asset['transformations'] = $transformations;
 		}
 
 		// Check Format.
 		$url_format = pathinfo( $asset['url'], PATHINFO_EXTENSION );
 		if ( strtolower( $url_format ) !== strtolower( $asset['format'] ) ) {
-			$asset['format']    = $url_format;
+			$asset['format']   = $url_format;
 			$asset['sync_key'] .= $url_format;
 		}
 
