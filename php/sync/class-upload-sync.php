@@ -115,6 +115,9 @@ class Upload_Sync {
 				),
 				'upload.php'
 			);
+			if ( ! $this->plugin->components['media']->is_local_media( $post->ID ) ) {
+				return $actions;
+			}
 			if ( ! $this->plugin->components['sync']->is_synced( $post->ID ) ) {
 				$actions['cloudinary-push'] = sprintf(
 					'<a href="%s" aria-label="%s">%s</a>',
