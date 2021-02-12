@@ -238,6 +238,10 @@ class Sync implements Setup, Assets {
 			$can = true;
 		}
 
+		if ( ! $this->managers['media']->is_local_media( $attachment_id ) ) {
+			$can = false;
+		}
+
 		/**
 		 * Filter to allow changing if an asset is allowed to be synced.
 		 * Return a WP Error with reason why it can't be synced.

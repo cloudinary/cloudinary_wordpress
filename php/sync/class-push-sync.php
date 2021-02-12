@@ -194,6 +194,10 @@ class Push_Sync {
 		$ids = array_map( 'intval', (array) $attachments );
 		// Handle based on Sync Type.
 		foreach ( $ids as $attachment_id ) {
+			// Skip external media.
+			if ( ! $this->media->is_local_media( $attachment_id ) ) {
+				continue;
+			}
 			// Flag attachment as being processed.
 			update_post_meta( $attachment_id, Sync::META_KEYS['syncing'], time() );
 			while ( $type = $this->sync->get_sync_type( $attachment_id, false ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition
