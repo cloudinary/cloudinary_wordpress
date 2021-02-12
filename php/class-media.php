@@ -245,6 +245,26 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Check if the attachment is local.
+	 *
+	 * @param int $attachment_id The attachment ID to check.
+	 *
+	 * @return bool
+	 */
+	public function is_local_media( $attachment_id ) {
+		$is_local_media = false;
+
+		$local_host = wp_parse_url( get_site_url(), PHP_URL_HOST );
+		$media_host = wp_parse_url( get_the_guid( $attachment_id ), PHP_URL_HOST );
+
+		if ( $local_host === $media_host ) {
+			$is_local_media = true;
+		}
+
+		return $is_local_media;
+	}
+
+	/**
 	 * Convert media extension.
 	 *
 	 * @param string $filename The file to convert.
@@ -1510,7 +1530,7 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function media_column_value( $column_name, $attachment_id ) {
 		if ( 'cld_status' === $column_name ) {
-			if ( $this->is_media( $attachment_id ) ) {
+			if ( $this->is_media( $attachment_id ) && $this->is_local_media( $attachment_id ) ) :
 				$status = array(
 					'state' => 'inactive',
 					'note'  => esc_html__( 'Not Synced', 'cloudinary' ),
@@ -1538,7 +1558,12 @@ class Media extends Settings_Component implements Setup {
 				?>
 				<span class="dashicons-cloudinary <?php echo esc_attr( $status['state'] ); ?>" title="<?php echo esc_attr( $status['note'] ); ?>"></span>
 				<?php
-			}
+			endif;
+			if ( $this->is_media( $attachment_id ) && ! $this->is_local_media( $attachment_id ) ) :
+				?>
+				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'Not syncable. This is an external media.', 'cloudinary' ); ?>"></span>
+				<?php
+			endif;
 		}
 	}
 
