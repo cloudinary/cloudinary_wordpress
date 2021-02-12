@@ -155,6 +155,8 @@ class Upload_Sync {
 			case 'cloudinary-push':
 				foreach ( $post_ids as $post_id ) {
 					if ( ! $this->media->is_local_media( $post_id ) ) {
+						// Clean up for previous attempts to sync.
+						$this->sync->delete_cloudinary_meta( $post_id );
 						continue;
 					}
 					$this->sync->set_signature_item( $post_id, 'file', '' );
