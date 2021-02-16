@@ -228,15 +228,29 @@ class Video {
 	 */
 	protected function build_video_embed( $attachment_id, $attributes = array(), $overwrite_transformations = false ) {
 		$public_id = $this->media->get_public_id( $attachment_id );
-		$params    = array(
-			'cloud_name' => $this->media->plugin->get_component( 'connect' )->get_cloud_name(),
+		// Setup the base params.
+		$params = array(
 			'public_id'  => $public_id,
-			'controls'   => 'true',
-			'fluid'      => 'true',
+			'cloud_name' => $this->media->plugin->get_component( 'connect' )->get_cloud_name(),
+			'player'     => array(
+				'fluid'    => 'true',
+				'controls' => 'false',
+			),
 			'source'     => array(
-				'transformation' => $this->media->get_transformations( $attachment_id, array(), $overwrite_transformations ),
+				'source_types' => array(),
 			),
 		);
+		// Check for transformations.
+		$transformations = $this->media->get_transformations( $attachment_id, array(), $overwrite_transformations );
+		if ( ! empty( $transformations ) ) {
+			$params['source']['transformation'] = $transformations;
+		}
+		// Set the source_type.
+		$video = wp_get_attachment_metadata( $attachment_id );
+		if ( ! empty( $video['fileformat'] ) ) {
+			$params['source']['source_types'][] = $video['fileformat'];
+			unset( $attributes[ $video['fileformat'] ] );
+		}
 		// Add cname if present.
 		if ( ! empty( $this->media->credentials['cname'] ) ) {
 			$params['cloudinary'] = array(
@@ -244,18 +258,26 @@ class Video {
 				'private_cdn' => 'true',
 			);
 		}
-		unset( $attributes['mp4'] );
+		// Set the autoplay.
+		if ( ! empty( $attributes['autoplay'] ) ) {
+			$params['player']['autoplay_mode'] = $this->media->get_settings()->get_value( 'video_autoplay_mode' );
+		}
+
+		// Set the poster.
 		if ( isset( $attributes['poster'] ) ) {
 			$poster_id = $this->media->get_public_id_from_url( $attributes['poster'] );
 			if ( $poster_id ) {
-				$params['poster'] = $poster_id;
+				$params['source']['poster'] = $poster_id;
 			}
 			unset( $attributes['poster'] );
 		}
-		$url = add_query_arg( $params, 'https://player.cloudinary.com/embed/' );
-		$url = add_query_arg( $attributes, $url );
+		// Add the player version to use.
+		$params['vpv'] = '1.5.1';
+		// Build URL.
+		$params['player'] = wp_parse_args( $attributes, $params['player'] );
+		$url              = add_query_arg( $params, 'https://player.cloudinary.com/embed/' );
 
-		$video    = wp_get_attachment_metadata( $attachment_id );
+		// Build the Player HTML.
 		$tag_args = array(
 			'type'       => 'tag',
 			'element'    => 'figure',
@@ -263,7 +285,6 @@ class Video {
 				'class' => array(
 					'wp-block-embed',
 					'is-type-video',
-					'wp-embed-aspect-16-9',
 					'wp-has-aspect-ratio',
 				),
 			),
