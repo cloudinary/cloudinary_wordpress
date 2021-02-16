@@ -606,6 +606,12 @@ class Media extends Settings_Component implements Setup {
 		if ( false === $overwrite_transformations ) {
 			$overwrite_transformations = $this->maybe_overwrite_featured_image( $attachment_id );
 		}
+
+		// Defaults are only to be added on front, main images ( not breakpoints, since these are adapted down), and videos.
+		if ( false === $overwrite_transformations && ! is_admin() ) {
+			$transformations = $this->apply_default_transformations( $transformations, $attachment_id );
+		}
+
 		/**
 		 * Filter the Cloudinary transformations.
 		 *
@@ -614,14 +620,7 @@ class Media extends Settings_Component implements Setup {
 		 *
 		 * @return array
 		 */
-		$transformations = apply_filters( 'cloudinary_transformations', $transformations, $attachment_id );
-
-		// Defaults are only to be added on front, main images ( not breakpoints, since these are adapted down), and videos.
-		if ( false === $overwrite_transformations && ! is_admin() ) {
-			$transformations = $this->apply_default_transformations( $transformations, $this->get_media_type( $attachment_id ) );
-		}
-
-		return $transformations;
+		return apply_filters( 'cloudinary_transformations', $transformations, $attachment_id );
 	}
 
 	/**
@@ -733,16 +732,17 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Apply default image transformations before building the URL.
 	 *
-	 * @param array  $transformations The set of transformations.
-	 * @param string $type            Default transformations type.
+	 * @param array $transformations The set of transformations.
+	 * @param int   $attachment_id   The attachment ID.
 	 *
 	 * @return array
 	 */
-	public function apply_default_transformations( array $transformations, $type = 'image' ) {
+	public function apply_default_transformations( array $transformations, $attachment_id ) {
 		// Allow filter to bypass defaults.
-		if ( false === apply_filters( 'cloudinary_apply_default_transformations', true ) ) {
+		if ( false === apply_filters( 'cloudinary_apply_default_transformations', true, $attachment_id ) ) {
 			return $transformations;
 		}
+		$type = $this->get_media_type( $attachment_id );
 		// Base image level.
 		$new_transformations = array(
 			'image'  => Api::generate_transformation_string( $transformations, $type ),
