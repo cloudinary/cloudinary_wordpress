@@ -152,6 +152,11 @@ class Video {
 	 */
 	public function filter_video_shortcode( $html, $attr ) {
 
+		// Confirm we have an ID and it's synced.
+		if ( empty( $attr['id'] ) || ! $this->media->has_public_id( $attr['id'] ) ) {
+			return $html;
+		}
+
 		// If not CLD video init, return default.
 		if ( ! $this->player_enabled() ) {
 			if ( empty( $attr['cloudinary'] ) ) {
