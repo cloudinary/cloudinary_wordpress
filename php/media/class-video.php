@@ -272,7 +272,7 @@ class Video {
 			unset( $attributes['poster'] );
 		}
 		// Add the player version to use.
-		$params['vpv'] = '1.5.1';
+		$params['vpv'] = self::PLAYER_VER;
 		// Build URL.
 		$params['player'] = wp_parse_args( $attributes, $params['player'] );
 		$url              = add_query_arg( $params, 'https://player.cloudinary.com/embed/' );
