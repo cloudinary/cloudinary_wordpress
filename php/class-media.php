@@ -2018,6 +2018,29 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Filters the new sizes to ensure non upload (sprites), don't get resized.
+	 *
+	 * @param array $new_sizes     Array of sizes.
+	 * @param array $image_meta    Image metadata.
+	 * @param int   $attachment_id The attachment ID.
+	 *
+	 * @return array
+	 */
+	public function manage_sizes( $new_sizes, $image_meta, $attachment_id ) {
+
+		if ( $this->has_public_id( $attachment_id ) ) {
+			// Get delivery type.
+			$delivery = $this->get_post_meta( $attachment_id, Sync::META_KEYS['delivery'], true );
+			if ( empty( $delivery ) || 'upload' !== $delivery ) {
+				// Only upload based deliveries will get intermediate sizes.
+				$new_sizes = array();
+			}
+		}
+
+		return $new_sizes;
+	}
+
+	/**
 	 * Setup the hooks and base_url if configured.
 	 */
 	public function setup() {
@@ -2063,6 +2086,9 @@ class Media extends Settings_Component implements Setup {
 			// Filter and action the custom column.
 			add_filter( 'manage_media_columns', array( $this, 'media_column' ) );
 			add_action( 'manage_media_custom_column', array( $this, 'media_column_value' ), 10, 2 );
+
+			// Handle other delivery types.
+			add_filter( 'intermediate_image_sizes_advanced', array( $this, 'manage_sizes' ), PHP_INT_MAX, 3 ); // High level to avoid other plugins breaking it.
 		}
 	}
 
