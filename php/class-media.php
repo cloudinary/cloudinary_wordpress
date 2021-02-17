@@ -2106,6 +2106,25 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Fix the PDF resource type.
+	 *
+	 * @link https://cloudinary.com/cookbook/convert_pdf_to_jpg
+	 *
+	 * @param string $type          The default type.
+	 * @param int    $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 **/
+	public function pdf_resource_type( $type, $attachment_id ) {
+
+		if ( 'application/pdf' === get_post_mime_type( $attachment_id ) ) {
+			$type = 'image';
+		}
+
+		return $type;
+	}
+
+	/**
 	 * Setup the hooks and base_url if configured.
 	 */
 	public function setup() {
@@ -2154,6 +2173,9 @@ class Media extends Settings_Component implements Setup {
 
 			// Handle other delivery types.
 			add_filter( 'intermediate_image_sizes_advanced', array( $this, 'manage_sizes' ), PHP_INT_MAX, 3 ); // High level to avoid other plugins breaking it.
+
+			// Filter PDF resource type.
+			add_filter( 'cloudinary_resource_type', array( $this, 'pdf_resource_type' ), 10, 2 );
 		}
 	}
 
