@@ -242,8 +242,6 @@ class Api {
 			'version'       => 'v1',
 		);
 		$args     = wp_parse_args( array_filter( $args ), $defaults );
-		// Correct Audio to Video.
-		$args['resource_type'] = $this->convert_resource_type( $args['resource_type'] );
 
 		// check for version.
 		if ( ! empty( $args['version'] ) && is_numeric( $args['version'] ) ) {
@@ -284,26 +282,6 @@ class Api {
 		$url_parts = array_filter( $url_parts );
 
 		return implode( '/', $url_parts );
-	}
-
-	/**
-	 * Convert the resource type into the usable Cloudinary type.
-	 *
-	 * @param string $type The type to convert.
-	 *
-	 * @return string
-	 */
-	public function convert_resource_type( $type ) {
-		$convert_resource_type = array(
-			'application' => 'image',
-			'audio'       => 'video',
-		);
-
-		if ( isset( $convert_resource_type[ $type ] ) ) {
-			$type = $convert_resource_type[ $type ];
-		}
-
-		return $type;
 	}
 
 	/**
@@ -407,7 +385,6 @@ class Api {
 	public function upload( $attachment_id, $args, $headers = array(), $try_remote = true ) {
 
 		$resource            = ! empty( $args['resource_type'] ) ? $args['resource_type'] : 'image';
-		$resource            = $this->convert_resource_type( $resource );
 		$url                 = $this->url( $resource, 'upload', true );
 		$args                = $this->clean_args( $args );
 		$disable_https_fetch = get_transient( '_cld_disable_http_upload' );

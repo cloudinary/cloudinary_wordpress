@@ -332,6 +332,41 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Get the resource type.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function get_resource_type( $attachment_id ) {
+		$media_type = $this->get_media_type( $attachment_id );
+
+		switch ( $media_type ) {
+			case 'application':
+			case 'text':
+				$type = 'raw';
+				break;
+
+			case 'audio':
+				$type = 'video';
+				break;
+
+			default:
+				$type = $media_type;
+		}
+
+		/**
+		 * Filter the Cloudinary resource type for the attachment.
+		 *
+		 * @param string $type          The type.
+		 * @param int    $attachment_id The attachment ID.
+		 */
+		$type = apply_filters( 'cloudinary_resource_type', $type, $attachment_id );
+
+		return $type;
+	}
+
+	/**
 	 * Remove the crop size from a url.
 	 *
 	 * @param string $url The url to remove the crop from.
@@ -883,7 +918,7 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		// Get the attachment resource type.
-		$resource_type = $this->get_media_type( $attachment_id );
+		$resource_type = $this->get_resource_type( $attachment_id );
 		// Setup initial args for cloudinary_url.
 		$delivery = $this->get_post_meta( $attachment_id, Sync::META_KEYS['delivery'], true );
 		$pre_args = array(
@@ -1898,7 +1933,7 @@ class Media extends Settings_Component implements Setup {
 		$options   = array(
 			'unique_filename' => true,
 			'overwrite'       => false,
-			'resource_type'   => $this->get_media_type( $attachment_id ),
+			'resource_type'   => $this->get_resource_type( $attachment_id ),
 			'public_id'       => basename( $public_id ),
 			'context'         => $this->get_context_options( $attachment_id ),
 		);

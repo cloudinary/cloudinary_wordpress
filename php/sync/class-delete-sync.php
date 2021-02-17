@@ -104,7 +104,7 @@ class Delete_Sync {
 			$path              = trim( pathinfo( $public_id, PATHINFO_DIRNAME ), '.' );
 			$cloudinary_folder = $this->plugin->settings->get_value( 'cloudinary_folder' );
 			if ( $cloudinary_folder === $path ) {
-				$type    = $this->plugin->components['media']->get_media_type( $post_id );
+				$type    = $this->plugin->components['media']->get_resource_type( $post_id );
 				$options = array(
 					'public_id'  => $public_id,
 					'invalidate' => true, // clear from CDN cache as well.
