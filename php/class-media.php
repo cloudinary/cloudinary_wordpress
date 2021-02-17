@@ -877,18 +877,19 @@ class Media extends Settings_Component implements Setup {
 			'resource_type' => $resource_type,
 			'delivery_type' => ! empty( $delivery ) ? $delivery : 'upload',
 		);
-
-		$size = $this->prepare_size( $attachment_id, $size );
-
+		$set_size = array();
+		if ( 'upload' === $delivery ) {
+			$set_size = $this->prepare_size( $attachment_id, $size );
+		}
 		// Prepare transformations.
 		$pre_args['transformation'] = $this->get_transformations( $attachment_id, $transformations, $overwrite_transformations );
 
 		// Make a copy as not to destroy the options in \Cloudinary::cloudinary_url().
 		$args = $pre_args;
-		$url  = $this->plugin->components['connect']->api->cloudinary_url( $cloudinary_id, $args, $size );
+		$url  = $this->plugin->components['connect']->api->cloudinary_url( $cloudinary_id, $args, $set_size );
 
 		// Check if this type is a preview only type. i.e PDF.
-		if ( ! empty( $size ) && $this->is_preview_only( $attachment_id ) ) {
+		if ( ! empty( $set_size ) && $this->is_preview_only( $attachment_id ) ) {
 			$url = $this->convert_media_extension( $url );
 		}
 
