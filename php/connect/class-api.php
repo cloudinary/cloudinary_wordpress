@@ -405,8 +405,12 @@ class Api {
 		} else {
 			// We should have the file in args at this point, but if the transient was set, it will be defaulting here.
 			if ( empty( $args['file'] ) ) {
-				$get_path_func = function_exists( 'wp_get_original_image_path' ) ? 'wp_get_original_image_path' : 'get_attached_file';
-				$args['file']  = call_user_func( $get_path_func, $attachment_id );
+				if ( wp_attachment_is_image( $attachment_id ) ) {
+					$get_path_func = function_exists( 'wp_get_original_image_path' ) ? 'wp_get_original_image_path' : 'get_attached_file';
+					$args['file']  = call_user_func( $get_path_func, $attachment_id );
+				} else {
+					$args['file'] = get_attached_file( $attachment_id );
+				}
 			}
 			// Headers indicate chunked upload.
 			if ( empty( $headers ) ) {
