@@ -575,7 +575,14 @@ class Media extends Settings_Component implements Setup {
 			$additional_sizes = wp_get_additional_image_sizes();
 			foreach ( $meta['sizes'] as $size_name => $size ) {
 				if ( $file === $size['file'] ) {
-					$cropped = ! wp_image_matches_ratio( $meta['width'], $meta['height'], $size['width'], $size['height'] );
+					$cropped = ! wp_image_matches_ratio(
+						// PDFs do not always have width and height, but they do have full sizes.
+						// This is important for the thumbnail crops on the media library.
+						! empty( $meta['width'] ) ? $meta['width'] : $meta['sizes']['full']['width'],
+						! empty( $meta['height'] ) ? $meta['height'] : $meta['sizes']['full']['height'],
+						$size['width'],
+						$size['height']
+					);
 					if ( isset( $additional_sizes[ $size_name ]['crop'] ) ) {
 						$cropped = $additional_sizes[ $size_name ]['crop'];
 					}
