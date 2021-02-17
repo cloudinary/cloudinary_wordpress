@@ -208,7 +208,7 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
-	 * Check if a file type is compatibile with Cloudinary & WordPress.
+	 * Check if a file type is compatible with Cloudinary & WordPress.
 	 *
 	 * @param string $file The file to check.
 	 *
