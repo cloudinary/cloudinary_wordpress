@@ -236,7 +236,7 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function is_media( $attachment_id ) {
 		$is_media = false;
-		if ( 'attachment' === get_post_type( $attachment_id ) && wp_get_attachment_metadata( $attachment_id ) ) {
+		if ( 'attachment' === get_post_type( $attachment_id ) ) {
 			$media_types = $this->get_compatible_media_types();
 			$type        = $this->get_media_type( $attachment_id );
 			$is_media    = in_array( $type, $media_types, true );

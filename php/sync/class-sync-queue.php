@@ -538,7 +538,6 @@ class Sync_Queue {
 
 		$args = array(
 			'post_type'      => 'attachment',
-			'post_mime_type' => array( 'image', 'video' ),
 			'post_status'    => 'inherit',
 			'posts_per_page' => 1,
 			'fields'         => 'ids',
