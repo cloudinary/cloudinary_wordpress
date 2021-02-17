@@ -252,16 +252,10 @@ class Media extends Settings_Component implements Setup {
 	 * @return bool
 	 */
 	public function is_local_media( $attachment_id ) {
-		$is_local_media = false;
-
 		$local_host = wp_parse_url( get_site_url(), PHP_URL_HOST );
 		$media_host = wp_parse_url( get_the_guid( $attachment_id ), PHP_URL_HOST );
 
-		if ( $local_host === $media_host ) {
-			$is_local_media = true;
-		}
-
-		return $is_local_media;
+		return $local_host === $media_host;
 	}
 
 	/**
