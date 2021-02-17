@@ -158,6 +158,7 @@ class Media extends Settings_Component implements Setup {
 			'video',
 			'audio',
 			'application',
+			'text',
 		);
 
 		/**
