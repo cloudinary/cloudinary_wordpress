@@ -738,7 +738,14 @@ class Media extends Settings_Component implements Setup {
 	 * @return array
 	 */
 	public function apply_default_transformations( array $transformations, $attachment_id ) {
-		// Allow filter to bypass defaults.
+		/**
+		 * Filter to allow bypassing defaults. Return false to not apply defaults.
+		 *
+		 * @param bool $true          True to apply defaults.
+		 * @param int  $attachment_id The current attachment ID.
+		 *
+		 * @return bool
+		 */
 		if ( false === apply_filters( 'cloudinary_apply_default_transformations', true, $attachment_id ) ) {
 			return $transformations;
 		}
@@ -1421,13 +1428,13 @@ class Media extends Settings_Component implements Setup {
 		$transformations = $this->get_transformations_from_string( $asset['url'] );
 		if ( ! empty( $transformations ) ) {
 			$asset['sync_key']        .= wp_json_encode( $transformations );
-			$asset['transformations'] = $transformations;
+			$asset['transformations']  = $transformations;
 		}
 
 		// Check Format.
 		$url_format = pathinfo( $asset['url'], PATHINFO_EXTENSION );
 		if ( strtolower( $url_format ) !== strtolower( $asset['format'] ) ) {
-			$asset['format']   = $url_format;
+			$asset['format']    = $url_format;
 			$asset['sync_key'] .= $url_format;
 		}
 
