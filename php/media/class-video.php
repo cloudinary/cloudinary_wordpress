@@ -8,6 +8,7 @@
 namespace Cloudinary\Media;
 
 use Cloudinary\Media;
+use Cloudinary\Utils;
 
 /**
  * Class Video.
@@ -35,13 +36,6 @@ class Video {
 	private $config;
 
 	/**
-	 * Determines if the video player is active.
-	 *
-	 * @var bool
-	 */
-	private $player_enabled = false;
-
-	/**
 	 * List of attachment ID's to enable.
 	 *
 	 * @var array
@@ -53,7 +47,7 @@ class Video {
 	 *
 	 * @var string
 	 */
-	const PLAYER_VER = '1.4.0';
+	const PLAYER_VER = '1.5.1';
 
 	/**
 	 * Cloudinary Core Version.
@@ -87,44 +81,7 @@ class Video {
 	 * @return bool
 	 */
 	public function player_enabled() {
-		return $this->player_enabled;
-	}
-
-	/**
-	 * $this->>register_scripts();
-	 * Initialises the Cloudinary player if it's enabled and if video content is found.
-	 */
-	public function init_player() {
-		if ( isset( $this->config['video_player'] ) && 'cld' === $this->config['video_player'] && ! is_admin() ) {
-			global $wp_query;
-			$posts = $wp_query->get_posts();
-			// Check content has a video to enqueue assets in correct location.
-			foreach ( $posts as $post ) {
-				$has_video  = $this->media->filter->get_video_shortcodes( get_the_content() );
-				$video_tags = $this->media->filter->get_media_tags( get_the_content(), 'video' );
-				if ( ! empty( $has_video ) || ! empty( $video_tags ) ) {
-					// Setup initial scripts.
-					wp_enqueue_style( 'cld-player' );
-					wp_enqueue_style( 'cld-player-local', $this->media->plugin->dir_url . 'css/video.css', null, self::PLAYER_VER );
-					wp_enqueue_script( 'cld-player' );
-
-					// Init cld script object.
-					$cld = array(
-						'cloud_name' => $this->media->credentials['cloud_name'],
-					);
-					if ( ! empty( $this->media->credentials['cname'] ) ) {
-						$cld['cname']       = $this->media->credentials['cname'];
-						$cld['private_cdn'] = true;
-					}
-					$code = 'var cld = cloudinary.Cloudinary.new(' . wp_json_encode( $cld ) . ');';
-					wp_add_inline_script( 'cld-player', $code );
-
-					// Enable video for output.
-					$this->player_enabled = true;
-					break; // Exit since we determined that a video is present.
-				}
-			}
-		}
+		return isset( $this->config['video_player'] ) && 'cld' === $this->config['video_player'] && ! is_admin();
 	}
 
 	/**
@@ -195,188 +152,31 @@ class Video {
 	 */
 	public function filter_video_shortcode( $html, $attr ) {
 
+		// Confirm we have an ID and it's synced.
+		if ( empty( $attr['id'] ) || ! $this->media->has_public_id( $attr['id'] ) ) {
+			return $html;
+		}
+
 		// If not CLD video init, return default.
-		if ( false === $this->player_enabled ) {
+		if ( ! $this->player_enabled() ) {
+			if ( empty( $attr['cloudinary'] ) ) {
+				$video                        = wp_get_attachment_metadata( $attr['id'] );
+				$url                          = $this->media->cloudinary_url( $attr['id'] );
+				$attr[ $video['fileformat'] ] = $url;
+				$attr['cloudinary']           = true; // Flag Cloudinary to ensure we don't call it again.
+				$html                         = wp_video_shortcode( $attr, $html );
+			}
+
 			return $html;
 		}
-		// Check for override flag.
-		$overwrite_transformations = false;
-		if ( ! empty( $attr['cldoverwrite'] ) ) {
-			$overwrite_transformations = true;
-		}
-		// Check for a cloudinary url, or prep sync if not found.
-		$cloudinary_url = $this->media->cloudinary_url( $attr['id'], false, false, null, $overwrite_transformations );
-		if ( ! $this->media->plugin->components['sync']->is_synced( $attr['id'] ) ) {
-			// If the asset is not synced, then the metadata will not be complete since v1 didn't save any.
-			// Return html for now since cloudinary_url will queue it up for syncing in the background.
-			return $html;
-		}
+		$attachment_id = $attr['id'];
+		unset( $attr['id'] );
+		unset( $attr['width'] );
+		unset( $attr['height'] );
 
-		// Queue video.
-		$video           = wp_get_attachment_metadata( $attr['id'] );
-		$transformations = $this->media->get_transformations_from_string( $cloudinary_url, 'video' );
-		$args            = array();
+		$overwrite_transformations = ! empty( $attr['cldoverwrite'] );
 
-		if ( isset( $attr['autoplay'] ) ) {
-			$args['autoplay'] = 'true' === $attr['autoplay'];
-			$args['muted']    = 'true' === $attr['autoplay'];
-		}
-		if ( isset( $attr['loop'] ) ) {
-			$args['loop'] = 'true' === $attr['loop'];
-		}
-		// Transformations.
-		if ( ! empty( $transformations ) ) {
-			$args['transformation'] = $transformations;
-		}
-		$args['overwrite_transformations'] = $overwrite_transformations;
-		// Size settings.
-		$size = '';
-		if ( ! empty( $attr['width'] ) ) {
-			$size        .= ' width="' . esc_attr( $attr['width'] ) . '"';
-			$args['size'] = true;
-		}
-		if ( ! empty( $attr['height'] ) ) {
-			$size        .= ' height="' . esc_attr( $attr['height'] ) . '"';
-			$args['size'] = true;
-		}
-		$instance = $this->queue_video_config( $attr['id'], $attr[ $video['fileformat'] ], $video['fileformat'], $args );
-
-		// Replace with video tag.
-		return '<video class="cld-fluid" id="cloudinary-video-' . esc_attr( $instance ) . '"' . $size . '></video>';
-	}
-
-	/**
-	 * Filter video tags and queue them for the player.
-	 *
-	 * @param string $content HTML content of the post.
-	 *
-	 * @return mixed
-	 */
-	public function filter_video_tags( $content ) {
-
-		$video_tags = $this->media->filter->get_media_tags( $content, 'video' );
-		foreach ( $video_tags as $tag ) {
-			$args = array();
-
-			// Catch poster.
-			$poster_url = $this->media->filter->get_poster_from_tag( $tag );
-			if ( false !== $poster_url ) {
-
-				$poster_id             = $this->media->get_id_from_url( $poster_url );
-				$cloudinary_id         = $this->media->cloudinary_id( $poster_id );
-				$cloudinary_url        = $this->media->cloudinary_url( $poster_id );
-				$transformations       = $this->media->get_transformations_from_string( $cloudinary_url );
-				$args['posterOptions'] = array(
-					'publicId' => $cloudinary_id,
-				);
-				if ( ! empty( $transformations ) ) {
-					$args['posterOptions']['transformation'] = $transformations;
-				}
-			}
-
-			$url = $this->media->filter->get_url_from_tag( $tag );
-			if ( false === $url ) {
-				continue;
-			}
-			$attachment_id = $this->media->filter->get_id_from_tag( $tag );
-			if ( empty( $attachment_id ) ) {
-				continue; // Missing or no attachment ID found.
-			}
-			// Enable Autoplay for this video.
-			if ( false !== strpos( $tag, 'autoplay' ) ) {
-				$args['autoplayMode'] = $this->config['video_autoplay_mode']; // if on, use defined mode.
-				$args['muted']        = 'always' === $this->config['video_autoplay_mode'];
-			}
-			// Enable Loop.
-			if ( false !== strpos( $tag, 'loop' ) ) {
-				$args['loop'] = true;
-			}
-			// If there is no controls, it has been turned off.
-			if ( false !== strpos( $tag, 'controls' ) ) {
-				$args['controls'] = true;
-			}
-			// If there is a muted, it has been turned on.
-			if ( false !== strpos( $tag, 'muted' ) ) {
-				$args['muted'] = true;
-			}
-			// If preload.
-			if ( preg_match( '/preload=\"([^\"]*)\"/i', $tag, $found ) ) {
-				$args['preload'] = $found[1];
-			}
-			// Add transformations if found.
-			$classes                   = $this->media->filter->get_classes( $tag ); // check if this is a transformation overwrite.
-			$overwrite_transformations = false;
-			if ( false !== strpos( $classes, 'cld-overwrite' ) ) {
-				$overwrite_transformations = true;
-			}
-			$args['overwrite_transformations'] = $overwrite_transformations;
-
-			$cloudinary_url = $this->media->cloudinary_url( $attachment_id, false, false, null, $overwrite_transformations );
-			// Bail replacing the video URL for cases where it doesn't exist.
-			// Cases are, for instance, when the file size is larger than the API limits — free accounts.
-			if ( ! empty( $cloudinary_url ) ) {
-				$transformations = $this->media->get_transformations_from_string( $cloudinary_url, 'video' );
-				if ( ! empty( $transformations ) ) {
-					$args['transformation'] = $transformations;
-				}
-				$video = wp_get_attachment_metadata( $attachment_id );
-				if ( $this->player_enabled() ) {
-					$instance = $this->queue_video_config( $attachment_id, $url, $video['fileformat'], $args );
-					// Remove src and replace with an ID.
-					$new_tag = str_replace( 'src="' . $url . '"', 'id="cloudinary-video-' . esc_attr( $instance ) . '"', $tag );
-					$content = str_replace( $tag, $new_tag, $content );
-				} else {
-					// Just replace URL.
-					$content = str_replace( $url, $cloudinary_url, $content );
-				}
-			}
-		}
-
-		return $content;
-	}
-
-	/**
-	 * Output init scripts in footer for videos.
-	 */
-	public function print_video_scripts() {
-
-		if ( $this->player_enabled() && ! empty( $this->attachments ) ) {
-
-			$cld_videos = array();
-			foreach ( $this->attachments as $instance => $video ) {
-				// @todo - ping the URL to ensure it has transformation available, else update an eager.
-				$cloudinary_id = $this->media->get_public_id( $video['id'] );
-				$default       = array(
-					'publicId'    => $cloudinary_id,
-					'sourceTypes' => array( $video['format'] ), // @todo Make this based on eager items as mentioned above.
-					'autoplay'    => 'off' !== $this->config['video_autoplay_mode'],
-					'loop'        => $this->config['video_loop'],
-				);
-
-				$valid_autoplay_modes = array( 'never', 'always', 'on-scroll' );
-				if ( $default['autoplay'] && in_array( $this->config['video_autoplay_mode'], $valid_autoplay_modes, true ) ) {
-					$default['autoplayMode'] = $this->config['video_autoplay_mode'];
-				}
-
-				$config = wp_parse_args( $video['args'], $default );
-
-				if ( empty( $config['size'] ) && ! empty( $config['transformation'] ) && ! $this->media->get_crop_from_transformation( $config['transformation'] ) ) {
-					$config['fluid'] = true;
-				}
-
-				$config['controls']      = $this->config['video_controls'];
-				$cld_videos[ $instance ] = $config;
-			}
-
-			if ( empty( $cld_videos ) ) {
-				return;
-			}
-
-			$json_cld_videos = wp_json_encode( $cld_videos );
-			$video_freeform  = esc_js( $this->config['video_freeform'] );
-
-			wp_add_inline_script( 'cld-player', "var cldVideos = '{$json_cld_videos}'; var videoFreeForm = '{$video_freeform}';" );
-		}
+		return $this->build_video_embed( $attachment_id, $attr, $overwrite_transformations );
 	}
 
 	/**
@@ -385,16 +185,6 @@ class Video {
 	public function enqueue_block_assets() {
 		wp_enqueue_script( 'cloudinary-block', $this->media->plugin->dir_url . 'js/block-editor.js', array(), $this->media->plugin->version, true );
 		wp_add_inline_script( 'cloudinary-block', 'var CLD_VIDEO_PLAYER = ' . wp_json_encode( $this->config ), 'before' );
-	}
-
-	/**
-	 * Register assets for the player.
-	 */
-	public function register_scripts_styles() {
-		wp_register_style( 'cld-player', 'https://unpkg.com/cloudinary-video-player@' . self::PLAYER_VER . '/dist/cld-video-player.min.css', null, self::PLAYER_VER );
-		wp_register_script( 'cld-core', 'https://unpkg.com/cloudinary-core@' . self::CORE_VER . '/cloudinary-core-shrinkwrap.min.js', null, self::CORE_VER, true );
-		wp_register_script( 'cld-player', 'https://unpkg.com/cloudinary-video-player@' . self::PLAYER_VER . '/dist/cld-video-player.min.js', array( 'cld-core' ), self::PLAYER_VER, true );
-		wp_enqueue_script( 'cld-video-init', CLDN_URL . 'js/video-init.js', array( 'cld-player' ), self::CORE_VER, true );
 	}
 
 	/**
@@ -407,28 +197,123 @@ class Video {
 	 */
 	public function filter_video_block_pre_render( $block, $source_block ) {
 
-		if ( 'core/video' === $source_block['blockName'] ) {
-			$classes = 'cld-fluid';
-			if ( ! empty( $source_block['attrs']['overwrite_transformations'] ) ) {
-				$classes .= ' cld-overwrite';
-			}
-			if ( ! empty( $source_block['attrs']['id'] ) ) {
-				$classes .= ' wp-video-' . $source_block['attrs']['id'];
-			}
+		if ( 'core/video' === $source_block['blockName'] && ! empty( $source_block['attrs']['id'] ) && $this->media->has_public_id( $source_block['attrs']['id'] ) ) {
+			$attachment_id             = $source_block['attrs']['id'];
+			$overwrite_transformations = ! empty( $source_block['attrs']['overwrite_transformations'] );
 			foreach ( $block['innerContent'] as &$content ) {
-
 				$video_tags = $this->media->filter->get_media_tags( $content );
-				foreach ( $video_tags as $tag ) {
-					if ( false !== strpos( $tag, 'class="' ) ) {
-						$content = str_replace( 'class="', 'class="' . $classes . ' ', $content );
-					} else {
-						$content = str_replace( '<video ', '<video class="' . $classes . '" ', $content );
-					}
+				$video_tag  = array_shift( $video_tags );
+				$attributes = Utils::get_tag_attributes( $video_tag );
+				if ( $this->player_enabled() ) {
+					unset( $attributes['src'] );
+					$content = $this->build_video_embed( $attachment_id, $attributes, $overwrite_transformations );
+				} else {
+					$url     = $this->media->cloudinary_url( $attachment_id );
+					$content = str_replace( $attributes['src'], $url, $content );
 				}
 			}
 		}
 
 		return $block;
+	}
+
+	/**
+	 * Build a new iframe embed for a video.
+	 *
+	 * @param int   $attachment_id             The attachment ID.
+	 * @param array $attributes                Attributes to add to the embed.
+	 * @param bool  $overwrite_transformations Flag to overwrite transformations.
+	 *
+	 * @return string|null
+	 */
+	protected function build_video_embed( $attachment_id, $attributes = array(), $overwrite_transformations = false ) {
+		$public_id = $this->media->get_public_id( $attachment_id );
+		// Setup the base params.
+		$params = array(
+			'public_id'  => $public_id,
+			'cloud_name' => $this->media->plugin->get_component( 'connect' )->get_cloud_name(),
+			'player'     => array(
+				'fluid'    => 'true',
+				'controls' => 'false',
+			),
+			'source'     => array(
+				'source_types' => array(),
+			),
+		);
+		// Check for transformations.
+		$transformations = $this->media->get_transformations( $attachment_id, array(), $overwrite_transformations );
+		if ( ! empty( $transformations ) ) {
+			$params['source']['transformation'] = $transformations;
+		}
+		// Set the source_type.
+		$video = wp_get_attachment_metadata( $attachment_id );
+		if ( ! empty( $video['fileformat'] ) ) {
+			$params['source']['source_types'][] = $video['fileformat'];
+			unset( $attributes[ $video['fileformat'] ] );
+		}
+		// Add cname if present.
+		if ( ! empty( $this->media->credentials['cname'] ) ) {
+			$params['cloudinary'] = array(
+				'cname'       => $this->media->credentials['cname'],
+				'private_cdn' => 'true',
+			);
+		}
+		// Set the autoplay.
+		if ( ! empty( $attributes['autoplay'] ) ) {
+			$params['player']['autoplay_mode'] = $this->media->get_settings()->get_value( 'video_autoplay_mode' );
+		}
+
+		// Set the poster.
+		if ( isset( $attributes['poster'] ) ) {
+			$poster_id = $this->media->get_public_id_from_url( $attributes['poster'] );
+			if ( $poster_id ) {
+				$params['source']['poster'] = $poster_id;
+			}
+			unset( $attributes['poster'] );
+		}
+		// Add the player version to use.
+		$params['vpv'] = self::PLAYER_VER;
+		// Build URL.
+		$params['player'] = wp_parse_args( $attributes, $params['player'] );
+		$url              = add_query_arg( $params, 'https://player.cloudinary.com/embed/' );
+
+		// Build the Player HTML.
+		$tag_args = array(
+			'type'       => 'tag',
+			'element'    => 'figure',
+			'attributes' => array(
+				'class' => array(
+					'wp-block-embed',
+					'is-type-video',
+					'wp-has-aspect-ratio',
+				),
+			),
+			array(
+				'type'       => 'tag',
+				'element'    => 'div',
+				'attributes' => array(
+					'class' => array(
+						'wp-block-embed__wrapper',
+					),
+				),
+				array(
+					'type'       => 'tag',
+					'element'    => 'iframe',
+					'attributes' => array(
+						'src'         => $url,
+						'width'       => $video['width'],
+						'height'      => $video['height'],
+						'allow'       => 'autoplay; fullscreen; encrypted-media; picture-in-picture',
+						'allowfullscreen',
+						'frameborder' => 0,
+					),
+				),
+			),
+		);
+
+		$new_tag = $this->media->get_settings()->create_setting( $public_id, $tag_args );
+
+		return $new_tag->get_component()->render();
 	}
 
 	/**
@@ -480,16 +365,11 @@ class Video {
 		add_filter( 'cloudinary_default_qf_transformations_video', array( $this, 'default_video_transformations' ), 10 );
 		add_filter( 'cloudinary_default_freeform_transformations_video', array( $this, 'default_video_freeform_transformations' ), 10 );
 		if ( ! is_admin() ) {
-			add_filter( 'the_content', array( $this, 'filter_video_tags' ) );
 			// Filter for block rendering.
 			add_filter( 'render_block_data', array( $this, 'filter_video_block_pre_render' ), 10, 2 );
 		}
 
-		add_action( 'wp_print_styles', array( $this, 'init_player' ) );
-		add_action( 'wp_footer', array( $this, 'print_video_scripts' ) );
-
 		// Add inline scripts for gutenberg.
 		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_block_assets' ) );
-		$this->register_scripts_styles();
 	}
 }
