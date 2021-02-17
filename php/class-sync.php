@@ -238,6 +238,10 @@ class Sync implements Setup, Assets {
 			$can = true;
 		}
 
+		if ( ! $this->managers['media']->is_local_media( $attachment_id ) ) {
+			$can = false;
+		}
+
 		/**
 		 * Filter to allow changing if an asset is allowed to be synced.
 		 * Return a WP Error with reason why it can't be synced.
@@ -829,6 +833,25 @@ class Sync implements Setup, Assets {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Delete Cloudinary meta for the attachment ID.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 */
+	public function delete_cloudinary_meta( $attachment_id ) {
+		// Update attachment meta.
+		$meta   = wp_get_attachment_metadata( $attachment_id, true );
+		unset( $meta[ self::META_KEYS['cloudinary'] ] );
+		wp_update_attachment_metadata( $attachment_id, $meta );
+
+		// Cleanup postmeta.
+		$queued = get_post_meta( $attachment_id, self::META_KEYS['queued'] );
+		delete_post_meta( $attachment_id, self::META_KEYS['public_id'] );
+		delete_post_meta( $attachment_id, self::META_KEYS['pending'] );
+		delete_post_meta( $attachment_id, self::META_KEYS['queued'] );
+		delete_post_meta( $attachment_id, $queued );
 	}
 
 	/**

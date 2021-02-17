@@ -115,6 +115,9 @@ class Upload_Sync {
 				),
 				'upload.php'
 			);
+			if ( ! $this->plugin->components['media']->is_local_media( $post->ID ) ) {
+				return $actions;
+			}
 			if ( ! $this->plugin->components['sync']->is_synced( $post->ID ) ) {
 				$actions['cloudinary-push'] = sprintf(
 					'<a href="%s" aria-label="%s">%s</a>',
@@ -151,6 +154,11 @@ class Upload_Sync {
 		switch ( $action ) {
 			case 'cloudinary-push':
 				foreach ( $post_ids as $post_id ) {
+					if ( ! $this->media->is_local_media( $post_id ) ) {
+						// Clean up for previous attempts to sync.
+						$this->sync->delete_cloudinary_meta( $post_id );
+						continue;
+					}
 					$this->sync->set_signature_item( $post_id, 'file', '' );
 					$this->media->delete_post_meta( $post_id, Sync::META_KEYS['public_id'] );
 					$this->sync->add_to_sync( $post_id );
