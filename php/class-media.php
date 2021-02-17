@@ -870,10 +870,12 @@ class Media extends Settings_Component implements Setup {
 		// Get the attachment resource type.
 		$resource_type = $this->get_media_type( $attachment_id );
 		// Setup initial args for cloudinary_url.
+		$delivery = $this->get_post_meta( $attachment_id, Sync::META_KEYS['delivery'], true );
 		$pre_args = array(
 			'secure'        => is_ssl(),
 			'version'       => $this->get_cloudinary_version( $attachment_id ),
 			'resource_type' => $resource_type,
+			'delivery_type' => ! empty( $delivery ) ? $delivery : 'upload',
 		);
 
 		$size = $this->prepare_size( $attachment_id, $size );
@@ -1349,7 +1351,8 @@ class Media extends Settings_Component implements Setup {
 		update_post_meta( $attachment_id, '_' . md5( $sync_key ), true );
 		// record a base to ensure primary isn't deleted.
 		update_post_meta( $attachment_id, '_' . md5( 'base_' . $public_id ), true );
-
+		// capture the delivery type.
+		update_post_meta( $attachment_id, Sync::META_KEYS['delivery'], $asset['type'] );
 		// Capture the ALT Text.
 		if ( ! empty( $asset['meta']['alt'] ) ) {
 			$alt_text = wp_strip_all_tags( $asset['meta']['alt'] );
@@ -1397,6 +1400,7 @@ class Media extends Settings_Component implements Setup {
 		$asset = array(
 			'version'         => (int) filter_var( $data['asset']['version'], FILTER_SANITIZE_NUMBER_INT ),
 			'public_id'       => filter_var( $data['asset']['public_id'], FILTER_SANITIZE_STRING ),
+			'type'            => filter_var( $data['asset']['type'], FILTER_SANITIZE_STRING ),
 			'format'          => filter_var( $data['asset']['format'], FILTER_SANITIZE_STRING ),
 			'src'             => filter_var( $data['asset']['secure_url'], FILTER_SANITIZE_URL ),
 			'url'             => filter_var( $data['asset']['secure_url'], FILTER_SANITIZE_URL ),
