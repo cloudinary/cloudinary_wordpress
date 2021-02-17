@@ -81,6 +81,7 @@ class Sync implements Setup, Assets {
 		'version'        => '_cloudinary_version',
 		'plugin_version' => '_plugin_version',
 		'breakpoints'    => '_cloudinary_breakpoints',
+		'delivery'       => '_cloudinary_delivery',
 		'public_id'      => '_public_id',
 		'transformation' => '_transformations',
 		'sync_error'     => '_sync_error',
@@ -425,6 +426,11 @@ class Sync implements Setup, Assets {
 				'generate' => array( $this->managers['media'], 'get_breakpoint_options' ),
 				'priority' => 25,
 				'sync'     => array( $this->managers['upload'], 'explicit_update' ),
+				'validate' => function ( $attachment_id ) {
+					$delivery = $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['delivery'] );
+
+					return empty( $delivery ) || 'upload' === $delivery;
+				},
 				'state'    => 'info syncing',
 				'note'     => __( 'Updating breakpoints', 'cloudinary' ),
 			),
