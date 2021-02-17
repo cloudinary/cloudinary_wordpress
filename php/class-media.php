@@ -224,7 +224,7 @@ class Media extends Settings_Component implements Setup {
 		$conversions  = $this->get_convertible_extensions();
 		$convertibles = array_keys( $conversions );
 
-		return in_array( $type, $types, true ) && ! in_array( $mime['ext'], $convertibles );
+		return in_array( $type, $types, true ) && ! in_array( $mime['ext'], $convertibles, true );
 	}
 
 	/**
@@ -239,7 +239,7 @@ class Media extends Settings_Component implements Setup {
 		if ( 'attachment' === get_post_type( $attachment_id ) && wp_get_attachment_metadata( $attachment_id ) ) {
 			$media_types = $this->get_compatible_media_types();
 			$type        = $this->get_media_type( $attachment_id );
-			$is_media    = in_array( $type, $media_types );
+			$is_media    = in_array( $type, $media_types, true );
 		}
 
 		return $is_media;
