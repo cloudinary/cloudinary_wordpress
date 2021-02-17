@@ -83,7 +83,6 @@ class Upload_Sync {
 		add_filter( 'handle_bulk_actions-upload', array( $this, 'handle_bulk_actions' ), 10, 3 );
 		// Add inline action.
 		add_filter( 'media_row_actions', array( $this, 'add_inline_action' ), 10, 2 );
-		add_filter( 'post_row_actions', array( $this, 'add_inline_action' ), 10, 2 );
 
 		// Add Bulk actions.
 		add_filter(
@@ -133,24 +132,6 @@ class Upload_Sync {
 					);
 				}
 			}
-
-		}
-
-		if ('on' === $this->plugin->settings->get_value( 'enable_support' ) ) {
-			$action_url = add_query_arg(
-				array(
-					'action'   => 'cloudinary-report',
-					'media[]'  => $post->ID,
-					'_wpnonce' => wp_create_nonce( 'bulk-media' ),
-				),
-				'upload.php'
-			);
-			$actions['cloudinary-support'] = sprintf(
-				'<a href="%s" aria-label="%s">%s</a>',
-				$action_url,
-				esc_attr__( 'Add to Cloudinary Report', 'cloudinary' ),
-				esc_html__( 'Add to Cloudinary Report', 'cloudinary' )
-			);
 		}
 
 		return $actions;
@@ -175,17 +156,9 @@ class Upload_Sync {
 					$this->sync->add_to_sync( $post_id );
 				}
 				break;
-			case 'cloudinary-report':
-				$report_items = get_option('_cloudinary_report', array() );
-				foreach ( $post_ids as $post_id ) {
-					$report_items[] = $post_id;
-				}
-				update_option( '_cloudinary_report', $report_items );
-				break;
 		}
 
 		return $location;
-
 	}
 
 	/**
