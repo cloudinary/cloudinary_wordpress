@@ -97,6 +97,7 @@ export const CAROUSEL_LOCATION = [
 	{ label: __( 'Left', 'cloudinary' ), value: 'left' },
 	{ label: __( 'Right', 'cloudinary' ), value: 'right' },
 	{ label: __( 'Top', 'cloudinary' ), value: 'top' },
+	{ label: __( 'Bottom', 'cloudinary' ), value: 'bottom' },
 ];
 
 export const CAROUSEL_STYLE = [
