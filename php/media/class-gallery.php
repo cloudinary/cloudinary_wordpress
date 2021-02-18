@@ -117,9 +117,9 @@ class Gallery {
 
 		$config = ! empty( $media->plugin->settings->get_value( 'gallery_config' ) ) ?
 			$media->plugin->settings->get_value( 'gallery_config' ) :
-			wp_json_encode( self::$default_config );
+			self::$default_config;
 
-		$this->config = json_decode( $config, true );
+		$this->config = $this->maybe_decode_config( $config );
 	}
 
 	/**
@@ -433,6 +433,22 @@ class Gallery {
 		<?php
 
 		return $content . ob_get_clean();
+	}
+
+	/**
+	 * Maybe decode the gallery configuration.
+	 * This has historical reasons, as it was used to be stored as encoded information.
+	 *
+	 * @param array|string $config The configuration for the gallery.
+	 *
+	 * @return array
+	 */
+	protected function maybe_decode_config( $config ) {
+		if ( ! is_array( $config ) ) {
+			$config = json_decode( $config, true );
+		}
+
+		return $config;
 	}
 
 	/**
