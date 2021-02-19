@@ -78,4 +78,15 @@ class React extends Text {
 
 		return $struct;
 	}
+
+	/**
+	 * Sanitize the value.
+	 *
+	 * @param string $value The value to sanitize.
+	 *
+	 * @return array|bool|null
+	 */
+	public function sanitize_value( $value ) {
+		return json_decode( $value, true );
+	}
 }

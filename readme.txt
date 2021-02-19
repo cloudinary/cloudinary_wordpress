@@ -90,10 +90,14 @@ Your site is now setup to start using Cloudinary.
 Once installing the new version of the plugin, the plugin will automatically upgrade all of your assets to work with the new plugin.
 Upgrade is seamless and requires no action from your side.
 
+= Can I continue using v1? =
+The legacy WordPress Plugin version (v1.x) will be deprecated as of February 1st, 2021, after which support, updates and bug fixes for the legacy plugin will continue in limited fashion. 
+The legacy plugin will be made obsolete on August 1st, 2021 (end-of-life date) and will no longer function after that date.
+
 = Does the plugin sync all of my media to Cloudinary? =
 
 The plugin will automatically sync all of your WordPress media to your Cloudinary account and start delivering assets from Cloudinary.
-Your assets in the WP storage will remain intact.
+You will be able to select whether the original files will remain in WordPress storage, or only in Cloudinary. 
 
 = Where can I find more info? =
 
@@ -109,7 +113,6 @@ The following plugins/themes/page-builders might not be fully compatible with th
 * Goodlayers
 * Leopard
 * Cube Portfolio
-* Smush
 
 
 == Screenshots ==
@@ -124,6 +127,25 @@ The following plugins/themes/page-builders might not be fully compatible with th
 9. Use Interactive Media Gallery 
 
 == Changelog ==
+
+= 2.6.0 (01 Feb 2021) =
+
+New Features:
+
+* Added a "wp cloudinary analyze" CLI command which returns the synchronization state of the assets
+* Added a "wp cloudinary sync" CLI command which triggers the synchronization of all pending assets
+
+Fixes and improvements:
+
+* Sync process improvements 
+* Sync process 1000 asset limitation was removed
+* Folder path now supports forward slashes
+* Deleting media on the WordPress media library will now delete them on Cloudinary
+* Fixed an infinite loading issue when using videos 
+* Fixed compatibility issues with Smush plugin
+* Fixed compatibility issues with using the Cloudinary tab in ACF plugin
+* Minor cosmetic updates
+
 
 = 2.5.0 (20 Jan 2021) =
 

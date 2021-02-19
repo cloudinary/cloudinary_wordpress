@@ -239,6 +239,10 @@ class Sync implements Setup, Assets {
 			$can = true;
 		}
 
+		if ( ! $this->managers['media']->is_local_media( $attachment_id ) ) {
+			$can = false;
+		}
+
 		/**
 		 * Filter to allow changing if an asset is allowed to be synced.
 		 * Return a WP Error with reason why it can't be synced.
@@ -777,24 +781,14 @@ class Sync implements Setup, Assets {
 	public function set_signature_item( $attachment_id, $type, $value = null ) {
 
 		// Get the core meta.
-		$meta = wp_get_attachment_metadata( $attachment_id, true );
-		if ( ! is_array( $meta ) ) {
-			$meta = array();
-		}
-		if ( empty( $meta[ self::META_KEYS['cloudinary'] ] ) ) {
-			$meta[ self::META_KEYS['cloudinary'] ] = array();
-		}
+		$meta = (array) $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['signature'], true );
 		// Set the specific value.
 		if ( is_null( $value ) ) {
 			// Generate a new value based on generator.
 			$value = $this->generate_type_signature( $type, $attachment_id );
 		}
-		// Ensure we have an array.
-		if ( empty( $meta[ self::META_KEYS['cloudinary'] ][ self::META_KEYS['signature'] ] ) || ! is_array( $meta[ self::META_KEYS['cloudinary'] ][ self::META_KEYS['signature'] ] ) ) {
-			$meta[ self::META_KEYS['cloudinary'] ][ self::META_KEYS['signature'] ] = array();
-		}
-		$meta[ self::META_KEYS['cloudinary'] ][ self::META_KEYS['signature'] ][ $type ] = $value;
-		wp_update_attachment_metadata( $attachment_id, $meta );
+		$meta[ $type ] = $value;
+		$this->managers['media']->update_post_meta( $attachment_id, self::META_KEYS['signature'], $meta );
 	}
 
 	/**
@@ -835,6 +829,25 @@ class Sync implements Setup, Assets {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Delete Cloudinary meta for the attachment ID.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 */
+	public function delete_cloudinary_meta( $attachment_id ) {
+		// Update attachment meta.
+		$meta   = wp_get_attachment_metadata( $attachment_id, true );
+		unset( $meta[ self::META_KEYS['cloudinary'] ] );
+		wp_update_attachment_metadata( $attachment_id, $meta );
+
+		// Cleanup postmeta.
+		$queued = get_post_meta( $attachment_id, self::META_KEYS['queued'] );
+		delete_post_meta( $attachment_id, self::META_KEYS['public_id'] );
+		delete_post_meta( $attachment_id, self::META_KEYS['pending'] );
+		delete_post_meta( $attachment_id, self::META_KEYS['queued'] );
+		delete_post_meta( $attachment_id, $queued );
 	}
 
 	/**
@@ -899,7 +912,7 @@ class Sync implements Setup, Assets {
 					'type'        => 'sync',
 					'title'       => __( 'Bulk sync all your WordPress assets to Cloudinary', 'cloudinary' ),
 					'tooltip_off' => __( 'Manual sync is enabled. Individual assets must be synced manually using the WordPress Media Library.', 'cloudinary' ),
-					'tooltip_on'  => __( "An optional one-time operation to by manually push all media to Cloudinary that was stored in your WordPress Media Library prior to activation of the Cloudinary plugin. Please note that there is a limit of 1000 images at a time so your server doesn't get overloaded.", 'cloudinary' ),
+					'tooltip_on'  => __( 'An optional one-time operation to manually synchronize all WordPress Media to Cloudinary.', 'cloudinary' ),
 					'queue'       => $this->managers['queue'],
 				),
 				array(
