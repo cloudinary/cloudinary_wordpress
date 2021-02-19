@@ -207,6 +207,11 @@ class Filter {
 		foreach ( $shortcodes as $shortcode ) {
 			$args = shortcode_parse_atts( $shortcode['args'] );
 
+			// Bypass empty args shortcodes.
+			if ( empty( $args ) ) {
+				continue;
+			}
+
 			// Get the format.
 			list( $format ) = array_intersect( $exts, array_keys( $args ) );
 			if ( null !== $format ) {
