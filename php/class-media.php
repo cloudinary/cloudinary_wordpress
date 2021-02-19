@@ -158,6 +158,7 @@ class Media extends Settings_Component implements Setup {
 			'video',
 			'audio',
 			'application',
+			'text',
 		);
 
 		/**
@@ -208,7 +209,7 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
-	 * Check if a file type is compatibile with Cloudinary & WordPress.
+	 * Check if a file type is compatible with Cloudinary & WordPress.
 	 *
 	 * @param string $file The file to check.
 	 *
@@ -223,7 +224,7 @@ class Media extends Settings_Component implements Setup {
 		$conversions  = $this->get_convertible_extensions();
 		$convertibles = array_keys( $conversions );
 
-		return in_array( $type, $types, true ) && ! in_array( $mime['ext'], $convertibles );
+		return in_array( $type, $types, true ) && ! in_array( $mime['ext'], $convertibles, true );
 	}
 
 	/**
@@ -235,10 +236,10 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function is_media( $attachment_id ) {
 		$is_media = false;
-		if ( 'attachment' === get_post_type( $attachment_id ) && wp_get_attachment_metadata( $attachment_id ) ) {
+		if ( 'attachment' === get_post_type( $attachment_id ) ) {
 			$media_types = $this->get_compatible_media_types();
 			$type        = $this->get_media_type( $attachment_id );
-			$is_media    = in_array( $type, $media_types );
+			$is_media    = in_array( $type, $media_types, true );
 		}
 
 		return $is_media;
@@ -328,6 +329,41 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function get_media_type( $attachment_id ) {
 		return $this->get_file_type( get_attached_file( $attachment_id ) );
+	}
+
+	/**
+	 * Get the resource type.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function get_resource_type( $attachment_id ) {
+		$media_type = $this->get_media_type( $attachment_id );
+
+		switch ( $media_type ) {
+			case 'application':
+			case 'text':
+				$type = 'raw';
+				break;
+
+			case 'audio':
+				$type = 'video';
+				break;
+
+			default:
+				$type = $media_type;
+		}
+
+		/**
+		 * Filter the Cloudinary resource type for the attachment.
+		 *
+		 * @param string $type          The type.
+		 * @param int    $attachment_id The attachment ID.
+		 */
+		$type = apply_filters( 'cloudinary_resource_type', $type, $attachment_id );
+
+		return $type;
 	}
 
 	/**
@@ -539,7 +575,14 @@ class Media extends Settings_Component implements Setup {
 			$additional_sizes = wp_get_additional_image_sizes();
 			foreach ( $meta['sizes'] as $size_name => $size ) {
 				if ( $file === $size['file'] ) {
-					$cropped = ! wp_image_matches_ratio( $meta['width'], $meta['height'], $size['width'], $size['height'] );
+					$cropped = ! wp_image_matches_ratio(
+						// PDFs do not always have width and height, but they do have full sizes.
+						// This is important for the thumbnail crops on the media library.
+						! empty( $meta['width'] ) ? $meta['width'] : $meta['sizes']['full']['width'],
+						! empty( $meta['height'] ) ? $meta['height'] : $meta['sizes']['full']['height'],
+						$size['width'],
+						$size['height']
+					);
 					if ( isset( $additional_sizes[ $size_name ]['crop'] ) ) {
 						$cropped = $additional_sizes[ $size_name ]['crop'];
 					}
@@ -882,7 +925,7 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		// Get the attachment resource type.
-		$resource_type = $this->get_media_type( $attachment_id );
+		$resource_type = $this->get_resource_type( $attachment_id );
 		// Setup initial args for cloudinary_url.
 		$pre_args = array(
 			'secure'        => is_ssl(),
@@ -1890,7 +1933,7 @@ class Media extends Settings_Component implements Setup {
 		$options   = array(
 			'unique_filename' => true,
 			'overwrite'       => false,
-			'resource_type'   => $this->get_media_type( $attachment_id ),
+			'resource_type'   => $this->get_resource_type( $attachment_id ),
 			'public_id'       => basename( $public_id ),
 			'context'         => $this->get_context_options( $attachment_id ),
 		);
@@ -2033,6 +2076,25 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Fix the PDF resource type.
+	 *
+	 * @link https://cloudinary.com/cookbook/convert_pdf_to_jpg
+	 *
+	 * @param string $type          The default type.
+	 * @param int    $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 **/
+	public function pdf_resource_type( $type, $attachment_id ) {
+
+		if ( 'application/pdf' === get_post_mime_type( $attachment_id ) ) {
+			$type = 'image';
+		}
+
+		return $type;
+	}
+
+	/**
 	 * Setup the hooks and base_url if configured.
 	 */
 	public function setup() {
@@ -2078,6 +2140,9 @@ class Media extends Settings_Component implements Setup {
 			// Filter and action the custom column.
 			add_filter( 'manage_media_columns', array( $this, 'media_column' ) );
 			add_action( 'manage_media_custom_column', array( $this, 'media_column_value' ), 10, 2 );
+
+			// Filter PDF resource type.
+			add_filter( 'cloudinary_resource_type', array( $this, 'pdf_resource_type' ), 10, 2 );
 		}
 	}
 

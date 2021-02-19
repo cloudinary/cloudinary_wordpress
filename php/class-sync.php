@@ -775,24 +775,14 @@ class Sync implements Setup, Assets {
 	public function set_signature_item( $attachment_id, $type, $value = null ) {
 
 		// Get the core meta.
-		$meta = wp_get_attachment_metadata( $attachment_id, true );
-		if ( ! is_array( $meta ) ) {
-			$meta = array();
-		}
-		if ( empty( $meta[ self::META_KEYS['cloudinary'] ] ) ) {
-			$meta[ self::META_KEYS['cloudinary'] ] = array();
-		}
+		$meta = (array) $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['signature'], true );
 		// Set the specific value.
 		if ( is_null( $value ) ) {
 			// Generate a new value based on generator.
 			$value = $this->generate_type_signature( $type, $attachment_id );
 		}
-		// Ensure we have an array.
-		if ( empty( $meta[ self::META_KEYS['cloudinary'] ][ self::META_KEYS['signature'] ] ) || ! is_array( $meta[ self::META_KEYS['cloudinary'] ][ self::META_KEYS['signature'] ] ) ) {
-			$meta[ self::META_KEYS['cloudinary'] ][ self::META_KEYS['signature'] ] = array();
-		}
-		$meta[ self::META_KEYS['cloudinary'] ][ self::META_KEYS['signature'] ][ $type ] = $value;
-		wp_update_attachment_metadata( $attachment_id, $meta );
+		$meta[ $type ] = $value;
+		$this->managers['media']->update_post_meta( $attachment_id, self::META_KEYS['signature'], $meta );
 	}
 
 	/**
