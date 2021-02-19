@@ -1704,6 +1704,8 @@ class Media extends Settings_Component implements Setup {
 		$data = get_post_meta( $post_id, $key, $single );
 		if ( '' !== $data ) {
 			$this->update_post_meta( $post_id, $key, $data );
+			// Remove the low level meta.
+			delete_post_meta( $post_id, $key );
 		}
 
 		return $data;
