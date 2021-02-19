@@ -927,23 +927,26 @@ class Media extends Settings_Component implements Setup {
 		// Get the attachment resource type.
 		$resource_type = $this->get_resource_type( $attachment_id );
 		// Setup initial args for cloudinary_url.
+		$delivery = $this->get_post_meta( $attachment_id, Sync::META_KEYS['delivery'], true );
 		$pre_args = array(
 			'secure'        => is_ssl(),
 			'version'       => $this->get_cloudinary_version( $attachment_id ),
 			'resource_type' => $resource_type,
+			'delivery_type' => ! empty( $delivery ) ? $delivery : 'upload',
 		);
-
-		$size = $this->prepare_size( $attachment_id, $size );
-
+		$set_size = array();
+		if ( 'upload' === $delivery ) {
+			$set_size = $this->prepare_size( $attachment_id, $size );
+		}
 		// Prepare transformations.
 		$pre_args['transformation'] = $this->get_transformations( $attachment_id, $transformations, $overwrite_transformations );
 
 		// Make a copy as not to destroy the options in \Cloudinary::cloudinary_url().
 		$args = $pre_args;
-		$url  = $this->plugin->components['connect']->api->cloudinary_url( $cloudinary_id, $args, $size );
+		$url  = $this->plugin->components['connect']->api->cloudinary_url( $cloudinary_id, $args, $set_size );
 
 		// Check if this type is a preview only type. i.e PDF.
-		if ( ! empty( $size ) && $this->is_preview_only( $attachment_id ) ) {
+		if ( ! empty( $set_size ) && $this->is_preview_only( $attachment_id ) ) {
 			$url = $this->convert_media_extension( $url );
 		}
 
@@ -1406,7 +1409,8 @@ class Media extends Settings_Component implements Setup {
 		update_post_meta( $attachment_id, '_' . md5( $sync_key ), true );
 		// record a base to ensure primary isn't deleted.
 		update_post_meta( $attachment_id, '_' . md5( 'base_' . $public_id ), true );
-
+		// capture the delivery type.
+		update_post_meta( $attachment_id, Sync::META_KEYS['delivery'], $asset['type'] );
 		// Capture the ALT Text.
 		if ( ! empty( $asset['meta']['alt'] ) ) {
 			$alt_text = wp_strip_all_tags( $asset['meta']['alt'] );
@@ -1454,6 +1458,7 @@ class Media extends Settings_Component implements Setup {
 		$asset = array(
 			'version'         => (int) filter_var( $data['asset']['version'], FILTER_SANITIZE_NUMBER_INT ),
 			'public_id'       => filter_var( $data['asset']['public_id'], FILTER_SANITIZE_STRING ),
+			'type'            => filter_var( $data['asset']['type'], FILTER_SANITIZE_STRING ),
 			'format'          => filter_var( $data['asset']['format'], FILTER_SANITIZE_STRING ),
 			'src'             => filter_var( $data['asset']['secure_url'], FILTER_SANITIZE_URL ),
 			'url'             => filter_var( $data['asset']['secure_url'], FILTER_SANITIZE_URL ),
@@ -1761,6 +1766,8 @@ class Media extends Settings_Component implements Setup {
 		$data = get_post_meta( $post_id, $key, $single );
 		if ( '' !== $data ) {
 			$this->update_post_meta( $post_id, $key, $data );
+			// Remove the low level meta.
+			delete_post_meta( $post_id, $key );
 		}
 
 		return $data;
@@ -2076,6 +2083,29 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Filters the new sizes to ensure non upload (sprites), don't get resized.
+	 *
+	 * @param array $new_sizes     Array of sizes.
+	 * @param array $image_meta    Image metadata.
+	 * @param int   $attachment_id The attachment ID.
+	 *
+	 * @return array
+	 */
+	public function manage_sizes( $new_sizes, $image_meta, $attachment_id ) {
+
+		if ( $this->has_public_id( $attachment_id ) ) {
+			// Get delivery type.
+			$delivery = $this->get_post_meta( $attachment_id, Sync::META_KEYS['delivery'], true );
+			if ( empty( $delivery ) || 'upload' !== $delivery ) {
+				// Only upload based deliveries will get intermediate sizes.
+				$new_sizes = array();
+			}
+		}
+
+		return $new_sizes;
+	}
+
+	/**
 	 * Fix the PDF resource type.
 	 *
 	 * @link https://cloudinary.com/cookbook/convert_pdf_to_jpg
@@ -2140,6 +2170,9 @@ class Media extends Settings_Component implements Setup {
 			// Filter and action the custom column.
 			add_filter( 'manage_media_columns', array( $this, 'media_column' ) );
 			add_action( 'manage_media_custom_column', array( $this, 'media_column_value' ), 10, 2 );
+
+			// Handle other delivery types.
+			add_filter( 'intermediate_image_sizes_advanced', array( $this, 'manage_sizes' ), PHP_INT_MAX, 3 ); // High level to avoid other plugins breaking it.
 
 			// Filter PDF resource type.
 			add_filter( 'cloudinary_resource_type', array( $this, 'pdf_resource_type' ), 10, 2 );

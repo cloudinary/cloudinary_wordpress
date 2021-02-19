@@ -172,7 +172,7 @@ class Api {
 			$parts[] = $this->credentials['cloud_name'];
 		}
 
-		if ( false === $endpoint && 'image' === $resource ) {
+		if ( false === $endpoint && 'image' === $resource && 'upload' === $function ) {
 			$parts[] = 'images';
 		} else {
 			$parts[] = $resource;
@@ -250,7 +250,7 @@ class Api {
 
 		// Determine if we're dealing with a fetched.
 		// ...or uploaded image and update the URL accordingly.
-		$asset_endpoint = filter_var( $public_id, FILTER_VALIDATE_URL ) ? 'fetch' : 'upload';
+		$asset_endpoint = filter_var( $public_id, FILTER_VALIDATE_URL ) ? 'fetch' : $args['delivery_type'];
 
 		$url_parts = array(
 			'https:/',
@@ -261,7 +261,8 @@ class Api {
 			$url_parts[] = self::generate_transformation_string( $args['transformation'], $args['resource_type'] );
 		}
 		$base = pathinfo( $public_id );
-		if ( 'image' === $args['resource_type'] ) {
+		// Only do dynamic naming and sizes if upload type.
+		if ( 'image' === $args['resource_type'] && 'upload' === $args['delivery_type'] ) {
 			$new_path  = $base['filename'] . '/' . $base['basename'];
 			$public_id = str_replace( $base['basename'], $new_path, $public_id );
 		}

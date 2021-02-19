@@ -81,6 +81,7 @@ class Sync implements Setup, Assets {
 		'version'        => '_cloudinary_version',
 		'plugin_version' => '_plugin_version',
 		'breakpoints'    => '_cloudinary_breakpoints',
+		'delivery'       => '_cloudinary_delivery',
 		'public_id'      => '_public_id',
 		'transformation' => '_transformations',
 		'sync_error'     => '_sync_error',
@@ -429,6 +430,11 @@ class Sync implements Setup, Assets {
 				'generate' => array( $this->managers['media'], 'get_breakpoint_options' ),
 				'priority' => 25,
 				'sync'     => array( $this->managers['upload'], 'explicit_update' ),
+				'validate' => function ( $attachment_id ) {
+					$delivery = $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['delivery'] );
+
+					return empty( $delivery ) || 'upload' === $delivery;
+				},
 				'state'    => 'info syncing',
 				'note'     => __( 'Updating breakpoints', 'cloudinary' ),
 			),
@@ -906,7 +912,7 @@ class Sync implements Setup, Assets {
 					'type'        => 'sync',
 					'title'       => __( 'Bulk sync all your WordPress assets to Cloudinary', 'cloudinary' ),
 					'tooltip_off' => __( 'Manual sync is enabled. Individual assets must be synced manually using the WordPress Media Library.', 'cloudinary' ),
-					'tooltip_on'  => __( "An optional one-time operation to by manually push all media to Cloudinary that was stored in your WordPress Media Library prior to activation of the Cloudinary plugin. Please note that there is a limit of 1000 images at a time so your server doesn't get overloaded.", 'cloudinary' ),
+					'tooltip_on'  => __( 'An optional one-time operation to manually synchronize all WordPress Media to Cloudinary.', 'cloudinary' ),
 					'queue'       => $this->managers['queue'],
 				),
 				array(
