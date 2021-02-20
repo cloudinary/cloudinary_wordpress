@@ -66,7 +66,7 @@ class Settings {
 	/**
 	 * Initiate the settings object.
 	 */
-	protected function __construct() {
+	public function __construct() {
 		add_action( 'admin_init', array( $this, 'register_wordpress_settings' ) );
 		add_action( 'admin_menu', array( $this, 'build_menus' ) );
 	}
