@@ -1553,7 +1553,7 @@ class Media extends Settings_Component implements Setup {
 				<span class="dashicons-cloudinary <?php echo esc_attr( $status['state'] ); ?>" title="<?php echo esc_attr( $status['note'] ); ?>"></span>
 				<?php
 			endif;
-			if ( $this->is_media( $attachment_id ) && ! $this->is_local_media( $attachment_id ) ) :
+			if ( ! $this->is_local_media( $attachment_id ) ) :
 				?>
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'Not syncable. This is an external media.', 'cloudinary' ); ?>"></span>
 				<?php
