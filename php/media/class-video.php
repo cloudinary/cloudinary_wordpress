@@ -262,7 +262,7 @@ class Video {
 			'public_id'  => $public_id,
 			'cloud_name' => $this->media->plugin->get_component( 'connect' )->get_cloud_name(),
 			'player'     => array(
-				'fluid'    => true,
+				'fluid'    => 'true',
 				'controls' => 'on' === $controls ? 'true' : 'false',
 			),
 			'source'     => array(
