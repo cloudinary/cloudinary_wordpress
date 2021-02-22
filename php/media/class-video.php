@@ -249,13 +249,21 @@ class Video {
 	 */
 	protected function build_video_embed( $attachment_id, $attributes = array(), $overwrite_transformations = false ) {
 		$public_id = $this->media->get_public_id( $attachment_id );
+		$controls  = $this->media->get_settings()->get_value( 'video_controls' );
+		$autoplay  = $this->media->get_settings()->get_value( 'video_autoplay_mode' );
+
+		// If we don't show controls, we need to autoplay the video.
+		if ( 'off' === $controls ) {
+			$autoplay = 'on-scroll';
+		}
+
 		// Setup the base params.
 		$params = array(
 			'public_id'  => $public_id,
 			'cloud_name' => $this->media->plugin->get_component( 'connect' )->get_cloud_name(),
 			'player'     => array(
-				'fluid'    => 'true',
-				'controls' => 'false',
+				'fluid'    => true,
+				'controls' => 'on' === $controls ? 'true' : 'false',
 			),
 			'source'     => array(
 				'source_types' => array(),
@@ -280,8 +288,17 @@ class Video {
 			);
 		}
 		// Set the autoplay.
-		if ( ! empty( $attributes['autoplay'] ) ) {
-			$params['player']['autoplay_mode'] = $this->media->get_settings()->get_value( 'video_autoplay_mode' );
+		// Some browsers require Autoplay to be muted — https://developers.google.com/web/updates/2016/07/autoplay.
+		switch ( $autoplay ) {
+			case 'always':
+				$params['player']['muted']    = 'true';
+				$params['player']['autoplay'] = 'true';
+				break;
+			case 'on-scroll':
+				$params['player']['muted']         = 'true';
+				$params['player']['autoplay_mode'] = 'on-scroll';
+				break;
+			default:
 		}
 
 		// Set the poster.
@@ -321,12 +338,12 @@ class Video {
 					'type'       => 'tag',
 					'element'    => 'iframe',
 					'attributes' => array(
-						'src'         => $url,
-						'width'       => $video['width'],
-						'height'      => $video['height'],
-						'allow'       => 'autoplay; fullscreen; encrypted-media; picture-in-picture',
-						'allowfullscreen',
-						'frameborder' => 0,
+						'src'             => $url,
+						'width'           => $video['width'],
+						'height'          => $video['height'],
+						'allow'           => 'autoplay; fullscreen; encrypted-media; picture-in-picture',
+						'allowfullscreen' => true,
+						'frameborder'     => 0,
 					),
 				),
 			),
