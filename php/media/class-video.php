@@ -188,6 +188,27 @@ class Video {
 	}
 
 	/**
+	 * Fallback for render_block_data filter.
+	 *
+	 * @param string $block_content The block content about to be appended.
+	 * @param array  $block         The full block, including name and attributes.
+	 *
+	 * @return string
+	 */
+	public function filter_video_block_render_block( $block_content, array $block ) {
+		if ( 'core/video' === $block['blockName'] ) {
+			remove_filter( 'render_block', array( $this, 'filter_video_block_render_block' ), 10, 2 );
+
+			$filtered_block = $this->filter_video_block_pre_render( $block, $block );
+			$block_content = render_block( $filtered_block );
+
+			add_filter( 'render_block', array( $this, 'filter_video_block_render_block' ), 10, 2 );
+		}
+
+		return $block_content;
+	}
+
+	/**
 	 * Filter a video block to add the class for cld-overriding.
 	 *
 	 * @param array $block        The current block structure.
@@ -366,7 +387,12 @@ class Video {
 		add_filter( 'cloudinary_default_freeform_transformations_video', array( $this, 'default_video_freeform_transformations' ), 10 );
 		if ( ! is_admin() ) {
 			// Filter for block rendering.
-			add_filter( 'render_block_data', array( $this, 'filter_video_block_pre_render' ), 10, 2 );
+			if ( has_filter( 'render_block_data' ) ) {
+				add_filter( 'render_block_data', array( $this, 'filter_video_block_pre_render' ), 10, 2 );
+			} else {
+				// The render_block_data filter was only introduced on WP 5.1.0. This is the fallback for 5.0.*.
+				add_filter( 'render_block', array( $this, 'filter_video_block_render_block' ), 10, 2 );
+			}
 		}
 
 		// Add inline scripts for gutenberg.
