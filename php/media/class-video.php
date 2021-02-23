@@ -188,6 +188,36 @@ class Video {
 	}
 
 	/**
+	 * Register assets for the player for preview.
+	 */
+	public function admin_enqueue_scripts() {
+		wp_register_style( 'cld-player', 'https://unpkg.com/cloudinary-video-player@' . self::PLAYER_VER . '/dist/cld-video-player.min.css', null, self::PLAYER_VER );
+		wp_register_script( 'cld-core', 'https://unpkg.com/cloudinary-core@' . self::CORE_VER . '/cloudinary-core-shrinkwrap.min.js', null, self::CORE_VER, true );
+		wp_register_script( 'cld-player', 'https://unpkg.com/cloudinary-video-player@' . self::PLAYER_VER . '/dist/cld-video-player.min.js', array( 'cld-core' ), self::PLAYER_VER, true );
+	}
+
+	/**
+	 * Fallback for render_block_data filter.
+	 *
+	 * @param string $block_content The block content about to be appended.
+	 * @param array  $block         The full block, including name and attributes.
+	 *
+	 * @return string
+	 */
+	public function filter_video_block_render_block( $block_content, array $block ) {
+		if ( 'core/video' === $block['blockName'] ) {
+			remove_filter( 'render_block', array( $this, 'filter_video_block_render_block' ), 10, 2 );
+
+			$filtered_block = $this->filter_video_block_pre_render( $block, $block );
+			$block_content = render_block( $filtered_block );
+
+			add_filter( 'render_block', array( $this, 'filter_video_block_render_block' ), 10, 2 );
+		}
+
+		return $block_content;
+	}
+
+	/**
 	 * Filter a video block to add the class for cld-overriding.
 	 *
 	 * @param array $block        The current block structure.
@@ -228,13 +258,21 @@ class Video {
 	 */
 	protected function build_video_embed( $attachment_id, $attributes = array(), $overwrite_transformations = false ) {
 		$public_id = $this->media->get_public_id( $attachment_id );
+		$controls  = $this->media->get_settings()->get_value( 'video_controls' );
+		$autoplay  = $this->media->get_settings()->get_value( 'video_autoplay_mode' );
+
+		// If we don't show controls, we need to autoplay the video.
+		if ( 'off' === $controls ) {
+			$autoplay = 'on-scroll';
+		}
+
 		// Setup the base params.
 		$params = array(
 			'public_id'  => $public_id,
 			'cloud_name' => $this->media->plugin->get_component( 'connect' )->get_cloud_name(),
 			'player'     => array(
 				'fluid'    => 'true',
-				'controls' => 'false',
+				'controls' => 'on' === $controls ? 'true' : 'false',
 			),
 			'source'     => array(
 				'source_types' => array(),
@@ -259,8 +297,17 @@ class Video {
 			);
 		}
 		// Set the autoplay.
-		if ( ! empty( $attributes['autoplay'] ) ) {
-			$params['player']['autoplay_mode'] = $this->media->get_settings()->get_value( 'video_autoplay_mode' );
+		// Some browsers require Autoplay to be muted — https://developers.google.com/web/updates/2016/07/autoplay.
+		switch ( $autoplay ) {
+			case 'always':
+				$params['player']['muted']    = 'true';
+				$params['player']['autoplay'] = 'true';
+				break;
+			case 'on-scroll':
+				$params['player']['muted']         = 'true';
+				$params['player']['autoplay_mode'] = 'on-scroll';
+				break;
+			default:
 		}
 
 		// Set the poster.
@@ -300,12 +347,12 @@ class Video {
 					'type'       => 'tag',
 					'element'    => 'iframe',
 					'attributes' => array(
-						'src'         => $url,
-						'width'       => $video['width'],
-						'height'      => $video['height'],
-						'allow'       => 'autoplay; fullscreen; encrypted-media; picture-in-picture',
-						'allowfullscreen',
-						'frameborder' => 0,
+						'src'             => $url,
+						'width'           => $video['width'],
+						'height'          => $video['height'],
+						'allow'           => 'autoplay; fullscreen; encrypted-media; picture-in-picture',
+						'allowfullscreen' => true,
+						'frameborder'     => 0,
 					),
 				),
 			),
@@ -366,10 +413,17 @@ class Video {
 		add_filter( 'cloudinary_default_freeform_transformations_video', array( $this, 'default_video_freeform_transformations' ), 10 );
 		if ( ! is_admin() ) {
 			// Filter for block rendering.
-			add_filter( 'render_block_data', array( $this, 'filter_video_block_pre_render' ), 10, 2 );
+			if ( has_filter( 'render_block_data' ) ) {
+				add_filter( 'render_block_data', array( $this, 'filter_video_block_pre_render' ), 10, 2 );
+			} else {
+				// The render_block_data filter was only introduced on WP 5.1.0. This is the fallback for 5.0.*.
+				add_filter( 'render_block', array( $this, 'filter_video_block_render_block' ), 10, 2 );
+			}
 		}
 
 		// Add inline scripts for gutenberg.
 		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_block_assets' ) );
+
+		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ), 5 );
 	}
 }
