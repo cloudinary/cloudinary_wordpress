@@ -997,6 +997,16 @@ class Media extends Settings_Component implements Setup {
 			}
 		}
 
+		/**
+		 * Filter Cloudinary size and crops
+		 *
+		 * @param array|string $size          The size array or slug.
+		 * @param int          $attachment_id The attachment ID.
+		 *
+		 * @return array|string
+		 */
+		$size = apply_filters( 'cloudinary_prepare_size', $size, $attachment_id );
+
 		return $size;
 	}
 
