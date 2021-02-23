@@ -424,6 +424,6 @@ class Video {
 		// Add inline scripts for gutenberg.
 		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_block_assets' ) );
 
-		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ), 5 );
 	}
 }
