@@ -706,13 +706,11 @@ class Filter {
 	 * @return string
 	 */
 	public function filter_image_block_render_block( $block_content, array $block ) {
-		if ( 'core/image' === $block['blockName'] ) {
-			remove_filter( 'render_block', array( $this, 'filter_image_block_render_block' ), 10, 2 );
+		if ( 'core/image' === $block['blockName'] && empty( $block['cld_render'] ) ) {
+			$filtered_block               = $this->filter_image_block_pre_render( $block, $block );
+			$filtered_block['cld_render'] = true;
+			$block_content                = render_block( $filtered_block );
 
-			$filtered_block = $this->filter_image_block_pre_render( $block, $block );
-			$block_content = render_block( $filtered_block );
-
-			add_filter( 'render_block', array( $this, 'filter_image_block_render_block' ), 10, 2 );
 		}
 
 		return $block_content;
