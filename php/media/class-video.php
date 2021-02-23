@@ -188,6 +188,15 @@ class Video {
 	}
 
 	/**
+	 * Register assets for the player for preview.
+	 */
+	public function admin_enqueue_scripts() {
+		wp_register_style( 'cld-player', 'https://unpkg.com/cloudinary-video-player@' . self::PLAYER_VER . '/dist/cld-video-player.min.css', null, self::PLAYER_VER );
+		wp_register_script( 'cld-core', 'https://unpkg.com/cloudinary-core@' . self::CORE_VER . '/cloudinary-core-shrinkwrap.min.js', null, self::CORE_VER, true );
+		wp_register_script( 'cld-player', 'https://unpkg.com/cloudinary-video-player@' . self::PLAYER_VER . '/dist/cld-video-player.min.js', array( 'cld-core' ), self::PLAYER_VER, true );
+	}
+
+	/**
 	 * Fallback for render_block_data filter.
 	 *
 	 * @param string $block_content The block content about to be appended.
@@ -414,5 +423,7 @@ class Video {
 
 		// Add inline scripts for gutenberg.
 		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_block_assets' ) );
+
+		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ) );
 	}
 }
