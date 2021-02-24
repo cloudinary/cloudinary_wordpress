@@ -1418,7 +1418,7 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Create a new attachment post item.
 	 *
-	 * @param array  $asset     The asset arrah data.
+	 * @param array  $asset     The asset array data.
 	 * @param string $public_id The cloudinary public id.
 	 *
 	 * @return int|\WP_Error
