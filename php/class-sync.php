@@ -243,11 +243,11 @@ class Sync implements Setup, Assets {
 			$can = false;
 		}
 
-		// Can't sync bypassed upload types.
+		// Can sync only syncable delivery types.
 		if (
-			in_array(
+			! in_array(
 				$this->managers['media']->get_media_delivery( $attachment_id ),
-				$this->managers['media']->bypass_upload_delivery_types(),
+				$this->managers['media']->get_syncable_delivery_types(),
 				true
 			)
 		) {

@@ -119,9 +119,9 @@ class Upload_Sync {
 				return $actions;
 			}
 			if (
-				in_array(
+				! in_array(
 					$this->media->get_media_delivery( $post->ID ),
-					$this->media->bypass_upload_delivery_types(),
+					$this->media->get_syncable_delivery_types(),
 					true
 				)
 			) {
@@ -171,7 +171,7 @@ class Upload_Sync {
 					if (
 						in_array(
 							$this->media->get_media_delivery( $post_id ),
-							$this->media->bypass_upload_delivery_types(),
+							$this->media->get_syncable_delivery_types(),
 							true
 						)
 					) {

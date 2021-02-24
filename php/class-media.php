@@ -172,23 +172,23 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
-	 * Get an array of delivery types to be bypassed on upload.
+	 * Get an array of syncable delivery types.
 	 *
 	 * @return array
 	 */
-	public function bypass_upload_delivery_types() {
-		$bypass = array(
-			'sprite',
+	public function get_syncable_delivery_types() {
+		$types = array(
+			'upload',
 		);
 
 		/**
 		 * Filter the delivery types that are able to sync.
 		 *
-		 * @param array $bypass The default bypassed types.
+		 * @param array $types The default syncable types.
 		 *
 		 * @return array
 		 */
-		return apply_filters( 'cloudinary_bypass_upload_delivery_types', $bypass );
+		return apply_filters( 'cloudinary_syncable_delivery_types', $types );
 	}
 	/**
 	 * Get convertible extensions and converted file types.

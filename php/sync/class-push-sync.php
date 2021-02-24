@@ -201,11 +201,11 @@ class Push_Sync {
 			if ( ! $this->media->is_local_media( $attachment_id ) ) {
 				continue;
 			}
-			// Skip bypassed upload syncs.
+			// Skip unsyncable delivery types.
 			if (
-				in_array(
+				! in_array(
 					$this->media->get_media_delivery( $attachment_id ),
-					$this->media->bypass_upload_delivery_types(),
+					$this->media->get_syncable_delivery_types(),
 					true
 				)
 			) {
