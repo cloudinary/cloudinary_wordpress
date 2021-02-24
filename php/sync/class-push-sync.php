@@ -194,6 +194,9 @@ class Push_Sync {
 		$ids = array_map( 'intval', (array) $attachments );
 		// Handle based on Sync Type.
 		foreach ( $ids as $attachment_id ) {
+			// Create synced post meta as a way to search for synced / unsynced items.
+			update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $this->media->get_public_id( $attachment_id ) );
+
 			// Skip external media.
 			if ( ! $this->media->is_local_media( $attachment_id ) ) {
 				continue;
@@ -201,7 +204,7 @@ class Push_Sync {
 			// Skip bypassed upload syncs.
 			if (
 				in_array(
-					$this->media->get_media_delivery(  $attachment_id ),
+					$this->media->get_media_delivery( $attachment_id ),
 					$this->media->bypass_upload_delivery_types(),
 					true
 				)
@@ -223,9 +226,6 @@ class Push_Sync {
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['process_log'], $stat[ $attachment_id ] );
 			// Remove processing flag.
 			delete_post_meta( $attachment_id, Sync::META_KEYS['syncing'] );
-
-			// Create synced post meta as a way to search for synced / unsynced items.
-			update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $this->media->get_public_id( $attachment_id ) );
 
 			$sync_thread = get_post_meta( $attachment_id, Sync::META_KEYS['queued'], true );
 			if ( ! empty( $sync_thread ) ) {

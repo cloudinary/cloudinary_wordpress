@@ -253,6 +253,8 @@ class Download_Sync {
 			if ( $asset_folder === $cloudinary_folder ) {
 				$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['folder_sync'], true );
 			}
+			// Create synced post meta as a way to search for synced / unsynced items.
+			update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
 			// Generate signatures.
 			$this->sync->set_signature_item( $attachment_id, 'options' );
 			$this->sync->set_signature_item( $attachment_id, 'cloud_name' );
