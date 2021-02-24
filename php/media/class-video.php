@@ -170,9 +170,7 @@ class Video {
 			return $html;
 		}
 		$attachment_id = $attr['id'];
-		unset( $attr['id'] );
-		unset( $attr['width'] );
-		unset( $attr['height'] );
+		unset( $attr['id'], $attr['width'], $attr['height'], $attr['controls'] );
 
 		$overwrite_transformations = ! empty( $attr['cldoverwrite'] );
 
@@ -235,7 +233,7 @@ class Video {
 				$video_tag  = array_shift( $video_tags );
 				$attributes = Utils::get_tag_attributes( $video_tag );
 				if ( $this->player_enabled() ) {
-					unset( $attributes['src'] );
+					unset( $attributes['src'], $attributes['controls'] );
 					$content = $this->build_video_embed( $attachment_id, $attributes, $overwrite_transformations );
 				} else {
 					$url     = $this->media->cloudinary_url( $attachment_id );
