@@ -172,6 +172,25 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Get an array of delivery types to be bypassed on upload.
+	 *
+	 * @return array
+	 */
+	public function bypass_upload_delivery_types() {
+		$bypass = array(
+			'sprite',
+		);
+
+		/**
+		 * Filter the delivery types that are able to sync.
+		 *
+		 * @param array $bypass The default bypassed types.
+		 *
+		 * @return array
+		 */
+		return apply_filters( 'cloudinary_bypass_upload_delivery_types', $bypass );
+	}
+	/**
 	 * Get convertible extensions and converted file types.
 	 *
 	 * @return array
