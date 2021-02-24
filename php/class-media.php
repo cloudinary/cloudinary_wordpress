@@ -260,6 +260,23 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Get the Cloudinary delivery type.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function get_media_delivery( $attachment_id ) {
+		$delivery = $this->get_post_meta( $attachment_id, Sync::META_KEYS['delivery'], true );
+
+		if ( ! empty( $delivery ) ) {
+			return $delivery;
+		}
+
+		return 'upload';
+	}
+
+	/**
 	 * Convert media extension.
 	 *
 	 * @param string $filename The file to convert.
@@ -927,12 +944,12 @@ class Media extends Settings_Component implements Setup {
 		// Get the attachment resource type.
 		$resource_type = $this->get_resource_type( $attachment_id );
 		// Setup initial args for cloudinary_url.
-		$delivery = $this->get_post_meta( $attachment_id, Sync::META_KEYS['delivery'], true );
+		$delivery = $this->get_media_delivery( $attachment_id );
 		$pre_args = array(
 			'secure'        => is_ssl(),
 			'version'       => $this->get_cloudinary_version( $attachment_id ),
 			'resource_type' => $resource_type,
-			'delivery_type' => ! empty( $delivery ) ? $delivery : 'upload',
+			'delivery_type' => $delivery,
 		);
 		$set_size = array();
 		if ( 'upload' === $delivery ) {
@@ -2105,8 +2122,8 @@ class Media extends Settings_Component implements Setup {
 
 		if ( $this->has_public_id( $attachment_id ) ) {
 			// Get delivery type.
-			$delivery = $this->get_post_meta( $attachment_id, Sync::META_KEYS['delivery'], true );
-			if ( empty( $delivery ) || 'upload' !== $delivery ) {
+			$delivery = $this->get_media_delivery( $attachment_id );
+			if ( 'upload' !== $delivery ) {
 				// Only upload based deliveries will get intermediate sizes.
 				$new_sizes = array();
 			}
