@@ -148,7 +148,6 @@ class Sync extends Text {
 			'post_type'      => 'attachment',
 			'post_status'    => 'inherit',
 			'fields'         => 'ids',
-			'post_mime_type' => array( 'image', 'video' ),
 			'posts_per_page' => 1,
 			'meta_query'     => array( // phpcs:ignore
 				array(
