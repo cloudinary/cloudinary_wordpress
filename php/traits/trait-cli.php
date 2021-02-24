@@ -201,6 +201,11 @@ trait CLI_Trait {
 			if (
 				! $this->plugin->get_component( 'sync' )->is_synced( $asset )
 				&& $this->plugin->get_component( 'media' )->is_local_media( $asset )
+				&& ! in_array(
+					$this->plugin->get_component( 'media' )->get_media_delivery( $asset ),
+					$this->plugin->get_component( 'media' )->bypass_upload_delivery_types(),
+					true
+				)
 			) {
 				$this->plugin->get_component( 'sync' )->managers['push']->process_assets( $asset, $bar );
 			}
@@ -245,6 +250,11 @@ trait CLI_Trait {
 			if (
 				$this->plugin->get_component( 'media' )->is_media( $asset )
 				&& $this->plugin->get_component( 'media' )->is_local_media( $asset )
+				&& ! in_array(
+					$this->plugin->get_component( 'media' )->get_media_delivery( $asset ),
+					$this->plugin->get_component( 'media' )->bypass_upload_delivery_types(),
+					true
+				)
 			) {
 				// Add a key.
 				$key = '_cld_synced';

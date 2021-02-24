@@ -243,6 +243,17 @@ class Sync implements Setup, Assets {
 			$can = false;
 		}
 
+		// Can't sync bypassed upload types.
+		if (
+			in_array(
+				$this->managers['media']->get_media_delivery( $attachment_id ),
+				$this->managers['media']->bypass_upload_delivery_types(),
+				true
+			)
+		) {
+			$can = false;
+		}
+
 		/**
 		 * Filter to allow changing if an asset is allowed to be synced.
 		 * Return a WP Error with reason why it can't be synced.

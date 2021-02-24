@@ -198,6 +198,16 @@ class Push_Sync {
 			if ( ! $this->media->is_local_media( $attachment_id ) ) {
 				continue;
 			}
+			// Skip bypassed upload syncs.
+			if (
+				in_array(
+					$this->media->get_media_delivery(  $attachment_id ),
+					$this->media->bypass_upload_delivery_types(),
+					true
+				)
+			) {
+				continue;
+			}
 			// Flag attachment as being processed.
 			update_post_meta( $attachment_id, Sync::META_KEYS['syncing'], time() );
 			while ( $type = $this->sync->get_sync_type( $attachment_id, false ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition
