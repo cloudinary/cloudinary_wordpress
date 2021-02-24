@@ -238,6 +238,12 @@ class Download_Sync {
 			// Be sure to record v2 meta.
 			if ( ! empty( $old_meta[ Sync::META_KEYS['cloudinary'] ] ) ) {
 				$meta[ Sync::META_KEYS['cloudinary'] ] = $old_meta[ Sync::META_KEYS['cloudinary'] ];
+			} else {
+				// Maybe capture newest meta.
+				$maybe_new = wp_get_attachment_metadata( $attachment_id );
+				if ( ! empty( $maybe_new[ Sync::META_KEYS['cloudinary'] ] ) ) {
+					$meta[ Sync::META_KEYS['cloudinary'] ] = $maybe_new[ Sync::META_KEYS['cloudinary'] ];
+				}
 			}
 			wp_update_attachment_metadata( $attachment_id, $meta );
 			// Update the folder synced flag.
