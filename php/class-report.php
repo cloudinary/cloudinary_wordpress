@@ -11,14 +11,14 @@ use Cloudinary\Component\Setup;
 use Cloudinary\Settings\Setting;
 
 /**
- * Plugin logger class.
+ * Plugin report class.
  */
-class Support extends Settings_Component implements Setup {
+class Report extends Settings_Component implements Setup {
 
 	/**
 	 * Holds the plugin instance.
 	 *
-	 * @var     Plugin Instance of the global plugin.
+	 * @var Plugin Instance of the global plugin.
 	 */
 	public $plugin;
 
@@ -28,13 +28,13 @@ class Support extends Settings_Component implements Setup {
 	const REPORT_KEY = '_cloudinary_report';
 
 	/**
-	 * Logger constructor.
+	 * Report constructor.
 	 *
 	 * @param Plugin $plugin Global instance of the main plugin.
 	 */
 	public function __construct( Plugin $plugin ) {
 		parent::__construct( $plugin );
-		add_action( 'cloudinary_settings_save_setting_enable_support', array( $this, 'init_reporting' ), 10, 3 );
+		add_action( 'cloudinary_settings_save_setting_enable_report', array( $this, 'init_reporting' ), 10, 3 );
 		add_filter( 'media_row_actions', array( $this, 'add_inline_action' ), 10, 2 );
 		add_filter( 'post_row_actions', array( $this, 'add_inline_action' ), 10, 2 );
 		add_filter( 'handle_bulk_actions-edit-post', array( $this, 'add_to_report' ), 10, 3 );
@@ -74,7 +74,7 @@ class Support extends Settings_Component implements Setup {
 	 */
 	public function add_inline_action( $actions, $post ) {
 
-		if ( 'on' === $this->settings->get_value( 'enable_support' ) ) {
+		if ( 'on' === $this->settings->get_value( 'enable_report' ) ) {
 
 			$screen = get_current_screen();
 			if ( $screen && 'upload' === $screen->id ) {
@@ -94,7 +94,7 @@ class Support extends Settings_Component implements Setup {
 			}
 			$action_url                    = add_query_arg( $args, '' );
 			$title                         = esc_html__( 'Add to Cloudinary Report', 'cloudinary' );
-			$actions['cloudinary-support'] = sprintf(
+			$actions['cloudinary-report'] = sprintf(
 				'<a href="%1$s" aria-label="%2$s">%2$s</a>',
 				$action_url,
 				$title
@@ -108,7 +108,7 @@ class Support extends Settings_Component implements Setup {
 	 * Setup the component.
 	 */
 	public function setup() {
-		if ( 'on' === $this->settings->get_value( 'enable_support' ) ) {
+		if ( 'on' === $this->settings->get_value( 'enable_report' ) ) {
 			add_action( 'add_meta_boxes', array( $this, 'image_meta_viewer' ) );
 		}
 	}
@@ -173,17 +173,17 @@ class Support extends Settings_Component implements Setup {
 	public function settings() {
 		$args = array(
 			'type'       => 'page',
-			'menu_title' => __( 'Support', 'cloudinary' ),
+			'menu_title' => __( 'Report', 'cloudinary' ),
 			'tabs'       => array(
 				'setup'  => array(
-					'page_title' => __( 'Support', 'cloudinary' ),
+					'page_title' => __( 'Report', 'cloudinary' ),
 					array(
 						'type'  => 'panel',
-						'title' => __( 'Support and Debug', 'cloudinary' ),
+						'title' => __( 'Report and Debug', 'cloudinary' ),
 						array(
 							'title' => __( 'Enable debug reporting', 'cloudinary' ),
 							'type'  => 'on_off',
-							'slug'  => 'enable_support',
+							'slug'  => 'enable_report',
 						),
 					),
 					array(
@@ -199,7 +199,7 @@ class Support extends Settings_Component implements Setup {
 						),
 					),
 					'enabled'    => function () {
-						$enabled = get_plugin_instance()->settings->get_value( 'enable_support' );
+						$enabled = get_plugin_instance()->settings->get_value( 'enable_report' );
 
 						return 'on' === $enabled;
 					},

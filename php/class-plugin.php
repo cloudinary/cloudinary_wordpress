@@ -133,7 +133,7 @@ final class Plugin {
 		$this->components['media']        = new Media( $this );
 		$this->components['api']          = new REST_API( $this );
 		$this->components['storage']      = new Storage( $this );
-		$this->components['support']      = new Support( $this );
+		$this->components['report']       = new Report( $this );
 	}
 
 	/**
@@ -141,7 +141,7 @@ final class Plugin {
 	 *
 	 * @param mixed $component The component.
 	 *
-	 * @return Logger|Connect|Media|REST_API|Settings_Page|Sync|null
+	 * @return Report|Connect|Media|REST_API|Settings_Page|Sync|null
 	 */
 	public function get_component( $component ) {
 		$return = null;

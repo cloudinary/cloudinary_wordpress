@@ -73,7 +73,7 @@ class System extends Panel {
 	 */
 	protected function posts() {
 
-		$report_items = get_option( Support::REPORT_KEY, array() );
+		$report_items = get_option( Report::REPORT_KEY, array() );
 		$report_items = array_unique( $report_items );
 		if ( ! empty( $report_items ) ) {
 			$post_data  = array();
