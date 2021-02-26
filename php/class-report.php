@@ -78,28 +78,33 @@ class Report extends Settings_Component implements Setup {
 		if ( 'on' === $this->settings->get_value( 'enable_report' ) ) {
 
 			$screen = get_current_screen();
-			if ( $screen && 'upload' === $screen->id ) {
 
-				$args = array(
-					'action'   => 'cloudinary-report',
-					'media[]'  => $post->ID,
-					'_wpnonce' => wp_create_nonce( 'bulk-media' ),
-				);
-
+			if ( in_array( $post->ID, $this->get_report_items(), true ) ) {
+				$actions['cloudinary-report'] = esc_html__( 'Added to the Cloudinary Report.', 'cloudinary' );
 			} else {
-				$args = array(
-					'action'   => 'cloudinary-report',
-					'post[]'   => $post->ID,
-					'_wpnonce' => wp_create_nonce( 'bulk-posts' ),
+				if ( $screen && 'upload' === $screen->id ) {
+
+					$args = array(
+						'action'   => 'cloudinary-report',
+						'media[]'  => $post->ID,
+						'_wpnonce' => wp_create_nonce( 'bulk-media' ),
+					);
+
+				} else {
+					$args = array(
+						'action'   => 'cloudinary-report',
+						'post[]'   => $post->ID,
+						'_wpnonce' => wp_create_nonce( 'bulk-posts' ),
+					);
+				}
+				$action_url                    = add_query_arg( $args, '' );
+				$title                         = esc_html__( 'Add to Cloudinary Report', 'cloudinary' );
+				$actions['cloudinary-report'] = sprintf(
+					'<a href="%1$s" aria-label="%2$s">%2$s</a>',
+					$action_url,
+					$title
 				);
 			}
-			$action_url                    = add_query_arg( $args, '' );
-			$title                         = esc_html__( 'Add to Cloudinary Report', 'cloudinary' );
-			$actions['cloudinary-report'] = sprintf(
-				'<a href="%1$s" aria-label="%2$s">%2$s</a>',
-				$action_url,
-				$title
-			);
 		}
 
 		return $actions;
