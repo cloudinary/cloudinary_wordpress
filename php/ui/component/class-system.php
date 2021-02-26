@@ -20,11 +20,30 @@ use function Cloudinary\get_plugin_instance;
 class System extends Panel {
 
 	/**
+	 * Holds the Plugin instance.
+	 *
+	 * @var Plugin
+	 */
+	protected $plugin;
+
+	/**
 	 * Holds the components build blueprint.
 	 *
 	 * @var string
 	 */
-	protected $blueprint = 'report|settings/|input/';
+	protected $blueprint = 'state|button';
+
+	/**
+	 * System constructor.
+	 *
+	 * @param Setting $setting The parent Setting.
+	 */
+	public function __construct( $setting ) {
+		parent::__construct( $setting );
+		$this->plugin = get_plugin_instance();
+
+		add_action( 'admin_init', array( $this, 'maybe_generate_report' ) );
+	}
 
 	/**
 	 * Holds the report data.
@@ -34,31 +53,144 @@ class System extends Panel {
 	protected $report_data = array();
 
 	/**
-	 * Filter the input parts structure.
+	 * Filter the report state.
 	 *
 	 * @param array $struct The array structure.
 	 *
 	 * @return array
 	 */
-	protected function input( $struct ) {
-		$struct['element']             = 'input';
-		$struct['attributes']['type']  = 'hidden';
-		$struct['attributes']['name']  = 'system_report';
-		$struct['attributes']['value'] = wp_json_encode( $this->report_data );
+	protected function state( $struct ) {
+
+		$p1            = $this->get_part( 'p' );
+		$p2            = $this->get_part( 'p' );
+		$p3            = $this->get_part( 'p' );
+		$p1['content'] = __( 'The Cloudinary report is enabled. You can now download the report and submit it privately to your support person in Cloudinary.', 'cloudinary' );
+		$p2['content'] = __( 'This report will contain information about:', 'cloudinary' );
+		$p3['content'] = __( 'Disabling reporting will cleanup your tracked items.', 'cloudinary' );
+
+		$default = array(
+			__( 'Your system environment — site URL, WordPress version, PHP version, and PHP loaded extensions;', 'cloudinary' ),
+			__( 'Your theme;', 'cloudinary' ),
+			__( 'Your active plugins;', 'cloudinary' ),
+			__( 'Your Cloudinary settings;', 'cloudinary' ),
+		);
+
+		$struct['element']           = 'div';
+		$struct['children'][]        = $p1;
+		$struct['children'][]        = $p2;
+		$struct['children']['items'] = $this->get_part( 'ul' );
+
+		foreach ( $default as $item ) {
+			$struct['children']['items']['children'][] = $this->get_list_item( $item );
+		}
+
+		$items = $this->get_items();
+		if ( ! empty( $items ) ) {
+			$struct['children']['items']['children'][] = $this->get_list_item( __( 'Raw data about:', 'cloudinary' ) );
+			$struct['children']['items']['children'][] = $items;
+			$struct['children'][]                      = $p3;
+		}
 
 		return $struct;
 	}
 
 	/**
-	 * Filter the report parts structure.
+	 * Filter the download button.
 	 *
 	 * @param array $struct The array structure.
 	 *
 	 * @return array
 	 */
-	protected function report( $struct ) {
+	protected function button( $struct ) {
+		$url = add_query_arg(
+			array(
+				'generate_report' => true,
+			),
+			$this->setting->get_option_parent()->get_component()->get_url()
+		);
 
-		$struct['element'] = null;
+		$button               = $this->get_part( 'a' );
+		$button['content']    = __( 'Download report', 'cloudinary' );
+		$button['attributes'] = array(
+			'href'   => $url,
+			'target' => '_blank',
+			'class'  => array(
+				'button',
+				'button-secondary',
+			),
+		);
+
+		$struct['element']            = 'div';
+		$struct['children']['button'] = $button;
+
+		return $struct;
+	}
+
+	/**
+	 * Get the tracked items structure.
+	 *
+	 * @return array
+	 */
+	protected function get_items() {
+
+		$items = $this->plugin->get_component( 'report' )->get_report_items();
+
+		if ( ! empty( $items ) ) {
+			$output = array();
+
+			foreach ( $items as $item ) {
+				$output[ get_post_type( $item ) ][] = sprintf(
+					'<a href="%1$s" title="%2$s" target="_blank">%3$s</a>',
+					get_edit_post_link( $item ),
+					__( 'Edit item', 'cloudinary' ),
+					get_the_title( $item )
+				);
+			}
+
+			$items = $this->get_part( 'ul' );
+
+			array_walk(
+				$output,
+				function ( $items_array, $key ) use ( &$items ) {
+					$post_type = get_post_type_object( $key );
+
+					if ( ! is_null( $post_type ) ) {
+						$items['children'][]                    = $this->get_list_item( $post_type->label );
+						$items['children'][ $post_type->label ] = $this->get_part( 'ul' );
+
+						foreach ( $items_array as $item ) {
+							$items['children'][ $post_type->label ]['children'][] = $this->get_list_item( $item );
+						}
+					}
+				}
+			);
+
+			ksort( $items );
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Get the LI item.
+	 *
+	 * @param string $item The item content.
+	 *
+	 * @return array
+	 */
+	protected function get_list_item( $item ) {
+		$li            = $this->get_part( 'li' );
+		$li['content'] = $item;
+
+		return $li;
+	}
+
+	/**
+	 * Filter the report parts structure.
+	 */
+	protected function generate_report() {
+		// Add system.
+		$this->system();
 		// Add theme.
 		$this->theme();
 		// Add plugins.
@@ -67,8 +199,50 @@ class System extends Panel {
 		$this->posts();
 		// Add config.
 		$this->config();
+	}
 
-		return $struct;
+	/**
+	 * Build the system report.
+	 */
+	protected function system() {
+		$system_data = array(
+			'home'           => get_bloginfo( 'url' ),
+			'wordpress'      => get_bloginfo( 'version' ),
+			'php'            => PHP_VERSION,
+			'php_extensions' => get_loaded_extensions(),
+		);
+		$this->add_report_block( 'system_status', $system_data );
+	}
+
+	/**
+	 * Build the theme report.
+	 */
+	protected function theme() {
+		$active_theme = wp_get_theme();
+		$theme_data   = array(
+			'name'        => $active_theme->get( 'Name' ),
+			'version'     => $active_theme->get( 'Version' ),
+			'author'      => $active_theme->get( 'Author' ),
+			'author_url'  => $active_theme->get( 'AuthorURI' ),
+			'child_theme' => is_child_theme(),
+		);
+		$this->add_report_block( 'theme_status', $theme_data );
+	}
+
+	/**
+	 * Build the plugins report.
+	 */
+	protected function plugins() {
+
+		$plugin_data = array(
+			'must_use' => wp_get_mu_plugins(),
+			'plugins'  => array(),
+		);
+		$active      = wp_get_active_and_valid_plugins();
+		foreach ( $active as $plugin ) {
+			$plugin_data['plugins'][] = get_plugin_data( $plugin );
+		}
+		$this->add_report_block( 'plugins_report', $plugin_data );
 	}
 
 	/**
@@ -94,96 +268,41 @@ class System extends Panel {
 				}
 			}
 			if ( ! empty( $media_data ) ) {
-				$this->add_report_block( __( 'Media', 'cloudinary' ), 'media_report', $media_data );
+				$this->add_report_block( 'media_report', $media_data );
 			}
 			if ( ! empty( $post_data ) ) {
-				$this->add_report_block( __( 'Posts', 'cloudinary' ), 'post_report', $post_data );
+				$this->add_report_block( 'post_report', $post_data );
 			}
 		}
-	}
-
-	/**
-	 * Build the theme report.
-	 */
-	protected function theme() {
-		$active_theme = wp_get_theme();
-		$theme_data   = array(
-			'name'        => $active_theme->get( 'Name' ),
-			'version'     => $active_theme->get( 'Version' ),
-			'author'      => $active_theme->get( 'Author' ),
-			'author_url'  => $active_theme->get( 'AuthorURI' ),
-			'child_theme' => is_child_theme(),
-		);
-		$this->add_report_block( __( 'Theme', 'cloudinary' ), 'theme_status', $theme_data );
-
 	}
 
 	/**
 	 * Build the config report.
 	 */
 	protected function config() {
-		$struct['element'] = null;
-
 		$config = $this->setting->get_root_setting()->get_value();
 		unset( $config['connect'] );
-		$config['gallery']['gallery_config'] = json_decode( $config['gallery']['gallery_config'], JSON_PRETTY_PRINT );
-		$this->add_report_block( __( 'Config', 'cloudinary' ), 'config_report', $config );
-	}
-
-	/**
-	 * Build the plugins report.
-	 */
-	protected function plugins() {
-
-		$plugin_data = array(
-			'must_use' => wp_get_mu_plugins(),
-			'plugins'  => array(),
-		);
-		$active      = wp_get_active_and_valid_plugins();
-		foreach ( $active as $plugin ) {
-			$plugin_data[] = get_plugin_data( $plugin );
-		}
-		$this->add_report_block( __( 'Plugins', 'cloudinary' ), 'plugins_report', $plugin_data );
+		$config['gallery'] = $this->plugin->get_component( 'media' )->gallery->get_config();
+		$this->add_report_block( 'config_report', $config );
 	}
 
 	/**
 	 * Create a report block setting.
 	 *
-	 * @param string $title The title.
-	 * @param string $slug  The slug.
-	 * @param array  $data  The data.
+	 * @param string $slug The slug.
+	 * @param array  $data The data.
 	 */
-	protected function add_report_block( $title, $slug, $data ) {
+	protected function add_report_block( $slug, $data ) {
 		$this->report_data[ $slug ] = $data;
-		$content                    = wp_strip_all_tags( wp_json_encode( $data, JSON_PRETTY_PRINT ) );
-		$theme                      = array(
-			'type'        => 'group',
-			'title'       => $title,
-			'collapsible' => 'closed',
-			array(
-				'type'       => 'tag',
-				'element'    => 'pre',
-				'attributes' => array(
-					'style' => 'overflow:auto;',
-				),
-				'content'    => $content,
-			),
-		);
-		$this->setting->create_setting( $slug, $theme, $this->setting );
 	}
 
 	/**
-	 * Setup the component parts, and build the download report, if needed.
+	 * Maybe generate the report.
 	 */
-	public function setup_component_parts() {
-		parent::setup_component_parts();
-		$options = array(
-			'options' => function ( $data ) {
-				return json_decode( $data, ARRAY_A );
-			},
-		);
-		$data    = filter_input( INPUT_POST, 'system_report', FILTER_CALLBACK, $options );
-		if ( $data ) {
+	public function maybe_generate_report() {
+		$download = filter_input( INPUT_GET, 'generate_report', FILTER_VALIDATE_BOOLEAN );
+		if ( $download ) {
+			$this->generate_report();
 			$timestamp = time();
 			$filename  = "cloudinary-report-{$timestamp}.json";
 			header( 'Content-Description: File Transfer' );
