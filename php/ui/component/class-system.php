@@ -191,7 +191,7 @@ class System extends Panel {
 			header( 'Expires: 0' );
 			header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
 			header( 'Pragma: public' );
-			echo wp_json_encode( $data, JSON_PRETTY_PRINT );
+			echo wp_json_encode( $this->report_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
 			exit;
 		}
 	}

@@ -165,7 +165,7 @@ class Report extends Settings_Component implements Setup {
 				'attributes' => array(
 					'style' => 'overflow:auto;',
 				),
-				'content'    => wp_json_encode( $meta, JSON_PRETTY_PRINT ),
+				'content'    => wp_json_encode( $meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ),
 			);
 			$this->settings->create_setting( 'meta_viewer', $args )->get_component()->render( true );
 		}
