@@ -56,7 +56,7 @@ class Report extends Settings_Component implements Setup {
 			$items = $this->get_report_items();
 			foreach ( $post_ids as $id ) {
 				if ( ! in_array( $id, $items, true ) ) {
-					$items[] = $id;
+					$items[] = (int) $id;
 				}
 			}
 			update_option( self::REPORT_KEY, $items, false );
