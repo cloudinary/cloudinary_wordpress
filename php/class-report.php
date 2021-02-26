@@ -123,13 +123,11 @@ class Report extends Settings_Component implements Setup {
 	/**
 	 * Init the report by clearing and preparing the report options.
 	 *
-	 * @param mixed   $new_value     The new value.
-	 * @param mixed   $current_value The current value.
-	 * @param Setting $setting       The setting object.
+	 * @param mixed $new_value The new value.
 	 *
 	 * @return mixed
 	 */
-	public function init_reporting( $new_value, $current_value, $setting ) {
+	public function init_reporting( $new_value ) {
 		delete_option( self::REPORT_KEY );
 
 		return $new_value;
