@@ -238,6 +238,12 @@ class Download_Sync {
 			// Be sure to record v2 meta.
 			if ( ! empty( $old_meta[ Sync::META_KEYS['cloudinary'] ] ) ) {
 				$meta[ Sync::META_KEYS['cloudinary'] ] = $old_meta[ Sync::META_KEYS['cloudinary'] ];
+			} else {
+				// Maybe capture newest meta.
+				$maybe_new = wp_get_attachment_metadata( $attachment_id );
+				if ( ! empty( $maybe_new[ Sync::META_KEYS['cloudinary'] ] ) ) {
+					$meta[ Sync::META_KEYS['cloudinary'] ] = $maybe_new[ Sync::META_KEYS['cloudinary'] ];
+				}
 			}
 			wp_update_attachment_metadata( $attachment_id, $meta );
 			// Update the folder synced flag.
@@ -247,6 +253,8 @@ class Download_Sync {
 			if ( $asset_folder === $cloudinary_folder ) {
 				$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['folder_sync'], true );
 			}
+			// Create synced post meta as a way to search for synced / unsynced items.
+			update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
 			// Generate signatures.
 			$this->sync->set_signature_item( $attachment_id, 'options' );
 			$this->sync->set_signature_item( $attachment_id, 'cloud_name' );

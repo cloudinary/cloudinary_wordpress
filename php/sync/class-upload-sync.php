@@ -115,7 +115,16 @@ class Upload_Sync {
 				),
 				'upload.php'
 			);
-			if ( ! $this->plugin->components['media']->is_local_media( $post->ID ) ) {
+			if ( ! $this->media->is_local_media( $post->ID ) ) {
+				return $actions;
+			}
+			if (
+				! in_array(
+					$this->media->get_media_delivery( $post->ID ),
+					$this->media->get_syncable_delivery_types(),
+					true
+				)
+			) {
 				return $actions;
 			}
 			if ( ! $this->plugin->components['sync']->is_synced( $post->ID ) ) {
@@ -157,6 +166,15 @@ class Upload_Sync {
 					if ( ! $this->media->is_local_media( $post_id ) ) {
 						// Clean up for previous attempts to sync.
 						$this->sync->delete_cloudinary_meta( $post_id );
+						continue;
+					}
+					if (
+						in_array(
+							$this->media->get_media_delivery( $post_id ),
+							$this->media->get_syncable_delivery_types(),
+							true
+						)
+					) {
 						continue;
 					}
 					$this->sync->set_signature_item( $post_id, 'file', '' );

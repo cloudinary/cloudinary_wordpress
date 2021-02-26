@@ -10,7 +10,6 @@ namespace Cloudinary\UI\Component;
 use Cloudinary\Plugin;
 use Cloudinary\Report;
 use Cloudinary\Settings\Setting;
-use function Cloudinary\get_plugin_instance;
 
 /**
  * System report Component.
