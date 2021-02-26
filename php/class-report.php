@@ -98,8 +98,8 @@ class Report extends Settings_Component implements Setup {
 						'_wpnonce' => wp_create_nonce( 'bulk-posts' ),
 					);
 				}
-				$action_url                    = add_query_arg( $args, '' );
-				$title                         = esc_html__( 'Add to Cloudinary Report', 'cloudinary' );
+				$action_url                   = add_query_arg( $args, '' );
+				$title                        = esc_html__( 'Add to Cloudinary Report', 'cloudinary' );
 				$actions['cloudinary-report'] = sprintf(
 					'<a href="%1$s" aria-label="%2$s">%2$s</a>',
 					$action_url,
@@ -178,11 +178,11 @@ class Report extends Settings_Component implements Setup {
 	 * @return array
 	 */
 	public function settings() {
-		$args = array(
+		return array(
 			'type'       => 'page',
 			'menu_title' => __( 'Report', 'cloudinary' ),
 			'tabs'       => array(
-				'setup'  => array(
+				'setup' => array(
 					'page_title' => __( 'Report', 'cloudinary' ),
 					array(
 						'type'  => 'panel',
@@ -196,14 +196,14 @@ class Report extends Settings_Component implements Setup {
 							'type'    => 'tag',
 							'element' => 'div',
 							'content' => $this->get_report_body(),
-							'enabled'    => function () {
+							'enabled' => function () {
 								$enabled = get_plugin_instance()->settings->get_value( 'enable_report' );
 								return 'on' !== $enabled;
 							},
 						),
 						array(
-							'type' => 'system',
-							'enabled'    => function () {
+							'type'    => 'system',
+							'enabled' => function () {
 								$enabled = get_plugin_instance()->settings->get_value( 'enable_report' );
 								return 'on' === $enabled;
 							},
@@ -215,8 +215,6 @@ class Report extends Settings_Component implements Setup {
 				),
 			),
 		);
-
-		return $args;
 	}
 
 	/**
