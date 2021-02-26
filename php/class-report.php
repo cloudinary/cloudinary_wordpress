@@ -53,7 +53,7 @@ class Report extends Settings_Component implements Setup {
 	 */
 	public function add_to_report( $location, $action, $post_ids ) {
 		if ( 'cloudinary-report' === $action ) {
-			$items = get_option( self::REPORT_KEY, array() );
+			$items = $this->get_report_items();
 			foreach ( $post_ids as $id ) {
 				if ( ! in_array( $id, $items, true ) ) {
 					$items[] = $id;
