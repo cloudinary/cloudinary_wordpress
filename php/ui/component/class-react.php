@@ -25,6 +25,13 @@ class React extends Text {
 	protected $blueprint = 'input/|app/|scripts/';
 
 	/**
+	 * Holds the component script.
+	 *
+	 * @var array
+	 */
+	protected $script;
+
+	/**
 	 * Filter the app part structure.
 	 *
 	 * @param array $struct The array structure.
@@ -72,10 +79,29 @@ class React extends Text {
 				'ver'       => $this->setting->get_root_setting()->get_param( 'version' ),
 				'in_footer' => true,
 			);
-			$script         = wp_parse_args( $this->setting->get_param( 'script' ), $script_default );
-			wp_enqueue_script( $script['slug'], $script['src'], $script['depts'], $script['ver'], $script['in_footer'] );
+			$this->script = wp_parse_args( $this->setting->get_param( 'script' ), $script_default );
 		}
 
 		return $struct;
+	}
+
+	/**
+	 * Enqueue scripts for this component.
+	 */
+	public function enqueue_scripts() {
+		if ( ! empty( $this->script ) ) {
+			wp_enqueue_script( $this->script['slug'], $this->script['src'], $this->script['depts'], $this->script['ver'], $this->script['in_footer'] );
+		}
+	}
+
+	/**
+	 * Sanitize the value.
+	 *
+	 * @param string $value The value to sanitize.
+	 *
+	 * @return array|bool|null
+	 */
+	public function sanitize_value( $value ) {
+		return json_decode( $value, true );
 	}
 }
