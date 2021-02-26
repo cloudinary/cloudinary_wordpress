@@ -8,7 +8,8 @@
 namespace Cloudinary;
 
 use Cloudinary\Component\Setup;
-use Cloudinary\Settings\Setting;
+use WP_Post;
+use WP_Screen;
 
 /**
  * Plugin report class.
@@ -68,8 +69,8 @@ class Report extends Settings_Component implements Setup {
 	/**
 	 * Add an inline action for adding to report.
 	 *
-	 * @param array    $actions All actions.
-	 * @param \WP_Post $post    The current post object.
+	 * @param array   $actions All actions.
+	 * @param WP_Post $post    The current post object.
 	 *
 	 * @return array
 	 */
@@ -139,7 +140,7 @@ class Report extends Settings_Component implements Setup {
 	 */
 	public function image_meta_viewer() {
 		$screen = get_current_screen();
-		if ( ! $screen instanceof \WP_Screen || 'attachment' !== $screen->id ) {
+		if ( ! $screen instanceof WP_Screen || 'attachment' !== $screen->id ) {
 			return;
 		}
 
@@ -153,7 +154,7 @@ class Report extends Settings_Component implements Setup {
 	/**
 	 * Render the metabox content.
 	 *
-	 * @param \WP_Post $post The post.
+	 * @param WP_Post $post The post.
 	 */
 	public function render( $post ) {
 		if ( 'attachment' === $post->post_type ) {
@@ -241,7 +242,7 @@ class Report extends Settings_Component implements Setup {
 	protected function get_report_body() {
 		ob_start();
 		esc_attr_e( 'Enabling system information reporting will allow you to generate and download a realtime snapshot report that can be used for debugging purposes. The report will be in JSON format and will include information about:', 'cloudinary' );
-?>
+		?>
 <ul>
 	<li><?php esc_html_e( 'Current WordPress and Cloudinary configuration;', 'cloudinary' ); ?></li>
 	<li><?php esc_html_e( 'Currently installed plugins;', 'cloudinary' ); ?></li>
@@ -249,9 +250,7 @@ class Report extends Settings_Component implements Setup {
 	<li><?php esc_html_e( 'Any specifically selected media. These can be added to the report from the WordPress Media Library;', 'cloudinary' ); ?></li>
 	<li><?php esc_html_e( 'Any specifically selected posts or pages. These can be added to the report from the relevant listing pages.', 'cloudinary' ); ?></li>
 </ul>
-<?php
-		$content = ob_get_clean();
-
-		return $content;
+		<?php
+		return ob_get_clean();
 	}
 }
