@@ -185,48 +185,73 @@ class Report extends Settings_Component implements Setup {
 					'page_title' => __( 'Report', 'cloudinary' ),
 					array(
 						'type'  => 'panel',
-						'title' => __( 'Report and Debug', 'cloudinary' ),
+						'title' => __( 'System information report', 'cloudinary' ),
 						array(
 							'title' => __( 'Enable debug reporting', 'cloudinary' ),
 							'type'  => 'on_off',
 							'slug'  => 'enable_report',
+						),
+						array(
+							'type'    => 'tag',
+							'element' => 'div',
+							'content' => $this->get_report_body(),
+							'enabled'    => function () {
+								$enabled = get_plugin_instance()->settings->get_value( 'enable_report' );
+								return 'on' !== $enabled;
+							},
+						),
+						array(
+							'type' => 'system',
+							'enabled'    => function () {
+								$enabled = get_plugin_instance()->settings->get_value( 'enable_report' );
+								return 'on' === $enabled;
+							},
 						),
 					),
 					array(
 						'type' => 'submit',
 					),
 				),
-				'report' => array(
-					'page_title' => __( 'Report', 'cloudinary' ),
-					'attributes' => array(
-						'form' => array(
-							'target' => '_blank',
-							'action' => '#',
-						),
-					),
-					'enabled'    => function () {
-						$enabled = get_plugin_instance()->settings->get_value( 'enable_report' );
-
-						return 'on' === $enabled;
-					},
-					array(
-						'type'       => 'panel',
-						'title'      => __( 'Report', 'cloudinary' ),
-						'attributes' => array(
-							'wrap' => array(),
-						),
-						array(
-							'type' => 'system',
-						),
-					),
-					array(
-						'type'  => 'submit',
-						'label' => __( 'Download Report', 'cloudinary' ),
-					),
-				),
 			),
 		);
 
 		return $args;
+	}
+
+	/**
+	 * Get items ID that are part of the report.
+	 *
+	 * @return array
+	 */
+	public function get_report_items() {
+		static $items;
+
+		if ( is_null( $items ) ) {
+			$items = get_option( self::REPORT_KEY, array() );
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Get the message for disabled report.
+	 *
+	 * @return string
+	 */
+	protected function get_report_body() {
+		ob_start();
+		esc_attr_e( 'Enabling system information reporting will allow you to generate and download a realtime snapshot report that can be used for debugging purposes. The report will be in JSON format and will include information about:', 'cloudinary' );
+?>
+<ul>
+	<li><?php esc_html_e( 'Current WordPress and Cloudinary configuration;', 'cloudinary' ); ?></li>
+	<li><?php esc_html_e( 'Currently installed plugins;', 'cloudinary' ); ?></li>
+	<li><?php esc_html_e( 'Any themes that are being used;', 'cloudinary' ); ?></li>
+	<li><?php esc_html_e( 'Any specifically selected media. These can be added to the report from the WordPress Media Library;', 'cloudinary' ); ?></li>
+	<li><?php esc_html_e( 'Any specifically selected posts or pages. These can be added to the report from the relevant listing pages.', 'cloudinary' ); ?></li>
+</ul>
+<?php
+		$content = ob_get_clean();
+
+		return $content;
 	}
 }
