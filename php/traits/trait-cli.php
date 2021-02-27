@@ -198,7 +198,15 @@ trait CLI_Trait {
 			$file     = get_attached_file( $asset );
 			$filename = self::pad_name( basename( $file ), 20, ' ', '*' );
 			$bar->tick( 1, 'Syncing (' . ( $done ) . ' of ' . $total . ') : ' . $filename );
-			if ( ! $this->plugin->get_component( 'sync' )->is_synced( $asset ) ) {
+			if (
+				! $this->plugin->get_component( 'sync' )->is_synced( $asset )
+				&& $this->plugin->get_component( 'media' )->is_local_media( $asset )
+				&& in_array(
+					$this->plugin->get_component( 'media' )->get_media_delivery( $asset ),
+					$this->plugin->get_component( 'media' )->get_syncable_delivery_types(),
+					true
+				)
+			) {
 				$this->plugin->get_component( 'sync' )->managers['push']->process_assets( $asset, $bar );
 			}
 			delete_post_meta( $asset, '_cld_unsynced', true );
@@ -239,7 +247,15 @@ trait CLI_Trait {
 		foreach ( $posts as $index => $asset ) {
 			$done ++;
 			$key = '_cld_unsupported';
-			if ( $this->plugin->get_component( 'media' )->is_media( $asset ) ) {
+			if (
+				$this->plugin->get_component( 'media' )->is_media( $asset )
+				&& $this->plugin->get_component( 'media' )->is_local_media( $asset )
+				&& in_array(
+					$this->plugin->get_component( 'media' )->get_media_delivery( $asset ),
+					$this->plugin->get_component( 'media' )->get_syncable_delivery_types(),
+					true
+				)
+			) {
 				// Add a key.
 				$key = '_cld_synced';
 				if ( ! $this->plugin->get_component( 'sync' )->is_synced( $asset ) ) {

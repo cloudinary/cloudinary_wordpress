@@ -31,18 +31,19 @@ class Page extends Panel {
 	 * @return array
 	 */
 	protected function form( $struct ) {
+		if ( $this->setting->has_param( 'has_tabs' ) ) {
+			return null;
+		}
 		$form_atts            = array(
 			'method'     => 'post',
 			'action'     => 'options.php',
 			'novalidate' => 'novalidate',
 		);
-		$struct['attributes'] = array_merge( $form_atts, $struct['attributes'] );
+		$struct['attributes'] = wp_parse_args( $struct['attributes'], $form_atts );
 
-		if ( ! $this->setting->has_param( 'has_tabs' ) ) {
-			// Don't run action if page has tabs, since the page actions will be different for each tab.
-			$struct['children'] = $this->page_actions();
-			$struct['content']  = wp_nonce_field( $this->get_option_name() . '-options', '_wpnonce', true, false );
-		}
+		// Don't run action if page has tabs, since the page actions will be different for each tab.
+		$struct['children'] = $this->page_actions();
+		$struct['content']  = wp_nonce_field( $this->get_option_name() . '-options', '_wpnonce', true, false );
 
 		return $struct;
 	}
@@ -154,6 +155,9 @@ class Page extends Panel {
 
 		$tabs = array();
 		foreach ( $this->setting->get_settings() as $setting ) {
+			if ( ! $setting->get_component()->is_enabled() ) {
+				continue;
+			}
 			// Create the tab wrapper.
 			$tab                        = $this->get_part( 'li' );
 			$tab['attributes']['class'] = array(

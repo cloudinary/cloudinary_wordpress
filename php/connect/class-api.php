@@ -172,7 +172,7 @@ class Api {
 			$parts[] = $this->credentials['cloud_name'];
 		}
 
-		if ( false === $endpoint && 'image' === $resource ) {
+		if ( false === $endpoint && 'image' === $resource && 'upload' === $function ) {
 			$parts[] = 'images';
 		} else {
 			$parts[] = $resource;
@@ -242,8 +242,6 @@ class Api {
 			'version'       => 'v1',
 		);
 		$args     = wp_parse_args( array_filter( $args ), $defaults );
-		// Correct Audio to Video.
-		$args['resource_type'] = $this->convert_resource_type( $args['resource_type'] );
 
 		// check for version.
 		if ( ! empty( $args['version'] ) && is_numeric( $args['version'] ) ) {
@@ -252,7 +250,7 @@ class Api {
 
 		// Determine if we're dealing with a fetched.
 		// ...or uploaded image and update the URL accordingly.
-		$asset_endpoint = filter_var( $public_id, FILTER_VALIDATE_URL ) ? 'fetch' : 'upload';
+		$asset_endpoint = filter_var( $public_id, FILTER_VALIDATE_URL ) ? 'fetch' : $args['delivery_type'];
 
 		$url_parts = array(
 			'https:/',
@@ -263,7 +261,8 @@ class Api {
 			$url_parts[] = self::generate_transformation_string( $args['transformation'], $args['resource_type'] );
 		}
 		$base = pathinfo( $public_id );
-		if ( 'image' === $args['resource_type'] ) {
+		// Only do dynamic naming and sizes if upload type.
+		if ( 'image' === $args['resource_type'] && 'upload' === $args['delivery_type'] ) {
 			$new_path  = $base['filename'] . '/' . $base['basename'];
 			$public_id = str_replace( $base['basename'], $new_path, $public_id );
 		}
@@ -283,26 +282,6 @@ class Api {
 		$url_parts = array_filter( $url_parts );
 
 		return implode( '/', $url_parts );
-	}
-
-	/**
-	 * Convert the resource type into the usable Cloudinary type.
-	 *
-	 * @param string $type The type to convert.
-	 *
-	 * @return string
-	 */
-	public function convert_resource_type( $type ) {
-		$convert_resource_type = array(
-			'application' => 'image',
-			'audio'       => 'video',
-		);
-
-		if ( isset( $convert_resource_type[ $type ] ) ) {
-			$type = $convert_resource_type[ $type ];
-		}
-
-		return $type;
 	}
 
 	/**
@@ -406,7 +385,6 @@ class Api {
 	public function upload( $attachment_id, $args, $headers = array(), $try_remote = true ) {
 
 		$resource            = ! empty( $args['resource_type'] ) ? $args['resource_type'] : 'image';
-		$resource            = $this->convert_resource_type( $resource );
 		$url                 = $this->url( $resource, 'upload', true );
 		$args                = $this->clean_args( $args );
 		$disable_https_fetch = get_transient( '_cld_disable_http_upload' );
@@ -427,8 +405,12 @@ class Api {
 		} else {
 			// We should have the file in args at this point, but if the transient was set, it will be defaulting here.
 			if ( empty( $args['file'] ) ) {
-				$get_path_func = function_exists( 'wp_get_original_image_path' ) ? 'wp_get_original_image_path' : 'get_attached_file';
-				$args['file']  = call_user_func( $get_path_func, $attachment_id );
+				if ( wp_attachment_is_image( $attachment_id ) ) {
+					$get_path_func = function_exists( 'wp_get_original_image_path' ) ? 'wp_get_original_image_path' : 'get_attached_file';
+					$args['file']  = call_user_func( $get_path_func, $attachment_id );
+				} else {
+					$args['file'] = get_attached_file( $attachment_id );
+				}
 			}
 			// Headers indicate chunked upload.
 			if ( empty( $headers ) ) {
