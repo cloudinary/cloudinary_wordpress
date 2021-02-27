@@ -185,7 +185,6 @@ class Upload_Sync {
 		}
 
 		return $location;
-
 	}
 
 	/**
