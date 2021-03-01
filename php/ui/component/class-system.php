@@ -70,10 +70,10 @@ class System extends Panel {
 		$p3['content'] = __( 'Disabling reporting will cleanup your tracked items.', 'cloudinary' );
 
 		$default = array(
-			__( 'Your system environment — site URL, WordPress version, PHP version, and PHP loaded extensions;', 'cloudinary' ),
-			__( 'Your theme;', 'cloudinary' ),
-			__( 'Your active plugins;', 'cloudinary' ),
-			__( 'Your Cloudinary settings;', 'cloudinary' ),
+			__( 'Your system environment — site URL, WordPress version, PHP version, and PHP loaded extensions.', 'cloudinary' ),
+			__( 'Your theme.', 'cloudinary' ),
+			__( 'Your active plugins.', 'cloudinary' ),
+			__( 'Your Cloudinary settings.', 'cloudinary' ),
 		);
 
 		$struct['element']           = 'div';
