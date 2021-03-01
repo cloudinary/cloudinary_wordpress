@@ -1,6 +1,6 @@
 <?php
 /**
- * Cloudinary Logger, to collect logs and debug data.
+ * Cloudinary Report to collect data.
  *
  * @package Cloudinary
  */
@@ -178,15 +178,15 @@ class Report extends Settings_Component implements Setup {
 	public function settings() {
 		return array(
 			'type'       => 'page',
-			'menu_title' => __( 'Report', 'cloudinary' ),
+			'menu_title' => __( 'System Report', 'cloudinary' ),
 			'tabs'       => array(
 				'setup' => array(
-					'page_title' => __( 'Report', 'cloudinary' ),
+					'page_title' => __( 'System Report', 'cloudinary' ),
 					array(
 						'type'  => 'panel',
 						'title' => __( 'System information report', 'cloudinary' ),
 						array(
-							'title' => __( 'Enable debug reporting', 'cloudinary' ),
+							'title' => __( 'Enable report', 'cloudinary' ),
 							'type'  => 'on_off',
 							'slug'  => 'enable_report',
 						),
@@ -237,13 +237,13 @@ class Report extends Settings_Component implements Setup {
 	 */
 	protected function get_report_body() {
 		ob_start();
-		esc_attr_e( 'Enabling system information reporting will allow you to generate and download a realtime snapshot report that can be used for debugging purposes. The report will be in JSON format and will include information about:', 'cloudinary' );
+		esc_attr_e( 'Enabling system information reporting will allow you to generate and download a realtime snapshot report that can be used for reporting purposes. The report will be in JSON format and will include information about:', 'cloudinary' );
 		?>
 <ul>
-	<li><?php esc_html_e( 'Current WordPress and Cloudinary configuration;', 'cloudinary' ); ?></li>
-	<li><?php esc_html_e( 'Currently installed plugins;', 'cloudinary' ); ?></li>
-	<li><?php esc_html_e( 'Any themes that are being used;', 'cloudinary' ); ?></li>
-	<li><?php esc_html_e( 'Any specifically selected media. These can be added to the report from the WordPress Media Library;', 'cloudinary' ); ?></li>
+	<li><?php esc_html_e( 'Current WordPress and Cloudinary configuration.', 'cloudinary' ); ?></li>
+	<li><?php esc_html_e( 'Currently installed plugins.', 'cloudinary' ); ?></li>
+	<li><?php esc_html_e( 'Any themes that are being used.', 'cloudinary' ); ?></li>
+	<li><?php esc_html_e( 'Any specifically selected media. These can be added to the report from the WordPress Media Library.', 'cloudinary' ); ?></li>
 	<li><?php esc_html_e( 'Any specifically selected posts or pages. These can be added to the report from the relevant listing pages.', 'cloudinary' ); ?></li>
 </ul>
 		<?php
