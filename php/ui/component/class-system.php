@@ -65,7 +65,7 @@ class System extends Panel {
 		$p1            = $this->get_part( 'p' );
 		$p2            = $this->get_part( 'p' );
 		$p3            = $this->get_part( 'p' );
-		$p1['content'] = __( 'The Cloudinary report is enabled. You can now download the report and submit it privately to your support person in Cloudinary.', 'cloudinary' );
+		$p1['content'] = __( 'The Cloudinary system information report is enabled. You can now download the realtime report and, if required, share it privately with your Cloudinary support contact.', 'cloudinary' );
 		$p2['content'] = __( 'This report will contain information about:', 'cloudinary' );
 		$p3['content'] = __( 'Disabling reporting will cleanup your tracked items.', 'cloudinary' );
 
