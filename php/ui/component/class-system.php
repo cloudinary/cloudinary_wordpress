@@ -283,7 +283,10 @@ class System extends Panel {
 	protected function config() {
 		$config = $this->setting->get_root_setting()->get_value();
 		unset( $config['connect'] );
-		$config['gallery'] = $this->plugin->get_component( 'media' )->gallery->get_config();
+		// The Gallery setting might not be set, so we need ensure it exists before using it.
+		if ( $this->plugin->get_component( 'media' )->gallery ) {
+			$config['gallery'] = $this->plugin->get_component( 'media' )->gallery->get_config();
+		}
 		$this->add_report_block( 'config_report', $config );
 	}
 
