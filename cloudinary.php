@@ -31,9 +31,67 @@
 // Define Cloudinary Constants.
 define( 'CLDN_CORE', __FILE__ );
 define( 'CLDN_PATH', plugin_dir_path( __FILE__ ) );
-define( 'CLDN_URL', plugin_dir_url( __FILE__ ) );
 
 if ( version_compare( phpversion(), '5.6', '>=' ) ) {
+
+	function get_cache_url( $url ) {
+
+		$cache_url = get_option( '_cloudinary_cache_url', null );
+		if ( ! empty( $cache_url ) ) {
+			$url = str_replace( get_site_url(), $cache_url, $url );
+		}
+
+		return $url;
+	}
+
+	add_filter( 'template_directory_uri', 'get_cache_url' );
+	add_filter( 'plugins_url', 'get_cache_url' );
+	add_action(
+		'admin_print_styles',
+		function () {
+			$scripts   = wp_styles();
+			$cache_url = get_option( '_cloudinary_cache_url', null );
+			if ( ! empty( $cache_url ) ) {
+				$scripts->base_url = $cache_url;
+			}
+		},
+		1
+	);
+	add_action(
+		'swp_print_styles',
+		function () {
+			$scripts   = wp_styles();
+			$cache_url = get_option( '_cloudinary_cache_url', null );
+			if ( ! empty( $cache_url ) ) {
+				$scripts->base_url = $cache_url;
+			}
+		},
+		1
+	);
+
+	add_action(
+		'sadmin_print_scripts',
+		function () {
+			$scripts   = wp_scripts();
+			$cache_url = get_option( '_cloudinary_cache_url', null );
+			if ( ! empty( $cache_url ) ) {
+				$scripts->base_url = $cache_url;
+			}
+		},
+		1
+	);
+	add_action(
+		'swp_print_scripts',
+		function () {
+			$scripts   = wp_scripts();
+			$cache_url = get_option( '_cloudinary_cache_url', null );
+			if ( ! empty( $cache_url ) ) {
+				$scripts->base_url = $cache_ur;
+			}
+		},
+		1
+	);
+
 	require_once __DIR__ . '/instance.php';
 } else {
 	if ( defined( 'WP_CLI' ) ) {

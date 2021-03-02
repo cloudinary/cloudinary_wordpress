@@ -7,6 +7,7 @@
 
 namespace Cloudinary\Sync;
 
+use Cloudinary\Cache;
 use Cloudinary\Sync;
 
 /**
@@ -203,11 +204,11 @@ class Push_Sync {
 			}
 			// Skip unsyncable delivery types.
 			if (
-				! in_array(
-					$this->media->get_media_delivery( $attachment_id ),
-					$this->media->get_syncable_delivery_types(),
-					true
-				)
+			! in_array(
+				$this->media->get_media_delivery( $attachment_id ),
+				$this->media->get_syncable_delivery_types(),
+				true
+			)
 			) {
 				continue;
 			}
@@ -249,14 +250,34 @@ class Push_Sync {
 		if ( ! empty( $queue['next'] ) && ( $this->queue->is_running( $thread_type ) ) ) {
 			while ( $attachment_id = $this->queue->get_post( $thread ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition
 				// translators: variable is thread name and asset ID.
-				$action_message = sprintf( __( '%1$s: Syncing asset %2$d', 'cloudinary' ), $thread, $attachment_id );
+				$action_message = sprintf( __( '%1$s: Syncing asset %2$s', 'cloudinary' ), $thread, $attachment_id );
 				do_action( '_cloudinary_queue_action', $action_message );
-				$this->process_assets( $attachment_id );
+				if ( 'static' === $thread_type ) {
+					$this->sync_static( $attachment_id );
+				} else {
+					$this->process_assets( $attachment_id );
+				}
 			}
-			$this->queue->stop_maybe( $thread_type );
+			if ( $this->queue->stop_maybe( $thread_type ) && 'static' === $thread_type ) {
+				$url = $this->media->base_url . '/raw/upload/v1/' . $this->media->get_cloudinary_folder() . $this->plugin->settings->get_value( 'cache_folder' );
+				update_option( Cache::META_KEYS['url'], $url );
+			}
 		}
 		// translators: variable is thread name.
 		$action_message = sprintf( __( 'Ending thread %s', 'cloudinary' ), $thread );
 		do_action( '_cloudinary_queue_action', $action_message );
+	}
+
+	protected function sync_static( $file ) {
+		$connect   = $this->plugin->get_component( 'connect' );
+		$folder    = $this->media->get_cloudinary_folder() . $this->plugin->settings->get_value( 'cache_folder' );
+		$file_path = $folder . '/' . substr( $file, strlen( ABSPATH ) );
+		$public_id = dirname( $file_path ) . '/' . pathinfo( $file, PATHINFO_FILENAME );
+		$options   = array(
+			'file'          => $file,
+			'resource_type' => 'raw',
+			'public_id'     => $public_id,
+		);
+		$data      = $connect->api->upload( 0, $options, array(), false );
 	}
 }

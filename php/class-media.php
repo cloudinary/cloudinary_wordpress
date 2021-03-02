@@ -37,7 +37,7 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @var     string.
 	 */
-	private $base_url;
+	public $base_url;
 
 	/**
 	 * Holds the Cloudinary folder.

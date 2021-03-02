@@ -84,6 +84,13 @@ class Sync_Queue {
 	protected $autosync_threads = array();
 
 	/**
+	 * Holds the list of autosync threads.
+	 *
+	 * @var array
+	 */
+	protected $staticsync_threads = array();
+
+	/**
 	 * Upload_Queue constructor.
 	 *
 	 * @param \Cloudinary\Plugin $plugin The plugin.
@@ -126,6 +133,19 @@ class Sync_Queue {
 			$this->autosync_threads[] = 'auto_sync_thread_' . $i;
 		}
 		$this->threads = array_merge( $this->queue_threads, $this->autosync_threads );
+
+		/**
+		 * Filter the amount of background threads to process for static asset syncing.
+		 *
+		 * @param int $threads The number of threads.
+		 *
+		 * @return int
+		 */
+		$staticsync_thread_count = apply_filters( 'cloudinary_staticsync_threads', 1 );
+		for ( $i = 0; $i < $staticsync_thread_count; $i ++ ) {
+			$this->staticsync_threads[] = 'static_sync_thread_' . $i;
+		}
+		$this->threads = array_merge( $this->threads, $this->staticsync_threads );
 
 		// Catch Queue actions.
 		// Enable sync queue.
@@ -218,11 +238,13 @@ class Sync_Queue {
 				wp_cache_delete( self::$queue_key, 'options' );
 				$return = get_option( self::$queue_key, $default );
 				break;
+			case 'static':
 			case 'autosync':
 				$return            = $default;
-				$return['running'] = $this->is_running( 'autosync' );
+				$return['running'] = $this->is_running( $type );
 				if ( true === $return['running'] ) {
-					foreach ( $this->autosync_threads as $thread ) {
+					$threads = $this->get_threads( $type );
+					foreach ( $threads as $thread ) {
 						if ( 2 <= $this->get_thread_state( $thread ) ) {
 							$return['threads'][] = $thread;
 						}
@@ -258,6 +280,9 @@ class Sync_Queue {
 			$return               = $thread_queue['next'];
 			$thread_queue['next'] = 0;
 			$thread_queue['ping'] = time();
+			if ( 'static' === $this->get_thread_type( $thread ) ) {
+				array_shift( $thread_queue );
+			}
 			$this->set_thread_queue( $thread, $thread_queue );
 		}
 
@@ -272,8 +297,8 @@ class Sync_Queue {
 	 * @return bool
 	 */
 	public function is_running( $type = 'queue' ) {
-		if ( 'autosync' === $type ) {
-			return true; // Autosync always runs, however if off, auto sync queue building is off.
+		if ( 'autosync' === $type || 'static' === $type ) {
+			return true; // Autosync and static always runs, however if off, auto sync queue building is off.
 		}
 		$queue = $this->get_queue();
 
@@ -339,18 +364,22 @@ class Sync_Queue {
 	 * Maybe stop the queue.
 	 *
 	 * @param string $type The type to maybe stop.
+	 *
+	 * @return bool
 	 */
 	public function stop_maybe( $type = 'queue' ) {
 		$queue = $this->get_queue( $type );
 		foreach ( $queue['threads'] as $thread ) {
 			if ( 2 <= $this->get_thread_state( $thread ) ) {
-				return; // Only 1 thread still needs to be running.
+				return false; // Only 1 thread still needs to be running.
 			}
 		}
 		// Stop the queue.
 		$this->stop_queue( $type );
 		// Restart the queue to make sure there are no new items added after the last start.
 		$this->start_queue( $type );
+
+		return true;
 	}
 
 	/**
@@ -423,17 +452,6 @@ class Sync_Queue {
 	}
 
 	/**
-	 * Check if thread is autosync thread.
-	 *
-	 * @param string $thread Thread name.
-	 *
-	 * @return bool
-	 */
-	public function is_autosync_thread( $thread ) {
-		return in_array( $thread, $this->autosync_threads );
-	}
-
-	/**
 	 * Start all threads.
 	 *
 	 * @param string $type The type of threads to start.
@@ -496,7 +514,15 @@ class Sync_Queue {
 	 */
 	public function get_thread_type( $thread ) {
 
-		return $this->is_autosync_thread( $thread ) ? 'autosync' : 'queue';
+		if ( in_array( $thread, $this->autosync_threads, true ) ) {
+			$type = 'autosync';
+		} elseif ( in_array( $thread, $this->staticsync_threads, true ) ) {
+			$type = 'static';
+		} else {
+			$type = 'queue';
+		}
+
+		return $type;
 	}
 
 	/**
@@ -516,6 +542,7 @@ class Sync_Queue {
 			);
 			wp_cache_delete( $thread_option, 'options' );
 			$return = get_option( $thread_option );
+			error_log( 'rebuild_queue' );
 			if ( empty( $return ) ) {
 				// Set option to remove notoption and default fro  cache.
 				$this->set_thread_queue( $thread, $default );
@@ -535,7 +562,17 @@ class Sync_Queue {
 	 * @return array
 	 */
 	protected function get_thread_queue_details( $thread ) {
+		if ( 'static' === $this->get_thread_type( $thread ) ) {
+			$thread_option = $this->get_thread_option( $thread );
+			$queue         = get_option( $thread_option );
+			unset( $queue['next'], $queue['count'], $queue['ping'] );
+			$next = array_shift( $queue );
 
+			return array(
+				'count' => count( $queue ),
+				'next'  => $next,
+			);
+		}
 		$args = array(
 			'post_type'      => 'attachment',
 			'post_status'    => 'inherit',
@@ -574,18 +611,22 @@ class Sync_Queue {
 	public function add_to_thread_queue( $thread, array $attachment_ids ) {
 
 		if ( in_array( $thread, $this->threads, true ) ) {
-			foreach ( $attachment_ids as $id ) {
-				$previous_thread = null;
-				if ( metadata_exists( 'post', $id, Sync::META_KEYS['queued'] ) ) {
-					if ( 'queue' === $this->get_thread_type( $thread ) ) {
-						continue;
+			if ( 'static' === $this->get_thread_type( $thread ) ) {
+				$this->set_thread_queue( $thread, $attachment_ids );
+			} else {
+				foreach ( $attachment_ids as $id ) {
+					$previous_thread = null;
+					if ( metadata_exists( 'post', $id, Sync::META_KEYS['queued'] ) ) {
+						if ( 'queue' === $this->get_thread_type( $thread ) ) {
+							continue;
+						}
+						$previous_thread = get_post_meta( $id, Sync::META_KEYS['queued'], true );
+						delete_post_meta( $id, $previous_thread, true );
+						delete_post_meta( $id, Sync::META_KEYS['queued'], $previous_thread );
 					}
-					$previous_thread = get_post_meta( $id, Sync::META_KEYS['queued'], true );
-					delete_post_meta( $id, $previous_thread, true );
-					delete_post_meta( $id, Sync::META_KEYS['queued'], $previous_thread );
+					add_post_meta( $id, Sync::META_KEYS['queued'], $thread, true );
+					add_post_meta( $id, $thread, true, true );
 				}
-				add_post_meta( $id, Sync::META_KEYS['queued'], $thread, true );
-				add_post_meta( $id, $thread, true, true );
 			}
 		}
 	}
@@ -611,6 +652,7 @@ class Sync_Queue {
 		$types = array(
 			'queue'    => $this->queue_threads,
 			'autosync' => $this->autosync_threads,
+			'static'   => $this->staticsync_threads,
 		);
 
 		return $types[ $type ];

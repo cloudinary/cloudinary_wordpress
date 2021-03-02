@@ -134,6 +134,9 @@ final class Plugin {
 		$this->components['api']          = new REST_API( $this );
 		$this->components['storage']      = new Storage( $this );
 		$this->components['report']       = new Report( $this );
+		//if ( ! is_admin() ) {
+			$this->components['cache'] = new Cache( $this );
+	//	}
 	}
 
 	/**
@@ -542,7 +545,7 @@ final class Plugin {
 	 */
 	public function locate_plugin() {
 
-		$dir_url      = CLDN_URL;
+		$dir_url      = plugin_dir_url( CLDN_CORE );
 		$dir_path     = CLDN_PATH;
 		$dir_basename = basename( CLDN_PATH );
 
