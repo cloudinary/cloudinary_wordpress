@@ -126,19 +126,18 @@ class Download_Sync {
 	}
 
 	/**
-	 * Prepare and sync down an asset stored remotely.
+	 * Get downloaded Public ID.
 	 *
-	 * @param int $attachment_id The attachment ID.
+	 * @param string $source The source URL.
 	 *
-	 * @return array|\WP_Error
+	 * @return string
 	 */
-	public function down_sync( $attachment_id ) {
-		$file  = get_post_meta( $attachment_id, '_wp_attached_file', true );
-		$path  = wp_parse_url( $file, PHP_URL_PATH );
+	public function get_public_id( $source ) {
+		$path  = wp_parse_url( $source, PHP_URL_PATH );
 		$media = $this->plugin->components['media'];
 		$parts = explode( '/', $path );
 		$parts = array_map(
-			function ( $val ) use ( $media ) {
+			static function ( $val ) use ( $media ) {
 				if ( empty( $val ) ) {
 					return false;
 				}
@@ -152,7 +151,7 @@ class Download_Sync {
 				if ( ! empty( $transformation_maybe ) ) {
 					return false;
 				}
-				if ( substr( $val, 0, 1 ) === 'v' && is_numeric( substr( $val, 1 ) ) ) {
+				if ( 'v' === $val[0] && is_numeric( substr( $val, 1 ) ) ) {
 					return false;
 				}
 
@@ -166,20 +165,8 @@ class Download_Sync {
 		// Remove extension.
 		$path      = pathinfo( $public_id );
 		$public_id = strstr( $public_id, '.' . $path['extension'], true );
-		// Save public ID.
-		$media->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
-		// Check if the asset is in the same folder as the defined Cloudinary folder.
-		if ( false !== strpos( $public_id, '/' ) ) {
-			$path              = pathinfo( $public_id );
-			$asset_folder      = trailingslashit( $path['dirname'] );
-			$cloudinary_folder = trailingslashit( $this->plugin->settings->get_value( 'cloudinary_folder' ) );
-			if ( $asset_folder === $cloudinary_folder ) {
-				// The asset folder matches the defined cloudinary folder, flag it as being in a folder sync.
-				$media->update_post_meta( $attachment_id, Sync::META_KEYS['folder_sync'], true );
-			}
-		}
 
-		return $this->download_asset( $attachment_id, $file );
+		return $public_id;
 	}
 
 	/**
@@ -247,7 +234,7 @@ class Download_Sync {
 			}
 			wp_update_attachment_metadata( $attachment_id, $meta );
 			// Update the folder synced flag.
-			$public_id         = $this->media->get_public_id( $attachment_id );
+			$public_id         = $this->get_public_id( $source );
 			$asset_folder      = strpos( $public_id, '/' ) ? dirname( $public_id ) : '/';
 			$cloudinary_folder = untrailingslashit( $this->media->get_cloudinary_folder() );
 			if ( $asset_folder === $cloudinary_folder ) {
