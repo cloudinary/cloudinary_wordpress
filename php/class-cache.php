@@ -64,19 +64,19 @@ class Cache implements Setup {
 		$this->register_hooks();
 		add_filter( 'template_include', array( $this, 'frontend_rewrite' ), PHP_INT_MAX );
 
-		add_action( 'cloudinary_settings_save_setting_cache_theme', array( $this, 'clear_theme_cache' ), 10, 3 );
+		add_action( 'cloudinary_settings_save_setting_cache_theme', array( $this, 'clear_theme_cache' ), 10 );
+		add_action( 'cloudinary_settings_save_setting_cache_plugins', array( $this, 'clear_theme_cache' ), 10 );
+		add_action( 'cloudinary_settings_save_setting_cache_wordpress', array( $this, 'clear_wp_cache' ), 10 );
 	}
 
 	/**
 	 * Invalidate Theme file cache.
 	 *
 	 * @param $new
-	 * @param $old
-	 * @param $setting
 	 *
 	 * @return mixed|string
 	 */
-	public function clear_theme_cache( $new, $old, $setting ) {
+	public function clear_theme_cache( $new ) {
 		if ( 'off' === $new ) {
 			$theme    = wp_get_theme();
 			$main_key = md5( $theme->get_stylesheet_directory() );
@@ -85,9 +85,133 @@ class Cache implements Setup {
 				$parent_key = md5( $theme->parent()->get_stylesheet_directory() );
 				delete_option( $parent_key );
 			}
+		} else {
+			$this->get_theme_paths();
 		}
 
 		return $new;
+	}
+
+	/**
+	 * Invalidate Plugin cache.
+	 */
+	public function clear_plugin_cache( $new ) {
+		if ( 'off' === $new ) {
+			$plugins        = get_plugins();
+			$active_plugins = (array) get_option( 'active_plugins', array() );
+			foreach ( $active_plugins as $plugin ) {
+				$plugin_folder = WP_PLUGIN_DIR . '/' . dirname( $plugin );
+				$folder_key    = md5( $plugin_folder );
+				delete_option( $folder_key );
+			}
+		} else {
+			$this->get_plugin_paths();
+		}
+
+		return $new;
+	}
+
+	/** Invalidate the WP cache.
+	 *
+	 * @param $new
+	 */
+	public function clear_wp_cache( $new ) {
+		if ( 'off' === $new ) {
+			$admin    = md5( ABSPATH . 'wp-admin' );
+			$includes = md5( ABSPATH . 'wp-includes' );
+			delete_option( $admin );
+			delete_option( $includes );
+		} else {
+			$this->get_wp_paths();
+		}
+
+		return $new;
+	}
+
+	/**
+	 * Get the file paths for the plugins.
+	 *
+	 * @return array
+	 */
+	protected function get_plugin_paths() {
+		$paths          = array();
+		$plugins        = get_plugins();
+		$active_plugins = (array) get_option( 'active_plugins', array() );
+		foreach ( $active_plugins as $plugin ) {
+			$key = 'plugin_cache_' . basename( dirname( $plugin ) );
+			if ( 'off' === $this->plugin->settings->get_value( $key ) ) {
+				continue;
+			}
+			$plugin_folder = WP_PLUGIN_DIR . '/' . dirname( $plugin );
+			$files         = $this->get_folder_files( $plugin_folder, $plugins[ $plugin ]['Version'], 'plugins_url', false );
+			$paths         = array_merge( $paths, $files );
+		}
+
+		return $paths;
+	}
+
+	/**
+	 * Get the theme file paths.
+	 *
+	 * @return array
+	 */
+	protected function get_theme_paths() {
+
+		$theme = wp_get_theme();
+		$paths = $this->get_folder_files(
+			$theme->get_stylesheet_directory(),
+			$theme->get( 'Version' ),
+			function ( $file ) use ( $theme ) {
+				return $theme->get_stylesheet_directory_uri() . $file;
+			}
+		);
+		if ( $theme->parent() ) {
+			$parent = $theme->parent();
+			$paths  += $this->get_folder_files(
+				$parent->get_stylesheet_directory(),
+				$parent->get( 'Version' ),
+				function ( $file ) use ( $parent ) {
+					return $parent->get_stylesheet_directory_uri() . $file;
+				}
+			);
+		}
+
+		return $paths;
+	}
+
+	/**
+	 * Get the file paths for WordPress.
+	 *
+	 * @return array
+	 */
+	protected function get_wp_paths() {
+		$version = get_bloginfo( 'version' );
+		$paths   = $this->get_folder_files( ABSPATH . 'wp-admin', $version, 'admin_url' );
+		$paths   += $this->get_folder_files( ABSPATH . 'wp-includes', $version, 'includes_url' );
+
+		return $paths;
+	}
+
+	/**
+	 * Get the paths for scanning.
+	 *
+	 * @return array
+	 */
+	protected function get_paths() {
+		$paths = array();
+		if ( 'on' === $this->plugin->settings->get_value( 'cache_plugins' ) ) {
+			$paths += $this->get_plugin_paths();
+		}
+
+		if ( 'on' === $this->plugin->settings->get_value( 'cache_theme' ) ) {
+			$paths += $this->get_theme_paths();
+		}
+
+		if ( 'on' === $this->plugin->settings->get_value( 'cache_wordpress' ) ) {
+			$paths += $this->get_wp_paths();
+		}
+
+		return $paths;
 	}
 
 	/**
@@ -96,50 +220,7 @@ class Cache implements Setup {
 	 * @return string
 	 */
 	public function frontend_rewrite( $template ) {
-		$paths = array();
-
-		if ( 'on' === $this->plugin->settings->get_value( 'cache_plugins' ) ) {
-			$plugins        = get_plugins();
-			$active_plugins = (array) get_option( 'active_plugins', array() );
-			foreach ( $active_plugins as $plugin ) {
-				$key = 'plugin_cache_' . basename( dirname( $plugin ) );
-				if ( 'off' === $this->plugin->settings->get_value( $key ) ) {
-					continue;
-				}
-				$plugin_folder = WP_PLUGIN_DIR . '/' . dirname( $plugin );
-				$files         = $this->get_folder_files( $plugin_folder, $plugins[ $plugin ]['Version'], 'plugins_url', false );
-				$paths         = array_merge( $paths, $files );
-			}
-		}
-
-		if ( 'on' === $this->plugin->settings->get_value( 'cache_theme' ) ) {
-			$theme       = wp_get_theme();
-			$theme_files = $this->get_folder_files(
-				$theme->get_stylesheet_directory(),
-				$theme->get( 'Version' ),
-				function ( $file ) use ( $theme ) {
-					return $theme->get_stylesheet_directory_uri() . $file;
-				}
-			);
-			if ( $theme->parent() ) {
-				$parent      = $theme->parent();
-				$theme_files += $this->get_folder_files(
-					$parent->get_stylesheet_directory(),
-					$parent->get( 'Version' ),
-					function ( $file ) use ( $parent ) {
-						return $parent->get_stylesheet_directory_uri() . $file;
-					}
-				);
-			}
-			$paths = array_merge( $paths, $theme_files );
-		}
-
-		if ( 'on' === $this->plugin->settings->get_value( 'cache_wordpress' ) ) {
-			$version  = get_bloginfo( 'version' );
-			$wp_files = $this->get_folder_files( ABSPATH . 'wp-admin', $version, 'admin_url' );
-			$wp_files += $this->get_folder_files( ABSPATH . 'wp-includes', $version, 'includes_url' );
-			$paths    = array_merge( $paths, $wp_files );
-		}
+		$paths = $this->get_paths();
 
 		if ( empty ( $paths ) ) {
 			return $template;
@@ -147,7 +228,8 @@ class Cache implements Setup {
 
 		ob_start();
 		include $template;
-		$html  = ob_get_clean();
+		$html = ob_get_clean();
+
 		$paths = array_filter(
 			$paths,
 			function ( $path, $url ) use ( $html ) {
@@ -156,7 +238,6 @@ class Cache implements Setup {
 			ARRAY_FILTER_USE_BOTH
 		);
 		preg_match_all( '#(' . implode( '|', array_keys( $paths ) ) . ')\b([-a-zA-Z0-9@:%_\+.~\#?&//=]*)?#si', $html, $result );
-
 		if ( empty( $result[0] ) ) {
 			return $template;
 		}
@@ -170,7 +251,7 @@ class Cache implements Setup {
 			if ( ! empty( $path_query ) ) {
 				parse_str( $path_query, $query );
 			}
-			$file_location  = $paths[ $result[1][ $index ] ];
+
 			$cloudinary_url = $this->get_cached_url( $url, $query['ver'], $file_source );
 			if ( ! empty( $cloudinary_url ) ) {
 				$html = str_replace( $url, $cloudinary_url, $html );
