@@ -199,16 +199,18 @@ class Cache implements Setup {
 	 */
 	protected function get_paths() {
 		$paths = array();
-		if ( 'on' === $this->plugin->settings->get_value( 'cache_plugins' ) ) {
-			$paths += $this->get_plugin_paths();
-		}
+		if ( 'on' === $this->plugin->settings->get_value( 'enable_site_cache' ) ) {
+			if ( 'on' === $this->plugin->settings->get_value( 'cache_plugins' ) ) {
+				$paths += $this->get_plugin_paths();
+			}
 
-		if ( 'on' === $this->plugin->settings->get_value( 'cache_theme' ) ) {
-			$paths += $this->get_theme_paths();
-		}
+			if ( 'on' === $this->plugin->settings->get_value( 'cache_theme' ) ) {
+				$paths += $this->get_theme_paths();
+			}
 
-		if ( 'on' === $this->plugin->settings->get_value( 'cache_wordpress' ) ) {
-			$paths += $this->get_wp_paths();
+			if ( 'on' === $this->plugin->settings->get_value( 'cache_wordpress' ) ) {
+				$paths += $this->get_wp_paths();
+			}
 		}
 
 		return $paths;
@@ -220,6 +222,7 @@ class Cache implements Setup {
 	 * @return string
 	 */
 	public function frontend_rewrite( $template ) {
+
 		$paths = $this->get_paths();
 		if ( empty ( $paths ) ) {
 			return $template;
