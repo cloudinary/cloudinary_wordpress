@@ -275,7 +275,7 @@ class Push_Sync {
 		$public_id = dirname( $file_path ) . '/' . pathinfo( $file, PATHINFO_FILENAME );
 		$options   = array(
 			'file'          => $file,
-			'resource_type' => 'raw',
+			'resource_type' => 'auto',
 			'public_id'     => $public_id,
 		);
 		$data      = $connect->api->upload( 0, $options, array(), false );
