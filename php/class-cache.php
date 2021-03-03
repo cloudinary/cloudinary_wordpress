@@ -529,9 +529,6 @@ class Cache implements Setup {
 						'title'   => __( 'Cache folder', 'cloudinary' ),
 						'default' => wp_parse_url( get_site_url(), PHP_URL_HOST ),
 					),
-					array(
-						'type' => 'cache_status',
-					),
 				),
 
 			),
