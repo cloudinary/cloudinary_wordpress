@@ -242,6 +242,11 @@ class Cache implements Setup {
 			return $template;
 		}
 
+		$sources  = array(
+			'url' => array(),
+			'cld' => array(),
+		);
+
 		foreach ( $result[0] as $index => $url ) {
 			$file_location = $paths[ $result[1][ $index ] ];
 			$path_query    = wp_parse_url( $url, PHP_URL_QUERY );
@@ -254,9 +259,14 @@ class Cache implements Setup {
 
 			$cloudinary_url = $this->get_cached_url( $url, $query['ver'], $file_source );
 			if ( ! empty( $cloudinary_url ) ) {
-				$html = str_replace( $url, $cloudinary_url, $html );
+				$sources['url'][] = $url;
+				$sources['cld'][] = $cloudinary_url;
 			}
 		}
+
+		// Replace all sources.
+		$html = str_replace( $sources['url'], $sources['cld'], $html );
+
 		// Push to output stream.
 		file_put_contents( "php://output", $html ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_file_put_contents
 
