@@ -221,7 +221,6 @@ class Cache implements Setup {
 	 */
 	public function frontend_rewrite( $template ) {
 		$paths = $this->get_paths();
-
 		if ( empty ( $paths ) ) {
 			return $template;
 		}
@@ -230,6 +229,35 @@ class Cache implements Setup {
 		include $template;
 		$html = ob_get_clean();
 
+		$base_url = md5( filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_SANITIZE_URL ) );
+
+		$sources = get_transient( $base_url );
+		if ( empty( $sources ) ) {
+			$sources = $this->build_sources( $paths, $html );
+			if ( is_null( $sources ) ) {
+				return $template;
+			}
+			set_transient( $base_url, $sources, 60 );
+		}
+
+		// Replace all sources.
+		$html = str_replace( $sources['url'], $sources['cld'], $html );
+
+		// Push to output stream.
+		file_put_contents( "php://output", $html ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_file_put_contents
+
+		return 'php://output';
+	}
+
+	/**
+	 * Build sources for a set of paths and HTML.
+	 *
+	 * @param array  $paths The paths to use.
+	 * @param string $html  The html to build against.
+	 *
+	 * @return array[]|null
+	 */
+	protected function build_sources( $paths, $html ) {
 		$paths = array_filter(
 			$paths,
 			function ( $path, $url ) use ( $html ) {
@@ -239,10 +267,10 @@ class Cache implements Setup {
 		);
 		preg_match_all( '#(' . implode( '|', array_keys( $paths ) ) . ')\b([-a-zA-Z0-9@:%_\+.~\#?&//=]*)?#si', $html, $result );
 		if ( empty( $result[0] ) ) {
-			return $template;
+			return null;
 		}
 
-		$sources  = array(
+		$sources = array(
 			'url' => array(),
 			'cld' => array(),
 		);
@@ -264,13 +292,7 @@ class Cache implements Setup {
 			}
 		}
 
-		// Replace all sources.
-		$html = str_replace( $sources['url'], $sources['cld'], $html );
-
-		// Push to output stream.
-		file_put_contents( "php://output", $html ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_file_put_contents
-
-		return 'php://output';
+		return $sources;
 	}
 
 	/**
