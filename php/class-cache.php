@@ -8,8 +8,6 @@
 namespace Cloudinary;
 
 use Cloudinary\Component\Setup;
-use Cloudinary\Media;
-use Cloudinary\Connect;
 
 /**
  * Plugin report class.
@@ -24,16 +22,27 @@ class Cache implements Setup {
 	public $plugin;
 
 	/**
+	 * Holds the Media component.
+	 *
 	 * @var Media
 	 */
 	protected $media;
 
 	/**
+	 * Holds the Connect component.
+	 *
 	 * @var Connect
 	 */
 	protected $connect;
-
 	/**
+	 * Holds the Rest API component.
+	 *
+	 * @var REST_API
+	 */
+	protected $api;
+	/**
+	 * Defaults for file cacheing.
+	 *
 	 * @var array
 	 */
 	public $file_cache_default = array(
@@ -45,36 +54,54 @@ class Cache implements Setup {
 	 * Holds the meta keys to be used.
 	 */
 	const META_KEYS = array(
-		'queue'        => '_cloudinary_cache_queue',
-		'url'          => '_cloudinary_cache_url',
-		'cached'       => '_cloudinary_cached',
-		'plugin_files' => '_cloudinary_plugin_files',
+		'queue'           => '_cloudinary_cache_queue',
+		'url'             => '_cloudinary_cache_url',
+		'cached'          => '_cloudinary_cached',
+		'plugin_files'    => '_cloudinary_plugin_files',
+		'upload_error'    => '_cloudinary_upload_errors',
+		'uploading_cache' => '_cloudinary_uploading_cache',
 	);
 
 	/**
-	 * Report constructor.
+	 * Site Cache constructor.
 	 *
 	 * @param Plugin $plugin Global instance of the main plugin.
 	 */
 	public function __construct( Plugin $plugin ) {
-
 		$this->plugin  = $plugin;
 		$this->media   = $this->plugin->get_component( 'media' );
 		$this->connect = $this->plugin->get_component( 'connect' );
+		$this->api     = $this->plugin->get_component( 'api' );
 		$this->register_hooks();
 		add_filter( 'template_include', array( $this, 'frontend_rewrite' ), PHP_INT_MAX );
 
 		add_action( 'cloudinary_settings_save_setting_cache_theme', array( $this, 'clear_theme_cache' ), 10 );
 		add_action( 'cloudinary_settings_save_setting_cache_plugins', array( $this, 'clear_theme_cache' ), 10 );
 		add_action( 'cloudinary_settings_save_setting_cache_wordpress', array( $this, 'clear_wp_cache' ), 10 );
+
+		add_action( 'admin_init', array( $this, 'admin_rewrite' ), 0 );
+	}
+
+	/**
+	 * Rewrites urls in admin.
+	 */
+	public function admin_rewrite() {
+		ob_start();
+		add_action(
+			'shutdown',
+			function () {
+				echo $this->html_rewrite( ob_get_clean() ); // phpcs:ignores WordPress.Security.EscapeOutput.OutputNotEscaped
+			},
+			0
+		);
 	}
 
 	/**
 	 * Invalidate Theme file cache.
 	 *
-	 * @param $new
+	 * @param string $new The new value being set.
 	 *
-	 * @return mixed|string
+	 * @return string
 	 */
 	public function clear_theme_cache( $new ) {
 		if ( 'off' === $new ) {
@@ -94,6 +121,10 @@ class Cache implements Setup {
 
 	/**
 	 * Invalidate Plugin cache.
+	 *
+	 * @param string $new The new value being set.
+	 *
+	 * @return string
 	 */
 	public function clear_plugin_cache( $new ) {
 		if ( 'off' === $new ) {
@@ -113,7 +144,9 @@ class Cache implements Setup {
 
 	/** Invalidate the WP cache.
 	 *
-	 * @param $new
+	 * @param string $new The new value being set.
+	 *
+	 * @return string
 	 */
 	public function clear_wp_cache( $new ) {
 		if ( 'off' === $new ) {
@@ -167,7 +200,7 @@ class Cache implements Setup {
 		);
 		if ( $theme->parent() ) {
 			$parent = $theme->parent();
-			$paths  += $this->get_folder_files(
+			$paths += $this->get_folder_files(
 				$parent->get_stylesheet_directory(),
 				$parent->get( 'Version' ),
 				function ( $file ) use ( $parent ) {
@@ -187,7 +220,7 @@ class Cache implements Setup {
 	protected function get_wp_paths() {
 		$version = get_bloginfo( 'version' );
 		$paths   = $this->get_folder_files( ABSPATH . 'wp-admin', $version, 'admin_url' );
-		$paths   += $this->get_folder_files( ABSPATH . 'wp-includes', $version, 'includes_url' );
+		$paths  += $this->get_folder_files( ABSPATH . 'wp-includes', $version, 'includes_url' );
 
 		return $paths;
 	}
@@ -217,14 +250,17 @@ class Cache implements Setup {
 	}
 
 	/**
-	 * @param $template
+	 * Rewrite urls on frontend.
+	 *
+	 * @param string $template The frontend template being loaded.
 	 *
 	 * @return string
 	 */
 	public function frontend_rewrite( $template ) {
 
 		$paths = $this->get_paths();
-		if ( empty ( $paths ) ) {
+
+		if ( empty( $paths ) ) {
 			return $template;
 		}
 
@@ -232,24 +268,44 @@ class Cache implements Setup {
 		include $template;
 		$html = ob_get_clean();
 
-		$base_url = md5( filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_SANITIZE_URL ) );
+		$html = $this->html_rewrite( $html );
+		// Push to output stream.
+		file_put_contents( 'php://output', $html ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_file_put_contents
 
+		return 'php://output';
+	}
+
+	/**
+	 * Rewrite HTML by replacing local URLS with Remote URLS.
+	 *
+	 * @param string $html The HTML to rewrite.
+	 *
+	 * @return string
+	 */
+	public function html_rewrite( $html ) {
+		$base_url = md5( filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_SANITIZE_URL ) );
+		$paths    = $this->get_paths();
+
+		if ( empty( $paths ) ) {
+			return $html;
+		}
 		$sources = get_transient( $base_url );
 		if ( empty( $sources ) ) {
 			$sources = $this->build_sources( $paths, $html );
-			if ( is_null( $sources ) ) {
-				return $template;
+			$expire  = 60;
+			if ( empty( $sources['url'] ) && ! empty( $sources['upload_pending'] ) ) {
+				// Set to a short since it's still syncing.
+				$expire = 5;
 			}
-			set_transient( $base_url, $sources, 60 );
+			set_transient( $base_url, $sources, $expire );
 		}
 
-		// Replace all sources.
-		$html = str_replace( $sources['url'], $sources['cld'], $html );
+		// Replace all sources if we have some URLS.
+		if ( ! empty( $sources['url'] ) ) {
+			$html = str_replace( $sources['url'], $sources['cld'], $html );
+		}
 
-		// Push to output stream.
-		file_put_contents( "php://output", $html ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_file_put_contents
-
-		return 'php://output';
+		return $html;
 	}
 
 	/**
@@ -278,21 +334,24 @@ class Cache implements Setup {
 			'cld' => array(),
 		);
 
-		foreach ( $result[0] as $index => $url ) {
-			$file_location = $paths[ $result[1][ $index ] ];
-			$path_query    = wp_parse_url( $url, PHP_URL_QUERY );
-			$file_query    = wp_parse_url( $file_location, PHP_URL_QUERY );
-			parse_str( $file_query, $query );
-			$file_source = remove_query_arg( 'ver', $file_location );
-			if ( ! empty( $path_query ) ) {
-				parse_str( $path_query, $query );
+		foreach ( $result[1] as $index => $url ) {
+			$params         = $this->src_version( $paths[ $url ] );
+			$cloudinary_url = $this->get_cached_url( $url, $params['version'], $params['file'], false );
+			if ( is_wp_error( $cloudinary_url ) ) {
+				// Multiple Synced error.
+				continue;
 			}
-
-			$cloudinary_url = $this->get_cached_url( $url, $query['ver'], $file_source );
-			if ( ! empty( $cloudinary_url ) ) {
+			if ( $url === $cloudinary_url ) {
+				// No remote yet, flag pending.
+				$sources['upload_pending'] = true;
+			} else {
 				$sources['url'][] = $url;
 				$sources['cld'][] = $cloudinary_url;
 			}
+		}
+
+		if ( ! empty( $sources['upload_pending'] ) && empty( get_transient( self::META_KEYS['uploading_cache'] ) ) ) {
+			$this->api->background_request( 'upload_cache' );
 		}
 
 		return $sources;
@@ -347,9 +406,9 @@ class Cache implements Setup {
 	 */
 	public function rest_endpoints( $endpoints ) {
 
-		$endpoints['cache_site'] = array(
-			'method'              => \WP_REST_Server::READABLE,
-			'callback'            => array( $this, 'start_cache' ),
+		$endpoints['upload_cache'] = array(
+			'method'              => \WP_REST_Server::CREATABLE,
+			'callback'            => array( $this, 'upload_cache' ),
 			'args'                => array(),
 			'permission_callback' => array( $this, 'rest_can_manage_options' ),
 		);
@@ -358,9 +417,64 @@ class Cache implements Setup {
 	}
 
 	/**
+	 * Admin permission callback.
+	 *
+	 * Explicitly defined to allow easier testability.
+	 *
+	 * @return bool
+	 */
+	public function rest_can_manage_options() {
+		return current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * Start uploading files to cloudinary cache.
+	 */
+	public function upload_cache() {
+		if ( empty( get_transient( self::META_KEYS['uploading_cache'] ) ) ) {
+			set_transient( self::META_KEYS['uploading_cache'], true, 20 ); // Flag a transient to prevent multiple background uploads.
+			$paths     = $this->get_paths();
+			$to_upload = array();
+			// Pre-get items to upload.
+			foreach ( $paths as $url => $file ) {
+				$params         = $this->src_version( $file );
+				$cloudinary_url = $this->get_cached_url( $url, $params['version'], $params['file'], false );
+				if ( $url === $cloudinary_url ) {
+					$params['url'] = $url;
+					// No remote yet, add to list.
+					$to_upload[] = $params;
+				}
+			}
+			foreach ( $to_upload as $index => $upload ) {
+				set_transient( self::META_KEYS['uploading_cache'], true, 20 ); // Flag a transient to prevent multiple background uploads.
+				do_action( '_cloudinary_queue_action', $action_message );
+				$this->get_cached_url( $upload['url'], $upload['version'], $upload['file'] );
+			}
+		}
+	}
+
+	/**
+	 * Separate a file with ver param into path and version array.
+	 *
+	 * @param string $file The file path to use.
+	 *
+	 * @return array
+	 */
+	protected function src_version( $file ) {
+		$file_query = wp_parse_url( $file, PHP_URL_QUERY );
+		parse_str( $file_query, $query );
+		$file_source = remove_query_arg( 'ver', $file );
+
+		return array(
+			'file'    => $file_source,
+			'version' => $query['ver'],
+		);
+	}
+
+	/**
 	 * Get files from a folder.
 	 *
-	 * @param $path
+	 * @param string $path The file path.
 	 *
 	 * @return array
 	 */
@@ -377,6 +491,7 @@ class Cache implements Setup {
 			'md',
 			'txt',
 			'xml',
+			'crt',
 		);
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		$files  = list_files( $path, PHP_INT_MAX, $exclude );
@@ -395,24 +510,27 @@ class Cache implements Setup {
 	/**
 	 * Get a cached URL.
 	 *
-	 * @param $local_url
-	 * @param $version
+	 * @param string $local_url     The local URL.
+	 * @param string $version       The version.
+	 * @param string $file_location The file path.
+	 * @param bool   $upload        Flag to set upload.
 	 *
 	 * @return string
 	 */
-	public function get_cached_url( $local_url, $version, $file_location ) {
-		$location_path    = wp_parse_url( $local_url, PHP_URL_PATH );
-		$parts            = explode( '/', trim( $location_path, '/' ) );
-		$storage_location = $parts[0];
-		$option_key       = self::META_KEYS['cached'] . '_' . $storage_location;
-		$cache            = get_option( $option_key, array() );
+	public function get_cached_url( $local_url, $version, $file_location, $upload = true ) {
+		$option_key = $this->get_cache_option_key( $file_location );
+		$cache      = get_option( $option_key, array() );
 		if ( empty( $cache[ $local_url ] ) || $cache[ $local_url ]['ver'] !== $version ) {
-			$cache[ $local_url ]        = array(
+			$cache[ $local_url ] = array(
 				'ver' => $version,
+				'url' => $local_url,
 			);
-			$cache[ $local_url ]['url'] = $this->sync_static( $file_location );
-			if ( ! empty( $cache[ $local_url ]['url'] ) ) {
-				update_option( $option_key, $cache, false );
+			if ( true === $upload ) {
+				$remote_url = $this->sync_static( $file_location );
+				if ( ! empty( $remote_url ) ) {
+					$cache[ $local_url ]['url'] = $remote_url;
+					update_option( $option_key, $cache, false );
+				}
 			}
 		}
 
@@ -420,12 +538,47 @@ class Cache implements Setup {
 	}
 
 	/**
-	 * @param $file
+	 * Get the option name for where the file will be stored.
 	 *
-	 * @return mixed
+	 * @param string $file_location The file path.
+	 *
+	 * @return string
+	 */
+	protected function get_cache_option_key( $file_location ) {
+		$plugins_path = WP_PLUGIN_DIR;
+		$theme        = get_theme_root();
+		$include      = ABSPATH . 'wp-includes';
+		$admin        = ABSPATH . 'wp-admin';
+		if ( false !== strpos( $file_location, $plugins_path ) ) {
+			$parts = explode( '/', substr( $file_location, strlen( $plugins_path ) ) );
+		} elseif ( false !== strpos( $file_location, $theme ) ) {
+			$parts = explode( '/', substr( $file_location, strlen( $theme ) ) );
+		} elseif ( false !== strpos( $file_location, $include ) ) {
+			$parts = array( 'wp_includes' );
+		} elseif ( false !== strpos( $file_location, $admin ) ) {
+			$parts = array( 'wp_admin' );
+		} else {
+			$parts = array( 'custom' );
+		}
+		$parts    = array_filter( $parts );
+		$location = array_shift( $parts );
+
+		return self::META_KEYS['cached'] . '_' . $location;
+	}
+
+	/**
+	 * Upload a static file.
+	 *
+	 * @param string $file The file path to upload.
+	 *
+	 * @return string|\WP_Error
 	 */
 	protected function sync_static( $file ) {
-
+		$errored = get_option( self::META_KEYS['upload_error'], array() );
+		if ( isset( $errored[ $file ] ) && 3 <= $errored[ $file ] ) {
+			// Dont try again.
+			return new \WP_Error( 'upload_error' );
+		}
 		$folder    = $this->media->get_cloudinary_folder() . $this->plugin->settings->get_value( 'cache_folder' );
 		$file_path = $folder . '/' . substr( $file, strlen( ABSPATH ) );
 		$public_id = dirname( $file_path ) . '/' . pathinfo( $file, PATHINFO_FILENAME );
@@ -442,6 +595,9 @@ class Cache implements Setup {
 
 		$data = $this->connect->api->upload( 0, $options, array(), false );
 		if ( is_wp_error( $data ) ) {
+			$errored[ $file ] = isset( $errored[ $file ] ) ? $errored[ $file ] + 1 : 1;
+			update_option( self::META_KEYS['upload_error'], $errored );
+
 			return null;
 		}
 
@@ -449,6 +605,8 @@ class Cache implements Setup {
 		if ( ! empty( $data['eager'] ) ) {
 			$url = $data['eager'][0]['secure_url'];
 		}
+		// Strip out version number.
+		$url = str_replace( '/v' . $data['version'], '', $url );
 
 		return $url;
 	}
