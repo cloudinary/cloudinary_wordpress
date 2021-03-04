@@ -312,13 +312,13 @@ class Sync_Queue {
 		);
 
 		// translators: variable is page number.
-		$action_message = sprintf( __( 'Building Queue.', 'cloudinary' ), $args['paged'] );
+		$action_message = __( 'Building Queue.', 'cloudinary' );
 		do_action( '_cloudinary_queue_action', $action_message );
 
 		$query = new \WP_Query( $args );
 		if ( ! $query->have_posts() ) {
 			// translators: variable is page number.
-			$action_message = sprintf( __( 'No posts', 'cloudinary' ), $args['paged'] );
+			$action_message = __( 'No posts', 'cloudinary' );
 			do_action( '_cloudinary_queue_action', $action_message );
 
 			return;
