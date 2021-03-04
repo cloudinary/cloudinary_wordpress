@@ -170,7 +170,7 @@ class Storage implements Notice {
 			}
 		}
 
-		return $this->settings['offload'] . $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true ) . $file_exists;
+		return $this->settings['offload'] . $this->media->get_public_id( $attachment_id ) . $file_exists;
 	}
 
 	/**
@@ -241,7 +241,7 @@ class Storage implements Notice {
 	 */
 	protected function remove_local_assets( $attachment_id ) {
 		// Delete local versions of images.
-		$meta = wp_get_attachment_metadata( $attachment_id );
+		$meta         = wp_get_attachment_metadata( $attachment_id );
 		$backup_sizes = '';
 		if ( ! empty( $meta['backup_sizes'] ) ) {
 			// Replace backup sizes.
