@@ -1129,7 +1129,6 @@ class Media extends Settings_Component implements Setup {
 		$cloudinary_id = null;
 		// A cloudinary_id is a public_id with a file extension.
 		if ( $this->has_public_id( $attachment_id ) ) {
-			// Since this is based on saved and not a dynamic, append a suffix.
 			$public_id = $this->get_public_id( $attachment_id, true );
 			// Get the file, and use the same extension.
 			$file = get_attached_file( $attachment_id );
