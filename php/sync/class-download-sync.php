@@ -126,55 +126,6 @@ class Download_Sync {
 	}
 
 	/**
-	 * Get downloaded Public ID.
-	 *
-	 * @param int    $attachment_id The attachment ID.
-	 * @param string $source        The source URL.
-	 *
-	 * @return string
-	 */
-	public function get_public_id( $attachment_id, $source ) {
-		$public_id = $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
-
-		if ( empty( $public_id ) ) {
-			$path  = wp_parse_url( $source, PHP_URL_PATH );
-			$media = $this->plugin->components['media'];
-			$parts = explode( '/', $path );
-			$parts = array_map(
-				static function ( $val ) use ( $media ) {
-					if ( empty( $val ) ) {
-						return false;
-					}
-					if ( $val === $media->credentials['cloud_name'] ) {
-						return false;
-					}
-					if ( in_array( $val, array( 'image', 'video', 'upload' ), true ) ) {
-						return false;
-					}
-					$transformation_maybe = $media->get_transformations_from_string( $val );
-					if ( ! empty( $transformation_maybe ) ) {
-						return false;
-					}
-					if ( 'v' === $val[0] && is_numeric( substr( $val, 1 ) ) ) {
-						return false;
-					}
-
-					return $val;
-				},
-				$parts
-			);
-			// Build public_id.
-			$parts     = array_filter( $parts );
-			$public_id = implode( '/', $parts );
-			// Remove extension.
-			$path      = pathinfo( $public_id );
-			$public_id = strstr( $public_id, '.' . $path['extension'], true );
-		}
-
-		return $public_id;
-	}
-
-	/**
 	 * Download an attachment source to the file system.
 	 *
 	 * @param int         $attachment_id The attachment ID.
@@ -239,14 +190,13 @@ class Download_Sync {
 			}
 			wp_update_attachment_metadata( $attachment_id, $meta );
 			// Update the folder synced flag.
-			$public_id         = $this->get_public_id( $attachment_id, $source );
+			$public_id         = $this->media->get_public_id( $attachment_id );
 			$asset_folder      = strpos( $public_id, '/' ) ? dirname( $public_id ) : '/';
 			$cloudinary_folder = untrailingslashit( $this->media->get_cloudinary_folder() );
 			if ( $asset_folder === $cloudinary_folder ) {
 				$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['folder_sync'], true );
 			}
-			// Create synced post meta as a way to search for synced / unsynced items.
-			update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
+
 			// Generate signatures.
 			$this->sync->set_signature_item( $attachment_id, 'options' );
 			$this->sync->set_signature_item( $attachment_id, 'cloud_name' );
