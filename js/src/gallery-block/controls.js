@@ -31,6 +31,8 @@ import {
 	ZOOM_TRIGGER,
 	ZOOM_TYPE,
 	ZOOM_VIEWER_POSITION,
+	LOOK_AND_FEEL,
+	PADDED_IMAGES,
 } from './options';
 
 import Radio from './radio';
@@ -56,6 +58,15 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 		typeof nestedAttrs.customSettings === 'object'
 			? JSON.stringify( nestedAttrs.customSettings )
 			: nestedAttrs.customSettings;
+
+	if ( ! attributes.transformation_crop ) {
+		attributes.transformation_crop = 'pad';
+		attributes.transformation_background = 'rgb:FFFFFF';
+	}
+
+	if ( 'fill' === attributes.transformation_crop ) {
+		delete attributes.transformation_background;
+	}
 
 	return (
 		<>
@@ -144,6 +155,41 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 						setAttributes( { aspectRatio: value } )
 					}
 				/>
+				<p>{ __( 'Look & Feel', 'cloudinary' ) }</p>
+				<p>
+					<ButtonGroup>
+						{ LOOK_AND_FEEL.map( ( type ) => (
+							<Button
+								key={ type.value + '-look-and-feel' }
+								isDefault
+								isPressed={
+									type.value ===
+									attributes.transformation_crop
+								}
+								onClick={ () =>
+									setAttributes( {
+										transformation_crop: type.value,
+										transformation_background: null,
+									} )
+								}
+							>
+								{ type.label }
+							</Button>
+						) ) }
+					</ButtonGroup>
+				</p>
+				{ 'pad' === attributes.transformation_crop && (
+					<SelectControl
+						label={ __( 'Pad style', 'cloudinary' ) }
+						value={ attributes.transformation_background }
+						options={ PADDED_IMAGES }
+						onChange={ ( value ) => {
+							setAttributes( {
+								transformation_background: value,
+							} );
+						} }
+					/>
+				) }
 				<p>{ __( 'Navigation', 'cloudinary' ) }</p>
 				<p>
 					<ButtonGroup>

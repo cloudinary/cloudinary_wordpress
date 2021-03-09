@@ -190,3 +190,33 @@ export const MEDIA_ICON_SHAPE = [
 		label: __( 'Square', 'cloudinary' ),
 	},
 ];
+
+export const LOOK_AND_FEEL = [
+	{
+		label: __( 'Pad', 'cloudinary' ),
+		value: 'pad',
+	},
+	{
+		label: __( 'Crop', 'cloudinary' ),
+		value: 'fill',
+	},
+];
+
+export const PADDED_IMAGES = [
+	{
+		label: __( 'White pad', 'cloudinary' ),
+		value: 'rgb:FFFFFF',
+	},
+	{
+		label: __( 'Auto color pad', 'cloudinary' ),
+		value: 'auto',
+	},
+	{
+		label: __( 'Predominante color pad', 'cloudinary' ),
+		value: 'auto:predominant',
+	},
+	{
+		label: __( 'Predominante gradiante pad', 'cloudinary' ),
+		value: 'auto:predominant_gradient',
+	},
+];
