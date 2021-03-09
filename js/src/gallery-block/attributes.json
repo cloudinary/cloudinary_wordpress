@@ -74,5 +74,9 @@
   "selectedImages": {
     "type": "array",
     "default": []
+  },
+  "transformation": {
+    "type": "object",
+    "default": {}
   }
 }
