@@ -31,8 +31,8 @@ import {
 	ZOOM_TRIGGER,
 	ZOOM_TYPE,
 	ZOOM_VIEWER_POSITION,
-	LOOK_AND_FEEL,
-	PADDED_IMAGES,
+	RESIZE_CROP,
+	PAD_STYLES,
 } from './options';
 
 import Radio from './radio';
@@ -155,10 +155,23 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 						setAttributes( { aspectRatio: value } )
 					}
 				/>
-				<p>{ __( 'Look & Feel', 'cloudinary' ) }</p>
+				<p
+					title={ __(
+						'How to resize or crop images to fit the gallery. Pad adds padding around the image using the specified padding style. Fill crops the image from the center so it fills as much of the available space as possible.',
+						'cloudinary'
+					) }
+				>
+					{ __( 'Resize or Crop Mode', 'cloudinary' ) }
+					<span
+						className="dashicons dashicons-info cld-tooltip"
+						data-tooltip="tooltip_auto_sync"
+					>
+						<span id="tooltip_auto_sync" className="hidden"></span>
+					</span>
+				</p>
 				<p>
 					<ButtonGroup>
-						{ LOOK_AND_FEEL.map( ( type ) => (
+						{ RESIZE_CROP.map( ( type ) => (
 							<Button
 								key={ type.value + '-look-and-feel' }
 								isDefault
@@ -182,7 +195,7 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 					<SelectControl
 						label={ __( 'Pad style', 'cloudinary' ) }
 						value={ attributes.transformation_background }
-						options={ PADDED_IMAGES }
+						options={ PAD_STYLES }
 						onChange={ ( value ) => {
 							setAttributes( {
 								transformation_background: value,

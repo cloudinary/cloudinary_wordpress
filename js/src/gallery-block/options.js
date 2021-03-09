@@ -191,7 +191,7 @@ export const MEDIA_ICON_SHAPE = [
 	},
 ];
 
-export const LOOK_AND_FEEL = [
+export const RESIZE_CROP = [
 	{
 		label: __( 'Pad', 'cloudinary' ),
 		value: 'pad',
@@ -202,21 +202,21 @@ export const LOOK_AND_FEEL = [
 	},
 ];
 
-export const PADDED_IMAGES = [
+export const PAD_STYLES = [
 	{
-		label: __( 'White pad', 'cloudinary' ),
+		label: __( 'White padding', 'cloudinary' ),
 		value: 'rgb:FFFFFF',
 	},
 	{
-		label: __( 'Auto color pad', 'cloudinary' ),
+		label: __( 'Border color padding', 'cloudinary' ),
 		value: 'auto',
 	},
 	{
-		label: __( 'Predominante color pad', 'cloudinary' ),
+		label: __( 'Predominant color padding', 'cloudinary' ),
 		value: 'auto:predominant',
 	},
 	{
-		label: __( 'Predominante gradiante pad', 'cloudinary' ),
+		label: __( 'Gradient fade padding', 'cloudinary' ),
 		value: 'auto:predominant_gradient',
 	},
 ];
