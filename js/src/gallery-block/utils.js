@@ -71,6 +71,10 @@ export const setupAttributesForRendering = ( attributes ) => {
 		delete config.displayProps.columns;
 	}
 
+	if ( 'pad' !== config?.transformation_crop ) {
+		delete config.transformation_background;
+	}
+
 	if ( config.customSettings ) {
 		try {
 			const customSettings = JSON.parse( config.customSettings );
