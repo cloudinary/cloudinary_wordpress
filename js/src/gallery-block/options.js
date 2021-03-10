@@ -197,7 +197,7 @@ export const RESIZE_CROP = [
 		value: 'pad',
 	},
 	{
-		label: __( 'Crop', 'cloudinary' ),
+		label: __( 'Fill', 'cloudinary' ),
 		value: 'fill',
 	},
 ];

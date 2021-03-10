@@ -237,7 +237,7 @@ class Report extends Settings_Component implements Setup {
 	 */
 	protected function get_report_body() {
 		ob_start();
-		esc_attr_e( 'Enabling system information reporting will allow you to generate and download a realtime snapshot report that can be used for reporting purposes. The report will be in JSON format and will include information about:', 'cloudinary' );
+		esc_attr_e( 'Enabling system information reporting will allow you to generate and download a realtime snapshot report. The report will be in JSON format and will include information about:', 'cloudinary' );
 		?>
 <ul>
 	<li><?php esc_html_e( 'Current WordPress and Cloudinary configuration.', 'cloudinary' ); ?></li>

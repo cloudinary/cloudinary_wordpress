@@ -75,8 +75,11 @@
     "type": "array",
     "default": []
   },
-  "transformation": {
-    "type": "object",
-    "default": {}
+  "transformation_crop": {
+    "type": "string",
+    "default": "pad"
+  },
+  "transformation_background": {
+    "type": "string"
   }
 }
