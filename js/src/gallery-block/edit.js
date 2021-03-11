@@ -42,7 +42,7 @@ const Edit = ( { setAttributes, attributes, className, isSelected } ) => {
 
 	const preparedAttributes = useMemo( () => {
 		// Do not override block settings with defaults on existing ones.
-		if ( 0 !== attributes.selectedImages.lenght ) {
+		if ( 0 !== attributes.selectedImages.length ) {
 			return attributes;
 		}
 
