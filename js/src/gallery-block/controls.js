@@ -1,6 +1,7 @@
 import Dot from 'dot-object';
 import { __ } from '@wordpress/i18n';
 import cloneDeep from 'lodash/cloneDeep';
+import Tippy from '@tippyjs/react';
 
 import '@wordpress/components/build-style/style.css';
 
@@ -31,6 +32,8 @@ import {
 	ZOOM_TRIGGER,
 	ZOOM_TYPE,
 	ZOOM_VIEWER_POSITION,
+	RESIZE_CROP,
+	PAD_STYLES,
 } from './options';
 
 import Radio from './radio';
@@ -56,6 +59,15 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 		typeof nestedAttrs.customSettings === 'object'
 			? JSON.stringify( nestedAttrs.customSettings )
 			: nestedAttrs.customSettings;
+
+	if ( ! attributes.transformation_crop ) {
+		attributes.transformation_crop = 'pad';
+		attributes.transformation_background = 'rgb:FFFFFF';
+	}
+
+	if ( 'fill' === attributes.transformation_crop ) {
+		delete attributes.transformation_background;
+	}
 
 	return (
 		<>
@@ -144,6 +156,58 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 						setAttributes( { aspectRatio: value } )
 					}
 				/>
+				<p>
+					<Tippy
+						content={
+							<span>
+								{ __(
+									'How to resize or crop images to fit the gallery. Pad adds padding around the image using the specified padding style. Fill crops the image from the center so it fills as much of the available space as possible.',
+									'cloudinary'
+								) }
+							</span>
+						}
+						theme={ 'cloudinary' }
+						arrow={ false }
+						placement={ 'bottom-start' }
+					>
+						<div className="cld-ui-title">
+							{ __( 'Resize/Crop Mode', 'cloudinary' ) }
+							<span className="dashicons dashicons-info cld-tooltip"></span>
+						</div>
+					</Tippy>
+					<ButtonGroup>
+						{ RESIZE_CROP.map( ( type ) => (
+							<Button
+								key={ type.value + '-look-and-feel' }
+								isDefault
+								isPressed={
+									type.value ===
+									attributes.transformation_crop
+								}
+								onClick={ () =>
+									setAttributes( {
+										transformation_crop: type.value,
+										transformation_background: null,
+									} )
+								}
+							>
+								{ type.label }
+							</Button>
+						) ) }
+					</ButtonGroup>
+				</p>
+				{ 'pad' === attributes.transformation_crop && (
+					<SelectControl
+						label={ __( 'Pad style', 'cloudinary' ) }
+						value={ attributes.transformation_background }
+						options={ PAD_STYLES }
+						onChange={ ( value ) => {
+							setAttributes( {
+								transformation_background: value,
+							} );
+						} }
+					/>
+				) }
 				<p>{ __( 'Navigation', 'cloudinary' ) }</p>
 				<p>
 					<ButtonGroup>

@@ -97,6 +97,7 @@ export const CAROUSEL_LOCATION = [
 	{ label: __( 'Left', 'cloudinary' ), value: 'left' },
 	{ label: __( 'Right', 'cloudinary' ), value: 'right' },
 	{ label: __( 'Top', 'cloudinary' ), value: 'top' },
+	{ label: __( 'Bottom', 'cloudinary' ), value: 'bottom' },
 ];
 
 export const CAROUSEL_STYLE = [
@@ -187,5 +188,35 @@ export const MEDIA_ICON_SHAPE = [
 		value: 'square',
 		icon: ShapeSquare,
 		label: __( 'Square', 'cloudinary' ),
+	},
+];
+
+export const RESIZE_CROP = [
+	{
+		label: __( 'Pad', 'cloudinary' ),
+		value: 'pad',
+	},
+	{
+		label: __( 'Fill', 'cloudinary' ),
+		value: 'fill',
+	},
+];
+
+export const PAD_STYLES = [
+	{
+		label: __( 'White padding', 'cloudinary' ),
+		value: 'rgb:FFFFFF',
+	},
+	{
+		label: __( 'Border color padding', 'cloudinary' ),
+		value: 'auto',
+	},
+	{
+		label: __( 'Predominant color padding', 'cloudinary' ),
+		value: 'auto:predominant',
+	},
+	{
+		label: __( 'Gradient fade padding', 'cloudinary' ),
+		value: 'auto:predominant_gradient',
 	},
 ];

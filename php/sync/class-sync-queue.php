@@ -312,13 +312,13 @@ class Sync_Queue {
 		);
 
 		// translators: variable is page number.
-		$action_message = sprintf( __( 'Building Queue.', 'cloudinary' ), $args['paged'] );
+		$action_message = __( 'Building Queue.', 'cloudinary' );
 		do_action( '_cloudinary_queue_action', $action_message );
 
 		$query = new \WP_Query( $args );
 		if ( ! $query->have_posts() ) {
 			// translators: variable is page number.
-			$action_message = sprintf( __( 'No posts', 'cloudinary' ), $args['paged'] );
+			$action_message = __( 'No posts', 'cloudinary' );
 			do_action( '_cloudinary_queue_action', $action_message );
 
 			return;
@@ -538,7 +538,6 @@ class Sync_Queue {
 
 		$args = array(
 			'post_type'      => 'attachment',
-			'post_mime_type' => array( 'image', 'video' ),
 			'post_status'    => 'inherit',
 			'posts_per_page' => 1,
 			'fields'         => 'ids',
@@ -674,7 +673,7 @@ class Sync_Queue {
 			$thread_queue = $this->get_thread_queue( $thread );
 			$offset       = time() - $thread_queue['ping'];
 			$return       = 3; // If autosync is running, default is ready/stalled.
-			if ( empty( $thread_queue['next'] ) ) {
+			if ( empty( $thread_queue['next'] ) && 0 !== $thread_queue['next'] ) {
 				$return = 1; // Queue is empty, so nothing to sync, set as ended.
 			} elseif ( ! empty( $thread_queue['ping'] ) && $offset < $this->cron_start_offset ) {
 				$return = 2; // If the last ping is within the time frame, it's still active.

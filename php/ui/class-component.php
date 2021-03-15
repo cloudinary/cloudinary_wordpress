@@ -110,7 +110,7 @@ abstract class Component {
 		$this->setup_component_parts();
 
 		// Add scripts.
-		add_action( 'admin_init', array( $this, 'enqueue_scripts' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 	}
 
 	/**

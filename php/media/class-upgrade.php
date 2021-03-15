@@ -109,7 +109,7 @@ class Upgrade {
 			$public_id = $this->media->get_public_id( $attachment_id, true );
 			// Check folder sync in order.
 			if ( $this->media->is_folder_synced( $attachment_id ) ) {
-				$public_id_folder = ltrim( dirname( $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true ) ), '.' );
+				$public_id_folder = ltrim( dirname( $this->media->get_public_id( $attachment_id ) ) );
 				$test_signature   = md5( false );
 				$folder_signature = md5( $public_id_folder );
 				$signature        = $this->sync->get_signature( $attachment_id );

@@ -66,7 +66,7 @@ class Delete_Sync {
 					if ( empty( $has_error ) ) {
 						$all_caps['delete_posts'] = false;
 						$action                   = filter_input( INPUT_GET, 'action', FILTER_SANITIZE_STRING );
-						if ( ! empty( $action ) && '-1' !== $action ) {
+						if ( ! empty( $action ) && 'delete' === $action ) {
 							wp_die( esc_html__( 'Sorry, you can’t delete an asset until it has fully synced with Cloudinary. Try again once syncing is complete.', 'cloudinary' ) );
 						}
 					}
@@ -104,7 +104,7 @@ class Delete_Sync {
 			$path              = trim( pathinfo( $public_id, PATHINFO_DIRNAME ), '.' );
 			$cloudinary_folder = $this->plugin->settings->get_value( 'cloudinary_folder' );
 			if ( $cloudinary_folder === $path ) {
-				$type    = $this->plugin->components['media']->get_media_type( $post_id );
+				$type    = $this->plugin->components['media']->get_resource_type( $post_id );
 				$options = array(
 					'public_id'  => $public_id,
 					'invalidate' => true, // clear from CDN cache as well.

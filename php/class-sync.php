@@ -81,6 +81,7 @@ class Sync implements Setup, Assets {
 		'version'        => '_cloudinary_version',
 		'plugin_version' => '_plugin_version',
 		'breakpoints'    => '_cloudinary_breakpoints',
+		'delivery'       => '_cloudinary_delivery',
 		'public_id'      => '_public_id',
 		'transformation' => '_transformations',
 		'sync_error'     => '_sync_error',
@@ -238,6 +239,21 @@ class Sync implements Setup, Assets {
 			$can = true;
 		}
 
+		if ( ! $this->managers['media']->is_local_media( $attachment_id ) ) {
+			$can = false;
+		}
+
+		// Can sync only syncable delivery types.
+		if (
+			! in_array(
+				$this->managers['media']->get_media_delivery( $attachment_id ),
+				$this->managers['media']->get_syncable_delivery_types(),
+				true
+			)
+		) {
+			$can = false;
+		}
+
 		/**
 		 * Filter to allow changing if an asset is allowed to be synced.
 		 * Return a WP Error with reason why it can't be synced.
@@ -361,7 +377,7 @@ class Sync implements Setup, Assets {
 	public function setup_sync_base_struct() {
 
 		$base_struct = array(
-			'upgrade'     => array(
+			'upgrade'      => array(
 				'generate' => array( $this, 'get_sync_version' ), // Method to generate a signature.
 				'validate' => array( $this, 'been_synced' ),
 				'priority' => 0,
@@ -370,7 +386,7 @@ class Sync implements Setup, Assets {
 				'note'     => __( 'Upgrading from previous version', 'cloudinary' ),
 				'realtime' => true,
 			),
-			'download'    => array(
+			'download'     => array(
 				'generate' => '__return_false',
 				'validate' => function ( $attachment_id ) {
 					$file = get_attached_file( $attachment_id );
@@ -382,7 +398,7 @@ class Sync implements Setup, Assets {
 				'state'    => 'info downloading',
 				'note'     => __( 'Downloading from Cloudinary', 'cloudinary' ),
 			),
-			'file'        => array(
+			'file'         => array(
 				'generate' => array( $this, 'generate_file_signature' ),
 				'priority' => 5.1,
 				'sync'     => array( $this->managers['upload'], 'upload_asset' ),
@@ -393,7 +409,7 @@ class Sync implements Setup, Assets {
 				'note'     => __( 'Uploading to Cloudinary', 'cloudinary' ),
 				'required' => true, // Required to complete URL render flag.
 			),
-			'folder'      => array(
+			'folder'       => array(
 				'generate' => array( $this->managers['media'], 'get_cloudinary_folder' ),
 				'validate' => array( $this->managers['media'], 'is_folder_synced' ),
 				'priority' => 10,
@@ -408,7 +424,7 @@ class Sync implements Setup, Assets {
 				},
 				'required' => true, // Required to complete URL render flag.
 			),
-			'public_id'   => array(
+			'public_id'    => array(
 				'generate' => array( $this->managers['media'], 'get_public_id' ),
 				'validate' => function ( $attachment_id ) {
 					$public_id = $this->managers['media']->has_public_id( $attachment_id );
@@ -421,27 +437,60 @@ class Sync implements Setup, Assets {
 				'note'     => __( 'Updating metadata', 'cloudinary' ),
 				'required' => true,
 			),
-			'breakpoints' => array(
+			'breakpoints'  => array(
 				'generate' => array( $this->managers['media'], 'get_breakpoint_options' ),
 				'priority' => 25,
 				'sync'     => array( $this->managers['upload'], 'explicit_update' ),
+				'validate' => function ( $attachment_id ) {
+					$delivery = $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['delivery'] );
+
+					return empty( $delivery ) || 'upload' === $delivery;
+				},
 				'state'    => 'info syncing',
 				'note'     => __( 'Updating breakpoints', 'cloudinary' ),
 			),
-			'options'     => array(
+			'options'      => array(
 				'generate' => array( $this->managers['media'], 'get_upload_options' ),
 				'priority' => 30,
 				'sync'     => array( $this->managers['upload'], 'context_update' ),
 				'state'    => 'info syncing',
 				'note'     => __( 'Updating metadata', 'cloudinary' ),
 			),
-			'cloud_name'  => array(
+			'cloud_name'   => array(
 				'generate' => array( $this->managers['connect'], 'get_cloud_name' ),
 				'priority' => 5.5,
 				'sync'     => array( $this->managers['upload'], 'upload_asset' ),
 				'state'    => 'uploading',
 				'note'     => __( 'Uploading to new cloud name.', 'cloudinary' ),
 				'required' => true,
+			),
+			'meta_cleanup' => array(
+				'generate' => function ( $attachment_id ) {
+					$meta = $this->managers['media']->get_post_meta( $attachment_id );
+					$return = false;
+					foreach ( $meta as $key => $value ) {
+						if ( get_post_meta( $attachment_id, $key, true ) === $value ) {
+							$return = true;
+							break;
+						}
+					}
+
+					return $return;
+				},
+				'priority' => 100, // Always be the highest.
+				'sync'     => function ( $attachment_id ) {
+					$meta = $this->managers['media']->get_post_meta( $attachment_id );
+					foreach ( $meta as $key => $value ) {
+						if ( self::META_KEYS['public_id'] === $key ) {
+							$this->managers['media']->delete_post_meta( $attachment_id, $key );
+							continue;
+						}
+						delete_post_meta( $attachment_id, $key, $value );
+					}
+					$this->set_signature_item( $attachment_id, 'meta_cleanup' );
+				},
+				'required' => true,
+				'realtime' => true,
 			),
 		);
 
@@ -771,24 +820,14 @@ class Sync implements Setup, Assets {
 	public function set_signature_item( $attachment_id, $type, $value = null ) {
 
 		// Get the core meta.
-		$meta = wp_get_attachment_metadata( $attachment_id, true );
-		if ( ! is_array( $meta ) ) {
-			$meta = array();
-		}
-		if ( empty( $meta[ self::META_KEYS['cloudinary'] ] ) ) {
-			$meta[ self::META_KEYS['cloudinary'] ] = array();
-		}
+		$meta = (array) $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['signature'], true );
 		// Set the specific value.
 		if ( is_null( $value ) ) {
 			// Generate a new value based on generator.
 			$value = $this->generate_type_signature( $type, $attachment_id );
 		}
-		// Ensure we have an array.
-		if ( empty( $meta[ self::META_KEYS['cloudinary'] ][ self::META_KEYS['signature'] ] ) || ! is_array( $meta[ self::META_KEYS['cloudinary'] ][ self::META_KEYS['signature'] ] ) ) {
-			$meta[ self::META_KEYS['cloudinary'] ][ self::META_KEYS['signature'] ] = array();
-		}
-		$meta[ self::META_KEYS['cloudinary'] ][ self::META_KEYS['signature'] ][ $type ] = $value;
-		wp_update_attachment_metadata( $attachment_id, $meta );
+		$meta[ $type ] = $value;
+		$this->managers['media']->update_post_meta( $attachment_id, self::META_KEYS['signature'], $meta );
 	}
 
 	/**
@@ -829,6 +868,24 @@ class Sync implements Setup, Assets {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Delete Cloudinary meta for the attachment ID.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 */
+	public function delete_cloudinary_meta( $attachment_id ) {
+		// Update attachment meta.
+		$meta = wp_get_attachment_metadata( $attachment_id, true );
+		unset( $meta[ self::META_KEYS['cloudinary'] ] );
+		wp_update_attachment_metadata( $attachment_id, $meta );
+
+		// Cleanup postmeta.
+		$queued = get_post_meta( $attachment_id, self::META_KEYS['queued'] );
+		delete_post_meta( $attachment_id, self::META_KEYS['pending'] );
+		delete_post_meta( $attachment_id, self::META_KEYS['queued'] );
+		delete_post_meta( $attachment_id, $queued );
 	}
 
 	/**
@@ -880,7 +937,10 @@ class Sync implements Setup, Assets {
 				array(
 					'type'         => 'radio',
 					'title'        => __( 'Sync method', 'cloudinary' ),
-					'tooltip_text' => __( 'Auto sync: Ensures that all of your WordPress assets are automatically synced with Cloudinary when they are added to the WordPress Media Library. Manual sync: Assets must be synced manually using the WordPress Media Library', 'cloudinary' ),
+					'tooltip_text' => __(
+						'Auto sync: Ensures that all of your WordPress assets are automatically synced with Cloudinary when they are added to the WordPress Media Library. Manual sync: Assets must be synced manually using the WordPress Media Library',
+						'cloudinary'
+					),
 					'slug'         => 'auto_sync',
 					'no_cached'    => true,
 					'default'      => 'on',
