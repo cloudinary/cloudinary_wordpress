@@ -219,7 +219,7 @@ class Video {
 			remove_filter( 'render_block', array( $this, 'filter_video_block_render_block' ), 10, 2 );
 
 			$filtered_block = $this->filter_video_block_pre_render( $block, $block );
-			$block_content = render_block( $filtered_block );
+			$block_content  = render_block( $filtered_block );
 
 			add_filter( 'render_block', array( $this, 'filter_video_block_render_block' ), 10, 2 );
 		}
