@@ -339,11 +339,7 @@ class Video {
 			'type'       => 'tag',
 			'element'    => 'figure',
 			'attributes' => array(
-				'class' => array(
-					'wp-block-embed',
-					'is-type-video',
-					'wp-has-aspect-ratio',
-				),
+				'class' => $this->get_video_classes( $video ),
 			),
 			array(
 				'type'       => 'tag',
@@ -412,6 +408,66 @@ class Video {
 		}
 
 		return $default;
+	}
+
+	/**
+	 * Get the video classes.
+	 * Try to find a match with WordPress aspect ratio.
+	 *
+	 * @param array $video The video metadata array.
+	 *
+	 * @return array
+	 */
+	protected function get_video_classes( $video ) {
+		$classes = array(
+			'wp-block-embed',
+			'is-type-video',
+		);
+
+		$sizes = array(
+			'wp-embed-aspect-21-9' => array(
+				'width'  => 21,
+				'height' => 9,
+			),
+			'wp-embed-aspect-18-9' => array(
+				'width'  => 18,
+				'height' => 9,
+			),
+			'wp-embed-aspect-16-9' => array(
+				'width'  => 16,
+				'height' => 9,
+			),
+			'wp-embed-aspect-4-3'  => array(
+				'width'  => 4,
+				'height' => 3,
+			),
+			'wp-embed-aspect-1-1'  => array(
+				'width'  => 1,
+				'height' => 1,
+			),
+			'wp-embed-aspect-9-16' => array(
+				'width'  => 9,
+				'height' => 16,
+			),
+			'wp-embed-aspect-1-2'  => array(
+				'width'  => 1,
+				'height' => 2,
+			),
+		);
+
+		$extra = array();
+
+		foreach ( $sizes as $size => $dimensions ) {
+			if ( $video['width'] / $video['height'] === $dimensions['width'] / $dimensions['height'] ) {
+				$extra = array(
+					'wp-has-aspect-ratio',
+					$size,
+				);
+				break;
+			}
+		}
+
+		return array_merge( $classes, $extra );
 	}
 
 	/**
