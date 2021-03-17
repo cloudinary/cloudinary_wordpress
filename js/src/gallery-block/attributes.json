@@ -74,5 +74,12 @@
   "selectedImages": {
     "type": "array",
     "default": []
+  },
+  "transformation_crop": {
+    "type": "string",
+    "default": "pad"
+  },
+  "transformation_background": {
+    "type": "string"
   }
 }

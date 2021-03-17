@@ -65,15 +65,15 @@ class System extends Panel {
 		$p1            = $this->get_part( 'p' );
 		$p2            = $this->get_part( 'p' );
 		$p3            = $this->get_part( 'p' );
-		$p1['content'] = __( 'The Cloudinary report is enabled. You can now download the report and submit it privately to your support person in Cloudinary.', 'cloudinary' );
+		$p1['content'] = __( 'The Cloudinary system information report is enabled. You can now download the realtime report and, if required, share it privately with your Cloudinary support contact.', 'cloudinary' );
 		$p2['content'] = __( 'This report will contain information about:', 'cloudinary' );
 		$p3['content'] = __( 'Disabling reporting will cleanup your tracked items.', 'cloudinary' );
 
 		$default = array(
-			__( 'Your system environment — site URL, WordPress version, PHP version, and PHP loaded extensions;', 'cloudinary' ),
-			__( 'Your theme;', 'cloudinary' ),
-			__( 'Your active plugins;', 'cloudinary' ),
-			__( 'Your Cloudinary settings;', 'cloudinary' ),
+			__( 'Your system environment — site URL, WordPress version, PHP version, and PHP loaded extensions.', 'cloudinary' ),
+			__( 'Your theme.', 'cloudinary' ),
+			__( 'Your active plugins.', 'cloudinary' ),
+			__( 'Your Cloudinary settings.', 'cloudinary' ),
 		);
 
 		$struct['element']           = 'div';
@@ -283,7 +283,10 @@ class System extends Panel {
 	protected function config() {
 		$config = $this->setting->get_root_setting()->get_value();
 		unset( $config['connect'] );
-		$config['gallery'] = $this->plugin->get_component( 'media' )->gallery->get_config();
+		// The Gallery setting might not be set, so we need ensure it exists before using it.
+		if ( $this->plugin->get_component( 'media' )->gallery ) {
+			$config['gallery'] = $this->plugin->get_component( 'media' )->gallery->get_config();
+		}
 		$this->add_report_block( 'config_report', $config );
 	}
 
