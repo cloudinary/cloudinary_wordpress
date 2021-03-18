@@ -1683,6 +1683,11 @@ class Media extends Settings_Component implements Setup {
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'Not syncable. This is an fetched media.', 'cloudinary' ); ?>"></span>
 				<?php
 			endif;
+			if ( 'sprite' === $this->get_media_delivery( $attachment_id ) ) :
+				?>
+				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'Not syncable. This is an sprite media.', 'cloudinary' ); ?>"></span>
+				<?php
+			endif;
 		}
 	}
 
