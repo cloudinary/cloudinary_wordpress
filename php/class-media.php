@@ -1651,7 +1651,6 @@ class Media extends Settings_Component implements Setup {
 					'state' => 'inactive',
 					'note'  => esc_html__( 'Not Synced', 'cloudinary' ),
 				);
-				add_filter( 'cloudinary_flag_sync', '__return_true' );
 				if ( ! $this->cloudinary_id( $attachment_id ) ) {
 					// If false, lets check why by seeing if the file size is too large.
 					$file     = get_attached_file( $attachment_id ); // Get the file size to make sure it can exist in cloudinary.
@@ -1668,7 +1667,6 @@ class Media extends Settings_Component implements Setup {
 						'note'  => esc_html__( 'Synced', 'cloudinary' ),
 					);
 				}
-				remove_filter( 'cloudinary_flag_sync', '__return_true' );
 				// filter status.
 				$status = apply_filters( 'cloudinary_media_status', $status, $attachment_id );
 				?>
