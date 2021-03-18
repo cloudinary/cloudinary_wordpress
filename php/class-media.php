@@ -1140,7 +1140,9 @@ class Media extends Settings_Component implements Setup {
 					$extension = $image_format;
 				}
 			}
-			$cloudinary_id = $public_id . '.' . $extension;
+			if ( 'fetch' !== $this->get_media_delivery( $attachment_id ) ) {
+				$cloudinary_id = $public_id . '.' . $extension;
+			}
 		}
 
 		return $cloudinary_id;
@@ -1644,7 +1646,7 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function media_column_value( $column_name, $attachment_id ) {
 		if ( 'cld_status' === $column_name ) {
-			if ( $this->is_media( $attachment_id ) && $this->is_local_media( $attachment_id ) ) :
+			if ( $this->is_media( $attachment_id ) && $this->sync->can_sync( $attachment_id ) ) :
 				$status = array(
 					'state' => 'inactive',
 					'note'  => esc_html__( 'Not Synced', 'cloudinary' ),
@@ -1676,6 +1678,11 @@ class Media extends Settings_Component implements Setup {
 			if ( ! $this->is_local_media( $attachment_id ) ) :
 				?>
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'Not syncable. This is an external media.', 'cloudinary' ); ?>"></span>
+				<?php
+			endif;
+			if ( 'fetch' === $this->get_media_delivery( $attachment_id ) ) :
+				?>
+				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'Not syncable. This is an fetched media.', 'cloudinary' ); ?>"></span>
 				<?php
 			endif;
 		}
