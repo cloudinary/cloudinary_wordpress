@@ -279,11 +279,11 @@ class Sync implements Setup, Assets {
 
 		// Can sync only syncable delivery types.
 		if (
-		! in_array(
-			$this->managers['media']->get_media_delivery( $attachment_id ),
-			$this->managers['media']->get_syncable_delivery_types(),
-			true
-		)
+			! in_array(
+				$this->managers['media']->get_media_delivery( $attachment_id ),
+				$this->managers['media']->get_syncable_delivery_types(),
+				true
+			)
 		) {
 			$can = false;
 		}
@@ -367,28 +367,26 @@ class Sync implements Setup, Assets {
 	/**
 	 * Register a new sync type.
 	 *
-	 * @param string         $type      Sync type key. Must not exceed 20 characters and may
-	 *                                  only contain lowercase alphanumeric characters, dashes,
-	 *                                  and underscores. See sanitize_key().
-	 * @param array          $structure {
-	 *                                  Array of arguments for registering a sync type.
+	 * @param string $type        Sync type key. Must not exceed 20 characters and may
+	 *                            only contain lowercase alphanumeric characters, dashes,
+	 *                            and underscores. See sanitize_key().
+	 * @param array  $structure   {
+	 *                            Array of arguments for registering a sync type.
 	 *
-	 * @type   callable      $generate  Callback method that generates the values to be used to sign a state.
+	 * @type   callable      $generate    Callback method that generates the values to be used to sign a state.
 	 *                                    Returns a string or array.
 	 *
-	 * @type   callable      $validate  Optional Callback method that validates the need to have the sync type applied.
+	 * @type   callable      $validate    Optional Callback method that validates the need to have the sync type applied.
 	 *                                    returns Bool.
 	 *
-	 * @type   int           $priority  Priority in which the type takes place. Lower is higher priority.
-	 *                                    i.e a download should happen before an upload so download is lower in the
-	 *                                    chain.
+	 * @type   int           $priority    Priority in which the type takes place. Lower is higher priority.
+	 *                                    i.e a download should happen before an upload so download is lower in the chain.
 	 *
-	 * @type   callable      $sync      Callback method that handles the sync. i.e uploads the file, adds meta data,
-	 *         etc..
+	 * @type   callable      $sync        Callback method that handles the sync. i.e uploads the file, adds meta data, etc..
 	 *
-	 * @type   string        $state     State class to be added to the status icon in media library.
+	 * @type   string        $state       State class to be added to the status icon in media library.
 	 *
-	 * @type string|callback $note      The status text displayed next to a syncing asset in the media library.
+	 * @type string|callback $note        The status text displayed next to a syncing asset in the media library.
 	 *                                    Can be a callback if the note needs to be dynamic. see type folder.
 	 *
 	 * }
@@ -409,9 +407,8 @@ class Sync implements Setup, Assets {
 	}
 
 	/**
-	 * Get built-in structures that form an assets entire sync state. This holds methods for building signatures for
-	 * each state of synchronization. These can be extended via 3rd parties by adding to the structures with custom
-	 * types and generation and sync methods.
+	 * Get built-in structures that form an assets entire sync state. This holds methods for building signatures for each state of synchronization.
+	 * These can be extended via 3rd parties by adding to the structures with custom types and generation and sync methods.
 	 */
 	public function setup_sync_base_struct() {
 
@@ -505,7 +502,7 @@ class Sync implements Setup, Assets {
 			),
 			'meta_cleanup' => array(
 				'generate' => function ( $attachment_id ) {
-					$meta   = $this->managers['media']->get_post_meta( $attachment_id );
+					$meta = $this->managers['media']->get_post_meta( $attachment_id );
 					$return = false;
 					foreach ( $meta as $key => $value ) {
 						if ( get_post_meta( $attachment_id, $key, true ) === $value ) {
@@ -848,8 +845,7 @@ class Sync implements Setup, Assets {
 	}
 
 	/**
-	 * Update signatures of types that match the specified types sync method. This prevents running the same method
-	 * repeatedly.
+	 * Update signatures of types that match the specified types sync method. This prevents running the same method repeatedly.
 	 *
 	 * @param int    $attachment_id The attachment ID.
 	 * @param string $type          The type of sync.

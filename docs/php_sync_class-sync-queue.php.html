@@ -123,7 +123,7 @@ class Sync_Queue {
 	 * @param \Cloudinary\Plugin $plugin The plugin.
 	 */
 	public function __construct( \Cloudinary\Plugin $plugin ) {
-		$this->plugin            = $plugin;
+		$this->plugin = $plugin;
 		/**
 		 * Filter the cron job frequency.
 		 *
@@ -134,7 +134,7 @@ class Sync_Queue {
 		 *
 		 * @return  {int}
 		 */
-		$this->cron_frequency    = apply_filters( 'cloudinary_cron_frequency', 10 * MINUTE_IN_SECONDS );
+		$this->cron_frequency = apply_filters( 'cloudinary_cron_frequency', 10 * MINUTE_IN_SECONDS );
 		/**
 		 * Filter the cron start offset.
 		 *
