@@ -251,13 +251,27 @@ class Push_Sync {
 			while ( $attachment_id = $this->queue->get_post( $thread ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition
 				// translators: variable is thread name and asset ID.
 				$action_message = sprintf( __( '%1$s: Syncing asset %2$d', 'cloudinary' ), $thread, $attachment_id );
-				do_action( '_cloudinary_queue_action', $action_message );
+				/**
+				 * Do action on queue action.
+				 *
+				 * @hook cloudinary_queue_action
+				 *
+				 * @param $action_message {string} The message.
+				 */
+				do_action( 'cloudinary_queue_action', $action_message );
 				$this->process_assets( $attachment_id );
 			}
 			$this->queue->stop_maybe( $thread_type );
 		}
 		// translators: variable is thread name.
 		$action_message = sprintf( __( 'Ending thread %s', 'cloudinary' ), $thread );
-		do_action( '_cloudinary_queue_action', $action_message );
+		/**
+		 * Do action on queue action.
+		 *
+		 * @hook cloudinary_queue_action
+		 *
+		 * @param $action_message {string} The message.
+		 */
+		do_action( 'cloudinary_queue_action', $action_message );
 	}
 }

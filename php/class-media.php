@@ -164,9 +164,12 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter the default Cloudinary Media Types.
 		 *
-		 * @param array $types The default media types array.
+		 * @hook    cloudinary_media_types
+		 * @default array( 'image', 'video', 'audio', 'application', 'text' )
 		 *
-		 * @return array
+		 * @param $types {array} The default media types array.
+		 *
+		 * @return  {array}
 		 */
 		return apply_filters( 'cloudinary_media_types', $media_types );
 	}
@@ -184,12 +187,16 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter the delivery types that are able to sync.
 		 *
-		 * @param array $types The default syncable types.
+		 * @hook    cloudinary_syncable_delivery_types
+		 * @default array( 'upload' )
 		 *
-		 * @return array
+		 * @param $types {array} The default syncable types.
+		 *
+		 * @return  {array}
 		 */
 		return apply_filters( 'cloudinary_syncable_delivery_types', $types );
 	}
+
 	/**
 	 * Get convertible extensions and converted file types.
 	 *
@@ -222,7 +229,12 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter the base types for conversion.
 		 *
-		 * @param array $base_types The base conversion types array.
+		 * @hook    cloudinary_convert_media_types
+		 * @default array
+		 *
+		 * @param $base_types {array} The base conversion types array.
+		 *
+		 * @return  {array}
 		 */
 		return apply_filters( 'cloudinary_convert_media_types', $base_types );
 	}
@@ -334,7 +346,12 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter the file types that are preview only.
 		 *
-		 * @param array $base_types The base preview types.
+		 * @hook    cloudinary_preview_types
+		 * @default array( 'pdf', 'psd' )
+		 *
+		 * @param $base_types {array} The base preview types.
+		 *
+		 * @return  {array}
 		 */
 		$preview_types = apply_filters( 'cloudinary_preview_types', $base_types );
 		$mime          = wp_check_filetype( get_attached_file( $attachment_id ) );
@@ -394,8 +411,12 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter the Cloudinary resource type for the attachment.
 		 *
-		 * @param string $type          The type.
-		 * @param int    $attachment_id The attachment ID.
+		 * @hook   cloudinary_resource_type
+		 *
+		 * @param $type          {string} The type.
+		 * @param $attachment_id {int}    The attachment ID.
+		 *
+		 * @return {string}
 		 */
 		$type = apply_filters( 'cloudinary_resource_type', $type, $attachment_id );
 
@@ -708,10 +729,12 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter the Cloudinary transformations.
 		 *
-		 * @param array $transformations Array of transformation options.
-		 * @param int   $attachment_id   The id of the asset.
+		 * @hook   cloudinary_transformations
 		 *
-		 * @return array
+		 * @param $transformations {array} Array of transformation options.
+		 * @param $attachment_id   {int} The id of the asset.
+		 *
+		 * @return {array}
 		 */
 		return apply_filters( 'cloudinary_transformations', $transformations, $attachment_id );
 	}
@@ -808,9 +831,11 @@ class Media extends Settings_Component implements Setup {
 			 * Filter doing upload.
 			 * If so, return the default attachment URL.
 			 *
-			 * @param bool Default false.
+			 * @hook   cloudinary_doing_upload
 			 *
-			 * @return bool
+			 * @param $false {bool} Default false.
+			 *
+			 * @return {bool}
 			 */
 			&& ! apply_filters( 'cloudinary_doing_upload', false )
 		) {
@@ -834,10 +859,12 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter to allow bypassing defaults. Return false to not apply defaults.
 		 *
-		 * @param bool $true          True to apply defaults.
-		 * @param int  $attachment_id The current attachment ID.
+		 * @hook   cloudinary_apply_default_transformations
 		 *
-		 * @return bool
+		 * @param $true          {bool} True to apply defaults.
+		 * @param $attachment_id {int}  The current attachment ID.
+		 *
+		 * @return {bool}
 		 */
 		if ( false === apply_filters( 'cloudinary_apply_default_transformations', true, $attachment_id ) ) {
 			return $transformations;
@@ -856,10 +883,12 @@ class Media extends Settings_Component implements Setup {
 			/**
 			 * Filter the default Quality and Format transformations for the specific media type.
 			 *
-			 * @param array $defaults        The default transformations array.
-			 * @param array $transformations The current transformations array.
+			 * @hook   cloudinary_default_qf_transformations_{$type}
 			 *
-			 * @return array
+			 * @param $defaults        {array} The default transformations array.
+			 * @param $transformations {array} The current transformations array.
+			 *
+			 * @return {array}
 			 */
 			$default                   = apply_filters( "cloudinary_default_qf_transformations_{$type}", array(), $transformations );
 			$default                   = array_filter( $default ); // Clear out empty settings.
@@ -868,10 +897,12 @@ class Media extends Settings_Component implements Setup {
 			/**
 			 * Filter the default Freeform transformations for the specific media type.
 			 *
-			 * @param array $defaults        The default transformations array.
-			 * @param array $transformations The current transformations array.
+			 * @hook   cloudinary_default_freeform_transformations_{$type}
 			 *
-			 * @return array
+			 * @param $defaults        {array} The default transformations array.
+			 * @param $transformations {array} The current transformations array.
+			 *
+			 * @return {array}
 			 */
 			$freeform = apply_filters( "cloudinary_default_freeform_transformations_{$type}", array(), $transformations );
 			$freeform = array_filter( $freeform ); // Clear out empty settings.
@@ -888,9 +919,11 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter the default cloudinary transformations.
 		 *
-		 * @param array $defaults The default transformations array.
+		 * @hook   cloudinary_default_transformations
 		 *
-		 * @return array
+		 * @param $defaults {array} The default transformations array.
+		 *
+		 * @return {array}
 		 */
 		$defaults = apply_filters(
 			'cloudinary_default_transformations',
@@ -989,11 +1022,13 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter the final Cloudinary URL.
 		 *
-		 * @param string $url           The Cloudinary URL.
-		 * @param int    $attachment_id The id of the attachment.
-		 * @param array  $pre_args      The arguments used to create the url.
+		 * @hook   cloudinary_converted_url
 		 *
-		 * @return string
+		 * @param $url           {string} The Cloudinary URL.
+		 * @param $attachment_id {int}    The id of the attachment.
+		 * @param $pre_args      {array}  The arguments used to create the url.
+		 *
+		 * @return {string}
 		 */
 		return apply_filters( 'cloudinary_converted_url', $url, $attachment_id, $pre_args );
 	}
@@ -1036,10 +1071,12 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter Cloudinary size and crops
 		 *
-		 * @param array|string $size          The size array or slug.
-		 * @param int          $attachment_id The attachment ID.
+		 * @hook   cloudinary_prepare_size
 		 *
-		 * @return array|string
+		 * @param $size          {array|string} The size array or slug.
+		 * @param $attachment_id {int}          The attachment ID.
+		 *
+		 * @return {array|string}
 		 */
 		$size = apply_filters( 'cloudinary_prepare_size', $size, $attachment_id );
 
@@ -1174,20 +1211,26 @@ class Media extends Settings_Component implements Setup {
 		$cloudinary_id = $this->get_cloudinary_id( $attachment_id );
 
 		/**
-		 * Filter to  validate the Cloudinary ID to allow extending it's availability.
+		 * Filter to validate the Cloudinary ID to allow extending it's availability.
 		 *
-		 * @param string|bool $cloudinary_id The public ID from Cloudinary, or false if not found.
-		 * @param int         $attachment_id The id of the asset.
+		 * @hook   cloudinary_validate_cloudinary_id
 		 *
-		 * @return string|bool
+		 * @param $cloudinary_id {string|bool} The public ID from Cloudinary, or false if not found.
+		 * @param $attachment_id {int}         The id of the asset.
+		 *
+		 * @return {string|bool}
 		 */
-		$cloudinary_id = apply_filters( 'validate_cloudinary_id', $cloudinary_id, $attachment_id );
+		$cloudinary_id = apply_filters( 'cloudinary_validate_cloudinary_id', $cloudinary_id, $attachment_id );
 
 		/**
 		 * Action the Cloudinary ID to allow extending it's availability.
 		 *
-		 * @param string|bool $cloudinary_id The public ID from Cloudinary, or false if not found.
-		 * @param int         $attachment_id The id of the asset.
+		 * @hook  cloudinary_id
+		 *
+		 * @param $cloudinary_id {string|bool} The public ID from Cloudinary, or false if not found.
+		 * @param $attachment_id {int}         The id of the asset.
+		 *
+		 * @since 2.1.9
 		 */
 		do_action( 'cloudinary_id', $cloudinary_id, $attachment_id );
 		// Cache ID to prevent multiple lookups.
@@ -1667,7 +1710,16 @@ class Media extends Settings_Component implements Setup {
 					);
 				}
 				remove_filter( 'cloudinary_flag_sync', '__return_true' );
-				// filter status.
+				/**
+				 * Filter the attachment status.
+				 *
+				 * @hook   cloudinary_media_status
+				 *
+				 * @param $status        {array} The attachment status.
+				 * @param $attachment_id {int}   The attachment ID.
+				 *
+				 * @return {array}
+				 */
 				$status = apply_filters( 'cloudinary_media_status', $status, $attachment_id );
 				?>
 				<span class="dashicons-cloudinary <?php echo esc_attr( $status['state'] ); ?>" title="<?php echo esc_attr( $status['note'] ); ?>"></span>
@@ -1925,11 +1977,13 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter the options to allow other plugins to add requested options for uploading.
 		 *
-		 * @param array    $options The options array.
-		 * @param \WP_Post $post    The attachment post.
-		 * @param \Cloudinary\Sync The sync object instance.
+		 * @hook   cloudinary_context_options
 		 *
-		 * @return array
+		 * @param $options {array}   The options array.
+		 * @param $post    {WP_Post} The attachment post.
+		 * @param $this    {Sync}    The sync object instance.
+		 *
+		 * @return {array}
 		 */
 		$context_options = apply_filters( 'cloudinary_context_options', $context_options, get_post( $attachment_id ), $this );
 		foreach ( $context_options as $option => &$value ) {
@@ -1958,10 +2012,12 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter is folder synced flag.
 		 *
-		 * @param bool $is_folder_synced Flag value for is folder sync.
-		 * @param int  $attachment_id    The attachment ID.
+		 * @hook   cloudinary_is_folder_synced
 		 *
-		 * @return bool
+		 * @param $is_folder_synced {bool} Flag value for is folder sync.
+		 * @param $attachment_id    {int}  The attachment ID.
+		 *
+		 * @return {bool}
 		 */
 		$is_folder_synced = apply_filters( 'cloudinary_is_folder_synced', $is_folder_synced, $attachment_id );
 
@@ -1991,11 +2047,13 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter the options to allow other plugins to add requested options for uploading.
 		 *
-		 * @param array    $options The options array.
-		 * @param \WP_Post $post    The attachment post.
-		 * @param \Cloudinary\Sync The sync object instance.
+		 * @hook   cloudinary_upload_options
 		 *
-		 * @return array
+		 * @param $options {array}   The options array.
+		 * @param $post    {WP_Post} The attachment post.
+		 * @param $this    {Sync}    The sync object instance.
+		 *
+		 * @return {array}
 		 */
 		$options = apply_filters( 'cloudinary_upload_options', $options, get_post( $attachment_id ), $this );
 		// Add folder to prevent folder contamination.
@@ -2115,11 +2173,13 @@ class Media extends Settings_Component implements Setup {
 			/**
 			 * Filter to allow stopping filtering out local.
 			 *
-			 * @param bool $can True as default.
+			 * @hook   cloudinary_filter_out_local
 			 *
-			 * @return bool
+			 * @param $can {bool} True as default.
+			 *
+			 * @return {bool}
 			 */
-			$can = apply_filters( 'cloudinary_filter_out_local', true );
+			$can = apply_filters( 'cloudinary_filter_out_local', $can );
 		}
 
 		return $can;

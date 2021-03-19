@@ -35,4 +35,13 @@ $settings = array(
 	),
 );
 
+/**
+ * Filter the Cloudinary admin header.
+ *
+ * @hook   cloudinary_admin_header
+ *
+ * @param $settings {array} The header settings.
+ *
+ * @return {array}
+ */
 return apply_filters( 'cloudinary_admin_header', $settings );

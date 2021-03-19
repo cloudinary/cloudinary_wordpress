@@ -593,9 +593,10 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			 *
 			 * @since 2.3.1
 			 *
-			 * @param string $new_version The version upgrading to.
+			 * @hook cloudinary_version_upgrade
 			 *
-			 * @param string $old_version The version upgrading from.
+			 * @param $new_version {string} The version upgrading to.
+			 * @param $old_version {string} The version upgrading from.
 			 */
 			do_action( 'cloudinary_version_upgrade', $old_version, $this->plugin->version );
 		}

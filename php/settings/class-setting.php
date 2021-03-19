@@ -117,7 +117,7 @@ class Setting {
 	 * @return array
 	 */
 	protected function get_dynamic_param_keys() {
-		$default_setting_params = array(
+		$setting_params = array(
 			'components'  => array( $this, 'add_child_settings' ),
 			'settings'    => array( $this, 'add_child_settings' ),
 			'pages'       => array( $this, 'add_child_pages' ),
@@ -128,11 +128,14 @@ class Setting {
 		/**
 		 * Filters the list of params that indicate a child setting to allow registering dynamically.
 		 *
-		 * @param array $setting_params The array of params.
+		 * @hook   cloudinary_get_setting_params
 		 *
-		 * @return array
+		 * @param $setting_params {array}   The array of params.
+		 * @param $this           {Setting} The setting instance.
+		 *
+		 * @return {array}
 		 */
-		$setting_params = apply_filters( 'cloudinary_get_setting_params', $default_setting_params, $this );
+		$setting_params = apply_filters( 'cloudinary_get_setting_params', $setting_params, $this );
 
 		return $setting_params;
 	}
@@ -464,11 +467,26 @@ class Setting {
 			/**
 			 * Filter the value before saving a setting.
 			 *
-			 * @param mixed   $new_value     The new setting value.
-			 * @param mixed   $current_value The setting current value.
-			 * @param Setting $setting         The setting object.
+			 * @hook   cloudinary_settings_save_setting_{$slug}
+			 *
+			 * @param $new_value     {mixed}   The new setting value.
+			 * @param $current_value {mixed}   The setting current value.
+			 * @param $setting       {Setting} The setting object.
+			 *
+			 * @return {mixed}
 			 */
 			$new_value = apply_filters( "cloudinary_settings_save_setting_{$slug}", $new_value, $current_value, $setting );
+			/**
+			 * Filter the value before saving a setting.
+			 *
+			 * @hook   cloudinary_settings_save_setting
+			 *
+			 * @param $new_value     {mixed}   The new setting value.
+			 * @param $current_value {mixed}   The setting current value.
+			 * @param $setting       {Setting} The setting object.
+			 *
+			 * @return {mixed}
+			 */
 			$new_value = apply_filters( 'cloudinary_settings_save_setting', $new_value, $current_value, $setting );
 			if ( $current_value !== $new_value ) {
 				// Only use the new value if it's different.
@@ -864,8 +882,12 @@ class Setting {
 		/**
 		 * Filter the setting value.
 		 *
-		 * @param mixed  $value The setting value.
-		 * @param string $slug  The setting slug.
+		 * @hook   cloudinary_setting_get_value
+		 *
+		 * @param $value {mixed} The setting value.
+		 * @param $slug  {string} The setting slug.
+		 *
+		 * @return {mixed}
 		 */
 		return apply_filters( 'cloudinary_setting_get_value', $this->value, $this->get_slug() );
 	}

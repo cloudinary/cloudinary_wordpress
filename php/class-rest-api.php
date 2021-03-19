@@ -34,6 +34,16 @@ class REST_API {
 	 * Init the REST API endpoints.
 	 */
 	public function rest_api_init() {
+		/**
+		 * Filter the Cloudinary REST API endpoints.
+		 *
+		 * @hook cloudinary_api_rest_endpoints
+		 * @default array()
+		 *
+		 * @param $types {array} The registered endpoints.
+		 *
+		 * @return {array}
+		 */
 		$this->endpoints = apply_filters( 'cloudinary_api_rest_endpoints', array() );
 
 		foreach ( $this->endpoints as $route => $endpoint ) {

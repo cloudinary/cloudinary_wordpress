@@ -89,4 +89,13 @@ $settings = array(
 	),
 );
 
+/**
+ * Filter the Cloudinary admin footer.
+ *
+ * @hook   cloudinary_admin_footer
+ *
+ * @param $settings {array} The footer settings.
+ *
+ * @return {array}
+ */
 return apply_filters( 'cloudinary_admin_footer', $settings );

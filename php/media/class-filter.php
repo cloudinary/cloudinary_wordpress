@@ -799,6 +799,15 @@ class Filter {
 				'wp_img_tag_add_srcset_and_sizes_attr',
 				function ( $add, $image, $context, $attachment_id ) {
 					$use = true;
+					/**
+					 * Filter to allow bypass filter local assets int the Front End.
+					 *
+					 * @hook cloudinary_filter_out_local
+					 *
+					 * @param $true {bool} Defaults to true.
+					 *
+					 * @return {bool}
+					 */
 					if ( $this->media->has_public_id( $attachment_id ) && apply_filters( 'cloudinary_filter_out_local', true ) ) {
 						$use = false;
 					}

@@ -39,4 +39,13 @@ $settings = array(
 	),
 );
 
+/**
+ * Filter the Cloudinary admin pages.
+ *
+ * @hook cloudinary_admin_pages
+ *
+ * @param $settings {array} The admin pages settings.
+ *
+ * @return {array}
+ */
 return apply_filters( 'cloudinary_admin_pages', $settings );

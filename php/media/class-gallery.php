@@ -132,14 +132,22 @@ class Gallery {
 		/**
 		 * Filter the gallery HTML container.
 		 *
-		 * @param string $selector The target HTML selector.
+		 * @hook cloudinary_gallery_html_container
+		 *
+		 * @param $selector {string} The target HTML selector.
+		 *
+		 * @return {string}
 		 */
 		$config['container'] = apply_filters( 'cloudinary_gallery_html_container', '' );
 
 		/**
 		 * Filter the gallery configuration.
 		 *
-		 * @param array $config The current gallery config.
+		 * @hook cloudinary_gallery_config
+		 *
+		 * @param $config {array} The current gallery config.
+		 *
+		 * @return {array}
 		 */
 		return apply_filters( 'cloudinary_gallery_config', $config );
 	}
