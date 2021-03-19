@@ -14,7 +14,7 @@
     "npm": ">=6.9"
   },
   "scripts": {
-    "build": "wp-scripts build",
+    "build": "wp-scripts build && npm run build:docs",
     "dev": "wp-scripts start",
     "lint:php": "composer lint",
     "lint:js": "wp-scripts lint-js",
