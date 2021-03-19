@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Source: php/sync/class-push-sync.php - Cloudinary Docs</title>
+
+	<script src="scripts/prettify/prettify.js"></script>
+	<script src="scripts/prettify/lang-css.js"></script>
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+	<link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+
+	<link
+			href="https://fonts.googleapis.com/css?family=IBM+Plex+Mono|IBM+Plex+Sans:300,400|Playfair+Display:900&display=swap"
+			rel="stylesheet">
+</head>
+
+<body>
+
+<div id="main">
+
+	
+	<h1 class="page-title">Source: php/sync/class-push-sync.php</h1>
+	
+
+	
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>&lt;?php
+/**
+ * Push Sync to Cloudinary.
+ *
+ * @package Cloudinary
+ */
+
+namespace Cloudinary\Sync;
+
+use Cloudinary\Sync;
+
+/**
+ * Class Push_Sync
+ *
+ * Push media library to Cloudinary.
+ */
+class Push_Sync {
+
+	/**
+	 * Holds the plugin instance.
+	 *
+	 * @since   0.1
+	 *
+	 * @var     \Cloudinary\Plugin Instance of the global plugin.
+	 */
+	public $plugin;
+
+	/**
+	 * Holds the ID of the last attachment synced.
+	 *
+	 * @var int
+	 */
+	protected $post_id;
+
+	/**
+	 * Holds the media component.
+	 *
+	 * @var \Cloudinary\Media
+	 */
+	protected $media;
+
+	/**
+	 * Holds the sync component.
+	 *
+	 * @var \Cloudinary\Sync
+	 */
+	protected $sync;
+
+	/**
+	 * Holds the connect component.
+	 *
+	 * @var \Cloudinary\Connect
+	 */
+	protected $connect;
+
+	/**
+	 * Holds the Rest_API component.
+	 *
+	 * @var \Cloudinary\REST_API
+	 */
+	protected $api;
+
+	/**
+	 * Holds the sync queue object.
+	 *
+	 * @var \Cloudinary\Sync\Sync_Queue
+	 */
+	public $queue;
+
+	/**
+	 * Push_Sync constructor.
+	 *
+	 * @param \Cloudinary\Plugin $plugin Global instance of the main plugin.
+	 */
+	public function __construct( \Cloudinary\Plugin $plugin ) {
+		$this->plugin = $plugin;
+		$this->register_hooks();
+	}
+
+	/**
+	 * Register any hooks that this component needs.
+	 */
+	private function register_hooks() {
+		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
+	}
+
+	/**
+	 * Setup this component.
+	 */
+	public function setup() {
+		// Setup components.
+		$this->media   = $this->plugin->components['media'];
+		$this->sync    = $this->plugin->components['sync'];
+		$this->connect = $this->plugin->components['connect'];
+		$this->api     = $this->plugin->components['api'];
+		$this->queue   = $this->sync->managers['queue'];
+
+		add_action( 'cloudinary_run_queue', array( $this, 'process_queue' ) );
+		add_action( 'cloudinary_sync_items', array( $this, 'process_assets' ) );
+	}
+
+	/**
+	 * Add endpoints to the \Cloudinary\REST_API::$endpoints array.
+	 *
+	 * @param array $endpoints Endpoints from the filter.
+	 *
+	 * @return array
+	 */
+	public function rest_endpoints( $endpoints ) {
+
+		$endpoints['attachments'] = array(
+			'method'              => \WP_REST_Server::READABLE,
+			'callback'            => array( $this, 'rest_get_queue_status' ),
+			'args'                => array(),
+			'permission_callback' => array( $this, 'rest_can_manage_options' ),
+		);
+
+		$endpoints['sync'] = array(
+			'method'              => \WP_REST_Server::CREATABLE,
+			'callback'            => array( $this, 'rest_start_sync' ),
+			'args'                => array(),
+			'permission_callback' => array( $this, 'rest_can_manage_options' ),
+		);
+
+		$endpoints['queue'] = array(
+			'method'   => \WP_REST_Server::CREATABLE,
+			'callback' => array( $this, 'process_queue' ),
+			'args'     => array(),
+		);
+
+		return $endpoints;
+	}
+
+	/**
+	 * Admin permission callback.
+	 *
+	 * Explicitly defined to allow easier testability.
+	 *
+	 * @return bool
+	 */
+	public function rest_can_manage_options() {
+		return current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * Get status of the current queue via REST API.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function rest_get_queue_status() {
+
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'data'    => $this->queue->is_running(),
+			)
+		);
+	}
+
+	/**
+	 * Starts a sync backbround process.
+	 *
+	 * @param \WP_REST_Request $request The request.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function rest_start_sync( \WP_REST_Request $request ) {
+
+		$type  = $request->get_param( 'type' );
+		$start = $this->queue->is_enabled();
+		$state = array(
+			'success' => false,
+		);
+		if ( empty( $start ) ) {
+			$this->queue->stop_queue();
+		} else {
+			$state['success'] = $this->queue->start_queue( $type );
+		}
+
+		return rest_ensure_response( $state );
+	}
+
+	/**
+	 * Process asset sync.
+	 *
+	 * @param int|array $attachments An attachment ID or an array of ID's.
+	 *
+	 * @return array
+	 */
+	public function process_assets( $attachments = array() ) {
+
+		$stat = array();
+		// If a single specified ID, push and return response.
+		$ids = array_map( 'intval', (array) $attachments );
+		// Handle based on Sync Type.
+		foreach ( $ids as $attachment_id ) {
+			// Create synced post meta as a way to search for synced / unsynced items.
+			update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $this->media->get_public_id( $attachment_id ) );
+
+			// Skip external media.
+			if ( ! $this->media->is_local_media( $attachment_id ) ) {
+				continue;
+			}
+			// Skip unsyncable delivery types.
+			if (
+				! in_array(
+					$this->media->get_media_delivery( $attachment_id ),
+					$this->media->get_syncable_delivery_types(),
+					true
+				)
+			) {
+				continue;
+			}
+			// Flag attachment as being processed.
+			update_post_meta( $attachment_id, Sync::META_KEYS['syncing'], time() );
+			$stat[ $attachment_id ] = array();
+			while ( $type = $this->sync->get_sync_type( $attachment_id, false ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition
+				if ( isset( $stat[ $attachment_id ][ $type ] ) ) {
+					// Loop prevention.
+					break;
+				}
+				$stat[ $attachment_id ][ $type ] = $this->sync->run_sync_method( $type, 'sync', $attachment_id );
+			}
+			// remove pending.
+			delete_post_meta( $attachment_id, Sync::META_KEYS['pending'] );
+			// Record Process log.
+			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['process_log'], $stat[ $attachment_id ] );
+			// Remove processing flag.
+			delete_post_meta( $attachment_id, Sync::META_KEYS['syncing'] );
+
+			$sync_thread = get_post_meta( $attachment_id, Sync::META_KEYS['queued'], true );
+			if ( ! empty( $sync_thread ) ) {
+				delete_post_meta( $attachment_id, Sync::META_KEYS['queued'] );
+				delete_post_meta( $attachment_id, $sync_thread );
+			}
+		}
+
+		return $stat;
+	}
+
+	/**
+	 * Resume the bulk sync.
+	 *
+	 * @param \WP_REST_Request $request The request.
+	 */
+	public function process_queue( \WP_REST_Request $request ) {
+		$thread      = $request->get_param( 'thread' );
+		$thread_type = $this->queue->get_thread_type( $thread );
+		$queue       = $this->queue->get_thread_queue( $thread );
+		if ( ! empty( $queue['next'] ) &amp;&amp; ( $this->queue->is_running( $thread_type ) ) ) {
+			while ( $attachment_id = $this->queue->get_post( $thread ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition
+				// translators: variable is thread name and asset ID.
+				$action_message = sprintf( __( '%1$s: Syncing asset %2$d', 'cloudinary' ), $thread, $attachment_id );
+				/**
+				 * Do action on queue action.
+				 *
+				 * @hook cloudinary_queue_action
+				 *
+				 * @param $action_message {string} The message.
+				 */
+				do_action( 'cloudinary_queue_action', $action_message );
+				$this->process_assets( $attachment_id );
+			}
+			$this->queue->stop_maybe( $thread_type );
+		}
+		// translators: variable is thread name.
+		$action_message = sprintf( __( 'Ending thread %s', 'cloudinary' ), $thread );
+		/**
+		 * Do action on queue action.
+		 *
+		 * @hook cloudinary_queue_action
+		 *
+		 * @param $action_message {string} The message.
+		 */
+		do_action( 'cloudinary_queue_action', $action_message );
+	}
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+	<h2><a href="index.html">Home</a></h2><h3>Actions</h3><ul><li><a href="cloudinary_id.html">cloudinary_id</a></li><li><a href="cloudinary_queue_action.html">cloudinary_queue_action</a></li><li><a href="cloudinary_register_sync_types.html">cloudinary_register_sync_types</a></li><li><a href="cloudinary_version_upgrade.html">cloudinary_version_upgrade</a></li></ul><h3>Filters</h3><ul><li><a href="cloudinary_admin_footer.html">cloudinary_admin_footer</a></li><li><a href="cloudinary_admin_header.html">cloudinary_admin_header</a></li><li><a href="cloudinary_admin_images_tab_global_transformations.html">cloudinary_admin_images_tab_global_transformations</a></li><li><a href="cloudinary_admin_pages.html">cloudinary_admin_pages</a></li><li><a href="cloudinary_admin_video_tab_global_transformations.html">cloudinary_admin_video_tab_global_transformations</a></li><li><a href="cloudinary_api_rest_endpoints.html">cloudinary_api_rest_endpoints</a></li><li><a href="cloudinary_apply_default_transformations.html">cloudinary_apply_default_transformations</a></li><li><a href="cloudinary_autosync_threads.html">cloudinary_autosync_threads</a></li><li><a href="cloudinary_can_sync_asset.html">cloudinary_can_sync_asset</a></li><li><a href="cloudinary_context_options.html">cloudinary_context_options</a></li><li><a href="cloudinary_convert_media_types.html">cloudinary_convert_media_types</a></li><li><a href="cloudinary_converted_url.html">cloudinary_converted_url</a></li><li><a href="cloudinary_cron_frequency.html">cloudinary_cron_frequency</a></li><li><a href="cloudinary_cron_start_offset.html">cloudinary_cron_start_offset</a></li><li><a href="cloudinary_default_freeform_transformations_%257B$type%257D.html">cloudinary_default_freeform_transformations_{$type}</a></li><li><a href="cloudinary_default_qf_transformations_%257B$type%257D.html">cloudinary_default_qf_transformations_{$type}</a></li><li><a href="cloudinary_default_transformations.html">cloudinary_default_transformations</a></li><li><a href="cloudinary_doing_upload.html">cloudinary_doing_upload</a></li><li><a href="cloudinary_filter_out_local.html">cloudinary_filter_out_local</a></li><li><a href="cloudinary_gallery_config.html">cloudinary_gallery_config</a></li><li><a href="cloudinary_gallery_html_container.html">cloudinary_gallery_html_container</a></li><li><a href="cloudinary_get_setting_params.html">cloudinary_get_setting_params</a></li><li><a href="cloudinary_is_folder_synced.html">cloudinary_is_folder_synced</a></li><li><a href="cloudinary_media_status.html">cloudinary_media_status</a></li><li><a href="cloudinary_media_types.html">cloudinary_media_types</a></li><li><a href="cloudinary_prepare_size.html">cloudinary_prepare_size</a></li><li><a href="cloudinary_preview_types.html">cloudinary_preview_types</a></li><li><a href="cloudinary_queue_threads.html">cloudinary_queue_threads</a></li><li><a href="cloudinary_resource_type.html">cloudinary_resource_type</a></li><li><a href="cloudinary_setting_get_value.html">cloudinary_setting_get_value</a></li><li><a href="cloudinary_settings_enabled_%257B$sub_setting-_get_slug()%257D.html">cloudinary_settings_enabled_{$sub_setting->get_slug()}</a></li><li><a href="cloudinary_settings_save_setting.html">cloudinary_settings_save_setting</a></li><li><a href="cloudinary_settings_save_setting_%257B$slug%257D.html">cloudinary_settings_save_setting_{$slug}</a></li><li><a href="cloudinary_setup_component_parts.html">cloudinary_setup_component_parts</a></li><li><a href="cloudinary_sync_base.html">cloudinary_sync_base</a></li><li><a href="cloudinary_sync_base_struct.html">cloudinary_sync_base_struct</a></li><li><a href="cloudinary_syncable_delivery_types.html">cloudinary_syncable_delivery_types</a></li><li><a href="cloudinary_transformations.html">cloudinary_transformations</a></li><li><a href="cloudinary_upload_options.html">cloudinary_upload_options</a></li><li><a href="cloudinary_validate_cloudinary_id.html">cloudinary_validate_cloudinary_id</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+	<a href="https://cloudinary.com/" target="_blank" rel="noopener noreferrer">Cloudinary</a> |
+	<a href="https://github.com/cloudinary/cloudinary_wordpress/" target="_blank" rel="noopener noreferrer">Cloudinary
+		on GitHub</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>

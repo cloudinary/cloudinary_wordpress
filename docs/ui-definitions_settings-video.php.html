@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Source: ui-definitions/settings-video.php - Cloudinary Docs</title>
+
+	<script src="scripts/prettify/prettify.js"></script>
+	<script src="scripts/prettify/lang-css.js"></script>
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+	<link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+
+	<link
+			href="https://fonts.googleapis.com/css?family=IBM+Plex+Mono|IBM+Plex+Sans:300,400|Playfair+Display:900&display=swap"
+			rel="stylesheet">
+</head>
+
+<body>
+
+<div id="main">
+
+	
+	<h1 class="page-title">Source: ui-definitions/settings-video.php</h1>
+	
+
+	
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>&lt;?php
+/**
+ * Defines the settings structure for video.
+ *
+ * @package Cloudinary
+ */
+
+$settings = array(
+	array(
+		'type'   => 'panel',
+		'title'  => __( 'Video - Global Settings', 'cloudinary' ),
+		'icon'   => $this->plugin->dir_url . 'css/video.svg',
+		'slug'   => 'video_settings',
+		'anchor' => true,
+		array(
+			'type' => 'row',
+			array(
+				'type'  => 'column',
+				'width' => '45%',
+				array(
+					'type' => 'group',
+					array(
+						'type'         => 'select',
+						'slug'         => 'video_player',
+						'title'        => __( 'Video player', 'cloudinary' ),
+						'tooltip_text' => __( 'Which video player to use on all videos.', 'cloudinary' ),
+						'default'      => 'wp',
+						'options'      => array(
+							'wp'  => __( 'WordPress player', 'cloudinary' ),
+							'cld' => __( 'Cloudinary player', 'cloudinary' ),
+						),
+					),
+					array(
+						'type'      => 'group',
+						'title'     => __( 'Player options', 'cloudinary' ),
+						'condition' => array(
+							'video_player' => 'cld',
+						),
+						array(
+							'slug'        => 'video_controls',
+							'description' => __( 'Show controls', 'cloudinary' ),
+							'type'        => 'on_off',
+							'default'     => 'on',
+						),
+						array(
+							'slug'        => 'video_loop',
+							'description' => __( ' Repeat video', 'cloudinary' ),
+							'type'        => 'on_off',
+							'default'     => 'off',
+						),
+						array(
+							'slug'        => 'video_autoplay_mode',
+							'title'       => __( 'Autoplay', 'cloudinary' ),
+							'type'        => 'radio',
+							'default'     => 'off',
+							'options'     => array(
+								'off'       => __( 'Off', 'cloudinary' ),
+								'always'    => __( 'Always', 'cloudinary' ),
+								'on-scroll' => __( 'On-scroll (autoplay when in view)', 'cloudinary' ),
+							),
+							'description' => sprintf(
+							// translators: Placeholders are &lt;a> tags.
+								__( 'Please note that when choosing "always", the video will autoplay without sound (muted). This is a built-in browser feature and applies to all major browsers.%1$sRead more about muted autoplay%2$s', 'cloudinary' ),
+								'&lt;br>&lt;a href="https://developers.google.com/web/updates/2016/07/autoplay" target="_blank">',
+								'&lt;/a>'
+							),
+						),
+					),
+					array(
+						'type'         => 'on_off',
+						'slug'         => 'video_limit_bitrate',
+						'title'        => __( 'Bitrate', 'cloudinary' ),
+						'description'  => __( 'Enable bitrate limiter', 'cloudinary' ),
+						'tooltip_text' => __( 'If set, all videos will be delivered in the defined bitrate.', 'cloudinary' ),
+						'default'      => 'off',
+						'attributes'   => array(
+							'data-context' => 'video',
+						),
+					),
+					array(
+						'type'        => 'number',
+						'slug'        => 'video_bitrate',
+						'prefix'      => __( 'Bitrate limit', 'cloudinary' ),
+						'description' => __( 'Maximum number of bits per second in Kilobytes.', 'cloudinary' ),
+						'default'     => '500',
+						'suffix'      => 'k',
+						'condition'   => array(
+							'video_limit_bitrate' => true,
+						),
+						'attributes'  => array(
+							'data-context' => 'video',
+							'data-meta'    => 'br',
+							'data-suffix'  => 'k',
+						),
+					),
+				),
+				array(
+					'type' => 'group',
+					array(
+						'type'         => 'on_off',
+						'slug'         => 'video_optimization',
+						'title'        => __( 'Video optimization', 'cloudinary' ),
+						'tooltip_text' => __( 'Videos will be delivered using Cloudinary’s automatic format and quality algorithms for the best tradeoff between visual quality and file size. Use Advanced Optimization options to manually tune format and quality.', 'cloudinary' ),
+						'description'  => __( 'Optimize videos on my site.', 'cloudinary' ),
+						'default'      => 'on',
+						'attributes'   => array(
+							'data-context' => 'video',
+						),
+					),
+				),
+				array(
+					'type'        => 'group',
+					'title'       => __( 'Advanced optimization', 'cloudinary' ),
+					'collapsible' => 'open',
+					'condition'   => array(
+						'video_optimization' => true,
+					),
+					array(
+						'type'         => 'select',
+						'slug'         => 'video_format',
+						'title'        => __( 'Video format', 'cloudinary' ),
+						'tooltip_text' => __( "The video format to use for delivery. Leave as Auto to automatically deliver the most optimal format based on the user's browser and device.", 'cloudinary' ),
+						'default'      => 'auto',
+						'options'      => array(
+							'none' => __( 'Not set', 'cloudinary' ),
+							'auto' => __( 'Auto', 'cloudinary' ),
+						),
+						'attributes'   => array(
+							'data-context' => 'video',
+							'data-meta'    => 'f',
+						),
+					),
+					array(
+						'type'         => 'select',
+						'slug'         => 'video_quality',
+						'title'        => __( 'Video quality', 'cloudinary' ),
+						'tooltip_text' => __( 'The compression quality to apply when delivering videos. Leave as Auto to apply an algorithm that finds the best tradeoff between visual quality and file size.', 'cloudinary' ),
+						'default'      => 'auto',
+						'options'      => array(
+							'none'      => __( 'Not set', 'cloudinary' ),
+							'auto'      => __( 'Auto', 'cloudinary' ),
+							'auto:best' => __( 'Auto best', 'cloudinary' ),
+							'auto:good' => __( 'Auto good', 'cloudinary' ),
+							'auto:eco'  => __( 'Auto eco', 'cloudinary' ),
+							'auto:low'  => __( 'Auto low', 'cloudinary' ),
+							'100'       => '100',
+							'80'        => '80',
+							'60'        => '60',
+							'40'        => '40',
+							'20'        => '20',
+						),
+						'attributes'   => array(
+							'data-context' => 'video',
+							'data-meta'    => 'q',
+						),
+					),
+
+				),
+				array(
+					'type'           => 'text',
+					'slug'           => 'video_freeform',
+					'title'          => __( 'Custom transformation', 'cloudinary' ),
+					'tooltip_text'   => __( 'The set of transformations to apply to all video assets, as a URL transformation string.', 'cloudinary' ),
+					'attributes'     => array(
+						'data-context' => 'video',
+						'placeholder'  => 'fps_15-25,ac_none',
+					),
+					'taxonomy_field' => array(
+						'context'  => 'video',
+						'priority' => 10,
+					),
+				),
+			),
+			array(
+				'type'  => 'column',
+				'width' => '55%',
+				array(
+					'type'           => 'video_preview',
+					'title'          => __( 'Video preview', 'cloudinary' ),
+					'slug'           => 'video_preview',
+					'taxonomy_field' => array(
+						'context'  => 'video',
+						'priority' => 10,
+					),
+				),
+			),
+
+		),
+	),
+	array(
+		'type' => 'submit',
+	),
+);
+
+/**
+ * Filter the Cloudinary global transformations tab for video.
+ *
+ * @hook   cloudinary_admin_video_tab_global_transformations
+ *
+ * @param $settings {array} The global transformations settings.
+ *
+ * @return {array}
+ */
+return apply_filters( 'cloudinary_admin_video_tab_global_transformations', $settings );
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+	<h2><a href="index.html">Home</a></h2><h3>Actions</h3><ul><li><a href="cloudinary_id.html">cloudinary_id</a></li><li><a href="cloudinary_queue_action.html">cloudinary_queue_action</a></li><li><a href="cloudinary_register_sync_types.html">cloudinary_register_sync_types</a></li><li><a href="cloudinary_version_upgrade.html">cloudinary_version_upgrade</a></li></ul><h3>Filters</h3><ul><li><a href="cloudinary_admin_footer.html">cloudinary_admin_footer</a></li><li><a href="cloudinary_admin_header.html">cloudinary_admin_header</a></li><li><a href="cloudinary_admin_images_tab_global_transformations.html">cloudinary_admin_images_tab_global_transformations</a></li><li><a href="cloudinary_admin_pages.html">cloudinary_admin_pages</a></li><li><a href="cloudinary_admin_video_tab_global_transformations.html">cloudinary_admin_video_tab_global_transformations</a></li><li><a href="cloudinary_api_rest_endpoints.html">cloudinary_api_rest_endpoints</a></li><li><a href="cloudinary_apply_default_transformations.html">cloudinary_apply_default_transformations</a></li><li><a href="cloudinary_autosync_threads.html">cloudinary_autosync_threads</a></li><li><a href="cloudinary_can_sync_asset.html">cloudinary_can_sync_asset</a></li><li><a href="cloudinary_context_options.html">cloudinary_context_options</a></li><li><a href="cloudinary_convert_media_types.html">cloudinary_convert_media_types</a></li><li><a href="cloudinary_converted_url.html">cloudinary_converted_url</a></li><li><a href="cloudinary_cron_frequency.html">cloudinary_cron_frequency</a></li><li><a href="cloudinary_cron_start_offset.html">cloudinary_cron_start_offset</a></li><li><a href="cloudinary_default_freeform_transformations_%257B$type%257D.html">cloudinary_default_freeform_transformations_{$type}</a></li><li><a href="cloudinary_default_qf_transformations_%257B$type%257D.html">cloudinary_default_qf_transformations_{$type}</a></li><li><a href="cloudinary_default_transformations.html">cloudinary_default_transformations</a></li><li><a href="cloudinary_doing_upload.html">cloudinary_doing_upload</a></li><li><a href="cloudinary_filter_out_local.html">cloudinary_filter_out_local</a></li><li><a href="cloudinary_gallery_config.html">cloudinary_gallery_config</a></li><li><a href="cloudinary_gallery_html_container.html">cloudinary_gallery_html_container</a></li><li><a href="cloudinary_get_setting_params.html">cloudinary_get_setting_params</a></li><li><a href="cloudinary_is_folder_synced.html">cloudinary_is_folder_synced</a></li><li><a href="cloudinary_media_status.html">cloudinary_media_status</a></li><li><a href="cloudinary_media_types.html">cloudinary_media_types</a></li><li><a href="cloudinary_prepare_size.html">cloudinary_prepare_size</a></li><li><a href="cloudinary_preview_types.html">cloudinary_preview_types</a></li><li><a href="cloudinary_queue_threads.html">cloudinary_queue_threads</a></li><li><a href="cloudinary_resource_type.html">cloudinary_resource_type</a></li><li><a href="cloudinary_setting_get_value.html">cloudinary_setting_get_value</a></li><li><a href="cloudinary_settings_enabled_%257B$sub_setting-_get_slug()%257D.html">cloudinary_settings_enabled_{$sub_setting->get_slug()}</a></li><li><a href="cloudinary_settings_save_setting.html">cloudinary_settings_save_setting</a></li><li><a href="cloudinary_settings_save_setting_%257B$slug%257D.html">cloudinary_settings_save_setting_{$slug}</a></li><li><a href="cloudinary_setup_component_parts.html">cloudinary_setup_component_parts</a></li><li><a href="cloudinary_sync_base.html">cloudinary_sync_base</a></li><li><a href="cloudinary_sync_base_struct.html">cloudinary_sync_base_struct</a></li><li><a href="cloudinary_syncable_delivery_types.html">cloudinary_syncable_delivery_types</a></li><li><a href="cloudinary_transformations.html">cloudinary_transformations</a></li><li><a href="cloudinary_upload_options.html">cloudinary_upload_options</a></li><li><a href="cloudinary_validate_cloudinary_id.html">cloudinary_validate_cloudinary_id</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+	<a href="https://cloudinary.com/" target="_blank" rel="noopener noreferrer">Cloudinary</a> |
+	<a href="https://github.com/cloudinary/cloudinary_wordpress/" target="_blank" rel="noopener noreferrer">Cloudinary
+		on GitHub</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>
