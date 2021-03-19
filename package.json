@@ -25,7 +25,8 @@
     "deploy": "npm run build && grunt deploy",
     "deploy-assets": "grunt deploy-assets",
     "postinstall": "composer install",
-    "readme": "composer readme"
+    "readme": "composer readme",
+    "build:docs": "rm -rf docs && jsdoc -c hookdoc-conf.json php ui-definitions cloudinary.php"
   },
   "husky": {
     "hooks": {
@@ -106,6 +107,7 @@
     "istanbul-reports": "3.0.2",
     "jest-puppeteer-istanbul": "0.5.3",
     "jest-silent-reporter": "0.3.0",
+    "jsdoc": "^3.6.6",
     "lint-staged": "^10.5.1",
     "load-grunt-tasks": "^5.1.0",
     "loading-attribute-polyfill": "^1.5.4",
@@ -134,6 +136,7 @@
     "typescript": "4.0.5",
     "webpack": "4.44.2",
     "webpack-cli": "4.2.0",
-    "webpackbar": "4.0.0"
+    "webpackbar": "4.0.0",
+    "wp-hookdoc": "^0.2.0"
   }
 }
