@@ -9,7 +9,9 @@
 	"require-dev": {
 		"wp-coding-standards/wpcs": "^2.3",
 		"automattic/vipwpcs": "^2.2",
-		"dealerdirect/phpcodesniffer-composer-installer": "^0.7.0"
+		"dealerdirect/phpcodesniffer-composer-installer": "^0.7.0",
+		"szepeviktor/phpstan-wordpress": "^0.7.5",
+		"phpstan/extension-installer": "^1.1"
 	},
 	"config": {
 		"platform": {
