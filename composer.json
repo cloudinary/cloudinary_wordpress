@@ -1,30 +1,30 @@
 {
-	"name": "cloudinary/cloudinary-image-management-and-manipulation-in-the-cloud-cdn",
-	"homepage": "https://wordpress.org/plugins/cloudinary-image-management-and-manipulation-in-the-cloud-cdn/",
-	"description": "Cloudinary is a cloud service that offers a solution to a web application's entire image and video management pipeline.",
-	"type": "wordpress-plugin",
-	"license": "GPL-2.0-or-later",
-	"require": {
-      "ext-json": "*"
-    },
-	"require-dev": {
-		"wp-coding-standards/wpcs": "^2.3",
-		"automattic/vipwpcs": "^2.2",
-		"dealerdirect/phpcodesniffer-composer-installer": "^0.7.0",
-		"szepeviktor/phpstan-wordpress": "^0.7.5",
-		"phpstan/extension-installer": "^1.1"
-	},
-	"config": {
-		"platform": {
-			"php": "7.1"
-		}
-	},
-	"scripts": {
-		"lint": [
-			"phpcs --ignore=*js/*"
-		],
-		"fix": [
-			"phpcbf --ignore=*js/*"
-		]
-	}
+  "name": "cloudinary/cloudinary-image-management-and-manipulation-in-the-cloud-cdn",
+  "homepage": "https://wordpress.org/plugins/cloudinary-image-management-and-manipulation-in-the-cloud-cdn/",
+  "description": "Cloudinary is a cloud service that offers a solution to a web application's entire image and video management pipeline.",
+  "type": "wordpress-plugin",
+  "license": "GPL-2.0-or-later",
+  "require": {
+    "ext-json": "*"
+  },
+  "require-dev": {
+    "wp-coding-standards/wpcs": "^2.3",
+    "automattic/vipwpcs": "^2.2",
+    "dealerdirect/phpcodesniffer-composer-installer": "^0.7.0",
+    "szepeviktor/phpstan-wordpress": "^0.7.5",
+    "phpstan/extension-installer": "^1.1"
+  },
+  "config": {
+    "platform": {
+      "php": "7.1"
+    }
+  },
+  "scripts": {
+    "lint": [
+      "phpcs --ignore=*js/*"
+    ],
+    "fix": [
+      "phpcbf --ignore=*js/*"
+    ]
+  }
 }
