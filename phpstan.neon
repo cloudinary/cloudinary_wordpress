@@ -10,7 +10,6 @@ parameters:
         - .phpstan/class-aliases.php
         - .phpstan/constants.php
         - .phpstan/functions.php
-#        - .phpstan/namespace-wp-cli.php
     ignoreErrors:
         - '~WP_CLI~'
         - '~stop_the_insanity~'
