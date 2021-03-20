@@ -26,7 +26,8 @@
     "deploy-assets": "grunt deploy-assets",
     "postinstall": "composer install",
     "readme": "composer readme",
-    "build:docs": "rm -rf docs && jsdoc -c hookdoc-conf.json php ui-definitions cloudinary.php"
+    "build:docs": "rm -rf docs && jsdoc -c hookdoc-conf.json php ui-definitions cloudinary.php",
+    "phpstan": "vendor/bin/phpstan analyze --memory-limit=-1"
   },
   "husky": {
     "hooks": {
