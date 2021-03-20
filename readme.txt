@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: image, video, DAM, optimization, CDN
 Requires at least: 4.7
-Tested up to: 5.6
+Tested up to: 5.7
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -127,6 +127,25 @@ The following plugins/themes/page-builders might not be fully compatible with th
 9. Use Interactive Media Gallery 
 
 == Changelog ==
+
+= 2.7.0 (15 Mar 2021) =
+
+New Features:
+
+* All WordPress Media Library file types are now syncable to Cloudinary
+* Added system report for better support experience
+* Added bottom option into the product gallery main carousel parameter
+* Added Pad modes into the product gallery main viewer parameter
+* Added Fill modes into the product gallery main viewer parameter
+* Video player loading performance was improved
+
+Fixes and Improvements:
+
+* Updated Cloudinary video player to version 1.5.1
+* Fixed product gallery in case of adding unsynced asset
+* Fixed WordPress Media Library error when editing an asset already synced to Cloudinary
+* Fixed sync failure for media added as an external URL by other plugins  
+
 
 = 2.6.0 (01 Feb 2021) =
 
