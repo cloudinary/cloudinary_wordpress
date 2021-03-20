@@ -7,9 +7,6 @@
 
 namespace Cloudinary\UI\Component;
 
-use Cloudinary\Media\Gallery;
-use function Cloudinary\get_plugin_instance;
-
 /**
  * Frame Component to render components only.
  *
@@ -79,7 +76,7 @@ class React extends Text {
 				'ver'       => $this->setting->get_root_setting()->get_param( 'version' ),
 				'in_footer' => true,
 			);
-			$this->script = wp_parse_args( $this->setting->get_param( 'script' ), $script_default );
+			$this->script   = wp_parse_args( $this->setting->get_param( 'script' ), $script_default );
 		}
 
 		return $struct;

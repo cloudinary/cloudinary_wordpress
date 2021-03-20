@@ -692,7 +692,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			if ( ! isset( $data['cloudinary_url'] ) || empty( $data['cloudinary_url'] ) ) {
 				return; // Not setup at all, abort upgrade.
 			}
-		} elseif ( version_compare( $old_version, '2.0.0', '<' ) ) {
+		} else {
 			// from V1 to V2.
 			$cld_url = get_option( self::META_KEYS['url'], null );
 			if ( empty( $cld_url ) ) {

@@ -11,7 +11,8 @@ $dir_url = Cloudinary\get_plugin_instance()->dir_url;
 <p>
 	<?php
 	printf(
-		wp_kses_post( 'After creating your %s:', 'cloudinary' ),
+		// translators: Link to create a Cloudinary account.
+		wp_kses_post( __( 'After creating your %s:', 'cloudinary' ) ),
 		sprintf(
 			// translators: Link to create a Cloudinary account.
 			esc_html__( '%1$sCloudinary account%2$s', 'cloudinary' ),

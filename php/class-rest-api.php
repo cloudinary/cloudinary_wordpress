@@ -15,6 +15,13 @@ class REST_API {
 	const BASE = 'cloudinary/v1';
 
 	/**
+	 * Holds the plugin instance.
+	 *
+	 * @var Plugin Instance of the global plugin.
+	 */
+	public $plugin;
+
+	/**
 	 * Plugin REST API endpoints.
 	 *
 	 * @var array
@@ -28,6 +35,8 @@ class REST_API {
 	 */
 	public function __construct( Plugin $plugin ) {
 		add_action( 'rest_api_init', array( $this, 'rest_api_init' ), PHP_INT_MAX );
+
+		$this->plugin = $plugin;
 	}
 
 	/**

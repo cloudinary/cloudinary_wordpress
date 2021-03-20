@@ -216,10 +216,10 @@ class Video {
 	 */
 	public function filter_video_block_render_block( $block_content, array $block ) {
 		if ( 'core/video' === $block['blockName'] ) {
-			remove_filter( 'render_block', array( $this, 'filter_video_block_render_block' ), 10, 2 );
+			remove_filter( 'render_block', array( $this, 'filter_video_block_render_block' ), 10 );
 
 			$filtered_block = $this->filter_video_block_pre_render( $block, $block );
-			$block_content = render_block( $filtered_block );
+			$block_content  = render_block( $filtered_block );
 
 			add_filter( 'render_block', array( $this, 'filter_video_block_render_block' ), 10, 2 );
 		}

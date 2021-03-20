@@ -307,6 +307,7 @@ class Api {
 	 * @return array|\WP_Error
 	 */
 	public function upload_large( $attachment_id, $args ) {
+		$result = array();
 		// Ensure we have the right file.
 		if ( empty( $args['file'] ) ) {
 			$args['file'] = get_attached_file( $attachment_id );
