@@ -1,0 +1,21 @@
+parameters:
+    level: 1
+    tmpDir: phpstan
+    paths:
+        - cloudinary.php
+        - instance.php
+        - php
+        - ui-definitions
+    bootstrapFiles:
+        - .phpstan/class-aliases.php
+        - .phpstan/constants.php
+        - .phpstan/functions.php
+    ignoreErrors:
+        - '~WP_CLI~'
+        - '~stop_the_insanity~'
+        - '~^Function apply_filters(_ref_array)? invoked with [34567] parameters, 2 required\.$~'
+        -
+            message: '~^Variable \$this might not be defined.$~'
+            paths:
+                - 'php/templates/*'
+                - 'ui-definitions/*'
