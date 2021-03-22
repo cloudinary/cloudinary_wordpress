@@ -15,6 +15,7 @@ const UI = {
 		const triggers = context.querySelectorAll( '[data-bind-trigger]' );
 		const masters = context.querySelectorAll( '[data-master]' );
 		const files = context.querySelectorAll( '[data-file]' );
+
 		const self = this;
 		const compilerDebounce = {};
 		const evaluateStateDebounce = {};
@@ -50,10 +51,11 @@ const UI = {
 		if ( ! parent ) {
 			return;
 		}
-		const parentInput = document.getElementById( parent );
-		this.check_parents[ parent ] = parentInput;
+		this.check_parents[ parent ] = document.getElementById( parent );
 		if ( ! this.parent_check_data[ parent ] ) {
-			this.parent_check_data[ parent ] = [];
+			this.parent_check_data[ parent ] = JSON.parse(
+				this.check_parents[ parent ].value
+			);
 		}
 		file.addEventListener( 'change', () => {
 			const index = this.parent_check_data[ parent ].indexOf(
@@ -69,10 +71,11 @@ const UI = {
 			}
 			compilerDebounce[ parent ] = setTimeout( () => {
 				this._compileParent( parent );
-			}, 2500 );
+			}, 10 );
 		} );
 	},
 	_compileParent( parent ) {
+		console.log( this.check_parents );
 		this.check_parents[ parent ].value = JSON.stringify(
 			this.parent_check_data[ parent ]
 		);

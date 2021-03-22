@@ -56,14 +56,13 @@ class File_Folder extends On_Off {
 
 		parent::__construct( $setting );
 
-		$this->primary = $this->primary_setting();
-
-		$paths       = (array) $this->setting->get_param( 'paths', array() );
-		$checked     = (array) $this->setting->get_value();
-		$clean_value = array();
-		$base_path   = $this->setting->get_param( 'base_path' );
-		$this->tree  = new Branch( $this->setting->get_slug() );
-		$handlers    = $this->setting->get_param( 'file_types', array() );
+		$paths              = (array) $this->setting->get_param( 'paths', array() );
+		$checked            = (array) $this->setting->get_value();
+		$clean_value        = array();
+		$base_path          = $this->setting->get_param( 'base_path' );
+		$this->tree         = new Branch( $this->setting->get_slug() . '_root' );
+		$this->tree->master = $this->setting->get_slug();
+		$handlers           = $this->setting->get_param( 'file_types', array() );
 
 		foreach ( $paths as $path ) {
 			$parts    = explode( '/', ltrim( $path, '/' ) );
@@ -112,7 +111,7 @@ class File_Folder extends On_Off {
 		// Set the main tree item.
 		$this->tree->name                  = __( 'Select All Assets', 'cloudinary' );
 		$struct['children']['tree']        = $this->tree->render();
-		$struct['attributes']['data-slug'] = $this->primary->get_slug();
+		$struct['attributes']['data-slug'] = $this->get_slug();
 
 		return $struct;
 	}
@@ -144,20 +143,11 @@ class File_Folder extends On_Off {
 		$struct['element']             = 'input';
 		$struct['attributes']['type']  = 'hidden';
 		$struct['attributes']['name']  = $this->get_name();
-		$struct['attributes']['id']    = $this->primary->get_slug();
+		$struct['attributes']['id']    = $this->setting->get_slug();
 		$struct['attributes']['value'] = wp_json_encode( $this->setting->get_param( 'clean_value', array() ) );
 		$struct['render']              = true;
 
 		return $struct;
-	}
-
-	/**
-	 * Get the primary setting (master that created the tree).
-	 *
-	 * @return Setting
-	 */
-	protected function primary_setting() {
-		return $this->setting->get_param( 'primary_setting', $this->setting );
 	}
 
 	/**

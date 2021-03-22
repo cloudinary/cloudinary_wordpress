@@ -31,6 +31,13 @@ class Branch {
 	public $name = null;
 
 	/**
+	 * Holds the ID of the master input.
+	 *
+	 * @var string|null
+	 */
+	public $master = null;
+
+	/**
 	 * Holds the full path.
 	 *
 	 * @var string
@@ -80,6 +87,7 @@ class Branch {
 		if ( ! isset( $this->paths[ $part ] ) ) {
 			$this->paths[ $part ]           = new Branch( $this->id . '/' . $part );
 			$this->paths[ $part ]->handlers = $this->handlers;
+			$this->paths[ $part ]->master   = $this->master;
 		}
 
 		return $this->paths[ $part ];
@@ -141,16 +149,22 @@ class Branch {
 	 * @return array
 	 */
 	public function input() {
-		$struct                          = array();
-		$struct['element']               = 'input';
-		$struct['attributes']['id']      = $this->id;
-		$struct['attributes']['type']    = 'checkbox';
-		$struct['attributes']['value']   = $this->value;
-		$struct['attributes']['checked'] = 'checked';
-		$struct['attributes']['class']   = array(
+		$struct                        = array();
+		$struct['element']             = 'input';
+		$struct['attributes']['id']    = $this->id;
+		$struct['attributes']['type']  = 'checkbox';
+		$struct['attributes']['value'] = $this->value;
+		if ( ! empty( $this->value ) ) {
+			$struct['attributes']['data-file'] = true;
+		}
+		if ( $this->checked ) {
+			$struct['attributes']['checked'] = $this->checked;
+		}
+		$struct['attributes']['data-parent'] = $this->master;
+		$struct['attributes']['class']       = array(
 			'cld-ui-input',
 		);
-		$struct['render']                = true;
+		$struct['render']                    = true;
 		if ( ! empty( $this->paths ) ) {
 			$struct['attributes']['data-master'] = wp_json_encode( $this->get_ids() );
 		}
