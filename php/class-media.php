@@ -2003,7 +2003,7 @@ class Media extends Settings_Component implements Setup {
 	public function get_upload_options( $attachment_id ) {
 
 		// Prepare upload options.
-		$public_id = $this->get_public_id( $attachment_id );
+		$public_id = $this->get_public_id( $attachment_id, true );
 		$folder    = ltrim( dirname( $public_id ), '.' );
 		$options   = array(
 			'unique_filename' => true,
