@@ -1929,9 +1929,14 @@ class Media extends Settings_Component implements Setup {
 	 * @return array
 	 */
 	public function get_context_options( $attachment_id ) {
+		$caption = get_post( $attachment_id )->post_excerpt;
+
+		if ( empty( $caption ) ) {
+			$caption = get_the_title( $attachment_id );
+		}
 
 		$context_options = array(
-			'caption' => esc_attr( get_the_title( $attachment_id ) ),
+			'caption' => esc_attr( $caption ),
 			'alt'     => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
 			'guid'    => md5( get_the_guid( $attachment_id ) ),
 		);
