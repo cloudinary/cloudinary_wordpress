@@ -773,7 +773,7 @@ abstract class Component {
 	final public static function init( $setting ) {
 
 		$caller = get_called_class();
-		$type   = $setting->get_param( 'type' );
+		$type   = $setting->get_param( 'type', 'tag' );
 		// Final check if type is callable component.
 		if ( ! is_string( $type ) || ! self::is_component_type( $type ) ) {
 			// Check what type this component needs to be.
