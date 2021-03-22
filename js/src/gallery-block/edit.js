@@ -41,6 +41,11 @@ const Edit = ( { setAttributes, attributes, className, isSelected } ) => {
 	const [ loading, setLoading ] = useState( false );
 
 	const preparedAttributes = useMemo( () => {
+		// Do not override block settings with defaults on existing ones.
+		if ( 0 !== attributes.selectedImages.length ) {
+			return attributes;
+		}
+
 		const defaultAttrs = {};
 
 		// eslint-disable-next-line no-unused-vars

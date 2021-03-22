@@ -65,9 +65,6 @@ class Gallery {
 			'mode'    => 'classic',
 			'columns' => 1,
 		),
-		'transformation'   => array(
-			'crop' => 'fill',
-		),
 		'indicatorProps'   => array( 'shape' => 'round' ),
 		'themeProps'       => array(
 			'primary'   => '#cf2e2e',
@@ -417,6 +414,13 @@ class Gallery {
 
 		$attributes['mediaAssets'] = $attributes['selectedImages'];
 		$attributes['cloudName']   = $this->media->plugin->components['connect']->get_cloud_name();
+
+		$credentials = $this->media->plugin->components['connect']->get_credentials();
+
+		if ( ! empty( $credentials['cname'] ) ) {
+			$attributes['secureDistribution'] = $credentials['cname'];
+			$attributes['privateCdn']         = true;
+		}
 		unset( $attributes['selectedImages'], $attributes['customSettings'] );
 
 		ob_start();

@@ -213,6 +213,7 @@ class Push_Sync {
 			}
 			// Flag attachment as being processed.
 			update_post_meta( $attachment_id, Sync::META_KEYS['syncing'], time() );
+			$stat[ $attachment_id ] = array();
 			while ( $type = $this->sync->get_sync_type( $attachment_id, false ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition
 				if ( isset( $stat[ $attachment_id ][ $type ] ) ) {
 					// Loop prevention.

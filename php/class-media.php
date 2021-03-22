@@ -1092,7 +1092,7 @@ class Media extends Settings_Component implements Setup {
 	public function get_public_id( $attachment_id, $suffixed = false ) {
 		// Check for a public_id.
 		if ( $this->has_public_id( $attachment_id ) ) {
-			$public_id = $this->get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
+			$public_id = get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
 			if ( $this->is_folder_synced( $attachment_id ) ) {
 				$public_id = $this->get_cloudinary_folder() . pathinfo( $public_id, PATHINFO_BASENAME );
 			}
@@ -1114,7 +1114,7 @@ class Media extends Settings_Component implements Setup {
 	 * @return bool
 	 */
 	public function has_public_id( $attachment_id ) {
-		return ! empty( $this->get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true ) );
+		return ! empty( get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true ) );
 	}
 
 	/**
@@ -1129,9 +1129,7 @@ class Media extends Settings_Component implements Setup {
 		$cloudinary_id = null;
 		// A cloudinary_id is a public_id with a file extension.
 		if ( $this->has_public_id( $attachment_id ) ) {
-			$public_id = $this->get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
-			// Since this is based on saved and not a dynamic, append a suffix.
-			$public_id .= $this->get_post_meta( $attachment_id, Sync::META_KEYS['suffix'], true );
+			$public_id = $this->get_public_id( $attachment_id, true );
 			// Get the file, and use the same extension.
 			$file = get_attached_file( $attachment_id );
 			// @todo: Make this use the globals, overrides, and application conversion.
@@ -1443,24 +1441,24 @@ class Media extends Settings_Component implements Setup {
 
 		$sync_key = $asset['sync_key'];
 		// Capture public_id. Use core update_post_meta since this attachment data doesnt exist yet.
-		update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
+		$this->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
 		// Capture version number.
-		update_post_meta( $attachment_id, Sync::META_KEYS['version'], $asset['version'] );
+		$this->update_post_meta( $attachment_id, Sync::META_KEYS['version'], $asset['version'] );
 		if ( ! empty( $asset['transformations'] ) ) {
 			// Save a combined key.
 			$sync_key .= wp_json_encode( $asset['transformations'] );
-			update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], $asset['transformations'] );
+			$this->update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], $asset['transformations'] );
 		}
 		// create a trackable key in post meta.
 		update_post_meta( $attachment_id, '_' . md5( $sync_key ), true );
 		// record a base to ensure primary isn't deleted.
 		update_post_meta( $attachment_id, '_' . md5( 'base_' . $public_id ), true );
 		// capture the delivery type.
-		update_post_meta( $attachment_id, Sync::META_KEYS['delivery'], $asset['type'] );
+		$this->update_post_meta( $attachment_id, Sync::META_KEYS['delivery'], $asset['type'] );
 		// Capture the ALT Text.
 		if ( ! empty( $asset['meta']['alt'] ) ) {
 			$alt_text = wp_strip_all_tags( $asset['meta']['alt'] );
-			update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt_text );
+			$this->update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt_text );
 		}
 
 		return $attachment_id;
@@ -1775,13 +1773,13 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Get Cloudinary related Post meta.
 	 *
-	 * @param int    $post_id The attachment ID.
-	 * @param string $key     The meta key to get.
-	 * @param bool   $single  If single or not.
+	 * @param int         $post_id The attachment ID.
+	 * @param string|null $key     The meta key to get.
+	 * @param bool        $single  If single or not.
 	 *
 	 * @return mixed
 	 */
-	public function get_post_meta( $post_id, $key, $single = false ) {
+	public function get_post_meta( $post_id, $key = null, $single = false ) {
 
 		$meta_data = wp_get_attachment_metadata( $post_id, true );
 		if ( ! is_array( $meta_data ) ) {
@@ -1790,7 +1788,10 @@ class Media extends Settings_Component implements Setup {
 		if ( ! isset( $meta_data[ Sync::META_KEYS['cloudinary'] ] ) ) {
 			$meta_data[ Sync::META_KEYS['cloudinary'] ] = array();
 		}
-		if ( ! empty( $meta_data[ Sync::META_KEYS['cloudinary'] ][ $key ] ) ) {
+
+		if ( null === $key ) {
+			$data = $meta_data[ Sync::META_KEYS['cloudinary'] ];
+		} elseif ( ! empty( $meta_data[ Sync::META_KEYS['cloudinary'] ][ $key ] ) ) {
 			$data = $meta_data[ Sync::META_KEYS['cloudinary'] ][ $key ];
 		} else {
 			$data = $this->build_cached_meta( $post_id, $key, $single );
@@ -1812,8 +1813,6 @@ class Media extends Settings_Component implements Setup {
 		$data = get_post_meta( $post_id, $key, $single );
 		if ( '' !== $data ) {
 			$this->update_post_meta( $post_id, $key, $data );
-			// Remove the low level meta.
-			delete_post_meta( $post_id, $key );
 		}
 
 		return $data;
@@ -1853,8 +1852,6 @@ class Media extends Settings_Component implements Setup {
 			unset( $meta_data[ Sync::META_KEYS['cloudinary'] ][ $key ] );
 			wp_update_attachment_metadata( $post_id, $meta_data );
 		}
-		// Delete meta data.
-		delete_post_meta( $post_id, $key );
 	}
 
 	/**
