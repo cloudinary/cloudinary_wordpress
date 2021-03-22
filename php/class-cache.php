@@ -12,7 +12,7 @@ use Cloudinary\Component\Setup;
 /**
  * Plugin report class.
  */
-class Cache extends Settings_Component implements Setup {
+class Cache extends Settings_Component {
 
 	/**
 	 * Holds the plugin instance.
