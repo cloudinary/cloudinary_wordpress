@@ -16,7 +16,9 @@ $settings = array(
 			'type' => 'row',
 			array(
 				'type'  => 'column',
-				'width' => '45%',
+				'class' => array(
+					'column-45',
+				),
 				array(
 					'type' => 'group',
 					array(
@@ -173,7 +175,9 @@ $settings = array(
 			),
 			array(
 				'type'  => 'column',
-				'width' => '55%',
+				'class' => array(
+					'column-55',
+				),
 				array(
 					'type'           => 'video_preview',
 					'title'          => __( 'Video preview', 'cloudinary' ),
