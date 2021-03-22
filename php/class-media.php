@@ -1460,6 +1460,16 @@ class Media extends Settings_Component implements Setup {
 			$alt_text = wp_strip_all_tags( $asset['meta']['alt'] );
 			$this->update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt_text );
 		}
+		// Capture the Caption Text.
+		if ( ! empty( $asset['meta']['caption'] ) ) {
+			$caption = wp_strip_all_tags( $asset['meta']['caption'] );
+			wp_update_post(
+				array(
+					'ID'           => $asset['attachment_id'],
+					'post_excerpt' => $caption,
+				)
+			);
+		}
 
 		return $attachment_id;
 	}
@@ -1576,6 +1586,16 @@ class Media extends Settings_Component implements Setup {
 				if ( ! empty( $asset['meta']['alt'] ) ) {
 					$alt_text = wp_strip_all_tags( $asset['meta']['alt'] );
 					update_post_meta( $asset['attachment_id'], '_wp_attachment_image_alt', $alt_text );
+				}
+				// Capture the Caption Text.
+				if ( ! empty( $asset['meta']['caption'] ) ) {
+					$caption = wp_strip_all_tags( $asset['meta']['caption'] );
+					wp_update_post(
+						array(
+							'ID'           => $asset['attachment_id'],
+							'post_excerpt' => $caption,
+						)
+					);
 				}
 				// Compare Version.
 				$current_version = $this->get_cloudinary_version( $asset['attachment_id'] );
