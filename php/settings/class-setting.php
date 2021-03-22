@@ -147,6 +147,28 @@ class Setting {
 	}
 
 	/**
+	 * Sets the params recursively.
+	 *
+	 * @param array $parts The parts to set.
+	 * @param array $param The param being set.
+	 * @param mixed $value The value to set.
+	 *
+	 * @return mixed
+	 */
+	protected function set_param_array( $parts, $param, $value ) {
+		$new = $param;
+		$key = array_shift( $parts );
+		if ( ! empty( $parts ) ) {
+			$param = isset( $param[ $key ] ) ? $param[ $key ] : array();
+			$value = $this->set_param_array( $parts, $param, $value );
+		}
+		$new[ $key ] = $value;
+
+		return $new;
+
+	}
+
+	/**
 	 * Set a parameter and value to the setting.
 	 *
 	 * @param string $param Param key to set.
@@ -155,7 +177,14 @@ class Setting {
 	 * @return $this
 	 */
 	public function set_param( $param, $value ) {
+		$parts = explode( ':', $param );
+		$param = array_shift( $parts );
+		if ( ! empty( $parts ) ) {
+			$value = $this->set_param_array( $parts, $this->params[ $param ], $value );
+		}
+
 		$this->params[ $param ] = $value;
+
 		if ( is_null( $value ) ) {
 			$this->remove_param( $param );
 		}
@@ -400,6 +429,9 @@ class Setting {
 	 * @return $this
 	 */
 	public function setup_setting( array $params ) {
+		if ( true === $this->get_param( 'is_setup' ) ) {
+			return $this;
+		}
 
 		$default        = array(
 			'priority' => 10,
@@ -466,7 +498,7 @@ class Setting {
 			 *
 			 * @param mixed   $new_value     The new setting value.
 			 * @param mixed   $current_value The setting current value.
-			 * @param Setting $setting         The setting object.
+			 * @param Setting $setting       The setting object.
 			 */
 			$new_value = apply_filters( "cloudinary_settings_save_setting_{$slug}", $new_value, $current_value, $setting );
 			$new_value = apply_filters( 'cloudinary_settings_save_setting', $new_value, $current_value, $setting );
@@ -697,10 +729,12 @@ class Setting {
 	/**
 	 * Render the settings Component.
 	 *
+	 * @param bool $echo Flag to echo output.
+	 *
 	 * @return string
 	 */
-	public function render_component() {
-		return $this->get_component()->render();
+	public function render_component( $echo = false ) {
+		return $this->get_component()->render( $echo );
 	}
 
 	/**
