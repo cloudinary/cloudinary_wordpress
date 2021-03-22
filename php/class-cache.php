@@ -12,7 +12,7 @@ use Cloudinary\Component\Setup;
 /**
  * Plugin report class.
  */
-class Cache implements Setup {
+class Cache extends Settings_Component implements Setup {
 
 	/**
 	 * Holds the plugin instance.
@@ -68,6 +68,7 @@ class Cache implements Setup {
 	 * @param Plugin $plugin Global instance of the main plugin.
 	 */
 	public function __construct( Plugin $plugin ) {
+
 		$this->plugin  = $plugin;
 		$this->media   = $this->plugin->get_component( 'media' );
 		$this->connect = $this->plugin->get_component( 'connect' );
@@ -164,12 +165,18 @@ class Cache implements Setup {
 	/**
 	 * Get the file paths for the plugins.
 	 *
+	 * @param string $plugin_path The plugin path.
+	 *
 	 * @return array
 	 */
-	protected function get_plugin_paths() {
-		$paths          = array();
-		$plugins        = get_plugins();
-		$active_plugins = (array) get_option( 'active_plugins', array() );
+	protected function get_plugin_paths( $plugin_path = null ) {
+		$paths   = array();
+		$plugins = get_plugins();
+		if ( ! is_null( $plugin_path ) ) {
+			$active_plugins = (array) $plugin_path;
+		} else {
+			$active_plugins = (array) get_option( 'active_plugins', array() );
+		}
 		foreach ( $active_plugins as $plugin ) {
 			$key = 'plugin_cache_' . basename( dirname( $plugin ) );
 			if ( 'off' === $this->plugin->settings->get_value( $key ) ) {
@@ -493,6 +500,12 @@ class Cache implements Setup {
 			'xml',
 			'crt',
 		);
+		$included_ext = array(
+			'png',
+			'jpg',
+			'gif',
+			'js',
+		);
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		$files  = list_files( $path, PHP_INT_MAX, $exclude );
 		$return = array_filter(
@@ -612,93 +625,299 @@ class Cache implements Setup {
 	}
 
 	/**
-	 * Setup the settings.
+	 * Get paths for plugins, filtered by type and shorted to start from plugin root.
+	 *
+	 * @param string $slug Plugin slug.
+	 *
+	 * @return array|void
 	 */
-	public function setup() {
-		$media_settings = $this->plugin->settings->get_setting( 'media' );
+	protected function get_filtered_plugin_paths( $slug ) {
 
+		$paths = $this->get_plugin_paths( $slug );
+
+		if ( empty( $paths ) ) {
+			return;
+		}
+		$include = array(
+			'jpg',
+			'png',
+			'svg',
+			'css',
+			'js',
+		);
+		$urls    = array_map(
+			function ( $url ) use ( $include ) {
+				$path = wp_parse_url( $url, PHP_URL_PATH );
+				$ext  = pathinfo( $path, PATHINFO_EXTENSION );
+				if ( ! in_array( $ext, $include, true ) ) {
+					return false;
+				}
+				$path = substr( $path, strlen( WP_PLUGIN_DIR ) + 1 );
+				$dir  = strstr( $path, '/', false );
+
+				return $dir;
+			},
+			$paths
+		);
+
+		$urls = array_unique( array_filter( $urls ) );
+
+		return $urls;
+	}
+
+	/**
+	 * Get the plugins table structure.
+	 *
+	 * @return array|mixed
+	 */
+	protected function get_plugins_table() {
+
+		$plugins_setup = get_transient( 'cache_plugins_tree' );
+		if ( ! empty( $plugins_setup ) ) {
+			return $plugins_setup;
+		}
 		$plugins = get_plugins();
 		$active  = wp_get_active_and_valid_plugins();
-		$toggles = array();
-		foreach ( $active as $plugin ) {
-			$path      = basename( dirname( $plugin ) ) . '/' . basename( $plugin );
-			$details   = $plugins[ $path ];
-			$toggles[] = array(
-				'type'        => 'on_off',
-				'slug'        => 'plugin_cache_' . basename( dirname( $plugin ) ),
-				'description' => $details['Name'],
-				'default'     => 'off',
+
+		$alignment = array(
+			'style' => 'text-align:right;',
+		);
+
+		$lists  = array(
+			'images'  => array(),
+			'css'     => array(),
+			'js'      => array(),
+			'plugins' => array(),
+		);
+		$params = array(
+			'type'    => 'table',
+			'slug'    => 'plugin_files',
+			'columns' => array(),
+		);
+		foreach ( $active as $plugin_path ) {
+			$slug   = basename( dirname( $plugin_path ) );
+			$plugin = $slug . '/' . basename( $plugin_path );
+			$slug   = md5( $plugin );
+			if ( ! isset( $plugins[ $plugin ] ) ) {
+				continue;
+			}
+
+			$details       = $plugins[ $plugin ];
+			$plugin_params = array(
+				'plugin_name' => array(
+					array(
+						array(
+							'slug'   => 'name_' . $slug,
+							'type'   => 'on_off',
+							'master' => array(
+								'images_' . $slug,
+								'css_' . $slug,
+								'js_' . $slug,
+							),
+						),
+						array(
+							'type'             => 'icon_toggle',
+							'slug'             => 'toggle_' . $slug,
+							'description_left' => $details['Name'],
+							'off'              => 'dashicons-arrow-up',
+							'on'               => 'dashicons-arrow-down',
+						),
+					),
+				),
+				'images'      => array(
+					'attributes' => $alignment,
+					array(
+						'type' => 'on_off',
+						'slug' => 'images_' . $slug,
+					),
+				),
+				'css'         => array(
+					'attributes' => $alignment,
+					array(
+						'type' => 'on_off',
+						'slug' => 'css_' . $slug,
+					),
+				),
+				'js'          => array(
+					'attributes' => $alignment,
+					array(
+						'type' => 'on_off',
+						'slug' => 'js_' . $slug,
+					),
+				),
+				'reload'      => array(
+					'type' => 'icon',
+					'icon' => 'dashicons-update',
+				),
 			);
+
+			$lists['images'][]  = 'images_' . $slug;
+			$lists['css'][]     = 'css_' . $slug;
+			$lists['js'][]      = 'js_' . $slug;
+			$lists['plugins'][] = 'name_' . $slug;
+
+			$params['rows'][ $slug ]             = $plugin_params;
+			$params['rows'][ $slug . '_spacer' ] = array();
+			$params['rows'][ $slug . '_tree' ]   = array(
+				'plugin_name' => array(
+					'condition' => array(
+						'toggle_' . $slug => true,
+					),
+					array(
+						'slug'       => $slug . '_files',
+						'type'       => 'file_folder',
+						'base_path'  => dirname( $plugin_path ),
+						'paths'      => $this->get_filtered_plugin_paths( $plugin ),
+						'file_types' => array(
+							'png' => 'images_' . $slug,
+							'svg' => 'images_' . $slug,
+							'css' => 'css_' . $slug,
+							'js'  => 'js_' . $slug,
+						),
+					),
+				),
+			);
+
 		}
 
-		$settings = array(
-			'type'        => 'page',
-			'menu_title'  => __( 'Site Cache', 'cloudinary' ),
-			'option_name' => 'cloudinary_cache_site',
-			'priority'    => 9,
-			'slug'        => 'site_cache',
-			array(
-				'type'  => 'panel',
-				'title' => __( 'Cache Settings', 'cloudinary' ),
+		$params['columns'] = array(
+			'plugin_name' => array(
 				array(
-					'type'         => 'on_off',
-					'slug'         => 'enable_site_cache',
-					'title'        => __( 'Full CDN', 'cloudinary' ),
-					'tooltip_text' => __(
-						'Deliver all assets from Cloudinary.',
-						'cloudinary'
-					),
-					'description'  => __( 'Enable caching site assets.', 'cloudinary' ),
-					'default'      => 'off',
+					'type'        => 'on_off',
+					'description' => __( 'Plugin', 'cloudinary' ),
+					'master'      => $lists['plugins'],
 				),
-				array(
-					'type'      => 'group',
-					'condition' => array(
-						'enable_site_cache' => true,
-					),
-					array(
-						'type'        => 'on_off',
-						'slug'        => 'cache_plugins',
-						'title'       => __( 'Plugins', 'cloudinary' ),
-						'description' => __( 'Deliver assets in active plugins.', 'cloudinary' ),
-						'default'     => 'off',
-					),
-					array(
-						'type'      => 'group',
-						'condition' => array(
-							'cache_plugins' => true,
-						),
-						$toggles,
-					),
-					array(
-						'type'        => 'on_off',
-						'slug'        => 'cache_theme',
-						'title'       => __( 'Theme', 'cloudinary' ),
-						'description' => __( 'Deliver assets in active theme.', 'cloudinary' ),
-						'default'     => 'off',
-					),
-					array(
-						'type'        => 'on_off',
-						'slug'        => 'cache_wordpress',
-						'title'       => __( 'WordPress', 'cloudinary' ),
-						'description' => __( 'Deliver assets in for WordPress.', 'cloudinary' ),
-						'default'     => 'off',
-					),
-					array(
-						'type'    => 'text',
-						'slug'    => 'cache_folder',
-						'title'   => __( 'Cache folder', 'cloudinary' ),
-						'default' => wp_parse_url( get_site_url(), PHP_URL_HOST ),
-					),
-				),
-
 			),
-			array(
-				'type' => 'submit',
+			'images'      => array(
+				'attributes' => $alignment,
+				array(
+					'type'             => 'on_off',
+					'description_left' => __( 'Images', 'cloudinary' ),
+					'master'           => $lists['images'],
+				),
+			),
+			'css'         => array(
+				'attributes' => $alignment,
+				array(
+					'type'             => 'on_off',
+					'description_left' => __( 'CSS', 'cloudinary' ),
+					'master'           => $lists['css'],
+				),
+			),
+			'js'          => array(
+				'attributes' => $alignment,
+				array(
+					'type'             => 'on_off',
+					'description_left' => __( 'JS', 'cloudinary' ),
+					'master'           => $lists['js'],
+				),
 			),
 		);
 
-		$cache_setting = $this->plugin->settings->create_setting( 'site_cache', $settings );
-		$media_settings->add_setting( $cache_setting );
+		set_transient( 'cache_plugins_tree', $params );
+
+		return $params;
+	}
+
+	/**
+	 * Returns the setting definitions.
+	 *
+	 * @return array
+	 */
+	public function settings() {
+
+		$plugins_setup = $this->get_plugins_table();
+
+		$args = array(
+			'type'       => 'page',
+			'menu_title' => __( 'Site Cache', 'cloudinary' ),
+			'tabs'       => array(
+				'cache_extras'  => array(
+					'page_title' => __( 'Site Cache', 'cloudinary' ),
+					array(
+						'type'  => 'panel',
+						'title' => __( 'Cache Settings', 'cloudinary' ),
+						array(
+							'type'         => 'on_off',
+							'slug'         => 'enable_site_cache',
+							'title'        => __( 'Full CDN', 'cloudinary' ),
+							'tooltip_text' => __(
+								'Deliver all assets from Cloudinary.',
+								'cloudinary'
+							),
+							'description'  => __( 'Enable caching site assets.', 'cloudinary' ),
+							'default'      => 'off',
+						),
+						array(
+							'type'      => 'group',
+							'condition' => array(
+								'enable_site_cache' => true,
+							),
+							array(
+								'type'        => 'on_off',
+								'slug'        => 'cache_theme',
+								'title'       => __( 'Theme', 'cloudinary' ),
+								'description' => __( 'Deliver assets in active theme.', 'cloudinary' ),
+								'default'     => 'off',
+							),
+							array(
+								'type'        => 'on_off',
+								'slug'        => 'cache_wordpress',
+								'title'       => __( 'WordPress', 'cloudinary' ),
+								'description' => __( 'Deliver assets for WordPress.', 'cloudinary' ),
+								'default'     => 'off',
+							),
+							array(
+								'type'        => 'on_off',
+								'slug'        => 'cache_custom',
+								'title'       => __( 'Custom Folders', 'cloudinary' ),
+								'description' => __( 'Deliver assets from custom folders.', 'cloudinary' ),
+								'default'     => 'off',
+							),
+							array(
+								'type'      => 'group',
+								'condition' => array(
+									'cache_custom' => true,
+								),
+								array(
+									'type'       => 'tag',
+									'element'    => 'div',
+									'slug'       => 'custom_folder_tree',
+									'attributes' => array(
+										'class' => array(
+											'tree',
+										),
+									),
+								),
+							),
+							array(
+								'type'    => 'text',
+								'slug'    => 'cache_folder',
+								'title'   => __( 'Cache folder', 'cloudinary' ),
+								'default' => wp_parse_url( get_site_url(), PHP_URL_HOST ),
+							),
+						),
+
+					),
+					array(
+						'type' => 'submit',
+					),
+				),
+				'cache_plugins' => array(
+					'page_title' => __( 'Plugins', 'cloudinary' ),
+					array(
+						'type'    => 'panel',
+						'title'   => __( 'Plugins', 'cloudinary' ),
+						'content' => __( 'Deliver assets in active plugins.', 'cloudinary' ),
+						$plugins_setup,
+					),
+					array(
+						'type' => 'submit',
+					),
+				),
+			),
+		);
+
+		return $args;
 	}
 }
