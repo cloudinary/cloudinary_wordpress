@@ -1908,7 +1908,7 @@ class Media extends Settings_Component implements Setup {
 				$breakpoints['transformation'] = Api::generate_transformation_string( $transformations, 'image' );
 			}
 			$breakpoints = array(
-				'public_id'              => $this->get_public_id( $attachment_id ),
+				'public_id'              => $this->get_public_id( $attachment_id, true ),
 				'type'                   => 'upload',
 				'responsive_breakpoints' => $breakpoint_options,
 				'context'                => $this->get_context_options( $attachment_id ),
