@@ -38,7 +38,14 @@ class WooCommerceGallery {
 	 */
 	public function enqueue_gallery_library() {
 		$product = wc_get_product();
-		$assets  = $product ? $this->gallery->get_image_data( $product->get_gallery_image_ids() ) : null;
+		if ( empty( $product ) ) {
+			return;
+		}
+
+		$images = (array) $product->get_gallery_image_ids();
+		array_unshift( $images, get_post_thumbnail_id() );
+
+		$assets = $this->gallery->get_image_data( array_filter( $images ) );
 
 		if ( $assets ) {
 			$json_assets = wp_json_encode( $assets );
