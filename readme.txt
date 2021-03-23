@@ -53,11 +53,8 @@ And with advanced digital asset management capabilities available in the plugin,
 * [Video transformations documentation](https://cloudinary.com/documentation/video_manipulation_and_delivery?utm_source=wp&utm_medium=wpmarketplace&utm_campaign=wpmarketplace)
 * [FAQ](http://cloudinary.com/faq?utm_source=wp&utm_medium=wpmarketplace&utm_campaign=wpmarketplace)
 
-= Contributors & Developers =
-“Cloudinary – Image and Video Optimization, Manipulation, and Delivery” is an open source software. The following people have contributed to this plugin:
-[Cloudinary](https://profiles.wordpress.org/cloudinary/)
-[XWP](https://profiles.wordpress.org/xwp/)
-[Automattic](https://profiles.wordpress.org/automattic/)
+= Notes =
+The legacy WordPress Plugin version (v1.x) will be deprecated as of February 1st, 2021, after which support, updates and bug fixes for the legacy plugin will continue in limited fashion. The legacy plugin will be made obsolete on August 1st, 2021 (end-of-life date) and will no longer function after that date.
 
 
 == Installation ==
