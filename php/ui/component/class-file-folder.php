@@ -89,13 +89,6 @@ class File_Folder extends On_Off {
 	}
 
 	/**
-	 * Enqueue scripts this component may use.
-	 */
-	public function enqueue_scripts() {
-		wp_enqueue_script( 'cld-file-tree', get_plugin_instance()->dir_url . 'js/file-tree.js', array( 'cloudinary' ), get_plugin_instance()->version, true );
-	}
-
-	/**
 	 * Get the folder part struct.
 	 *
 	 * @param array $struct The structure.
