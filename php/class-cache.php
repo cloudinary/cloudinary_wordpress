@@ -680,7 +680,7 @@ class Cache extends Settings_Component {
 		$active  = wp_get_active_and_valid_plugins();
 
 		$alignment = array(
-			'style' => 'text-align:right;',
+			'style' => 'text-align:right;width:20%;',
 		);
 
 		$lists  = array(
@@ -710,9 +710,7 @@ class Cache extends Settings_Component {
 							'slug'   => 'name_' . $slug,
 							'type'   => 'on_off',
 							'master' => array(
-								'images_' . $slug,
-								'css_' . $slug,
-								'js_' . $slug,
+								'plugins_master',
 							),
 						),
 						array(
@@ -722,27 +720,92 @@ class Cache extends Settings_Component {
 							'off'              => 'dashicons-arrow-up',
 							'on'               => 'dashicons-arrow-down',
 						),
+						array(
+							'type'       => 'tag',
+							'element'    => 'span',
+							'content'    => '',
+							'render'     => true,
+							'attributes' => array(
+								'id'    => 'name_' . $slug . '_size_wrapper',
+								'class' => array(
+									'file-size',
+									'small',
+								),
+							),
+						),
 					),
 				),
 				'images'      => array(
 					'attributes' => $alignment,
 					array(
-						'type' => 'on_off',
-						'slug' => 'images_' . $slug,
+						'type'       => 'tag',
+						'element'    => 'span',
+						'content'    => '',
+						'render'     => true,
+						'attributes' => array(
+							'id'    => 'images_' . $slug . '_size_wrapper',
+							'class' => array(
+								'file-size',
+								'small',
+							),
+						),
+					),
+					array(
+						'type'   => 'on_off',
+						'slug'   => 'images_' . $slug,
+						'master' => array(
+							'images_master',
+							'name_' . $slug,
+						),
 					),
 				),
 				'css'         => array(
 					'attributes' => $alignment,
 					array(
-						'type' => 'on_off',
-						'slug' => 'css_' . $slug,
+						'type'       => 'tag',
+						'element'    => 'span',
+						'content'    => '',
+						'render'     => true,
+						'attributes' => array(
+							'id'    => 'css_' . $slug . '_size_wrapper',
+							'class' => array(
+								'file-size',
+								'small',
+							),
+						),
 					),
+					array(
+						'type'   => 'on_off',
+						'slug'   => 'css_' . $slug,
+						'master' => array(
+							'name_' . $slug,
+							'css_master',
+						),
+					),
+
 				),
 				'js'          => array(
 					'attributes' => $alignment,
 					array(
-						'type' => 'on_off',
-						'slug' => 'js_' . $slug,
+						'type'       => 'tag',
+						'element'    => 'span',
+						'content'    => '',
+						'render'     => true,
+						'attributes' => array(
+							'id'    => 'js_' . $slug . '_size_wrapper',
+							'class' => array(
+								'file-size',
+								'small',
+							),
+						),
+					),
+					array(
+						'type'   => 'on_off',
+						'slug'   => 'js_' . $slug,
+						'master' => array(
+							'name_' . $slug,
+							'js_master',
+						),
 					),
 				),
 				'reload'      => array(
@@ -783,33 +846,42 @@ class Cache extends Settings_Component {
 		$params['columns'] = array(
 			'plugin_name' => array(
 				array(
+					'slug'        => 'plugins_master',
 					'type'        => 'on_off',
 					'description' => __( 'Plugin', 'cloudinary' ),
-					'master'      => $lists['plugins'],
 				),
 			),
 			'images'      => array(
 				'attributes' => $alignment,
 				array(
+					'slug'             => 'images_master',
 					'type'             => 'on_off',
 					'description_left' => __( 'Images', 'cloudinary' ),
-					'master'           => $lists['images'],
+					'master'           => array(
+						'plugins_master',
+					),
 				),
 			),
 			'css'         => array(
 				'attributes' => $alignment,
 				array(
+					'slug'             => 'css_master',
 					'type'             => 'on_off',
 					'description_left' => __( 'CSS', 'cloudinary' ),
-					'master'           => $lists['css'],
+					'master'           => array(
+						'plugins_master',
+					),
 				),
 			),
 			'js'          => array(
 				'attributes' => $alignment,
 				array(
+					'slug'             => 'js_master',
 					'type'             => 'on_off',
 					'description_left' => __( 'JS', 'cloudinary' ),
-					'master'           => $lists['js'],
+					'master'           => array(
+						'plugins_master',
+					),
 				),
 			),
 		);
@@ -909,7 +981,21 @@ class Cache extends Settings_Component {
 						'type'    => 'panel',
 						'title'   => __( 'Plugins', 'cloudinary' ),
 						'content' => __( 'Deliver assets in active plugins.', 'cloudinary' ),
-						$plugins_setup,
+						array(
+							'type'             => 'on_off',
+							'slug'             => 'cache_all_plugins',
+							'description_left' => __( 'Deliver selection', 'cloudinary' ),
+							'description'      => __( 'Deliver assets from all plugin folders', 'cloudinary' ),
+							'default'          => 'off',
+							'disabled_color'   => '#2a0',
+						),
+						array(
+							'type'      => 'group',
+							'condition' => array(
+								'cache_all_plugins' => false,
+							),
+							$plugins_setup,
+						),
 					),
 					array(
 						'type' => 'submit',

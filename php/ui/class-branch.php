@@ -33,9 +33,9 @@ class Branch {
 	/**
 	 * Holds the ID of the master input.
 	 *
-	 * @var string|null
+	 * @var array()
 	 */
-	public $master = null;
+	public $master = array();
 
 	/**
 	 * Holds the full path.
@@ -66,6 +66,20 @@ class Branch {
 	public $handlers = array();
 
 	/**
+	 * Holds total size of the files in this branch.
+	 *
+	 * @var int
+	 */
+	public $branch_size = 0;
+
+	/**
+	 * Holds the parent field.
+	 *
+	 * @var string
+	 */
+	public $parent;
+
+	/**
 	 * Render component for a setting.
 	 * Component constructor.
 	 *
@@ -74,6 +88,17 @@ class Branch {
 	public function __construct( $name ) {
 		$this->name = basename( $name );
 		$this->id   = $name;
+	}
+
+	/**
+	 * Set a master.
+	 *
+	 * @param string $master The master control ID.
+	 */
+	public function set_master( $master ) {
+		if ( ! empty( $master ) && ! in_array( $master, $this->master, true ) ) {
+			$this->master[] = $master;
+		}
 	}
 
 	/**
@@ -87,7 +112,7 @@ class Branch {
 		if ( ! isset( $this->paths[ $part ] ) ) {
 			$this->paths[ $part ]           = new Branch( $this->id . '/' . $part );
 			$this->paths[ $part ]->handlers = $this->handlers;
-			$this->paths[ $part ]->master   = $this->master;
+			$this->paths[ $part ]->set_master( $this->id );
 		}
 
 		return $this->paths[ $part ];
@@ -122,6 +147,23 @@ class Branch {
 		$struct['attributes']['class'][] = 'description';
 		$struct['attributes']['for']     = $this->id;
 		$struct['content']               = $this->name;
+		$file_size                       = '';
+		if ( ! empty( $this->value ) ) {
+			$file_size = size_format( $this->branch_size, 2 );
+		}
+		$struct['children']['size'] = array(
+			'element'    => 'span',
+			'content'    => $file_size,
+			'render'     => true,
+			'attributes' => array(
+				'id'    => $this->id . '_size_wrapper',
+				'class' => array(
+					'file-size',
+					'description',
+					'small',
+				),
+			),
+		);
 
 		return $struct;
 	}
@@ -156,17 +198,24 @@ class Branch {
 		$struct['attributes']['value'] = $this->value;
 		if ( ! empty( $this->value ) ) {
 			$struct['attributes']['data-file'] = true;
+			if ( file_exists( $this->value ) ) {
+				$filesize          = filesize( $this->value );
+				$this->branch_size += $filesize;
+			}
+		}
+		$struct['attributes']['data-size'] = $this->branch_size;
+		if ( $this->parent ) {
+			$struct['attributes']['data-parent'] = $this->parent;
 		}
 		if ( $this->checked ) {
 			$struct['attributes']['checked'] = $this->checked;
 		}
-		$struct['attributes']['data-parent'] = $this->master;
-		$struct['attributes']['class']       = array(
+		$struct['render']              = true;
+		$struct['attributes']['class'] = array(
 			'cld-ui-input',
 		);
-		$struct['render']                    = true;
-		if ( ! empty( $this->paths ) ) {
-			$struct['attributes']['data-master'] = wp_json_encode( $this->get_ids() );
+		if ( ! empty( $this->master ) ) {
+			$struct['attributes']['data-master'] = wp_json_encode( $this->master );
 		}
 
 		return $struct;
@@ -182,6 +231,7 @@ class Branch {
 		$children = array();
 		foreach ( $this->paths as $key => $branch ) {
 			$children[ $branch->id ] = $branch->render();
+			$this->branch_size      += $branch->branch_size;
 		}
 
 		$struct = array(
@@ -190,7 +240,6 @@ class Branch {
 			'name'       => $this->name,
 			'value'      => $this->value,
 			'checked'    => false,
-			'master'     => $this->get_ids(),
 			'attributes' => array(
 				'class' => array(
 					'tree-trunk',

@@ -56,13 +56,13 @@ class File_Folder extends On_Off {
 
 		parent::__construct( $setting );
 
-		$paths              = (array) $this->setting->get_param( 'paths', array() );
-		$checked            = (array) $this->setting->get_value();
-		$clean_value        = array();
-		$base_path          = $this->setting->get_param( 'base_path' );
-		$this->tree         = new Branch( $this->setting->get_slug() . '_root' );
-		$this->tree->master = $this->setting->get_slug();
-		$handlers           = $this->setting->get_param( 'file_types', array() );
+		$paths       = (array) $this->setting->get_param( 'paths', array() );
+		$checked     = (array) $this->setting->get_value();
+		$clean_value = array();
+		$base_path   = $this->setting->get_param( 'base_path' );
+		$this->tree  = new Branch( $this->setting->get_slug() . '_root' );
+		$this->tree->set_master( $this->setting->get_param( 'master' ) );
+		$handlers = $this->setting->get_param( 'file_types', array() );
 
 		foreach ( $paths as $path ) {
 			$parts    = explode( '/', ltrim( $path, '/' ) );
@@ -72,14 +72,15 @@ class File_Folder extends On_Off {
 				$full_path = $base_path . $path;
 				$previous  = $previous->get_path( $folder );
 				if ( $length === $index ) {
-					$previous->value = $full_path;
+					$previous->value  = $full_path;
+					$previous->parent = $this->setting->get_slug();
 					if ( in_array( $full_path, $checked, true ) ) {
 						$previous->checked = true;
 						$clean_value[]     = $full_path;
 					}
 					$ext = pathinfo( $folder, PATHINFO_EXTENSION );
 					if ( isset( $handlers[ $ext ] ) ) {
-						$this->set_master( $handlers[ $ext ], $previous->id );
+						$previous->set_master( $handlers[ $ext ] );
 					}
 				}
 			}
