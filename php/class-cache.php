@@ -163,6 +163,36 @@ class Cache extends Settings_Component {
 	}
 
 	/**
+	 * Get paths for plugins selection, or all.
+	 *
+	 * @param string $all On for all, off for selected.
+	 *
+	 * @return array
+	 */
+	protected function get_plugin_selection_paths( $all ) {
+		if ( 'on' === $all ) {
+			return $this->get_plugin_paths();
+		}
+
+		$plugins            = $this->settings->get_value( 'plugin_files_table' );
+		$plugins            = array_filter(
+			$plugins,
+			'is_array'
+		);
+		$all_paths          = array();
+		$plugins_folder_len = strlen( WP_PLUGIN_DIR ) + 1;
+		foreach ( $plugins as $paths ) {
+			foreach ( $paths as $path ) {
+				$short_part        = substr( $path, $plugins_folder_len );
+				$url               = plugins_url( wp_normalize_path( $short_part ) );
+				$all_paths[ $url ] = $path;
+			}
+		}
+
+		return $all_paths;
+	}
+
+	/**
 	 * Get the file paths for the plugins.
 	 *
 	 * @param string $plugin_path The plugin path.
@@ -240,9 +270,7 @@ class Cache extends Settings_Component {
 	protected function get_paths() {
 		$paths = array();
 		if ( 'on' === $this->plugin->settings->get_value( 'enable_site_cache' ) ) {
-			if ( 'on' === $this->plugin->settings->get_value( 'cache_plugins' ) ) {
-				$paths += $this->get_plugin_paths();
-			}
+			$paths += $this->get_plugin_selection_paths( $this->settings->get_value( 'cache_all_plugins' ) );
 
 			if ( 'on' === $this->plugin->settings->get_value( 'cache_theme' ) ) {
 				$paths += $this->get_theme_paths();
