@@ -1434,6 +1434,12 @@ class Media extends Settings_Component implements Setup {
 			'post_content'   => '',
 			'post_status'    => 'inherit',
 		);
+
+		// Capture the Caption Text.
+		if ( ! empty( $asset['meta']['caption'] ) ) {
+			$post_args['post_excerpt'] = wp_strip_all_tags( $asset['meta']['caption'] );
+		}
+
 		// Disable Upload_Sync to avoid sync loop.
 		add_filter( 'cloudinary_upload_sync_enabled', '__return_false' );
 		// Create the attachment.
@@ -1459,16 +1465,6 @@ class Media extends Settings_Component implements Setup {
 		if ( ! empty( $asset['meta']['alt'] ) ) {
 			$alt_text = wp_strip_all_tags( $asset['meta']['alt'] );
 			$this->update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt_text );
-		}
-		// Capture the Caption Text.
-		if ( ! empty( $asset['meta']['caption'] ) ) {
-			$caption = wp_strip_all_tags( $asset['meta']['caption'] );
-			wp_update_post(
-				array(
-					'ID'           => $asset['attachment_id'],
-					'post_excerpt' => $caption,
-				)
-			);
 		}
 
 		return $attachment_id;
