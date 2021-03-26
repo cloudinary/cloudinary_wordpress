@@ -126,6 +126,17 @@ class Deactivation {
 	 * @return void
 	 */
 	public function markup() {
+		$report_label = sprintf(
+			// translators: The System Report link tag.
+			__( 'Share a %s with Cloudinary to help improve the plugin.', 'cloudinary' ),
+			sprintf(
+				// translators: The System Report link and label.
+				'<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
+				'https://cloudinary.com/documentation/wordpress_integration#system_report',
+				'System Report'
+			)
+		);
+
 		?>
 <a href="#TB_inline?&width=520&height=390&inlineId=cloudinary-deactivation" class="thickbox" id="cld-deactivation-link" title="<?php esc_attr_e( 'Tell us how to improve!', 'cloudinary' ); ?>"><?php esc_html_e( 'Deactivation feedback', 'cloudinary' ); ?>></a>
 <div id="cloudinary-deactivation" style="display: none;">
@@ -155,13 +166,13 @@ class Deactivation {
 			<p>
 				<input type="checkbox" id="cld-report" name="report">
 				<label for="cld-report">
-					<?php esc_html_e( 'Upload a System Report to my cloud and share it with Cloudinary to help improve the plugin.', 'cloudinary' ); ?>
+					<?php echo wp_kses_post( $report_label ); ?>
 				</label>
 			</p>
 			<p>
 				<input type="checkbox" id="cld-contact" name="contact">
 				<label for="cld-contact">
-					<?php esc_html_e( 'Allow Cloudinary to contact me to clarify my reasoning. This will submit the System Report.', 'cloudinary' ); ?>
+					<?php esc_html_e( 'Allow Cloudinary to contact me regarding deactivation of the plugin.', 'cloudinary' ); ?>
 				</label>
 			</p>
 			<button class="button button-primary" disabled="disabled">
