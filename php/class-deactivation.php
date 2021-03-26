@@ -88,7 +88,7 @@ class Deactivation {
 	 *
 	 * @return array
 	 */
-	public function get_reasons() {
+	protected function get_reasons() {
 		return array(
 			array(
 				'id'   => 'dont_understand_value',
