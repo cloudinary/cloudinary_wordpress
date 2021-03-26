@@ -218,6 +218,27 @@ class Deactivation {
 	}
 
 	/**
+	 * Uploads the System Report to the Cloud.
+	 *
+	 * @return array|WP_Error
+	 */
+	public function upload_report() {
+		require_once ABSPATH . '/wp-admin/includes/file.php';
+
+		$report = $this->plugin->get_component( 'report' )->get_report_data();
+		$temp   = get_temp_dir() . $report['filename'];
+		file_put_contents( $temp, wp_json_encode( $report['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) );
+		$args = array(
+			'file'          => $temp,
+			'public_id'     => $report['filename'],
+			'resource_type' => 'raw',
+			'type'          => 'upload',
+		);
+
+		return $this->plugin->get_component( 'connect' )->api->upload( $temp, $args, array(), false );
+	}
+
+	/**
 	 * Processes the feedback and dispatches it to Cloudinary services.
 	 *
 	 * @param WP_REST_Request $request The Rest Request.
