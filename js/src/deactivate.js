@@ -12,7 +12,7 @@ const Deactivate = {
 		'.cloudinary-deactivation input[type="radio"]'
 	),
 	report: document.getElementById( 'cld-report' ),
-	contact: document.getElementById( 'cld-contact' ),
+	contact: document.getElementById( 'cld-contact' ).parentNode,
 	// The feedback submit button.
 	submitButton: document.querySelector(
 		'.cloudinary-deactivation .button-primary'
@@ -68,12 +68,11 @@ const Deactivate = {
 		} );
 
 		// Allowing Cloudinary contact should include the System Report.
-		context.contact.addEventListener( 'change', function () {
-			if ( context.contact.checked ) {
-				context.report.checked = true;
-				context.report.disabled = true;
+		context.report.addEventListener( 'change', function () {
+			if ( context.report.checked ) {
+				context.contact.removeAttribute( 'style' );
 			} else {
-				context.report.disabled = false;
+				context.contact.style.display = 'none';
 			}
 		} );
 
