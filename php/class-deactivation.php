@@ -152,6 +152,18 @@ class Deactivation {
 			</ul>
 		</div>
 		<div class="modal-footer">
+			<p>
+				<input type="checkbox" id="cld-report" name="report">
+				<label for="cld-report">
+					<?php esc_html_e( 'Upload a System Report to my cloud and share it with Cloudinary to help improve the plugin.', 'cloudinary' ); ?>
+				</label>
+			</p>
+			<p>
+				<input type="checkbox" id="cld-contact" name="contact">
+				<label for="cld-contact">
+					<?php esc_html_e( 'Allow Cloudinary to contact me to clarify my reasoning. This will submit the System Report.', 'cloudinary' ); ?>
+				</label>
+			</p>
 			<button class="button button-primary" disabled="disabled">
 				<?php esc_html_e( 'Submit and deactivate', 'cloudinary' ); ?>
 			</button>
@@ -213,8 +225,10 @@ class Deactivation {
 	 * @return WP_Error|WP_HTTP_Response|WP_REST_Response
 	 */
 	public function rest_callback( WP_REST_Request $request ) {
-		$reason = $request->get_param( 'reason' );
-		$more   = $request->get_param( 'more' );
+		$reason  = $request->get_param( 'reason' );
+		$more    = $request->get_param( 'more' );
+		$report  = filter_var( $request->get_param( 'report' ), FILTER_VALIDATE_BOOLEAN );
+		$contact = filter_var( $request->get_param( 'contact' ), FILTER_VALIDATE_BOOLEAN );
 
 		if ( empty( $reason ) ) {
 			return rest_ensure_response( 200 );
@@ -230,13 +244,22 @@ class Deactivation {
 			return rest_ensure_response( 418 );
 		}
 
-		$url = add_query_arg(
-			array(
-				'reason'    => sanitize_text_field( $reason ),
-				'free_text' => sanitize_textarea_field( $more ),
-			),
-			self::$cld_endpoint
+		$args = array(
+			'reason'    => sanitize_text_field( $reason ),
+			'free_text' => sanitize_textarea_field( $more ),
 		);
+
+		if ( $report || $contact ) {
+			$report = $this->upload_report();
+
+			if ( ! empty( $report['secure_url'] ) ) {
+				$args['report'] = $report['secure_url'];
+			}
+		}
+
+		$args['contact'] = $contact;
+
+		$url = add_query_arg( $args, self::$cld_endpoint );
 
 		$response = wp_remote_get( $url ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_remote_get_wp_remote_get
 
