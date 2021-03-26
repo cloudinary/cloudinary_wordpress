@@ -169,7 +169,7 @@ class Deactivation {
 					<?php echo wp_kses_post( $report_label ); ?>
 				</label>
 			</p>
-			<p>
+			<p style="display:none">
 				<input type="checkbox" id="cld-contact" name="contact">
 				<label for="cld-contact">
 					<?php esc_html_e( 'Allow Cloudinary to contact me regarding deactivation of the plugin.', 'cloudinary' ); ?>
@@ -281,15 +281,15 @@ class Deactivation {
 			'free_text' => sanitize_textarea_field( $more ),
 		);
 
-		if ( $report || $contact ) {
+		if ( $report ) {
 			$report = $this->upload_report();
 
 			if ( ! empty( $report['secure_url'] ) ) {
 				$args['report'] = $report['secure_url'];
 			}
-		}
 
-		$args['contact'] = $contact;
+			$args['contact'] = $contact;
+		}
 
 		$url = add_query_arg( $args, self::$cld_endpoint );
 
