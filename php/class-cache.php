@@ -77,10 +77,11 @@ class Cache extends Settings_Component {
 		add_filter( 'template_include', array( $this, 'frontend_rewrite' ), PHP_INT_MAX );
 
 		add_action( 'cloudinary_settings_save_setting_cache_theme', array( $this, 'clear_theme_cache' ), 10 );
-		add_action( 'cloudinary_settings_save_setting_cache_plugins', array( $this, 'clear_theme_cache' ), 10 );
+		add_action( 'cloudinary_settings_save_setting_cache_plugins', array( $this, 'clear_plugin_cache' ), 10 );
 		add_action( 'cloudinary_settings_save_setting_cache_wordpress', array( $this, 'clear_wp_cache' ), 10 );
 
 		add_action( 'admin_init', array( $this, 'admin_rewrite' ), 0 );
+		add_action( 'activate_plugin', array( $this, 'invalidate_plugin_cache' ) );
 	}
 
 	/**
@@ -118,6 +119,13 @@ class Cache extends Settings_Component {
 		}
 
 		return $new;
+	}
+
+	/**
+	 * Clear the plugin Settings cache.
+	 */
+	public function invalidate_plugin_cache() {
+		delete_transient( 'cache_plugins_tree' );
 	}
 
 	/**
@@ -292,22 +300,14 @@ class Cache extends Settings_Component {
 	 * @return string
 	 */
 	public function frontend_rewrite( $template ) {
-
-		$paths = $this->get_paths();
-
-		if ( empty( $paths ) ) {
+		$bypass = filter_input( INPUT_GET, 'bypass_cache', FILTER_SANITIZE_STRING );
+		if ( ! empty( $bypass ) ) {
 			return $template;
 		}
-
-		ob_start();
+		ob_start( array( $this, 'html_rewrite' ) );
 		include $template;
-		$html = ob_get_clean();
 
-		$html = $this->html_rewrite( $html );
-		// Push to output stream.
-		file_put_contents( 'php://output', $html ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_file_put_contents
-
-		return 'php://output';
+		return CLDN_PATH . 'php/cache/template.php';
 	}
 
 	/**
@@ -1006,9 +1006,21 @@ class Cache extends Settings_Component {
 				'cache_plugins' => array(
 					'page_title' => __( 'Plugins', 'cloudinary' ),
 					array(
-						'type'    => 'panel',
-						'title'   => __( 'Plugins', 'cloudinary' ),
-						'content' => __( 'Deliver assets in active plugins.', 'cloudinary' ),
+						'type'       => 'panel',
+						'title'      => __( 'Plugins', 'cloudinary' ),
+						'content'    => __( 'Deliver assets in active plugins.', 'cloudinary' ),
+						'attributes' => array(
+							'header' => array(
+								'class' => array(
+									'full-width',
+								),
+							),
+							'wrap'   => array(
+								'class' => array(
+									'full-width',
+								),
+							),
+						),
 						array(
 							'type'             => 'on_off',
 							'slug'             => 'cache_all_plugins',

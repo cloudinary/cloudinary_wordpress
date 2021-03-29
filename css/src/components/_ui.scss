@@ -421,6 +421,7 @@
 						}
 					}
 				}
+
 				&.mini {
 					width: $mini-control-width;
 					height: $mini-control-height;
@@ -516,6 +517,10 @@
 		border: 1px solid $color-light-grey;
 		margin-right: 1rem;
 		max-width: $content-width;
+
+		&.full-width {
+			max-width: 100%;
+		}
 	}
 
 	&-submit,
@@ -559,7 +564,9 @@
 			display: flex;
 			border-bottom: 0;
 			padding: 0.4rem 1.75rem 0.2rem;
-
+			&.full-width {
+				max-width: 100%;
+			}
 			img {
 				margin-right: 0.6rem;
 			}

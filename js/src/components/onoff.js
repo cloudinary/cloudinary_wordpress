@@ -136,7 +136,6 @@ const OnOff = {
 			let size = null;
 			if ( 0 < input.filesize ) {
 				size = filesize( input.filesize, {
-					fixed: 2,
 					spacer: ' ',
 				} ).human( 'jedec' );
 			}

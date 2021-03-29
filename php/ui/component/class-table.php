@@ -144,6 +144,11 @@ class Table extends Component {
 				}
 				$columns[ $col_slug ] = $child_row;
 			} elseif ( isset( $previous ) ) {
+				if ( ! isset( $columns[ $previous ]['attributes'] ) ) {
+					$columns[ $previous ]['attributes'] = array(
+						'colspan' => 0,
+					);
+				}
 				$columns[ $previous ]['attributes']['colspan'] ++;
 				continue;
 			} else {

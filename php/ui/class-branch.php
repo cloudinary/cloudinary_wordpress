@@ -149,7 +149,7 @@ class Branch {
 		$struct['content']               = $this->name;
 		$file_size                       = '';
 		if ( ! empty( $this->value ) ) {
-			$file_size = size_format( $this->branch_size, 2 );
+			$file_size = size_format( $this->branch_size );
 		}
 		$struct['children']['size'] = array(
 			'element'    => 'span',
@@ -199,7 +199,7 @@ class Branch {
 		if ( ! empty( $this->value ) ) {
 			$struct['attributes']['data-file'] = true;
 			if ( file_exists( $this->value ) ) {
-				$filesize          = filesize( $this->value );
+				$filesize           = filesize( $this->value );
 				$this->branch_size += $filesize;
 			}
 		}

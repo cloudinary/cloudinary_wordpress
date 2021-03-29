@@ -180,6 +180,9 @@ class Setting {
 		$parts = explode( ':', $param );
 		$param = array_shift( $parts );
 		if ( ! empty( $parts ) ) {
+			if ( ! isset( $this->params[ $param ] ) ) {
+				$this->params[ $param ] = array();
+			}
 			$value = $this->set_param_array( $parts, $this->params[ $param ], $value );
 		}
 
