@@ -293,7 +293,7 @@ class Deactivation {
 
 		$url = add_query_arg( $args, self::$cld_endpoint );
 
-		$response = wp_remote_get( $url ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_remote_get_wp_remote_get
+		$response = wp_safe_remote_get( $url );
 
 		return rest_ensure_response(
 			wp_remote_retrieve_response_code( $response )
