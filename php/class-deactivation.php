@@ -88,7 +88,7 @@ class Deactivation {
 	 *
 	 * @return array
 	 */
-	public function get_reasons() {
+	protected function get_reasons() {
 		return array(
 			array(
 				'id'   => 'dont_understand_value',
@@ -126,6 +126,17 @@ class Deactivation {
 	 * @return void
 	 */
 	public function markup() {
+		$report_label = sprintf(
+			// translators: The System Report link tag.
+			__( 'Share a %s with Cloudinary to help improve the plugin.', 'cloudinary' ),
+			sprintf(
+				// translators: The System Report link and label.
+				'<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
+				'https://cloudinary.com/documentation/wordpress_integration#system_report',
+				'System Report'
+			)
+		);
+
 		?>
 <a href="#TB_inline?&width=520&height=390&inlineId=cloudinary-deactivation" class="thickbox" id="cld-deactivation-link" title="<?php esc_attr_e( 'Tell us how to improve!', 'cloudinary' ); ?>" style="display: none;"><?php esc_html_e( 'Deactivation feedback', 'cloudinary' ); ?>></a>
 <div id="cloudinary-deactivation" style="display: none;">
@@ -152,6 +163,18 @@ class Deactivation {
 			</ul>
 		</div>
 		<div class="modal-footer">
+			<p>
+				<input type="checkbox" id="cld-report" name="report">
+				<label for="cld-report">
+					<?php echo wp_kses_post( $report_label ); ?>
+				</label>
+			</p>
+			<p style="display:none">
+				<input type="checkbox" id="cld-contact" name="contact">
+				<label for="cld-contact">
+					<?php esc_html_e( 'Allow Cloudinary to contact me regarding deactivation of the plugin.', 'cloudinary' ); ?>
+				</label>
+			</p>
 			<button class="button button-primary" disabled="disabled">
 				<?php esc_html_e( 'Submit and deactivate', 'cloudinary' ); ?>
 			</button>
@@ -206,6 +229,27 @@ class Deactivation {
 	}
 
 	/**
+	 * Uploads the System Report to the Cloud.
+	 *
+	 * @return array|WP_Error
+	 */
+	public function upload_report() {
+		require_once ABSPATH . '/wp-admin/includes/file.php';
+
+		$report = $this->plugin->get_component( 'report' )->get_report_data();
+		$temp   = get_temp_dir() . $report['filename'];
+		file_put_contents( $temp, wp_json_encode( $report['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) );
+		$args = array(
+			'file'          => $temp,
+			'public_id'     => $report['filename'],
+			'resource_type' => 'raw',
+			'type'          => 'upload',
+		);
+
+		return $this->plugin->get_component( 'connect' )->api->upload( $temp, $args, array(), false );
+	}
+
+	/**
 	 * Processes the feedback and dispatches it to Cloudinary services.
 	 *
 	 * @param WP_REST_Request $request The Rest Request.
@@ -213,8 +257,10 @@ class Deactivation {
 	 * @return WP_Error|WP_HTTP_Response|WP_REST_Response
 	 */
 	public function rest_callback( WP_REST_Request $request ) {
-		$reason = $request->get_param( 'reason' );
-		$more   = $request->get_param( 'more' );
+		$reason  = $request->get_param( 'reason' );
+		$more    = $request->get_param( 'more' );
+		$report  = filter_var( $request->get_param( 'report' ), FILTER_VALIDATE_BOOLEAN );
+		$contact = filter_var( $request->get_param( 'contact' ), FILTER_VALIDATE_BOOLEAN );
 
 		if ( empty( $reason ) ) {
 			return rest_ensure_response( 200 );
@@ -230,15 +276,24 @@ class Deactivation {
 			return rest_ensure_response( 418 );
 		}
 
-		$url = add_query_arg(
-			array(
-				'reason'    => sanitize_text_field( $reason ),
-				'free_text' => sanitize_textarea_field( $more ),
-			),
-			self::$cld_endpoint
+		$args = array(
+			'reason'    => sanitize_text_field( $reason ),
+			'free_text' => sanitize_textarea_field( $more ),
 		);
 
-		$response = wp_remote_get( $url ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_remote_get_wp_remote_get
+		if ( $report ) {
+			$report = $this->upload_report();
+
+			if ( ! empty( $report['secure_url'] ) ) {
+				$args['report'] = $report['secure_url'];
+			}
+
+			$args['contact'] = $contact;
+		}
+
+		$url = add_query_arg( $args, self::$cld_endpoint );
+
+		$response = wp_safe_remote_get( $url );
 
 		return rest_ensure_response(
 			wp_remote_retrieve_response_code( $response )

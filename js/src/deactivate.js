@@ -11,6 +11,8 @@ const Deactivate = {
 	options: document.querySelectorAll(
 		'.cloudinary-deactivation input[type="radio"]'
 	),
+	report: document.getElementById( 'cld-report' ),
+	contact: document.getElementById( 'cld-contact' ).parentNode,
 	// The feedback submit button.
 	submitButton: document.querySelector(
 		'.cloudinary-deactivation .button-primary'
@@ -40,7 +42,7 @@ const Deactivate = {
 					.setAttribute(
 						'style',
 						'bottom: 0;' +
-							'height: 450px;' +
+							'height: 600px;' +
 							'left: 0;' +
 							'margin: auto;' +
 							'right: 0;' +
@@ -65,6 +67,15 @@ const Deactivate = {
 			} );
 		} );
 
+		// Allowing Cloudinary contact should include the System Report.
+		context.report.addEventListener( 'change', function () {
+			if ( context.report.checked ) {
+				context.contact.removeAttribute( 'style' );
+			} else {
+				context.contact.style.display = 'none';
+			}
+		} );
+
 		// Add event listener to submit the feedback.
 		context.submitButton.addEventListener( 'click', function () {
 			wp.ajax
@@ -73,6 +84,8 @@ const Deactivate = {
 					data: {
 						reason: context.reason,
 						more: context.more?.value,
+						report: context.report.checked,
+						contact: context.contact.checked,
 					},
 					beforeSend( request ) {
 						request.setRequestHeader(
