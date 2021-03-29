@@ -6,6 +6,15 @@ module.exports = function ( grunt ) {
 		.read( 'cloudinary.php' )
 		.match( /Version:\s*(.+)$/im )[ 1 ];
 
+	const options = {
+		plugin_slug:
+			'cloudinary-image-management-and-manipulation-in-the-cloud-cdn',
+		plugin_main_file: 'cloudinary.php',
+		build_dir: '<%= dist_dir %>',
+		assets_dir: 'assets',
+		svn_user: 'cloudinary',
+	};
+
 	grunt.initConfig( {
 		dist_dir: 'build',
 
@@ -56,18 +65,13 @@ module.exports = function ( grunt ) {
 		},
 
 		wp_deploy: {
-			options: {
-				plugin_slug:
-					'cloudinary-image-management-and-manipulation-in-the-cloud-cdn',
-				plugin_main_file: 'cloudinary.php',
-				build_dir: '<%= dist_dir %>',
-				assets_dir: 'assets',
-			},
 			default: {
 				// Default deploy to trunk and a tag release.
+				options,
 			},
 			assets: {
 				// Deploy only screenshots and icons.
+				...options,
 				deploy_trunk: false,
 				deploy_tag: false,
 			},

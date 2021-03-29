@@ -1434,6 +1434,12 @@ class Media extends Settings_Component implements Setup {
 			'post_content'   => '',
 			'post_status'    => 'inherit',
 		);
+
+		// Capture the Caption Text.
+		if ( ! empty( $asset['meta']['caption'] ) ) {
+			$post_args['post_excerpt'] = wp_strip_all_tags( $asset['meta']['caption'] );
+		}
+
 		// Disable Upload_Sync to avoid sync loop.
 		add_filter( 'cloudinary_upload_sync_enabled', '__return_false' );
 		// Create the attachment.
@@ -1576,6 +1582,16 @@ class Media extends Settings_Component implements Setup {
 				if ( ! empty( $asset['meta']['alt'] ) ) {
 					$alt_text = wp_strip_all_tags( $asset['meta']['alt'] );
 					update_post_meta( $asset['attachment_id'], '_wp_attachment_image_alt', $alt_text );
+				}
+				// Capture the Caption Text.
+				if ( ! empty( $asset['meta']['caption'] ) ) {
+					$caption = wp_strip_all_tags( $asset['meta']['caption'] );
+					wp_update_post(
+						array(
+							'ID'           => $asset['attachment_id'],
+							'post_excerpt' => $caption,
+						)
+					);
 				}
 				// Compare Version.
 				$current_version = $this->get_cloudinary_version( $asset['attachment_id'] );
@@ -1888,7 +1904,7 @@ class Media extends Settings_Component implements Setup {
 				$breakpoints['transformation'] = Api::generate_transformation_string( $transformations, 'image' );
 			}
 			$breakpoints = array(
-				'public_id'              => $this->get_public_id( $attachment_id ),
+				'public_id'              => $this->get_public_id( $attachment_id, true ),
 				'type'                   => 'upload',
 				'responsive_breakpoints' => $breakpoint_options,
 				'context'                => $this->get_context_options( $attachment_id ),
@@ -1909,9 +1925,14 @@ class Media extends Settings_Component implements Setup {
 	 * @return array
 	 */
 	public function get_context_options( $attachment_id ) {
+		$caption = get_post( $attachment_id )->post_excerpt;
+
+		if ( empty( $caption ) ) {
+			$caption = get_the_title( $attachment_id );
+		}
 
 		$context_options = array(
-			'caption' => esc_attr( get_the_title( $attachment_id ) ),
+			'caption' => esc_attr( $caption ),
 			'alt'     => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
 			'guid'    => md5( get_the_guid( $attachment_id ) ),
 		);
@@ -1978,7 +1999,7 @@ class Media extends Settings_Component implements Setup {
 	public function get_upload_options( $attachment_id ) {
 
 		// Prepare upload options.
-		$public_id = $this->get_public_id( $attachment_id );
+		$public_id = $this->get_public_id( $attachment_id, true );
 		$folder    = ltrim( dirname( $public_id ), '.' );
 		$options   = array(
 			'unique_filename' => true,

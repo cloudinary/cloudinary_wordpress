@@ -28,6 +28,10 @@ class Column extends Row {
 			$struct['attributes']['style'] = 'width:' . $this->setting->get_param( 'width' ) . ';';
 		}
 
+		if ( $this->setting->has_param( 'class' ) ) {
+			$struct['attributes']['class'] = array_merge( $struct['attributes']['class'], $this->setting->get_param( 'class' ) );
+		}
+
 		return $struct;
 	}
 

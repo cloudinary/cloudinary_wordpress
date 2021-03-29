@@ -138,7 +138,7 @@ class Deactivation {
 		);
 
 		?>
-<a href="#TB_inline?&width=520&height=390&inlineId=cloudinary-deactivation" class="thickbox" id="cld-deactivation-link" title="<?php esc_attr_e( 'Tell us how to improve!', 'cloudinary' ); ?>"><?php esc_html_e( 'Deactivation feedback', 'cloudinary' ); ?>></a>
+<a href="#TB_inline?&width=520&height=390&inlineId=cloudinary-deactivation" class="thickbox" id="cld-deactivation-link" title="<?php esc_attr_e( 'Tell us how to improve!', 'cloudinary' ); ?>" style="display: none;"><?php esc_html_e( 'Deactivation feedback', 'cloudinary' ); ?>></a>
 <div id="cloudinary-deactivation" style="display: none;">
 	<div class="cloudinary-deactivation">
 		<div class="modal-body">
