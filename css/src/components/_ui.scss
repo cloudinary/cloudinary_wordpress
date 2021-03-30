@@ -373,7 +373,9 @@
 				width: $control-width;
 				height: $control-height;
 				margin-right: 0.4rem;
-
+				&.disabled{
+					opacity: 0.4;
+				}
 				input {
 					opacity: 0;
 					width: 0;

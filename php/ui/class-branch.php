@@ -85,7 +85,7 @@ class Branch {
 	 *
 	 * @param string $name The name for this branch.
 	 */
-	public function __construct( $name ) {
+	public function __construct( $name = 'root' ) {
 		$this->name = basename( $name );
 		$this->id   = $name;
 	}
@@ -112,7 +112,6 @@ class Branch {
 		if ( ! isset( $this->paths[ $part ] ) ) {
 			$this->paths[ $part ]           = new Branch( $this->id . '/' . $part );
 			$this->paths[ $part ]->handlers = $this->handlers;
-			$this->paths[ $part ]->set_master( $this->id );
 		}
 
 		return $this->paths[ $part ];
@@ -123,7 +122,7 @@ class Branch {
 	 *
 	 * @return array
 	 */
-	public function get_toggle() {
+	public function get_switch() {
 		$struct                        = array();
 		$struct['element']             = 'label';
 		$struct['attributes']['class'] = array(
@@ -132,6 +131,61 @@ class Branch {
 		);
 		$struct['children']['input']   = $this->input();
 		$struct['children']['slider']  = $this->slider();
+
+		return $struct;
+	}
+
+	/**
+	 * Get the toggle part.
+	 *
+	 * @return array
+	 */
+	public function toggle() {
+		$struct                        = array();
+		$struct['element']             = 'label';
+		$struct['attributes']['class'] = array(
+			'cld-input-icon-toggle-control',
+			'mini',
+		);
+		$input                         = $this->input();
+		$input['attributes']['id']     = $this->id . '_toggle';
+		if ( $input['attributes']['data-master'] ) {
+			unset( $input['attributes']['data-master'] );
+		}
+		$input['attributes']['data-bind-trigger'] = $this->id . '_toggle';
+		$struct['children']['input']              = $input;
+
+		$slider                        = $this->slider();
+		$slider['element']             = 'i';
+		$slider['attributes']['class'] = array(
+			'cld-input-icon-toggle-control-slider',
+		);
+		$slider['children']['on']      = $this->get_toggle_icon( 'icon-on dashicons-arrow-up' );
+		$slider['children']['off']     = $this->get_toggle_icon( 'icon-off dashicons-arrow-down' );
+		$struct['children']['slider']  = $slider;
+
+		$name                       = $this->get_name();
+		$name['attributes']['for']  = $this->id . '_toggle';
+		$struct['children']['name'] = $name;
+
+		return $struct;
+	}
+
+	/**
+	 * Get a toggle icon part.
+	 *
+	 * @param string $icon Ican class.
+	 *
+	 * @return array
+	 */
+	protected function get_toggle_icon( $icon ) {
+		$struct                        = array();
+		$struct['element']             = 'i';
+		$struct['attributes']['class'] = array(
+			$icon,
+			'dashicons',
+		);
+		$struct['render']              = true;
 
 		return $struct;
 	}
@@ -224,16 +278,40 @@ class Branch {
 	/**
 	 * Render the parts together.
 	 *
-	 * @return array
+	 * @param bool $root Flag to signal a root render.
+	 *
+	 * @return array|null
 	 */
-	public function render() {
+	public function render( $root = true ) {
 
 		$children = array();
 		foreach ( $this->paths as $key => $branch ) {
-			$children[ $branch->id ] = $branch->render();
-			$this->branch_size      += $branch->branch_size;
+			$key = ! empty( $branch->paths ) ? 'a_' . $branch->id : 'b_' . $branch->id;
+			if ( ! $root ) {
+				$branch->set_master( $this->id );
+			}
+			$children[ $key ]   = $branch->render( false );
+			$this->branch_size += $branch->branch_size;
 		}
-
+		if ( ! empty( $children ) ) {
+			ksort( $children );
+			$child_branches = array(
+				'element'    => 'ul',
+				'attributes' => array(
+					'class' => array(
+						'tree-branch',
+					),
+				),
+				'children'   => $children,
+			);
+			if ( $root ) {
+				return $child_branches;
+			}
+		}
+		$name = $this->toggle();
+		if ( empty( $this->paths ) ) {
+			$name = $this->get_name();
+		}
 		$struct = array(
 			'element'    => 'li',
 			'id'         => $this->id,
@@ -246,21 +324,22 @@ class Branch {
 				),
 			),
 			'children'   => array(
-				'toggle' => $this->get_toggle(),
-				'name'   => $this->get_name(),
+				'switch' => $this->get_switch(),
+				'name'   => $name,
 			),
 		);
 
-		if ( ! empty( $children ) ) {
-			$struct['children']['branches'] = array(
-				'element'    => 'ul',
-				'attributes' => array(
-					'class' => array(
-						'tree-branch',
-					),
+		if ( ! empty( $child_branches ) ) {
+			$child_branches['attributes'] = array(
+				'data-condition' => wp_json_encode( array( $this->id . '_toggle' => true ) ),
+				'class'          => array(
+					'cld-ui-conditional',
+					'closed',
+					'tree-branch',
 				),
-				'children'   => $children,
 			);
+
+			$struct['children']['branches'] = $child_branches;
 		}
 
 		return $struct;

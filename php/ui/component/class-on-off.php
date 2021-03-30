@@ -86,7 +86,7 @@ class On_Off extends Text {
 			$struct['attributes']['data-master'] = wp_json_encode( $this->setting->get_param( 'master' ) );
 		}
 
-		if ( true === $this->setting->has_param( 'master_required', false ) && empty( $struct['attributes']['data-master'] ) ) {
+		if ( true === $this->setting->get_param( 'disabled', false ) || true === $this->setting->has_param( 'master_required', false ) && empty( $struct['attributes']['data-master'] ) ) {
 			$struct['attributes']['disabled'] = 'disabled';
 		}
 
@@ -109,7 +109,15 @@ class On_Off extends Text {
 		if ( true === $this->setting->get_param( 'mini', false ) ) {
 			$struct['attributes']['class'][] = 'mini';
 		}
-		if ( true === $this->setting->get_param( 'master_required', false ) && empty( $this->setting->get_param( 'master', array() ) ) ) {
+		if (
+			true === $this->setting->get_param( 'disabled', false ) ||
+			true === $this->setting->get_param( 'master_required', false ) &&
+			empty(
+				$this->setting->get_param(
+					'master',
+					array()
+				)
+			) ) {
 			$struct['attributes']['class'][] = 'disabled';
 		}
 

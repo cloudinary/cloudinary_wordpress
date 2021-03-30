@@ -66,12 +66,14 @@ class Table extends Component {
 	 * @return array
 	 */
 	protected function build_head() {
+		$columns = $this->setting->get_param( 'columns', array() );
+
 		$header = array(
 			'element' => 'thead',
 			array(
 				'element' => 'tr',
 			),
-			$this->head_columns(),
+			$this->head_columns( $columns ),
 		);
 
 		return $header;
@@ -80,10 +82,11 @@ class Table extends Component {
 	/**
 	 * Build html params for the header columns.
 	 *
+	 * @param array $columns The columns to build.
+	 *
 	 * @return array
 	 */
-	protected function head_columns() {
-		$columns        = $this->setting->get_param( 'columns', array() );
+	protected function head_columns( $columns ) {
 		$header_columns = array();
 		foreach ( $columns as $slug => $column ) {
 			$this->columns[] = $slug;

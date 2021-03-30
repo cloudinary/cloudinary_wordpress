@@ -102,10 +102,8 @@ class File_Folder extends On_Off {
 			'tree',
 		);
 
-		// Set the main tree item.
-		$this->tree->name                  = __( 'Select All Assets', 'cloudinary' );
 		$struct['children']['tree']        = $this->tree->render();
-		$struct['attributes']['data-slug'] = $this->get_slug();
+		$struct['attributes']['data-slug'] = $this->setting->get_slug();
 
 		return $struct;
 	}
@@ -145,7 +143,7 @@ class File_Folder extends On_Off {
 	}
 
 	/**
-	 * Set the maaster control.
+	 * Set the master control.
 	 *
 	 * @param string $master The slug of the master setting.
 	 * @param string $slug   The slug of the setting to be controlled.
