@@ -1,0 +1,17 @@
+{
+  "git": {
+    "requireBranch": "master",
+    "commitMessage": "Version ${version}",
+    "tagName": "${version}",
+    "tagAnnotation": "Version ${version}"
+  },
+  "github": {
+    "release": true,
+    "releaseName": "Version ${version}",
+    "draft": true,
+    "tokenRef": "GITHUB_TOKEN"
+  },
+   "npm": {
+    "publish": false
+  }
+}
