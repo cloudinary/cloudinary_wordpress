@@ -22,10 +22,12 @@
     "lint:style": "wp-scripts lint-style",
     "lint": "npm-run-all lint:php lint:js lint:style",
     "package": "npm run build && grunt package",
-    "deploy": "npm run build && grunt deploy",
+    "deploy": "npm run build && grunt deploy && npm run release",
     "deploy-assets": "grunt deploy-assets",
     "postinstall": "composer install",
-    "readme": "composer readme"
+    "readme": "composer readme",
+    "release": "release-it",
+    "release:dry": "release-it --dry-run"
   },
   "husky": {
     "hooks": {
@@ -124,6 +126,7 @@
     "puppeteer": "npm:puppeteer-core@3.0.0",
     "react": "17.0.1",
     "react-dom": "17.0.1",
+    "release-it": "^14.5.0",
     "rtlcss": "2.6.1",
     "rtlcss-webpack-plugin": "4.0.4",
     "semver": "7.3.2",
