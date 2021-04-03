@@ -32,20 +32,9 @@ class Table extends Component {
 	protected $columns = array();
 
 	/**
-	 * Table constructor.
-	 *
-	 * @param Setting $setting The setting.
-	 */
-	public function __construct( $setting ) {
-
-		parent::__construct( $setting );
-		$this->register_components();
-	}
-
-	/**
 	 * Register table structures as components.
 	 */
-	protected function register_components() {
+	public function setup() {
 		$table = array(
 			'element'    => 'table',
 			'attributes' => array(

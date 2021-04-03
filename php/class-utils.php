@@ -9,7 +9,6 @@ namespace Cloudinary;
 
 use Cloudinary\Settings\Setting;
 use Google\Web_Stories\Story_Post_Type;
-use function Clue\StreamFilter\fun;
 
 /**
  * Class that includes utility methods.
@@ -129,84 +128,5 @@ class Utils {
 		}
 
 		return $return;
-	}
-
-	/**
-	 * Get and sanitize files from a folder.
-	 *
-	 * @param string $folder       The folder to get from.
-	 * @param string $version      The version.
-	 * @param string $callback     The callback for sanitizing the url.
-	 * @param bool   $strip_folder Flag for stripping the basename.
-	 *
-	 * @return array
-	 */
-	public static function get_folder_files( $folder, $version, $callback = 'home_url', $strip_folder = true ) {
-		if ( ! is_callable( $callback ) ) {
-			$callback = 'home_url';
-		}
-		$default      = array(
-			'version' => null,
-			'files'   => array(),
-		);
-		$folder_key   = md5( $folder );
-		$folder_cache = get_option( $folder_key, $default );
-		if ( empty( $folder_cache['files'] ) || $folder_cache['version'] !== $version ) {
-			$folder_cache['files']   = array();
-			$folder_cache['version'] = $version;
-			$found                   = self::get_files( $folder );
-			foreach ( $found as $file ) {
-				$strip_length                  = $strip_folder ? strlen( $folder ) : strlen( dirname( $folder ) . '/' );
-				$file_part                     = substr( $file, $strip_length );
-				$url                           = call_user_func( $callback, wp_normalize_path( $file_part ) );
-				$folder_cache['files'][ $url ] = $file . '?ver=' . $version;
-			}
-			// Add files cache.
-			update_option( $folder_key, $folder_cache, false );
-		}
-
-		return $folder_cache['files'];
-	}
-
-	/**
-	 * Get files from a folder.
-	 *
-	 * @param string $path      The file path.
-	 * @param array  $types     The file types to include.
-	 * @param bool   $trim_base Flag to trim the base off.
-	 *
-	 * @return array
-	 */
-	public static function get_files( $path, $types = array(), $trim_base = false ) {
-
-		$exclude = array(
-			'node_modules',
-			'vendor',
-		);
-
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-		$files = list_files( $path, PHP_INT_MAX, $exclude );
-		if ( ! empty( $types ) ) {
-			$files = array_filter(
-				$files,
-				function ( $file ) use ( $types ) {
-					return in_array( pathinfo( $file, PATHINFO_EXTENSION ), $types, true );
-				}
-			);
-		}
-
-		if ( true === $trim_base ) {
-			$path_len = strlen( $path );
-			$files    = array_map(
-				function ( $file ) use ( $path_len ) {
-					return substr( $file, $path_len );
-				},
-				$files
-			);
-		}
-
-		sort( $files );
-
-		return $files;
 	}
 }

@@ -171,6 +171,12 @@ class On_Off extends Text {
 	 * @return bool
 	 */
 	public function sanitize_value( $value ) {
-		return 'on' === $value ? 'on' : 'off';
+		$allowed = array(
+			'on',
+			'some',
+			'off',
+		);
+
+		return in_array( $value, $allowed, true ) ? $value : 'off';
 	}
 }

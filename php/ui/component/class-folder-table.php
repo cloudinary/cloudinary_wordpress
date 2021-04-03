@@ -18,6 +18,13 @@ use Cloudinary\Utils;
 class Folder_Table extends Table {
 
 	/**
+	 * Flag if component is a capture type.
+	 *
+	 * @var bool
+	 */
+	public $capture = true;
+
+	/**
 	 * Holds the slugs for the file lists.
 	 *
 	 * @var array
@@ -27,11 +34,11 @@ class Folder_Table extends Table {
 	/**
 	 * Register table structures as components.
 	 */
-	protected function register_components() {
+	public function setup() {
 		$this->setting->set_param( 'columns', $this->build_headers() );
 		$this->setting->set_param( 'rows', $this->build_rows() );
 		$this->setting->set_param( 'file_lists', $this->slugs );
-		parent::register_components();
+		parent::setup();
 	}
 
 	/**
@@ -45,6 +52,7 @@ class Folder_Table extends Table {
 				array(
 					'slug'        => $this->get_title_slug(),
 					'type'        => 'on_off',
+					'default'     => 'on',
 					'description' => $this->setting->get_param( 'title', '' ),
 				),
 			),
@@ -71,27 +79,55 @@ class Folder_Table extends Table {
 	}
 
 	/**
+	 * Get the rows and build required params.
+	 *
+	 * @return  array
+	 */
+	protected function get_rows() {
+		$roots       = $this->setting->get_param( 'root_paths', array() );
+		$row_default = array(
+			'version' => time(),
+			'title'   => null,
+			'path'    => null,
+			'files'   => array(),
+			'types'   => array_keys( $this->get_filter_types() ),
+			'filters' => array(),
+		);
+		$rows        = array();
+		foreach ( $roots as $slug => $row ) {
+			$row            = wp_parse_args( $row, $row_default );
+			$row['slug']    = $slug;
+			$row['filters'] = $this->get_supported_filters( $row['unique_extensions'] );
+
+			// Add to list.
+			$rows[ $slug ] = $row;
+		}
+
+		return $rows;
+	}
+
+	/**
 	 * Build the rows.
 	 *
 	 * @return array
 	 */
 	protected function build_rows() {
-		$roots      = $this->setting->get_param( 'root_paths', array() );
+
 		$row_params = array();
-		foreach ( $roots as $root => $path ) {
-			$files                           = $this->get_files( $path );
-			$slug                            = sanitize_file_name( $root );
-			$row_params[ $slug ]             = $this->build_column( $root, $slug, $path );
+		$rows       = $this->get_rows();
+		foreach ( $rows as $slug => $row ) {
+			$row_params[ $slug ]             = $this->build_column( $row );
 			$row_params[ $slug . '_spacer' ] = array();
 			$content                         = array(
 				'content' => __( 'No assets found.', 'cloudinary' ),
 			);
-			if ( ! empty( $files ) ) {
+			if ( ! empty( $row['files'] ) ) {
 				$content       = array(
 					'slug'       => $slug . '_files',
 					'type'       => 'file_folder',
-					'base_path'  => $path,
-					'paths'      => $files,
+					'base_path'  => $row['path'],
+					'action'     => 'selection',
+					'paths'      => $row['files'],
 					'file_types' => $this->get_filter_types( $slug ),
 				);
 				$this->slugs[] = $slug . '_files';
@@ -104,7 +140,6 @@ class Folder_Table extends Table {
 					$content,
 				),
 			);
-
 		}
 
 		return $row_params;
@@ -113,28 +148,31 @@ class Folder_Table extends Table {
 	/**
 	 * Build a single column.
 	 *
-	 * @param string $title The title.
-	 * @param string $slug  The slug.
-	 * @param string $path  The path.
+	 * @param array $row The row array to column for.
 	 *
 	 * @return array
 	 */
-	protected function build_column( $title, $slug, $path ) {
-		$active = empty( $this->get_files( $path ) );
-		$column = array(
+	protected function build_column( $row ) {
+
+		$disabled = empty( $row['files'] );
+		$column   = array(
 			'title_column' => array(
 				array(
-					'slug'     => $slug,
-					'type'     => 'on_off',
-					'disabled' => $active,
-					'master'   => array(
+					'slug'      => $row['slug'],
+					'title'     => $this->setting->get_value( $this->get_title_slug() ),
+					'type'      => 'on_off',
+					'disabled'  => $disabled,
+					'default'   => 'on',
+					'base_path' => $row['path'],
+					'action'    => 'all_selector',
+					'master'    => array(
 						$this->get_title_slug(),
 					),
 				),
 				array(
 					'type'             => 'icon_toggle',
-					'slug'             => 'toggle_' . $slug,
-					'description_left' => $title,
+					'slug'             => 'toggle_' . $row['slug'],
+					'description_left' => $row['title'],
 					'off'              => 'dashicons-arrow-down',
 					'on'               => 'dashicons-arrow-up',
 				),
@@ -144,7 +182,7 @@ class Folder_Table extends Table {
 					'content'    => '',
 					'render'     => true,
 					'attributes' => array(
-						'id'    => 'name_' . $slug . '_size_wrapper',
+						'id'    => 'name_' . $row['slug'] . '_size_wrapper',
 						'class' => array(
 							'file-size',
 							'small',
@@ -154,7 +192,7 @@ class Folder_Table extends Table {
 			),
 		);
 
-		$column_filters = $this->build_column_filters( $slug, $path );
+		$column_filters = $this->build_column_filters( $row );
 
 		$column = array_merge( $column, $column_filters );
 
@@ -164,20 +202,18 @@ class Folder_Table extends Table {
 	/**
 	 * Build the filters columns.
 	 *
-	 * @param string $slug The slug.
-	 * @param string $path The path.
+	 * @param array $row The row params.
 	 *
 	 * @return array
 	 */
-	protected function build_column_filters( $slug, $path ) {
+	protected function build_column_filters( $row ) {
 		$filters        = $this->setting->get_param( 'filters', array() );
 		$column_filters = array();
 		foreach ( $filters as $filter => $types ) {
-			$filter_slug = $this->get_filter_slug( $filter );
-			if ( ! $this->path_has_filter_types( $path, $filter ) ) {
-				$column_filters[ $filter_slug ] = array();
+			if ( ! $row['filters'][ $filter ] ) {
 				continue;
 			}
+			$filter_slug                    = $this->get_filter_slug( $filter );
 			$column_filters[ $filter_slug ] = array(
 				'attributes' => array(
 					'style' => 'text-align:right;width:20%;',
@@ -188,7 +224,7 @@ class Folder_Table extends Table {
 					'content'    => '',
 					'render'     => true,
 					'attributes' => array(
-						'id'    => $filter_slug . '_' . $slug . '_size_wrapper',
+						'id'    => $filter_slug . '_' . $row['slug'] . '_size_wrapper',
 						'class' => array(
 							'file-size',
 							'small',
@@ -197,10 +233,10 @@ class Folder_Table extends Table {
 				),
 				array(
 					'type'   => 'on_off',
-					'slug'   => $filter_slug . '_' . $slug,
+					'slug'   => $filter_slug . '_' . $row['slug'],
 					'master' => array(
 						$filter_slug,
-						$slug,
+						$row['slug'],
 					),
 				),
 			);
@@ -212,53 +248,45 @@ class Folder_Table extends Table {
 	/**
 	 * Get the files for this path.
 	 *
-	 * @param string $path The path.
+	 * @param string $path    The path.
+	 * @param string $version The path version.
+	 * @param array  $types   The types to filter by.
 	 *
 	 * @return array|mixed
 	 */
-	protected function get_files( $path ) {
-		$files = get_transient( $this->get_files_transient_key( $path ) );
-		if ( empty( $files ) ) {
-			$types = $this->get_filter_types();
-			$files = Utils::get_files( $path, array_keys( $types ), true );
-			set_transient( $this->get_files_slug(), $files, 60 );
+	protected function get_files( $path, $version, $types = array() ) {
+		$transient_key = md5( $path );
+		$paths         = get_transient( $transient_key );
+		if ( empty( $paths ) || $version !== $paths['version'] || $types !== $paths['types'] ) {
+			$paths                      = array(
+				'version'           => $version,
+				'types'             => $types,
+				'unique_extensions' => array(),
+			);
+			$paths['files']             = Utils::get_files( $path, array_keys( $types ), true );
+			$paths['unique_extensions'] = Utils::get_unique_extensions( $paths['files'] );
+			set_transient( $transient_key, $paths );
 		}
 
-		return $files;
+		return $paths;
 	}
 
 	/**
-	 * Checks if the path has any file type that match the filter.
+	 * Gets the supported filters from a list of extensions.
 	 *
-	 * @param string $path The path.
-	 * @param string $type The type to check.
+	 * @param array $extensions The list of extensions to check with.
 	 *
-	 * @return bool
+	 * @return array
 	 */
-	protected function path_has_filter_types( $path, $type ) {
-
-		static $filtered_types = array();
-
-		// Cache the values.
-		$type = $this->get_filter_slug( $type );
-		if ( ! isset( $filtered_types[ $path ] ) ) {
-
-			$all_types               = $this->get_filter_types();
-			$files                   = $this->get_files( $path );
-			$files_types             = array_map(
-				function ( $file ) use ( $all_types ) {
-					$ext = pathinfo( $file, PATHINFO_EXTENSION );
-
-					return isset( $all_types[ $ext ] ) ? $all_types[ $ext ] : null;
-				},
-				$files
-			);
-			$files_types             = array_filter( $files_types );
-			$files_types             = array_unique( $files_types );
-			$filtered_types[ $path ] = array_fill_keys( $files_types, true );
+	protected function get_supported_filters( $extensions ) {
+		$filters   = $this->setting->get_param( 'filters', array() );
+		$supported = array();
+		foreach ( $filters as $filter => $types ) {
+			$match                = array_intersect( $extensions, $types );
+			$supported[ $filter ] = ! empty( $match );
 		}
 
-		return isset( $filtered_types[ $path ][ $type ] );
+		return $supported;
 	}
 
 	/**
@@ -313,18 +341,5 @@ class Folder_Table extends Table {
 		$slug = sanitize_key( $filter );
 
 		return $slug . '_filter';
-	}
-
-	/**
-	 * Get the transient key for storing files.
-	 *
-	 * @param string $path The path to get the key for.
-	 *
-	 * @return string
-	 */
-	protected function get_files_transient_key( $path ) {
-		$key = wp_json_encode( $this->get_filter_types( $path ) );
-
-		return md5( $key . '_' . $path );
 	}
 }

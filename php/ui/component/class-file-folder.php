@@ -1,6 +1,6 @@
 <?php
 /**
- * Color Field UI Component.
+ * File Folder Tree UI Component.
  *
  * @package Cloudinary
  */
@@ -9,7 +9,6 @@ namespace Cloudinary\UI\Component;
 
 use Cloudinary\Settings\Setting;
 use Cloudinary\UI\Branch;
-use function Cloudinary\get_plugin_instance;
 
 /**
  * Class Color Component
@@ -47,48 +46,6 @@ class File_Folder extends On_Off {
 	protected $handler_files = array();
 
 	/**
-	 * Render component for a setting.
-	 * Component constructor.
-	 *
-	 * @param Setting $setting The parent Setting.
-	 */
-	public function __construct( $setting ) {
-
-		parent::__construct( $setting );
-
-		$paths       = (array) $this->setting->get_param( 'paths', array() );
-		$checked     = (array) $this->setting->get_value();
-		$clean_value = array();
-		$base_path   = $this->setting->get_param( 'base_path' );
-		$this->tree  = new Branch( $this->setting->get_slug() . '_root' );
-		$this->tree->set_master( $this->setting->get_param( 'master' ) );
-		$handlers = $this->setting->get_param( 'file_types', array() );
-
-		foreach ( $paths as $path ) {
-			$parts    = explode( '/', ltrim( $path, '/' ) );
-			$previous = $this->tree;
-			$length   = count( $parts ) - 1;
-			foreach ( $parts as $index => $folder ) {
-				$full_path = $base_path . $path;
-				$previous  = $previous->get_path( $folder );
-				if ( $length === $index ) {
-					$previous->value  = $full_path;
-					$previous->parent = $this->setting->get_slug();
-					if ( in_array( $full_path, $checked, true ) ) {
-						$previous->checked = true;
-						$clean_value[]     = $full_path;
-					}
-					$ext = pathinfo( $folder, PATHINFO_EXTENSION );
-					if ( isset( $handlers[ $ext ] ) ) {
-						$previous->set_master( $handlers[ $ext ] );
-					}
-				}
-			}
-		}
-		$this->setting->set_param( 'clean_value', $clean_value );
-	}
-
-	/**
 	 * Get the folder part struct.
 	 *
 	 * @param array $struct The structure.
@@ -116,6 +73,37 @@ class File_Folder extends On_Off {
 	 * @return mixed
 	 */
 	protected function tree( $struct ) {
+		$paths       = (array) $this->setting->get_param( 'paths', array() );
+		$checked     = (array) $this->setting->get_value();
+		$clean_value = array();
+		$base_path   = $this->setting->get_param( 'base_path' );
+		$this->tree  = new Branch( $this->setting->get_slug() . '_root' );
+		$this->tree->set_master( $this->setting->get_param( 'master' ) );
+		$handlers = $this->setting->get_param( 'file_types', array() );
+
+		foreach ( $paths as $path ) {
+			$full_path = trailingslashit( $base_path ) . $path;
+			$parts     = explode( '/', ltrim( $path, '/' ) );
+			$previous  = $this->tree;
+			$length    = count( $parts ) - 1;
+			foreach ( $parts as $index => $folder ) {
+
+				$previous = $previous->get_path( $folder );
+				if ( $length === $index ) {
+					$previous->value  = $full_path;
+					$previous->parent = $this->setting->get_slug();
+					if ( in_array( $full_path, $checked, true ) ) {
+						$previous->checked = true;
+						$clean_value[]     = $full_path;
+					}
+					$ext = pathinfo( $folder, PATHINFO_EXTENSION );
+					if ( isset( $handlers[ $ext ] ) ) {
+						$previous->set_master( $handlers[ $ext ] );
+					}
+				}
+			}
+		}
+		$this->setting->set_param( 'clean_value', $clean_value );
 
 		$struct['element']               = 'div';
 		$struct['attributes']['class'][] = 'tree';
@@ -163,8 +151,10 @@ class File_Folder extends On_Off {
 	 * @return array|bool|string
 	 */
 	public function sanitize_value( $value ) {
-		$files = json_decode( $value, true );
+		if ( is_string( $value ) ) {
+			$value = json_decode( $value, true );
+		}
 
-		return array_map( 'esc_url', (array) $files );
+		return array_map( 'esc_url', (array) $value );
 	}
 }

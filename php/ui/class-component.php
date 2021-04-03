@@ -107,6 +107,13 @@ abstract class Component {
 	}
 
 	/**
+	 * Setup the component.
+	 */
+	public function setup() {
+
+	}
+
+	/**
 	 * Enqueue scripts this component may use.
 	 */
 	public function enqueue_scripts() {
