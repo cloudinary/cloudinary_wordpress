@@ -459,17 +459,35 @@ class Cache extends Settings_Component implements Setup {
 			return null;
 		}
 
+		$file_type_filters = $this->get_filetype_filters();
+		$types             = array();
+		foreach ( $file_type_filters as $filter ) {
+			$types = array_merge( $types, $filter );
+		}
+
 		// Get just the URLS to get.
 		$urls_on_page = array_keys( $paths );
 		// Get all instances of paths from the page with version suffix.
-		preg_match_all( '#' . implode( '|', $urls_on_page ) . '\b([-a-zA-Z0-9@:%_\+.~\#?&//=]*)?#si', $html, $result );
-		$result[0] = array_filter( $result[0], 'wp_http_validate_url' );
+		preg_match_all( '/(?<=["\'])[^"\']+?\.(' . implode( '|', $types ) . ')\b([-a-zA-Z0-9@:%_\+.~\#?&=]*)?(?=["\'])/', $html, $result );
 		// Bail if not found.
 		if ( empty( $result[0] ) ) {
 			return null;
 		}
+		$found_urls = array_filter( $result[0], 'wp_http_validate_url' );
+		$found_urls = array_filter(
+			$found_urls,
+			function ( $url ) use ( $urls_on_page ) {
+				foreach ( $urls_on_page as $page_url ) {
+					if ( false !== strpos( $url, $page_url ) ) {
+						return true;
+					}
+				}
+
+				return false;
+			}
+		);
 		// Clean out duplicates.
-		$found_urls = array_unique( $result[0] );
+		$found_urls = array_unique( $found_urls );
 		$sources    = array();
 		$urls       = $this->get_cached_urls( $found_urls );
 		$missing    = array_diff( $found_urls, array_keys( $urls ) );
@@ -584,19 +602,24 @@ class Cache extends Settings_Component implements Setup {
 	/**
 	 * Get or count all un-cached urls for syncing.
 	 *
-	 * @param bool $count Count only flag.
-	 *
 	 * @return array
 	 */
-	public function get_uncached_items( $count = false ) {
+	public function get_uncached_items() {
 
-		$type = 'id, src_path, local_url';
-		if ( $count ) {
-			$type = 'COUNT(id)';
-		}
-		$query = "SELECT {$type} FROM {$this->cache_table} WHERE cached_url IS NULL";
+		$query = "SELECT id, src_path, local_url FROM {$this->cache_table} WHERE cached_url IS NULL";
 
 		return $this->wpdb->get_results( $this->wpdb->prepare( $query ), ARRAY_A );  // phpcs:ignore WordPress.DB.PreparedSQL
+	}
+
+	/**
+	 * Count how many items are to be cached.
+	 *
+	 * @return int
+	 */
+	public function count_uncached_items() {
+		$query = "SELECT COUNT(id) AS total FROM {$this->cache_table} WHERE cached_url IS NULL";
+
+		return (int) $this->wpdb->get_var( $this->wpdb->prepare( $query ) );  // phpcs:ignore WordPress.DB.PreparedSQL
 	}
 
 	/**
@@ -614,7 +637,8 @@ class Cache extends Settings_Component implements Setup {
 	 *  Update changes and start sync.
 	 */
 	public function start_sync() {
-		if ( ! empty( $this->get_uncached_items( true ) ) ) {
+
+		if ( ! empty( $this->count_uncached_items() ) ) {
 			$this->api->background_request( 'upload_cache' );
 		}
 	}
