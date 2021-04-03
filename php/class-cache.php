@@ -402,7 +402,17 @@ class Cache extends Settings_Component implements Setup {
 	public function html_rewrite( $html ) {
 
 		$base_url = md5( filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_SANITIZE_URL ) );
-		$paths    = apply_filters( 'cloudinary_get_cache_paths', array() );
+		/**
+		 * Filter the cache paths to be looked for and replaced.
+		 *
+		 * @hook    cloudinary_get_cache_paths
+		 * @default array()
+		 *
+		 * @param $paths {array} The filtered paths.
+		 *
+		 * @return  {array}
+		 */
+		$paths = apply_filters( 'cloudinary_get_cache_paths', array() );
 		if ( empty( $paths ) ) {
 			return $html;
 		}
@@ -666,13 +676,12 @@ class Cache extends Settings_Component implements Setup {
 	}
 
 	/**
-	 * Get the plugins table structure.
+	 * Get the file type filters that is used to determine what kind of files get cached.
 	 *
-	 * @return array|mixed
+	 * @return array
 	 */
-	protected function get_plugins_table() {
-
-		$default_filters   = array(
+	protected function get_filetype_filters() {
+		$default_filters = array(
 			__( 'Images', 'cloudinary' ) => array(
 				'jpg',
 				'png',
@@ -685,9 +694,29 @@ class Cache extends Settings_Component implements Setup {
 				'js',
 			),
 		);
-		$file_type_filters = apply_filters( 'cloudinary_plugin_asset_cache_filters', $default_filters );
 
-		$types = array();
+		/**
+		 * Filter types of files that can be cached.
+		 *
+		 * @hook    cloudinary_plugin_asset_cache_filters
+		 * @default array()
+		 *
+		 * @param $default_filters {array} The types of files to be filtered.
+		 *
+		 * @return  {array}
+		 */
+		return apply_filters( 'cloudinary_plugin_asset_cache_filters', $default_filters );
+	}
+
+	/**
+	 * Get the plugins table structure.
+	 *
+	 * @return array|mixed
+	 */
+	protected function get_plugins_table() {
+
+		$file_type_filters = $this->get_filetype_filters();
+		$types             = array();
 		foreach ( $file_type_filters as $filter ) {
 			$types = array_merge( $types, $filter );
 		}
@@ -727,22 +756,9 @@ class Cache extends Settings_Component implements Setup {
 	 * @return array
 	 */
 	protected function get_theme_table() {
-		$default_filters   = array(
-			__( 'Images', 'cloudinary' ) => array(
-				'jpg',
-				'png',
-				'svg',
-			),
-			__( 'CSS', 'cloudinary' )    => array(
-				'css',
-			),
-			__( 'JS', 'cloudinary' )     => array(
-				'js',
-			),
-		);
-		$file_type_filters = apply_filters( 'cloudinary_folder_asset_cache_filters', $default_filters );
 
-		$types = array();
+		$file_type_filters = $this->get_filetype_filters();
+		$types             = array();
 		foreach ( $file_type_filters as $filter ) {
 			$types = array_merge( $types, $filter );
 		}
@@ -778,22 +794,8 @@ class Cache extends Settings_Component implements Setup {
 	 */
 	protected function get_wp_table() {
 
-		$default_filters   = array(
-			__( 'Images', 'cloudinary' ) => array(
-				'jpg',
-				'png',
-				'svg',
-			),
-			__( 'CSS', 'cloudinary' )    => array(
-				'css',
-			),
-			__( 'JS', 'cloudinary' )     => array(
-				'js',
-			),
-		);
-		$file_type_filters = apply_filters( 'cloudinary_folder_asset_cache_filters', $default_filters );
-
-		$types = array();
+		$file_type_filters = $this->get_filetype_filters();
+		$types             = array();
 		foreach ( $file_type_filters as $filter ) {
 			$types = array_merge( $types, $filter );
 		}
