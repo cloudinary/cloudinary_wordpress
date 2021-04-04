@@ -833,6 +833,9 @@ tr .file-size.small {
 	margin-left: 12px;
 	margin-top: -8px;
 
+	.success {
+		color: $color-notification-success;
+	}
 	td + & {
 		padding-top: 0;
 	}

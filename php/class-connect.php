@@ -10,6 +10,7 @@ namespace Cloudinary;
 use Cloudinary\Component\Config;
 use Cloudinary\Component\Notice;
 use Cloudinary\Component\Setup;
+use Cloudinary\Connect\Api;
 
 /**
  * Cloudinary connection class.
@@ -32,7 +33,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 *
 	 * @since   0.1
 	 *
-	 * @var     \Cloudinary\Api
+	 * @var     Api
 	 */
 	public $api;
 

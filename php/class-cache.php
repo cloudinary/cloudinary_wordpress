@@ -96,16 +96,12 @@ class Cache extends Settings_Component implements Setup {
 	 * Holds the meta keys to be used.
 	 */
 	const META_KEYS = array(
-		'queue'           => '_cloudinary_cache_queue',
-		'url'             => '_cloudinary_cache_url',
-		'cached'          => '_cloudinary_cached',
-		'plugin_files'    => '_cloudinary_plugin_files',
 		'upload_error'    => '_cloudinary_upload_errors',
 		'uploading_cache' => '_cloudinary_uploading_cache',
-		'content_folders' => '_cloudinary_content_folders',
 		'has_table'       => '_cloudinary_has_table',
 		'cache_table'     => 'cld_cache',
 		'cache_point'     => 'cld_cache_points',
+		'upload_method'   => '_cloudinary_upload_method',
 	);
 
 	/**
@@ -561,14 +557,16 @@ class Cache extends Settings_Component implements Setup {
 		if ( empty( get_transient( self::META_KEYS['uploading_cache'] ) ) ) {
 			set_transient( self::META_KEYS['uploading_cache'], true, 60 ); // Flag a transient to prevent multiple background uploads.
 			$to_upload = $this->get_uncached_items();
-			foreach ( $to_upload as &$upload ) {
+			foreach ( $to_upload as $upload ) {
 				set_transient( self::META_KEYS['uploading_cache'], true, 60 ); // Flag a transient to prevent multiple background uploads.
-				$upload['cached_url'] = $this->sync_static( $upload['src_path'], $upload['src_path'] );
+				$upload['cached_url'] = $this->sync_static( $upload['src_path'], $upload['local_url'] );
 				if ( ! is_wp_error( $upload['cached_url'] ) && ! empty( $upload['cached_url'] ) ) {
 					$upload['timestamp'] = time();
 					$this->set_cached_url( $upload );
 				}
 			}
+			// Clear it so the next can try.
+			delete_transient( self::META_KEYS['uploading_cache'] );
 		}
 	}
 
@@ -606,7 +604,7 @@ class Cache extends Settings_Component implements Setup {
 	 */
 	public function get_uncached_items() {
 
-		$query = "SELECT id, src_path, local_url FROM {$this->cache_table} WHERE cached_url IS NULL";
+		$query = "SELECT id, src_path, local_url FROM {$this->cache_table} WHERE cached_url IS NULL LIMIT 5";
 
 		return $this->wpdb->get_results( $this->wpdb->prepare( $query ), ARRAY_A );  // phpcs:ignore WordPress.DB.PreparedSQL
 	}
@@ -655,6 +653,27 @@ class Cache extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Gets the upload method: url or file upload by determining if the site is accessible from the outside.
+	 *
+	 * @return string
+	 */
+	protected function get_upload_method() {
+		$method = get_transient( self::META_KEYS['upload_method'] );
+		if ( empty( $method ) ) {
+			$test_url = $this->media->base_url . '/image/fetch/' . $this->plugin->dir_url . 'no_file.svg';
+			$request  = wp_remote_head( $test_url );
+			$result   = wp_remote_retrieve_header( $request, 'x-cld-error' );
+			$method   = 'url';
+			if ( false !== strpos( $result, 'ERR_DNS_FAIL' ) ) {
+				$method = 'direct';
+			}
+			set_transient( self::META_KEYS['upload_method'], $method, DAY_IN_SECONDS );
+		}
+
+		return $method;
+	}
+
+	/**
 	 * Upload a static file.
 	 *
 	 * @param string $file The file path to upload.
@@ -673,8 +692,19 @@ class Cache extends Settings_Component implements Setup {
 		$file_path = $this->cache_folder . '/' . substr( $file, strlen( ABSPATH ) );
 		$public_id = dirname( $file_path ) . '/' . pathinfo( $file, PATHINFO_FILENAME );
 		$type      = $this->media->get_file_type( $file );
-		$options   = array(
-			'file'          => $file,
+		$method    = $this->get_upload_method();
+
+		$upload_file = $url;
+		if ( 'direct' === $method ) {
+			if ( function_exists( 'curl_file_create' ) ) {
+				$upload_file = curl_file_create( $file ); // phpcs:ignore
+				$upload_file->setPostFilename( $file );
+			} else {
+				$upload_file = '@' . $upload_file;
+			}
+		}
+		$options = array(
+			'file'          => $upload_file,
 			'resource_type' => 'auto',
 			'public_id'     => wp_normalize_path( $public_id ),
 		);
@@ -682,8 +712,7 @@ class Cache extends Settings_Component implements Setup {
 		if ( 'image' === $type ) {
 			$options['eager'] = 'f_auto,q_auto';
 		}
-
-		$data = $this->connect->api->upload( 0, $options, array(), false );
+		$data = $this->connect->api->upload_cache( $options );
 		if ( is_wp_error( $data ) ) {
 			$errored[ $file ] = isset( $errored[ $file ] ) ? $errored[ $file ] + 1 : 1;
 			update_option( self::META_KEYS['upload_error'], $errored );
@@ -856,6 +885,7 @@ class Cache extends Settings_Component implements Setup {
 	public function setup() {
 		$this->create_table_maybe();
 		$this->add_setting_tabs();
+		// Quick test to see if site is available from outside.
 	}
 
 	/**
@@ -916,7 +946,7 @@ class Cache extends Settings_Component implements Setup {
 
 			// Plugin has some.
 			$excludes = $settings->get_value( $slug . '_files' );
-			$paths   += $this->get_path_urls( $cache_point, $excludes );
+			$paths    += $this->get_path_urls( $cache_point, $excludes );
 
 		}
 
@@ -938,7 +968,6 @@ class Cache extends Settings_Component implements Setup {
 			array(
 				'type'       => 'panel',
 				'title'      => __( 'Plugins', 'cloudinary' ),
-				'content'    => __( 'Deliver assets in active plugins.', 'cloudinary' ),
 				'attributes' => array(
 					'header' => array(
 						'class' => array(
@@ -1000,9 +1029,8 @@ class Cache extends Settings_Component implements Setup {
 		$params      = array(
 			'type' => 'frame',
 			array(
-				'type'    => 'panel',
-				'title'   => __( 'Themes', 'cloudinary' ),
-				'content' => __( 'Deliver assets in custom folders.', 'cloudinary' ),
+				'type'  => 'panel',
+				'title' => __( 'Themes', 'cloudinary' ),
 				array(
 					'type'        => 'on_off',
 					'slug'        => 'cache_all_themes',
@@ -1053,13 +1081,12 @@ class Cache extends Settings_Component implements Setup {
 		$params          = array(
 			'type' => 'frame',
 			array(
-				'type'    => 'panel',
-				'title'   => __( 'WordPress', 'cloudinary' ),
-				'content' => __( 'Deliver assets in WordPress core.', 'cloudinary' ),
+				'type'  => 'panel',
+				'title' => __( 'WordPress', 'cloudinary' ),
 				array(
 					'type'        => 'on_off',
 					'slug'        => 'cache_all_wp',
-					'description' => __( 'Deliver all assets from WordPress.', 'cloudinary' ),
+					'description' => __( 'Deliver all assets from WordPress core.', 'cloudinary' ),
 					'default'     => 'on',
 				),
 				array(
