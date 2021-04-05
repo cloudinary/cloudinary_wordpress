@@ -169,7 +169,7 @@ class Upload_Sync {
 						continue;
 					}
 					if (
-						in_array(
+						! in_array(
 							$this->media->get_media_delivery( $post_id ),
 							$this->media->get_syncable_delivery_types(),
 							true
