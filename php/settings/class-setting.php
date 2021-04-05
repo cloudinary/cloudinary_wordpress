@@ -908,6 +908,10 @@ class Setting {
 	 */
 	public function get_value( $slug = null ) {
 		if ( is_string( $slug ) && ! $this->is_root_setting() && ! $this->is_option_parent() ) {
+			if ( $this->get_setting( $slug, false ) ) {
+				return $this->get_setting( $slug )->get_value();
+			}
+
 			return $this->find_setting( $slug )->get_value();
 		}
 		if ( is_null( $this->value ) ) {

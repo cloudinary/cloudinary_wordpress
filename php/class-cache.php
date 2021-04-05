@@ -9,6 +9,7 @@ namespace Cloudinary;
 
 use Cloudinary\Component\Setup;
 use \Cloudinary\Cache\File_System;
+use Cloudinary\Settings\Setting;
 
 /**
  * Plugin report class.
@@ -150,9 +151,18 @@ class Cache extends Settings_Component implements Setup {
 	 * Invalidate cache of src files.
 	 *
 	 * @param array|string $files File/Files to invalidate.
+	 *
+	 * @return bool
 	 */
 	public function invalidate( $files ) {
 
+		$src_files    = (array) $files;
+		$list_prepare = array_fill( 0, count( $src_files ), '%s' );
+		$list_prepare = join( ',', $list_prepare );
+
+		$query = "DELETE FROM {$this->cache_table} WHERE src_path in( {$list_prepare} );";
+
+		return $this->wpdb->query( $this->wpdb->prepare( $query, $src_files ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL
 	}
 
 	/**
@@ -167,7 +177,7 @@ class Cache extends Settings_Component implements Setup {
 	 */
 	protected function get_plugin_data( $plugin, $version, $types, $rebuild = false ) {
 		$plugin_path = $this->file_system->wp_plugins_dir() . dirname( $plugin );
-		$cache_point = $this->get_cache_data( $plugin_path );
+		$cache_point = $this->get_cache_point( $plugin_path );
 		$paths       = $cache_point['data'];
 		if ( true === $rebuild || empty( $paths ) || $version !== $paths['version'] || $types !== $paths['types'] ) {
 			$paths = array(
@@ -225,7 +235,7 @@ class Cache extends Settings_Component implements Setup {
 			$theme = wp_get_theme( $theme );
 		}
 		$theme_path  = $theme->get_stylesheet_directory();
-		$cache_point = $this->get_cache_data( $theme_path );
+		$cache_point = $this->get_cache_point( $theme_path );
 		$paths       = $cache_point['data'];
 		if ( true === $rebuild || empty( $paths ) || $theme->get( 'Version' ) !== $paths['version'] || $types !== $paths['types'] ) {
 			$paths                      = array(
@@ -272,7 +282,7 @@ class Cache extends Settings_Component implements Setup {
 	 * @return array
 	 */
 	protected function get_folder_data( $path, $types, $rebuild = false ) {
-		$cache_point = $this->get_cache_data( $path );
+		$cache_point = $this->get_cache_point( $path );
 		$paths       = $cache_point['data'];
 		$version     = get_bloginfo( 'version' );
 		if ( true === $rebuild || ! empty( $paths ) || $version !== $paths['version'] || $types !== $paths['types'] ) {
@@ -300,7 +310,7 @@ class Cache extends Settings_Component implements Setup {
 	 *
 	 * @return array
 	 */
-	protected function get_cache_data( $path ) {
+	protected function get_cache_point( $path ) {
 		if ( empty( $this->cache_points[ $path ] ) ) {
 			$cache_point = $this->wpdb->get_row( $this->wpdb->prepare( "SELECT * FROM {$this->cache_point_table} WHERE cache_point = %s", $path ), ARRAY_A ); // phpcs:ignore
 			if ( is_null( $cache_point ) ) {
@@ -345,9 +355,10 @@ class Cache extends Settings_Component implements Setup {
 	 * @return array
 	 */
 	protected function get_path_urls( $cache_point_slug, $excludes = array() ) {
-		$cache_point = $this->get_cache_data( $cache_point_slug );
+		$cache_point = $this->get_cache_point( $cache_point_slug );
 		$data        = $cache_point['data'];
-		if ( empty( $data['files_fetched'] ) || $data['files_fetched'] >= time() + self::FILE_LOOKUP_TIMEOUT ) {
+
+		if ( empty( $data['files_fetched'] ) || $data['files_fetched'] < time() - self::FILE_LOOKUP_TIMEOUT ) {
 			switch ( $data['type'] ) {
 				case 'plugin':
 					$data = $this->get_plugin_data( $data['plugin'], $data['version'], $data['types'], true );
@@ -554,10 +565,16 @@ class Cache extends Settings_Component implements Setup {
 	 * Start uploading files to cloudinary cache.
 	 */
 	public function upload_cache() {
-		if ( empty( get_transient( self::META_KEYS['uploading_cache'] ) ) ) {
+
+		if ( empty( get_transient( self::META_KEYS['uploading_cache'] ) ) && ! empty( $this->count_uncached_items() ) ) {
+
 			set_transient( self::META_KEYS['uploading_cache'], true, 60 ); // Flag a transient to prevent multiple background uploads.
 			$to_upload = $this->get_uncached_items();
+
 			foreach ( $to_upload as $upload ) {
+				// translators: variable is file name.
+				$action_message = sprintf( __( 'Uploading:  %s', 'cloudinary' ), basename( $upload['src_path'] ) );
+				do_action( '_cloudinary_debug_action', $action_message );
 				set_transient( self::META_KEYS['uploading_cache'], true, 60 ); // Flag a transient to prevent multiple background uploads.
 				$upload['cached_url'] = $this->sync_static( $upload['src_path'], $upload['local_url'] );
 				if ( ! is_wp_error( $upload['cached_url'] ) && ! empty( $upload['cached_url'] ) ) {
@@ -685,6 +702,10 @@ class Cache extends Settings_Component implements Setup {
 
 		$errored = get_option( self::META_KEYS['upload_error'], array() );
 		if ( isset( $errored[ $file ] ) && 3 <= $errored[ $file ] ) {
+			unset( $errored[ $file ] );
+			update_option( self::META_KEYS['upload_error'], $errored );
+			$this->invalidate( $file );
+
 			// Dont try again.
 			return new \WP_Error( 'upload_error' );
 		}
@@ -714,6 +735,7 @@ class Cache extends Settings_Component implements Setup {
 		}
 		$data = $this->connect->api->upload_cache( $options );
 		if ( is_wp_error( $data ) ) {
+			do_action( '_cloudinary_debug_action', $data->get_error_message() );
 			$errored[ $file ] = isset( $errored[ $file ] ) ? $errored[ $file ] + 1 : 1;
 			update_option( self::META_KEYS['upload_error'], $errored );
 
@@ -884,25 +906,45 @@ class Cache extends Settings_Component implements Setup {
 	 */
 	public function setup() {
 		$this->create_table_maybe();
-		$this->add_setting_tabs();
-		// Quick test to see if site is available from outside.
+		$this->setup_setting_tabs();
 	}
 
 	/**
 	 * Adds the individual setting tabs.
 	 */
-	protected function add_setting_tabs() {
-		$this->add_plugin_settings();
-		$this->add_theme_settings();
-		$this->add_wp_settings();
-		if ( 'on' == $this->settings->get_value( 'enable_full_site_cache' ) ) {
-			$placeholder = $this->settings->create_setting( 'cache_all_holder', array( 'type' => 'data' ) );
-			$this->settings->get_setting( 'cache_plugins' )->set_parent( $placeholder );
-			$this->settings->get_setting( 'cache_themes' )->set_parent( $placeholder );
-			$this->settings->get_setting( 'cache_wordpress' )->set_parent( $placeholder );
+	protected function setup_setting_tabs() {
+		$cache_settings = $this->get_cache_settings();
+		foreach ( $cache_settings as $setting ) {
+			$callback = $setting->get_param( 'callback' );
+			if ( is_callable( $callback ) ) {
+				call_user_func( $callback ); // Init the settings.
+			}
 
-			return;
+			if ( 'on' == $this->settings->get_value( 'enable_full_site_cache' ) ) {
+				$placeholder = $this->settings->get_setting( 'cache_all_holder' );
+				$placeholder->add_setting( $setting );
+			}
 		}
+	}
+
+	/**
+	 * Get all the Cache settings.
+	 *
+	 * @return Setting[]
+	 */
+	public function get_cache_settings() {
+		static $settings = array();
+		if ( empty( $settings ) ) {
+			$main_setting = $this->settings;
+			foreach ( $main_setting->get_settings() as $slug => $setting ) {
+				if ( 'main_cache_page' === $slug ) {
+					continue; // Exclude the main page.
+				}
+				$settings[ $slug ] = $setting;
+			}
+		}
+
+		return $settings;
 	}
 
 	/**
@@ -946,7 +988,7 @@ class Cache extends Settings_Component implements Setup {
 
 			// Plugin has some.
 			$excludes = $settings->get_value( $slug . '_files' );
-			$paths    += $this->get_path_urls( $cache_point, $excludes );
+			$paths   += $this->get_path_urls( $cache_point, $excludes );
 
 		}
 
@@ -1183,7 +1225,7 @@ UNIQUE KEY cache_point (cache_point)
 			'type'       => 'page',
 			'menu_title' => __( 'Site Cache', 'cloudinary' ),
 			'tabs'       => array(
-				'cache_extras'    => array(
+				'main_cache_page' => array(
 					'page_title' => __( 'Site Cache', 'cloudinary' ),
 					array(
 						'type'  => 'panel',
@@ -1233,12 +1275,15 @@ UNIQUE KEY cache_point (cache_point)
 				),
 				'cache_plugins'   => array(
 					'page_title' => __( 'Plugins', 'cloudinary' ),
+					'callback'   => array( $this, 'add_plugin_settings' ),
 				),
 				'cache_themes'    => array(
 					'page_title' => __( 'Themes', 'cloudinary' ),
+					'callback'   => array( $this, 'add_theme_settings' ),
 				),
 				'cache_wordpress' => array(
 					'page_title' => __( 'WordPress', 'cloudinary' ),
+					'callback'   => array( $this, 'add_wp_settings' ),
 				),
 			),
 		);
