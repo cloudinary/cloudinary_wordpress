@@ -193,6 +193,7 @@ class Video {
 		$requiring_screens = array(
 			'cloudinary_page_media',
 			'edit-tags',
+			'term',
 		);
 
 		if ( null === $current_screen ) {
