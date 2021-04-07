@@ -54,8 +54,7 @@ module.exports = function ( grunt ) {
 		compress: {
 			release: {
 				options: {
-					archive:
-						'cloudinary-image-management-and-manipulation-in-the-cloud-cdn.zip',
+					archive: 'cloudinary-wordpress-v2.zip',
 				},
 				cwd: 'build',
 				dest:
