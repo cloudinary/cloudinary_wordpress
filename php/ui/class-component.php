@@ -491,7 +491,9 @@ abstract class Component {
 			$this->add_content( $struct['content'] );
 			if ( ! empty( $struct['children'] ) ) {
 				foreach ( $struct['children'] as $child ) {
-					$this->handle_structure( $child['name'], $child );
+					if ( ! is_null( $child ) ) {
+						$this->handle_structure( $child['name'], $child );
+					}
 				}
 			}
 			$this->close_tag( $struct );

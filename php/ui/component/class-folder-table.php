@@ -7,8 +7,10 @@
 
 namespace Cloudinary\UI\Component;
 
-use Cloudinary\UI\Component;
+use Cloudinary\REST_API;
+use Cloudinary\Cache\Cache_Point;
 use Cloudinary\Utils;
+use function Cloudinary\get_plugin_instance;
 
 /**
  * HTML Component to render components only.
@@ -32,9 +34,17 @@ class Folder_Table extends Table {
 	protected $slugs = array();
 
 	/**
+	 * Holds the cache point object.
+	 *
+	 * @var Cache_Point
+	 */
+	protected $cache_point;
+
+	/**
 	 * Register table structures as components.
 	 */
 	public function setup() {
+		$this->cache_point = get_plugin_instance()->get_component( 'cache' )->cache_point;
 		$this->setting->set_param( 'columns', $this->build_headers() );
 		$this->setting->set_param( 'rows', $this->build_rows() );
 		$this->setting->set_param( 'file_lists', $this->slugs );
@@ -86,19 +96,15 @@ class Folder_Table extends Table {
 	protected function get_rows() {
 		$roots       = $this->setting->get_param( 'root_paths', array() );
 		$row_default = array(
-			'version' => time(),
-			'title'   => null,
-			'path'    => null,
-			'files'   => array(),
-			'types'   => array_keys( $this->get_filter_types() ),
-			'filters' => array(),
+			'title'    => null,
+			'src_path' => null,
+			'url'      => null,
 		);
 		$rows        = array();
 		foreach ( $roots as $slug => $row ) {
-			$row            = wp_parse_args( $row, $row_default );
-			$row['slug']    = $slug;
-			$row['filters'] = $this->get_supported_filters( $row['unique_extensions'] );
-
+			$row             = wp_parse_args( $row, $row_default );
+			$row['slug']     = $slug;
+			$row['src_path'] = str_replace( ABSPATH, '', $row['src_path'] );
 			// Add to list.
 			$rows[ $slug ] = $row;
 		}
@@ -116,6 +122,48 @@ class Folder_Table extends Table {
 		$row_params = array();
 		$rows       = $this->get_rows();
 		foreach ( $rows as $slug => $row ) {
+			$url                             = rest_url( REST_API::BASE . '/browse' );
+			$row_params[ $slug ]             = $this->build_column( $row );
+			$row_params[ $slug . '_spacer' ] = array();
+			$content                         = array(
+				'content' => __( 'No assets found.', 'cloudinary' ),
+			);
+			$row_params[ $slug . '_tree' ]   = array(
+				'title_column' => array(
+					'attributes' => array(
+						'class' => array(
+							'closed',
+							'tree',
+						),
+					),
+					array(
+						'element'    => 'ul',
+						'attributes' => array(
+							'data-url'     => $url,
+							'data-path'    => $row['src_path'],
+							'data-browser' => 'toggle_' . $slug,
+							'class'        => array(
+								'tree-branch',
+							),
+						),
+					),
+				),
+			);
+		}
+
+		return $row_params;
+	}
+
+	/**
+	 * Build the rows.
+	 *
+	 * @return array
+	 */
+	protected function old_build_rows() {
+
+		$row_params = array();
+		$rows       = $this->get_rows();
+		foreach ( $rows as $slug => $row ) {
 			$row_params[ $slug ]             = $this->build_column( $row );
 			$row_params[ $slug . '_spacer' ] = array();
 			$content                         = array(
@@ -127,7 +175,6 @@ class Folder_Table extends Table {
 					'type'       => 'file_folder',
 					'base_path'  => $row['path'],
 					'action'     => 'selection',
-					'paths'      => $row['files'],
 					'file_types' => $this->get_filter_types( $slug ),
 				);
 				$this->slugs[] = $slug . '_files';
@@ -163,7 +210,7 @@ class Folder_Table extends Table {
 					'type'      => 'on_off',
 					'disabled'  => $disabled,
 					'default'   => 'on',
-					'base_path' => $row['path'],
+					'base_path' => $row['src_path'],
 					'action'    => 'all_selector',
 					'master'    => array(
 						$this->get_title_slug(),
@@ -175,6 +222,7 @@ class Folder_Table extends Table {
 					'description_left' => $row['title'],
 					'off'              => 'dashicons-arrow-down',
 					'on'               => 'dashicons-arrow-up',
+					'default'          => 'off',
 				),
 				array(
 					'type'       => 'tag',
@@ -191,10 +239,6 @@ class Folder_Table extends Table {
 				),
 			),
 		);
-
-		$column_filters = $this->build_column_filters( $row );
-
-		$column = array_merge( $column, $column_filters );
 
 		return $column;
 	}

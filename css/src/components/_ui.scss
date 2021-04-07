@@ -18,6 +18,11 @@
 		background-position: center center;
 		width: auto;
 		height: 100px;
+
+		&.tree-branch {
+			background-size: 50px 50px;
+			background-position: 25px center;
+		}
 	}
 
 	&-syncing {
@@ -373,9 +378,11 @@
 				width: $control-width;
 				height: $control-height;
 				margin-right: 0.4rem;
-				&.disabled{
+
+				&.disabled {
 					opacity: 0.4;
 				}
+
 				input {
 					opacity: 0;
 					width: 0;
@@ -566,9 +573,11 @@
 			display: flex;
 			border-bottom: 0;
 			padding: 0.4rem 1.75rem 0.2rem;
+
 			&.full-width {
 				max-width: 100%;
 			}
+
 			img {
 				margin-right: 0.6rem;
 			}
@@ -826,16 +835,17 @@ tr .file-size.small {
 }
 
 
-.tree {
+td.tree {
 	position: relative;
 	line-height: 1.5;
 	color: #212529;
-	margin-left: 12px;
-	margin-top: -8px;
+	padding-left: 25px;
+	padding-top: 0;
 
 	.success {
 		color: $color-notification-success;
 	}
+
 	td + & {
 		padding-top: 0;
 	}

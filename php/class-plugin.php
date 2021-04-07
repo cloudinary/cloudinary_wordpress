@@ -134,9 +134,7 @@ final class Plugin {
 		$this->components['api']          = new REST_API( $this );
 		$this->components['storage']      = new Storage( $this );
 		$this->components['report']       = new Report( $this );
-		//if ( ! is_admin() ) {
-			$this->components['cache'] = new Cache( $this );
-	//	}
+		$this->components['cache']        = new Cache( $this );
 	}
 
 	/**
@@ -144,7 +142,7 @@ final class Plugin {
 	 *
 	 * @param mixed $component The component.
 	 *
-	 * @return Report|Connect|Media|REST_API|Settings_Page|Sync|null
+	 * @return Report|Connect|Media|REST_API|Settings_Page|Sync|Cache|null
 	 */
 	public function get_component( $component ) {
 		$return = null;

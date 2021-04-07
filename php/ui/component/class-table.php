@@ -15,7 +15,7 @@ use Cloudinary\Settings\Setting;
  *
  * @package Cloudinary\UI
  */
-class Table extends Component {
+class Table extends Text {
 
 	/**
 	 * Holds the components build blueprint.

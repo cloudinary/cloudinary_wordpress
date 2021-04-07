@@ -28,7 +28,7 @@ class File_System {
 	 *
 	 * @var \WP_Filesystem_Direct
 	 */
-	protected $wp_file_system;
+	public $wp_file_system;
 
 	/**
 	 * Holds the path locations
@@ -48,14 +48,24 @@ class File_System {
 		if ( WP_Filesystem() ) {
 			global $wp_filesystem;
 			$this->wp_file_system = $wp_filesystem;
-			$this->paths          = array(
-				'plugin'   => $this->wp_file_system->wp_plugins_dir(),
-				'theme'    => $this->wp_file_system->wp_themes_dir(),
-				'content'  => $this->wp_file_system->wp_content_dir(),
-				'admin'    => $this->wp_file_system->abspath() . 'wp-admin/',
-				'includes' => $this->wp_file_system->abspath() . 'wp-includes/',
-				'root'     => $this->wp_file_system->abspath(),
-			);
+			$this->setup_paths();
+		}
+	}
+
+	/**
+	 * Setup the paths.
+	 */
+	protected function setup_paths() {
+		$paths = array(
+			plugins_url()        => $this->wp_file_system->wp_plugins_dir(),
+			get_theme_root_uri() => $this->wp_file_system->wp_themes_dir(),
+			content_url()        => $this->wp_file_system->wp_content_dir(),
+			admin_url()          => $this->wp_file_system->abspath() . 'wp-admin/',
+			includes_url()       => $this->wp_file_system->abspath() . 'wp-includes/',
+			home_url()           => $this->wp_file_system->abspath(),
+		);
+		foreach ( $paths as $url => $path ) {
+			$this->paths[ trailingslashit( $url ) ] = trailingslashit( $path );
 		}
 	}
 
@@ -75,6 +85,28 @@ class File_System {
 	 */
 	public function wp() {
 		return $this->wp_file_system;
+	}
+
+	/**
+	 * Checks if resource is a file.
+	 *
+	 * @param string $file File path.
+	 *
+	 * @return bool Whether $file is a file.
+	 */
+	public function is_file( $file ) {
+		return $this->wp_file_system->is_file( $file );
+	}
+
+	/**
+	 * Checks if resource is a directory.
+	 *
+	 * @param string $path Directory path.
+	 *
+	 * @return bool Whether $path is a directory.
+	 */
+	public function is_dir( $path ) {
+		return $this->wp_file_system->is_dir( $path );
 	}
 
 	/**
@@ -123,6 +155,25 @@ class File_System {
 	}
 
 	/**
+	 * Get the root locations for a file.
+	 *
+	 * @param string $file_url The file to cet locations for.
+	 *
+	 * @return array
+	 */
+	public function get_file_src_root( $file_url ) {
+
+		foreach ( $this->paths as $url => $src ) {
+			if ( false !== strpos( $file_url, $url ) ) {
+				return array(
+					'path' => $src,
+					'url'  => $url,
+				);
+			}
+		}
+	}
+
+	/**
 	 * Determine the location of the path.
 	 *
 	 * @param string $path The path.
@@ -134,6 +185,23 @@ class File_System {
 		$type          = array_search( $location_path, $this->paths );
 
 		return $type ? $type : 'root';
+	}
+
+	/**
+	 * Get the file path from the URL.
+	 *
+	 * @param string $file_url The url to get file src for.
+	 *
+	 * @return string|null
+	 */
+	public function get_src_path( $file_url ) {
+		$src_root = $this->get_file_src_root( $file_url );
+		$src_file = wp_normalize_path( str_replace( $src_root['url'], $src_root['path'], $file_url ) );
+		if ( $this->wp_file_system->exists( $src_file ) ) {
+			return $src_file;
+		}
+
+		return null;
 	}
 
 	/**
