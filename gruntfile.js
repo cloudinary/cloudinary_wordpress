@@ -70,9 +70,11 @@ module.exports = function ( grunt ) {
 			},
 			assets: {
 				// Deploy only screenshots and icons.
-				...options,
-				deploy_trunk: false,
-				deploy_tag: false,
+				options: {
+					...options,
+					deploy_trunk: false,
+					deploy_tag: false,
+				},
 			},
 		},
 	} );
