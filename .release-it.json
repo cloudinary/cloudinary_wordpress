@@ -1,4 +1,9 @@
 {
+  "plugins": {
+    "@release-it/bumper": {
+      "in": ".version"
+    }
+  },
   "git": {
     "requireBranch": "master",
     "commitMessage": "Version ${version}",

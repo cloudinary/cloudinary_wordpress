@@ -50,6 +50,7 @@
     "@babel/core": "7.12.3",
     "@babel/plugin-proposal-optional-chaining": "7.12.1",
     "@babel/polyfill": "7.12.1",
+    "@release-it/bumper": "^2.0.0",
     "@testing-library/react": "11.1.0",
     "@tippyjs/react": "^4.2.4",
     "@wordpress/api-fetch": "^3.21.1",
