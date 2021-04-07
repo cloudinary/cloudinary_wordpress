@@ -81,7 +81,7 @@ module.exports = function ( grunt ) {
 
 	grunt.registerTask( 'package', [ 'clean', 'copy', 'replace', 'compress' ] );
 
-	grunt.registerTask( 'deploy', [ 'package', 'wp_deploy' ] );
+	grunt.registerTask( 'deploy', [ 'package', 'wp_deploy:default' ] );
 
 	grunt.registerTask( 'deploy-assets', [ 'wp_deploy:assets' ] );
 };
