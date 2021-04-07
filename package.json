@@ -27,6 +27,7 @@
     "postinstall": "composer install",
     "readme": "composer readme",
     "release": "release-it",
+    "release:ci": "release-it --ci",
     "release:dry": "release-it --dry-run"
   },
   "husky": {
