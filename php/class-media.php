@@ -1371,6 +1371,31 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Check if a url is pointing to Cloudinary sync folder.
+	 *
+	 * @param string $url The tested URL.
+	 *
+	 * @return bool
+	 */
+	public function is_cloudinary_sync_folder( $url ) {
+		$path = wp_parse_url( $url, PHP_URL_PATH );
+		$parts = explode( '/', $path );
+
+		// Remove public id and file name.
+		array_splice( $parts, -2 );
+
+		foreach ( $parts as $part ) {
+			array_shift( $parts );
+			if ( 'v' === $part[0] && is_numeric( substr( $part, 1 ) ) ) {
+				break;
+			}
+		}
+
+		// Check for the Cloudinary folder.
+		return implode( '/', $parts ) === $this->get_cloudinary_folder( false );
+	}
+
+	/**
 	 * Add media tab template.
 	 */
 	public function media_template() {
