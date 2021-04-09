@@ -1728,12 +1728,12 @@ class Media extends Settings_Component implements Setup {
 			endif;
 			if ( 'fetch' === $this->get_media_delivery( $attachment_id ) ) :
 				?>
-				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'This is an fetched media.', 'cloudinary' ); ?>"></span>
+				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'This media is Fetch type.', 'cloudinary' ); ?>"></span>
 				<?php
 			endif;
 			if ( 'sprite' === $this->get_media_delivery( $attachment_id ) ) :
 				?>
-				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'This is an sprite media.', 'cloudinary' ); ?>"></span>
+				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'This media is Sprite type.', 'cloudinary' ); ?>"></span>
 				<?php
 			endif;
 		}
