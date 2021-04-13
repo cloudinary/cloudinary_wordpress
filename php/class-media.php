@@ -1688,14 +1688,7 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function media_column_value( $column_name, $attachment_id ) {
 		if ( 'cld_status' === $column_name ) {
-			if (
-				$this->is_media( $attachment_id ) &&
-				in_array(
-					$this->get_media_delivery( $attachment_id ),
-					$this->get_syncable_delivery_types(),
-					true
-				)
-			) :
+			if ( $this->sync->is_syncable( $attachment_id ) ) :
 				$status = array(
 					'state' => 'inactive',
 					'note'  => esc_html__( 'Not Synced', 'cloudinary' ),

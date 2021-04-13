@@ -244,13 +244,7 @@ class Sync implements Setup, Assets {
 		}
 
 		// Can sync only syncable delivery types.
-		if (
-			! in_array(
-				$this->managers['media']->get_media_delivery( $attachment_id ),
-				$this->managers['media']->get_syncable_delivery_types(),
-				true
-			)
-		) {
+		if ( ! $this->is_syncable( $attachment_id ) ) {
 			$can = false;
 		}
 
@@ -326,6 +320,29 @@ class Sync implements Setup, Assets {
 		$public_id = $cld_folder . $file_info['filename'];
 
 		return ltrim( $public_id, '/' );
+	}
+
+	/**
+	 * Is syncable asset.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function is_syncable( $attachment_id ) {
+		$syncable = false;
+		if (
+			$this->managers['media']->is_media( $attachment_id )
+			&& in_array(
+				$this->managers['media']->get_media_delivery( $attachment_id ),
+				$this->managers['media']->get_syncable_delivery_types(),
+				true
+			)
+		) {
+			$syncable = true;
+		}
+
+		return $syncable;
 	}
 
 	/**
