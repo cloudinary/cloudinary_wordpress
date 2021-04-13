@@ -15,6 +15,7 @@ use Cloudinary\Sync\Download_Sync;
 use Cloudinary\Sync\Push_Sync;
 use Cloudinary\Sync\Sync_Queue;
 use Cloudinary\Sync\Upload_Sync;
+use WP_Error;
 
 /**
  * Class Sync
@@ -297,6 +298,18 @@ class Sync implements Setup, Assets {
 			$signatures[ $attachment_id ] = $return;
 			$return                       = wp_parse_args( $signature, $this->sync_types );
 		}
+
+		/**
+		 * Filter the get signature of the asset.
+		 *
+		 * @hook cloudinary_get_signature
+		 *
+		 * @param $signature     {array} The attachment signature.
+		 * @param $attachment_id {int}   The attachment ID.
+		 *
+		 * @return {array}
+		 */
+		$return = apply_filters( 'cloudinary_get_signature', $signatures[ $attachment_id ], $attachment_id );
 
 		return $return;
 	}
@@ -874,6 +887,23 @@ class Sync implements Setup, Assets {
 	}
 
 	/**
+	 * Filter the signature.
+	 *
+	 * @param array $signature     The signature array.
+	 * @param int   $attachment_id The attachment ID.
+	 *
+	 * @return array|bool|string|WP_Error
+	 */
+	public function get_signature_syncable_type( $signature, $attachment_id ) {
+
+		if ( ! $this->is_syncable( $attachment_id ) ) {
+			$signature = $this->generate_signature( $attachment_id );
+		}
+
+		return $signature;
+	}
+
+	/**
 	 * Checks if auto sync feature is enabled.
 	 *
 	 * @return bool
@@ -933,6 +963,7 @@ class Sync implements Setup, Assets {
 			$this->managers['queue']->setup( $this );
 
 			add_filter( 'cloudinary_setting_get_value', array( $this, 'filter_get_cloudinary_folder' ), 10, 2 );
+			add_filter( 'cloudinary_get_signature', array( $this, 'get_signature_syncable_type' ), 10, 2 );
 		}
 	}
 
