@@ -1140,6 +1140,7 @@ class Media extends Settings_Component implements Setup {
 					$extension = $image_format;
 				}
 			}
+			$cloudinary_id = $public_id;
 			if ( 'fetch' !== $this->get_media_delivery( $attachment_id ) ) {
 				$cloudinary_id = $public_id . '.' . $extension;
 			}
