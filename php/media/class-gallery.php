@@ -409,6 +409,9 @@ class Gallery {
 			return $content;
 		}
 
+		// Ensure library is enqueued. Deals with archive pages that render the content.
+		$this->enqueue_gallery_library();
+
 		$attributes = Utils::expand_dot_notation( $block['attrs'], '_' );
 		$attributes = array_merge( self::$default_config, $attributes );
 
@@ -488,6 +491,11 @@ class Gallery {
 			) {
 				$can = true;
 			}
+		}
+
+		// Bail enqueuing the script several times.
+		if ( wp_script_is( self::GALLERY_LIBRARY_HANDLE ) ) {
+			$can = false;
 		}
 
 		/**
