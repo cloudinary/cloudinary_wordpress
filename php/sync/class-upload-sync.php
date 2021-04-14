@@ -118,13 +118,7 @@ class Upload_Sync {
 			if ( ! $this->media->is_local_media( $post->ID ) ) {
 				return $actions;
 			}
-			if (
-				! in_array(
-					$this->media->get_media_delivery( $post->ID ),
-					$this->media->get_syncable_delivery_types(),
-					true
-				)
-			) {
+			if ( ! $this->sync->is_syncable( $post->ID ) ) {
 				return $actions;
 			}
 			if ( ! $this->plugin->components['sync']->is_synced( $post->ID ) ) {
@@ -168,13 +162,7 @@ class Upload_Sync {
 						$this->sync->delete_cloudinary_meta( $post_id );
 						continue;
 					}
-					if (
-						! in_array(
-							$this->media->get_media_delivery( $post_id ),
-							$this->media->get_syncable_delivery_types(),
-							true
-						)
-					) {
+					if ( ! $this->sync->is_syncable( $post_id ) ) {
 						continue;
 					}
 					$this->sync->set_signature_item( $post_id, 'file', '' );
