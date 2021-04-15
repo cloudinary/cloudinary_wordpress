@@ -454,7 +454,7 @@ class Media extends Settings_Component implements Setup {
 
 		if ( $as_sync_key ) {
 			$transformations = $this->get_transformations_from_string( $url );
-			$public_id      .= ! empty( $transformations ) ? wp_json_encode( $transformations ) : '';
+			$public_id       .= ! empty( $transformations ) ? wp_json_encode( $transformations ) : '';
 		}
 
 		return $public_id;
