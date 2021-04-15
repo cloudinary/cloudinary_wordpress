@@ -190,6 +190,7 @@ class Media extends Settings_Component implements Setup {
 		 */
 		return apply_filters( 'cloudinary_syncable_delivery_types', $types );
 	}
+
 	/**
 	 * Get convertible extensions and converted file types.
 	 *
@@ -273,9 +274,10 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function is_local_media( $attachment_id ) {
 		$local_host = wp_parse_url( get_site_url(), PHP_URL_HOST );
-		$media_host = wp_parse_url( get_the_guid( $attachment_id ), PHP_URL_HOST );
+		$guid       = get_the_guid( $attachment_id );
+		$media_host = wp_parse_url( $guid, PHP_URL_HOST );
 
-		return $local_host === $media_host;
+		return $local_host === $media_host || $this->is_cloudinary_url( $guid );
 	}
 
 	/**
@@ -1379,7 +1381,7 @@ class Media extends Settings_Component implements Setup {
 	 * @return bool
 	 */
 	public function is_cloudinary_sync_folder( $url ) {
-		$path = wp_parse_url( $url, PHP_URL_PATH );
+		$path  = wp_parse_url( $url, PHP_URL_PATH );
 		$parts = explode( '/', $path );
 
 		// Remove public id and file name.
@@ -1714,18 +1716,15 @@ class Media extends Settings_Component implements Setup {
 				?>
 				<span class="dashicons-cloudinary <?php echo esc_attr( $status['state'] ); ?>" title="<?php echo esc_attr( $status['note'] ); ?>"></span>
 				<?php
-			endif;
-			if ( ! $this->is_local_media( $attachment_id ) ) :
+			elseif ( ! $this->is_local_media( $attachment_id ) ) :
 				?>
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'Not syncable. This is an external media.', 'cloudinary' ); ?>"></span>
 				<?php
-			endif;
-			if ( 'fetch' === $this->get_media_delivery( $attachment_id ) ) :
+			elseif ( 'fetch' === $this->get_media_delivery( $attachment_id ) ) :
 				?>
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'This media is Fetch type.', 'cloudinary' ); ?>"></span>
 				<?php
-			endif;
-			if ( 'sprite' === $this->get_media_delivery( $attachment_id ) ) :
+			elseif ( 'sprite' === $this->get_media_delivery( $attachment_id ) ) :
 				?>
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'This media is Sprite type.', 'cloudinary' ); ?>"></span>
 				<?php
