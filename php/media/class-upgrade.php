@@ -98,7 +98,7 @@ class Upgrade {
 			// Remove extension.
 			$path      = pathinfo( $public_id );
 			$public_id = str_replace( $path['basename'], $path['filename'], $public_id );
-			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
+			update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['version'], $asset_version );
 			if ( ! empty( $asset_transformations ) ) {
 				$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], $asset_transformations );

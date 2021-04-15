@@ -302,14 +302,14 @@ class Sync implements Setup, Assets {
 		/**
 		 * Filter the get signature of the asset.
 		 *
-		 * @hook cloudinary_get_signature
+		 * @hook   cloudinary_get_signature
 		 *
-		 * @param $signature     {array} The attachment signature.
+		 * @param $return        {array} The attachment signature.
 		 * @param $attachment_id {int}   The attachment ID.
 		 *
 		 * @return {array}
 		 */
-		$return = apply_filters( 'cloudinary_get_signature', $signatures[ $attachment_id ], $attachment_id );
+		$return = apply_filters( 'cloudinary_get_signature', $return, $attachment_id );
 
 		return $return;
 	}
@@ -496,7 +496,7 @@ class Sync implements Setup, Assets {
 			),
 			'meta_cleanup' => array(
 				'generate' => function ( $attachment_id ) {
-					$meta = $this->managers['media']->get_post_meta( $attachment_id );
+					$meta   = $this->managers['media']->get_post_meta( $attachment_id );
 					$return = false;
 					foreach ( $meta as $key => $value ) {
 						if ( get_post_meta( $attachment_id, $key, true ) === $value ) {
