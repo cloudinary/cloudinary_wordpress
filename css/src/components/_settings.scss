@@ -313,6 +313,10 @@
 		margin-top: 0.5em;
 	}
 
+	input[type="checkbox"] ~ label {
+		margin-left: .25em;
+	}
+
 	.modal-footer {
 		background-color: #fcfcfc;
 		border-top: 1px solid #ddd;
@@ -333,6 +337,10 @@
 
 	textarea {
 		resize: none;
+	}
+
+	p {
+		display: flex;
 	}
 }
 

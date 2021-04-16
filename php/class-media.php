@@ -1140,7 +1140,9 @@ class Media extends Settings_Component implements Setup {
 					$extension = $image_format;
 				}
 			}
-			$cloudinary_id = $public_id . '.' . $extension;
+			if ( 'fetch' !== $this->get_media_delivery( $attachment_id ) ) {
+				$cloudinary_id = $public_id . '.' . $extension;
+			}
 		}
 
 		return $cloudinary_id;
@@ -1434,6 +1436,12 @@ class Media extends Settings_Component implements Setup {
 			'post_content'   => '',
 			'post_status'    => 'inherit',
 		);
+
+		// Capture the Caption Text.
+		if ( ! empty( $asset['meta']['caption'] ) ) {
+			$post_args['post_excerpt'] = wp_strip_all_tags( $asset['meta']['caption'] );
+		}
+
 		// Disable Upload_Sync to avoid sync loop.
 		add_filter( 'cloudinary_upload_sync_enabled', '__return_false' );
 		// Create the attachment.
@@ -1577,6 +1585,16 @@ class Media extends Settings_Component implements Setup {
 					$alt_text = wp_strip_all_tags( $asset['meta']['alt'] );
 					update_post_meta( $asset['attachment_id'], '_wp_attachment_image_alt', $alt_text );
 				}
+				// Capture the Caption Text.
+				if ( ! empty( $asset['meta']['caption'] ) ) {
+					$caption = wp_strip_all_tags( $asset['meta']['caption'] );
+					wp_update_post(
+						array(
+							'ID'           => $asset['attachment_id'],
+							'post_excerpt' => $caption,
+						)
+					);
+				}
 				// Compare Version.
 				$current_version = $this->get_cloudinary_version( $asset['attachment_id'] );
 				if ( $current_version !== $asset['version'] ) {
@@ -1644,12 +1662,11 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function media_column_value( $column_name, $attachment_id ) {
 		if ( 'cld_status' === $column_name ) {
-			if ( $this->is_media( $attachment_id ) && $this->is_local_media( $attachment_id ) ) :
+			if ( $this->is_media( $attachment_id ) && $this->sync->can_sync( $attachment_id ) ) :
 				$status = array(
 					'state' => 'inactive',
 					'note'  => esc_html__( 'Not Synced', 'cloudinary' ),
 				);
-				add_filter( 'cloudinary_flag_sync', '__return_true' );
 				if ( ! $this->cloudinary_id( $attachment_id ) ) {
 					// If false, lets check why by seeing if the file size is too large.
 					$file     = get_attached_file( $attachment_id ); // Get the file size to make sure it can exist in cloudinary.
@@ -1666,7 +1683,6 @@ class Media extends Settings_Component implements Setup {
 						'note'  => esc_html__( 'Synced', 'cloudinary' ),
 					);
 				}
-				remove_filter( 'cloudinary_flag_sync', '__return_true' );
 				// filter status.
 				$status = apply_filters( 'cloudinary_media_status', $status, $attachment_id );
 				?>
@@ -1676,6 +1692,16 @@ class Media extends Settings_Component implements Setup {
 			if ( ! $this->is_local_media( $attachment_id ) ) :
 				?>
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'Not syncable. This is an external media.', 'cloudinary' ); ?>"></span>
+				<?php
+			endif;
+			if ( 'fetch' === $this->get_media_delivery( $attachment_id ) ) :
+				?>
+				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'Not syncable. This is an fetched media.', 'cloudinary' ); ?>"></span>
+				<?php
+			endif;
+			if ( 'sprite' === $this->get_media_delivery( $attachment_id ) ) :
+				?>
+				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'Not syncable. This is an sprite media.', 'cloudinary' ); ?>"></span>
 				<?php
 			endif;
 		}
@@ -1888,7 +1914,7 @@ class Media extends Settings_Component implements Setup {
 				$breakpoints['transformation'] = Api::generate_transformation_string( $transformations, 'image' );
 			}
 			$breakpoints = array(
-				'public_id'              => $this->get_public_id( $attachment_id ),
+				'public_id'              => $this->get_public_id( $attachment_id, true ),
 				'type'                   => 'upload',
 				'responsive_breakpoints' => $breakpoint_options,
 				'context'                => $this->get_context_options( $attachment_id ),
@@ -1909,9 +1935,14 @@ class Media extends Settings_Component implements Setup {
 	 * @return array
 	 */
 	public function get_context_options( $attachment_id ) {
+		$caption = get_post( $attachment_id )->post_excerpt;
+
+		if ( empty( $caption ) ) {
+			$caption = get_the_title( $attachment_id );
+		}
 
 		$context_options = array(
-			'caption' => esc_attr( get_the_title( $attachment_id ) ),
+			'caption' => esc_attr( $caption ),
 			'alt'     => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
 			'guid'    => md5( get_the_guid( $attachment_id ) ),
 		);
@@ -1978,7 +2009,7 @@ class Media extends Settings_Component implements Setup {
 	public function get_upload_options( $attachment_id ) {
 
 		// Prepare upload options.
-		$public_id = $this->get_public_id( $attachment_id );
+		$public_id = $this->get_public_id( $attachment_id, true );
 		$folder    = ltrim( dirname( $public_id ), '.' );
 		$options   = array(
 			'unique_filename' => true,

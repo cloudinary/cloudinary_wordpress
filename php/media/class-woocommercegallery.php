@@ -38,7 +38,14 @@ class WooCommerceGallery {
 	 */
 	public function enqueue_gallery_library() {
 		$product = wc_get_product();
-		$assets  = $product ? $this->gallery->get_image_data( $product->get_gallery_image_ids() ) : null;
+		if ( empty( $product ) ) {
+			return;
+		}
+
+		$images = (array) $product->get_gallery_image_ids();
+		array_unshift( $images, get_post_thumbnail_id() );
+
+		$assets = $this->gallery->get_image_data( array_filter( $images ) );
 
 		if ( $assets ) {
 			$json_assets = wp_json_encode( $assets );
@@ -67,6 +74,21 @@ class WooCommerceGallery {
 	}
 
 	/**
+	 * Maybe enqueue the gallery scripts.
+	 *
+	 * @param bool $can Default value.
+	 *
+	 * @return bool
+	 */
+	public function maybe_enqueue_scripts( $can ) {
+		if ( is_singular( 'product' ) ) {
+			$can = true;
+		}
+
+		return $can;
+	}
+
+	/**
 	 * Setup hooks for the gallery.
 	 */
 	public function setup_hooks() {
@@ -82,5 +104,7 @@ class WooCommerceGallery {
 		if ( ! is_admin() && self::woocommerce_active() ) {
 			add_filter( 'woocommerce_single_product_image_thumbnail_html', '__return_empty_string' );
 		}
+
+		add_filter( 'cloudinary_enqueue_gallery_script', array( $this, 'maybe_enqueue_scripts' ) );
 	}
 }

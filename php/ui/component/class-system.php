@@ -28,6 +28,13 @@ class System extends Panel {
 	protected $plugin;
 
 	/**
+	 * Holds the Report instance.
+	 *
+	 * @var Report
+	 */
+	protected $report;
+
+	/**
 	 * Holds the components build blueprint.
 	 *
 	 * @var string
@@ -42,16 +49,10 @@ class System extends Panel {
 	public function __construct( $setting ) {
 		parent::__construct( $setting );
 		$this->plugin = get_plugin_instance();
+		$this->report = $this->plugin->get_component( 'report' );
 
 		add_action( 'admin_init', array( $this, 'maybe_generate_report' ) );
 	}
-
-	/**
-	 * Holds the report data.
-	 *
-	 * @var array
-	 */
-	protected $report_data = array();
 
 	/**
 	 * Filter the report state.
@@ -187,137 +188,21 @@ class System extends Panel {
 	}
 
 	/**
-	 * Filter the report parts structure.
-	 */
-	protected function generate_report() {
-		// Add system.
-		$this->system();
-		// Add theme.
-		$this->theme();
-		// Add plugins.
-		$this->plugins();
-		// Add posts.
-		$this->posts();
-		// Add config.
-		$this->config();
-	}
-
-	/**
-	 * Build the system report.
-	 */
-	protected function system() {
-		$system_data = array(
-			'home'           => get_bloginfo( 'url' ),
-			'wordpress'      => get_bloginfo( 'version' ),
-			'php'            => PHP_VERSION,
-			'php_extensions' => get_loaded_extensions(),
-		);
-		$this->add_report_block( 'system_status', $system_data );
-	}
-
-	/**
-	 * Build the theme report.
-	 */
-	protected function theme() {
-		$active_theme = wp_get_theme();
-		$theme_data   = array(
-			'name'        => $active_theme->get( 'Name' ),
-			'version'     => $active_theme->get( 'Version' ),
-			'author'      => $active_theme->get( 'Author' ),
-			'author_url'  => $active_theme->get( 'AuthorURI' ),
-			'child_theme' => is_child_theme(),
-		);
-		$this->add_report_block( 'theme_status', $theme_data );
-	}
-
-	/**
-	 * Build the plugins report.
-	 */
-	protected function plugins() {
-
-		$plugin_data = array(
-			'must_use' => wp_get_mu_plugins(),
-			'plugins'  => array(),
-		);
-		$active      = wp_get_active_and_valid_plugins();
-		foreach ( $active as $plugin ) {
-			$plugin_data['plugins'][] = get_plugin_data( $plugin );
-		}
-		$this->add_report_block( 'plugins_report', $plugin_data );
-	}
-
-	/**
-	 * Build the posts report.
-	 */
-	protected function posts() {
-
-		$report_items = get_option( Report::REPORT_KEY, array() );
-		$report_items = array_unique( $report_items );
-		if ( ! empty( $report_items ) ) {
-			$post_data  = array();
-			$media_data = array();
-			foreach ( $report_items as $post_id ) {
-				$post_type = get_post_type( $post_id );
-				if ( 'attachment' === $post_type ) {
-					$data                   = wp_get_attachment_metadata( $post_id );
-					$data['all_meta']       = get_post_meta( $post_id );
-					$media_data[ $post_id ] = $data;
-				} else {
-					$data                  = get_post( $post_id, ARRAY_A );
-					$data['post_meta']     = get_post_meta( $post_id );
-					$post_data[ $post_id ] = $data;
-				}
-			}
-			if ( ! empty( $media_data ) ) {
-				$this->add_report_block( 'media_report', $media_data );
-			}
-			if ( ! empty( $post_data ) ) {
-				$this->add_report_block( 'post_report', $post_data );
-			}
-		}
-	}
-
-	/**
-	 * Build the config report.
-	 */
-	protected function config() {
-		$config = $this->setting->get_root_setting()->get_value();
-		unset( $config['connect'] );
-		// The Gallery setting might not be set, so we need ensure it exists before using it.
-		if ( $this->plugin->get_component( 'media' )->gallery ) {
-			$config['gallery'] = $this->plugin->get_component( 'media' )->gallery->get_config();
-		}
-		$this->add_report_block( 'config_report', $config );
-	}
-
-	/**
-	 * Create a report block setting.
-	 *
-	 * @param string $slug The slug.
-	 * @param array  $data The data.
-	 */
-	protected function add_report_block( $slug, $data ) {
-		$this->report_data[ $slug ] = $data;
-	}
-
-	/**
 	 * Maybe generate the report.
 	 */
 	public function maybe_generate_report() {
 		$download = filter_input( INPUT_GET, 'generate_report', FILTER_VALIDATE_BOOLEAN );
 		if ( $download ) {
-			$this->generate_report();
-			$timestamp = time();
-			$filename  = "cloudinary-report-{$timestamp}.json";
+			$report = $this->report->get_report_data();
 			header( 'Content-Description: File Transfer' );
 			header( 'Content-Type: application/octet-stream' );
-			header( "Content-Disposition: attachment; filename={$filename}" );
+			header( "Content-Disposition: attachment; filename={$report['filename']}" );
 			header( 'Content-Transfer-Encoding: text' );
 			header( 'Connection: Keep-Alive' );
 			header( 'Expires: 0' );
 			header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
 			header( 'Pragma: public' );
-			echo wp_json_encode( $this->report_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
+			echo wp_json_encode( $report['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
 			exit;
 		}
 	}
