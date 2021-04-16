@@ -78,10 +78,9 @@ class On_Off extends Text {
 		if ( 'on' === $this->setting->get_value() ) {
 			$struct['attributes']['checked'] = 'checked';
 		}
-		$struct['attributes']['class'] = array(
-			'cld-ui-input',
-		);
-		$struct['render']              = true;
+		$struct['attributes']['class'][] = 'cld-ui-input';
+
+		$struct['render'] = true;
 		if ( $this->setting->has_param( 'master' ) ) {
 			$struct['attributes']['data-master'] = wp_json_encode( $this->setting->get_param( 'master' ) );
 		}
@@ -117,7 +116,8 @@ class On_Off extends Text {
 					'master',
 					array()
 				)
-			) ) {
+			)
+		) {
 			$struct['attributes']['class'][] = 'disabled';
 		}
 
