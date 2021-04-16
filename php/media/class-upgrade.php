@@ -94,11 +94,10 @@ class Upgrade {
 				}
 			}
 			// Build public_id.
-			$parts     = array_filter( $id_parts );
-			$public_id = implode( '/', $parts );
-			// Remove extension.
-			$path      = pathinfo( $public_id );
-			$public_id = str_replace( $path['basename'], $path['filename'], $public_id );
+			$parts = array_filter( $id_parts );
+			if ( empty( $public_id ) ) {
+				$public_id = implode( '/', $parts );
+			}
 			update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['version'], $asset_version );
 			if ( ! empty( $asset_transformations ) ) {
