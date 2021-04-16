@@ -41,6 +41,7 @@ class Table extends Text {
 				'class' => array(
 					'widefat',
 					'striped',
+					'cld-table',
 				),
 			),
 			$this->build_head(),
@@ -61,8 +62,9 @@ class Table extends Text {
 			'element' => 'thead',
 			array(
 				'element' => 'tr',
+				$this->head_columns( $columns ),
 			),
-			$this->head_columns( $columns ),
+
 		);
 
 		return $header;
@@ -81,6 +83,11 @@ class Table extends Text {
 			$this->columns[] = $slug;
 			$new_column      = array(
 				'element' => 'th',
+				'attributes' => array(
+					'class' => array(
+						'cld-table-th',
+					),
+				),
 			);
 			if ( is_array( $column ) ) {
 				$new_column = array_merge( $new_column, $column );

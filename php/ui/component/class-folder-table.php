@@ -9,7 +9,6 @@ namespace Cloudinary\UI\Component;
 
 use Cloudinary\REST_API;
 use Cloudinary\Cache\Cache_Point;
-use Cloudinary\Utils;
 use function Cloudinary\get_plugin_instance;
 
 /**
@@ -41,6 +40,13 @@ class Folder_Table extends Table {
 	protected $cache_point;
 
 	/**
+	 * Holds the script export data.
+	 *
+	 * @var array
+	 */
+	protected $export = array();
+
+	/**
 	 * Register table structures as components.
 	 */
 	public function setup() {
@@ -48,6 +54,11 @@ class Folder_Table extends Table {
 		$this->setting->set_param( 'columns', $this->build_headers() );
 		$this->setting->set_param( 'rows', $this->build_rows() );
 		$this->setting->set_param( 'file_lists', $this->slugs );
+		$this->export = array(
+			'update_url' => rest_url( REST_API::BASE . '/disable_cache_items' ),
+			'fetch_url'  => rest_url( REST_API::BASE . '/show_cache' ),
+			'nonce'      => wp_create_nonce( 'wp_rest' ),
+		);
 		parent::setup();
 	}
 
@@ -58,7 +69,7 @@ class Folder_Table extends Table {
 	 */
 	protected function build_headers() {
 		$header_columns = array(
-			'title_column' => array(
+			'title_column'  => array(
 				array(
 					'slug'        => $this->get_title_slug(),
 					'type'        => 'on_off',
@@ -66,24 +77,13 @@ class Folder_Table extends Table {
 					'description' => $this->setting->get_param( 'title', '' ),
 				),
 			),
-		);
-		$filters        = $this->setting->get_param( 'filters', array() );
-		foreach ( $filters as $filter => $types ) {
-			$slug                    = $this->get_filter_slug( $filter );
-			$header_columns[ $slug ] = array(
+			'apply_changes' => array(
 				'attributes' => array(
-					'style' => 'text-align:right;width:20%;',
+					'style' => 'text-align:right;',
 				),
-				array(
-					'slug'             => $slug,
-					'type'             => 'on_off',
-					'description_left' => $filter,
-					'master'           => array(
-						$this->get_title_slug(),
-					),
-				),
-			);
-		}
+
+			),
+		);
 
 		return $header_columns;
 	}
@@ -122,13 +122,24 @@ class Folder_Table extends Table {
 		$row_params = array();
 		$rows       = $this->get_rows();
 		foreach ( $rows as $slug => $row ) {
-			$url                             = rest_url( REST_API::BASE . '/browse' );
+			$cache_point = $this->cache_point->get_cache_point( $row['url'] );
+
 			$row_params[ $slug ]             = $this->build_column( $row );
 			$row_params[ $slug . '_spacer' ] = array();
-			$content                         = array(
-				'content' => __( 'No assets found.', 'cloudinary' ),
-			);
-			$row_params[ $slug . '_tree' ]   = array(
+
+			if ( empty( $cache_point ) ) {
+				$row_params[ $slug . '_tree' ] = array(
+					'title_column' => array(
+						'condition' => array(
+							$slug             => true,
+							'toggle_' . $slug => true,
+						),
+						'content'   => __( 'No files cached.', 'cloudinary' ),
+					),
+				);
+				continue;
+			}
+			$row_params[ $slug . '_tree' ] = array(
 				'title_column' => array(
 					'attributes' => array(
 						'class' => array(
@@ -137,54 +148,102 @@ class Folder_Table extends Table {
 						),
 					),
 					array(
-						'element'    => 'ul',
+						'element'    => 'div',
 						'attributes' => array(
-							'data-url'     => $url,
-							'data-path'    => $row['src_path'],
-							'data-browser' => 'toggle_' . $slug,
-							'class'        => array(
-								'tree-branch',
+							'class' => array(
+								'cld-loading',
+								'closed',
 							),
 						),
 					),
-				),
-			);
-		}
+					array(
+						'element'    => 'table',
+						'condition'  => array(
+							$slug => true,
+						),
+						'attributes' => array(
+							'class' => array(
+								'striped',
+								'widefat',
+							),
+						),
+						array(
+							'element' => 'thead',
+							array(
+								'element' => 'tr',
+								array(
+									'element' => 'th',
+									array(
+										'slug'        => $slug . '_selector',
+										'type'        => 'on_off',
+										'description' => __( 'Cached Files', 'cloudinary' ),
+										'mini'        => true,
+									),
+									array(
+										'element'    => 'input',
+										'attributes' => array(
+											'type'        => 'search',
+											'id'          => $slug . '_search',
+											'class'       => array(
+												'cld-search',
+											),
+										),
+									),
+									array(
+										'element'    => 'button',
+										'content' => __( 'Search', 'cloudinary' ),
+										'attributes' => array(
+											'type'    => 'button',
+											'id'      => $slug . '_reload',
+											'class'   => array(
+												'cld-reload',
+												'button',
+												'button-small',
+											),
+										),
+									),
+								),
+								array(
+									'element'    => 'th',
+									'attributes' => array(
+										'style' => 'text-align:right;',
+									),
+									array(
+										'element'    => 'label',
+										'content'    => __( 'Delete Cached', 'cloudinary' ),
+										array(
+											'element'    => 'input',
+											'attributes' => array(
+												'id'    => $slug . '_deleter',
+												'type'  => 'checkbox',
+												'style' => 'margin:0 4px 0 8px;',
+											),
+										),
+										'attributes' => array(
+											'class' => array(
+												'delete',
+											),
+										),
+									),
+								),
+							),
+						),
+						array(
+							'element'    => 'tbody',
+							'attributes' => array(
+								'data-cache-point' => $cache_point->ID,
+								'data-browser'     => 'toggle_' . $slug,
+								'data-slug'        => $slug,
+								'data-apply'       => 'apply_' . $slug,
+								'class'            => array(
+									'tree-branch',
+									'striped',
+								),
+							),
+							'render'     => true,
+						),
 
-		return $row_params;
-	}
-
-	/**
-	 * Build the rows.
-	 *
-	 * @return array
-	 */
-	protected function old_build_rows() {
-
-		$row_params = array();
-		$rows       = $this->get_rows();
-		foreach ( $rows as $slug => $row ) {
-			$row_params[ $slug ]             = $this->build_column( $row );
-			$row_params[ $slug . '_spacer' ] = array();
-			$content                         = array(
-				'content' => __( 'No assets found.', 'cloudinary' ),
-			);
-			if ( ! empty( $row['files'] ) ) {
-				$content       = array(
-					'slug'       => $slug . '_files',
-					'type'       => 'file_folder',
-					'base_path'  => $row['path'],
-					'action'     => 'selection',
-					'file_types' => $this->get_filter_types( $slug ),
-				);
-				$this->slugs[] = $slug . '_files';
-			}
-			$row_params[ $slug . '_tree' ] = array(
-				'title_column' => array(
-					'condition' => array(
-						'toggle_' . $slug => true,
 					),
-					$content,
 				),
 			);
 		}
@@ -201,14 +260,12 @@ class Folder_Table extends Table {
 	 */
 	protected function build_column( $row ) {
 
-		$disabled = empty( $row['files'] );
-		$column   = array(
-			'title_column' => array(
+		$column = array(
+			'title_column'  => array(
 				array(
 					'slug'      => $row['slug'],
 					'title'     => $this->setting->get_value( $this->get_title_slug() ),
 					'type'      => 'on_off',
-					'disabled'  => $disabled,
 					'default'   => 'on',
 					'base_path' => $row['src_path'],
 					'action'    => 'all_selector',
@@ -223,7 +280,22 @@ class Folder_Table extends Table {
 					'off'              => 'dashicons-arrow-down',
 					'on'               => 'dashicons-arrow-up',
 					'default'          => 'off',
+					'condition'        => array(
+						$row['slug'] => true,
+					),
 				),
+				array(
+					'type'             => 'icon_toggle',
+					'slug'             => 'off_' . $row['slug'],
+					'description_left' => $row['title'],
+					'off'              => ' ',
+					'on'               => ' ',
+					'default'          => 'off',
+					'condition'        => array(
+						$row['slug'] => false,
+					),
+				),
+
 				array(
 					'type'       => 'tag',
 					'element'    => 'span',
@@ -238,122 +310,28 @@ class Folder_Table extends Table {
 					),
 				),
 			),
+			'apply_changes' => array(
+				'attributes' => array(
+					'style' => 'text-align:right;height:26px;',
+				),
+				array(
+					'slug'       => 'apply_' . $row['slug'],
+					'type'       => 'button',
+					'value'      => $this->setting->get_param( 'title', '' ),
+					'attributes' => array(
+						'data-changes' => array(),
+					),
+					'style'      => array(
+						'button-small',
+						'button-primary',
+						'closed',
+					),
+					'label'      => __( 'Apply changes', 'cloudinary' ),
+				),
+			),
 		);
 
 		return $column;
-	}
-
-	/**
-	 * Build the filters columns.
-	 *
-	 * @param array $row The row params.
-	 *
-	 * @return array
-	 */
-	protected function build_column_filters( $row ) {
-		$filters        = $this->setting->get_param( 'filters', array() );
-		$column_filters = array();
-		foreach ( $filters as $filter => $types ) {
-			if ( ! $row['filters'][ $filter ] ) {
-				continue;
-			}
-			$filter_slug                    = $this->get_filter_slug( $filter );
-			$column_filters[ $filter_slug ] = array(
-				'attributes' => array(
-					'style' => 'text-align:right;width:20%;',
-				),
-				array(
-					'type'       => 'tag',
-					'element'    => 'span',
-					'content'    => '',
-					'render'     => true,
-					'attributes' => array(
-						'id'    => $filter_slug . '_' . $row['slug'] . '_size_wrapper',
-						'class' => array(
-							'file-size',
-							'small',
-						),
-					),
-				),
-				array(
-					'type'   => 'on_off',
-					'slug'   => $filter_slug . '_' . $row['slug'],
-					'master' => array(
-						$filter_slug,
-						$row['slug'],
-					),
-				),
-			);
-		}
-
-		return $column_filters;
-	}
-
-	/**
-	 * Get the files for this path.
-	 *
-	 * @param string $path    The path.
-	 * @param string $version The path version.
-	 * @param array  $types   The types to filter by.
-	 *
-	 * @return array|mixed
-	 */
-	protected function get_files( $path, $version, $types = array() ) {
-		$transient_key = md5( $path );
-		$paths         = get_transient( $transient_key );
-		if ( empty( $paths ) || $version !== $paths['version'] || $types !== $paths['types'] ) {
-			$paths                      = array(
-				'version'           => $version,
-				'types'             => $types,
-				'unique_extensions' => array(),
-			);
-			$paths['files']             = Utils::get_files( $path, array_keys( $types ), true );
-			$paths['unique_extensions'] = Utils::get_unique_extensions( $paths['files'] );
-			set_transient( $transient_key, $paths );
-		}
-
-		return $paths;
-	}
-
-	/**
-	 * Gets the supported filters from a list of extensions.
-	 *
-	 * @param array $extensions The list of extensions to check with.
-	 *
-	 * @return array
-	 */
-	protected function get_supported_filters( $extensions ) {
-		$filters   = $this->setting->get_param( 'filters', array() );
-		$supported = array();
-		foreach ( $filters as $filter => $types ) {
-			$match                = array_intersect( $extensions, $types );
-			$supported[ $filter ] = ! empty( $match );
-		}
-
-		return $supported;
-	}
-
-	/**
-	 * Get the filter types.
-	 *
-	 * @param null|string $slug The optional slug.
-	 *
-	 * @return array
-	 */
-	protected function get_filter_types( $slug = null ) {
-		$filters      = $this->setting->get_param( 'filters', array() );
-		$filter_types = array();
-		foreach ( $filters as $filter => $types ) {
-			$filter_slug = $this->get_filter_slug( $filter );
-			foreach ( $types as $type ) {
-				$filter_types[ $type ] = $filter_slug;
-				if ( $slug ) {
-					$filter_types[ $type ] .= '_' . $slug;
-				}
-			}
-		}
-
-		return $filter_types;
 	}
 
 	/**
@@ -385,5 +363,13 @@ class Folder_Table extends Table {
 		$slug = sanitize_key( $filter );
 
 		return $slug . '_filter';
+	}
+
+	/**
+	 * Output the export  script before rendering.
+	 */
+	protected function pre_render() {
+		wp_add_inline_script( 'cloudinary', 'var CLDCACHE = ' . wp_json_encode( $this->export ), 'before' );
+		parent::pre_render();
 	}
 }
