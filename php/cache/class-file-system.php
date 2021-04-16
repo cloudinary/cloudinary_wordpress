@@ -115,7 +115,7 @@ class File_System {
 	 * @return string
 	 */
 	public function wp_plugins_dir() {
-		return $this->paths['plugin'];
+		return $this->wp_file_system->wp_plugins_dir();
 	}
 
 	/**
@@ -124,7 +124,7 @@ class File_System {
 	 * @return string
 	 */
 	public function wp_content_dir() {
-		return $this->paths['content'];
+		return $this->wp_file_system->wp_content_dir();
 	}
 
 	/**
@@ -133,7 +133,7 @@ class File_System {
 	 * @return string
 	 */
 	public function wp_themes_dir() {
-		return $this->paths['theme'];
+		return $this->wp_file_system->wp_themes_dir();
 	}
 
 	/**
@@ -142,7 +142,7 @@ class File_System {
 	 * @return string
 	 */
 	public function wp_admin_dir() {
-		return $this->paths['admin'];
+		return $this->wp_file_system->abspath() . 'wp-admin/';
 	}
 
 	/**
@@ -151,7 +151,7 @@ class File_System {
 	 * @return string
 	 */
 	public function wp_includes_dir() {
-		return $this->paths['includes'];
+		return $this->wp_file_system->abspath() . 'wp-includes/';
 	}
 
 	/**
