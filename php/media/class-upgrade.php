@@ -64,6 +64,7 @@ class Upgrade {
 			$asset_version         = 1;
 			$asset_transformations = array();
 			$id_parts              = array();
+			$public_id             = $this->get_fetch_public_id( $path, $attachment_id );
 			foreach ( $parts as $val ) {
 				if ( empty( $val ) ) {
 					continue;
@@ -138,6 +139,25 @@ class Upgrade {
 		$this->sync->get_signature( $attachment_id, true );
 
 		return $public_id;
+	}
+
+	/**
+	 * Maybe the upgraded attachment is a fetch image.
+	 *
+	 * @param string $path          The attachment path.
+	 * @param int    $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function get_fetch_public_id( $path, $attachment_id ) {
+		$parts = explode( '/image/fetch/', $path );
+
+		if ( ! empty( $parts[1] ) ) {
+			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['delivery'], 'fetch' );
+			return $parts[1];
+		}
+
+		return '';
 	}
 
 	/**
