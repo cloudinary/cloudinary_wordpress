@@ -11,6 +11,18 @@
 }
 
 .cld {
+	&-pagenav{
+		margin-top: 5px;
+		text-align: center;
+		line-height: 2.4em;
+		color: #555;
+		&-next{
+			float: right;
+		}
+		&-prev{
+			float: left;
+		}
+	}
 	&-delete{
 		color: $color-red;
 		cursor: pointer;

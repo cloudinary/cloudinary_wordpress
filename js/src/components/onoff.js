@@ -61,6 +61,12 @@ const OnOff = {
 			input.elements = children;
 		}
 	},
+	_removeChild( input, child ) {
+		const index = input.elements.indexOf( child );
+		if ( -1 < index ) {
+			input.elements.splice( index, 1 );
+		}
+	},
 	_checkDown( input ) {
 		if ( input.elements ) {
 			input.classList.remove( 'partial' );
@@ -101,6 +107,10 @@ const OnOff = {
 			isPartial = false;
 		}
 		input.elements.forEach( ( child ) => {
+			if ( null === child.parentNode ) {
+				this._removeChild( input, child );
+				return;
+			}
 			sum += child.checked;
 			if ( child.classList.contains( 'partial' ) ) {
 				isPartial = true;

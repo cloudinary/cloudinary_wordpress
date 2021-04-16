@@ -19,6 +19,12 @@ const CacheManage = {
 			: null;
 	},
 	setCachePoint( ID, cachePoint ) {
+		const paginate = document.createElement( 'div' );
+		const loader = this._getRow();
+		const loaderTd = document.createElement( 'td' );
+		loaderTd.colSpan = 2;
+		loaderTd.className = 'cld-loading';
+		loader.appendChild( loaderTd );
 		const master = document.getElementById( cachePoint.dataset.slug );
 		const search = document.getElementById(
 			cachePoint.dataset.slug + '_search'
@@ -51,6 +57,7 @@ const CacheManage = {
 				this._load( ID );
 			}
 		} );
+		paginate.className = 'cld-pagenav';
 		apply.cacheChanges = {
 			draft: [],
 			publish: [],
@@ -60,9 +67,12 @@ const CacheManage = {
 		cachePoint.search = search;
 		cachePoint.controller = controller;
 		cachePoint.viewer = cachePoint.parentNode.parentNode;
-		cachePoint.loader = cachePoint.viewer.firstChild;
+		cachePoint.loader = loader;
 		cachePoint.table = cachePoint.parentNode;
 		cachePoint.apply = apply;
+		cachePoint.paginate = paginate;
+		cachePoint.viewer.appendChild( paginate );
+
 		this.cachePoints[ '_' + ID ] = cachePoint;
 	},
 	close( element ) {
@@ -101,21 +111,23 @@ const CacheManage = {
 			cachePoint.controller.checked = false;
 		}
 	},
-	_load( ID ) {
+	_load( ID, page ) {
 		const cachePoint = this.getCachePoint( ID );
-		this.close( cachePoint.table );
+		this._clearChildren( cachePoint );
+		cachePoint.appendChild( cachePoint.loader );
 		this.open( cachePoint.loader );
 		apiFetch( {
 			path: CLDCACHE.fetch_url,
 			data: {
 				ID,
+				page,
 				search: cachePoint.search.value,
 			},
 			method: 'POST',
-		} ).then( ( cachedItems ) => {
-			this.close( cachePoint.loader );
-			this.open( cachePoint.table );
-			this._buildList( cachePoint, cachedItems );
+		} ).then( ( result ) => {
+			cachePoint.removeChild( cachePoint.loader );
+			this._buildList( cachePoint, result.items );
+			this._buildNav( cachePoint, result );
 			const masters = cachePoint.querySelectorAll( '[data-master]' );
 			OnOff.bind( masters );
 			cachePoint.loaded = true;
@@ -201,8 +213,17 @@ const CacheManage = {
 		cachePoint.viewer.appendChild( note );
 		this.close( cachePoint.table );
 	},
+	_clearChildren( element ) {
+		while ( element.children.length ) {
+			const el = element.lastChild;
+			if ( el.children.length ) {
+				this._clearChildren( el );
+			}
+			//console.log( el );
+			element.removeChild( el );
+		}
+	},
 	_buildList( cachePoint, cachedItems ) {
-		cachePoint.innerHTML = '';
 		cachedItems.forEach( ( item ) => {
 			if ( item.note ) {
 				cachePoint.appendChild( this._getNote( item.note ) );
@@ -213,12 +234,50 @@ const CacheManage = {
 				on: 'publish',
 				off: 'draft',
 			} );
-			const file = this._getFile( cachePoint, item, statSwitch, row );
-			const deleter = this._getDeleter( cachePoint, file, item );
+			const file = this._getFile( cachePoint, item, row );
 			row.appendChild( file );
-			row.appendChild( deleter );
+			row.appendChild( statSwitch );
 			cachePoint.appendChild( row );
 		} );
+	},
+	_buildNav( cachePoint, result ) {
+		cachePoint.paginate.innerHTML = '';
+		const left = document.createElement( 'button' );
+		const right = document.createElement( 'button' );
+
+		left.type = 'button';
+		left.innerHTML = '&lsaquo;';
+		left.className = 'button cld-pagenav-prev';
+		if ( 1 === result.current_page ) {
+			left.disabled = true;
+		} else {
+			left.addEventListener( 'click', ( ev ) => {
+				this._load(
+					cachePoint.dataset.cachePoint,
+					result.current_page - 1
+				);
+			} );
+		}
+
+		right.type = 'button';
+		right.innerHTML = '&rsaquo;';
+		right.className = 'button cld-pagenav-next';
+		if (
+			result.current_page === result.total_pages ||
+			0 === result.total_pages
+		) {
+			right.disabled = true;
+		} else {
+			right.addEventListener( 'click', ( ev ) => {
+				this._load(
+					cachePoint.dataset.cachePoint,
+					result.current_page + 1
+				);
+			} );
+		}
+		cachePoint.paginate.innerText = result.nav_text;
+		cachePoint.paginate.appendChild( left );
+		cachePoint.paginate.appendChild( right );
 	},
 	_getNote( message ) {
 		const row = this._getRow();
@@ -235,32 +294,30 @@ const CacheManage = {
 		}
 		return row;
 	},
-	_getFile( cachePoint, item, stateSwitch, row ) {
+	_getFile( cachePoint, item ) {
 		const file = document.createElement( 'td' );
 		const label = document.createElement( 'label' );
-
+		const deleter = this._getDeleter( cachePoint, file, item );
 		label.innerText = item.short_url;
 		label.htmlFor = item.key;
-		file.appendChild( stateSwitch );
+		file.appendChild( deleter );
 		file.appendChild( label );
 
-		const spinner = document.createElement( 'span' );
-		spinner.className = 'spinner';
-		spinner.style.visibility = 'hidden';
-		spinner.id = item.ID;
-
-		file.appendChild( spinner );
 		return file;
 	},
 	_getDeleter( cachePoint, file, item ) {
-		const column = document.createElement( 'td' );
 		const checkbox = document.createElement( 'input' );
 		const masters = [ cachePoint.dataset.slug + '_deleter' ];
-		column.style.textAlign = 'right';
+		const index = this._getListIndex( cachePoint, item.ID, 'delete' );
 		checkbox.type = 'checkbox';
 		checkbox.value = item.ID;
+		checkbox.id = item.key;
 		checkbox.dataset.master = JSON.stringify( masters );
-		column.appendChild( checkbox );
+		if ( -1 < index ) {
+			checkbox.checked = true;
+			file.style.textDecoration = 'line-through';
+		}
+
 		checkbox.addEventListener( 'change', ( ev ) => {
 			file.style.opacity = 1;
 			file.style.textDecoration = '';
@@ -281,19 +338,21 @@ const CacheManage = {
 			} );
 			window.dispatchEvent( event );
 		} );
-		return column;
+		return checkbox;
 	},
 
 	_getStateSwitch( cachePoint, item, states ) {
+		const column = document.createElement( 'td' );
 		const wrap = document.createElement( 'label' );
 		const checkbox = document.createElement( 'input' );
 		const slider = document.createElement( 'span' );
 		const masters = [ cachePoint.dataset.slug + '_selector' ];
+		const index = this._getListIndex( cachePoint, item.ID, 'draft' );
+		column.style.textAlign = 'right';
 		wrap.className = 'cld-input-on-off-control mini';
 		checkbox.type = 'checkbox';
-		checkbox.id = item.key;
 		checkbox.value = item.ID;
-		checkbox.checked = item.active;
+		checkbox.checked = -1 < index ? false : item.active;
 		checkbox.dataset.master = JSON.stringify( masters );
 		slider.className = 'cld-input-on-off-control-slider';
 
@@ -311,8 +370,8 @@ const CacheManage = {
 			} );
 			window.dispatchEvent( event );
 		} );
-
-		return wrap;
+		column.appendChild( wrap );
+		return column;
 	},
 };
 
