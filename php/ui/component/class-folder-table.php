@@ -148,15 +148,6 @@ class Folder_Table extends Table {
 						),
 					),
 					array(
-						'element'    => 'div',
-						'attributes' => array(
-							'class' => array(
-								'cld-loading',
-								'closed',
-							),
-						),
-					),
-					array(
 						'element'    => 'table',
 						'condition'  => array(
 							$slug => true,
@@ -174,28 +165,42 @@ class Folder_Table extends Table {
 								array(
 									'element' => 'th',
 									array(
-										'slug'        => $slug . '_selector',
-										'type'        => 'on_off',
-										'description' => __( 'Cached Files', 'cloudinary' ),
-										'mini'        => true,
+										'element'      => 'input',
+										'tooltip_text' => __( 'Delete selected cached items.', 'cloudinary' ),
+										'attributes'   => array(
+											'id'           => $slug . '_deleter',
+											'type'         => 'checkbox',
+											'style'        => 'margin:0 4px 0 0;',
+											'data-tooltip' => $slug . '_delete_tip',
+										),
+									),
+									array(
+										'element'    => 'span',
+										'content'    => __( 'Select cache items to invalidate.', 'cloudinary' ),
+										'attributes' => array(
+											'id'    => $slug . '_delete_tip',
+											'class' => array(
+												'hidden',
+											),
+										),
 									),
 									array(
 										'element'    => 'input',
 										'attributes' => array(
-											'type'        => 'search',
-											'id'          => $slug . '_search',
-											'class'       => array(
+											'type'  => 'search',
+											'id'    => $slug . '_search',
+											'class' => array(
 												'cld-search',
 											),
 										),
 									),
 									array(
 										'element'    => 'button',
-										'content' => __( 'Search', 'cloudinary' ),
+										'content'    => __( 'Search', 'cloudinary' ),
 										'attributes' => array(
-											'type'    => 'button',
-											'id'      => $slug . '_reload',
-											'class'   => array(
+											'type'  => 'button',
+											'id'    => $slug . '_reload',
+											'class' => array(
 												'cld-reload',
 												'button',
 												'button-small',
@@ -209,19 +214,21 @@ class Folder_Table extends Table {
 										'style' => 'text-align:right;',
 									),
 									array(
-										'element'    => 'label',
-										'content'    => __( 'Delete Cached', 'cloudinary' ),
-										array(
-											'element'    => 'input',
-											'attributes' => array(
-												'id'    => $slug . '_deleter',
-												'type'  => 'checkbox',
-												'style' => 'margin:0 4px 0 8px;',
+										'slug'       => $slug . '_selector',
+										'type'       => 'on_off',
+										'attributes' => array(
+											'wrap' => array(
+												'data-tooltip' => $slug . '_disable_tip',
 											),
 										),
+									),
+									array(
+										'element'    => 'span',
+										'content'    => __( 'Select cache items to bypass.', 'cloudinary' ),
 										'attributes' => array(
+											'id'    => $slug . '_disable_tip',
 											'class' => array(
-												'delete',
+												'hidden',
 											),
 										),
 									),

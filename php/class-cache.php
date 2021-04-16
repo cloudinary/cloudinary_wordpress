@@ -361,21 +361,16 @@ class Cache extends Settings_Component implements Setup {
 	 *
 	 * @param \WP_REST_Request $request The request object.
 	 *
-	 * @return array
+	 * @return \WP_REST_Response
 	 */
 	public function rest_get_caches( $request ) {
-		$id     = $request->get_param( 'ID' );
-		$search = $request->get_param( 'search' );
-		$return = $this->cache_point->get_cache_point_cache( $id, $search );
-		if ( empty( $return ) ) {
-			$return = array(
-				array(
-					'note' => __( 'No files cached', 'cloudinary' ),
-				),
-			);
-		}
+		$id           = $request->get_param( 'ID' );
+		$search       = $request->get_param( 'search' );
+		$page         = $request->get_param( 'page' );
+		$current_page = $page ? $page : 1;
+		$data         = $this->cache_point->get_cache_point_cache( $id, $search, $current_page );
 
-		return $return;
+		return rest_ensure_response( $data );
 	}
 
 	/**
@@ -921,8 +916,10 @@ class Cache extends Settings_Component implements Setup {
 	 * Add Content paths for caching.
 	 */
 	public function add_content_cache_paths() {
-
-		$this->add_cache_paths( 'cache_content', 'content_files', 'cache_all_content' );
+		if ( ! is_admin() ) {
+			// Exclude content replacement in admin.
+			$this->add_cache_paths( 'cache_content', 'content_files', 'cache_all_content' );
+		};
 	}
 
 	/**
