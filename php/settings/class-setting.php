@@ -680,7 +680,7 @@ class Setting {
 	 * @return $this
 	 */
 	public function setup_component() {
-		if ( is_null( $this->component ) ) {
+		if ( ! $this->has_component() ) {
 			$this->component = Component::init( $this );
 			$this->component->setup();
 		}
@@ -929,16 +929,18 @@ class Setting {
 				// Find the option parent below.
 				$this->value = $this->get_option_children();
 			} else {
-				return $this->get_option_parent()->get_value( $this->get_slug() );
+				$values   = $this->get_option_parent()->get_value();
+				$own_slug = $this->get_slug();
+				if ( empty( $values[ $own_slug ] ) || $this->has_settings() ) {
+					$default_children    = (array) $this->get_default_values_recursive();
+					$values[ $own_slug ] = array_intersect_key( $values, $default_children );
+				}
+				$this->value = $values[ $own_slug ];
 			}
 		}
-
 		$return      = $this->value;
 		$return_slug = $this->get_slug();
-		if ( is_string( $slug ) ) {
-			if ( ! isset( $this->value[ $slug ] ) ) {
-				$this->value[ $slug ] = null;
-			}
+		if ( $this->is_option_parent() && isset( $slug ) && isset( $this->value[ $slug ] ) ) {
 			$return      = $this->value[ $slug ];
 			$return_slug = $slug;
 		}
@@ -1217,6 +1219,15 @@ class Setting {
 		}
 
 		return $capture;
+	}
+
+	/**
+	 * Checks if the setting has a component.
+	 *
+	 * @return bool
+	 */
+	public function has_component() {
+		return ! is_null( $this->component );
 	}
 
 	/**

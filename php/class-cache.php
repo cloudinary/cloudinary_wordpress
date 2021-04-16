@@ -29,7 +29,7 @@ class Cache extends Settings_Component implements Setup {
 	 *
 	 * @var Media
 	 */
-	protected $media;
+	public $media;
 
 	/**
 	 * File System
@@ -67,27 +67,6 @@ class Cache extends Settings_Component implements Setup {
 	protected $cache_points = array();
 
 	/**
-	 * WP DB Class.
-	 *
-	 * @var \wpdb
-	 */
-	protected $wpdb;
-
-	/**
-	 * Holds the table name for caching items.
-	 *
-	 * @var string
-	 */
-	protected $cache_table;
-
-	/**
-	 * Holds the table name for storing cache points.
-	 *
-	 * @var string
-	 */
-	protected $cache_point_table;
-
-	/**
 	 * Holds the folder in which to store cached items in Cloudinary.
 	 *
 	 * @var string
@@ -114,27 +93,18 @@ class Cache extends Settings_Component implements Setup {
 	);
 
 	/**
-	 * Holds the timeout in seconds, for when to resync the list of found files for a path.
-	 */
-	const FILE_LOOKUP_TIMEOUT = 60;
-
-	/**
 	 * Site Cache constructor.
 	 *
 	 * @param Plugin $plugin Global instance of the main plugin.
 	 */
 	public function __construct( Plugin $plugin ) {
-		global $wpdb;
-		$this->wpdb = $wpdb;
 		parent::__construct( $plugin );
 		$this->file_system = new File_System( $plugin );
 		if ( $this->file_system->enabled() ) {
-			$this->cache_folder      = wp_parse_url( get_site_url(), PHP_URL_HOST );
-			$this->cache_table       = $this->wpdb->prefix . self::META_KEYS['cache_table'];
-			$this->cache_point_table = $this->wpdb->prefix . self::META_KEYS['cache_point'];
-			$this->media             = $this->plugin->get_component( 'media' );
-			$this->connect           = $this->plugin->get_component( 'connect' );
-			$this->api               = $this->plugin->get_component( 'api' );
+			$this->cache_folder = wp_parse_url( get_site_url(), PHP_URL_HOST );
+			$this->media        = $this->plugin->get_component( 'media' );
+			$this->connect      = $this->plugin->get_component( 'connect' );
+			$this->api          = $this->plugin->get_component( 'api' );
 			$this->register_hooks();
 		}
 	}
@@ -144,205 +114,13 @@ class Cache extends Settings_Component implements Setup {
 	 */
 	public function admin_rewrite() {
 		ob_start( array( $this, 'html_rewrite' ) );
-	}
-
-	/**
-	 * Clear the plugin Settings cache.
-	 *
-	 * @param string $plugin The plugin to invalidate cache for.
-	 */
-	public function invalidate_plugin_cache( $plugin ) {
-
-	}
-
-	/**
-	 * Invalidate cache of src files.
-	 *
-	 * @param array|string $files File/Files to invalidate.
-	 *
-	 * @return bool
-	 */
-	public function invalidate( $files ) {
-
-		$src_files    = (array) $files;
-		$list_prepare = array_fill( 0, count( $src_files ), '%s' );
-		$list_prepare = join( ',', $list_prepare );
-
-		$query = "DELETE FROM {$this->cache_table} WHERE src_path in( {$list_prepare} );";
-
-		return $this->wpdb->query( $this->wpdb->prepare( $query, $src_files ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL
-	}
-
-	/**
-	 * Get the file paths for the plugins.
-	 *
-	 * @param string $plugin  The plugin path.
-	 * @param string $version The plugin version.
-	 * @param array  $types   The types to get.
-	 * @param bool   $rebuild Flag to rebuild paths.
-	 *
-	 * @return array
-	 */
-	protected function get_plugin_data( $plugin, $version, $types, $rebuild = false ) {
-		$plugin_path = $this->file_system->wp_plugins_dir() . dirname( $plugin );
-		$cache_point = $this->get_cache_point( $plugin_path );
-		$paths       = $cache_point['data'];
-		if ( true === $rebuild || empty( $paths ) || $version !== $paths['version'] || $types !== $paths['types'] ) {
-			$paths = array(
-				'type'              => 'plugin',
-				'plugin'            => $plugin,
-				'version'           => $version,
-				'types'             => $types,
-				'unique_extensions' => array(),
-				'files_fetched'     => time(),
-				'path'              => $plugin_path,
-			);
-
-			$paths['files']             = $this->get_plugin_paths( $plugin, $types );
-			$paths['unique_extensions'] = File_System::get_unique_extensions( $paths['files'] );
-			$cache_point['data']        = $paths;
-			$this->set_cache_data( $plugin_path, $cache_point );
-		}
-
-		return $paths;
-	}
-
-	/**
-	 * Get the file paths for the plugins.
-	 *
-	 * @param string $plugin The plugin path.
-	 * @param array  $types  The types to get.
-	 *
-	 * @return array
-	 */
-	protected function get_plugin_paths( $plugin, $types ) {
-		$all_files = get_plugin_files( $plugin );
-
-		$filtered_files = File_System::filter_file_types( $all_files, $types );
-		$trim_len       = strlen( dirname( $plugin ) ) + 1;
-
-		return array_map(
-			function ( $file ) use ( $trim_len ) {
-				return substr( $file, $trim_len );
+		add_action(
+			'shutdown',
+			function () {
+				ob_get_flush();
 			},
-			$filtered_files
+			- 1
 		);
-	}
-
-	/**
-	 * Get the file paths for the theme.
-	 *
-	 * @param \WP_Theme|string $theme   The theme name or object.
-	 * @param array            $types   The types to get.
-	 * @param bool             $rebuild Flag to rebuild paths.
-	 *
-	 * @return array
-	 */
-	protected function get_theme_data( $theme, $types, $rebuild = false ) {
-		if ( is_string( $theme ) ) {
-			$theme = wp_get_theme( $theme );
-		}
-		$theme_path  = $theme->get_stylesheet_directory();
-		$cache_point = $this->get_cache_point( $theme_path );
-		$paths       = $cache_point['data'];
-		if ( true === $rebuild || empty( $paths ) || $theme->get( 'Version' ) !== $paths['version'] || $types !== $paths['types'] ) {
-			$paths                      = array(
-				'title'             => ! empty( $theme->get( 'Name' ) ) ? $theme->get( 'Name' ) : basename( $theme_path ),
-				'type'              => 'theme',
-				'theme'             => basename( $theme_path ),
-				'version'           => $theme->get( 'Version' ),
-				'types'             => $types,
-				'unique_extensions' => array(),
-				'files_fetched'     => time(),
-				'path'              => $theme_path,
-			);
-			$files                      = $this->get_theme_paths( $theme, $types );
-			$paths['files']             = File_System::filter_min( $files );
-			$paths['unique_extensions'] = File_System::get_unique_extensions( $paths['files'] );
-			$cache_point['data']        = $paths;
-			$this->set_cache_data( $theme_path, $cache_point );
-		}
-
-		return $paths;
-	}
-
-	/**
-	 * Get files for the theme.
-	 *
-	 * @param \WP_Theme $theme The theme to get paths for.
-	 * @param array     $types The file types to get.
-	 *
-	 * @return  array
-	 */
-	protected function get_theme_paths( $theme, $types ) {
-		$all_files = $theme->get_files( $types, 1000, false );
-
-		return array_keys( $all_files );
-	}
-
-	/**
-	 * Get the file paths for a folder.
-	 *
-	 * @param string $path    The folder path.
-	 * @param array  $types   The types to get.
-	 * @param bool   $rebuild Flag to rebuild paths.
-	 *
-	 * @return array
-	 */
-	protected function get_folder_data( $path, $types, $rebuild = false ) {
-		$cache_point = $this->get_cache_point( $path );
-		$paths       = $cache_point['data'];
-		$version     = get_bloginfo( 'version' );
-		if ( true === $rebuild || ! empty( $paths ) || $version !== $paths['version'] || $types !== $paths['types'] ) {
-			$paths                      = array(
-				'version'           => $version,
-				'type'              => $path,
-				'types'             => $types,
-				'unique_extensions' => array(),
-				'files_fetched'     => time(),
-				'path'              => $path,
-			);
-			$paths['files']             = $this->file_system->get_files( $path, $types );
-			$paths['unique_extensions'] = File_System::get_unique_extensions( $paths['files'] );
-			$cache_point['data']        = $paths;
-			$this->set_cache_data( $path, $cache_point );
-		}
-
-		return $paths;
-	}
-
-	/**
-	 * Get urls for cache point files.
-	 *
-	 * @param string $cache_point_slug The cache point to get urls for.
-	 * @param array  $excludes         List of files to exclude.
-	 *
-	 * @return array
-	 */
-	protected function get_path_urls( $cache_point_slug, $excludes = array() ) {
-		$cache_point = $this->get_cache_point( $cache_point_slug );
-		$data        = $cache_point['data'];
-
-		if ( empty( $data['files_fetched'] ) || $data['files_fetched'] < time() - self::FILE_LOOKUP_TIMEOUT ) {
-			switch ( $data['type'] ) {
-				case 'plugin':
-					$data = $this->get_plugin_data( $data['plugin'], $data['version'], $data['types'], true );
-					break;
-				case 'theme':
-					$data = $this->get_theme_data( $data['theme'], $data['types'], true );
-					break;
-				default:
-					$data = $this->get_folder_data( $data['path'], $data['types'], false );
-					break;
-			}
-		}
-
-		if ( ! empty( $excludes ) ) {
-			$data['files'] = array_diff( $excludes, $data['files'] );
-		}
-		$urls = $this->file_system->get_file_urls( $cache_point['cache_point'], $data['files'], $data['version'] );
-
-		return $urls;
 	}
 
 	/**
@@ -383,6 +161,75 @@ class Cache extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Find the URLs from HTML.
+	 *
+	 * @param string $html The HTML to find urls from.
+	 *
+	 * @return array
+	 */
+	public function find_urls( $html ) {
+		$types = $this->get_filetype_filters();
+
+		// Get all instances of paths from the page with version suffix. Keep it loose as to catch relative urls as well.
+		preg_match_all( '/(?<=["\'\(\s])[^"\'\(\s;]+?\.{1}(' . implode( '|', $types ) . ')([-a-zA-Z0-9@:%_\+.~\#?&=]+)?/i', $html, $result );
+
+		return $result[0];
+	}
+
+	/**
+	 * Convert relative urls to full urls.
+	 *
+	 * @param string $html          The html to convert.
+	 * @param string $relative_path The relative path to do the conversion against.
+	 *
+	 * @return array
+	 */
+	public function convert_relative_urls( $html, $relative_path ) {
+
+		$extracted = $this->extract_relative_urls( $html, $relative_path );
+
+		return str_replace( array_keys( $extracted ), $extracted, $html );
+	}
+
+	/**
+	 * Extracts relative urls form HTML.
+	 *
+	 * @param string $html          The html to extract from.
+	 * @param string $relative_path The relative path of the HTML location.
+	 *
+	 * @return array
+	 */
+	public function extract_relative_urls( $html, $relative_path ) {
+		$urls      = $this->find_urls( $html );
+		$mapped    = array_combine( $urls, $urls );
+		$extracted = array_map(
+			function ( $file ) use ( $relative_path ) {
+				$file           = ltrim( $file, '/' ); // Remove the leading slash.
+				$file_parts     = explode( '/', $file );
+				$relative_path  = untrailingslashit( $relative_path ); // Remove the trailing slash.
+				$relative_parts = explode( '/', $relative_path );
+				foreach ( $file_parts as $part ) {
+					if ( '.' === $part || '..' === $part ) {
+						array_shift( $file_parts );
+						if ( '..' === $part ) {
+							// Drop the end of the relative path.
+							array_pop( $relative_parts );
+						}
+						continue;
+					}
+					break;
+				}
+				$relative_parts = array_merge( $relative_parts, $file_parts );
+
+				return implode( '/', $relative_parts );
+			},
+			$mapped
+		);
+
+		return $extracted;
+	}
+
+	/**
 	 * Build sources for a set of paths and HTML.
 	 *
 	 * @param string $html The html to build against.
@@ -391,28 +238,70 @@ class Cache extends Settings_Component implements Setup {
 	 */
 	protected function build_sources( $html ) {
 
-		$file_type_filters = $this->get_filetype_filters();
-		$types             = array();
-		foreach ( $file_type_filters as $filter ) {
-			$types = array_merge( $types, $filter );
-		}
+		$found_urls = $this->find_urls( $html );
 
-		// Get all instances of paths from the page with version suffix.
-		preg_match_all( '/(?<=["\'])[^"\']+?\.(' . implode( '|', $types ) . ')\b([-a-zA-Z0-9@:%_\+.~\#?&=]*)?(?=["\'])/', $html, $result );
 		// Bail if not found.
-		if ( empty( $result[0] ) ) {
+		if ( empty( $found_urls ) ) {
 			return null;
 		}
-		$found_posts = $this->cache_point->get_cached_urls( $result[0] );
+		// Extract CSS files to look internally for relative URLS.
+		$css_relatives = array_filter(
+			$found_urls,
+			function ( $file ) {
+				return 'css' === pathinfo( strstr( $file, '?', true ), PATHINFO_EXTENSION );
+			}
+		);
+
+		// Remove the URLs that have relative url's in the CSS.
+		$found_urls = array_diff( $found_urls, $css_relatives );
+		preg_match_all( '/<link([^>]*)>/s', $html, $found_tags );
+		$tag_args = array_map( 'shortcode_parse_atts', $found_tags[1] );
+
+		// Extract relative URLs.
+		$tag_replace = array();
+		foreach ( $css_relatives as $css_relative ) {
+			$path      = $this->cache_point->url_to_path( strstr( $css_relative, '?', true ) );
+			$css       = $this->file_system->wp()->get_contents( $path );
+			$extracted = $this->extract_relative_urls( $css, dirname( $css_relative ) );
+
+			// Find tags with relatives and replace with style tags.
+			foreach ( $tag_args as $index => $args ) {
+
+				if ( empty( $args ) || ! isset( $args['href'] ) ) {
+					continue;
+				}
+				if ( $args['href'] === $css_relative ) {
+					$css = str_replace( array_keys( $extracted ), $extracted, $css );
+					$css = str_replace( "\n", '', $css );
+					$css = str_replace( "\r\n", '', $css );
+
+					$tag_replace[ $found_tags[0][ $index ] ] = '<style>' . $css . '</style>';
+				}
+			}
+
+			$found_urls = array_merge( $found_urls, array_values( $extracted ) );
+		}
+
+		$found_urls  = array_unique( $found_urls );
+		$found_posts = $this->cache_point->get_cached_urls( $found_urls );
+		if ( empty( $found_posts ) ) {
+			return null;
+		}
+		// Find tags with relatives and replace with style tags.
+		foreach ( $tag_replace as &$tag_replaced ) {
+			$tag_replaced = str_replace( array_keys( $found_posts ), $found_posts, $tag_replaced );
+		}
+		$found_posts = array_merge( $found_posts, $tag_replace );
 
 		// Clean locals/pending.
-		$found_posts    = array_filter(
+		$found_posts = array_filter(
 			$found_posts,
 			function ( $key, $value ) {
 				return $key != $value;
 			},
 			ARRAY_FILTER_USE_BOTH
 		);
+
 		$sources        = array();
 		$sources['url'] = array_keys( $found_posts );
 		$sources['cld'] = array_values( $found_posts );
@@ -421,37 +310,14 @@ class Cache extends Settings_Component implements Setup {
 	}
 
 	/**
-	 * Prepare uncached URLS to be synced by inserting them in the cache table, without cached URLS.
-	 *
-	 * @param array $items Local urls to be added.
-	 * @param array $paths Array of source paths of files to be cached.
-	 */
-	protected function prep_cache_items( $items, $paths ) {
-
-		$sources = array();
-		foreach ( $items as $url ) {
-			$clean_url = remove_query_arg( 'ver', $url );
-			$sources[] = $url;
-			$sources[] = remove_query_arg( 'ver', $paths[ $clean_url ] );
-			$sources[] = pathinfo( $clean_url, PATHINFO_EXTENSION );
-		}
-
-		$list_prepare = implode( ',', array_fill( 0, count( $items ), '(%s,%s,%s)' ) );
-		$query        = "INSERT INTO {$this->cache_table} ( local_url, src_path, type ) VALUES {$list_prepare}";
-		$this->wpdb->query( $this->wpdb->prepare( $query, $sources ) ); // phpcs:ignore WordPress.DB.PreparedSQL
-	}
-
-	/**
 	 * Register any hooks that this component needs.
 	 */
-	private function register_hooks() {
+	protected function register_hooks() {
 		$this->cache_point = new Cache_Point( $this );
-
 		add_filter( 'template_include', array( $this, 'frontend_rewrite' ), PHP_INT_MAX );
 		add_action( 'admin_init', array( $this, 'admin_rewrite' ), 0 );
 		add_action( 'deactivate_plugin', array( $this, 'invalidate_plugin_cache' ) );
 		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
-		add_action( 'shutdown', array( $this, 'start_sync' ) );
 	}
 
 	/**
@@ -463,121 +329,89 @@ class Cache extends Settings_Component implements Setup {
 	 */
 	public function rest_endpoints( $endpoints ) {
 
-		$endpoints['upload_cache'] = array(
-			'method'   => \WP_REST_Server::ALLMETHODS,
-			'callback' => array( $this, 'upload_cache' ),
-			'args'     => array(),
+		$endpoints['show_cache']          = array(
+			'method'              => \WP_REST_Server::ALLMETHODS,
+			'callback'            => array( $this, 'rest_get_caches' ),
+			'permission_callback' => array( $this, 'rest_can_manage_options' ),
+			'args'                => array(),
+		);
+		$endpoints['disable_cache_items'] = array(
+			'method'              => \WP_REST_Server::ALLMETHODS,
+			'permission_callback' => array( $this, 'rest_can_manage_options' ),
+			'callback'            => array( $this, 'rest_disable_items' ),
+			'args'                => array(
+				'ids'   => array(
+					'type'        => 'array',
+					'default'     => array(),
+					'description' => __( 'The list of IDs to update.', 'cloudinary' ),
+				),
+				'state' => array(
+					'type'        => 'string',
+					'default'     => 'draft',
+					'description' => __( 'The state to update.', 'cloudinary' ),
+				),
+			),
 		);
 
 		return $endpoints;
 	}
 
 	/**
-	 * Start uploading files to cloudinary cache.
-	 */
-	public function upload_cache() {
-
-		if ( empty( get_transient( self::META_KEYS['uploading_cache'] ) ) && ! empty( $this->count_uncached_items() ) ) {
-
-			set_transient( self::META_KEYS['uploading_cache'], true, 60 ); // Flag a transient to prevent multiple background uploads.
-			$to_upload = $this->get_uncached_items();
-
-			foreach ( $to_upload as $upload ) {
-				// translators: variable is file name.
-				$action_message = sprintf( __( 'Uploading:  %s', 'cloudinary' ), basename( $upload['src_path'] ) );
-				do_action( '_cloudinary_debug_action', $action_message );
-				set_transient( self::META_KEYS['uploading_cache'], true, 60 ); // Flag a transient to prevent multiple background uploads.
-				$upload['cached_url'] = $this->sync_static( $upload['src_path'], $upload['local_url'] );
-				if ( ! is_wp_error( $upload['cached_url'] ) && ! empty( $upload['cached_url'] ) ) {
-					$upload['timestamp'] = time();
-					$this->set_cached_url( $upload );
-				}
-			}
-			// Clear it so the next can try.
-			delete_transient( self::META_KEYS['uploading_cache'] );
-		}
-	}
-
-	/**
-	 * Get all cached urls for local urls.
+	 * Get cached files for an cache point.
 	 *
-	 * @param array $local_urls List of local URLs to get.
-	 * @param bool  $purge      Flag to purge expired items.
+	 * @param \WP_REST_Request $request The request object.
 	 *
 	 * @return array
 	 */
-	public function get_cached_urls( $local_urls, $purge = false ) {
-
-		if ( $purge ) {
-			$this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$this->cache_table} WHERE timestamp <= %d", time() - 60 ) ); // phpcs:ignore WordPress.DB.PreparedSQL
-		}
-
-		$list_prepare = array_fill( 0, count( $local_urls ), '%s' );
-		$list_prepare = join( ',', $list_prepare );
-
-		$query  = "SELECT * FROM {$this->cache_table} WHERE local_url in( {$list_prepare} );";
-		$found  = $this->wpdb->get_results( $this->wpdb->prepare( $query, $local_urls ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL
-		$return = array();
-		foreach ( $found as $row ) {
-			$return[ $row['local_url'] ] = $row['cached_url'];
+	public function rest_get_caches( $request ) {
+		$id     = $request->get_param( 'ID' );
+		$search = $request->get_param( 'search' );
+		$return = $this->cache_point->get_cache_point_cache( $id, $search );
+		if ( empty( $return ) ) {
+			$return = array(
+				array(
+					'note' => __( 'No files cached', 'cloudinary' ),
+				),
+			);
 		}
 
 		return $return;
 	}
 
 	/**
-	 * Get or count all un-cached urls for syncing.
+	 * Admin permission callback.
 	 *
-	 * @return array
+	 * Explicitly defined to allow easier testability.
+	 *
+	 * @return bool
 	 */
-	public function get_uncached_items() {
-
-		$query = "SELECT id, src_path, local_url FROM {$this->cache_table} WHERE cached_url IS NULL LIMIT 5";
-
-		return $this->wpdb->get_results( $this->wpdb->prepare( $query ), ARRAY_A );  // phpcs:ignore WordPress.DB.PreparedSQL
+	public function rest_can_manage_options() {
+		return current_user_can( 'manage_options' );
 	}
 
 	/**
-	 * Count how many items are to be cached.
+	 * Change the status of a cache_point.
 	 *
-	 * @return int
-	 */
-	public function count_uncached_items() {
-		$query = "SELECT COUNT(id) AS total FROM {$this->cache_table} WHERE cached_url IS NULL";
-
-		return (int) $this->wpdb->get_var( $this->wpdb->prepare( $query ) );  // phpcs:ignore WordPress.DB.PreparedSQL
-	}
-
-	/**
-	 * Load cached URLS from a source file.
+	 * @param \WP_REST_Request $request Full details about the request.
 	 *
-	 * @param string $file Source file to load cache for.
-	 *
-	 * @return array|null
+	 * @return \WP_REST_Response|\WP_Error Response object on success, or WP_Error object on failure.
 	 */
-	protected function load_cache( $file ) {
-		return $this->wpdb->get_results( $this->wpdb->prepare( "SELECT * FROM {$this->cache_table} WHERE src_path = %s", $file ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL
-	}
-
-	/**
-	 *  Update changes and start sync.
-	 */
-	public function start_sync() {
-
-		if ( ! empty( $this->count_uncached_items() ) ) {
-			$this->api->background_request( 'upload_cache' );
+	public function rest_disable_items( $request ) {
+		$ids   = $request['ids'];
+		$state = $request['state'];
+		foreach ( $ids as $id ) {
+			if ( 'delete' === $state ) {
+				wp_delete_post( $id );
+				continue;
+			}
+			$args = array(
+				'ID'          => $id,
+				'post_status' => $state,
+			);
+			wp_update_post( $args );
 		}
-	}
 
-	/**
-	 * Get cached url item.
-	 *
-	 * @param array $item The cache data array.
-	 */
-	public function set_cached_url( $item ) {
-		$id = $item['id'];
-		unset( $item['id'] );
-		$this->wpdb->update( $this->cache_table, $item, array( 'id' => $id ) );
+		return $ids;
 	}
 
 	/**
@@ -614,18 +448,16 @@ class Cache extends Settings_Component implements Setup {
 		$errored = get_transient( self::META_KEYS['upload_error'] );
 		if ( isset( $errored[ $file ] ) && 3 <= $errored[ $file ] ) {
 			unset( $errored[ $file ] );
-			update_option( self::META_KEYS['upload_error'], $errored );
-			$this->invalidate( $file );
+			set_transient( self::META_KEYS['upload_error'], $errored, 60 );
 
 			// Dont try again.
 			return new \WP_Error( 'upload_error' );
 		}
 
-		$file_path = $this->cache_folder . '/' . substr( $file, strlen( ABSPATH ) );
-		$public_id = dirname( $file_path ) . '/' . pathinfo( $file, PATHINFO_FILENAME );
-		$type      = $this->media->get_file_type( $file );
-		$method    = $this->get_upload_method();
-
+		$file_path   = $this->cache_folder . '/' . substr( $file, strlen( ABSPATH ) );
+		$public_id   = dirname( $file_path ) . '/' . pathinfo( $file, PATHINFO_FILENAME );
+		$type        = $this->media->get_file_type( $file );
+		$method      = $this->get_upload_method();
 		$upload_file = $url;
 		if ( 'direct' === $method ) {
 			if ( function_exists( 'curl_file_create' ) ) {
@@ -642,9 +474,13 @@ class Cache extends Settings_Component implements Setup {
 		);
 
 		if ( 'image' === $type ) {
-			$options['eager'] = 'f_auto,q_auto';
+			$options['eager'] = 'f_auto,q_auto:eco';
 		}
 		$data = $this->connect->api->upload_cache( $options );
+
+		if ( isset( $temp_name ) ) {
+			$this->file_system->wp()->delete( $temp_name );
+		}
 		if ( is_wp_error( $data ) ) {
 			do_action( '_cloudinary_debug_action', $data->get_error_message() );
 			$errored[ $file ] = isset( $errored[ $file ] ) ? $errored[ $file ] + 1 : 1;
@@ -668,17 +504,15 @@ class Cache extends Settings_Component implements Setup {
 	 */
 	protected function get_filetype_filters() {
 		$default_filters = array(
-			__( 'Images', 'cloudinary' ) => array(
-				'jpg',
-				'png',
-				'svg',
-			),
-			__( 'CSS', 'cloudinary' )    => array(
-				'css',
-			),
-			__( 'JS', 'cloudinary' )     => array(
-				'js',
-			),
+			'jpg',
+			'png',
+			'svg',
+			'eot',
+			'woff2',
+			'woff',
+			'ttf',
+			'css',
+			'js',
 		);
 
 		/**
@@ -700,12 +534,6 @@ class Cache extends Settings_Component implements Setup {
 	 * @return array|mixed
 	 */
 	protected function get_plugins_table() {
-
-		$file_type_filters = $this->get_filetype_filters();
-		$types             = array();
-		foreach ( $file_type_filters as $filter ) {
-			$types = array_merge( $types, $filter );
-		}
 
 		$plugins = get_plugins();
 		$active  = wp_get_active_and_valid_plugins();
@@ -731,7 +559,6 @@ class Cache extends Settings_Component implements Setup {
 			'type'       => 'folder_table',
 			'title'      => __( 'Plugin', 'cloudinary' ),
 			'root_paths' => $rows,
-			'filters'    => $file_type_filters,
 		);
 
 	}
@@ -743,11 +570,6 @@ class Cache extends Settings_Component implements Setup {
 	 */
 	protected function get_theme_table() {
 
-		$file_type_filters = $this->get_filetype_filters();
-		$types             = array();
-		foreach ( $file_type_filters as $filter ) {
-			$types = array_merge( $types, $filter );
-		}
 		$theme  = wp_get_theme();
 		$themes = array(
 			$theme,
@@ -757,8 +579,10 @@ class Cache extends Settings_Component implements Setup {
 		}
 		// Active Theme.
 		foreach ( $themes as $theme ) {
-			$slug          = $theme->get_stylesheet_directory();
-			$rows[ $slug ] = array(
+			$theme_location = $theme->get_stylesheet_directory();
+			$theme_slug     = basename( dirname( $theme_location ) ) . '/' . basename( $theme_location );
+			$slug           = sanitize_file_name( $theme_slug );
+			$rows[ $slug ]  = array(
 				'title'    => $theme->get( 'Name' ),
 				'url'      => $theme->get_stylesheet_directory_uri(),
 				'src_path' => $theme->get_stylesheet_directory(),
@@ -770,7 +594,6 @@ class Cache extends Settings_Component implements Setup {
 			'type'       => 'folder_table',
 			'title'      => __( 'Theme', 'cloudinary' ),
 			'root_paths' => $rows,
-			'filters'    => $file_type_filters,
 		);
 	}
 
@@ -780,12 +603,6 @@ class Cache extends Settings_Component implements Setup {
 	 * @return array
 	 */
 	protected function get_wp_table() {
-
-		$file_type_filters = $this->get_filetype_filters();
-		$types             = array();
-		foreach ( $file_type_filters as $filter ) {
-			$types = array_merge( $types, $filter );
-		}
 
 		$rows = array();
 		// Admin folder.
@@ -806,7 +623,29 @@ class Cache extends Settings_Component implements Setup {
 			'type'       => 'folder_table',
 			'title'      => __( 'WordPress', 'cloudinary' ),
 			'root_paths' => $rows,
-			'filters'    => $file_type_filters,
+		);
+	}
+
+	/**
+	 * Get the settings structure for the WordPress table.
+	 *
+	 * @return array
+	 */
+	protected function get_content_table() {
+
+		$rows               = array();
+		$uploads            = wp_get_upload_dir();
+		$rows['wp_content'] = array(
+			'title'    => __( 'Uploads', 'cloudinary' ),
+			'url'      => $uploads['baseurl'],
+			'src_path' => $uploads['basedir'],
+		);
+
+		return array(
+			'slug'       => 'content_files',
+			'type'       => 'folder_table',
+			'title'      => __( 'Content', 'cloudinary' ),
+			'root_paths' => $rows,
 		);
 	}
 
@@ -882,11 +721,11 @@ class Cache extends Settings_Component implements Setup {
 		$settings     = $this->settings->find_setting( $setting );
 		$cache_points = $settings->find_setting( $cache_point_setting )->get_param( 'root_paths', array() );
 		foreach ( $cache_points as $slug => $cache_point ) {
-
+			$enable_full = $this->settings->get_value( 'enable_full_site_cache' );
+			$enable_all  = $settings->get_value();
 			// All on or Plugin is on.
-			if ( 'on' == $this->settings->get_value( 'enable_full_site_cache' ) || 'on' === $settings->get_value( $all_cache_setting ) || 'off' !== $settings->get_value( $slug ) ) {
+			if ( 'on' == $enable_full || 'on' === $enable_all[ $all_cache_setting ] || ( isset( $enable_all[ $slug ] ) && 'on' === $enable_all[ $slug ] ) ) {
 				$this->cache_point->register_cache_path( $cache_point['url'], $cache_point['src_path'] );
-				continue;
 			}
 		}
 	}
@@ -942,10 +781,8 @@ class Cache extends Settings_Component implements Setup {
 
 	/**
 	 * Add Plugin paths for caching.
-	 *
-	 * @param array $paths The current paths to add to.
 	 */
-	public function add_plugin_cache_paths( $paths ) {
+	public function add_plugin_cache_paths() {
 
 		$this->add_cache_paths( 'cache_plugins', 'plugin_files', 'cache_all_plugins' );
 	}
@@ -990,10 +827,8 @@ class Cache extends Settings_Component implements Setup {
 
 	/**
 	 * Add Theme paths for caching.
-	 *
-	 * @param array $paths The current paths to add to.
 	 */
-	public function add_theme_cache_paths( $paths ) {
+	public function add_theme_cache_paths() {
 
 		$this->add_cache_paths( 'cache_themes', 'theme_files', 'cache_all_themes' );
 	}
@@ -1038,12 +873,56 @@ class Cache extends Settings_Component implements Setup {
 
 	/**
 	 * Add Theme paths for caching.
-	 *
-	 * @param array $paths The current paths to add to.
 	 */
-	public function add_wp_cache_paths( $paths ) {
+	public function add_wp_cache_paths() {
 
 		$this->add_cache_paths( 'cache_wordpress', 'wordpress_files', 'cache_all_wp' );
+	}
+
+	/**
+	 * Add WP Settings page.
+	 */
+	protected function add_content_settings() {
+		if ( ! $this->is_cache_setting_enabled( 'cache_content_enable' ) ) {
+			$this->settings->remove_setting( 'cache_content' );
+
+			return;
+		}
+		$content_setup = $this->get_content_table();
+		$params        = array(
+			'type' => 'frame',
+			array(
+				'type'  => 'panel',
+				'title' => __( 'Content', 'cloudinary' ),
+				array(
+					'type'        => 'on_off',
+					'slug'        => 'cache_all_content',
+					'description' => __( 'Deliver all content assets from WordPress Media Library.', 'cloudinary' ),
+					'default'     => 'on',
+				),
+				array(
+					'type'      => 'group',
+					'condition' => array(
+						'cache_all_content' => false,
+					),
+					$content_setup,
+				),
+			),
+			array(
+				'type' => 'submit',
+			),
+		);
+
+		$this->settings->create_setting( 'content_settings', $params, $this->settings->get_setting( 'cache_content' ) );
+		add_action( 'cloudinary_cache_init_cache_points', array( $this, 'add_content_cache_paths' ) );
+	}
+
+	/**
+	 * Add Content paths for caching.
+	 */
+	public function add_content_cache_paths() {
+
+		$this->add_cache_paths( 'cache_content', 'content_files', 'cache_all_content' );
 	}
 
 	/**
@@ -1113,6 +992,13 @@ class Cache extends Settings_Component implements Setup {
 								'description' => __( 'Deliver assets for WordPress.', 'cloudinary' ),
 								'default'     => 'off',
 							),
+							array(
+								'type'        => 'on_off',
+								'slug'        => 'cache_content_enable',
+								'title'       => __( 'Content', 'cloudinary' ),
+								'description' => __( 'Deliver content assets for WordPress.', 'cloudinary' ),
+								'default'     => 'off',
+							),
 						),
 					),
 					array(
@@ -1130,6 +1016,10 @@ class Cache extends Settings_Component implements Setup {
 				'cache_wordpress' => array(
 					'page_title' => __( 'WordPress', 'cloudinary' ),
 					'callback'   => array( $this, 'add_wp_settings' ),
+				),
+				'cache_content'   => array(
+					'page_title' => __( 'Content', 'cloudinary' ),
+					'callback'   => array( $this, 'add_content_settings' ),
 				),
 			),
 		);

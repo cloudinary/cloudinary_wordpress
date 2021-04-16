@@ -3,6 +3,7 @@
 import tippy from 'tippy.js';
 import 'tippy.js/dist/tippy.css';
 import OnOff from './onoff';
+import CacheManage from './cache-manage';
 
 const UI = {
 	bindings: {},
@@ -19,7 +20,7 @@ const UI = {
 		const self = this;
 		const compilerDebounce = {};
 
-		// Bind on off's.
+		// Bind on offs.
 		OnOff.bind( masters );
 
 		triggers.forEach( ( input ) => this._trigger( input ) );
@@ -43,6 +44,9 @@ const UI = {
 		[ ...triggers ].forEach( ( input ) => {
 			input.dispatchEvent( new Event( 'input' ) );
 		} );
+
+		// Start cache manager.
+		CacheManage.init( context );
 	},
 	_files( file, compilerDebounce ) {
 		const parent = file.dataset.parent;
