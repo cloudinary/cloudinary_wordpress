@@ -74,7 +74,7 @@ class Upgrade {
 					$cloud_name = md5( $val );
 					continue;
 				}
-				if ( in_array( $val, array( 'images', 'image', 'video', 'upload' ), true ) ) {
+				if ( in_array( $val, array( 'images', 'image', 'video', 'upload', 'fetch' ), true ) ) {
 					continue;
 				}
 				$transformation_maybe = $media->get_transformations_from_string( $val );
