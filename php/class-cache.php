@@ -662,12 +662,6 @@ class Cache extends Settings_Component implements Setup {
 			if ( is_callable( $callback ) ) {
 				call_user_func( $callback ); // Init the settings.
 			}
-
-			if ( 'on' == $this->settings->get_value( 'enable_full_site_cache' ) ) {
-				// Move to a placeholder setting, since we won't need to have the pages.
-				$placeholder = $this->settings->get_setting( 'cache_all_holder' );
-				$placeholder->add_setting( $setting );
-			}
 		}
 	}
 
@@ -679,7 +673,7 @@ class Cache extends Settings_Component implements Setup {
 	public function get_cache_settings() {
 		static $settings = array();
 		if ( empty( $settings ) ) {
-			$main_setting = $this->settings;
+			$main_setting = $this->settings->get_setting( 'cache_groups' );
 			foreach ( $main_setting->get_settings() as $slug => $setting ) {
 				if ( 'main_cache_page' === $slug ) {
 					continue; // Exclude the main page.
@@ -736,38 +730,21 @@ class Cache extends Settings_Component implements Setup {
 		}
 		$plugins_setup = $this->get_plugins_table();
 		$params        = array(
-			'type' => 'frame',
+			'type'        => 'panel',
+			'title'       => __( 'Plugins', 'cloudinary' ),
+			'collapsible' => 'closed',
 			array(
-				'type'       => 'panel',
-				'title'      => __( 'Plugins', 'cloudinary' ),
-				'attributes' => array(
-					'header' => array(
-						'class' => array(
-							'full-width',
-						),
-					),
-					'wrap'   => array(
-						'class' => array(
-							'full-width',
-						),
-					),
-				),
-				array(
-					'type'        => 'on_off',
-					'slug'        => 'cache_all_plugins',
-					'description' => __( 'Deliver assets from all plugin folders', 'cloudinary' ),
-					'default'     => 'on',
-				),
-				array(
-					'type'      => 'group',
-					'condition' => array(
-						'cache_all_plugins' => false,
-					),
-					$plugins_setup,
-				),
+				'type'        => 'on_off',
+				'slug'        => 'cache_all_plugins',
+				'description' => __( 'Deliver assets from all plugin folders', 'cloudinary' ),
+				'default'     => 'on',
 			),
 			array(
-				'type' => 'submit',
+				'type'      => 'group',
+				'condition' => array(
+					'cache_all_plugins' => false,
+				),
+				$plugins_setup,
 			),
 		);
 		$this->settings->create_setting( 'plugins_settings', $params, $this->settings->get_setting( 'cache_plugins' ) );
@@ -793,26 +770,21 @@ class Cache extends Settings_Component implements Setup {
 		}
 		$theme_setup = $this->get_theme_table();
 		$params      = array(
-			'type' => 'frame',
+			'type'        => 'panel',
+			'title'       => __( 'Themes', 'cloudinary' ),
+			'collapsible' => 'closed',
 			array(
-				'type'  => 'panel',
-				'title' => __( 'Themes', 'cloudinary' ),
-				array(
-					'type'        => 'on_off',
-					'slug'        => 'cache_all_themes',
-					'description' => __( 'Deliver all assets from active theme.', 'cloudinary' ),
-					'default'     => 'on',
-				),
-				array(
-					'type'      => 'group',
-					'condition' => array(
-						'cache_all_themes' => false,
-					),
-					$theme_setup,
-				),
+				'type'        => 'on_off',
+				'slug'        => 'cache_all_themes',
+				'description' => __( 'Deliver all assets from active theme.', 'cloudinary' ),
+				'default'     => 'on',
 			),
 			array(
-				'type' => 'submit',
+				'type'      => 'group',
+				'condition' => array(
+					'cache_all_themes' => false,
+				),
+				$theme_setup,
 			),
 		);
 
@@ -839,26 +811,21 @@ class Cache extends Settings_Component implements Setup {
 		}
 		$wordpress_setup = $this->get_wp_table();
 		$params          = array(
-			'type' => 'frame',
+			'type'        => 'panel',
+			'title'       => __( 'WordPress', 'cloudinary' ),
+			'collapsible' => 'closed',
 			array(
-				'type'  => 'panel',
-				'title' => __( 'WordPress', 'cloudinary' ),
-				array(
-					'type'        => 'on_off',
-					'slug'        => 'cache_all_wp',
-					'description' => __( 'Deliver all assets from WordPress core.', 'cloudinary' ),
-					'default'     => 'on',
-				),
-				array(
-					'type'      => 'group',
-					'condition' => array(
-						'cache_all_wp' => false,
-					),
-					$wordpress_setup,
-				),
+				'type'        => 'on_off',
+				'slug'        => 'cache_all_wp',
+				'description' => __( 'Deliver all assets from WordPress core.', 'cloudinary' ),
+				'default'     => 'on',
 			),
 			array(
-				'type' => 'submit',
+				'type'      => 'group',
+				'condition' => array(
+					'cache_all_wp' => false,
+				),
+				$wordpress_setup,
 			),
 		);
 
@@ -885,26 +852,21 @@ class Cache extends Settings_Component implements Setup {
 		}
 		$content_setup = $this->get_content_table();
 		$params        = array(
-			'type' => 'frame',
+			'type'        => 'panel',
+			'title'       => __( 'Content', 'cloudinary' ),
+			'collapsible' => 'closed',
 			array(
-				'type'  => 'panel',
-				'title' => __( 'Content', 'cloudinary' ),
-				array(
-					'type'        => 'on_off',
-					'slug'        => 'cache_all_content',
-					'description' => __( 'Deliver all content assets from WordPress Media Library.', 'cloudinary' ),
-					'default'     => 'on',
-				),
-				array(
-					'type'      => 'group',
-					'condition' => array(
-						'cache_all_content' => false,
-					),
-					$content_setup,
-				),
+				'type'        => 'on_off',
+				'slug'        => 'cache_all_content',
+				'description' => __( 'Deliver all content assets from WordPress Media Library.', 'cloudinary' ),
+				'default'     => 'on',
 			),
 			array(
-				'type' => 'submit',
+				'type'      => 'group',
+				'condition' => array(
+					'cache_all_content' => false,
+				),
+				$content_setup,
 			),
 		);
 
@@ -1002,21 +964,55 @@ class Cache extends Settings_Component implements Setup {
 						'type' => 'submit',
 					),
 				),
-				'cache_plugins'   => array(
-					'page_title' => __( 'Plugins', 'cloudinary' ),
-					'callback'   => array( $this, 'add_plugin_settings' ),
-				),
-				'cache_themes'    => array(
-					'page_title' => __( 'Themes', 'cloudinary' ),
-					'callback'   => array( $this, 'add_theme_settings' ),
-				),
-				'cache_wordpress' => array(
-					'page_title' => __( 'WordPress', 'cloudinary' ),
-					'callback'   => array( $this, 'add_wp_settings' ),
-				),
-				'cache_content'   => array(
-					'page_title' => __( 'Content', 'cloudinary' ),
-					'callback'   => array( $this, 'add_content_settings' ),
+				'cache_manager'   => array(
+					'page_title' => __( 'Site Cache Manager', 'cloudinary' ),
+					array(
+						'type'       => 'panel',
+						'title'      => __( 'Cache Groups', 'cloudinary' ),
+						'slug'       => 'cache_groups',
+						'attributes' => array(
+							'header' => array(
+								'class' => array(
+									'full-width',
+								),
+							),
+							'wrap'   => array(
+								'class' => array(
+									'full-width',
+								),
+							),
+						),
+						array(
+							'slug'     => 'cache_plugins',
+							'type'     => 'frame',
+							'callback' => array( $this, 'add_plugin_settings' ),
+						),
+						array(
+							'slug'     => 'cache_themes',
+							'type'     => 'frame',
+							'callback' => array( $this, 'add_theme_settings' ),
+						),
+						array(
+							'slug'     => 'cache_wordpress',
+							'type'     => 'frame',
+							'callback' => array( $this, 'add_wp_settings' ),
+						),
+						array(
+							'slug'     => 'cache_content',
+							'type'     => 'frame',
+							'callback' => array( $this, 'add_content_settings' ),
+						),
+					),
+					array(
+						'type'       => 'submit',
+						'attributes' => array(
+							'wrap' => array(
+								'class' => array(
+									'full-width',
+								),
+							),
+						),
+					),
 				),
 			),
 		);
