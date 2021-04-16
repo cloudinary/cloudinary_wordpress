@@ -275,8 +275,11 @@ const CacheManage = {
 				);
 			} );
 		}
-		cachePoint.paginate.innerText = result.nav_text;
+		const text = document.createElement( 'span' );
+		text.innerText = result.nav_text;
+		text.className = 'cld-pagenav-text';
 		cachePoint.paginate.appendChild( left );
+		cachePoint.paginate.appendChild( text );
 		cachePoint.paginate.appendChild( right );
 	},
 	_getNote( message ) {

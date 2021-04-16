@@ -163,7 +163,7 @@ class Cache_Controller extends \WP_REST_Posts_Controller {
 
 			wp_safe_remote_request( $url, $params );
 			if ( ! $streamed ) {
-				$server->send_header( 'Location', $post->post_title );
+				$server->send_header( 'Location', $meta['cache_url'] );
 			}
 			exit;
 		}
@@ -173,6 +173,7 @@ class Cache_Controller extends \WP_REST_Posts_Controller {
 			// Lets do a check on the file.
 			$file_time = $this->cache->file_system->wp_file_system->mtime( $meta['src_file'] );
 			if ( $meta['last_updated'] > $file_time ) {
+				update_post_meta( $post->ID, 'last_updated', time() );
 				// All cool.
 				exit;
 			}
@@ -191,6 +192,7 @@ class Cache_Controller extends \WP_REST_Posts_Controller {
 		}
 
 		update_post_meta( $post->ID, 'cached_url', $cache_url );
+		update_post_meta( $post->ID, 'last_updated', time() );
 		exit;
 	}
 }

@@ -87,9 +87,8 @@ class Cache_Point {
 			$check = true;
 			$meta  = $this->get_meta_cache( $object_id );
 			if ( ! isset( $meta[ $meta_key ] ) || $meta_value !== $meta[ $meta_key ] ) {
-				$meta[ $meta_key ]    = $meta_value;
-				$this->meta_updates[] = $object_id;
-				$check                = $this->set_meta_cache( $object_id, $meta );
+				$meta[ $meta_key ] = $meta_value;
+				$check             = $this->set_meta_cache( $object_id, $meta );
 			}
 		}
 
@@ -175,6 +174,8 @@ class Cache_Point {
 	 * @return bool
 	 */
 	protected function set_meta_cache( $object_id, $meta ) {
+		$this->meta_updates[] = $object_id;
+
 		return wp_cache_replace( $object_id, $meta, 'cloudinary_asset' );
 	}
 

@@ -13,14 +13,17 @@
 .cld {
 	&-pagenav{
 		margin-top: 5px;
-		text-align: center;
+		text-align: right;
 		line-height: 2.4em;
 		color: #555;
+		&-text{
+			margin: 0 2em;
+		}
 		&-next{
-			float: right;
+			//float: right;
 		}
 		&-prev{
-			float: left;
+			//float: left;
 		}
 	}
 	&-delete{

@@ -673,11 +673,8 @@ class Cache extends Settings_Component implements Setup {
 	public function get_cache_settings() {
 		static $settings = array();
 		if ( empty( $settings ) ) {
-			$main_setting = $this->settings->get_setting( 'cache_groups' );
+			$main_setting = $this->settings->get_setting( 'cache_paths' );
 			foreach ( $main_setting->get_settings() as $slug => $setting ) {
-				if ( 'main_cache_page' === $slug ) {
-					continue; // Exclude the main page.
-				}
 				$settings[ $slug ] = $setting;
 			}
 		}
@@ -723,21 +720,32 @@ class Cache extends Settings_Component implements Setup {
 	 * Add the plugin cache settings page.
 	 */
 	protected function add_plugin_settings() {
-		if ( ! $this->is_cache_setting_enabled( 'cache_plugins_enable' ) ) {
-			$this->settings->remove_setting( 'cache_plugins' );
 
-			return;
-		}
 		$plugins_setup = $this->get_plugins_table();
 		$params        = array(
 			'type'        => 'panel',
 			'title'       => __( 'Plugins', 'cloudinary' ),
 			'collapsible' => 'closed',
+			'attributes'  => array(
+				'header' => array(
+					'class' => array(
+						'full-width',
+					),
+				),
+				'wrap'   => array(
+					'class' => array(
+						'full-width',
+					),
+				),
+			),
 			array(
 				'type'        => 'on_off',
 				'slug'        => 'cache_all_plugins',
 				'description' => __( 'Deliver assets from all plugin folders', 'cloudinary' ),
 				'default'     => 'on',
+				'master'      => array(
+					'enable_full_site_cache',
+				),
 			),
 			array(
 				'type'      => 'group',
@@ -763,21 +771,32 @@ class Cache extends Settings_Component implements Setup {
 	 * Add Theme Settings page.
 	 */
 	protected function add_theme_settings() {
-		if ( ! $this->is_cache_setting_enabled( 'cache_theme_enable' ) ) {
-			$this->settings->remove_setting( 'cache_themes' );
 
-			return;
-		}
 		$theme_setup = $this->get_theme_table();
 		$params      = array(
 			'type'        => 'panel',
 			'title'       => __( 'Themes', 'cloudinary' ),
 			'collapsible' => 'closed',
+			'attributes'  => array(
+				'header' => array(
+					'class' => array(
+						'full-width',
+					),
+				),
+				'wrap'   => array(
+					'class' => array(
+						'full-width',
+					),
+				),
+			),
 			array(
 				'type'        => 'on_off',
 				'slug'        => 'cache_all_themes',
 				'description' => __( 'Deliver all assets from active theme.', 'cloudinary' ),
 				'default'     => 'on',
+				'master'      => array(
+					'enable_full_site_cache',
+				),
 			),
 			array(
 				'type'      => 'group',
@@ -804,21 +823,32 @@ class Cache extends Settings_Component implements Setup {
 	 * Add WP Settings page.
 	 */
 	protected function add_wp_settings() {
-		if ( ! $this->is_cache_setting_enabled( 'cache_wordpress_enable' ) ) {
-			$this->settings->remove_setting( 'cache_wordpress' );
 
-			return;
-		}
 		$wordpress_setup = $this->get_wp_table();
 		$params          = array(
 			'type'        => 'panel',
 			'title'       => __( 'WordPress', 'cloudinary' ),
 			'collapsible' => 'closed',
+			'attributes'  => array(
+				'header' => array(
+					'class' => array(
+						'full-width',
+					),
+				),
+				'wrap'   => array(
+					'class' => array(
+						'full-width',
+					),
+				),
+			),
 			array(
 				'type'        => 'on_off',
 				'slug'        => 'cache_all_wp',
 				'description' => __( 'Deliver all assets from WordPress core.', 'cloudinary' ),
 				'default'     => 'on',
+				'master'      => array(
+					'enable_full_site_cache',
+				),
 			),
 			array(
 				'type'      => 'group',
@@ -845,21 +875,32 @@ class Cache extends Settings_Component implements Setup {
 	 * Add WP Settings page.
 	 */
 	protected function add_content_settings() {
-		if ( ! $this->is_cache_setting_enabled( 'cache_content_enable' ) ) {
-			$this->settings->remove_setting( 'cache_content' );
 
-			return;
-		}
 		$content_setup = $this->get_content_table();
 		$params        = array(
 			'type'        => 'panel',
 			'title'       => __( 'Content', 'cloudinary' ),
 			'collapsible' => 'closed',
+			'attributes'  => array(
+				'header' => array(
+					'class' => array(
+						'full-width',
+					),
+				),
+				'wrap'   => array(
+					'class' => array(
+						'full-width',
+					),
+				),
+			),
 			array(
 				'type'        => 'on_off',
 				'slug'        => 'cache_all_content',
 				'description' => __( 'Deliver all content assets from WordPress Media Library.', 'cloudinary' ),
 				'default'     => 'on',
+				'master'      => array(
+					'enable_full_site_cache',
+				),
 			),
 			array(
 				'type'      => 'group',
@@ -912,64 +953,9 @@ class Cache extends Settings_Component implements Setup {
 				'main_cache_page' => array(
 					'page_title' => __( 'Site Cache', 'cloudinary' ),
 					array(
-						'type'  => 'panel',
-						'title' => __( 'Cache Settings', 'cloudinary' ),
-						array(
-							'type'         => 'on_off',
-							'slug'         => 'enable_full_site_cache',
-							'title'        => __( 'Full CDN', 'cloudinary' ),
-							'tooltip_text' => __(
-								'Deliver all assets from Cloudinary.',
-								'cloudinary'
-							),
-							'description'  => __( 'Enable caching site assets.', 'cloudinary' ),
-							'default'      => 'off',
-						),
-						array(
-							'type'      => 'group',
-							'condition' => array(
-								'enable_full_site_cache' => false,
-							),
-							array(
-								'type'        => 'on_off',
-								'slug'        => 'cache_plugins_enable',
-								'title'       => __( 'Plugins', 'cloudinary' ),
-								'description' => __( 'Deliver assets in active plugins.', 'cloudinary' ),
-								'default'     => 'off',
-							),
-							array(
-								'type'        => 'on_off',
-								'slug'        => 'cache_theme_enable',
-								'title'       => __( 'Theme', 'cloudinary' ),
-								'description' => __( 'Deliver assets in active theme.', 'cloudinary' ),
-								'default'     => 'off',
-							),
-							array(
-								'type'        => 'on_off',
-								'slug'        => 'cache_wordpress_enable',
-								'title'       => __( 'WordPress', 'cloudinary' ),
-								'description' => __( 'Deliver assets for WordPress.', 'cloudinary' ),
-								'default'     => 'off',
-							),
-							array(
-								'type'        => 'on_off',
-								'slug'        => 'cache_content_enable',
-								'title'       => __( 'Content', 'cloudinary' ),
-								'description' => __( 'Deliver content assets for WordPress.', 'cloudinary' ),
-								'default'     => 'off',
-							),
-						),
-					),
-					array(
-						'type' => 'submit',
-					),
-				),
-				'cache_manager'   => array(
-					'page_title' => __( 'Site Cache Manager', 'cloudinary' ),
-					array(
+						'slug'       => 'cache_paths',
 						'type'       => 'panel',
-						'title'      => __( 'Cache Groups', 'cloudinary' ),
-						'slug'       => 'cache_groups',
+						'title'      => __( 'Cache Settings', 'cloudinary' ),
 						'attributes' => array(
 							'header' => array(
 								'class' => array(
@@ -981,6 +967,17 @@ class Cache extends Settings_Component implements Setup {
 									'full-width',
 								),
 							),
+						),
+						array(
+							'type'         => 'on_off',
+							'slug'         => 'enable_full_site_cache',
+							'title'        => __( 'Full CDN', 'cloudinary' ),
+							'tooltip_text' => __(
+								'Deliver all assets from Cloudinary.',
+								'cloudinary'
+							),
+							'description'  => __( 'Enable caching site assets.', 'cloudinary' ),
+							'default'      => 'off',
 						),
 						array(
 							'slug'     => 'cache_plugins',
