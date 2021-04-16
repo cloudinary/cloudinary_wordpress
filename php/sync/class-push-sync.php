@@ -202,13 +202,7 @@ class Push_Sync {
 				continue;
 			}
 			// Skip unsyncable delivery types.
-			if (
-			! in_array(
-				$this->media->get_media_delivery( $attachment_id ),
-				$this->media->get_syncable_delivery_types(),
-				true
-			)
-			) {
+			if ( ! $this->sync->is_syncable( $attachment_id ) ) {
 				continue;
 			}
 			// Flag attachment as being processed.
