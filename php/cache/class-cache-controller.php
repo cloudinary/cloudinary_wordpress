@@ -43,6 +43,7 @@ class Cache_Controller extends \WP_REST_Posts_Controller {
 		$get_item_args = array(
 			'context' => $this->get_context_param( array( 'default' => 'view' ) ),
 		);
+
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>[\d]+)',
@@ -81,7 +82,7 @@ class Cache_Controller extends \WP_REST_Posts_Controller {
 					),
 				),
 				array(
-					'methods'             => \WP_REST_Server::READABLE,
+					'methods'             => \WP_REST_Server::ALLMETHODS,
 					'callback'            => array( $this, 'get_item' ),
 					'permission_callback' => array( $this, 'get_item_permissions_check' ),
 					'args'                => $get_item_args,
@@ -89,6 +90,7 @@ class Cache_Controller extends \WP_REST_Posts_Controller {
 				'schema' => array( $this, 'get_public_item_schema' ),
 			)
 		);
+
 	}
 
 	/**
@@ -106,6 +108,16 @@ class Cache_Controller extends \WP_REST_Posts_Controller {
 	}
 
 	/**
+	 * Get the disable items url.
+	 *
+	 * @return string
+	 */
+	public function get_cache_state_url() {
+
+		return rest_url( "{$this->namespace}/{$this->rest_base}/state" );
+	}
+
+	/**
 	 * Retrieves a single post.
 	 *
 	 * @since 4.7.0
@@ -115,48 +127,70 @@ class Cache_Controller extends \WP_REST_Posts_Controller {
 	 * @return \WP_REST_Response|\WP_Error Response object on success, or WP_Error object on failure.
 	 */
 	public function get_item( $request ) {
+		// Get the server.
+		$server = rest_get_server();
+		$server->remove_header( 'Content-Type' );
 
 		$post = $this->get_post( $request['id'] );
 		if ( is_wp_error( $post ) ) {
 			return $post;
 		}
-		// Get the server.
-		$server = rest_get_server();
-		$server->remove_header( 'Content-Type' );
+		$meta   = get_post_meta( $post->ID );
+		$direct = $request->get_param( 'uploading' );
+		if ( empty( $direct ) ) {
+			$mime     = wp_check_filetype( $meta['src_file'], wp_get_mime_types() );
+			$streamed = false;
+			if ( 'image' === strstr( $mime['type'], '/', true ) ) {
+				// Stream images to the browser before uploading.
+				$server->send_header( 'Content-Type', $mime['type'] );
+				$server->send_header( 'Content-Length', $this->cache->file_system->wp_file_system->size( $meta['src_file'] ) );
+				$handle = fopen( $meta['src_file'], 'r' );  // phpcs:ignore
+				fpassthru( $handle );
+				fclose( $handle ); // phpcs:ignore
+				$streamed = true;
+			}
+			$url    = $this->get_cache_upload_url( $post->ID );
+			$params = array(
+				'timeout'   => 0.01,
+				'method'    => 'GET',
+				'blocking'  => false,
+				'sslverify' => false,
+				'headers'   => array(),
+				'body'      => array(
+					'uploading' => true,
+				),
+			);
 
-		// Get the file path.
-		$src_url = $post->post_title;
-		if ( false !== strpos( $src_url, '?' ) ) {
-			$src_url = strstr( $src_url, '?', true );
+			wp_safe_remote_request( $url, $params );
+			if ( ! $streamed ) {
+				$server->send_header( 'Location', $post->post_title );
+			}
+			exit;
 		}
-		$cache_point = $this->get_post( $post->post_parent );
-		$base_path   = ABSPATH . $cache_point->post_content;
-		$file        = wp_normalize_path( str_replace( $cache_point->post_title, $base_path, $src_url ) );
 
 		// Check if the file is different.
-		if ( $post->post_title !== $post->post_content ) {
+		if ( $meta['local_url'] !== $meta['cached_url'] ) {
 			// Lets do a check on the file.
-			$modified_time = get_post_datetime( $post, 'modified' )->getTimestamp();
-			$file_time     = $this->cache->file_system->wp_file_system->mtime( $file );
-			if ( $modified_time > $file_time ) {
-				$server->send_header( 'Location', $post->post_content );
+			$file_time = $this->cache->file_system->wp_file_system->mtime( $meta['src_file'] );
+			if ( $meta['last_updated'] > $file_time ) {
+				// All cool.
 				exit;
 			}
 		}
-		$mime = wp_check_filetype( $file, wp_get_mime_types() );
-		$server->send_header( 'Content-Type', $mime['type'] );
-		$server->send_header( 'Content-Length', $this->cache->file_system->wp_file_system->size( $file ) );
-		$handle = fopen( $file, 'r' ); // phpcs:ignore
-		fpassthru( $handle );
-		$cache_url = $this->cache->sync_static( $file, $src_url );
-		if ( ! is_wp_error( $cache_url ) ) {
-			$details = array(
-				'ID'           => $post->ID,
-				'post_content' => $cache_url,
+
+		$cache_url = $this->cache->sync_static( $meta['src_file'], $meta['cached_url'] );
+		if ( is_wp_error( $cache_url ) ) {
+			// If error, log it, and set item to draft.
+			update_post_meta( $post->ID, 'upload_error', $cache_url );
+			$params = array(
+				'ID'          => $post->ID,
+				'post_status' => 'draft',
 			);
-			wp_update_post( $details );
+			wp_update_post( $params );
+			exit;
 		}
+
+		update_post_meta( $post->ID, 'cached_url', $cache_url );
 		exit;
 	}
-
 }
