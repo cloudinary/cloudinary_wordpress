@@ -202,6 +202,8 @@
 			align-self: center;
 			padding: 0 0.45rem;
 			cursor: pointer;
+			position: absolute;
+			right: 0;
 		}
 
 		&-title {
@@ -609,6 +611,7 @@
 		&-heading {
 			display: flex;
 			padding: 0.4rem 1.75rem 0.2rem;
+			position: relative;
 
 			&.full-width {
 				max-width: 100%;
