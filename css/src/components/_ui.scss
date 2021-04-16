@@ -603,11 +603,11 @@
 
 		&.has-heading {
 			margin-top: 0;
+			border-top: 0;
 		}
 
 		&-heading {
 			display: flex;
-			border-bottom: 0;
 			padding: 0.4rem 1.75rem 0.2rem;
 
 			&.full-width {
@@ -616,6 +616,9 @@
 
 			img {
 				margin-right: 0.6rem;
+			}
+			&.collapsible{
+				cursor: pointer;
 			}
 		}
 

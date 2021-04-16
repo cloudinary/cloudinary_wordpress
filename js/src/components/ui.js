@@ -124,7 +124,8 @@ const UI = {
 	},
 	_toggle( element ) {
 		const self = this;
-		element.addEventListener( 'click', function () {
+		element.addEventListener( 'click', function ( ev ) {
+			ev.stopPropagation();
 			const wrap = document.querySelector(
 				'[data-wrap="' + element.dataset.toggle + '"]'
 			);
