@@ -148,6 +148,11 @@ class Gallery {
 	 * Register frontend assets for the gallery.
 	 */
 	public function enqueue_gallery_library() {
+		// Bail enqueuing the scripts if conditions aren't met.
+		if ( ! $this->maybe_enqueue_scripts() ) {
+			return;
+		}
+
 		wp_enqueue_script(
 			self::GALLERY_LIBRARY_HANDLE,
 			self::GALLERY_LIBRARY_URL,
@@ -404,6 +409,9 @@ class Gallery {
 			return $content;
 		}
 
+		// Ensure library is enqueued. Deals with archive pages that render the content.
+		$this->enqueue_gallery_library();
+
 		$attributes = Utils::expand_dot_notation( $block['attrs'], '_' );
 		$attributes = array_merge( self::$default_config, $attributes );
 
@@ -414,6 +422,13 @@ class Gallery {
 
 		$attributes['mediaAssets'] = $attributes['selectedImages'];
 		$attributes['cloudName']   = $this->media->plugin->components['connect']->get_cloud_name();
+
+		$credentials = $this->media->plugin->components['connect']->get_credentials();
+
+		if ( ! empty( $credentials['cname'] ) ) {
+			$attributes['secureDistribution'] = $credentials['cname'];
+			$attributes['privateCdn']         = true;
+		}
 		unset( $attributes['selectedImages'], $attributes['customSettings'] );
 
 		ob_start();
@@ -446,6 +461,53 @@ class Gallery {
 		}
 
 		return $config;
+	}
+
+	/**
+	 * Maybe enqueue gallery scripts.
+	 *
+	 * @return bool
+	 */
+	protected function maybe_enqueue_scripts() {
+		$can = false;
+
+		// Can if front end and have the block.
+		if (
+			! is_admin() &&
+			has_block( 'cloudinary/gallery' )
+		) {
+			$can = true;
+		}
+
+		// Can on back end on block editor and gallery settings page.
+		if ( is_admin() ) {
+			$screen = get_current_screen();
+			if (
+				! is_null( $screen ) &&
+				(
+					'cloudinary_page_media' === $screen->id ||
+					( method_exists( $screen, 'is_block_editor' ) && $screen->is_block_editor() )
+				)
+			) {
+				$can = true;
+			}
+		}
+
+		// Bail enqueuing the script several times.
+		if ( wp_script_is( self::GALLERY_LIBRARY_HANDLE ) ) {
+			$can = false;
+		}
+
+		/**
+		 * Filter the enqueue of gallery script.
+		 *
+		 * @param bool $can Default value.
+		 *
+		 * @return bool
+		 */
+		$can = apply_filters( 'cloudinary_enqueue_gallery_script', $can );
+
+		return $can;
 	}
 
 	/**

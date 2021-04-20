@@ -498,6 +498,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 					'target'     => '_self',
 					'attributes' => array(
 						'class'    => array(
+							'button',
 							'button-secondary',
 						),
 						'link_tag' => array(

@@ -354,7 +354,7 @@ class Storage implements Notice {
 			$this->settings = wp_parse_args( $settings, $defaults );
 			$structure      = array(
 				'generate' => array( $this, 'generate_signature' ),
-				'priority' => 5.2,
+				'priority' => 15,
 				'sync'     => array( $this, 'sync' ),
 				'state'    => 'info syncing',
 				'note'     => array( $this, 'status' ),
