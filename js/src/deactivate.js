@@ -7,6 +7,8 @@ const Deactivate = {
 	pluginListLinks: document.querySelectorAll(
 		'.cld-deactivate-link, .cld-deactivate'
 	),
+	// The deactivation links when Cloudinary only is set for storage.
+	triggers: document.getElementsByClassName( 'cld-deactivate' ),
 	// The reasons.
 	options: document.querySelectorAll(
 		'.cloudinary-deactivation input[type="radio"]'
@@ -50,6 +52,24 @@ const Deactivate = {
 							'visibility: visible;' +
 							'width: 550px;'
 					);
+			} );
+		} );
+
+		// Add it a trigger watch to stop deactivation.
+		[ ...context.triggers ].forEach( ( trigger ) => {
+			trigger.addEventListener( 'click', function ( ev ) {
+				if (
+					! confirm(
+						wp.i18n.__(
+							'Caution: Your storage setting is currently set to "Cloudinary only", disabling the plugin will result in broken links to media assets. Are you sure you want to continue?',
+							'cloudinary'
+						)
+					)
+				) {
+					ev.preventDefault();
+					// Close the feedback form.
+					document.getElementById( 'TB_closeWindowButton' ).click();
+				}
 			} );
 		} );
 
