@@ -1,4 +1,3 @@
-/* global CLDCACHE */
 import apiFetch from '@wordpress/api-fetch';
 import OnOff from './onoff';
 
@@ -239,7 +238,7 @@ const CacheManage = {
 			if ( el.children.length ) {
 				this._clearChildren( el );
 			}
-			//console.log( el );
+
 			element.removeChild( el );
 		}
 	},

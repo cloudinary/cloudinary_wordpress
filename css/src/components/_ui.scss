@@ -19,12 +19,6 @@
 		&-text{
 			margin: 0 2em;
 		}
-		&-next{
-			//float: right;
-		}
-		&-prev{
-			//float: left;
-		}
 	}
 	&-delete{
 		color: $color-red;
@@ -33,7 +27,6 @@
 	}
 	&-apply{
 		&-action{
-			//visibility: hidden;
 			float: right;
 		}
 	}
