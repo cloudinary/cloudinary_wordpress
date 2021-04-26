@@ -1,4 +1,3 @@
-/* global */
 import filesize from 'file-size';
 
 const OnOff = {
