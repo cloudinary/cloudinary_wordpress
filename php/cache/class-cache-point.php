@@ -71,7 +71,7 @@ class Cache_Point {
 	protected $to_upload = array();
 
 	/**
-	 * Holds the limit of items to sync per visiter.s
+	 * Holds the limit of items to sync per visitor.
 	 *
 	 * @var int
 	 */
@@ -84,7 +84,7 @@ class Cache_Point {
 	 */
 	public function __construct( Cache $cache ) {
 		$this->cache      = $cache;
-		$this->sync_limit = apply_filters( 'cloudinary_on_demand_sync_linmit', 10 );
+		$this->sync_limit = apply_filters( 'cloudinary_on_demand_sync_limit', 10 );
 		$this->register_post_type();
 
 		add_filter( 'update_post_metadata', array( $this, 'update_meta' ), 10, 4 );
@@ -234,6 +234,7 @@ class Cache_Point {
 		if ( ! empty( $this->to_upload ) ) {
 			$now = microtime( true );
 			wp_schedule_single_event( $now, 'cloudinary_upload_cache', array( $this->to_upload ) );
+			spawn_cron( $now );
 		}
 	}
 
@@ -243,7 +244,7 @@ class Cache_Point {
 	public function init() {
 		$params = array(
 			'post_type'              => self::POST_TYPE_SLUG,
-			'post_status'            => array( 'draft', 'publish' ),
+			'post_status'            => 'any',
 			'post_parent'            => 0,
 			'posts_per_page'         => 100,
 			'no_found_rows'          => true,
@@ -346,23 +347,6 @@ class Cache_Point {
 		$validated_urls[ $url ] = ! is_null( $this->url_to_path( $url ) );
 
 		return $validated_urls[ $url ];
-	}
-
-	/**
-	 * Set cache path status.
-	 *
-	 * @param string $url    The path to disable.
-	 * @param string $status The state to set.
-	 */
-	public function set_cache_path_state( $url, $status ) {
-		$cache_point = $this->get_cache_point( $url );
-		if ( $cache_point && $cache_point->post_status !== $status ) {
-			$args = array(
-				'ID'          => $cache_point->ID,
-				'post_status' => $status,
-			);
-			wp_update_post( $args );
-		}
 	}
 
 	/**
@@ -490,13 +474,14 @@ class Cache_Point {
 			return array();
 		}
 		$cached_items = (array) get_post_meta( $cache_point->ID, 'cached_urls', true );
+		$excluded     = (array) get_post_meta( $cache_point->ID, 'excluded_urls', true );
 		$cached_items = array_filter( $cached_items );
 		$args         = array(
 			'post_type'      => self::POST_TYPE_SLUG,
 			'posts_per_page' => 20,
 			'paged'          => $page,
 			'post_parent'    => $id,
-			'post_status'    => array( 'draft', 'publish' ),
+			'post_status'    => 'any',
 		);
 		if ( ! empty( $search ) ) {
 			$args['s'] = $search;
@@ -508,13 +493,14 @@ class Cache_Point {
 			if ( ! isset( $cached_items[ $meta['local_url'] ] ) || is_null( $meta['cached_url'] ) || $meta['local_url'] === $meta['cached_url'] ) {
 				continue; // Not yet uploaded.
 			}
+
 			$items[] = array(
 				'ID'         => $post->ID,
 				'key'        => $post->post_name,
 				'local_url'  => $meta['local_url'],
 				'cached_url' => $meta['cached_url'],
 				'short_url'  => str_replace( $cache_point->post_title, '', $meta['local_url'] ),
-				'active'     => 'publish' === $post->post_status,
+				'active'     => ! in_array( $meta['local_url'], $excluded, true ),
 			);
 		}
 		$total_items = count( $items );
@@ -730,8 +716,8 @@ class Cache_Point {
 		$params = array(
 			'post_type'              => self::POST_TYPE_SLUG,
 			'post_name__in'          => $keys,
-			'posts_per_page'         => 10,
-			'post_status'            => array( 'draft', 'publish' ),
+			'posts_per_page'         => 100,
+			'post_status'            => 'any',
 			'post_parent__in'        => $this->get_active_cache_points( true ),
 			'no_found_rows'          => true,
 			'update_post_meta_cache' => false,
@@ -746,7 +732,7 @@ class Cache_Point {
 				$meta       = get_post_meta( $post->ID );
 				$cached_url = $meta['cached_url'] ? $meta['cached_url'] : $meta['local_url'];
 				$excludes   = get_post_meta( $post->post_parent, 'excluded_urls', true );
-				if ( 'draft' === $post->post_status && in_array( $meta['local_url'], $excludes, true ) ) {
+				if ( in_array( $meta['local_url'], $excludes, true ) ) {
 					// Add it as local, since this is being ignored.
 					$found_posts[ $meta['local_url'] ] = $meta['local_url'];
 					continue;

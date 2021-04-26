@@ -336,18 +336,7 @@ class Cache extends Settings_Component implements Setup {
 			if ( empty( $cached_urls ) ) {
 				$cached_urls = array();
 			}
-			// Check if the file is different.
-			if ( $meta['local_url'] !== $meta['cached_url'] ) {
-				// Lets do a check on the file.
-				$file_time = $this->file_system->wp_file_system->mtime( $meta['src_file'] );
-				if ( $meta['last_updated'] > $file_time ) {
-					update_post_meta( $post_id, 'last_updated', time() );
-					$cached_urls[ $meta['local_url'] ] = $meta['cached_url'];
-					update_post_meta( $post->post_parent, 'cached_urls', $cached_urls );
-					// All cool.
-					continue;
-				}
-			}
+
 			$cache_url = $this->sync_static( $meta['src_file'], $meta['local_url'] );
 			if ( is_wp_error( $cache_url ) ) {
 				// If error, log it, and set item to draft.
@@ -467,7 +456,6 @@ class Cache extends Settings_Component implements Setup {
 			$cached_items = get_post_meta( $item->post_parent, 'cached_urls' );
 			$item_meta    = get_post_meta( $id );
 			if ( 'delete' === $state ) {
-				$state = 'draft';
 				if ( isset( $cached_items[ $item_meta['local_url'] ] ) ) {
 					unset( $cached_items[ $item_meta['local_url'] ] );
 					update_post_meta( $item->post_parent, 'cached_urls', $cached_items );
@@ -477,12 +465,6 @@ class Cache extends Settings_Component implements Setup {
 			} elseif ( 'publish' === $state ) {
 				$this->cache_point->remove_excluded_url( $item->post_parent, $item_meta['local_url'] );
 			}
-
-			$args = array(
-				'ID'          => $id,
-				'post_status' => $state,
-			);
-			wp_update_post( $args );
 		}
 
 		return $ids;
