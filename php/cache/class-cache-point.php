@@ -32,6 +32,12 @@ class Cache_Point {
 	protected $active_cache_points = array();
 
 	/**
+	 * Holds a list of pre-found cached urls before querying to find cached items
+	 *
+	 * @var array.
+	 */
+	protected $pre_cached = array();
+	/**
 	 * Holds the list of registered cache_points.
 	 *
 	 * @var \WP_Post[]
@@ -58,17 +64,51 @@ class Cache_Point {
 	const POST_TYPE_SLUG = 'cloudinary_asset';
 
 	/**
+	 * Holds the list of items to upload.
+	 *
+	 * @var array
+	 */
+	protected $to_upload = array();
+
+	/**
+	 * Holds the limit of items to sync per visiter.s
+	 *
+	 * @var int
+	 */
+	protected $sync_limit;
+
+	/**
 	 * Cache Point constructor.
 	 *
 	 * @param Cache $cache The plugin ache object.
 	 */
 	public function __construct( Cache $cache ) {
-		$this->cache = $cache;
+		$this->cache      = $cache;
+		$this->sync_limit = apply_filters( 'cloudinary_on_demand_sync_linmit', 10 );
 		$this->register_post_type();
+
 		add_filter( 'update_post_metadata', array( $this, 'update_meta' ), 10, 4 );
 		add_filter( 'get_post_metadata', array( $this, 'get_meta' ), 10, 3 );
 		add_filter( 'delete_post_metadata', array( $this, 'delete_meta' ), 10, 4 );
 		add_action( 'shutdown', array( $this, 'meta_updates' ) );
+		add_action( 'wp_resource_hints', array( $this, 'dns_prefetch' ), 10, 2 );
+	}
+
+	/**
+	 * Add DNS prefetch link tag for assets.
+	 *
+	 * @param array  $urls          URLs to print for resource hints.
+	 * @param string $relation_type The relation type the URLs are printed for, e.g. 'preconnect' or 'prerender'.
+	 *
+	 * @return array
+	 */
+	public function dns_prefetch( $urls, $relation_type ) {
+
+		if ( 'dns-prefetch' === $relation_type && ! empty( $this->active_cache_points ) ) {
+			$urls[] = $this->cache->media->base_url;
+		}
+
+		return $urls;
 	}
 
 	/**
@@ -131,8 +171,7 @@ class Cache_Point {
 	public function get_meta( $check, $object_id, $meta_key ) {
 
 		if ( self::POST_TYPE_SLUG === get_post_type( $object_id ) ) {
-			$meta  = $this->get_meta_cache( $object_id );
-			$value = array();
+			$meta = $this->get_meta_cache( $object_id );
 			if ( empty( $meta_key ) ) {
 				$value = $meta;
 			} elseif ( isset( $meta[ $meta_key ] ) ) {
@@ -180,7 +219,7 @@ class Cache_Point {
 	}
 
 	/**
-	 * Compiles all metadata to be saved at shutdown.
+	 * Compiles all metadata and preps upload at shutdown.
 	 */
 	public function meta_updates() {
 		foreach ( $this->meta_updates as $id ) {
@@ -191,6 +230,11 @@ class Cache_Point {
 			);
 			wp_update_post( $params );
 		}
+		// Prep the upload for un-synced items.
+		if ( ! empty( $this->to_upload ) ) {
+			$now = microtime( true );
+			wp_schedule_single_event( $now, 'cloudinary_upload_cache', array( $this->to_upload ) );
+		}
 	}
 
 	/**
@@ -198,10 +242,13 @@ class Cache_Point {
 	 */
 	public function init() {
 		$params = array(
-			'post_type'      => self::POST_TYPE_SLUG,
-			'post_status'    => array( 'pending', 'publish' ),
-			'post_parent'    => 0,
-			'posts_per_page' => 100,
+			'post_type'              => self::POST_TYPE_SLUG,
+			'post_status'            => array( 'draft', 'publish' ),
+			'post_parent'            => 0,
+			'posts_per_page'         => 100,
+			'no_found_rows'          => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
 		);
 		$query  = new \WP_Query( $params );
 		foreach ( $query->get_posts() as $post ) {
@@ -253,21 +300,35 @@ class Cache_Point {
 	/**
 	 * Add the url to the cache point's exclude list.
 	 *
-	 * @param \WP_Post $cache_point The cache point to add to.
-	 * @param string   $url         The url to add.
+	 * @param int    $cache_point_id The cache point ID to add to.
+	 * @param string $url            The url to add.
 	 */
-	protected function exclude_url( $cache_point, $url ) {
-		$excludes = get_post_meta( $cache_point->ID, 'excluded_urls', true );
+	public function exclude_url( $cache_point_id, $url ) {
+		$excludes = get_post_meta( $cache_point_id, 'excluded_urls', true );
 		if ( empty( $excludes ) ) {
 			$excludes = array();
 		}
-		$excludes[] = $url;
-		update_post_meta( $cache_point->ID, 'excluded_urls', $excludes );
-		$args = array(
-			'ID'           => $cache_point->ID,
-			'post_content' => wp_json_encode( $cache_point->post_content_filtered ),
-		);
-		wp_update_post( $args );
+		if ( ! in_array( $url, $excludes, true ) ) {
+			$excludes[] = $url;
+			update_post_meta( $cache_point_id, 'excluded_urls', $excludes );
+		}
+	}
+
+	/**
+	 * Add the url to the cache point's exclude list.
+	 *
+	 * @param int    $cache_point_id The cache point ID to add to.
+	 * @param string $url            The url to add.
+	 */
+	public function remove_excluded_url( $cache_point_id, $url ) {
+		$excludes = get_post_meta( $cache_point_id, 'excluded_urls', true );
+		if ( ! empty( $excludes ) ) {
+			$index = array_search( $url, (array) $excludes, true );
+			if ( false !== $index ) {
+				unset( $excludes[ $index ] );
+				update_post_meta( $cache_point_id, 'excluded_urls', $excludes );
+			}
+		}
 	}
 
 	/**
@@ -333,9 +394,7 @@ class Cache_Point {
 	 * @return string
 	 */
 	public function url_to_path( $url ) {
-		if ( strpos( $url, '?' ) ) {
-			$url = strstr( $url, '?', true );
-		}
+		$url      = $this->clean_url( $url );
 		$src_path = $this->cache->file_system->get_src_path( $url );
 		if ( $this->cache->file_system->is_dir( $src_path ) ) {
 			$src_path = trailingslashit( $src_path );
@@ -349,25 +408,26 @@ class Cache_Point {
 	 *
 	 * @param string $url The cache point url to get.
 	 *
-	 * @return \WP_Post
+	 * @return \WP_Post | null
 	 */
 	protected function load_cache_point( $url ) {
-
-		$key         = $this->get_key_name( $url );
-		$url         = trailingslashit( $url );
-		$cache_point = null;
-		$params      = array(
-			'name'           => $key,
-			'post_type'      => self::POST_TYPE_SLUG,
-			'posts_per_page' => 1,
-		);
-		$found       = get_posts( $params );
-		if ( ! empty( $found ) ) {
-			$cache_point                           = array_shift( $found );
-			$this->registered_cache_points[ $url ] = $cache_point;
+		if ( ! isset( $this->registered_cache_points[ $url ] ) ) {
+			$key         = $this->get_key_name( $url );
+			$url         = trailingslashit( $url );
+			$cache_point = null;
+			$params      = array(
+				'name'           => $key,
+				'post_type'      => self::POST_TYPE_SLUG,
+				'posts_per_page' => 1,
+			);
+			$found       = get_posts( $params );
+			if ( ! empty( $found ) ) {
+				$cache_point                           = array_shift( $found );
+				$this->registered_cache_points[ $url ] = $cache_point;
+			}
 		}
 
-		return $cache_point;
+		return isset( $this->registered_cache_points[ $url ] ) ? $this->registered_cache_points[ $url ] : null;
 	}
 
 	/**
@@ -403,9 +463,11 @@ class Cache_Point {
 	protected function get_parent_cache_point( $url ) {
 		$parent = null;
 		foreach ( $this->active_cache_points as $key => $cache_point ) {
-			$excludes = get_post_meta( $cache_point->ID, 'excluded_urls', true );
-			if ( false !== strpos( $url, $key ) && ! in_array( $url, $excludes, true ) ) {
-				$parent = $cache_point;
+			if ( false !== strpos( $url, $key ) ) {
+				$excludes = (array) get_post_meta( $cache_point->ID, 'excluded_urls', true );
+				if ( ! in_array( $url, $excludes, true ) ) {
+					$parent = $cache_point;
+				}
 				break;
 			}
 		}
@@ -423,12 +485,13 @@ class Cache_Point {
 	 * @return \WP_Post[]
 	 */
 	public function get_cache_point_cache( $id, $search = null, $page = 1 ) {
-
 		$cache_point = get_post( $id );
 		if ( is_null( $cache_point ) ) {
 			return array();
 		}
-		$args = array(
+		$cached_items = (array) get_post_meta( $cache_point->ID, 'cached_urls', true );
+		$cached_items = array_filter( $cached_items );
+		$args         = array(
 			'post_type'      => self::POST_TYPE_SLUG,
 			'posts_per_page' => 20,
 			'paged'          => $page,
@@ -439,29 +502,33 @@ class Cache_Point {
 			$args['s'] = $search;
 		}
 		$posts = new \WP_Query( $args );
-
 		$items = array();
 		foreach ( $posts->get_posts() as $post ) {
-			$meta    = get_post_meta( $post->ID );
+			$meta = get_post_meta( $post->ID );
+			if ( ! isset( $cached_items[ $meta['local_url'] ] ) || is_null( $meta['cached_url'] ) || $meta['local_url'] === $meta['cached_url'] ) {
+				continue; // Not yet uploaded.
+			}
 			$items[] = array(
 				'ID'         => $post->ID,
 				'key'        => $post->post_name,
 				'local_url'  => $meta['local_url'],
 				'cached_url' => $meta['cached_url'],
 				'short_url'  => str_replace( $cache_point->post_title, '', $meta['local_url'] ),
-				'active'     => 'publish' === $post->post_status && 'publish' === $cache_point->post_status,
+				'active'     => 'publish' === $post->post_status,
 			);
 		}
+		$total_items = count( $items );
+		$pages       = ceil( $total_items / 20 );
 		// translators: The current page and total pages.
-		$description = sprintf( __( 'Page %1$d of %2$d', 'cloudinary' ), $page, $posts->max_num_pages );
+		$description = sprintf( __( 'Page %1$d of %2$d', 'cloudinary' ), $page, $pages );
 
 		// translators: The number of files.
-		$totals = sprintf( _n( '%d cached file', '%d cached files', $posts->found_posts, 'cloudinary' ), $posts->found_posts );
+		$totals = sprintf( _n( '%d cached file', '%d cached files', $total_items, 'cloudinary' ), $total_items );
 
 		$return = array(
 			'items'        => $items,
-			'total'        => $posts->found_posts,
-			'total_pages'  => $posts->max_num_pages,
+			'total'        => $total_items,
+			'total_pages'  => $pages,
 			'current_page' => $page,
 			'nav_text'     => $totals . ' | ' . $description,
 		);
@@ -491,6 +558,7 @@ class Cache_Point {
 			// Add meta data.
 			$meta = array(
 				'excluded_urls' => array(),
+				'cached_urls'   => array(),
 				'src_path'      => $src_path,
 				'url'           => $url,
 			);
@@ -530,6 +598,73 @@ class Cache_Point {
 	}
 
 	/**
+	 * Clean URLs te remove any query arguments and fragments.
+	 *
+	 * @param string $url The URL to clean.
+	 *
+	 * @return string
+	 */
+	public function clean_url( $url ) {
+		$default = array(
+			'scheme' => '',
+			'host'   => '',
+			'path'   => '',
+		);
+		$parts   = wp_parse_args( wp_parse_url( $url ), $default );
+
+		return $parts['scheme'] . '://' . $parts['host'] . $parts['path'];
+	}
+
+	/**
+	 * Get cached urls from cachepoint cache.
+	 *
+	 * @param array $urls List of URLS to extract.
+	 *
+	 * @return array
+	 */
+	protected function pre_cache_urls( $urls ) {
+		foreach ( $urls as $index => $url ) {
+			$cache_point = $this->get_cache_point( $url );
+			$return      = null;
+			if ( $cache_point ) {
+				$cached_urls = get_post_meta( $cache_point->ID, 'cached_urls', true );
+				if ( isset( $cached_urls[ $url ] ) ) {
+					$this->pre_cached[ $url ] = $cached_urls[ $url ];
+					unset( $urls[ $index ] );
+				}
+			}
+		}
+
+		return $urls;
+	}
+
+	/**
+	 * Purge the entire cache for a cache point.
+	 *
+	 * @param int $id The cache point post ID.
+	 */
+	public function purge_cache( $id ) {
+		$cache_point = get_post( $id );
+		$old_meta    = get_post_meta( $cache_point->ID );
+
+		// Add meta data.
+		$meta   = array(
+			'excluded_urls' => array(),
+			'cached_urls'   => array(),
+			'src_path'      => $old_meta['src_path'],
+			'url'           => $old_meta['url'],
+		);
+		$params = array(
+			'ID'           => $id,
+			'post_content' => wp_json_encode( $meta ),
+		);
+		$update = wp_update_post( $params );
+		$this->set_meta_cache( $cache_point->ID, $meta );
+
+		return $update;
+	}
+
+	/**
 	 * Convert a list of local URLS to Cached.
 	 *
 	 * @param array $urls List of local URLS to get cached versions.
@@ -546,38 +681,83 @@ class Cache_Point {
 			return null;
 		}
 
-		$keys        = array_map( array( $this, 'get_key_name' ), $urls );
-		$params      = array(
-			'post_type'      => self::POST_TYPE_SLUG,
-			'post_name__in'  => $keys,
-			'posts_per_page' => - 1,
-			'post_status'    => array( 'draft', 'publish' ),
-		);
-		$posts       = new \WP_Query( $params );
-		$all         = $posts->get_posts();
-		$found_posts = array();
-		foreach ( $all as $index => $post ) {
-			if ( 'draft' === $post->post_status ) {
-				// Add it as local.
-				unset( $urls[ array_search( $post->post_title, $urls ) ] );
-				continue;
+		$urls        = $this->pre_cache_urls( $urls );
+		$found_posts = $this->pre_cached;
+		if ( ! empty( $urls ) ) {
+			$queried_items = $this->query_cached_items( $urls );
+			if ( ! empty( $queried_items ) ) {
+				$found_posts += $queried_items;
 			}
-
-			$meta       = get_post_meta( $post->ID );
-			$cached_url = $meta['cached_url'];
-			// Check if it's still local after 2 min.
-			if ( $meta['local_url'] === $meta['cached_url'] && $meta['last_updated'] < time() - 20 ) {
-				// Set bach to the uploader.
-				$cached_url = $this->get_cache_upload_url( $post );
-			}
-
-			$found_posts[ $meta['local_url'] ] = $cached_url;
 		}
-
 		$missing = array_diff( $urls, array_keys( $found_posts ) );
 		if ( ! empty( $missing ) ) {
-			$found_posts = array_merge( $found_posts, $this->prepare_cache( $missing ) );
+			$this->prepare_cache( $missing );
 		}
+
+		// Remove urls that are local to improve replace performance.
+		$found_posts = array_filter(
+			$found_posts,
+			function ( $key, $value ) {
+				return $key !== $value;
+			},
+			ARRAY_FILTER_USE_BOTH
+		);
+
+		return $found_posts;
+	}
+
+	/**
+	 * Add item to be synced later.
+	 *
+	 * @param int $id The cloudinary_asset post type ID to sync.
+	 */
+	protected function prepare_for_sync( $id ) {
+		if ( count( $this->to_upload ) < $this->sync_limit ) {
+			$this->to_upload[] = $id;
+		}
+	}
+
+	/**
+	 * Query cached items that are not cached in the cache point meta (purged, new, evaluated).
+	 * This will add items to the to_upload to re-evaluate, and re-upload if needed.
+	 *
+	 * @param array $urls The urls to query.
+	 *
+	 * @return array
+	 */
+	public function query_cached_items( $urls ) {
+		$keys   = array_map( array( $this, 'get_key_name' ), $urls );
+		$params = array(
+			'post_type'              => self::POST_TYPE_SLUG,
+			'post_name__in'          => $keys,
+			'posts_per_page'         => 10,
+			'post_status'            => array( 'draft', 'publish' ),
+			'post_parent__in'        => $this->get_active_cache_points( true ),
+			'no_found_rows'          => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+			'paged'                  => 1,
+		);
+		$posts  = new \WP_Query( $params );
+		do {
+			$all         = $posts->get_posts();
+			$found_posts = array();
+			foreach ( $all as $index => $post ) {
+				$meta       = get_post_meta( $post->ID );
+				$cached_url = $meta['cached_url'] ? $meta['cached_url'] : $meta['local_url'];
+				$excludes   = get_post_meta( $post->post_parent, 'excluded_urls', true );
+				if ( 'draft' === $post->post_status && in_array( $meta['local_url'], $excludes, true ) ) {
+					// Add it as local, since this is being ignored.
+					$found_posts[ $meta['local_url'] ] = $meta['local_url'];
+					continue;
+				}
+				// Send to upload prep.
+				$this->prepare_for_sync( $post->ID );
+				$found_posts[ $meta['local_url'] ] = $cached_url;
+			}
+			$params['paged'] ++;
+			$posts = new \WP_Query( $params );
+		} while ( $posts->have_posts() );
 
 		return $found_posts;
 	}
@@ -585,32 +765,21 @@ class Cache_Point {
 	/**
 	 * Prepare a list of urls to be cached.
 	 *
-	 * @param array $urls  List of urls to cache.
-	 * @param int   $limit Limit the number of items to be cached at once.
-	 *
-	 * @return array
+	 * @param array $urls List of urls to cache.
 	 */
-	public function prepare_cache( $urls, $limit = 5 ) {
-		$urls        = array_slice( $urls, 0, $limit );
-		$cached_urls = array();
+	public function prepare_cache( $urls ) {
+
 		foreach ( $urls as $url ) {
 			$cache_point = $this->get_cache_point( $url );
 			if ( is_null( $cache_point ) ) {
 				continue;
 			}
-			if ( ! $this->is_valid_url( $url ) ) {
-				$this->exclude_url( $cache_point, $url );
+
+			$file = $this->url_to_path( $url );
+			if ( is_null( $file ) ) {
+				$this->exclude_url( $cache_point->ID, $url );
 				continue;
 			}
-
-			$src_url = $url;
-			if ( false !== strpos( $src_url, '?' ) ) {
-				$src_url = strstr( $src_url, '?', true );
-			}
-			$base_url  = get_post_meta( $cache_point->ID, 'url', true );
-			$base_path = get_post_meta( $cache_point->ID, 'src_path', true );
-			$base_path = ABSPATH . $base_path;
-			$file      = wp_normalize_path( str_replace( $base_url, $base_path, $src_url ) );
 
 			$meta = array(
 				'local_url'    => $url,
@@ -628,36 +797,9 @@ class Cache_Point {
 				'post_parent'  => $cache_point->ID,
 			);
 
-			$id                  = wp_insert_post( $args );
-			$cached_urls[ $url ] = $this->get_cache_upload_url( $id );
+			$id = wp_insert_post( $args );
+			$this->prepare_for_sync( $id );
 		}
-
-		return $cached_urls;
-	}
-
-	/**
-	 * Get the cache upload URL.
-	 *
-	 * @param int|\WP_Post $post The post or post ID.
-	 *
-	 * @return string
-	 */
-	public function get_cache_upload_url( $post ) {
-		if ( is_int( $post ) ) {
-			$post = get_post( $post );
-		}
-
-		return $this->post_type->get_rest_controller()->get_cache_upload_url( $post->ID );
-	}
-
-	/**
-	 * Get the cache update URL.
-	 *
-	 * @return string
-	 */
-	public function get_cache_update_url() {
-
-		return $this->post_type->get_rest_controller()->get_cache_state_url();
 	}
 
 	/**
@@ -665,24 +807,22 @@ class Cache_Point {
 	 */
 	protected function register_post_type() {
 		$args            = array(
-			'label'                 => __( 'Post Type', 'cloudinary' ),
-			'labels'                => array(),
-			'supports'              => false,
-			'hierarchical'          => true,
-			'public'                => false,
-			'show_ui'               => false,
-			'show_in_menu'          => false,
-			'show_in_admin_bar'     => false,
-			'show_in_nav_menus'     => false,
-			'can_export'            => false,
-			'has_archive'           => false,
-			'exclude_from_search'   => false,
-			'publicly_queryable'    => false,
-			'rewrite'               => false,
-			'capability_type'       => 'page',
-			'show_in_rest'          => true,
-			'rest_base'             => 'cld-asset',
-			'rest_controller_class' => '\Cloudinary\Cache\Cache_Controller',
+			'label'               => __( 'Cloudinary Asset', 'cloudinary' ),
+			'description'         => __( 'Post type to represent a non-media library asset.', 'cloudinary' ),
+			'labels'              => array(),
+			'supports'            => false,
+			'hierarchical'        => true,
+			'public'              => false,
+			'show_ui'             => false,
+			'show_in_menu'        => false,
+			'show_in_admin_bar'   => false,
+			'show_in_nav_menus'   => false,
+			'can_export'          => false,
+			'has_archive'         => false,
+			'exclude_from_search' => true,
+			'publicly_queryable'  => false,
+			'rewrite'             => false,
+			'capability_type'     => 'page',
 		);
 		$this->post_type = register_post_type( self::POST_TYPE_SLUG, $args );
 	}

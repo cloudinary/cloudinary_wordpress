@@ -57,6 +57,7 @@ class Folder_Table extends Table {
 		$this->export = array(
 			'update_url' => rest_url( REST_API::BASE . '/disable_cache_items' ),
 			'fetch_url'  => rest_url( REST_API::BASE . '/show_cache' ),
+			'purge_url'  => rest_url( REST_API::BASE . '/purge_cache' ),
 			'nonce'      => wp_create_nonce( 'wp_rest' ),
 		);
 		parent::setup();

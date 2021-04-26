@@ -171,9 +171,11 @@ class Cache extends Settings_Component implements Setup {
 		$types = $this->get_filetype_filters();
 
 		// Get all instances of paths from the page with version suffix. Keep it loose as to catch relative urls as well.
-		preg_match_all( '/(?<=["\'\(\s])[^"\'\(\s;]+?\.{1}(' . implode( '|', $types ) . ')([-a-zA-Z0-9@:%_\+.~\#?&=]+)?/i', $html, $result );
+		// wp_extract_urls() can also do this, however, we want to get only of the types specified.
+		preg_match_all( '/(?<=["\'\(\s])[^"\'\(\s;]+?\.{1}(' . implode( '|', $types ) . ')([-a-zA-Z0-9@:%_\+.~\#?&=]+)?/i', $html, $urls );
+		$urls = array_unique( array_map( 'html_entity_decode', $urls[0] ) );
 
-		return $result[0];
+		return $urls;
 	}
 
 	/**
@@ -318,6 +320,51 @@ class Cache extends Settings_Component implements Setup {
 		add_action( 'admin_init', array( $this, 'admin_rewrite' ), 0 );
 		add_action( 'deactivate_plugin', array( $this, 'invalidate_plugin_cache' ) );
 		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
+		add_action( 'cloudinary_upload_cache', array( $this, 'upload_cache' ) );
+	}
+
+	/**
+	 * Hook into the Cron event and process unsynced items.
+	 *
+	 * @param array $args The args passed to the cron event.
+	 */
+	public function upload_cache( $args ) {
+		foreach ( (array) $args as $post_id ) {
+			$meta        = get_post_meta( $post_id );
+			$post        = get_post( $post_id );
+			$cached_urls = get_post_meta( $post->post_parent, 'cached_urls', true );
+			if ( empty( $cached_urls ) ) {
+				$cached_urls = array();
+			}
+			// Check if the file is different.
+			if ( $meta['local_url'] !== $meta['cached_url'] ) {
+				// Lets do a check on the file.
+				$file_time = $this->file_system->wp_file_system->mtime( $meta['src_file'] );
+				if ( $meta['last_updated'] > $file_time ) {
+					update_post_meta( $post_id, 'last_updated', time() );
+					$cached_urls[ $meta['local_url'] ] = $meta['cached_url'];
+					update_post_meta( $post->post_parent, 'cached_urls', $cached_urls );
+					// All cool.
+					continue;
+				}
+			}
+			$cache_url = $this->sync_static( $meta['src_file'], $meta['local_url'] );
+			if ( is_wp_error( $cache_url ) ) {
+				// If error, log it, and set item to draft.
+				update_post_meta( $post_id, 'upload_error', $cache_url );
+				$params = array(
+					'ID'          => $post_id,
+					'post_status' => 'draft',
+				);
+				wp_update_post( $params );
+				continue;
+			}
+
+			update_post_meta( $post_id, 'cached_url', $cache_url );
+			update_post_meta( $post_id, 'last_updated', time() );
+			$cached_urls[ $meta['local_url'] ] = $cache_url;
+			update_post_meta( $post->post_parent, 'cached_urls', $cached_urls );
+		}
 	}
 
 	/**
@@ -330,13 +377,13 @@ class Cache extends Settings_Component implements Setup {
 	public function rest_endpoints( $endpoints ) {
 
 		$endpoints['show_cache']          = array(
-			'method'              => \WP_REST_Server::ALLMETHODS,
+			'method'              => \WP_REST_Server::CREATABLE,
 			'callback'            => array( $this, 'rest_get_caches' ),
 			'permission_callback' => array( $this, 'rest_can_manage_options' ),
 			'args'                => array(),
 		);
 		$endpoints['disable_cache_items'] = array(
-			'method'              => \WP_REST_Server::ALLMETHODS,
+			'method'              => \WP_REST_Server::CREATABLE,
 			'permission_callback' => array( $this, 'rest_can_manage_options' ),
 			'callback'            => array( $this, 'rest_disable_items' ),
 			'args'                => array(
@@ -352,8 +399,29 @@ class Cache extends Settings_Component implements Setup {
 				),
 			),
 		);
+		$endpoints['purge_cache']         = array(
+			'method'              => \WP_REST_Server::CREATABLE,
+			'callback'            => array( $this, 'rest_purge_cache_point' ),
+			'permission_callback' => array( $this, 'rest_can_manage_options' ),
+			'args'                => array(),
+		);
 
 		return $endpoints;
+	}
+
+	/**
+	 * Purges a cachepoint which forces the entire point to re-evaluate cached items when requested.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 *
+	 * @return \WP_Error|\WP_HTTP_Response|\WP_REST_Response
+	 */
+	public function rest_purge_cache_point( $request ) {
+
+		$cache_point = $request->get_param( 'cachePoint' );
+		$result      = $this->cache_point->purge_cache( $cache_point );
+
+		return rest_ensure_response( $result );
 	}
 
 	/**
@@ -395,10 +463,21 @@ class Cache extends Settings_Component implements Setup {
 		$ids   = $request['ids'];
 		$state = $request['state'];
 		foreach ( $ids as $id ) {
+			$item         = get_post( $id );
+			$cached_items = get_post_meta( $item->post_parent, 'cached_urls' );
+			$item_meta    = get_post_meta( $id );
 			if ( 'delete' === $state ) {
-				wp_delete_post( $id );
-				continue;
+				$state = 'draft';
+				if ( isset( $cached_items[ $item_meta['local_url'] ] ) ) {
+					unset( $cached_items[ $item_meta['local_url'] ] );
+					update_post_meta( $item->post_parent, 'cached_urls', $cached_items );
+				}
+			} elseif ( 'draft' === $state ) {
+				$this->cache_point->exclude_url( $item->post_parent, $item_meta['local_url'] );
+			} elseif ( 'publish' === $state ) {
+				$this->cache_point->remove_excluded_url( $item->post_parent, $item_meta['local_url'] );
 			}
+
 			$args = array(
 				'ID'          => $id,
 				'post_status' => $state,
@@ -440,20 +519,11 @@ class Cache extends Settings_Component implements Setup {
 	 */
 	public function sync_static( $file, $url ) {
 
-		$errored = get_transient( self::META_KEYS['upload_error'] );
-		if ( isset( $errored[ $file ] ) && 3 <= $errored[ $file ] ) {
-			unset( $errored[ $file ] );
-			set_transient( self::META_KEYS['upload_error'], $errored, 60 );
-
-			// Dont try again.
-			return new \WP_Error( 'upload_error' );
-		}
-
 		$file_path   = $this->cache_folder . '/' . substr( $file, strlen( ABSPATH ) );
 		$public_id   = dirname( $file_path ) . '/' . pathinfo( $file, PATHINFO_FILENAME );
 		$type        = $this->media->get_file_type( $file );
 		$method      = $this->get_upload_method();
-		$upload_file = $url;
+		$upload_file = $this->cache_point->clean_url( $url );
 		if ( 'direct' === $method ) {
 			if ( function_exists( 'curl_file_create' ) ) {
 				$upload_file = curl_file_create( $file ); // phpcs:ignore
@@ -477,11 +547,7 @@ class Cache extends Settings_Component implements Setup {
 			$this->file_system->wp()->delete( $temp_name );
 		}
 		if ( is_wp_error( $data ) ) {
-			do_action( '_cloudinary_debug_action', $data->get_error_message() );
-			$errored[ $file ] = isset( $errored[ $file ] ) ? $errored[ $file ] + 1 : 1;
-			set_transient( self::META_KEYS['upload_error'], $errored, 60 );
-
-			return null;
+			return $data;
 		}
 
 		$url = $data['secure_url'];
@@ -500,6 +566,7 @@ class Cache extends Settings_Component implements Setup {
 	protected function get_filetype_filters() {
 		$default_filters = array(
 			'jpg',
+			'gif',
 			'png',
 			'svg',
 			'eot',
