@@ -337,21 +337,27 @@ class Cache extends Settings_Component implements Setup {
 				$cached_urls = array();
 			}
 
-			$cache_url = $this->sync_static( $meta['src_file'], $meta['local_url'] );
-			if ( is_wp_error( $cache_url ) ) {
-				// If error, log it, and set item to draft.
-				update_post_meta( $post_id, 'upload_error', $cache_url );
-				$params = array(
-					'ID'          => $post_id,
-					'post_status' => 'draft',
-				);
-				wp_update_post( $params );
-				continue;
+			foreach ( $meta['cached_urls'] as $url => &$cached_url ) {
+				if ( $url !== $cached_url ) {
+					continue;
+				}
+				$result = $this->sync_static( $meta['src_file'], $meta['base_url'] );
+				if ( is_wp_error( $result ) ) {
+					// If error, log it, and set item to draft.
+					update_post_meta( $post_id, 'upload_error', $result );
+					$params = array(
+						'ID'          => $post_id,
+						'post_status' => 'draft',
+					);
+					wp_update_post( $params );
+					continue;
+				}
+				$cached_url          = $result;
+				$cached_urls[ $url ] = $cached_url;
 			}
-
-			update_post_meta( $post_id, 'cached_url', $cache_url );
+			update_post_meta( $post_id, 'cached_urls', $meta['cached_urls'] );
 			update_post_meta( $post_id, 'last_updated', time() );
-			$cached_urls[ $meta['local_url'] ] = $cache_url;
+			// Update cache point, cache.
 			update_post_meta( $post->post_parent, 'cached_urls', $cached_urls );
 		}
 	}
@@ -453,7 +459,7 @@ class Cache extends Settings_Component implements Setup {
 		$state = $request['state'];
 		foreach ( $ids as $id ) {
 			$item         = get_post( $id );
-			$cached_items = get_post_meta( $item->post_parent, 'cached_urls' );
+			$cached_items = get_post_meta( $item->post_parent, 'cached_urls', true );
 			$item_meta    = get_post_meta( $id );
 			if ( 'delete' === $state ) {
 				if ( isset( $cached_items[ $item_meta['local_url'] ] ) ) {
@@ -461,9 +467,9 @@ class Cache extends Settings_Component implements Setup {
 					update_post_meta( $item->post_parent, 'cached_urls', $cached_items );
 				}
 			} elseif ( 'draft' === $state ) {
-				$this->cache_point->exclude_url( $item->post_parent, $item_meta['local_url'] );
+				$this->cache_point->exclude_url( $item->post_parent, $item_meta['base_url'] );
 			} elseif ( 'publish' === $state ) {
-				$this->cache_point->remove_excluded_url( $item->post_parent, $item_meta['local_url'] );
+				$this->cache_point->remove_excluded_url( $item->post_parent, $item_meta['base_url'] );
 			}
 		}
 

@@ -213,7 +213,9 @@ class Cache_Point {
 	 * @return bool
 	 */
 	protected function set_meta_cache( $object_id, $meta ) {
-		$this->meta_updates[] = $object_id;
+		if ( ! in_array( $object_id, $this->meta_updates, true ) ) {
+			$this->meta_updates[] = $object_id;
+		}
 
 		return wp_cache_replace( $object_id, $meta, 'cloudinary_asset' );
 	}
@@ -232,9 +234,9 @@ class Cache_Point {
 		}
 		// Prep the upload for un-synced items.
 		if ( ! empty( $this->to_upload ) ) {
-			$now = microtime( true );
+			$now = microtime( true ); // Set it further than the initial spawn, to allow it through.
 			wp_schedule_single_event( $now, 'cloudinary_upload_cache', array( $this->to_upload ) );
-			spawn_cron( $now );
+			spawn_cron( $now + 61 );
 		}
 	}
 
@@ -490,17 +492,18 @@ class Cache_Point {
 		$items = array();
 		foreach ( $posts->get_posts() as $post ) {
 			$meta = get_post_meta( $post->ID );
-			if ( ! isset( $cached_items[ $meta['local_url'] ] ) || is_null( $meta['cached_url'] ) || $meta['local_url'] === $meta['cached_url'] ) {
+
+			$has = array_intersect_key( $meta['cached_urls'], $cached_items );
+			if ( empty( $has ) ) {
 				continue; // Not yet uploaded.
 			}
 
 			$items[] = array(
-				'ID'         => $post->ID,
-				'key'        => $post->post_name,
-				'local_url'  => $meta['local_url'],
-				'cached_url' => $meta['cached_url'],
-				'short_url'  => str_replace( $cache_point->post_title, '', $meta['local_url'] ),
-				'active'     => ! in_array( $meta['local_url'], $excluded, true ),
+				'ID'        => $post->ID,
+				'key'       => $post->post_name,
+				'local_url' => $meta['base_url'],
+				'short_url' => str_replace( $cache_point->post_title, '', $meta['base_url'] ),
+				'active'    => ! in_array( $meta['base_url'], $excluded, true ),
 			);
 		}
 		$total_items = count( $items );
@@ -569,7 +572,7 @@ class Cache_Point {
 	 * @return string
 	 */
 	protected function get_key_name( $url ) {
-		return md5( trailingslashit( $url ) );
+		return md5( trailingslashit( $this->clean_url( $url ) ) );
 	}
 
 	/**
@@ -651,6 +654,25 @@ class Cache_Point {
 	}
 
 	/**
+	 * Filter out duplicate urls that have different query and fragments.
+	 * We should only have a single base url per asset to prevent creating duplicate base items.
+	 *
+	 * @param string $url The url to test.
+	 *
+	 * @return bool
+	 */
+	protected function filter_duplicate_base( $url ) {
+		static $urls = array();
+		$clean = $this->clean_url( $url );
+		if ( isset( $urls[ $clean ] ) ) {
+			return false;
+		}
+		$urls[ $clean ] = true;
+
+		return true;
+	}
+
+	/**
 	 * Convert a list of local URLS to Cached.
 	 *
 	 * @param array $urls List of local URLS to get cached versions.
@@ -676,6 +698,7 @@ class Cache_Point {
 			}
 		}
 		$missing = array_diff( $urls, array_keys( $found_posts ) );
+		$missing = array_filter( $missing, array( $this, 'filter_duplicate_base' ) );
 		if ( ! empty( $missing ) ) {
 			$this->prepare_cache( $missing );
 		}
@@ -712,10 +735,11 @@ class Cache_Point {
 	 * @return array
 	 */
 	public function query_cached_items( $urls ) {
-		$keys   = array_map( array( $this, 'get_key_name' ), $urls );
-		$params = array(
+		$clean_urls = array_map( array( $this, 'clean_url' ), $urls );
+		$keys       = array_map( array( $this, 'get_key_name' ), $urls );
+		$params     = array(
 			'post_type'              => self::POST_TYPE_SLUG,
-			'post_name__in'          => $keys,
+			'post_name__in'          => array_unique( $keys ),
 			'posts_per_page'         => 100,
 			'post_status'            => 'any',
 			'post_parent__in'        => $this->get_active_cache_points( true ),
@@ -724,22 +748,32 @@ class Cache_Point {
 			'update_post_term_cache' => false,
 			'paged'                  => 1,
 		);
-		$posts  = new \WP_Query( $params );
+		$posts      = new \WP_Query( $params );
 		do {
 			$all         = $posts->get_posts();
 			$found_posts = array();
 			foreach ( $all as $index => $post ) {
-				$meta       = get_post_meta( $post->ID );
-				$cached_url = $meta['cached_url'] ? $meta['cached_url'] : $meta['local_url'];
-				$excludes   = get_post_meta( $post->post_parent, 'excluded_urls', true );
-				if ( in_array( $meta['local_url'], $excludes, true ) ) {
+				$meta     = get_post_meta( $post->ID );
+				$excludes = get_post_meta( $post->post_parent, 'excluded_urls', true );
+				if ( in_array( $meta['base_url'], $excludes, true ) ) {
 					// Add it as local, since this is being ignored.
-					$found_posts[ $meta['local_url'] ] = $meta['local_url'];
+					$found_posts[ $meta['base_url'] ] = $meta['base_url'];
 					continue;
 				}
-				// Send to upload prep.
-				$this->prepare_for_sync( $post->ID );
-				$found_posts[ $meta['local_url'] ] = $cached_url;
+				$indexes = array_keys( $clean_urls, $meta['base_url'], true );
+				if ( empty( $indexes ) ) {
+					continue; // Shouldn't happen, but bail in case.
+				}
+				foreach ( $indexes as $key ) {
+					$url = $urls[ $key ];
+					if ( ! isset( $meta['cached_urls'][ $url ] ) || $url === $meta['cached_urls'][ $url ] ) {
+						// Send to upload prep.
+						$this->prepare_for_sync( $post->ID );
+						$meta['cached_urls'][ $url ] = $url;
+						update_post_meta( $post->ID, 'cached_urls', $meta['cached_urls'] );
+					}
+					$found_posts[ $url ] = $meta['cached_urls'][ $url ];
+				}
 			}
 			$params['paged'] ++;
 			$posts = new \WP_Query( $params );
@@ -756,7 +790,8 @@ class Cache_Point {
 	public function prepare_cache( $urls ) {
 
 		foreach ( $urls as $url ) {
-			$cache_point = $this->get_cache_point( $url );
+			$base_url    = $this->clean_url( $url );
+			$cache_point = $this->get_cache_point( $base_url );
 			if ( is_null( $cache_point ) ) {
 				continue;
 			}
@@ -766,19 +801,20 @@ class Cache_Point {
 				$this->exclude_url( $cache_point->ID, $url );
 				continue;
 			}
-
 			$meta = array(
-				'local_url'    => $url,
-				'cached_url'   => $url,
+				'base_url'     => $base_url,
+				'cached_urls'  => array(
+					$url => $url,
+				),
 				'src_file'     => $file,
 				'last_updated' => time(),
 			);
 
 			$args = array(
 				'post_type'    => self::POST_TYPE_SLUG,
-				'post_title'   => $meta['local_url'],
+				'post_title'   => $base_url,
 				'post_content' => wp_json_encode( $meta ),
-				'post_name'    => $this->get_key_name( $meta['local_url'] ), // Has the name for uniqueness, and length.
+				'post_name'    => $this->get_key_name( $base_url ), // Has the name for uniqueness, and length.
 				'post_status'  => 'publish',
 				'post_parent'  => $cache_point->ID,
 			);
