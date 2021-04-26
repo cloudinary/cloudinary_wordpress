@@ -4,6 +4,7 @@ import OnOff from './onoff';
 
 const CacheManage = {
 	cachePoints: {},
+	spinners: {},
 	init( context ) {
 		if ( typeof CLDCACHE !== 'undefined' ) {
 			apiFetch.use( apiFetch.createNonceMiddleware( CLDCACHE.nonce ) );
@@ -50,7 +51,7 @@ const CacheManage = {
 		reload.addEventListener( 'click', ( ev ) => {
 			this._load( ID );
 		} );
-		search.addEventListener( 'keypress', ( ev ) => {
+		search.addEventListener( 'keydown', ( ev ) => {
 			if ( 13 === ev.which ) {
 				ev.preventDefault();
 				ev.stopPropagation();
@@ -71,6 +72,7 @@ const CacheManage = {
 		cachePoint.table = cachePoint.parentNode;
 		cachePoint.apply = apply;
 		cachePoint.paginate = paginate;
+		cachePoint.currentPage = 1;
 		cachePoint.viewer.appendChild( paginate );
 
 		this.cachePoints[ '_' + ID ] = cachePoint;
@@ -111,7 +113,7 @@ const CacheManage = {
 			cachePoint.controller.checked = false;
 		}
 	},
-	_load( ID, page ) {
+	_load( ID ) {
 		const cachePoint = this.getCachePoint( ID );
 		this._clearChildren( cachePoint );
 		cachePoint.appendChild( cachePoint.loader );
@@ -120,7 +122,7 @@ const CacheManage = {
 			path: CLDCACHE.fetch_url,
 			data: {
 				ID,
-				page,
+				page: cachePoint.currentPage,
 				search: cachePoint.search.value,
 			},
 			method: 'POST',
@@ -164,6 +166,7 @@ const CacheManage = {
 		}
 	},
 	_set_state( cachePoint, state, ids ) {
+		this._showSpinners( ids );
 		apiFetch( {
 			path: CLDCACHE.update_url,
 			data: {
@@ -172,20 +175,37 @@ const CacheManage = {
 			},
 			method: 'POST',
 		} ).then( ( result ) => {
+			this._hideSpinners( result );
 			result.forEach( ( id ) => {
 				this.close( cachePoint.apply );
+				this._removeFromList( cachePoint, id, state );
+				this._evaluateApply( cachePoint );
 				cachePoint.apply.disabled = '';
-				//const spinner = document.getElementById( id );
-				//const parent = spinner.parentNode.parentNode;
-				//spinner.style.visibility = 'hidden';
-				if ( 'delete' === state ) {
-					const row = document.getElementById( 'row_' + id );
-					row.parentNode.removeChild( row );
-					if ( ! cachePoint.children.length ) {
-						this.noCache( cachePoint );
-					}
-				}
 			} );
+			if ( 'delete' === state ) {
+				this._load( cachePoint.dataset.cachePoint );
+			}
+		} );
+	},
+	_purgeCache( cachePoint ) {
+		apiFetch( {
+			path: CLDCACHE.purge_url,
+			data: {
+				cachePoint: cachePoint.dataset.cachePoint,
+			},
+			method: 'POST',
+		} ).then( () => {
+			this._load( cachePoint.dataset.cachePoint );
+		} );
+	},
+	_showSpinners( ids ) {
+		ids.forEach( ( id ) => {
+			this.spinners[ 'spinner_' + id ].style.visibility = 'visible';
+		} );
+	},
+	_hideSpinners( ids ) {
+		ids.forEach( ( id ) => {
+			this.spinners[ 'spinner_' + id ].style.visibility = 'hidden';
 		} );
 	},
 	_removeFromList( cachePoint, ID, state ) {
@@ -245,6 +265,25 @@ const CacheManage = {
 		const left = document.createElement( 'button' );
 		const right = document.createElement( 'button' );
 
+		if ( result.items.length ) {
+			const purge = document.createElement( 'button' );
+			purge.type = 'button';
+			purge.className = 'button';
+			purge.innerText = wp.i18n.__( 'Purge cache point', 'cloudinary' );
+			purge.style.float = 'left';
+			cachePoint.paginate.appendChild( purge );
+
+			purge.addEventListener( 'click', ( ev ) => {
+				if (
+					confirm(
+						wp.i18n.__( 'Purge entire cache point?', 'cloudinary' )
+					)
+				) {
+					this._purgeCache( cachePoint );
+				}
+			} );
+		}
+
 		left.type = 'button';
 		left.innerHTML = '&lsaquo;';
 		left.className = 'button cld-pagenav-prev';
@@ -252,10 +291,8 @@ const CacheManage = {
 			left.disabled = true;
 		} else {
 			left.addEventListener( 'click', ( ev ) => {
-				this._load(
-					cachePoint.dataset.cachePoint,
-					result.current_page - 1
-				);
+				cachePoint.currentPage = result.current_page - 1;
+				this._load( cachePoint.dataset.cachePoint );
 			} );
 		}
 
@@ -269,12 +306,11 @@ const CacheManage = {
 			right.disabled = true;
 		} else {
 			right.addEventListener( 'click', ( ev ) => {
-				this._load(
-					cachePoint.dataset.cachePoint,
-					result.current_page + 1
-				);
+				cachePoint.currentPage = result.current_page + 1;
+				this._load( cachePoint.dataset.cachePoint );
 			} );
 		}
+
 		const text = document.createElement( 'span' );
 		text.innerText = result.nav_text;
 		text.className = 'cld-pagenav-text';
@@ -305,13 +341,19 @@ const CacheManage = {
 		label.htmlFor = item.key;
 		file.appendChild( deleter );
 		file.appendChild( label );
-
+		const spinner = document.createElement( 'span' );
+		const spinnerId = 'spinner_' + item.ID;
+		spinner.className = 'spinner';
+		spinner.id = spinnerId;
+		file.appendChild( spinner );
+		this.spinners[ spinnerId ] = spinner;
 		return file;
 	},
 	_getDeleter( cachePoint, file, item ) {
 		const checkbox = document.createElement( 'input' );
 		const masters = [ cachePoint.dataset.slug + '_deleter' ];
 		const index = this._getListIndex( cachePoint, item.ID, 'delete' );
+
 		checkbox.type = 'checkbox';
 		checkbox.value = item.ID;
 		checkbox.id = item.key;
@@ -374,6 +416,7 @@ const CacheManage = {
 			window.dispatchEvent( event );
 		} );
 		column.appendChild( wrap );
+
 		return column;
 	},
 };

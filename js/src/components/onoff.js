@@ -18,7 +18,7 @@ const OnOff = {
 	_master( input ) {
 		const masters = JSON.parse( input.dataset.master );
 		if ( input.dataset.size ) {
-			input.filesize = parseInt( input.dataset.size );
+			input.filesize = parseInt( input.dataset.size, 10 );
 		}
 		input.masters = masters.map( ( master ) => {
 			const masterElement = document.getElementById( master );
