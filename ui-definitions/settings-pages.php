@@ -36,6 +36,13 @@ $settings = array(
 				'title' => __( 'Your Media Sync Status', 'cloudinary' ),
 			),
 		),
+		array(
+			'type' => 'panel',
+			array(
+				'type'  => 'cache_status',
+				'title' => __( 'Cache Status', 'cloudinary' ),
+			),
+		),
 	),
 );
 
