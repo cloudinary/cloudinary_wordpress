@@ -467,7 +467,7 @@ class Cache_Point {
 	 * @param string|null $search Optional search.
 	 * @param int         $page   The page or results to load.
 	 *
-	 * @return \WP_Post[]
+	 * @return array
 	 */
 	public function get_cache_point_cache( $id, $search = null, $page = 1 ) {
 		$cache_point = get_post( $id );
