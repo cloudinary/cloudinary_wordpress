@@ -172,8 +172,8 @@ class Cache extends Settings_Component implements Setup {
 
 		// Get all instances of paths from the page with version suffix. Keep it loose as to catch relative urls as well.
 		// wp_extract_urls() can also do this, however, we want to get only of the types specified.
-		preg_match_all( '/(?<=["\'\(\s])[^"\'\(\s;]+?\.{1}(' . implode( '|', $types ) . ')([-a-zA-Z0-9@:%_\+.~\#?&=]+)?/i', $html, $urls );
-		$urls = array_unique( array_map( 'html_entity_decode', $urls[0] ) );
+		preg_match_all( '/(?<=["\'\(\s])[^"\'\(\s;\)]+?\.{1}(' . implode( '|', $types ) . ')([-a-zA-Z0-9@:;%_\+.~\#?&=]+)?/i', $html, $urls );
+		$urls = array_unique( $urls[0] );
 
 		return $urls;
 	}
@@ -797,7 +797,7 @@ class Cache extends Settings_Component implements Setup {
 				'type'        => 'on_off',
 				'slug'        => 'cache_all_plugins',
 				'description' => __( 'Deliver assets from all plugin folders', 'cloudinary' ),
-				'default'     => 'on',
+				'default'     => 'off',
 				'master'      => array(
 					'enable_full_site_cache',
 				),
@@ -848,7 +848,7 @@ class Cache extends Settings_Component implements Setup {
 				'type'        => 'on_off',
 				'slug'        => 'cache_all_themes',
 				'description' => __( 'Deliver all assets from active theme.', 'cloudinary' ),
-				'default'     => 'on',
+				'default'     => 'off',
 				'master'      => array(
 					'enable_full_site_cache',
 				),
@@ -900,7 +900,7 @@ class Cache extends Settings_Component implements Setup {
 				'type'        => 'on_off',
 				'slug'        => 'cache_all_wp',
 				'description' => __( 'Deliver all assets from WordPress core.', 'cloudinary' ),
-				'default'     => 'on',
+				'default'     => 'off',
 				'master'      => array(
 					'enable_full_site_cache',
 				),
@@ -952,7 +952,7 @@ class Cache extends Settings_Component implements Setup {
 				'type'        => 'on_off',
 				'slug'        => 'cache_all_content',
 				'description' => __( 'Deliver all content assets from WordPress Media Library.', 'cloudinary' ),
-				'default'     => 'on',
+				'default'     => 'off',
 				'master'      => array(
 					'enable_full_site_cache',
 				),

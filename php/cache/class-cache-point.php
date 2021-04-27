@@ -84,7 +84,7 @@ class Cache_Point {
 	 */
 	public function __construct( Cache $cache ) {
 		$this->cache      = $cache;
-		$this->sync_limit = apply_filters( 'cloudinary_on_demand_sync_limit', 10 );
+		$this->sync_limit = apply_filters( 'cloudinary_on_demand_sync_limit', 100 );
 		$this->register_post_type();
 
 		add_filter( 'update_post_metadata', array( $this, 'update_meta' ), 10, 4 );
@@ -236,7 +236,6 @@ class Cache_Point {
 		if ( ! empty( $this->to_upload ) ) {
 			$now = microtime( true ); // Set it further than the initial spawn, to allow it through.
 			wp_schedule_single_event( $now, 'cloudinary_upload_cache', array( $this->to_upload ) );
-			spawn_cron( $now + 61 );
 		}
 	}
 
@@ -766,7 +765,8 @@ class Cache_Point {
 				}
 				foreach ( $indexes as $key ) {
 					$url = $urls[ $key ];
-					if ( ! isset( $meta['cached_urls'][ $url ] ) || $url === $meta['cached_urls'][ $url ] ) {
+
+					if ( ! isset( $meta['cached_urls'][ $url ] ) || $url === $meta['cached_urls'][ $url ] && $meta['last_updated'] < time() - MINUTE_IN_SECONDS * 10 ) {
 						// Send to upload prep.
 						$this->prepare_for_sync( $post->ID );
 						$meta['cached_urls'][ $url ] = $url;
