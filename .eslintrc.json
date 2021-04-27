@@ -8,7 +8,8 @@
     "$": "readonly",
     "CLDN": "readonly",
     "CLD_GLOBAL_TRANSFORMATIONS": "readonly",
-    "samplePlayer": "readonly"
+    "samplePlayer": "readonly",
+    "CLDCACHE": "readonly"
   },
   "extends": [
     "plugin:@wordpress/eslint-plugin/recommended"

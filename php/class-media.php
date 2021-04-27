@@ -37,7 +37,7 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @var     string.
 	 */
-	private $base_url;
+	public $base_url;
 
 	/**
 	 * Holds the Cloudinary folder.
@@ -1389,6 +1389,9 @@ class Media extends Settings_Component implements Setup {
 
 		foreach ( $parts as $part ) {
 			array_shift( $parts );
+			if ( empty( $part ) ) {
+				continue;
+			}
 			if ( 'v' === $part[0] && is_numeric( substr( $part, 1 ) ) ) {
 				break;
 			}
