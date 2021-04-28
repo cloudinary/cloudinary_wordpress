@@ -488,12 +488,11 @@ class Cache extends Settings_Component implements Setup {
 	protected function get_upload_method() {
 		$method = get_transient( self::META_KEYS['upload_method'] );
 		if ( empty( $method ) ) {
-			$test_url = $this->media->base_url . '/image/fetch/' . $this->plugin->dir_url . 'no_file.svg';
+			$test_url = $this->media->base_url . '/image/fetch/' . $this->plugin->dir_url . 'css/logo.svg';
 			$request  = wp_remote_head( $test_url );
-			$result   = wp_remote_retrieve_header( $request, 'x-cld-error' );
-			$method   = 'url';
-			if ( false !== strpos( $result, 'ERR_DNS_FAIL' ) ) {
-				$method = 'direct';
+			$method   = 'direct';
+			if ( 200 === wp_remote_retrieve_response_code( $request ) ) {
+				$method = 'url';
 			}
 			set_transient( self::META_KEYS['upload_method'], $method, DAY_IN_SECONDS );
 		}
