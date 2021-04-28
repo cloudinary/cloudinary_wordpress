@@ -535,9 +535,6 @@ class Cache extends Settings_Component implements Setup {
 		}
 		$data = $this->connect->api->upload_cache( $options );
 
-		if ( isset( $temp_name ) ) {
-			$this->file_system->wp()->delete( $temp_name );
-		}
 		if ( is_wp_error( $data ) ) {
 			return $data;
 		}
