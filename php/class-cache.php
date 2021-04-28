@@ -302,8 +302,8 @@ class Cache extends Settings_Component implements Setup {
 		// Clean locals/pending.
 		$found_posts = array_filter(
 			$found_posts,
-			function ( $key, $value ) {
-				return $key != $value;
+			static function ( $key, $value ) {
+				return $key !== $value;
 			},
 			ARRAY_FILTER_USE_BOTH
 		);
@@ -371,7 +371,7 @@ class Cache extends Settings_Component implements Setup {
 	 *
 	 * @param array $endpoints The endpoint to add to.
 	 *
-	 * @return mixed
+	 * @return array
 	 */
 	public function rest_endpoints( $endpoints ) {
 
@@ -585,7 +585,7 @@ class Cache extends Settings_Component implements Setup {
 	/**
 	 * Get the plugins table structure.
 	 *
-	 * @return array|mixed
+	 * @return array
 	 */
 	protected function get_plugins_table() {
 
@@ -750,8 +750,7 @@ class Cache extends Settings_Component implements Setup {
 	 */
 	protected function is_cache_setting_enabled( $cache_setting ) {
 
-		return 'on' == $this->settings->get_value( 'enable_full_site_cache' ) || 'on' == $this->settings->get_value( $cache_setting );
-
+		return 'on' === $this->settings->get_value( 'enable_full_site_cache' ) || 'on' === $this->settings->get_value( $cache_setting );
 	}
 
 	/**
@@ -769,7 +768,7 @@ class Cache extends Settings_Component implements Setup {
 			$enable_full = $this->settings->get_value( 'enable_full_site_cache' );
 			$enable_all  = $settings->get_value();
 			// All on or Plugin is on.
-			if ( 'on' == $enable_full || 'on' === $enable_all[ $all_cache_setting ] || ( isset( $enable_all[ $slug ] ) && 'on' === $enable_all[ $slug ] ) ) {
+			if ( 'on' === $enable_full || 'on' === $enable_all[ $all_cache_setting ] || ( isset( $enable_all[ $slug ] ) && 'on' === $enable_all[ $slug ] ) ) {
 				$this->cache_point->register_cache_path( $cache_point['url'], $cache_point['src_path'] );
 			}
 		}
