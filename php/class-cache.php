@@ -11,6 +11,10 @@ use Cloudinary\Cache\Cache_Point;
 use Cloudinary\Cache\File_System;
 use Cloudinary\Component\Setup;
 use Cloudinary\Settings\Setting;
+use WP_Error;
+use WP_HTTP_Response;
+use WP_REST_Request;
+use WP_REST_Response;
 
 /**
  * Plugin report class.
@@ -407,9 +411,9 @@ class Cache extends Settings_Component implements Setup {
 	/**
 	 * Purges a cachepoint which forces the entire point to re-evaluate cached items when requested.
 	 *
-	 * @param \WP_REST_Request $request The request object.
+	 * @param WP_REST_Request $request The request object.
 	 *
-	 * @return \WP_Error|\WP_HTTP_Response|\WP_REST_Response
+	 * @return WP_Error|WP_HTTP_Response|WP_REST_Response
 	 */
 	public function rest_purge_cache_point( $request ) {
 
@@ -422,9 +426,9 @@ class Cache extends Settings_Component implements Setup {
 	/**
 	 * Get cached files for an cache point.
 	 *
-	 * @param \WP_REST_Request $request The request object.
+	 * @param WP_REST_Request $request The request object.
 	 *
-	 * @return \WP_REST_Response
+	 * @return WP_REST_Response
 	 */
 	public function rest_get_caches( $request ) {
 		$id           = $request->get_param( 'ID' );
@@ -450,9 +454,9 @@ class Cache extends Settings_Component implements Setup {
 	/**
 	 * Change the status of a cache_point.
 	 *
-	 * @param \WP_REST_Request $request Full details about the request.
+	 * @param WP_REST_Request $request Full details about the request.
 	 *
-	 * @return \WP_REST_Response|\WP_Error Response object on success, or WP_Error object on failure.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
 	 */
 	public function rest_disable_items( $request ) {
 		$ids   = $request['ids'];
@@ -503,7 +507,7 @@ class Cache extends Settings_Component implements Setup {
 	 * @param string $file The file path to upload.
 	 * @param string $url  The file URL to upload.
 	 *
-	 * @return string|\WP_Error
+	 * @return string|WP_Error
 	 */
 	public function sync_static( $file, $url ) {
 
