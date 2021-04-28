@@ -36,7 +36,7 @@ class Tag extends Component {
 		$struct['attributes'] = $this->setting->get_param( 'attributes', array() );
 		$struct['render']     = true;
 		if ( $this->setting->has_param( 'content' ) ) {
-			$struct['content']           = $this->setting->get_param( 'content' );
+			$struct['content'] = $this->setting->get_param( 'content' );
 		}
 
 		return $struct;
