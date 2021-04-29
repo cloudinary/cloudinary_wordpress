@@ -316,11 +316,51 @@ class Cache extends Settings_Component implements Setup {
 	 */
 	protected function register_hooks() {
 		$this->cache_point = new Cache_Point( $this );
-		add_filter( 'template_include', array( $this, 'frontend_rewrite' ), PHP_INT_MAX );
-		add_action( 'admin_init', array( $this, 'admin_rewrite' ), 0 );
-		add_action( 'deactivate_plugin', array( $this, 'invalidate_plugin_cache' ) );
+		if ( ! $this->bypass_cache() ) {
+			add_filter( 'template_include', array( $this, 'frontend_rewrite' ), PHP_INT_MAX );
+			add_action( 'admin_init', array( $this, 'admin_rewrite' ), 0 );
+		}
 		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
 		add_action( 'cloudinary_upload_cache', array( $this, 'upload_cache' ) );
+		add_action( 'http_request_args', array( $this, 'prevent_caching_internal_requests' ), 10, 5 );
+	}
+
+	/**
+	 * Prevent internal background requests from getting new cached items created.
+	 *
+	 * @param array  $args The request structure.
+	 * @param string $url  The URL being requested.
+	 *
+	 * @return array
+	 */
+	public function prevent_caching_internal_requests( $args, $url ) {
+		$home    = strtolower( wp_parse_url( home_url(), PHP_URL_HOST ) );
+		$request = strtolower( wp_parse_url( $url, PHP_URL_HOST ) );
+		if ( $home === $request ) {
+			$args['headers']['x-cld-cache'] = time();
+		}
+
+		return $args;
+	}
+
+	/**
+	 * Check if the cache needs to be bypassed.
+	 */
+	public function bypass_cache() {
+
+		$bypass = filter_input( INPUT_SERVER, 'HTTP_X_CLD_CACHE', FILTER_SANITIZE_NUMBER_INT );
+
+		/**
+		 * Filter to allow bypassing the cache.
+		 *
+		 * @hook    cloudinary_bypass_cache
+		 * @default false
+		 *
+		 * @param $bypass {bool} True to bypass, false to not.
+		 *
+		 * @return  {bool}
+		 */
+		return apply_filters( 'cloudinary_bypass_cache', ! is_null( $bypass ) );
 	}
 
 	/**
@@ -347,7 +387,7 @@ class Cache extends Settings_Component implements Setup {
 					update_post_meta( $post_id, 'upload_error', $result );
 					$params = array(
 						'ID'          => $post_id,
-						'post_status' => 'draft',
+						'post_status' => 'disabled',
 					);
 					wp_update_post( $params );
 					continue;

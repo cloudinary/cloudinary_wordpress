@@ -245,7 +245,7 @@ class Cache_Point {
 	public function init() {
 		$params = array(
 			'post_type'              => self::POST_TYPE_SLUG,
-			'post_status'            => 'any',
+			'post_status'            => array( 'enabled', 'disabled' ),
 			'post_parent'            => 0,
 			'posts_per_page'         => 100,
 			'no_found_rows'          => true,
@@ -482,7 +482,7 @@ class Cache_Point {
 			'posts_per_page' => 20,
 			'paged'          => $page,
 			'post_parent'    => $id,
-			'post_status'    => 'any',
+			'post_status'    => array( 'enabled', 'disabled' ),
 		);
 		if ( ! empty( $search ) ) {
 			$args['s'] = $search;
@@ -556,7 +556,7 @@ class Cache_Point {
 				'post_type'    => self::POST_TYPE_SLUG,
 				'post_title'   => $url,
 				'post_content' => wp_json_encode( $meta ),
-				'post_status'  => 'publish',
+				'post_status'  => 'enabled',
 			);
 			$post_id                               = wp_insert_post( $params );
 			$this->registered_cache_points[ $url ] = get_post( $post_id );
@@ -630,6 +630,8 @@ class Cache_Point {
 	 * Purge the entire cache for a cache point.
 	 *
 	 * @param int $id The cache point post ID.
+	 *
+	 * @return bool
 	 */
 	public function purge_cache( $id ) {
 		$cache_point = get_post( $id );
@@ -740,7 +742,7 @@ class Cache_Point {
 			'post_type'              => self::POST_TYPE_SLUG,
 			'post_name__in'          => array_unique( $keys ),
 			'posts_per_page'         => 100,
-			'post_status'            => 'any',
+			'post_status'            => array( 'enabled', 'disabled' ),
 			'post_parent__in'        => $this->get_active_cache_points( true ),
 			'no_found_rows'          => true,
 			'update_post_meta_cache' => false,
@@ -792,7 +794,7 @@ class Cache_Point {
 		foreach ( $urls as $url ) {
 			$base_url    = $this->clean_url( $url );
 			$cache_point = $this->get_cache_point( $base_url );
-			if ( is_null( $cache_point ) ) {
+			if ( is_null( $cache_point ) || $this->exists( $base_url ) ) {
 				continue;
 			}
 
@@ -815,13 +817,34 @@ class Cache_Point {
 				'post_title'   => $base_url,
 				'post_content' => wp_json_encode( $meta ),
 				'post_name'    => $this->get_key_name( $base_url ), // Has the name for uniqueness, and length.
-				'post_status'  => 'publish',
+				'post_status'  => 'enabled',
 				'post_parent'  => $cache_point->ID,
 			);
 
 			$id = wp_insert_post( $args );
 			$this->prepare_for_sync( $id );
 		}
+	}
+
+	/**
+	 * Check if the post exists to prevent creating duplicates.
+	 *
+	 * @param string $url The url to test.
+	 *
+	 * @return bool
+	 */
+	public function exists( $url ) {
+
+		$cache_name = $this->get_key_name( $url );
+		$args       = array(
+			'post_type'      => self::POST_TYPE_SLUG,
+			'post_status'    => array( 'enabled', 'disabled' ),
+			'posts_per_page' => 1,
+			'name'           => $cache_name,
+		);
+		$query      = new \WP_Query( $args );
+
+		return (bool) $query->found_posts;
 	}
 
 	/**
