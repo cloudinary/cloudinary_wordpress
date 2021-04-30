@@ -296,13 +296,14 @@ class Cache extends Settings_Component implements Setup {
 		$found_posts = array_filter(
 			$found_posts,
 			function ( $key, $value ) {
-				return $key != $value;
+				return $key !== $value;
 			},
 			ARRAY_FILTER_USE_BOTH
 		);
 
+		$source_urls    = array_map( array( $this->cache_point, 'clean_url' ), array_keys( $found_posts ) );
 		$sources        = array();
-		$sources['url'] = array_keys( $found_posts );
+		$sources['url'] = $source_urls;
 		$sources['cld'] = array_values( $found_posts );
 
 		return $sources;
@@ -375,9 +376,6 @@ class Cache extends Settings_Component implements Setup {
 			}
 
 			foreach ( $meta[ Cache_Point::META_KEYS['cached_urls'] ] as $url => &$cached_url ) {
-				if ( $url !== $cached_url ) {
-					continue;
-				}
 				$result = $this->sync_static( $meta[ Cache_Point::META_KEYS['src_file'] ], $meta[ Cache_Point::META_KEYS['base_url'] ] );
 				if ( is_wp_error( $result ) ) {
 					// If error, log it, and set item to draft.
@@ -639,6 +637,7 @@ class Cache extends Settings_Component implements Setup {
 				'title'    => $details['Name'],
 				'url'      => dirname( $plugin_url ),
 				'src_path' => dirname( $plugin_path ),
+				'version'  => $details['Version'],
 			);
 		}
 
@@ -665,6 +664,7 @@ class Cache extends Settings_Component implements Setup {
 		if ( $theme->parent() ) {
 			$themes[] = $theme->parent();
 		}
+		$rows = array();
 		// Active Theme.
 		foreach ( $themes as $theme ) {
 			$theme_location = $theme->get_stylesheet_directory();
@@ -674,6 +674,7 @@ class Cache extends Settings_Component implements Setup {
 				'title'    => $theme->get( 'Name' ),
 				'url'      => $theme->get_stylesheet_directory_uri(),
 				'src_path' => $theme->get_stylesheet_directory(),
+				'version'  => $theme->get( 'Version' ),
 			);
 		}
 
@@ -692,18 +693,21 @@ class Cache extends Settings_Component implements Setup {
 	 */
 	protected function get_wp_table() {
 
-		$rows = array();
+		$rows    = array();
+		$version = get_bloginfo( 'version' );
 		// Admin folder.
 		$rows['wp_admin'] = array(
 			'title'    => __( 'WordPress Admin', 'cloudinary' ),
 			'url'      => admin_url(),
 			'src_path' => $this->file_system->wp_admin_dir(),
+			'version'  => $version,
 		);
 		// Includes folder.
 		$rows['wp_includes'] = array(
 			'title'    => __( 'WordPress Includes', 'cloudinary' ),
 			'url'      => includes_url(),
 			'src_path' => $this->file_system->wp_includes_dir(),
+			'version'  => $version,
 		);
 
 		return array(
@@ -727,6 +731,7 @@ class Cache extends Settings_Component implements Setup {
 			'title'    => __( 'Uploads', 'cloudinary' ),
 			'url'      => $uploads['baseurl'],
 			'src_path' => $uploads['basedir'],
+			'version'  => 0,
 		);
 
 		return array(
@@ -803,8 +808,8 @@ class Cache extends Settings_Component implements Setup {
 			$enable_full = $this->settings->get_value( 'enable_full_site_cache' );
 			$enable_all  = $settings->get_value();
 			// All on or Plugin is on.
-			if ( 'on' == $enable_full || 'on' === $enable_all[ $all_cache_setting ] || ( isset( $enable_all[ $slug ] ) && 'on' === $enable_all[ $slug ] ) ) {
-				$this->cache_point->register_cache_path( $cache_point['url'], $cache_point['src_path'] );
+			if ( 'on' === $enable_full || 'on' === $enable_all[ $all_cache_setting ] || ( isset( $enable_all[ $slug ] ) && 'on' === $enable_all[ $slug ] ) ) {
+				$this->cache_point->register_cache_path( $cache_point['url'], $cache_point['src_path'], $cache_point['version'] );
 			}
 		}
 	}

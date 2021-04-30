@@ -91,6 +91,7 @@ class Cache_Point {
 		'src_file'      => 'src_file',
 		'last_updated'  => 'last_updated',
 		'upload_error'  => 'upload_error',
+		'version'       => 'version',
 	);
 
 	/**
@@ -294,9 +295,10 @@ class Cache_Point {
 	 *
 	 * @param string $url      The URL to register.
 	 * @param string $src_path The source path to register.
+	 * @param string $version  The version of the cache point.
 	 */
-	public function register_cache_path( $url, $src_path ) {
-		$this->create_cache_point( $url, $src_path );
+	public function register_cache_path( $url, $src_path, $version ) {
+		$this->create_cache_point( $url, $src_path, $version );
 		$this->activate_cache_point( $url );
 	}
 
@@ -594,8 +596,9 @@ class Cache_Point {
 	 *
 	 * @param string $url      The url to create the cache point for.
 	 * @param string $src_path The path to be cached.
+	 * @param string $version  The version of the cache point.
 	 */
-	public function create_cache_point( $url, $src_path ) {
+	public function create_cache_point( $url, $src_path, $version ) {
 		if ( ! $this->is_registered( $url ) ) {
 			$key      = $this->get_key_name( $url );
 			$url      = trailingslashit( $url );
@@ -607,6 +610,7 @@ class Cache_Point {
 				self::META_KEYS['cached_urls']   => array(),
 				self::META_KEYS['src_path']      => $src_path,
 				self::META_KEYS['url']           => $url,
+				self::META_KEYS['version']       => $version,
 			);
 			// Create new Cache point.
 			$params                                = array(
@@ -618,6 +622,23 @@ class Cache_Point {
 			);
 			$post_id                               = wp_insert_post( $params );
 			$this->registered_cache_points[ $url ] = get_post( $post_id );
+		}
+		$this->check_version( $url, $version );
+	}
+
+	/**
+	 * Check and update the version if needed.
+	 *
+	 * @param string $url     The url of the cache point.
+	 * @param string $version the version.
+	 */
+	protected function check_version( $url, $version ) {
+		$cache_point = $this->get_cache_point( $url );
+		if ( ! is_numeric( $cache_point ) ) {
+			$prev_version = get_post_meta( $cache_point->ID, self::META_KEYS['version'], true );
+			if ( $prev_version !== $version ) {
+				update_post_meta( $cache_point->ID, self::META_KEYS['version'], $version );
+			}
 		}
 	}
 
@@ -719,6 +740,21 @@ class Cache_Point {
 	}
 
 	/**
+	 * Version a URL.
+	 *
+	 * @param string $url The url to add a version to.
+	 *
+	 * @return string
+	 */
+	protected function version_url( $url ) {
+		$url         = $this->clean_url( $url );
+		$cache_point = $this->get_cache_point( $url );
+		$version     = get_post_meta( $cache_point->ID, self::META_KEYS['version'], true );
+
+		return add_query_arg( 'version', $version, $url );
+	}
+
+	/**
 	 * Convert a list of local URLS to Cached.
 	 *
 	 * @param array $urls List of local URLS to get cached versions.
@@ -735,7 +771,7 @@ class Cache_Point {
 			return null;
 		}
 
-		$urls        = $this->pre_cache_urls( $urls );
+		$urls        = $this->pre_cache_urls( array_map( array( $this, 'version_url' ), $urls ) );
 		$found_posts = $this->pre_cached;
 		if ( ! empty( $urls ) ) {
 			$queried_items = $this->query_cached_items( $urls );
