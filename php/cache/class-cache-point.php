@@ -477,6 +477,48 @@ class Cache_Point {
 	}
 
 	/**
+	 * Get all cache items for a cache point.
+	 *
+	 * @param string|int $cache_point_id_url The cache point ID or URL.
+	 * @param bool       $id_only            Flag to get ID's only.
+	 *
+	 * @return \WP_Post[]
+	 */
+	public function get_cache_items( $cache_point_id_url, $id_only = false ) {
+		$items = array();
+		if ( ! is_int( $cache_point_id_url ) ) {
+			$cache_point = $this->get_cache_point( $cache_point_id_url );
+		} else {
+			$cache_point = get_post( $cache_point_id_url );
+		}
+		if ( ! is_null( $cache_point ) ) {
+
+			$params = array(
+				'post_type'              => self::POST_TYPE_SLUG,
+				'posts_per_page'         => 1,
+				'post_status'            => array( 'enabled', 'disabled' ),
+				'post_parent'            => $cache_point->ID,
+				'no_found_rows'          => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+				'paged'                  => 1,
+			);
+			if ( true === $id_only ) {
+				$params['fields'] = 'ids';
+			}
+			$posts = new \WP_Query( $params );
+			do {
+				$found = $posts->get_posts();
+				$items = array_merge( $items, $found );
+				$params['paged'] ++;
+				$posts = new \WP_Query( $params );
+			} while ( $posts->have_posts() );
+		}
+
+		return $items;
+	}
+
+	/**
 	 * Get a cache point from a url.
 	 *
 	 * @param Int         $id     The cache point ID to get cache for.
@@ -645,28 +687,16 @@ class Cache_Point {
 	 * Purge the entire cache for a cache point.
 	 *
 	 * @param int $id The cache point post ID.
-	 *
-	 * @return bool
 	 */
 	public function purge_cache( $id ) {
 		$cache_point = get_post( $id );
-		$old_meta    = get_post_meta( $cache_point->ID );
-
-		// Add meta data.
-		$meta   = array(
-			'excluded_urls' => array(),
-			'cached_urls'   => array(),
-			'src_path'      => $old_meta['src_path'],
-			'url'           => $old_meta['url'],
-		);
-		$params = array(
-			'ID'           => $id,
-			'post_content' => wp_json_encode( $meta ),
-		);
-		$update = wp_update_post( $params );
-		$this->set_meta_cache( $cache_point->ID, $meta );
-
-		return $update;
+		if ( ! is_null( $cache_point ) ) {
+			$items = $this->get_cache_items( $cache_point->ID, true );
+			foreach ( $items as $cache_item ) {
+				update_post_meta( $cache_item, self::META_KEYS['cached_urls'], array() );
+			}
+			update_post_meta( $cache_point->ID, self::META_KEYS['cached_urls'], array() );
+		}
 	}
 
 	/**
