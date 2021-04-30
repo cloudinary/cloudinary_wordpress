@@ -462,13 +462,14 @@ class Cache extends Settings_Component implements Setup {
 			$cached_items = get_post_meta( $item->post_parent, 'cached_urls', true );
 			$item_meta    = get_post_meta( $id );
 			if ( 'delete' === $state ) {
-				if ( isset( $cached_items[ $item_meta['local_url'] ] ) ) {
-					unset( $cached_items[ $item_meta['local_url'] ] );
+				if ( isset( $cached_items[ $item_meta['base_url'] ] ) ) {
+					unset( $cached_items[ $item_meta['base_url'] ] );
 					update_post_meta( $item->post_parent, 'cached_urls', $cached_items );
 				}
-			} elseif ( 'draft' === $state ) {
+				update_post_meta( $id, 'cached_urls', array() );
+			} elseif ( 'disable' === $state ) {
 				$this->cache_point->exclude_url( $item->post_parent, $item_meta['base_url'] );
-			} elseif ( 'publish' === $state ) {
+			} elseif ( 'enable' === $state ) {
 				$this->cache_point->remove_excluded_url( $item->post_parent, $item_meta['base_url'] );
 			}
 		}
