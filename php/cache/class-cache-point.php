@@ -497,7 +497,7 @@ class Cache_Point {
 
 			$params = array(
 				'post_type'              => self::POST_TYPE_SLUG,
-				'posts_per_page'         => 1,
+				'posts_per_page'         => 100,
 				'post_status'            => array( 'enabled', 'disabled' ),
 				'post_parent'            => $cache_point->ID,
 				'no_found_rows'          => true,
