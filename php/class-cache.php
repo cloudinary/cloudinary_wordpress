@@ -82,14 +82,11 @@ class Cache extends Settings_Component implements Setup {
 
 	/**
 	 * Holds the meta keys to be used.
+	 *
+	 * @var array
 	 */
 	const META_KEYS = array(
-		'upload_error'    => '_cloudinary_upload_errors',
-		'uploading_cache' => '_cloudinary_uploading_cache',
-		'has_table'       => '_cloudinary_has_table',
-		'cache_table'     => 'cld_cache',
-		'cache_point'     => 'cld_cache_points',
-		'upload_method'   => '_cloudinary_upload_method',
+		'upload_method' => '_cloudinary_upload_method',
 	);
 
 	/**
@@ -299,13 +296,14 @@ class Cache extends Settings_Component implements Setup {
 		$found_posts = array_filter(
 			$found_posts,
 			function ( $key, $value ) {
-				return $key != $value;
+				return $key !== $value;
 			},
 			ARRAY_FILTER_USE_BOTH
 		);
 
+		$source_urls    = array_map( array( $this->cache_point, 'clean_url' ), array_keys( $found_posts ) );
 		$sources        = array();
-		$sources['url'] = array_keys( $found_posts );
+		$sources['url'] = $source_urls;
 		$sources['cld'] = array_values( $found_posts );
 
 		return $sources;
@@ -316,11 +314,51 @@ class Cache extends Settings_Component implements Setup {
 	 */
 	protected function register_hooks() {
 		$this->cache_point = new Cache_Point( $this );
-		add_filter( 'template_include', array( $this, 'frontend_rewrite' ), PHP_INT_MAX );
-		add_action( 'admin_init', array( $this, 'admin_rewrite' ), 0 );
-		add_action( 'deactivate_plugin', array( $this, 'invalidate_plugin_cache' ) );
+		if ( ! $this->bypass_cache() ) {
+			add_filter( 'template_include', array( $this, 'frontend_rewrite' ), PHP_INT_MAX );
+			add_action( 'admin_init', array( $this, 'admin_rewrite' ), 0 );
+		}
 		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
 		add_action( 'cloudinary_upload_cache', array( $this, 'upload_cache' ) );
+		add_action( 'http_request_args', array( $this, 'prevent_caching_internal_requests' ), 10, 5 );
+	}
+
+	/**
+	 * Prevent internal background requests from getting new cached items created.
+	 *
+	 * @param array  $args The request structure.
+	 * @param string $url  The URL being requested.
+	 *
+	 * @return array
+	 */
+	public function prevent_caching_internal_requests( $args, $url ) {
+		$home    = strtolower( wp_parse_url( home_url(), PHP_URL_HOST ) );
+		$request = strtolower( wp_parse_url( $url, PHP_URL_HOST ) );
+		if ( $home === $request ) {
+			$args['headers']['x-cld-cache'] = time();
+		}
+
+		return $args;
+	}
+
+	/**
+	 * Check if the cache needs to be bypassed.
+	 */
+	public function bypass_cache() {
+
+		$bypass = filter_input( INPUT_SERVER, 'HTTP_X_CLD_CACHE', FILTER_SANITIZE_NUMBER_INT );
+
+		/**
+		 * Filter to allow bypassing the cache.
+		 *
+		 * @hook    cloudinary_bypass_cache
+		 * @default false
+		 *
+		 * @param $bypass {bool} True to bypass, false to not.
+		 *
+		 * @return  {bool}
+		 */
+		return apply_filters( 'cloudinary_bypass_cache', ! is_null( $bypass ) );
 	}
 
 	/**
@@ -332,22 +370,19 @@ class Cache extends Settings_Component implements Setup {
 		foreach ( (array) $args as $post_id ) {
 			$meta        = get_post_meta( $post_id );
 			$post        = get_post( $post_id );
-			$cached_urls = get_post_meta( $post->post_parent, 'cached_urls', true );
+			$cached_urls = get_post_meta( $post->post_parent, Cache_Point::META_KEYS['cached_urls'], true );
 			if ( empty( $cached_urls ) ) {
 				$cached_urls = array();
 			}
 
-			foreach ( $meta['cached_urls'] as $url => &$cached_url ) {
-				if ( $url !== $cached_url ) {
-					continue;
-				}
-				$result = $this->sync_static( $meta['src_file'], $meta['base_url'] );
+			foreach ( $meta[ Cache_Point::META_KEYS['cached_urls'] ] as $url => &$cached_url ) {
+				$result = $this->sync_static( $meta[ Cache_Point::META_KEYS['src_file'] ], $meta[ Cache_Point::META_KEYS['base_url'] ] );
 				if ( is_wp_error( $result ) ) {
 					// If error, log it, and set item to draft.
-					update_post_meta( $post_id, 'upload_error', $result );
+					update_post_meta( $post_id, Cache_Point::META_KEYS['upload_error'], $result );
 					$params = array(
 						'ID'          => $post_id,
-						'post_status' => 'draft',
+						'post_status' => 'disabled',
 					);
 					wp_update_post( $params );
 					continue;
@@ -355,10 +390,10 @@ class Cache extends Settings_Component implements Setup {
 				$cached_url          = $result;
 				$cached_urls[ $url ] = $cached_url;
 			}
-			update_post_meta( $post_id, 'cached_urls', $meta['cached_urls'] );
-			update_post_meta( $post_id, 'last_updated', time() );
+			update_post_meta( $post_id, Cache_Point::META_KEYS['cached_urls'], $meta[ Cache_Point::META_KEYS['cached_urls'] ] );
+			update_post_meta( $post_id, Cache_Point::META_KEYS['last_updated'], time() );
 			// Update cache point, cache.
-			update_post_meta( $post->post_parent, 'cached_urls', $cached_urls );
+			update_post_meta( $post->post_parent, Cache_Point::META_KEYS['cached_urls'], $cached_urls );
 		}
 	}
 
@@ -459,17 +494,18 @@ class Cache extends Settings_Component implements Setup {
 		$state = $request['state'];
 		foreach ( $ids as $id ) {
 			$item         = get_post( $id );
-			$cached_items = get_post_meta( $item->post_parent, 'cached_urls', true );
+			$cached_items = get_post_meta( $item->post_parent, Cache_Point::META_KEYS['cached_urls'], true );
 			$item_meta    = get_post_meta( $id );
 			if ( 'delete' === $state ) {
-				if ( isset( $cached_items[ $item_meta['local_url'] ] ) ) {
-					unset( $cached_items[ $item_meta['local_url'] ] );
-					update_post_meta( $item->post_parent, 'cached_urls', $cached_items );
+				if ( isset( $cached_items[ $item_meta[ Cache_Point::META_KEYS['base_url'] ] ] ) ) {
+					unset( $cached_items[ $item_meta[ Cache_Point::META_KEYS['base_url'] ] ] );
+					update_post_meta( $item->post_parent, Cache_Point::META_KEYS['cached_urls'], $cached_items );
 				}
-			} elseif ( 'draft' === $state ) {
-				$this->cache_point->exclude_url( $item->post_parent, $item_meta['base_url'] );
-			} elseif ( 'publish' === $state ) {
-				$this->cache_point->remove_excluded_url( $item->post_parent, $item_meta['base_url'] );
+				update_post_meta( $id, Cache_Point::META_KEYS['cached_urls'], array() );
+			} elseif ( 'disable' === $state ) {
+				$this->cache_point->exclude_url( $item->post_parent, $item_meta[ Cache_Point::META_KEYS['base_url'] ] );
+			} elseif ( 'enable' === $state ) {
+				$this->cache_point->remove_excluded_url( $item->post_parent, $item_meta[ Cache_Point::META_KEYS['base_url'] ] );
 			}
 		}
 
@@ -601,6 +637,7 @@ class Cache extends Settings_Component implements Setup {
 				'title'    => $details['Name'],
 				'url'      => dirname( $plugin_url ),
 				'src_path' => dirname( $plugin_path ),
+				'version'  => $details['Version'],
 			);
 		}
 
@@ -627,6 +664,7 @@ class Cache extends Settings_Component implements Setup {
 		if ( $theme->parent() ) {
 			$themes[] = $theme->parent();
 		}
+		$rows = array();
 		// Active Theme.
 		foreach ( $themes as $theme ) {
 			$theme_location = $theme->get_stylesheet_directory();
@@ -636,6 +674,7 @@ class Cache extends Settings_Component implements Setup {
 				'title'    => $theme->get( 'Name' ),
 				'url'      => $theme->get_stylesheet_directory_uri(),
 				'src_path' => $theme->get_stylesheet_directory(),
+				'version'  => $theme->get( 'Version' ),
 			);
 		}
 
@@ -654,18 +693,21 @@ class Cache extends Settings_Component implements Setup {
 	 */
 	protected function get_wp_table() {
 
-		$rows = array();
+		$rows    = array();
+		$version = get_bloginfo( 'version' );
 		// Admin folder.
 		$rows['wp_admin'] = array(
 			'title'    => __( 'WordPress Admin', 'cloudinary' ),
 			'url'      => admin_url(),
 			'src_path' => $this->file_system->wp_admin_dir(),
+			'version'  => $version,
 		);
 		// Includes folder.
 		$rows['wp_includes'] = array(
 			'title'    => __( 'WordPress Includes', 'cloudinary' ),
 			'url'      => includes_url(),
 			'src_path' => $this->file_system->wp_includes_dir(),
+			'version'  => $version,
 		);
 
 		return array(
@@ -689,6 +731,7 @@ class Cache extends Settings_Component implements Setup {
 			'title'    => __( 'Uploads', 'cloudinary' ),
 			'url'      => $uploads['baseurl'],
 			'src_path' => $uploads['basedir'],
+			'version'  => 0,
 		);
 
 		return array(
@@ -765,8 +808,8 @@ class Cache extends Settings_Component implements Setup {
 			$enable_full = $this->settings->get_value( 'enable_full_site_cache' );
 			$enable_all  = $settings->get_value();
 			// All on or Plugin is on.
-			if ( 'on' == $enable_full || 'on' === $enable_all[ $all_cache_setting ] || ( isset( $enable_all[ $slug ] ) && 'on' === $enable_all[ $slug ] ) ) {
-				$this->cache_point->register_cache_path( $cache_point['url'], $cache_point['src_path'] );
+			if ( 'on' === $enable_full || 'on' === $enable_all[ $all_cache_setting ] || ( isset( $enable_all[ $slug ] ) && 'on' === $enable_all[ $slug ] ) ) {
+				$this->cache_point->register_cache_path( $cache_point['url'], $cache_point['src_path'], $cache_point['version'] );
 			}
 		}
 	}
