@@ -78,6 +78,22 @@ class Cache_Point {
 	protected $sync_limit;
 
 	/**
+	 * Holds the meta keys.
+	 *
+	 * @var array
+	 */
+	const META_KEYS = array(
+		'excluded_urls' => 'excluded_urls',
+		'cached_urls'   => 'cached_urls',
+		'src_path'      => 'src_path',
+		'url'           => 'url',
+		'base_url'      => 'base_url',
+		'src_file'      => 'src_file',
+		'last_updated'  => 'last_updated',
+		'upload_error'  => 'upload_error',
+	);
+
+	/**
 	 * Cache Point constructor.
 	 *
 	 * @param Cache $cache The plugin ache object.
@@ -306,13 +322,13 @@ class Cache_Point {
 	 * @param string $url            The url to add.
 	 */
 	public function exclude_url( $cache_point_id, $url ) {
-		$excludes = get_post_meta( $cache_point_id, 'excluded_urls', true );
+		$excludes = get_post_meta( $cache_point_id, self::META_KEYS['excluded_urls'], true );
 		if ( empty( $excludes ) ) {
 			$excludes = array();
 		}
 		if ( ! in_array( $url, $excludes, true ) ) {
 			$excludes[] = $url;
-			update_post_meta( $cache_point_id, 'excluded_urls', $excludes );
+			update_post_meta( $cache_point_id, self::META_KEYS['excluded_urls'], $excludes );
 		}
 	}
 
@@ -323,12 +339,12 @@ class Cache_Point {
 	 * @param string $url            The url to add.
 	 */
 	public function remove_excluded_url( $cache_point_id, $url ) {
-		$excludes = get_post_meta( $cache_point_id, 'excluded_urls', true );
+		$excludes = get_post_meta( $cache_point_id, self::META_KEYS['excluded_urls'], true );
 		if ( ! empty( $excludes ) ) {
 			$index = array_search( $url, (array) $excludes, true );
 			if ( false !== $index ) {
 				unset( $excludes[ $index ] );
-				update_post_meta( $cache_point_id, 'excluded_urls', $excludes );
+				update_post_meta( $cache_point_id, self::META_KEYS['excluded_urls'], $excludes );
 			}
 		}
 	}
@@ -449,7 +465,7 @@ class Cache_Point {
 		$parent = null;
 		foreach ( $this->active_cache_points as $key => $cache_point ) {
 			if ( false !== strpos( $url, $key ) ) {
-				$excludes = (array) get_post_meta( $cache_point->ID, 'excluded_urls', true );
+				$excludes = (array) get_post_meta( $cache_point->ID, self::META_KEYS['excluded_urls'], true );
 				if ( ! in_array( $url, $excludes, true ) ) {
 					$parent = $cache_point;
 				}
@@ -474,8 +490,8 @@ class Cache_Point {
 		if ( is_null( $cache_point ) ) {
 			return array();
 		}
-		$cached_items = (array) get_post_meta( $cache_point->ID, 'cached_urls', true );
-		$excluded     = (array) get_post_meta( $cache_point->ID, 'excluded_urls', true );
+		$cached_items = (array) get_post_meta( $cache_point->ID, self::META_KEYS['cached_urls'], true );
+		$excluded     = (array) get_post_meta( $cache_point->ID, self::META_KEYS['excluded_urls'], true );
 		$cached_items = array_filter( $cached_items );
 		$args         = array(
 			'post_type'      => self::POST_TYPE_SLUG,
@@ -492,7 +508,7 @@ class Cache_Point {
 		foreach ( $posts->get_posts() as $post ) {
 			$meta = get_post_meta( $post->ID );
 
-			$has = array_intersect_key( $meta['cached_urls'], $cached_items );
+			$has = array_intersect_key( $meta[ self::META_KEYS['cached_urls'] ], $cached_items );
 			if ( empty( $has ) ) {
 				continue; // Not yet uploaded.
 			}
@@ -500,9 +516,9 @@ class Cache_Point {
 			$items[] = array(
 				'ID'        => $post->ID,
 				'key'       => $post->post_name,
-				'local_url' => $meta['base_url'],
-				'short_url' => str_replace( $cache_point->post_title, '', $meta['base_url'] ),
-				'active'    => ! in_array( $meta['base_url'], $excluded, true ),
+				'local_url' => $meta[ self::META_KEYS['base_url'] ],
+				'short_url' => str_replace( $cache_point->post_title, '', $meta[ self::META_KEYS['base_url'] ] ),
+				'active'    => ! in_array( $meta[ self::META_KEYS['base_url'] ], $excluded, true ),
 			);
 		}
 		$total_items = count( $items );
@@ -545,10 +561,10 @@ class Cache_Point {
 
 			// Add meta data.
 			$meta = array(
-				'excluded_urls' => array(),
-				'cached_urls'   => array(),
-				'src_path'      => $src_path,
-				'url'           => $url,
+				self::META_KEYS['excluded_urls'] => array(),
+				self::META_KEYS['cached_urls']   => array(),
+				self::META_KEYS['src_path']      => $src_path,
+				self::META_KEYS['url']           => $url,
 			);
 			// Create new Cache point.
 			$params                                = array(
@@ -613,9 +629,8 @@ class Cache_Point {
 	protected function pre_cache_urls( $urls ) {
 		foreach ( $urls as $index => $url ) {
 			$cache_point = $this->get_cache_point( $url );
-			$return      = null;
 			if ( $cache_point ) {
-				$cached_urls = get_post_meta( $cache_point->ID, 'cached_urls', true );
+				$cached_urls = get_post_meta( $cache_point->ID, self::META_KEYS['cached_urls'], true );
 				if ( isset( $cached_urls[ $url ] ) ) {
 					$this->pre_cached[ $url ] = $cached_urls[ $url ];
 					unset( $urls[ $index ] );
@@ -755,26 +770,28 @@ class Cache_Point {
 			$found_posts = array();
 			foreach ( $all as $index => $post ) {
 				$meta     = get_post_meta( $post->ID );
-				$excludes = get_post_meta( $post->post_parent, 'excluded_urls', true );
-				if ( in_array( $meta['base_url'], $excludes, true ) ) {
+				$excludes = get_post_meta( $post->post_parent, self::META_KEYS['excluded_urls'], true );
+				if ( in_array( $meta[ self::META_KEYS['base_url'] ], $excludes, true ) ) {
 					// Add it as local, since this is being ignored.
-					$found_posts[ $meta['base_url'] ] = $meta['base_url'];
+					$found_posts[ $meta[ self::META_KEYS['base_url'] ] ] = $meta[ self::META_KEYS['base_url'] ];
 					continue;
 				}
-				$indexes = array_keys( $clean_urls, $meta['base_url'], true );
+				$indexes = array_keys( $clean_urls, $meta[ self::META_KEYS['base_url'] ], true );
 				if ( empty( $indexes ) ) {
 					continue; // Shouldn't happen, but bail in case.
 				}
 				foreach ( $indexes as $key ) {
 					$url = $urls[ $key ];
 
-					if ( ! isset( $meta['cached_urls'][ $url ] ) || $url === $meta['cached_urls'][ $url ] && $meta['last_updated'] < time() - MINUTE_IN_SECONDS * 10 ) {
+					if ( ! isset( $meta[ self::META_KEYS['cached_urls'] ][ $url ] )
+						 || $url === $meta[ self::META_KEYS['cached_urls'] ][ $url ]
+							&& $meta[ self::META_KEYS['last_updated'] ] < time() - MINUTE_IN_SECONDS * 10 ) {
 						// Send to upload prep.
 						$this->prepare_for_sync( $post->ID );
-						$meta['cached_urls'][ $url ] = $url;
-						update_post_meta( $post->ID, 'cached_urls', $meta['cached_urls'] );
+						$meta[ self::META_KEYS['cached_urls'] ][ $url ] = $url;
+						update_post_meta( $post->ID, self::META_KEYS['cached_urls'], $meta[ self::META_KEYS['cached_urls'] ] );
 					}
-					$found_posts[ $url ] = $meta['cached_urls'][ $url ];
+					$found_posts[ $url ] = $meta[ self::META_KEYS['cached_urls'] ][ $url ];
 				}
 			}
 			$params['paged'] ++;
@@ -804,12 +821,12 @@ class Cache_Point {
 				continue;
 			}
 			$meta = array(
-				'base_url'     => $base_url,
-				'cached_urls'  => array(
+				self::META_KEYS['base_url']     => $base_url,
+				self::META_KEYS['cached_urls']  => array(
 					$url => $url,
 				),
-				'src_file'     => $file,
-				'last_updated' => time(),
+				self::META_KEYS['src_file']     => $file,
+				self::META_KEYS['last_updated'] => time(),
 			);
 
 			$args = array(

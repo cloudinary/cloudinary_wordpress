@@ -82,14 +82,11 @@ class Cache extends Settings_Component implements Setup {
 
 	/**
 	 * Holds the meta keys to be used.
+	 *
+	 * @var array
 	 */
 	const META_KEYS = array(
-		'upload_error'    => '_cloudinary_upload_errors',
-		'uploading_cache' => '_cloudinary_uploading_cache',
-		'has_table'       => '_cloudinary_has_table',
-		'cache_table'     => 'cld_cache',
-		'cache_point'     => 'cld_cache_points',
-		'upload_method'   => '_cloudinary_upload_method',
+		'upload_method' => '_cloudinary_upload_method',
 	);
 
 	/**
@@ -372,19 +369,19 @@ class Cache extends Settings_Component implements Setup {
 		foreach ( (array) $args as $post_id ) {
 			$meta        = get_post_meta( $post_id );
 			$post        = get_post( $post_id );
-			$cached_urls = get_post_meta( $post->post_parent, 'cached_urls', true );
+			$cached_urls = get_post_meta( $post->post_parent, Cache_Point::META_KEYS['cached_urls'], true );
 			if ( empty( $cached_urls ) ) {
 				$cached_urls = array();
 			}
 
-			foreach ( $meta['cached_urls'] as $url => &$cached_url ) {
+			foreach ( $meta[ Cache_Point::META_KEYS['cached_urls'] ] as $url => &$cached_url ) {
 				if ( $url !== $cached_url ) {
 					continue;
 				}
-				$result = $this->sync_static( $meta['src_file'], $meta['base_url'] );
+				$result = $this->sync_static( $meta[ Cache_Point::META_KEYS['src_file'] ], $meta[ Cache_Point::META_KEYS['base_url'] ] );
 				if ( is_wp_error( $result ) ) {
 					// If error, log it, and set item to draft.
-					update_post_meta( $post_id, 'upload_error', $result );
+					update_post_meta( $post_id, Cache_Point::META_KEYS['upload_error'], $result );
 					$params = array(
 						'ID'          => $post_id,
 						'post_status' => 'disabled',
@@ -395,10 +392,10 @@ class Cache extends Settings_Component implements Setup {
 				$cached_url          = $result;
 				$cached_urls[ $url ] = $cached_url;
 			}
-			update_post_meta( $post_id, 'cached_urls', $meta['cached_urls'] );
-			update_post_meta( $post_id, 'last_updated', time() );
+			update_post_meta( $post_id, Cache_Point::META_KEYS['cached_urls'], $meta[ Cache_Point::META_KEYS['cached_urls'] ] );
+			update_post_meta( $post_id, Cache_Point::META_KEYS['last_updated'], time() );
 			// Update cache point, cache.
-			update_post_meta( $post->post_parent, 'cached_urls', $cached_urls );
+			update_post_meta( $post->post_parent, Cache_Point::META_KEYS['cached_urls'], $cached_urls );
 		}
 	}
 
@@ -499,18 +496,18 @@ class Cache extends Settings_Component implements Setup {
 		$state = $request['state'];
 		foreach ( $ids as $id ) {
 			$item         = get_post( $id );
-			$cached_items = get_post_meta( $item->post_parent, 'cached_urls', true );
+			$cached_items = get_post_meta( $item->post_parent, Cache_Point::META_KEYS['cached_urls'], true );
 			$item_meta    = get_post_meta( $id );
 			if ( 'delete' === $state ) {
-				if ( isset( $cached_items[ $item_meta['base_url'] ] ) ) {
-					unset( $cached_items[ $item_meta['base_url'] ] );
-					update_post_meta( $item->post_parent, 'cached_urls', $cached_items );
+				if ( isset( $cached_items[ $item_meta[ Cache_Point::META_KEYS['base_url'] ] ] ) ) {
+					unset( $cached_items[ $item_meta[ Cache_Point::META_KEYS['base_url'] ] ] );
+					update_post_meta( $item->post_parent, Cache_Point::META_KEYS['cached_urls'], $cached_items );
 				}
-				update_post_meta( $id, 'cached_urls', array() );
+				update_post_meta( $id, Cache_Point::META_KEYS['cached_urls'], array() );
 			} elseif ( 'disable' === $state ) {
-				$this->cache_point->exclude_url( $item->post_parent, $item_meta['base_url'] );
+				$this->cache_point->exclude_url( $item->post_parent, $item_meta[ Cache_Point::META_KEYS['base_url'] ] );
 			} elseif ( 'enable' === $state ) {
-				$this->cache_point->remove_excluded_url( $item->post_parent, $item_meta['base_url'] );
+				$this->cache_point->remove_excluded_url( $item->post_parent, $item_meta[ Cache_Point::META_KEYS['base_url'] ] );
 			}
 		}
 
