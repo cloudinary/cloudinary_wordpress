@@ -82,7 +82,7 @@ class Table extends Text {
 		foreach ( $columns as $slug => $column ) {
 			$this->columns[] = $slug;
 			$new_column      = array(
-				'element' => 'th',
+				'element'    => 'th',
 				'attributes' => array(
 					'class' => array(
 						'cld-table-th',

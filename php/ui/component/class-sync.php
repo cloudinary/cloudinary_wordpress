@@ -157,8 +157,8 @@ class Sync extends Text {
 
 			),
 		);
-		$query  = new \WP_Query( $params );
-		$count  = $query->found_posts;
+		$query = new \WP_Query( $params );
+		$count = $query->found_posts;
 
 		return $count;
 	}

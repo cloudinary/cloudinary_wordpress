@@ -59,8 +59,8 @@ const CacheManage = {
 		} );
 		paginate.className = 'cld-pagenav';
 		apply.cacheChanges = {
-			draft: [],
-			publish: [],
+			disable: [],
+			enable: [],
 			delete: [],
 		};
 		cachePoint.master = master;
@@ -250,8 +250,8 @@ const CacheManage = {
 			}
 			const row = this._getRow( item.ID );
 			const statSwitch = this._getStateSwitch( cachePoint, item, {
-				on: 'publish',
-				off: 'draft',
+				on: 'enable',
+				off: 'disable',
 			} );
 			const file = this._getFile( cachePoint, item, row );
 			row.appendChild( file );
@@ -374,7 +374,7 @@ const CacheManage = {
 					checked: checkbox.checked,
 					states: {
 						on: 'delete',
-						off: item.active ? 'publish' : 'draft',
+						off: item.active ? 'enable' : 'disable',
 					},
 					item,
 					cachePoint,
@@ -391,7 +391,7 @@ const CacheManage = {
 		const checkbox = document.createElement( 'input' );
 		const slider = document.createElement( 'span' );
 		const masters = [ cachePoint.dataset.slug + '_selector' ];
-		const index = this._getListIndex( cachePoint, item.ID, 'draft' );
+		const index = this._getListIndex( cachePoint, item.ID, 'disable' );
 		column.style.textAlign = 'right';
 		wrap.className = 'cld-input-on-off-control mini';
 		checkbox.type = 'checkbox';
