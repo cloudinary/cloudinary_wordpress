@@ -271,7 +271,7 @@ class Upload_Sync {
 			// Set folder Synced.
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['folder_sync'], $this->media->is_folder_synced( $attachment_id ) );
 			// Set public_id.
-			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
+			update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
 			// Set version.
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['version'], $result['version'] );
 			// Set the delivery type.
@@ -307,7 +307,7 @@ class Upload_Sync {
 
 		if ( ! is_wp_error( $result ) ) {
 			$this->sync->set_signature_item( $attachment_id, $type );
-			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $options['public_id'] );
+			update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $options['public_id'] );
 		}
 
 		return $result;
