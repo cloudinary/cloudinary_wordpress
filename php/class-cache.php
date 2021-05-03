@@ -11,6 +11,10 @@ use Cloudinary\Cache\Cache_Point;
 use Cloudinary\Cache\File_System;
 use Cloudinary\Component\Setup;
 use Cloudinary\Settings\Setting;
+use WP_Error;
+use WP_HTTP_Response;
+use WP_REST_Request;
+use WP_REST_Response;
 
 /**
  * Plugin report class.
@@ -295,7 +299,7 @@ class Cache extends Settings_Component implements Setup {
 		// Clean locals/pending.
 		$found_posts = array_filter(
 			$found_posts,
-			function ( $key, $value ) {
+			static function ( $key, $value ) {
 				return $key !== $value;
 			},
 			ARRAY_FILTER_USE_BOTH
@@ -402,7 +406,7 @@ class Cache extends Settings_Component implements Setup {
 	 *
 	 * @param array $endpoints The endpoint to add to.
 	 *
-	 * @return mixed
+	 * @return array
 	 */
 	public function rest_endpoints( $endpoints ) {
 
@@ -442,9 +446,9 @@ class Cache extends Settings_Component implements Setup {
 	/**
 	 * Purges a cachepoint which forces the entire point to re-evaluate cached items when requested.
 	 *
-	 * @param \WP_REST_Request $request The request object.
+	 * @param WP_REST_Request $request The request object.
 	 *
-	 * @return \WP_Error|\WP_HTTP_Response|\WP_REST_Response
+	 * @return WP_Error|WP_HTTP_Response|WP_REST_Response
 	 */
 	public function rest_purge_cache_point( $request ) {
 
@@ -457,9 +461,9 @@ class Cache extends Settings_Component implements Setup {
 	/**
 	 * Get cached files for an cache point.
 	 *
-	 * @param \WP_REST_Request $request The request object.
+	 * @param WP_REST_Request $request The request object.
 	 *
-	 * @return \WP_REST_Response
+	 * @return WP_REST_Response
 	 */
 	public function rest_get_caches( $request ) {
 		$id           = $request->get_param( 'ID' );
@@ -485,9 +489,9 @@ class Cache extends Settings_Component implements Setup {
 	/**
 	 * Change the status of a cache_point.
 	 *
-	 * @param \WP_REST_Request $request Full details about the request.
+	 * @param WP_REST_Request $request Full details about the request.
 	 *
-	 * @return \WP_REST_Response|\WP_Error Response object on success, or WP_Error object on failure.
+	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
 	 */
 	public function rest_disable_items( $request ) {
 		$ids   = $request['ids'];
@@ -520,12 +524,11 @@ class Cache extends Settings_Component implements Setup {
 	protected function get_upload_method() {
 		$method = get_transient( self::META_KEYS['upload_method'] );
 		if ( empty( $method ) ) {
-			$test_url = $this->media->base_url . '/image/fetch/' . $this->plugin->dir_url . 'no_file.svg';
+			$test_url = $this->media->base_url . '/image/fetch/' . $this->plugin->dir_url . 'css/logo.svg';
 			$request  = wp_remote_head( $test_url );
-			$result   = wp_remote_retrieve_header( $request, 'x-cld-error' );
-			$method   = 'url';
-			if ( false !== strpos( $result, 'ERR_DNS_FAIL' ) ) {
-				$method = 'direct';
+			$method   = 'direct';
+			if ( 200 === wp_remote_retrieve_response_code( $request ) ) {
+				$method = 'url';
 			}
 			set_transient( self::META_KEYS['upload_method'], $method, DAY_IN_SECONDS );
 		}
@@ -539,7 +542,7 @@ class Cache extends Settings_Component implements Setup {
 	 * @param string $file The file path to upload.
 	 * @param string $url  The file URL to upload.
 	 *
-	 * @return string|\WP_Error
+	 * @return string|WP_Error
 	 */
 	public function sync_static( $file, $url ) {
 
@@ -567,9 +570,6 @@ class Cache extends Settings_Component implements Setup {
 		}
 		$data = $this->connect->api->upload_cache( $options );
 
-		if ( isset( $temp_name ) ) {
-			$this->file_system->wp()->delete( $temp_name );
-		}
 		if ( is_wp_error( $data ) ) {
 			return $data;
 		}
@@ -617,7 +617,7 @@ class Cache extends Settings_Component implements Setup {
 	/**
 	 * Get the plugins table structure.
 	 *
-	 * @return array|mixed
+	 * @return array
 	 */
 	protected function get_plugins_table() {
 
@@ -789,8 +789,7 @@ class Cache extends Settings_Component implements Setup {
 	 */
 	protected function is_cache_setting_enabled( $cache_setting ) {
 
-		return 'on' == $this->settings->get_value( 'enable_full_site_cache' ) || 'on' == $this->settings->get_value( $cache_setting );
-
+		return 'on' === $this->settings->get_value( 'enable_full_site_cache' ) || 'on' === $this->settings->get_value( $cache_setting );
 	}
 
 	/**

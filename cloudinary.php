@@ -3,7 +3,7 @@
  * Plugin Name: Cloudinary
  * Plugin URI: https://cloudinary.com/documentation/wordpress_integration
  * Description: With the Cloudinary plugin, you can upload and manage your media assets in the cloud, then deliver them to your users through a fast content delivery network, improving your website’s loading speed and overall user experience. Apply multiple transformations and take advantage of a full digital asset management solution without leaving WordPress.
- * Version: 2.7.1
+ * Version: 2.8.0-rc-1
  * Author:  Cloudinary Ltd., XWP
  * Author URI: https://cloudinary.com/
  * License: GPLv2+

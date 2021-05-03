@@ -17,6 +17,7 @@
     "build": "wp-scripts build",
     "dev": "wp-scripts start",
     "lint:php": "composer lint",
+    "lint:php:fix": "composer fix",
     "lint:js": "wp-scripts lint-js",
     "lint:js:fix": "wp-scripts lint-js --fix",
     "lint:style": "wp-scripts lint-style",

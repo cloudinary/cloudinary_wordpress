@@ -496,7 +496,8 @@ class Sync implements Setup, Assets {
 			),
 			'meta_cleanup' => array(
 				'generate' => function ( $attachment_id ) {
-					$meta   = $this->managers['media']->get_post_meta( $attachment_id );
+					$meta = $this->managers['media']->get_post_meta( $attachment_id );
+
 					$return = false;
 					foreach ( $meta as $key => $value ) {
 						if ( get_post_meta( $attachment_id, $key, true ) === $value ) {
