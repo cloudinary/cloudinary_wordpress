@@ -160,6 +160,12 @@ class Upload_Sync {
 					if ( ! $this->sync->is_syncable( $post_id ) ) {
 						continue;
 					}
+
+					// It's required to perform a new sync that Cloudinary and WordPress storage is set.
+					if ( 'dual_full' !== $this->plugin->settings->find_setting( 'offload' )->get_value() ) {
+						continue;
+					}
+
 					// Clean up for previous syncs and start over.
 					$this->sync->delete_cloudinary_meta( $post_id );
 					$this->sync->set_signature_item( $post_id, 'file', '' );
