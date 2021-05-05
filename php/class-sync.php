@@ -15,6 +15,7 @@ use Cloudinary\Sync\Download_Sync;
 use Cloudinary\Sync\Push_Sync;
 use Cloudinary\Sync\Sync_Queue;
 use Cloudinary\Sync\Upload_Sync;
+use WP_Error;
 
 /**
  * Class Sync
@@ -33,7 +34,7 @@ class Sync implements Setup, Assets {
 	/**
 	 * Contains all the different sync components.
 	 *
-	 * @var array A collection of sync components.
+	 * @var Delete_Sync[]|Push_Sync[]|Upload_Sync[]
 	 */
 	public $managers;
 
@@ -244,13 +245,7 @@ class Sync implements Setup, Assets {
 		}
 
 		// Can sync only syncable delivery types.
-		if (
-			! in_array(
-				$this->managers['media']->get_media_delivery( $attachment_id ),
-				$this->managers['media']->get_syncable_delivery_types(),
-				true
-			)
-		) {
+		if ( ! $this->is_syncable( $attachment_id ) ) {
 			$can = false;
 		}
 
@@ -293,7 +288,7 @@ class Sync implements Setup, Assets {
 		if ( ! empty( $signatures[ $attachment_id ] ) && true === $cached ) {
 			$return = $signatures[ $attachment_id ];
 		} else {
-			$signature = (array) $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['signature'], true );
+			$signature = $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['signature'], true );
 			if ( empty( $signature ) ) {
 				$signature = array();
 			}
@@ -303,6 +298,18 @@ class Sync implements Setup, Assets {
 			$signatures[ $attachment_id ] = $return;
 			$return                       = wp_parse_args( $signature, $this->sync_types );
 		}
+
+		/**
+		 * Filter the get signature of the asset.
+		 *
+		 * @hook   cloudinary_get_signature
+		 *
+		 * @param $return        {array} The attachment signature.
+		 * @param $attachment_id {int}   The attachment ID.
+		 *
+		 * @return {array}
+		 */
+		$return = apply_filters( 'cloudinary_get_signature', $return, $attachment_id );
 
 		return $return;
 	}
@@ -326,6 +333,29 @@ class Sync implements Setup, Assets {
 		$public_id = $cld_folder . $file_info['filename'];
 
 		return ltrim( $public_id, '/' );
+	}
+
+	/**
+	 * Is syncable asset.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function is_syncable( $attachment_id ) {
+		$syncable = false;
+		if (
+			$this->managers['media']->is_media( $attachment_id )
+			&& in_array(
+				$this->managers['media']->get_media_delivery( $attachment_id ),
+				$this->managers['media']->get_syncable_delivery_types(),
+				true
+			)
+		) {
+			$syncable = true;
+		}
+
+		return $syncable;
 	}
 
 	/**
@@ -467,6 +497,7 @@ class Sync implements Setup, Assets {
 			'meta_cleanup' => array(
 				'generate' => function ( $attachment_id ) {
 					$meta = $this->managers['media']->get_post_meta( $attachment_id );
+
 					$return = false;
 					foreach ( $meta as $key => $value ) {
 						if ( get_post_meta( $attachment_id, $key, true ) === $value ) {
@@ -820,7 +851,10 @@ class Sync implements Setup, Assets {
 	public function set_signature_item( $attachment_id, $type, $value = null ) {
 
 		// Get the core meta.
-		$meta = (array) $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['signature'], true );
+		$meta = $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['signature'], true );
+		if ( empty( $meta ) ) {
+			$meta = array();
+		}
 		// Set the specific value.
 		if ( is_null( $value ) ) {
 			// Generate a new value based on generator.
@@ -854,6 +888,23 @@ class Sync implements Setup, Assets {
 		}
 
 		return $value;
+	}
+
+	/**
+	 * Filter the signature.
+	 *
+	 * @param array $signature     The signature array.
+	 * @param int   $attachment_id The attachment ID.
+	 *
+	 * @return array|bool|string|WP_Error
+	 */
+	public function get_signature_syncable_type( $signature, $attachment_id ) {
+
+		if ( ! $this->is_syncable( $attachment_id ) ) {
+			$signature = $this->generate_signature( $attachment_id );
+		}
+
+		return $signature;
 	}
 
 	/**
@@ -916,6 +967,7 @@ class Sync implements Setup, Assets {
 			$this->managers['queue']->setup( $this );
 
 			add_filter( 'cloudinary_setting_get_value', array( $this, 'filter_get_cloudinary_folder' ), 10, 2 );
+			add_filter( 'cloudinary_get_signature', array( $this, 'get_signature_syncable_type' ), 10, 2 );
 		}
 	}
 

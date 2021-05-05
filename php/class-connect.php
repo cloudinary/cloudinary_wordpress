@@ -10,6 +10,7 @@ namespace Cloudinary;
 use Cloudinary\Component\Config;
 use Cloudinary\Component\Notice;
 use Cloudinary\Component\Setup;
+use Cloudinary\Connect\Api;
 
 /**
  * Cloudinary connection class.
@@ -32,7 +33,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 *
 	 * @since   0.1
 	 *
-	 * @var     \Cloudinary\Api
+	 * @var     Api
 	 */
 	public $api;
 
@@ -588,6 +589,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 */
 	public function get_config() {
 		$old_version = $this->settings->get_value( 'version' );
+
 		if ( version_compare( $this->plugin->version, $old_version, '>' ) ) {
 			/**
 			 * Do action to allow upgrading of different areas.
@@ -872,6 +874,9 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 
 		// Add data storage.
 		foreach ( self::META_KEYS as $slug => $option_name ) {
+			if ( 'url' === $slug ) {
+				continue; // URL already set.
+			}
 			$args[] = array(
 				'slug'        => $slug,
 				'option_name' => $option_name,

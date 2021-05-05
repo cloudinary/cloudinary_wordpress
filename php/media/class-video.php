@@ -70,7 +70,7 @@ class Video {
 	 */
 	public function __construct( Media $media ) {
 		$this->media  = $media;
-		$this->config = $this->media->get_settings()->get_setting( 'video_settings' )->get_value();
+		$this->config = $this->media->get_settings()->get_value( 'video_settings' );
 
 		$this->setup_hooks();
 	}
@@ -193,6 +193,7 @@ class Video {
 		$requiring_screens = array(
 			'cloudinary_page_media',
 			'edit-tags',
+			'term',
 		);
 
 		if ( null === $current_screen ) {

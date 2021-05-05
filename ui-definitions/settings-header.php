@@ -24,6 +24,16 @@ $settings = array(
 		),
 		array(
 			'type'       => 'tag',
+			'element'    => 'span',
+			'content'    => $this->version . ' | ',
+			'attributes' => array(
+				'class' => array(
+					'description',
+				),
+			),
+		),
+		array(
+			'type'       => 'tag',
 			'element'    => 'a',
 			'content'    => __( 'Need help?', 'cloudinary' ),
 			'attributes' => array(

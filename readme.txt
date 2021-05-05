@@ -128,6 +128,19 @@ The following plugins/themes/page-builders might not be fully compatible with th
 
 == Changelog ==
 
+= 2.7.1 (20 Apr 2021) =
+
+Fixes and Improvements:
+
+* Fixed support for syncing assets' caption metadata
+* Added system report to the deactivation form
+* Product gallery scripts are now loaded only when needed
+* Fixed manual sync of a single asset
+* Fixed issues related to "Cloudinary only storage" option
+* Fixed delivery of fetched/other special image types from Cloudinary
+* Fixed an error when using the "Twenty Twenty" theme 
+
+
 = 2.7.0 (15 Mar 2021) =
 
 New Features:

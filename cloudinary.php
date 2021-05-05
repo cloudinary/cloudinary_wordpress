@@ -31,7 +31,6 @@
 // Define Cloudinary Constants.
 define( 'CLDN_CORE', __FILE__ );
 define( 'CLDN_PATH', plugin_dir_path( __FILE__ ) );
-define( 'CLDN_URL', plugin_dir_url( __FILE__ ) );
 
 if ( version_compare( phpversion(), '5.6', '>=' ) ) {
 	require_once __DIR__ . '/instance.php';

@@ -468,6 +468,23 @@ class Api {
 	}
 
 	/**
+	 * Upload an cache item.
+	 *
+	 * @param array $args The upload parameters.
+	 *
+	 * @return array $the url to the cached item.
+	 */
+	public function upload_cache( $args ) {
+		$call_args = array(
+			'headers' => array(),
+			'body'    => $args,
+		);
+		$url       = $this->url( 'auto', 'upload', true );
+
+		return $this->call( $url, $call_args, 'post' );
+	}
+
+	/**
 	 * Create a local copy of the file if stored remotely in VIP.
 	 *
 	 * @param string $file File name to copy.

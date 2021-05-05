@@ -37,6 +37,10 @@ class Panel extends Component {
 		if ( $this->setting->has_param( 'anchor' ) ) {
 			$struct['attributes']['id'] = 'panel-' . str_replace( '_', '-', $this->setting->get_slug() );
 		}
+		if ( $this->setting->has_param( 'collapsible' ) ) {
+			$struct['attributes']['class'][]  = 'collapsible';
+			$struct['attributes']['data-for'] = $this->setting->get_slug();
+		}
 
 		return parent::header( $struct );
 	}
@@ -53,8 +57,7 @@ class Panel extends Component {
 		$struct['element'] = 'h2';
 		$struct['content'] = $this->setting->get_param( 'title' );
 		if ( $this->setting->has_param( 'collapsible' ) ) {
-			$struct['attributes']['class'][]  = 'collapsible';
-			$struct['attributes']['data-for'] = $this->setting->get_slug();
+			$struct['attributes']['class'][] = 'collapsible';
 		}
 
 		return $struct;

@@ -37,7 +37,7 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @var     string.
 	 */
-	private $base_url;
+	public $base_url;
 
 	/**
 	 * Holds the Cloudinary folder.
@@ -190,6 +190,7 @@ class Media extends Settings_Component implements Setup {
 		 */
 		return apply_filters( 'cloudinary_syncable_delivery_types', $types );
 	}
+
 	/**
 	 * Get convertible extensions and converted file types.
 	 *
@@ -273,9 +274,10 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function is_local_media( $attachment_id ) {
 		$local_host = wp_parse_url( get_site_url(), PHP_URL_HOST );
-		$media_host = wp_parse_url( get_the_guid( $attachment_id ), PHP_URL_HOST );
+		$guid       = get_the_guid( $attachment_id );
+		$media_host = wp_parse_url( $guid, PHP_URL_HOST );
 
-		return $local_host === $media_host;
+		return $local_host === $media_host || $this->is_cloudinary_url( $guid );
 	}
 
 	/**
@@ -1140,7 +1142,10 @@ class Media extends Settings_Component implements Setup {
 					$extension = $image_format;
 				}
 			}
-			$cloudinary_id = $public_id . '.' . $extension;
+			$cloudinary_id = $public_id;
+			if ( 'fetch' !== $this->get_media_delivery( $attachment_id ) ) {
+				$cloudinary_id = $public_id . '.' . $extension;
+			}
 		}
 
 		return $cloudinary_id;
@@ -1366,6 +1371,34 @@ class Media extends Settings_Component implements Setup {
 		$cld_url    = $this->plugin->components['connect']->api->asset_url;
 
 		return $test_parts['host'] === $cld_url;
+	}
+
+	/**
+	 * Check if a url is pointing to Cloudinary sync folder.
+	 *
+	 * @param string $url The tested URL.
+	 *
+	 * @return bool
+	 */
+	public function is_cloudinary_sync_folder( $url ) {
+		$path  = wp_parse_url( $url, PHP_URL_PATH );
+		$parts = explode( '/', $path );
+
+		// Remove public id and file name.
+		array_splice( $parts, -2 );
+
+		foreach ( $parts as $part ) {
+			array_shift( $parts );
+			if ( empty( $part ) ) {
+				continue;
+			}
+			if ( 'v' === $part[0] && is_numeric( substr( $part, 1 ) ) ) {
+				break;
+			}
+		}
+
+		// Check for the Cloudinary folder.
+		return implode( '/', $parts ) === $this->get_cloudinary_folder( false );
 	}
 
 	/**
@@ -1660,12 +1693,11 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function media_column_value( $column_name, $attachment_id ) {
 		if ( 'cld_status' === $column_name ) {
-			if ( $this->is_media( $attachment_id ) && $this->is_local_media( $attachment_id ) ) :
+			if ( $this->sync->is_syncable( $attachment_id ) ) :
 				$status = array(
 					'state' => 'inactive',
 					'note'  => esc_html__( 'Not Synced', 'cloudinary' ),
 				);
-				add_filter( 'cloudinary_flag_sync', '__return_true' );
 				if ( ! $this->cloudinary_id( $attachment_id ) ) {
 					// If false, lets check why by seeing if the file size is too large.
 					$file     = get_attached_file( $attachment_id ); // Get the file size to make sure it can exist in cloudinary.
@@ -1682,16 +1714,22 @@ class Media extends Settings_Component implements Setup {
 						'note'  => esc_html__( 'Synced', 'cloudinary' ),
 					);
 				}
-				remove_filter( 'cloudinary_flag_sync', '__return_true' );
 				// filter status.
 				$status = apply_filters( 'cloudinary_media_status', $status, $attachment_id );
 				?>
 				<span class="dashicons-cloudinary <?php echo esc_attr( $status['state'] ); ?>" title="<?php echo esc_attr( $status['note'] ); ?>"></span>
 				<?php
-			endif;
-			if ( ! $this->is_local_media( $attachment_id ) ) :
+			elseif ( ! $this->is_local_media( $attachment_id ) ) :
 				?>
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'Not syncable. This is an external media.', 'cloudinary' ); ?>"></span>
+				<?php
+			elseif ( 'fetch' === $this->get_media_delivery( $attachment_id ) ) :
+				?>
+				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'This media is Fetch type.', 'cloudinary' ); ?>"></span>
+				<?php
+			elseif ( 'sprite' === $this->get_media_delivery( $attachment_id ) ) :
+				?>
+				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'This media is Sprite type.', 'cloudinary' ); ?>"></span>
 				<?php
 			endif;
 		}

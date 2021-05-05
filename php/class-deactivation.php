@@ -238,7 +238,7 @@ class Deactivation {
 
 		$report = $this->plugin->get_component( 'report' )->get_report_data();
 		$temp   = get_temp_dir() . $report['filename'];
-		file_put_contents( $temp, wp_json_encode( $report['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) );
+		file_put_contents( $temp, wp_json_encode( $report['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_file_put_contents
 		$args = array(
 			'file'          => $temp,
 			'public_id'     => $report['filename'],
