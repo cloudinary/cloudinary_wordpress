@@ -2,9 +2,7 @@ module.exports = function ( grunt ) {
 	// Load all Grunt plugins.
 	require( 'load-grunt-tasks' )( grunt );
 
-	const pluginVersion = grunt.file
-		.read( 'cloudinary.php' )
-		.match( /Version:\s*(.+)$/im )[ 1 ];
+	const pluginVersion = grunt.file.read( '.version' );
 
 	const options = {
 		plugin_slug:
@@ -40,7 +38,10 @@ module.exports = function ( grunt ) {
 
 		replace: {
 			version: {
-				src: '<%= dist_dir %>/readme.txt',
+				src: [
+					'<%= dist_dir %>/readme.txt',
+					'<%= dist_dir %>/cloudinary.php',
+				],
 				overwrite: true,
 				replacements: [
 					{
