@@ -323,8 +323,7 @@ class Cache extends Settings_Component implements Setup {
 			add_action( 'admin_init', array( $this, 'admin_rewrite' ), 0 );
 		}
 		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
-		add_action( 'cloudinary_upload_cache', array( $this, 'upload_cache' ) );
-		add_action( 'http_request_args', array( $this, 'prevent_caching_internal_requests' ), 10, 5 );
+		add_action( 'http_request_args', array( $this, 'prevent_caching_internal_requests' ), 10, 5 ); // phpcs:ignore WordPressVIPMinimum.Hooks.RestrictedHooks.http_request_args
 	}
 
 	/**
@@ -369,11 +368,17 @@ class Cache extends Settings_Component implements Setup {
 	 * Hook into the Cron event and process unsynced items.
 	 *
 	 * @param array $args The args passed to the cron event.
+	 *
+	 * @return int[]
 	 */
 	public function upload_cache( $args ) {
+		$return = array();
 		foreach ( (array) $args as $post_id ) {
+			$post = get_post( $post_id );
+			if ( Cache_Point::POST_TYPE_SLUG !== $post->post_type ) {
+				continue;
+			}
 			$meta        = get_post_meta( $post_id );
-			$post        = get_post( $post_id );
 			$cached_urls = get_post_meta( $post->post_parent, Cache_Point::META_KEYS['cached_urls'], true );
 			if ( empty( $cached_urls ) ) {
 				$cached_urls = array();
@@ -398,7 +403,10 @@ class Cache extends Settings_Component implements Setup {
 			update_post_meta( $post_id, Cache_Point::META_KEYS['last_updated'], time() );
 			// Update cache point, cache.
 			update_post_meta( $post->post_parent, Cache_Point::META_KEYS['cached_urls'], $cached_urls );
+			$return[] = $post_id;
 		}
+
+		return $return;
 	}
 
 	/**
@@ -439,8 +447,28 @@ class Cache extends Settings_Component implements Setup {
 			'permission_callback' => array( $this, 'rest_can_manage_options' ),
 			'args'                => array(),
 		);
+		$endpoints['upload_cache']        = array(
+			'method'   => \WP_REST_Server::CREATABLE,
+			'callback' => array( $this, 'rest_upload_cache' ),
+			'args'     => array(),
+		);
 
 		return $endpoints;
+	}
+
+	/**
+	 * Upload a set of assets..
+	 *
+	 * @param WP_REST_Request $request The request object.
+	 *
+	 * @return WP_Error|WP_HTTP_Response|WP_REST_Response
+	 */
+	public function rest_upload_cache( $request ) {
+
+		$assets_ids = $request->get_param( 'ids' );
+		$result     = $this->upload_cache( $assets_ids );
+
+		return rest_ensure_response( $result );
 	}
 
 	/**
