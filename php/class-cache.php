@@ -565,6 +565,29 @@ class Cache extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Get an array of mimetypes that should be replaced inline with base64 encoding.
+	 *
+	 * @return array
+	 */
+	protected function get_inline_types() {
+		$inline_types = array(
+			'image/svg+xml',
+		);
+
+		/**
+		 * Filter types of files that can replaced inline with a base64 encoded data URI.
+		 *
+		 * @hook    cloudinary_plugin_asset_cache_inline_types
+		 * @default array()
+		 *
+		 * @param $inline_types {array} The types of files to be encoded inline.
+		 *
+		 * @return  {array}
+		 */
+		return apply_filters( 'cloudinary_plugin_asset_cache_inline_types', $inline_types );
+	}
+
+	/**
 	 * Upload a static file.
 	 *
 	 * @param string $file The file path to upload.
@@ -574,11 +597,20 @@ class Cache extends Settings_Component implements Setup {
 	 */
 	public function sync_static( $file, $url ) {
 
-		$file_path   = $this->cache_folder . '/' . substr( $file, strlen( ABSPATH ) );
-		$public_id   = dirname( $file_path ) . '/' . pathinfo( $file, PATHINFO_FILENAME );
-		$type        = $this->media->get_file_type( $file );
-		$method      = $this->get_upload_method();
-		$upload_file = $this->cache_point->clean_url( $url );
+		$file_path    = $this->cache_folder . '/' . substr( $file, strlen( ABSPATH ) );
+		$public_id    = dirname( $file_path ) . '/' . pathinfo( $file, PATHINFO_FILENAME );
+		$type         = $this->media->get_file_type( $file );
+		$method       = $this->get_upload_method();
+		$upload_file  = $this->cache_point->clean_url( $url );
+		$inline_types = $this->get_inline_types();
+
+		// Check if file is to be inline encoded.
+		$mime_type = mime_content_type( $file );
+		if ( in_array( $mime_type, $inline_types, true ) ) {
+			$content = $this->file_system->wp_file_system->get_contents( $file );
+
+			return 'data:' . $mime_type . ';base64,' . base64_encode( $content );
+		}
 		if ( 'direct' === $method ) {
 			if ( function_exists( 'curl_file_create' ) ) {
 				$upload_file = curl_file_create( $file ); // phpcs:ignore
