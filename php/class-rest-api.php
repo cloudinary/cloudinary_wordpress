@@ -75,7 +75,8 @@ class REST_API {
 		$args            = array(
 			'timeout'   => 0.1,
 			'blocking'  => false,
-			'sslverify' => false,
+			/** This filter is documented in wp-includes/class-wp-http-streams.php */
+			'sslverify' => apply_filters( 'https_local_ssl_verify', false ),
 			'method'    => $method,
 			'headers'   => array(),
 			'body'      => $params,
