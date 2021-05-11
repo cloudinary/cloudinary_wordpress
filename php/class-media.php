@@ -1477,7 +1477,7 @@ class Media extends Settings_Component implements Setup {
 
 		$sync_key = $asset['sync_key'];
 		// Capture public_id. Use core update_post_meta since this attachment data doesnt exist yet.
-		$this->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
+		update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
 		// Capture version number.
 		$this->update_post_meta( $attachment_id, Sync::META_KEYS['version'], $asset['version'] );
 		if ( ! empty( $asset['transformations'] ) ) {

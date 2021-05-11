@@ -932,7 +932,15 @@ class Sync implements Setup, Assets {
 		$queued = get_post_meta( $attachment_id, self::META_KEYS['queued'] );
 		delete_post_meta( $attachment_id, self::META_KEYS['pending'] );
 		delete_post_meta( $attachment_id, self::META_KEYS['queued'] );
+		delete_post_meta( $attachment_id, self::META_KEYS['suffix'] );
+		delete_post_meta( $attachment_id, self::META_KEYS['public_id'] );
 		delete_post_meta( $attachment_id, $queued );
+
+		// Signatures cleanup.
+		$signatures = $this->get_signature( $attachment_id );
+		foreach ( $signatures as $signature ) {
+			delete_post_meta( $attachment_id, "_{$signature}" );
+		}
 	}
 
 	/**
