@@ -180,59 +180,6 @@ class Cache extends Settings_Component implements Setup {
 	}
 
 	/**
-	 * Convert relative urls to full urls.
-	 *
-	 * @param string $html          The html to convert.
-	 * @param string $relative_path The relative path to do the conversion against.
-	 *
-	 * @return array
-	 */
-	public function convert_relative_urls( $html, $relative_path ) {
-
-		$extracted = $this->extract_relative_urls( $html, $relative_path );
-
-		return str_replace( array_keys( $extracted ), $extracted, $html );
-	}
-
-	/**
-	 * Extracts relative urls form HTML.
-	 *
-	 * @param string $html          The html to extract from.
-	 * @param string $relative_path The relative path of the HTML location.
-	 *
-	 * @return array
-	 */
-	public function extract_relative_urls( $html, $relative_path ) {
-		$urls      = $this->find_urls( $html );
-		$mapped    = array_combine( $urls, $urls );
-		$extracted = array_map(
-			function ( $file ) use ( $relative_path ) {
-				$file           = ltrim( $file, '/' ); // Remove the leading slash.
-				$file_parts     = explode( '/', $file );
-				$relative_path  = untrailingslashit( $relative_path ); // Remove the trailing slash.
-				$relative_parts = explode( '/', $relative_path );
-				foreach ( $file_parts as $part ) {
-					if ( '.' === $part || '..' === $part ) {
-						array_shift( $file_parts );
-						if ( '..' === $part ) {
-							// Drop the end of the relative path.
-							array_pop( $relative_parts );
-						}
-						continue;
-					}
-					break;
-				}
-				$relative_parts = array_merge( $relative_parts, $file_parts );
-
-				return implode( '/', $relative_parts );
-			},
-			$mapped
-		);
-
-		return $extracted;
-	}
-
-	/**
 	 * Build sources for a set of paths and HTML.
 	 *
 	 * @param string $html The html to build against.
@@ -247,55 +194,12 @@ class Cache extends Settings_Component implements Setup {
 		if ( empty( $found_urls ) ) {
 			return null;
 		}
-		// Extract CSS files to look internally for relative URLS.
-		$css_relatives = array_filter(
-			$found_urls,
-			function ( $file ) {
-				return 'css' === pathinfo( strstr( $file, '?', true ), PATHINFO_EXTENSION );
-			}
-		);
-
-		// Remove the URLs that have relative url's in the CSS.
-		$found_urls = array_diff( $found_urls, $css_relatives );
-		preg_match_all( '/<link([^>]*)>/s', $html, $found_tags );
-		$tag_args = array_map( 'shortcode_parse_atts', $found_tags[1] );
-
-		// Extract relative URLs.
-		$tag_replace = array();
-		foreach ( $css_relatives as $css_relative ) {
-			$path      = $this->cache_point->url_to_path( strstr( $css_relative, '?', true ) );
-			$css       = $this->file_system->wp()->get_contents( $path );
-			$extracted = $this->extract_relative_urls( $css, dirname( $css_relative ) );
-
-			// Find tags with relatives and replace with style tags.
-			foreach ( $tag_args as $index => $args ) {
-
-				if ( empty( $args ) || ! isset( $args['href'] ) ) {
-					continue;
-				}
-				if ( $args['href'] === $css_relative ) {
-					$css = str_replace( array_keys( $extracted ), $extracted, $css );
-					$css = str_replace( "\n", '', $css );
-					$css = str_replace( "\r\n", '', $css );
-
-					$tag_replace[ $found_tags[0][ $index ] ] = '<style>' . $css . '</style>';
-				}
-			}
-
-			$found_urls = array_merge( $found_urls, array_values( $extracted ) );
-		}
 
 		$found_urls  = array_unique( $found_urls );
 		$found_posts = $this->cache_point->get_cached_urls( $found_urls );
 		if ( empty( $found_posts ) ) {
 			return null;
 		}
-		// Find tags with relatives and replace with style tags.
-		foreach ( $tag_replace as &$tag_replaced ) {
-			$tag_replaced = str_replace( array_keys( $found_posts ), $found_posts, $tag_replaced );
-		}
-		$found_posts = array_merge( $found_posts, $tag_replace );
-
 		// Clean locals/pending.
 		$found_posts = array_filter(
 			$found_posts,
@@ -593,12 +497,6 @@ class Cache extends Settings_Component implements Setup {
 			'gif',
 			'png',
 			'svg',
-			'eot',
-			'woff2',
-			'woff',
-			'ttf',
-			'css',
-			'js',
 		);
 
 		/**
