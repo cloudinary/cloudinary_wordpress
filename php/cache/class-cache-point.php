@@ -92,6 +92,7 @@ class Cache_Point {
 		'last_updated'  => 'last_updated',
 		'upload_error'  => 'upload_error',
 		'version'       => 'version',
+		'size'          => 'size',
 	);
 
 	/**
@@ -331,7 +332,7 @@ class Cache_Point {
 			$excludes = array();
 		}
 		if ( ! in_array( $url, $excludes, true ) ) {
-			$excludes[] = $url;
+			$excludes[] = $this->clean_url( $url );
 			update_post_meta( $cache_point_id, self::META_KEYS['excluded_urls'], $excludes );
 		}
 	}
@@ -467,6 +468,7 @@ class Cache_Point {
 	 */
 	protected function get_parent_cache_point( $url ) {
 		$parent = null;
+		$url    = $this->clean_url( $url );
 		foreach ( $this->active_cache_points as $key => $cache_point ) {
 			if ( false !== strpos( $url, $key ) ) {
 				$excludes = (array) get_post_meta( $cache_point->ID, self::META_KEYS['excluded_urls'], true );
@@ -790,7 +792,7 @@ class Cache_Point {
 		$missing = array_diff( $urls, array_keys( $found_posts ) );
 		$missing = array_filter( $missing, array( $this, 'filter_duplicate_base' ) );
 		if ( ! empty( $missing ) ) {
-			$this->prepare_cache( $missing );
+			$found_posts += $this->prepare_cache( $missing );
 		}
 
 		// Remove urls that are local to improve replace performance.
@@ -865,7 +867,12 @@ class Cache_Point {
 						$meta[ self::META_KEYS['cached_urls'] ][ $url ] = $url;
 						update_post_meta( $post->ID, self::META_KEYS['cached_urls'], $meta[ self::META_KEYS['cached_urls'] ] );
 					}
-					$found_posts[ $url ] = $meta[ self::META_KEYS['cached_urls'] ][ $url ];
+					$found_posts[ $url ] = array(
+						'url' => $meta[ self::META_KEYS['cached_urls'] ][ $url ],
+					);
+					if ( ! empty( $meta[ self::META_KEYS['size'] ] ) ) {
+						$found_posts[ $url ]['size'] = $meta[ self::META_KEYS['size'] ];
+					}
 				}
 			}
 			$params['paged'] ++;
@@ -879,9 +886,11 @@ class Cache_Point {
 	 * Prepare a list of urls to be cached.
 	 *
 	 * @param array $urls List of urls to cache.
+	 *
+	 * @return array
 	 */
 	public function prepare_cache( $urls ) {
-
+		$return = array();
 		foreach ( $urls as $url ) {
 			$base_url    = $this->clean_url( $url );
 			$cache_point = $this->get_cache_point( $base_url );
@@ -894,7 +903,10 @@ class Cache_Point {
 				$this->exclude_url( $cache_point->ID, $url );
 				continue;
 			}
-			$meta = array(
+			$return[ $url ] = array(
+				'url' => $url,
+			);
+			$meta           = array(
 				self::META_KEYS['base_url']     => $base_url,
 				self::META_KEYS['cached_urls']  => array(
 					$url => $url,
@@ -903,6 +915,15 @@ class Cache_Point {
 				self::META_KEYS['last_updated'] => time(),
 			);
 
+			$type = $this->cache->media->get_file_type( $file );
+			if ( 'image' === $type ) {
+				$sizes                  = getimagesize( $file );
+				$meta['size']           = array(
+					'width'  => $sizes[0],
+					'height' => $sizes[1],
+				);
+				$return[ $url ]['size'] = $meta['size'];
+			}
 			$args = array(
 				'post_type'    => self::POST_TYPE_SLUG,
 				'post_title'   => $base_url,
@@ -915,6 +936,8 @@ class Cache_Point {
 			$id = wp_insert_post( $args );
 			$this->prepare_for_sync( $id );
 		}
+
+		return $return;
 	}
 
 	/**

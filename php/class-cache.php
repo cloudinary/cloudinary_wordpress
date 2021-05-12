@@ -168,14 +168,16 @@ class Cache extends Settings_Component implements Setup {
 					continue;
 				}
 
-				$size = explode( '|', $cld['size'] );
-				$svg  = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $size[0] . '" height="' . $size[1] . '"><defs><linearGradient id="grad1" x1="100%" y1="100%"><stop offset="0%" stop-color="rgb(100,100,100)" stop-opacity=".5"><animate attributeName="stop-color" values="rgba(100,100,100)" dur="14s" repeatCount="indefinite"></animate></stop><stop offset="100%" stop-color="rgb(255,255,255)" stop-opacity=".5"><animate attributeName="stop-color" values="rgba(255,255,255,0.5)" dur="1s" repeatCount="indefinite"></animate><animate attributeName="offset" values=".95;.80;.60;.40;.60;.80;.95" dur="1s" repeatCount="indefinite"></animate></stop></linearGradient></defs><rect width="100%" height="100%" fill="url(#grad1)" /></svg>';
+				$svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $cld['size']['width'] . '" height="' . $cld['size']['height'] . '"><defs><linearGradient id="linear" x1="0%" y1="50%" x2="100%" y2="0%"><stop offset="0%" stop-color="%23fff" stop-opacity="1"><animate attributeName="offset" values="0;1;1;1;1;1" dur="1s" repeatCount="indefinite" /><animate attributeName="stop-opacity" values="0;.3;0;0;0;0;0;0;0" dur="2s" repeatCount="indefinite" /></stop><stop offset="100%" stop-opacity="0" /></linearGradient></defs><rect x="0" y="0" width="100%" height="100%" fill="%23444" opacity="0.4"/><rect x="0" y="0" width="100%" height="100%" fill="url(%23linear)"/></svg>';
 
 				// Set the preload image.
-				$sources['cld'][ $index ] = 'data:image/svg+xml;base64,' . base64_encode( $svg ) . '" data-src="' . $cld['url'] . '"';
+				$sources['cld'][ $index ] = 'src=\'data:image/svg+xml;utf8,' . $svg . '\' data-src="' . $cld['url'] . '"';
 
 				// Append a closing " to the URL.
-				$sources['url'][ $index ] .= '"';
+				$sources['url'][ $index ] = 'src="' . $sources['url'][ $index ] . '"';
+				// Append a clean url switch for other cases.
+				$sources['url'][] = $sources['url'][ $index ];
+				$sources['cld'][] = $cld['url'];
 			}
 			$html = str_replace( $sources['url'], $sources['cld'], $html );
 		}
@@ -420,7 +422,12 @@ class Cache extends Settings_Component implements Setup {
 				}
 
 				$cached_url          = $result;
-				$cached_urls[ $url ] = $cached_url;
+				$cached_urls[ $url ] = array(
+					'url' => $cached_url,
+				);
+				if ( ! empty( $meta[ Cache_Point::META_KEYS['size'] ] ) ) {
+					$cached_urls[ $url ]['size'] = $meta[ Cache_Point::META_KEYS['size'] ];
+				}
 			}
 			update_post_meta( $post_id, Cache_Point::META_KEYS['cached_urls'], $meta[ Cache_Point::META_KEYS['cached_urls'] ] );
 			update_post_meta( $post_id, Cache_Point::META_KEYS['last_updated'], time() );
@@ -616,7 +623,7 @@ class Cache extends Settings_Component implements Setup {
 	 * @param string $file The file path to upload.
 	 * @param string $url  The file URL to upload.
 	 *
-	 * @return array|WP_Error
+	 * @return string|WP_Error
 	 */
 	public function sync_static( $file, $url ) {
 
@@ -632,9 +639,7 @@ class Cache extends Settings_Component implements Setup {
 		if ( in_array( $mime_type, $inline_types, true ) ) {
 			$content = $this->file_system->wp_file_system->get_contents( $file );
 
-			return array(
-				'url' => 'data:' . $mime_type . ';base64,' . base64_encode( $content ),
-			);
+			return 'data:' . $mime_type . ';base64,' . base64_encode( $content );
 		}
 		if ( 'direct' === $method ) {
 			if ( function_exists( 'curl_file_create' ) ) {
@@ -659,13 +664,9 @@ class Cache extends Settings_Component implements Setup {
 			return $data;
 		}
 
-		$return = array(
-			'url' => $data['secure_url'],
-		);
+		$return = $data['secure_url'];
 		if ( ! empty( $data['eager'] ) ) {
-			$return['url']  = $data['eager'][0]['secure_url'];
-			$size           = getimagesize( $file );
-			$return['size'] = $size[0] . '|' . $size[1];
+			$return = $data['eager'][0]['secure_url'];
 		}
 
 		return $return;
