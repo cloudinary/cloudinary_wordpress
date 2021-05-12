@@ -171,7 +171,7 @@ class Cache extends Settings_Component implements Setup {
 				$svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $cld['size']['width'] . '" height="' . $cld['size']['height'] . '"><defs><linearGradient id="linear" x1="0%" y1="50%" x2="100%" y2="0%"><stop offset="0%" stop-color="%23fff" stop-opacity="1"><animate attributeName="offset" values="0;1;1;1;1;1" dur="1s" repeatCount="indefinite" /><animate attributeName="stop-opacity" values="0;.3;0;0;0;0;0;0;0" dur="2s" repeatCount="indefinite" /></stop><stop offset="100%" stop-opacity="0" /></linearGradient></defs><rect x="0" y="0" width="100%" height="100%" fill="%23444" opacity="0.4"/><rect x="0" y="0" width="100%" height="100%" fill="url(%23linear)"/></svg>';
 
 				// Set the preload image.
-				$sources['cld'][ $index ] = 'src=\'data:image/svg+xml;utf8,' . $svg . '\' data-src="' . $cld['url'] . '"';
+				$sources['cld'][ $index ] = 'src=\'data:image/svg+xml;utf8,' . $svg . '\' data-src="' . $cld['url'] . '" data-width="' . $cld['size']['width'] . '"';
 
 				// Append a closing " to the URL.
 				$sources['url'][ $index ] = 'src="' . $sources['url'][ $index ] . '"';
