@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: image, video, DAM, optimization, CDN
 Requires at least: 4.7
-Tested up to: 5.7
+Tested up to: 5.7.1
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -127,6 +127,14 @@ The following plugins/themes/page-builders might not be fully compatible with th
 9. Use Interactive Media Gallery 
 
 == Changelog ==
+
+
+= 2.7.2 (11 May 2021) = 
+
+Fixes and Improvements:
+
+* Fixed overriding files with the same name
+
 
 = 2.7.1 (20 Apr 2021) =
 
