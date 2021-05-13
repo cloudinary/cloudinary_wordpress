@@ -105,6 +105,8 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		add_action( 'update_option_cloudinary_connect', array( $this, 'updated_option' ) );
 		add_action( 'cloudinary_status', array( $this, 'check_status' ) );
 		add_action( 'cloudinary_version_upgrade', array( $this, 'upgrade_connection' ) );
+
+		add_filter( 'cloudinary_setting_get_value', array( $this, 'maybe_connection_string_constant' ), 10, 2 );
 	}
 
 	/**
@@ -727,6 +729,43 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			update_option( self::META_KEYS['signature'], $signature );
 			update_option( self::META_KEYS['version'], $this->plugin->version );
 		}
+	}
+
+	/**
+	 * Checks if connection string constant is defined.
+	 *
+	 * @return bool
+	 */
+	public function has_connection_string_constant() {
+		return defined( 'CLOUDINARY_CONNECTION_STRING' );
+	}
+
+	/**
+	 * Filters the connection parts.
+	 *
+	 * @param mixed  $value   The default value.
+	 * @param string $setting The setting slug.
+	 *
+	 * @return mixed
+	 */
+	public function maybe_connection_string_constant( $value, $setting ) {
+		if ( ! $this->has_connection_string_constant() ) {
+			return $value;
+		}
+
+		if ( 'cloudinary_url' === $setting ) {
+			$value = CLOUDINARY_CONNECTION_STRING;
+		}
+
+		if ( 'signature' === $setting ) {
+			 $value = md5( CLOUDINARY_CONNECTION_STRING );
+		}
+
+		if ( 'connect' === $setting ) {
+			$value['cloudinary_url'] = CLOUDINARY_CONNECTION_STRING;
+		}
+
+		return $value;
 	}
 
 	/**
