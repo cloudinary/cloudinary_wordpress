@@ -753,16 +753,22 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			return $value;
 		}
 
+		static $url = null;
+
+		if ( empty( $url ) ) {
+			$url = str_replace( 'CLOUDINARY_URL=', '', CLOUDINARY_CONNECTION_STRING );
+		}
+
 		if ( 'cloudinary_url' === $setting ) {
-			$value = CLOUDINARY_CONNECTION_STRING;
+			$value = $url;
 		}
 
 		if ( 'signature' === $setting ) {
-			 $value = md5( CLOUDINARY_CONNECTION_STRING );
+			 $value = md5( $url );
 		}
 
 		if ( 'connect' === $setting ) {
-			$value['cloudinary_url'] = CLOUDINARY_CONNECTION_STRING;
+			$value['cloudinary_url'] = $url;
 		}
 
 		return $value;
