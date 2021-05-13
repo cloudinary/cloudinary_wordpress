@@ -251,8 +251,10 @@ class Cache_Point {
 		}
 		// Prep the upload for un-synced items.
 		if ( ! empty( $this->to_upload ) ) {
-			$now = microtime( true ); // Set it further than the initial spawn, to allow it through.
-			wp_schedule_single_event( $now, 'cloudinary_upload_cache', array( $this->to_upload ) );
+			$api = $this->cache->plugin->get_component( 'api' );
+			if ( $api ) {
+				$api->background_request( 'upload_cache', array( 'ids' => $this->to_upload ), 'POST' );
+			}
 		}
 	}
 
@@ -484,7 +486,7 @@ class Cache_Point {
 	 * @param string|int $cache_point_id_url The cache point ID or URL.
 	 * @param bool       $id_only            Flag to get ID's only.
 	 *
-	 * @return \WP_Post[]
+	 * @return \WP_Post[]|int[]
 	 */
 	public function get_cache_items( $cache_point_id_url, $id_only = false ) {
 		$items = array();
@@ -708,8 +710,11 @@ class Cache_Point {
 	 * Purge the entire cache for a cache point.
 	 *
 	 * @param int $id The cache point post ID.
+	 *
+	 * @return bool
 	 */
 	public function purge_cache( $id ) {
+		$return      = false;
 		$cache_point = get_post( $id );
 		if ( ! is_null( $cache_point ) ) {
 			$items = $this->get_cache_items( $cache_point->ID, true );
@@ -717,7 +722,10 @@ class Cache_Point {
 				update_post_meta( $cache_item, self::META_KEYS['cached_urls'], array() );
 			}
 			update_post_meta( $cache_point->ID, self::META_KEYS['cached_urls'], array() );
+			$return = true;
 		}
+
+		return $return;
 	}
 
 	/**
@@ -730,7 +738,7 @@ class Cache_Point {
 	 */
 	protected function filter_duplicate_base( $url ) {
 		static $urls = array();
-		$clean       = $this->clean_url( $url );
+		$clean = $this->clean_url( $url );
 		if ( isset( $urls[ $clean ] ) ) {
 			return false;
 		}
