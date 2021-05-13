@@ -54,8 +54,7 @@ module.exports = function ( grunt ) {
 		compress: {
 			release: {
 				options: {
-					archive:
-						'cloudinary-image-management-and-manipulation-in-the-cloud-cdn.zip',
+					archive: 'cloudinary-wordpress-v2.zip',
 				},
 				cwd: 'build',
 				dest:
@@ -71,16 +70,18 @@ module.exports = function ( grunt ) {
 			},
 			assets: {
 				// Deploy only screenshots and icons.
-				...options,
-				deploy_trunk: false,
-				deploy_tag: false,
+				options: {
+					...options,
+					deploy_trunk: false,
+					deploy_tag: false,
+				},
 			},
 		},
 	} );
 
 	grunt.registerTask( 'package', [ 'clean', 'copy', 'replace', 'compress' ] );
 
-	grunt.registerTask( 'deploy', [ 'package', 'wp_deploy' ] );
+	grunt.registerTask( 'deploy', [ 'package', 'wp_deploy:default' ] );
 
 	grunt.registerTask( 'deploy-assets', [ 'wp_deploy:assets' ] );
 };
