@@ -494,9 +494,19 @@ class Cache extends Settings_Component implements Setup {
 	protected function get_filetype_filters() {
 		$default_filters = array(
 			'jpg',
+			'jpeg',
 			'gif',
 			'png',
 			'svg',
+			'mp4',
+			'm4v',
+			'mov',
+			'wmv',
+			'avi',
+			'mpg',
+			'ogv',
+			'3gp',
+			'3g2',
 		);
 
 		/**
