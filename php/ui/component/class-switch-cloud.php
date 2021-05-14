@@ -43,9 +43,10 @@ class Switch_Cloud extends Submit {
 		);
 
 		if ( $plugin->get_component( 'connect' )->has_connection_string_constant() ) {
+			unset( $struct['attributes']['href'] );
+			$struct['element']                = 'button';
 			$struct['attributes']['disabled'] = 'disabled';
 			$struct['attributes']['title']    = __( 'Connection string defined by constant.', 'cloudinary' );
-			$struct['attributes']['href']     = '#';
 		}
 
 		return $struct;
