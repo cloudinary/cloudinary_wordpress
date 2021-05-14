@@ -8,6 +8,7 @@
 namespace Cloudinary\UI\Component;
 
 use Cloudinary\UI\Component;
+use function Cloudinary\get_plugin_instance;
 
 /**
  * Connect Link Component.
@@ -25,7 +26,8 @@ class Switch_Cloud extends Submit {
 	 */
 	protected function submit_button( $struct ) {
 
-		$url = add_query_arg(
+		$plugin = get_plugin_instance();
+		$url    = add_query_arg(
 			array(
 				'switch-account' => true,
 			),
@@ -39,6 +41,13 @@ class Switch_Cloud extends Submit {
 			'button',
 			'button-primary',
 		);
+
+		if ( $plugin->get_component( 'connect' )->has_connection_string_constant() ) {
+			unset( $struct['attributes']['href'] );
+			$struct['element']                = 'button';
+			$struct['attributes']['disabled'] = 'disabled';
+			$struct['attributes']['title']    = __( 'Connection string defined by constant.', 'cloudinary' );
+		}
 
 		return $struct;
 	}
