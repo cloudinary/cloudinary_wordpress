@@ -27,7 +27,7 @@ class Switch_Cloud extends Submit {
 	protected function submit_button( $struct ) {
 
 		$plugin = get_plugin_instance();
-		$url = add_query_arg(
+		$url    = add_query_arg(
 			array(
 				'switch-account' => true,
 			),
