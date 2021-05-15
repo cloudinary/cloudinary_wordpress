@@ -155,6 +155,30 @@ class Cache extends Settings_Component implements Setup {
 		$sources = $this->build_sources( $html );
 		// Replace all sources if we have some URLS.
 		if ( ! empty( $sources ) && ! empty( $sources['url'] ) ) {
+			$replace_urls = array();
+
+			foreach ( $sources['cld'] as $index => $cld ) {
+				if ( ! is_array( $cld ) ) {
+					unset( $sources['url'][ $index ], $sources['cld'][ $index ] );
+					continue;
+				}
+
+				if ( ! isset( $cld['size'] ) ) {
+					$sources['cld'][ $index ] = $cld['url'];
+					continue;
+				}
+
+				$svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $cld['size']['width'] . '" height="' . $cld['size']['height'] . '"><defs><linearGradient id="linear" x1="0%" y1="50%" x2="100%" y2="0%"><stop offset="0%" stop-color="%23fff" stop-opacity="1"><animate attributeName="offset" values="0;1;1;1;1;1" dur="1s" repeatCount="indefinite" /><animate attributeName="stop-opacity" values="0;.3;0;0;0;0;0;0;0" dur="2s" repeatCount="indefinite" /></stop><stop offset="100%" stop-opacity="0" /></linearGradient></defs><rect x="0" y="0" width="100%" height="100%" fill="%23444" opacity="0.4"/><rect x="0" y="0" width="100%" height="100%" fill="url(%23linear)"/></svg>';
+
+				// Set the preload image.
+				$sources['cld'][ $index ] = 'src=\'data:image/svg+xml;utf8,' . $svg . '\' data-src="' . $cld['url'] . '" data-width="' . $cld['size']['width'] . '"';
+
+				// Append a closing " to the URL.
+				$sources['url'][ $index ] = 'src="' . $sources['url'][ $index ] . '"';
+				// Append a clean url switch for other cases.
+				$sources['url'][] = $sources['url'][ $index ];
+				$sources['cld'][] = $cld['url'];
+			}
 			$html = str_replace( $sources['url'], $sources['cld'], $html );
 		}
 
@@ -396,8 +420,14 @@ class Cache extends Settings_Component implements Setup {
 					wp_update_post( $params );
 					continue;
 				}
+
 				$cached_url          = $result;
-				$cached_urls[ $url ] = $cached_url;
+				$cached_urls[ $url ] = array(
+					'url' => $cached_url,
+				);
+				if ( ! empty( $meta[ Cache_Point::META_KEYS['size'] ] ) ) {
+					$cached_urls[ $url ]['size'] = $meta[ Cache_Point::META_KEYS['size'] ];
+				}
 			}
 			update_post_meta( $post_id, Cache_Point::META_KEYS['cached_urls'], $meta[ Cache_Point::META_KEYS['cached_urls'] ] );
 			update_post_meta( $post_id, Cache_Point::META_KEYS['last_updated'], time() );
@@ -448,7 +478,7 @@ class Cache extends Settings_Component implements Setup {
 			'args'                => array(),
 		);
 		$endpoints['upload_cache']        = array(
-			'method'   => \WP_REST_Server::CREATABLE,
+			'method'   => \WP_REST_Server::ALLMETHODS,
 			'callback' => array( $this, 'rest_upload_cache' ),
 			'args'     => array(),
 		);
@@ -626,7 +656,7 @@ class Cache extends Settings_Component implements Setup {
 		);
 
 		if ( 'image' === $type ) {
-			$options['eager'] = 'f_auto,q_auto:eco';
+			$options['eager'] = 'f_auto,q_auto';
 		}
 		$data = $this->connect->api->upload_cache( $options );
 
@@ -634,12 +664,12 @@ class Cache extends Settings_Component implements Setup {
 			return $data;
 		}
 
-		$url = $data['secure_url'];
+		$return = $data['secure_url'];
 		if ( ! empty( $data['eager'] ) ) {
-			$url = $data['eager'][0]['secure_url'];
+			$return = $data['eager'][0]['secure_url'];
 		}
 
-		return $url;
+		return $return;
 	}
 
 	/**

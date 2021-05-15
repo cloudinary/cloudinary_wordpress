@@ -127,14 +127,15 @@ final class Plugin {
 	 * that extend the Customizer to ensure resources are available in time.
 	 */
 	public function init() {
-		$this->components['connect']      = new Connect( $this );
-		$this->components['deactivation'] = new Deactivation( $this );
-		$this->components['sync']         = new Sync( $this );
-		$this->components['media']        = new Media( $this );
-		$this->components['api']          = new REST_API( $this );
-		$this->components['storage']      = new Storage( $this );
-		$this->components['report']       = new Report( $this );
-		$this->components['cache']        = new Cache( $this );
+		$this->components['connect']                = new Connect( $this );
+		$this->components['deactivation']           = new Deactivation( $this );
+		$this->components['sync']                   = new Sync( $this );
+		$this->components['media']                  = new Media( $this );
+		$this->components['api']                    = new REST_API( $this );
+		$this->components['storage']                = new Storage( $this );
+		$this->components['report']                 = new Report( $this );
+		$this->components['cache']                  = new Cache( $this );
+		$this->components['responsive_breakpoints'] = new Responsive_Breakpoints( $this );
 	}
 
 	/**
@@ -142,7 +143,7 @@ final class Plugin {
 	 *
 	 * @param mixed $component The component.
 	 *
-	 * @return Report|Connect|Media|REST_API|Settings_Page|Sync|Cache|null
+	 * @return Report|Connect|Media|REST_API|Settings_Page|Sync|Cache|Responsive_Breakpoints|null
 	 */
 	public function get_component( $component ) {
 		$return = null;
@@ -264,6 +265,7 @@ final class Plugin {
 	public function register_hooks() {
 		add_action( 'plugins_loaded', array( $this, 'init' ), 9 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'register_enqueue_styles' ), 11 );
+		add_action( 'wp_head', array( $this, 'register_enqueue_styles' ), 11 );
 		add_action( 'admin_footer', array( $this, 'enqueue_assets' ), 11 );
 		add_action( 'init', array( $this, 'setup' ), 10 );
 		add_action( 'init', array( $this, 'register_assets' ), 10 );
