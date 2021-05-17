@@ -1824,13 +1824,13 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Get Cloudinary related Post meta.
 	 *
-	 * @param int         $post_id The attachment ID.
-	 * @param string|null $key     The meta key to get.
-	 * @param bool        $single  If single or not.
+	 * @param int    $post_id The attachment ID.
+	 * @param string $key     The meta key to get.
+	 * @param bool   $single  If single or not.
 	 *
 	 * @return mixed
 	 */
-	public function get_post_meta( $post_id, $key = null, $single = false ) {
+	public function get_post_meta( $post_id, $key = '', $single = false ) {
 
 		$meta_data = wp_get_attachment_metadata( $post_id, true );
 		if ( ! is_array( $meta_data ) ) {
@@ -1840,7 +1840,7 @@ class Media extends Settings_Component implements Setup {
 			$meta_data[ Sync::META_KEYS['cloudinary'] ] = array();
 		}
 
-		if ( null === $key ) {
+		if ( '' === $key ) {
 			$data = $meta_data[ Sync::META_KEYS['cloudinary'] ];
 		} elseif ( ! empty( $meta_data[ Sync::META_KEYS['cloudinary'] ][ $key ] ) ) {
 			$data = $meta_data[ Sync::META_KEYS['cloudinary'] ][ $key ];
