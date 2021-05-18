@@ -68,7 +68,7 @@ class WooCommerceGallery {
 	 * @return bool
 	 */
 	public function enabled() {
-		return 'on' === $this->gallery->media->plugin->settings->get_value( 'gallery_woocommerce_enabled' );
+		return 'on' === $this->gallery->settings->get_value( 'gallery_woocommerce_enabled' );
 	}
 
 	/**

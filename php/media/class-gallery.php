@@ -7,7 +7,7 @@
 
 namespace Cloudinary\Media;
 
-use Cloudinary\Component\Settings;
+use Cloudinary\Settings\Setting;
 use Cloudinary\Media;
 use Cloudinary\REST_API;
 use Cloudinary\Utils;
@@ -43,7 +43,7 @@ class Gallery {
 	/**
 	 * Holds the sync settings object.
 	 *
-	 * @var Settings
+	 * @var Setting
 	 */
 	public $settings;
 
@@ -111,12 +111,6 @@ class Gallery {
 		$this->media = $media;
 
 		$this->setup_hooks();
-
-		$config = ! empty( $media->plugin->settings->get_value( 'gallery_config' ) ) ?
-			$media->plugin->settings->get_value( 'gallery_config' ) :
-			self::$default_config;
-
-		$this->config = $this->maybe_decode_config( $config );
 	}
 
 	/**
@@ -125,7 +119,13 @@ class Gallery {
 	 * @return array
 	 */
 	public function get_config() {
-		$config = Utils::array_filter_recursive( $this->config ); // Remove empty values.
+
+		$config = ! empty( $this->settings->get_value( 'gallery_config' ) ) ?
+			$this->settings->get_value( 'gallery_config' ) :
+			self::$default_config;
+
+		$this->config = $this->maybe_decode_config( $config );
+		$config       = Utils::array_filter_recursive( $this->config ); // Remove empty values.
 
 		$config['cloudName'] = $this->media->plugin->components['connect']->get_cloud_name();
 
@@ -275,7 +275,7 @@ class Gallery {
 			}
 			// If synced now, the ID will be available in the meta.
 			$data['publicId'] = $this->media->get_public_id( $image_id, true );
-			$transformations  = $this->media->get_transformation_from_meta( $image_id );
+			$transformations  = $this->media->get_transformations( $image_id );
 			if ( $transformations ) {
 				$data['transformation'] = array( 'transformation' => $transformations );
 			}
@@ -420,8 +420,16 @@ class Gallery {
 			return $content;
 		}
 
-		$attributes['mediaAssets'] = $attributes['selectedImages'];
-		$attributes['cloudName']   = $this->media->plugin->components['connect']->get_cloud_name();
+		$attributes['mediaAssets'] = array();
+		foreach ( $attributes['selectedImages'] as $attachment ) {
+			$transformations = $this->media->get_transformations( $attachment['attachmentId'] );
+			if ( ! empty( $transformations ) ) {
+				$attachment['transformation'] = array( 'transformation' => $transformations );
+			}
+			$attributes['mediaAssets'][] = $attachment;
+		}
+
+		$attributes['cloudName'] = $this->media->plugin->components['connect']->get_cloud_name();
 
 		$credentials = $this->media->plugin->components['connect']->get_credentials();
 
