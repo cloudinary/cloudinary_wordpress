@@ -57,7 +57,8 @@ module.exports = function ( grunt ) {
 				options: {
 					archive: 'cloudinary-wordpress-v2.zip',
 				},
-				cwd: 'build',
+				cwd: '<%= dist_dir %>',
+				expand: true,
 				dest:
 					'cloudinary-image-management-and-manipulation-in-the-cloud-cdn',
 				src: [ '**/*' ],
