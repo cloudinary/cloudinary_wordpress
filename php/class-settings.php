@@ -124,7 +124,8 @@ class Settings {
 			/**
 			 * Filter enabled setting.
 			 *
-			 * @hook cloudinary_settings_enabled_{$sub_setting->get_slug()}
+			 * @hook    cloudinary_settings_enabled_{$sub_setting->get_slug()}
+			 * @default true
 			 *
 			 * @param $true {bool} Is enabled.
 			 *

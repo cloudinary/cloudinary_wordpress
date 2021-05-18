@@ -118,13 +118,7 @@ class Upload_Sync {
 			if ( ! $this->media->is_local_media( $post->ID ) ) {
 				return $actions;
 			}
-			if (
-				! in_array(
-					$this->media->get_media_delivery( $post->ID ),
-					$this->media->get_syncable_delivery_types(),
-					true
-				)
-			) {
+			if ( ! $this->sync->is_syncable( $post->ID ) ) {
 				return $actions;
 			}
 			if ( ! $this->plugin->components['sync']->is_synced( $post->ID ) ) {
@@ -163,20 +157,20 @@ class Upload_Sync {
 		switch ( $action ) {
 			case 'cloudinary-push':
 				foreach ( $post_ids as $post_id ) {
-					if ( ! $this->media->is_local_media( $post_id ) ) {
-						// Clean up for previous attempts to sync.
-						$this->sync->delete_cloudinary_meta( $post_id );
+					if ( ! $this->sync->is_syncable( $post_id ) ) {
 						continue;
 					}
+
+					// It's required to perform a new sync that Cloudinary and WordPress storage is set.
 					if (
-						in_array(
-							$this->media->get_media_delivery( $post_id ),
-							$this->media->get_syncable_delivery_types(),
-							true
-						)
+						'dual_full' !== $this->plugin->settings->find_setting( 'offload' )->get_value() &&
+						$this->plugin->components['sync']->is_synced( $post_id )
 					) {
 						continue;
 					}
+
+					// Clean up for previous syncs and start over.
+					$this->sync->delete_cloudinary_meta( $post_id );
 					$this->sync->set_signature_item( $post_id, 'file', '' );
 					$this->media->delete_post_meta( $post_id, Sync::META_KEYS['public_id'] );
 					$this->sync->add_to_sync( $post_id );
@@ -283,7 +277,7 @@ class Upload_Sync {
 			// Set folder Synced.
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['folder_sync'], $this->media->is_folder_synced( $attachment_id ) );
 			// Set public_id.
-			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
+			update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
 			// Set version.
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['version'], $result['version'] );
 			// Set the delivery type.
@@ -319,7 +313,7 @@ class Upload_Sync {
 
 		if ( ! is_wp_error( $result ) ) {
 			$this->sync->set_signature_item( $attachment_id, $type );
-			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $options['public_id'] );
+			update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $options['public_id'] );
 		}
 
 		return $result;

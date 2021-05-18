@@ -7,7 +7,7 @@
 
 namespace Cloudinary\Media;
 
-use Cloudinary\Component\Settings;
+use Cloudinary\Settings\Setting;
 use Cloudinary\Media;
 use Cloudinary\REST_API;
 use Cloudinary\Utils;
@@ -43,7 +43,7 @@ class Gallery {
 	/**
 	 * Holds the sync settings object.
 	 *
-	 * @var Settings
+	 * @var Setting
 	 */
 	public $settings;
 
@@ -111,12 +111,6 @@ class Gallery {
 		$this->media = $media;
 
 		$this->setup_hooks();
-
-		$config = ! empty( $media->plugin->settings->get_value( 'gallery_config' ) ) ?
-			$media->plugin->settings->get_value( 'gallery_config' ) :
-			self::$default_config;
-
-		$this->config = $this->maybe_decode_config( $config );
 	}
 
 	/**
@@ -125,14 +119,21 @@ class Gallery {
 	 * @return array
 	 */
 	public function get_config() {
-		$config = Utils::array_filter_recursive( $this->config ); // Remove empty values.
+
+		$config = ! empty( $this->settings->get_value( 'gallery_config' ) ) ?
+			$this->settings->get_value( 'gallery_config' ) :
+			self::$default_config;
+
+		$this->config = $this->maybe_decode_config( $config );
+		$config       = Utils::array_filter_recursive( $this->config ); // Remove empty values.
 
 		$config['cloudName'] = $this->media->plugin->components['connect']->get_cloud_name();
 
 		/**
 		 * Filter the gallery HTML container.
 		 *
-		 * @hook cloudinary_gallery_html_container
+		 * @hook    cloudinary_gallery_html_container
+		 * @default ''
 		 *
 		 * @param $selector {string} The target HTML selector.
 		 *
@@ -156,6 +157,11 @@ class Gallery {
 	 * Register frontend assets for the gallery.
 	 */
 	public function enqueue_gallery_library() {
+		// Bail enqueuing the scripts if conditions aren't met.
+		if ( ! $this->maybe_enqueue_scripts() ) {
+			return;
+		}
+
 		wp_enqueue_script(
 			self::GALLERY_LIBRARY_HANDLE,
 			self::GALLERY_LIBRARY_URL,
@@ -278,7 +284,7 @@ class Gallery {
 			}
 			// If synced now, the ID will be available in the meta.
 			$data['publicId'] = $this->media->get_public_id( $image_id, true );
-			$transformations  = $this->media->get_transformation_from_meta( $image_id );
+			$transformations  = $this->media->get_transformations( $image_id );
 			if ( $transformations ) {
 				$data['transformation'] = array( 'transformation' => $transformations );
 			}
@@ -412,6 +418,9 @@ class Gallery {
 			return $content;
 		}
 
+		// Ensure library is enqueued. Deals with archive pages that render the content.
+		$this->enqueue_gallery_library();
+
 		$attributes = Utils::expand_dot_notation( $block['attrs'], '_' );
 		$attributes = array_merge( self::$default_config, $attributes );
 
@@ -420,8 +429,23 @@ class Gallery {
 			return $content;
 		}
 
-		$attributes['mediaAssets'] = $attributes['selectedImages'];
-		$attributes['cloudName']   = $this->media->plugin->components['connect']->get_cloud_name();
+		$attributes['mediaAssets'] = array();
+		foreach ( $attributes['selectedImages'] as $attachment ) {
+			$transformations = $this->media->get_transformations( $attachment['attachmentId'] );
+			if ( ! empty( $transformations ) ) {
+				$attachment['transformation'] = array( 'transformation' => $transformations );
+			}
+			$attributes['mediaAssets'][] = $attachment;
+		}
+
+		$attributes['cloudName'] = $this->media->plugin->components['connect']->get_cloud_name();
+
+		$credentials = $this->media->plugin->components['connect']->get_credentials();
+
+		if ( ! empty( $credentials['cname'] ) ) {
+			$attributes['secureDistribution'] = $credentials['cname'];
+			$attributes['privateCdn']         = true;
+		}
 		unset( $attributes['selectedImages'], $attributes['customSettings'] );
 
 		ob_start();
@@ -454,6 +478,53 @@ class Gallery {
 		}
 
 		return $config;
+	}
+
+	/**
+	 * Maybe enqueue gallery scripts.
+	 *
+	 * @return bool
+	 */
+	protected function maybe_enqueue_scripts() {
+		$can = false;
+
+		// Can if front end and have the block.
+		if (
+			! is_admin() &&
+			has_block( 'cloudinary/gallery' )
+		) {
+			$can = true;
+		}
+
+		// Can on back end on block editor and gallery settings page.
+		if ( is_admin() ) {
+			$screen = get_current_screen();
+			if (
+				! is_null( $screen ) &&
+				(
+					'cloudinary_page_media' === $screen->id ||
+					( method_exists( $screen, 'is_block_editor' ) && $screen->is_block_editor() )
+				)
+			) {
+				$can = true;
+			}
+		}
+
+		// Bail enqueuing the script several times.
+		if ( wp_script_is( self::GALLERY_LIBRARY_HANDLE ) ) {
+			$can = false;
+		}
+
+		/**
+		 * Filter the enqueue of gallery script.
+		 *
+		 * @param bool $can Default value.
+		 *
+		 * @return bool
+		 */
+		$can = apply_filters( 'cloudinary_enqueue_gallery_script', $can );
+
+		return $can;
 	}
 
 	/**

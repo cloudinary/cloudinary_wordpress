@@ -40,6 +40,29 @@ $settings = array(
 );
 
 /**
+ * Filter to enable beta features for testing.
+ *
+ * @hook    cloudinary_beta
+ * @default false
+ *
+ * @param $enable  {bool}   Flag to enable beata features.
+ * @param $feature {string} Optional feature type.
+ *
+ * @return {bool}
+ */
+if ( apply_filters( 'cloudinary_beta', false, 'site_cache' ) ) {
+	if ( ! empty( $this->get_component( 'cache' ) ) ) {
+		$settings[ $this->slug ][] = array(
+			'type' => 'panel',
+			array(
+				'type'  => 'cache_status',
+				'title' => __( 'Cache Status', 'cloudinary' ),
+			),
+		);
+	}
+}
+
+/**
  * Filter the Cloudinary admin pages.
  *
  * @hook cloudinary_admin_pages

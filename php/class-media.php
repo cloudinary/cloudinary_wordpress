@@ -37,7 +37,7 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @var     string.
 	 */
-	private $base_url;
+	public $base_url;
 
 	/**
 	 * Holds the Cloudinary folder.
@@ -169,7 +169,7 @@ class Media extends Settings_Component implements Setup {
 		 *
 		 * @param $types {array} The default media types array.
 		 *
-		 * @return  {array}
+		 * @return {array}
 		 */
 		return apply_filters( 'cloudinary_media_types', $media_types );
 	}
@@ -192,7 +192,7 @@ class Media extends Settings_Component implements Setup {
 		 *
 		 * @param $types {array} The default syncable types.
 		 *
-		 * @return  {array}
+		 * @return {array}
 		 */
 		return apply_filters( 'cloudinary_syncable_delivery_types', $types );
 	}
@@ -229,8 +229,7 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter the base types for conversion.
 		 *
-		 * @hook    cloudinary_convert_media_types
-		 * @default array
+		 * @hook cloudinary_convert_media_types
 		 *
 		 * @param $base_types {array} The base conversion types array.
 		 *
@@ -285,9 +284,10 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function is_local_media( $attachment_id ) {
 		$local_host = wp_parse_url( get_site_url(), PHP_URL_HOST );
-		$media_host = wp_parse_url( get_the_guid( $attachment_id ), PHP_URL_HOST );
+		$guid       = get_the_guid( $attachment_id );
+		$media_host = wp_parse_url( $guid, PHP_URL_HOST );
 
-		return $local_host === $media_host;
+		return $local_host === $media_host || $this->is_cloudinary_url( $guid );
 	}
 
 	/**
@@ -351,7 +351,7 @@ class Media extends Settings_Component implements Setup {
 		 *
 		 * @param $base_types {array} The base preview types.
 		 *
-		 * @return  {array}
+		 * @return {array}
 		 */
 		$preview_types = apply_filters( 'cloudinary_preview_types', $base_types );
 		$mime          = wp_check_filetype( get_attached_file( $attachment_id ) );
@@ -411,7 +411,7 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter the Cloudinary resource type for the attachment.
 		 *
-		 * @hook   cloudinary_resource_type
+		 * @hook cloudinary_resource_type
 		 *
 		 * @param $type          {string} The type.
 		 * @param $attachment_id {int}    The attachment ID.
@@ -729,7 +729,7 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter the Cloudinary transformations.
 		 *
-		 * @hook   cloudinary_transformations
+		 * @hook cloudinary_transformations
 		 *
 		 * @param $transformations {array} Array of transformation options.
 		 * @param $attachment_id   {int} The id of the asset.
@@ -831,7 +831,8 @@ class Media extends Settings_Component implements Setup {
 			 * Filter doing upload.
 			 * If so, return the default attachment URL.
 			 *
-			 * @hook   cloudinary_doing_upload
+			 * @hook    cloudinary_doing_upload
+			 * @default false
 			 *
 			 * @param $false {bool} Default false.
 			 *
@@ -859,7 +860,8 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter to allow bypassing defaults. Return false to not apply defaults.
 		 *
-		 * @hook   cloudinary_apply_default_transformations
+		 * @hook    cloudinary_apply_default_transformations
+		 * @default true
 		 *
 		 * @param $true          {bool} True to apply defaults.
 		 * @param $attachment_id {int}  The current attachment ID.
@@ -883,7 +885,8 @@ class Media extends Settings_Component implements Setup {
 			/**
 			 * Filter the default Quality and Format transformations for the specific media type.
 			 *
-			 * @hook   cloudinary_default_qf_transformations_{$type}
+			 * @hook    cloudinary_default_qf_transformations_{$type}
+			 * @default array()
 			 *
 			 * @param $defaults        {array} The default transformations array.
 			 * @param $transformations {array} The current transformations array.
@@ -897,7 +900,8 @@ class Media extends Settings_Component implements Setup {
 			/**
 			 * Filter the default Freeform transformations for the specific media type.
 			 *
-			 * @hook   cloudinary_default_freeform_transformations_{$type}
+			 * @hook    cloudinary_default_freeform_transformations_{$type}
+			 * @default array()
 			 *
 			 * @param $defaults        {array} The default transformations array.
 			 * @param $transformations {array} The current transformations array.
@@ -919,7 +923,7 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter the default cloudinary transformations.
 		 *
-		 * @hook   cloudinary_default_transformations
+		 * @hook cloudinary_default_transformations
 		 *
 		 * @param $defaults {array} The default transformations array.
 		 *
@@ -1022,7 +1026,7 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter the final Cloudinary URL.
 		 *
-		 * @hook   cloudinary_converted_url
+		 * @hook cloudinary_converted_url
 		 *
 		 * @param $url           {string} The Cloudinary URL.
 		 * @param $attachment_id {int}    The id of the attachment.
@@ -1071,7 +1075,7 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter Cloudinary size and crops
 		 *
-		 * @hook   cloudinary_prepare_size
+		 * @hook cloudinary_prepare_size
 		 *
 		 * @param $size          {array|string} The size array or slug.
 		 * @param $attachment_id {int}          The attachment ID.
@@ -1177,7 +1181,10 @@ class Media extends Settings_Component implements Setup {
 					$extension = $image_format;
 				}
 			}
-			$cloudinary_id = $public_id . '.' . $extension;
+			$cloudinary_id = $public_id;
+			if ( 'fetch' !== $this->get_media_delivery( $attachment_id ) ) {
+				$cloudinary_id = $public_id . '.' . $extension;
+			}
 		}
 
 		return $cloudinary_id;
@@ -1213,7 +1220,7 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter to validate the Cloudinary ID to allow extending it's availability.
 		 *
-		 * @hook   cloudinary_validate_cloudinary_id
+		 * @hook cloudinary_validate_cloudinary_id
 		 *
 		 * @param $cloudinary_id {string|bool} The public ID from Cloudinary, or false if not found.
 		 * @param $attachment_id {int}         The id of the asset.
@@ -1412,6 +1419,34 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Check if a url is pointing to Cloudinary sync folder.
+	 *
+	 * @param string $url The tested URL.
+	 *
+	 * @return bool
+	 */
+	public function is_cloudinary_sync_folder( $url ) {
+		$path  = wp_parse_url( $url, PHP_URL_PATH );
+		$parts = explode( '/', $path );
+
+		// Remove public id and file name.
+		array_splice( $parts, -2 );
+
+		foreach ( $parts as $part ) {
+			array_shift( $parts );
+			if ( empty( $part ) ) {
+				continue;
+			}
+			if ( 'v' === $part[0] && is_numeric( substr( $part, 1 ) ) ) {
+				break;
+			}
+		}
+
+		// Check for the Cloudinary folder.
+		return implode( '/', $parts ) === $this->get_cloudinary_folder( false );
+	}
+
+	/**
 	 * Add media tab template.
 	 */
 	public function media_template() {
@@ -1477,6 +1512,12 @@ class Media extends Settings_Component implements Setup {
 			'post_content'   => '',
 			'post_status'    => 'inherit',
 		);
+
+		// Capture the Caption Text.
+		if ( ! empty( $asset['meta']['caption'] ) ) {
+			$post_args['post_excerpt'] = wp_strip_all_tags( $asset['meta']['caption'] );
+		}
+
 		// Disable Upload_Sync to avoid sync loop.
 		add_filter( 'cloudinary_upload_sync_enabled', '__return_false' );
 		// Create the attachment.
@@ -1484,7 +1525,7 @@ class Media extends Settings_Component implements Setup {
 
 		$sync_key = $asset['sync_key'];
 		// Capture public_id. Use core update_post_meta since this attachment data doesnt exist yet.
-		$this->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
+		update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
 		// Capture version number.
 		$this->update_post_meta( $attachment_id, Sync::META_KEYS['version'], $asset['version'] );
 		if ( ! empty( $asset['transformations'] ) ) {
@@ -1620,6 +1661,16 @@ class Media extends Settings_Component implements Setup {
 					$alt_text = wp_strip_all_tags( $asset['meta']['alt'] );
 					update_post_meta( $asset['attachment_id'], '_wp_attachment_image_alt', $alt_text );
 				}
+				// Capture the Caption Text.
+				if ( ! empty( $asset['meta']['caption'] ) ) {
+					$caption = wp_strip_all_tags( $asset['meta']['caption'] );
+					wp_update_post(
+						array(
+							'ID'           => $asset['attachment_id'],
+							'post_excerpt' => $caption,
+						)
+					);
+				}
 				// Compare Version.
 				$current_version = $this->get_cloudinary_version( $asset['attachment_id'] );
 				if ( $current_version !== $asset['version'] ) {
@@ -1687,12 +1738,11 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function media_column_value( $column_name, $attachment_id ) {
 		if ( 'cld_status' === $column_name ) {
-			if ( $this->is_media( $attachment_id ) && $this->is_local_media( $attachment_id ) ) :
+			if ( $this->sync->is_syncable( $attachment_id ) ) :
 				$status = array(
 					'state' => 'inactive',
 					'note'  => esc_html__( 'Not Synced', 'cloudinary' ),
 				);
-				add_filter( 'cloudinary_flag_sync', '__return_true' );
 				if ( ! $this->cloudinary_id( $attachment_id ) ) {
 					// If false, lets check why by seeing if the file size is too large.
 					$file     = get_attached_file( $attachment_id ); // Get the file size to make sure it can exist in cloudinary.
@@ -1709,11 +1759,11 @@ class Media extends Settings_Component implements Setup {
 						'note'  => esc_html__( 'Synced', 'cloudinary' ),
 					);
 				}
-				remove_filter( 'cloudinary_flag_sync', '__return_true' );
+
 				/**
 				 * Filter the attachment status.
 				 *
-				 * @hook   cloudinary_media_status
+				 * @hook cloudinary_media_status
 				 *
 				 * @param $status        {array} The attachment status.
 				 * @param $attachment_id {int}   The attachment ID.
@@ -1724,10 +1774,17 @@ class Media extends Settings_Component implements Setup {
 				?>
 				<span class="dashicons-cloudinary <?php echo esc_attr( $status['state'] ); ?>" title="<?php echo esc_attr( $status['note'] ); ?>"></span>
 				<?php
-			endif;
-			if ( ! $this->is_local_media( $attachment_id ) ) :
+			elseif ( ! $this->is_local_media( $attachment_id ) ) :
 				?>
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'Not syncable. This is an external media.', 'cloudinary' ); ?>"></span>
+				<?php
+			elseif ( 'fetch' === $this->get_media_delivery( $attachment_id ) ) :
+				?>
+				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'This media is Fetch type.', 'cloudinary' ); ?>"></span>
+				<?php
+			elseif ( 'sprite' === $this->get_media_delivery( $attachment_id ) ) :
+				?>
+				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'This media is Sprite type.', 'cloudinary' ); ?>"></span>
 				<?php
 			endif;
 		}
@@ -1825,13 +1882,13 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Get Cloudinary related Post meta.
 	 *
-	 * @param int         $post_id The attachment ID.
-	 * @param string|null $key     The meta key to get.
-	 * @param bool        $single  If single or not.
+	 * @param int    $post_id The attachment ID.
+	 * @param string $key     The meta key to get.
+	 * @param bool   $single  If single or not.
 	 *
 	 * @return mixed
 	 */
-	public function get_post_meta( $post_id, $key = null, $single = false ) {
+	public function get_post_meta( $post_id, $key = '', $single = false ) {
 
 		$meta_data = wp_get_attachment_metadata( $post_id, true );
 		if ( ! is_array( $meta_data ) ) {
@@ -1841,7 +1898,7 @@ class Media extends Settings_Component implements Setup {
 			$meta_data[ Sync::META_KEYS['cloudinary'] ] = array();
 		}
 
-		if ( null === $key ) {
+		if ( '' === $key ) {
 			$data = $meta_data[ Sync::META_KEYS['cloudinary'] ];
 		} elseif ( ! empty( $meta_data[ Sync::META_KEYS['cloudinary'] ][ $key ] ) ) {
 			$data = $meta_data[ Sync::META_KEYS['cloudinary'] ][ $key ];
@@ -1940,7 +1997,7 @@ class Media extends Settings_Component implements Setup {
 				$breakpoints['transformation'] = Api::generate_transformation_string( $transformations, 'image' );
 			}
 			$breakpoints = array(
-				'public_id'              => $this->get_public_id( $attachment_id ),
+				'public_id'              => $this->get_public_id( $attachment_id, true ),
 				'type'                   => 'upload',
 				'responsive_breakpoints' => $breakpoint_options,
 				'context'                => $this->get_context_options( $attachment_id ),
@@ -1961,9 +2018,14 @@ class Media extends Settings_Component implements Setup {
 	 * @return array
 	 */
 	public function get_context_options( $attachment_id ) {
+		$caption = get_post( $attachment_id )->post_excerpt;
+
+		if ( empty( $caption ) ) {
+			$caption = get_the_title( $attachment_id );
+		}
 
 		$context_options = array(
-			'caption' => esc_attr( get_the_title( $attachment_id ) ),
+			'caption' => esc_attr( $caption ),
 			'alt'     => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
 			'guid'    => md5( get_the_guid( $attachment_id ) ),
 		);
@@ -1977,7 +2039,7 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter the options to allow other plugins to add requested options for uploading.
 		 *
-		 * @hook   cloudinary_context_options
+		 * @hook cloudinary_context_options
 		 *
 		 * @param $options {array}   The options array.
 		 * @param $post    {WP_Post} The attachment post.
@@ -2012,7 +2074,7 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter is folder synced flag.
 		 *
-		 * @hook   cloudinary_is_folder_synced
+		 * @hook cloudinary_is_folder_synced
 		 *
 		 * @param $is_folder_synced {bool} Flag value for is folder sync.
 		 * @param $attachment_id    {int}  The attachment ID.
@@ -2034,7 +2096,7 @@ class Media extends Settings_Component implements Setup {
 	public function get_upload_options( $attachment_id ) {
 
 		// Prepare upload options.
-		$public_id = $this->get_public_id( $attachment_id );
+		$public_id = $this->get_public_id( $attachment_id, true );
 		$folder    = ltrim( dirname( $public_id ), '.' );
 		$options   = array(
 			'unique_filename' => true,
@@ -2047,7 +2109,7 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter the options to allow other plugins to add requested options for uploading.
 		 *
-		 * @hook   cloudinary_upload_options
+		 * @hook cloudinary_upload_options
 		 *
 		 * @param $options {array}   The options array.
 		 * @param $post    {WP_Post} The attachment post.
@@ -2173,7 +2235,8 @@ class Media extends Settings_Component implements Setup {
 			/**
 			 * Filter to allow stopping filtering out local.
 			 *
-			 * @hook   cloudinary_filter_out_local
+			 * @hook    cloudinary_filter_out_local
+			 * @default true
 			 *
 			 * @param $can {bool} True as default.
 			 *

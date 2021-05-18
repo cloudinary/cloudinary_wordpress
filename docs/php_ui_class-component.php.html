@@ -103,7 +103,7 @@ abstract class Component {
 	 *
 	 * @var array
 	 */
-	protected $condition = array();
+	protected static $condition = array();
 
 	/**
 	 * Render component for a setting.
@@ -124,20 +124,13 @@ abstract class Component {
 		if ( $this->setting->has_param( 'condition' ) ) {
 			$condition = $this->setting->get_param( 'condition' );
 			foreach ( $condition as $slug => $value ) {
-				$bound            = $this->setting->find_setting( $slug );
-				$conditional_bind = $bound->get_param( 'attributes', array() );
-				$bound_attributes = $bound->get_param( 'attributes:input', array() );
-
-				$conditional_bind['input'] = wp_parse_args(
-					array(
-						'data-bound' => $this->setting->get_slug(),
-					),
-					$bound_attributes
-				);
-				$bound->set_param( 'attributes', $conditional_bind );
+				$bound = $this->setting->get_root_setting()->get_setting( $slug, false );
+				if ( ! is_null( $bound ) ) {
+					$bound->set_param( 'attributes:input:data-bind-trigger', $bound->get_slug() );
+				} else {
+					$this->setting->set_param( 'condition', null );
+				}
 			}
-
-			$this->blueprint = 'conditional|' . $this->blueprint . '|/conditional';
 		}
 
 		// Setup the components parts for render.
@@ -145,6 +138,13 @@ abstract class Component {
 
 		// Add scripts.
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+	}
+
+	/**
+	 * Setup the component.
+	 */
+	public function setup() {
+
 	}
 
 	/**
@@ -274,7 +274,6 @@ abstract class Component {
 				'element'    => 'div',
 				'attributes' => array(
 					'data-condition' => wp_json_encode( $this->setting->get_param( 'condition', array() ) ),
-					'data-bind'      => $this->setting->get_slug(),
 				),
 			),
 		);
@@ -282,7 +281,7 @@ abstract class Component {
 		/**
 		 * Filter the components build parts.
 		 *
-		 * @hook   cloudinary_setup_component_parts
+		 * @hook cloudinary_setup_component_parts
 		 *
 		 * @param $build_parts {array} The build parts.
 		 * @param $this        {self}  The component object.
@@ -379,7 +378,6 @@ abstract class Component {
 	protected function build_struct( &amp;$parts ) {
 
 		$struct = array();
-
 		while ( ! empty( $parts ) ) {
 			$part  = array_shift( $parts );
 			$state = $this->get_state( $part );
@@ -472,6 +470,15 @@ abstract class Component {
 	}
 
 	/**
+	 * Get the components value.
+	 *
+	 * @return mixed
+	 */
+	public function get_value() {
+		return $this->setting->get_value();
+	}
+
+	/**
 	 * Handles a structure part before rendering.
 	 *
 	 * @param string $name   The name of the part.
@@ -479,6 +486,10 @@ abstract class Component {
 	 */
 	public function handle_structure( $name, $struct ) {
 		if ( $this->has_content( $name, $struct ) ) {
+			if ( ! empty( $struct['element'] ) &amp;&amp; $this->setting->has_param( 'condition' ) ) {
+				$struct = $this->conditional( $struct );
+				$this->setting->set_param( 'condition', null );
+			}
 			$this->compile_part( $struct );
 		}
 	}
@@ -516,7 +527,9 @@ abstract class Component {
 			$this->add_content( $struct['content'] );
 			if ( ! empty( $struct['children'] ) ) {
 				foreach ( $struct['children'] as $child ) {
-					$this->handle_structure( $child['name'], $child );
+					if ( ! is_null( $child ) ) {
+						$this->handle_structure( $child['name'], $child );
+					}
 				}
 			}
 			$this->close_tag( $struct );
@@ -733,7 +746,7 @@ abstract class Component {
 	 * @return array
 	 */
 	protected function settings( $struct ) {
-		$struct['element'] = '';
+		$struct['element'] = null;
 		if ( $this->setting->has_parent() &amp;&amp; $this->setting->has_settings() ) {
 			$html = array();
 			foreach ( $this->setting->get_settings() as $setting ) {
@@ -753,7 +766,6 @@ abstract class Component {
 	 * @return string
 	 */
 	public static function build_attributes( $attributes ) {
-
 		$return = array();
 		foreach ( $attributes as $attribute => $value ) {
 			if ( is_array( $value ) ) {
@@ -806,7 +818,7 @@ abstract class Component {
 	final public static function init( $setting ) {
 
 		$caller = get_called_class();
-		$type   = $setting->get_param( 'type' );
+		$type   = $setting->get_param( 'type', 'tag' );
 		// Final check if type is callable component.
 		if ( ! is_string( $type ) || ! self::is_component_type( $type ) ) {
 			// Check what type this component needs to be.
@@ -858,10 +870,13 @@ abstract class Component {
 				$compare_value = $this->setting->find_setting( $slug )->get_value();
 				$results[]     = $value === $compare_value;
 			}
+			$struct['attributes']['class'][] = 'cld-ui-conditional';
+
 			if ( in_array( false, $results, true ) ) {
 				$class = 'closed';
 			}
-			$struct['attributes']['class'][] = $class;
+			$struct['attributes']['class'][]        = $class;
+			$struct['attributes']['data-condition'] = wp_json_encode( $this->setting->get_param( 'condition', array() ) );
 		}
 
 		return $struct;
@@ -896,7 +911,7 @@ abstract class Component {
 </div>
 
 <nav>
-	<h2><a href="index.html">Home</a></h2><h3>Actions</h3><ul><li><a href="cloudinary_id.html">cloudinary_id</a></li><li><a href="cloudinary_queue_action.html">cloudinary_queue_action</a></li><li><a href="cloudinary_register_sync_types.html">cloudinary_register_sync_types</a></li><li><a href="cloudinary_version_upgrade.html">cloudinary_version_upgrade</a></li></ul><h3>Filters</h3><ul><li><a href="cloudinary_admin_footer.html">cloudinary_admin_footer</a></li><li><a href="cloudinary_admin_header.html">cloudinary_admin_header</a></li><li><a href="cloudinary_admin_images_tab_global_transformations.html">cloudinary_admin_images_tab_global_transformations</a></li><li><a href="cloudinary_admin_pages.html">cloudinary_admin_pages</a></li><li><a href="cloudinary_admin_video_tab_global_transformations.html">cloudinary_admin_video_tab_global_transformations</a></li><li><a href="cloudinary_api_rest_endpoints.html">cloudinary_api_rest_endpoints</a></li><li><a href="cloudinary_apply_default_transformations.html">cloudinary_apply_default_transformations</a></li><li><a href="cloudinary_autosync_threads.html">cloudinary_autosync_threads</a></li><li><a href="cloudinary_can_sync_asset.html">cloudinary_can_sync_asset</a></li><li><a href="cloudinary_context_options.html">cloudinary_context_options</a></li><li><a href="cloudinary_convert_media_types.html">cloudinary_convert_media_types</a></li><li><a href="cloudinary_converted_url.html">cloudinary_converted_url</a></li><li><a href="cloudinary_cron_frequency.html">cloudinary_cron_frequency</a></li><li><a href="cloudinary_cron_start_offset.html">cloudinary_cron_start_offset</a></li><li><a href="cloudinary_default_freeform_transformations_%257B$type%257D.html">cloudinary_default_freeform_transformations_{$type}</a></li><li><a href="cloudinary_default_qf_transformations_%257B$type%257D.html">cloudinary_default_qf_transformations_{$type}</a></li><li><a href="cloudinary_default_transformations.html">cloudinary_default_transformations</a></li><li><a href="cloudinary_doing_upload.html">cloudinary_doing_upload</a></li><li><a href="cloudinary_filter_out_local.html">cloudinary_filter_out_local</a></li><li><a href="cloudinary_gallery_config.html">cloudinary_gallery_config</a></li><li><a href="cloudinary_gallery_html_container.html">cloudinary_gallery_html_container</a></li><li><a href="cloudinary_get_setting_params.html">cloudinary_get_setting_params</a></li><li><a href="cloudinary_is_folder_synced.html">cloudinary_is_folder_synced</a></li><li><a href="cloudinary_media_status.html">cloudinary_media_status</a></li><li><a href="cloudinary_media_types.html">cloudinary_media_types</a></li><li><a href="cloudinary_prepare_size.html">cloudinary_prepare_size</a></li><li><a href="cloudinary_preview_types.html">cloudinary_preview_types</a></li><li><a href="cloudinary_queue_threads.html">cloudinary_queue_threads</a></li><li><a href="cloudinary_resource_type.html">cloudinary_resource_type</a></li><li><a href="cloudinary_setting_get_value.html">cloudinary_setting_get_value</a></li><li><a href="cloudinary_settings_enabled_%257B$sub_setting-_get_slug()%257D.html">cloudinary_settings_enabled_{$sub_setting->get_slug()}</a></li><li><a href="cloudinary_settings_save_setting.html">cloudinary_settings_save_setting</a></li><li><a href="cloudinary_settings_save_setting_%257B$slug%257D.html">cloudinary_settings_save_setting_{$slug}</a></li><li><a href="cloudinary_setup_component_parts.html">cloudinary_setup_component_parts</a></li><li><a href="cloudinary_sync_base.html">cloudinary_sync_base</a></li><li><a href="cloudinary_sync_base_struct.html">cloudinary_sync_base_struct</a></li><li><a href="cloudinary_syncable_delivery_types.html">cloudinary_syncable_delivery_types</a></li><li><a href="cloudinary_transformations.html">cloudinary_transformations</a></li><li><a href="cloudinary_upload_options.html">cloudinary_upload_options</a></li><li><a href="cloudinary_validate_cloudinary_id.html">cloudinary_validate_cloudinary_id</a></li></ul>
+	<h2><a href="index.html">Home</a></h2><h3>Actions</h3><ul><li><a href="cloudinary_id.html">cloudinary_id</a></li><li><a href="cloudinary_queue_action.html">cloudinary_queue_action</a></li><li><a href="cloudinary_register_sync_types.html">cloudinary_register_sync_types</a></li><li><a href="cloudinary_version_upgrade.html">cloudinary_version_upgrade</a></li></ul><h3>Filters</h3><ul><li><a href="cloudinary_admin_footer.html">cloudinary_admin_footer</a></li><li><a href="cloudinary_admin_header.html">cloudinary_admin_header</a></li><li><a href="cloudinary_admin_images_tab_global_transformations.html">cloudinary_admin_images_tab_global_transformations</a></li><li><a href="cloudinary_admin_pages.html">cloudinary_admin_pages</a></li><li><a href="cloudinary_admin_video_tab_global_transformations.html">cloudinary_admin_video_tab_global_transformations</a></li><li><a href="cloudinary_api_rest_endpoints.html">cloudinary_api_rest_endpoints</a></li><li><a href="cloudinary_apply_default_transformations.html">cloudinary_apply_default_transformations</a></li><li><a href="cloudinary_autosync_threads.html">cloudinary_autosync_threads</a></li><li><a href="cloudinary_beta.html">cloudinary_beta</a></li><li><a href="cloudinary_bypass_cache.html">cloudinary_bypass_cache</a></li><li><a href="cloudinary_can_sync_asset.html">cloudinary_can_sync_asset</a></li><li><a href="cloudinary_context_options.html">cloudinary_context_options</a></li><li><a href="cloudinary_convert_media_types.html">cloudinary_convert_media_types</a></li><li><a href="cloudinary_converted_url.html">cloudinary_converted_url</a></li><li><a href="cloudinary_cron_frequency.html">cloudinary_cron_frequency</a></li><li><a href="cloudinary_cron_start_offset.html">cloudinary_cron_start_offset</a></li><li><a href="cloudinary_default_freeform_transformations_%257B$type%257D.html">cloudinary_default_freeform_transformations_{$type}</a></li><li><a href="cloudinary_default_qf_transformations_%257B$type%257D.html">cloudinary_default_qf_transformations_{$type}</a></li><li><a href="cloudinary_default_transformations.html">cloudinary_default_transformations</a></li><li><a href="cloudinary_doing_upload.html">cloudinary_doing_upload</a></li><li><a href="cloudinary_filter_out_local.html">cloudinary_filter_out_local</a></li><li><a href="cloudinary_gallery_config.html">cloudinary_gallery_config</a></li><li><a href="cloudinary_gallery_html_container.html">cloudinary_gallery_html_container</a></li><li><a href="cloudinary_get_setting_params.html">cloudinary_get_setting_params</a></li><li><a href="cloudinary_get_signature.html">cloudinary_get_signature</a></li><li><a href="cloudinary_is_folder_synced.html">cloudinary_is_folder_synced</a></li><li><a href="cloudinary_media_status.html">cloudinary_media_status</a></li><li><a href="cloudinary_media_types.html">cloudinary_media_types</a></li><li><a href="cloudinary_on_demand_sync_limit.html">cloudinary_on_demand_sync_limit</a></li><li><a href="cloudinary_plugin_asset_cache_filters.html">cloudinary_plugin_asset_cache_filters</a></li><li><a href="cloudinary_plugin_asset_cache_inline_types.html">cloudinary_plugin_asset_cache_inline_types</a></li><li><a href="cloudinary_prepare_size.html">cloudinary_prepare_size</a></li><li><a href="cloudinary_preview_types.html">cloudinary_preview_types</a></li><li><a href="cloudinary_queue_threads.html">cloudinary_queue_threads</a></li><li><a href="cloudinary_resource_type.html">cloudinary_resource_type</a></li><li><a href="cloudinary_setting_get_value.html">cloudinary_setting_get_value</a></li><li><a href="cloudinary_settings_enabled_%257B$sub_setting-_get_slug()%257D.html">cloudinary_settings_enabled_{$sub_setting->get_slug()}</a></li><li><a href="cloudinary_settings_save_setting.html">cloudinary_settings_save_setting</a></li><li><a href="cloudinary_settings_save_setting_%257B$slug%257D.html">cloudinary_settings_save_setting_{$slug}</a></li><li><a href="cloudinary_setup_component_parts.html">cloudinary_setup_component_parts</a></li><li><a href="cloudinary_sync_base.html">cloudinary_sync_base</a></li><li><a href="cloudinary_sync_base_struct.html">cloudinary_sync_base_struct</a></li><li><a href="cloudinary_syncable_delivery_types.html">cloudinary_syncable_delivery_types</a></li><li><a href="cloudinary_transformations.html">cloudinary_transformations</a></li><li><a href="cloudinary_upload_options.html">cloudinary_upload_options</a></li><li><a href="cloudinary_validate_cloudinary_id.html">cloudinary_validate_cloudinary_id</a></li></ul>
 </nav>
 
 <br class="clear">

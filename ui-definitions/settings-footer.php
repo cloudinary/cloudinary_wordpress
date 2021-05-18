@@ -92,7 +92,7 @@ $settings = array(
 /**
  * Filter the Cloudinary admin footer.
  *
- * @hook   cloudinary_admin_footer
+ * @hook cloudinary_admin_footer
  *
  * @param $settings {array} The footer settings.
  *

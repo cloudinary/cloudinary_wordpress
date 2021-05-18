@@ -10,7 +10,10 @@ namespace Cloudinary\UI\Component;
 use function Cloudinary\get_plugin_instance;
 use Cloudinary\UI\Component;
 use Cloudinary\Settings\Setting;
-use \Cloudinary\Sync;
+use Cloudinary\Sync;
+use Cloudinary\Media;
+use Cloudinary\Cache;
+use Cloudinary\Plugin;
 
 /**
  * Media Sync Status Component to render plan status.
@@ -36,9 +39,16 @@ class Media_Status extends Component {
 	/**
 	 * Holds the media instance
 	 *
-	 * @var string
+	 * @var Media
 	 */
 	protected $media;
+
+	/**
+	 * Holds the plugin instance
+	 *
+	 * @var Plugin
+	 */
+	protected $plugin;
 
 	/**
 	 * Holds the media sync data setting.
@@ -54,9 +64,9 @@ class Media_Status extends Component {
 	 */
 	public function __construct( $setting ) {
 
-		$plugin        = get_plugin_instance();
-		$this->media   = $plugin->get_component( 'media' );
-		$this->dir_url = $plugin->dir_url;
+		$this->plugin  = get_plugin_instance();
+		$this->media   = $this->plugin->get_component( 'media' );
+		$this->dir_url = $this->plugin->dir_url;
 
 		parent::__construct( $setting );
 	}

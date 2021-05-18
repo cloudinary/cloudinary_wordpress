@@ -2,9 +2,16 @@ module.exports = function ( grunt ) {
 	// Load all Grunt plugins.
 	require( 'load-grunt-tasks' )( grunt );
 
-	const pluginVersion = grunt.file
-		.read( 'cloudinary.php' )
-		.match( /Version:\s*(.+)$/im )[ 1 ];
+	const pluginVersion = grunt.file.read( '.version' );
+
+	const options = {
+		plugin_slug:
+			'cloudinary-image-management-and-manipulation-in-the-cloud-cdn',
+		plugin_main_file: 'cloudinary.php',
+		build_dir: '<%= dist_dir %>',
+		assets_dir: 'assets',
+		svn_user: 'cloudinary',
+	};
 
 	grunt.initConfig( {
 		dist_dir: 'build',
@@ -31,7 +38,10 @@ module.exports = function ( grunt ) {
 
 		replace: {
 			version: {
-				src: '<%= dist_dir %>/readme.txt',
+				src: [
+					'<%= dist_dir %>/readme.txt',
+					'<%= dist_dir %>/cloudinary.php',
+				],
 				overwrite: true,
 				replacements: [
 					{
@@ -45,10 +55,10 @@ module.exports = function ( grunt ) {
 		compress: {
 			release: {
 				options: {
-					archive:
-						'cloudinary-image-management-and-manipulation-in-the-cloud-cdn.zip',
+					archive: 'cloudinary-wordpress-v2.zip',
 				},
-				cwd: 'build',
+				cwd: '<%= dist_dir %>',
+				expand: true,
 				dest:
 					'cloudinary-image-management-and-manipulation-in-the-cloud-cdn',
 				src: [ '**/*' ],
@@ -56,27 +66,24 @@ module.exports = function ( grunt ) {
 		},
 
 		wp_deploy: {
-			options: {
-				plugin_slug:
-					'cloudinary-image-management-and-manipulation-in-the-cloud-cdn',
-				plugin_main_file: 'cloudinary.php',
-				build_dir: '<%= dist_dir %>',
-				assets_dir: 'assets',
-			},
 			default: {
 				// Default deploy to trunk and a tag release.
+				options,
 			},
 			assets: {
 				// Deploy only screenshots and icons.
-				deploy_trunk: false,
-				deploy_tag: false,
+				options: {
+					...options,
+					deploy_trunk: false,
+					deploy_tag: false,
+				},
 			},
 		},
 	} );
 
 	grunt.registerTask( 'package', [ 'clean', 'copy', 'replace', 'compress' ] );
 
-	grunt.registerTask( 'deploy', [ 'package', 'wp_deploy' ] );
+	grunt.registerTask( 'deploy', [ 'package', 'wp_deploy:default' ] );
 
 	grunt.registerTask( 'deploy-assets', [ 'wp_deploy:assets' ] );
 };

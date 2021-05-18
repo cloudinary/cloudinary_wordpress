@@ -98,7 +98,7 @@ class Sync_Queue {
 		 *
 		 * @param $time {int} The filtered time.
 		 *
-		 * @return  {int}
+		 * @return {int}
 		 */
 		$this->cron_frequency = apply_filters( 'cloudinary_cron_frequency', 10 * MINUTE_IN_SECONDS );
 		/**
@@ -109,7 +109,7 @@ class Sync_Queue {
 		 *
 		 * @param $time {int} The filtered time.
 		 *
-		 * @return  {int}
+		 * @return {int}
 		 */
 		$this->cron_start_offset = apply_filters( 'cloudinary_cron_start_offset', MINUTE_IN_SECONDS );
 		$this->load_hooks();
@@ -130,7 +130,7 @@ class Sync_Queue {
 		 *
 		 * @param $threads {int} The number of threads.
 		 *
-		 * @return  {int}
+		 * @return {int}
 		 */
 		$queue_threads_count = apply_filters( 'cloudinary_queue_threads', 2 );
 		for ( $i = 0; $i < $queue_threads_count; $i ++ ) {
@@ -145,7 +145,7 @@ class Sync_Queue {
 		 *
 		 * @param $threads {int} The number of threads.
 		 *
-		 * @return  {int}
+		 * @return {int}
 		 */
 		$autosync_thread_count = apply_filters( 'cloudinary_autosync_threads', 1 );
 		for ( $i = 0; $i < $autosync_thread_count; $i ++ ) {

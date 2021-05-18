@@ -24,6 +24,16 @@ $settings = array(
 		),
 		array(
 			'type'       => 'tag',
+			'element'    => 'span',
+			'content'    => $this->version . ' | ',
+			'attributes' => array(
+				'class' => array(
+					'description',
+				),
+			),
+		),
+		array(
+			'type'       => 'tag',
 			'element'    => 'a',
 			'content'    => __( 'Need help?', 'cloudinary' ),
 			'attributes' => array(
@@ -38,7 +48,7 @@ $settings = array(
 /**
  * Filter the Cloudinary admin header.
  *
- * @hook   cloudinary_admin_header
+ * @hook cloudinary_admin_header
  *
  * @param $settings {array} The header settings.
  *

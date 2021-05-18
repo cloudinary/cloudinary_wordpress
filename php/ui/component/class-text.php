@@ -77,7 +77,7 @@ class Text extends Component {
 		$struct['attributes']['value']   = $this->setting->get_value();
 		$struct['attributes']['class'][] = 'regular-' . $this->type;
 		$struct['render']                = true;
-		
+
 		if ( $this->setting->has_param( 'required' ) ) {
 			$struct['attributes']['required'] = 'required';
 		}
@@ -106,8 +106,9 @@ class Text extends Component {
 	 */
 	protected function description( $struct ) {
 
-		$struct['element']               = 'p';
+		$struct['element']               = 'label';
 		$struct['attributes']['class'][] = 'description';
+		$struct['attributes']['for']     = $this->setting->get_slug();
 		$struct['content']               = $this->setting->get_param( 'description' );
 
 		return $struct;
