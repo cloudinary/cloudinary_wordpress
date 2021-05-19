@@ -270,7 +270,7 @@ class Sync implements Setup, Assets {
 	public function get_sync_version( $attachment_id ) {
 		$version = $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['plugin_version'], true );
 
-		return $version !== $this->plugin->version;
+		return $version . '-' . $this->plugin->version;
 	}
 
 	/**
