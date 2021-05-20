@@ -14,7 +14,7 @@
     "npm": ">=6.9"
   },
   "scripts": {
-    "build": "wp-scripts build",
+    "build": "wp-scripts build && npm run build:docs",
     "dev": "wp-scripts start",
     "lint:php": "composer lint",
     "lint:php:fix": "composer fix",
@@ -29,7 +29,8 @@
     "readme": "composer readme",
     "release": "release-it",
     "release:ci": "release-it --ci",
-    "release:dry": "release-it --dry-run"
+    "release:dry": "release-it --dry-run",
+    "build:docs": "rm -rf docs && jsdoc -c hookdoc-conf.json php ui-definitions cloudinary.php"
   },
   "husky": {
     "hooks": {
@@ -112,6 +113,7 @@
     "istanbul-reports": "3.0.2",
     "jest-puppeteer-istanbul": "0.5.3",
     "jest-silent-reporter": "0.3.0",
+    "jsdoc": "^3.6.6",
     "lint-staged": "^10.5.1",
     "load-grunt-tasks": "^5.1.0",
     "loading-attribute-polyfill": "^1.5.4",
@@ -141,6 +143,7 @@
     "typescript": "4.0.5",
     "webpack": "4.44.2",
     "webpack-cli": "4.2.0",
-    "webpackbar": "4.0.0"
+    "webpackbar": "4.0.0",
+    "wp-hookdoc": "^0.2.0"
   }
 }

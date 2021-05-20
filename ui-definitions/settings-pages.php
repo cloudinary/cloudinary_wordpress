@@ -45,10 +45,10 @@ $settings = array(
  * @hook    cloudinary_beta
  * @default false
  *
- * @param $enable  {bool} Flag to enable beata features.
+ * @param $enable  {bool}   Flag to enable beata features.
  * @param $feature {string} Optional feature type.
  *
- * @return  {bool}
+ * @return {bool}
  */
 if ( apply_filters( 'cloudinary_beta', false, 'site_cache' ) ) {
 	if ( ! empty( $this->get_component( 'cache' ) ) ) {
@@ -62,4 +62,13 @@ if ( apply_filters( 'cloudinary_beta', false, 'site_cache' ) ) {
 	}
 }
 
+/**
+ * Filter the Cloudinary admin pages.
+ *
+ * @hook cloudinary_admin_pages
+ *
+ * @param $settings {array} The admin pages settings.
+ *
+ * @return {array}
+ */
 return apply_filters( 'cloudinary_admin_pages', $settings );
