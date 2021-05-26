@@ -79,7 +79,7 @@ class React extends Text {
 				'ver'       => $this->setting->get_root_setting()->get_param( 'version' ),
 				'in_footer' => true,
 			);
-			$this->script = wp_parse_args( $this->setting->get_param( 'script' ), $script_default );
+			$this->script   = wp_parse_args( $this->setting->get_param( 'script' ), $script_default );
 		}
 
 		return $struct;
@@ -102,6 +102,10 @@ class React extends Text {
 	 * @return array|bool|null
 	 */
 	public function sanitize_value( $value ) {
+		if ( is_array( $value ) ) {
+			return $value;
+		}
+
 		return json_decode( $value, true );
 	}
 }

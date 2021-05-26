@@ -8,13 +8,16 @@
 namespace Cloudinary;
 
 use Cloudinary\Traits\CLI_Trait;
+use WP_CLI_Command;
 
+// phpcs:disable WordPressVIPMinimum.Classes.RestrictedExtendClasses.wp_cli
 /**
  * CLI class.
  *
  * @since   2.5.1
  */
-class CLI extends \WP_CLI_Command { // phpcs:ignore WordPressVIPMinimum.Classes.RestrictedExtendClasses.wp_cli
+class CLI extends WP_CLI_Command {
+	// phpcs:enable
 
 	use CLI_Trait;
 

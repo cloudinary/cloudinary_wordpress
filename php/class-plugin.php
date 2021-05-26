@@ -134,6 +134,21 @@ final class Plugin {
 		$this->components['api']          = new REST_API( $this );
 		$this->components['storage']      = new Storage( $this );
 		$this->components['report']       = new Report( $this );
+
+		/**
+		 * Filter to enable beta features for testing.
+		 *
+		 * @hook    cloudinary_beta
+		 * @default false
+		 *
+		 * @param $enable  {bool} Flag to enable beata features.
+		 * @param $feature {string} Optional feature type.
+		 *
+		 * @return  {bool}
+		 */
+		if ( apply_filters( 'cloudinary_beta', false, 'site_cache' ) ) {
+			$this->components['cache'] = new Cache( $this );
+		}
 	}
 
 	/**
@@ -141,7 +156,7 @@ final class Plugin {
 	 *
 	 * @param mixed $component The component.
 	 *
-	 * @return Report|Connect|Media|REST_API|Settings_Page|Sync|null
+	 * @return Report|Connect|Media|REST_API|Settings_Page|Sync|Cache|null
 	 */
 	public function get_component( $component ) {
 		$return = null;
@@ -542,7 +557,7 @@ final class Plugin {
 	 */
 	public function locate_plugin() {
 
-		$dir_url      = CLDN_URL;
+		$dir_url      = plugin_dir_url( CLDN_CORE );
 		$dir_path     = CLDN_PATH;
 		$dir_basename = basename( CLDN_PATH );
 

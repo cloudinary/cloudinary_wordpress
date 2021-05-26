@@ -21,7 +21,7 @@ class Tag extends Component {
 	 *
 	 * @var string
 	 */
-	protected $blueprint = 'tag_wrap|body/|settings/|/tag_wrap';
+	protected $blueprint = 'tag_wrap|settings/|/tag_wrap';
 
 	/**
 	 * Filter the title parts structure.
@@ -35,6 +35,9 @@ class Tag extends Component {
 		$struct['element']    = $this->setting->get_param( 'element', 'div' );
 		$struct['attributes'] = $this->setting->get_param( 'attributes', array() );
 		$struct['render']     = true;
+		if ( $this->setting->has_param( 'content' ) ) {
+			$struct['content'] = $this->setting->get_param( 'content' );
+		}
 
 		return $struct;
 	}

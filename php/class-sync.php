@@ -34,7 +34,7 @@ class Sync implements Setup, Assets {
 	/**
 	 * Contains all the different sync components.
 	 *
-	 * @var array A collection of sync components.
+	 * @var Delete_Sync[]|Push_Sync[]|Upload_Sync[]
 	 */
 	public $managers;
 
@@ -270,7 +270,7 @@ class Sync implements Setup, Assets {
 	public function get_sync_version( $attachment_id ) {
 		$version = $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['plugin_version'], true );
 
-		return $version !== $this->plugin->version;
+		return $version . '-' . $this->plugin->version;
 	}
 
 	/**
@@ -288,7 +288,7 @@ class Sync implements Setup, Assets {
 		if ( ! empty( $signatures[ $attachment_id ] ) && true === $cached ) {
 			$return = $signatures[ $attachment_id ];
 		} else {
-			$signature = (array) $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['signature'], true );
+			$signature = $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['signature'], true );
 			if ( empty( $signature ) ) {
 				$signature = array();
 			}
@@ -496,7 +496,8 @@ class Sync implements Setup, Assets {
 			),
 			'meta_cleanup' => array(
 				'generate' => function ( $attachment_id ) {
-					$meta   = $this->managers['media']->get_post_meta( $attachment_id );
+					$meta = $this->managers['media']->get_post_meta( $attachment_id );
+
 					$return = false;
 					foreach ( $meta as $key => $value ) {
 						if ( get_post_meta( $attachment_id, $key, true ) === $value ) {
@@ -850,7 +851,10 @@ class Sync implements Setup, Assets {
 	public function set_signature_item( $attachment_id, $type, $value = null ) {
 
 		// Get the core meta.
-		$meta = (array) $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['signature'], true );
+		$meta = $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['signature'], true );
+		if ( empty( $meta ) ) {
+			$meta = array();
+		}
 		// Set the specific value.
 		if ( is_null( $value ) ) {
 			// Generate a new value based on generator.
