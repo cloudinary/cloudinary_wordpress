@@ -107,6 +107,16 @@ class Upgrade {
 		} else {
 			// v2 upgrade.
 			$public_id = $this->media->get_public_id( $attachment_id, true );
+			$suffix    = $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['suffix'], true );
+			if ( ! empty( $suffix ) ) {
+				// Has suffix. Get delete and cleanup public ID.
+				if ( false !== strpos( $public_id, $suffix ) ) {
+					$public_id = str_replace( $suffix, '', $public_id );
+				}
+				$public_id .= $suffix;
+				$this->media->delete_post_meta( $attachment_id, Sync::META_KEYS['suffix'] );
+				update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
+			}
 			// Check folder sync in order.
 			if ( $this->media->is_folder_synced( $attachment_id ) ) {
 				$public_id_folder = ltrim( dirname( $this->media->get_public_id( $attachment_id ) ) );

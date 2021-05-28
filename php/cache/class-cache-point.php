@@ -100,7 +100,17 @@ class Cache_Point {
 	 * @param Cache $cache The plugin ache object.
 	 */
 	public function __construct( Cache $cache ) {
-		$this->cache      = $cache;
+		$this->cache = $cache;
+		/**
+		 * Filter the on demand synced items limit.
+		 *
+		 * @hook    cloudinary_on_demand_sync_limit
+		 * @default 100
+		 *
+		 * @param $value {int} The default number of static assets.
+		 *
+		 * @return {int}
+		 */
 		$this->sync_limit = apply_filters( 'cloudinary_on_demand_sync_limit', 100 );
 		$this->register_post_type();
 
