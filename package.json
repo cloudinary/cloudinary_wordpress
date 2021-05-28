@@ -142,5 +142,6 @@
     "webpack": "^4.44.2",
     "webpack-cli": "^4.2.0",
     "webpackbar": "^4.0.0"
-  }
+  },
+  "version": "2.7.3"
 }

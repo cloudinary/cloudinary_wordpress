@@ -128,6 +128,15 @@ The following plugins/themes/page-builders might not be fully compatible with th
 
 == Changelog ==
 
+= 2.7.3 (26 May 2021) =
+
+Fixes and Improvements:
+
+* Added support for setting the connection string as a constant
+* Fixed the asset suffix being duplicated in the metadata while asset is syncing
+* Fixed the default meta key on get_post_meta
+* Fixed the display of the “Uninitialized string offset: 0” notice
+
 
 = 2.7.2 (11 May 2021) = 
 
