@@ -361,6 +361,7 @@ class Report extends Settings_Component implements Setup {
 				if ( 'attachment' === $post_type ) {
 					$data                   = wp_get_attachment_metadata( $post_id );
 					$data['all_meta']       = get_post_meta( $post_id );
+					$data['attachment']     = get_post( $post_id );
 					$media_data[ $post_id ] = $data;
 				} else {
 					$data                  = get_post( $post_id, ARRAY_A );
