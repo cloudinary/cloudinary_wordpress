@@ -33,7 +33,7 @@ class String_Replace {
 	 */
 	public function __construct( Plugin $plugin ) {
 		$this->plugin = $plugin;
-		$this->init();
+		add_action( 'template_redirect', array( $this, 'init' ), 1 );
 	}
 
 	/**
@@ -41,6 +41,17 @@ class String_Replace {
 	 */
 	public function init() {
 		ob_start( array( $this, 'replace_strings' ) );
+	}
+
+	/**
+	 * Check if a string is set for replacement.
+	 *
+	 * @param string $string String to check.
+	 *
+	 * @return bool
+	 */
+	public function string_set( $string ) {
+		return isset( self::$replacements[ $string ] );
 	}
 
 	/**
@@ -70,7 +81,10 @@ class String_Replace {
 		 * @param $html {string} The html of the page.
 		 */
 		do_action( 'cloudinary_string_replace', $html );
+		if ( ! empty( self::$replacements ) ) {
+			$html = str_replace( array_keys( self::$replacements ), array_values( self::$replacements ), $html );
+		}
 
-		return str_replace( array_keys( self::$replacements ), array_values( self::$replacements ), $html );
+		return $html;
 	}
 }
