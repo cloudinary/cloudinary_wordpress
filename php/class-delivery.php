@@ -44,7 +44,6 @@ class Delivery implements Setup {
 	public function __construct( Plugin $plugin ) {
 		$this->plugin = $plugin;
 		$this->media  = $this->plugin->get_component( 'media' );
-		$this->filter = $this->media->filter;
 		$this->setup_hooks();
 	}
 
@@ -59,7 +58,11 @@ class Delivery implements Setup {
 	 * Setup component.
 	 */
 	public function setup() {
-		add_action( 'cloudinary_string_replace', array( $this, 'catch_urls' ) );
+		add_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ), 10, 5 );
+		$this->filter = $this->media->filter;
+		// Add filters.
+		add_action( 'cloudinary_string_replace', array( $this, 'convert_urls' ) );
+		// @todo: Add filter for `cloudinary_string_replace` with method `convert_urls` To catch non ID's tags.
 	}
 
 	/**
@@ -169,12 +172,24 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Convert attachment URLS from HTML content.
+	 *
+	 * @param string $content The HTML to convert URLS from.
+	 */
+	public function convert_urls( $content ) {
+		$known = $this->get_known_urls( $content );
+		foreach ( $known as $src => $replace ) {
+			String_Replace::replace( $src, $replace );
+		}
+	}
+
+	/**
 	 * Catch attachment URLS from HTML content.
 	 *
 	 * @param string $content The HTML to catch URLS from.
 	 */
 	public function catch_urls( $content ) {
-		$known = $this->get_known_urls( $content );
+		$known = array();
 		$urls  = wp_extract_urls( $content );
 		$dirs  = wp_get_upload_dir();
 		$urls  = array_map(
