@@ -115,13 +115,25 @@ class Delivery implements Setup {
 		$urls             = array();
 		$meta             = wp_get_attachment_metadata( $attachment_id );
 		$dirs             = wp_get_upload_dir();
-		$base             = trailingslashit( $dirs['baseurl'] );
+		$maybe_sub_folder = explode( DIRECTORY_SEPARATOR, $meta['file'] );
+		$base_url         = array( $dirs['baseurl'] );
+		if ( 3 === count( $maybe_sub_folder ) ) {
+			array_pop( $maybe_sub_folder );
+			$base_url = array_merge( $base_url, $maybe_sub_folder );
+		}
+		$base             = trailingslashit( implode( DIRECTORY_SEPARATOR, $base_url ) );
 		$baseurl          = wp_get_attachment_url( $attachment_id );
 		$urls[ $baseurl ] = $this->media->cloudinary_url( $attachment_id );
 		// Ignore getting 'original_image' since this isn't used in the front end.
 		if ( ! empty( $meta['sizes'] ) ) {
 			foreach ( $meta['sizes'] as $data ) {
-				$urls[ $base . $data['file'] ] = $this->media->cloudinary_url( $attachment_id, array( $data['width'], $data['height'] ) );
+				$urls[ $base . $data['file'] ] = $this->media->cloudinary_url(
+					$attachment_id,
+					array(
+						$data['width'],
+						$data['height'],
+					)
+				);
 			}
 		}
 
