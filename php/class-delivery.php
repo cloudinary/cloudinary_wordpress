@@ -9,6 +9,7 @@ namespace Cloudinary;
 
 use Cloudinary\Component\Setup;
 use Cloudinary\Media\Filter;
+use Cloudinary\String_Replace;
 
 /**
  * Plugin Delivery class.
@@ -42,8 +43,9 @@ class Delivery implements Setup {
 	 * @param Plugin $plugin Global instance of the main plugin.
 	 */
 	public function __construct( Plugin $plugin ) {
-		$this->plugin = $plugin;
-		$this->media  = $this->plugin->get_component( 'media' );
+		$this->plugin                        = $plugin;
+		$this->plugin->components['replace'] = new String_Replace( $this->plugin );
+		$this->media                         = $this->plugin->get_component( 'media' );
 		$this->setup_hooks();
 	}
 
