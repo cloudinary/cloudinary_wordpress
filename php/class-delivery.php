@@ -158,7 +158,6 @@ class Delivery implements Setup {
 		$cached = wp_cache_get( $key );
 		if ( false === $cached ) {
 			$results = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared
-			$post_id = null;
 			if ( $results ) {
 				foreach ( $results as $result ) {
 					$found = array_merge( $found, $this->get_attachment_size_urls( $result->post_id ) );

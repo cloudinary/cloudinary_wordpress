@@ -8,7 +8,7 @@
 namespace Cloudinary;
 
 /**
- * Plugin report class.
+ * Plugin Beta class.
  */
 class Beta {
 
