@@ -15,6 +15,7 @@ use Cloudinary\Settings\Setting;
 use Cloudinary\Sync\Storage;
 use WP_REST_Request;
 use WP_REST_Server;
+use WP_Screen;
 use const E_USER_WARNING;
 use const WPCOM_IS_VIP_ENV;
 
@@ -278,7 +279,7 @@ final class Plugin {
 	public function register_hooks() {
 		add_action( 'plugins_loaded', array( $this, 'init' ), 9 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'register_enqueue_styles' ), 11 );
-		add_action( 'admin_footer', array( $this, 'enqueue_assets' ), 11 );
+		add_action( 'admin_footer', array( $this, 'maybe_enqueue_assets' ), 11 );
 		add_action( 'init', array( $this, 'setup' ), 10 );
 		add_action( 'init', array( $this, 'register_assets' ), 10 );
 		add_action( 'admin_notices', array( $this, 'admin_notices' ) );
@@ -324,6 +325,30 @@ final class Plugin {
 			},
 			$components
 		);
+	}
+
+	/**
+	 * Maybe enqueue Cloudinary assets.
+	 */
+	public function maybe_enqueue_assets() {
+		$current_screen = get_current_screen();
+
+		if (
+			$current_screen instanceof WP_Screen &&
+			(
+				'cloudinary' === $current_screen->parent_base ||
+				in_array(
+					$current_screen->base,
+					array(
+						'post',
+						'edit-tags',
+					),
+					true
+				)
+			)
+		) {
+			$this->enqueue_assets();
+		}
 	}
 
 	/**
