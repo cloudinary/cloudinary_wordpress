@@ -10,6 +10,7 @@ namespace Cloudinary;
 use Cloudinary\Component\Setup;
 use Cloudinary\Media\Filter;
 use Cloudinary\String_Replace;
+use Cloudinary\UI\Component\HTML;
 
 /**
  * Plugin Delivery class.
@@ -38,6 +39,13 @@ class Delivery implements Setup {
 	protected $filter;
 
 	/**
+	 * The meta data cache key to store URLS.
+	 *
+	 * @var string
+	 */
+	const META_CACHE_KEY = '_cld_replacements';
+
+	/**
 	 * Component constructor.
 	 *
 	 * @param Plugin $plugin Global instance of the main plugin.
@@ -63,8 +71,42 @@ class Delivery implements Setup {
 		add_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ), 10, 5 );
 		$this->filter = $this->media->filter;
 		// Add filters.
-		add_action( 'cloudinary_string_replace', array( $this, 'convert_urls' ) );
+		add_filter( 'the_content', array( $this, 'filter_local' ) );
 		// @todo: Add filter for `cloudinary_string_replace` with method `convert_urls` To catch non ID's tags.
+		add_action( 'save_post', array( $this, 'remove_replace_cache' ), 10, 2 );
+	}
+
+	/**
+	 * Delete the content replacement cache data.
+	 *
+	 * @param int    $post_id The post ID to remove cache from.
+	 * @param string $content The post content.
+	 */
+	public function remove_replace_cache( $post_id, $content ) {
+		delete_post_meta( $post_id, self::META_CACHE_KEY );
+		$this->convert_tags( $post_id, $content );
+	}
+
+	/**
+	 * Filter out the local URLS from the content.
+	 *
+	 * @param string $content The HTML of the content to filter.
+	 *
+	 * @return string
+	 */
+	public function filter_local( $content ) {
+		$post_id = get_queried_object_id();
+		if ( ! empty( $post_id ) ) {
+			$replacements = get_post_meta( $post_id, self::META_CACHE_KEY, true );
+			if ( empty( $replacements ) ) {
+				$replacements = $this->convert_tags( $post_id, $content );
+			}
+			foreach ( $replacements as $search => $replace ) {
+				String_Replace::replace( $search, $replace );
+			}
+		}
+
+		return $content;
 	}
 
 	/**
@@ -178,15 +220,109 @@ class Delivery implements Setup {
 	}
 
 	/**
-	 * Convert attachment URLS from HTML content.
+	 * Convert media tags from Local to Cloudinary, and register with String_Replace.
 	 *
-	 * @param string $content The HTML to convert URLS from.
+	 * @param int    $post_id The post ID.
+	 * @param string $content The HTML to find tags and prep replacement in.
 	 */
-	public function convert_urls( $content ) {
-		$known = $this->get_known_urls( $content );
-		foreach ( $known as $src => $replace ) {
-			String_Replace::replace( $src, $replace );
+	public function convert_tags( $post_id, $content ) {
+
+		$tags         = $this->filter->get_media_tags( $content );
+		$replacements = array();
+		foreach ( $tags as $element ) {
+			$attachment_id = $this->filter->get_id_from_tag( $element );
+			if ( empty( $attachment_id ) ) {
+				continue;
+			}
+
+			// Get the tag type.
+			$tag = strstr( trim( $element, '<' ), ' ', true );
+
+			// Break element up.
+			$atts = shortcode_parse_atts( $element );
+
+			// Remove the old srcset if it has one.
+			if ( isset( $atts['srcset'] ) ) {
+				unset( $atts['srcset'] );
+			}
+
+			// Remove head and tail.
+			array_shift( $atts );
+			array_pop( $atts );
+
+			// Get overwrite flag.
+			$overwrite = (bool) strpos( $atts['class'], 'cld-overwrite' );
+
+			// Get size.
+			$size = $this->get_size_from_atts( $atts['class'] );
+
+			// Get transformations if present.
+			$transformations = $this->get_transformations_maybe( $atts['src'] );
+
+			// Create new src url.
+			$atts['src'] = $this->media->cloudinary_url( $attachment_id, $size, $transformations, null, $overwrite );
+
+			// Setup new tag.
+			$new_tag = array(
+				$tag,
+				HTML::build_attributes( $atts ),
+			);
+
+			$replace = HTML::compile_tag( $new_tag );
+
+			// Add new srcset.
+			$replace = $this->media->apply_srcset( $replace, $attachment_id, $overwrite );
+
+			// Register replacement.
+			$replacements[ $element ] = $replace;
 		}
+
+		// Update the post meta cache.
+		update_post_meta( $post_id, self::META_CACHE_KEY, $replacements );
+
+		// Catch others.
+		$this->catch_urls( $content );
+
+		return $replacements;
+	}
+
+	/**
+	 * Get the size from the attributes.
+	 *
+	 * @param array $atts Attributes array.
+	 *
+	 * @return array
+	 */
+	protected function get_size_from_atts( $atts ) {
+		$size = array();
+		if ( ! empty( $atts['width'] ) ) {
+			$size[] = $atts['width'];
+		}
+		if ( ! empty( $atts['height'] ) ) {
+			$size[] = $atts['height'];
+		}
+
+		return $size;
+	}
+
+	/**
+	 * Maybe get the inline transformations from an image url.
+	 *
+	 * @param string $url The image src url.
+	 *
+	 * @return array|null
+	 */
+	protected function get_transformations_maybe( $url ) {
+		$transformations = null;
+		$query           = wp_parse_url( $url, PHP_URL_QUERY );
+		if ( ! empty( $query ) && false !== strpos( $query, 'cld_params' ) ) {
+			// Has params in src.
+			$args = array();
+			wp_parse_str( $query, $args );
+			$transformations = $this->media->get_transformations_from_string( $args['cld_params'] );
+		}
+
+		return $transformations;
 	}
 
 	/**
