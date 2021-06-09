@@ -193,6 +193,8 @@ class Global_Transformations {
 	 * Init term meta field values.
 	 */
 	public function init_term_transformations() {
+		// Enqueue Cloudinary.
+		$this->media->plugin->enqueue_assets();
 
 		$this->reset_taxonomy_field_values();
 
