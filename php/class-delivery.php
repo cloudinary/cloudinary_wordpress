@@ -233,6 +233,8 @@ class Delivery implements Setup {
 			// Register replacement.
 			String_Replace::replace( $element, $replace );
 		}
+		// Catch others.
+		$this->catch_urls( $content );
 	}
 
 	/**
