@@ -92,7 +92,7 @@ class Delivery implements Setup {
 	 *
 	 * @param string $content The HTML of the content to filter.
 	 *
-	 * @return mixed
+	 * @return string
 	 */
 	public function filter_local( $content ) {
 		$post_id = get_queried_object_id();
