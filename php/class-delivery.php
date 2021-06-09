@@ -10,7 +10,7 @@ namespace Cloudinary;
 use Cloudinary\Component\Setup;
 use Cloudinary\Media\Filter;
 use Cloudinary\String_Replace;
-use Cloudinary\UI\Component;
+use Cloudinary\UI\Component\HTML;
 
 /**
  * Plugin Delivery class.
@@ -222,10 +222,10 @@ class Delivery implements Setup {
 			// Setup new tag.
 			$new_tag = array(
 				$tag,
-				Component::build_attributes( $atts ),
+				HTML::build_attributes( $atts ),
 			);
 
-			$replace = Component::compile_tag( $new_tag );
+			$replace = HTML::compile_tag( $new_tag );
 
 			// Add new srcset.
 			$replace = $this->media->apply_srcset( $replace, $attachment_id, $overwrite );
@@ -244,10 +244,10 @@ class Delivery implements Setup {
 	 */
 	protected function get_size_from_atts( $atts ) {
 		$size = array();
-		if ( $atts['width'] ) {
+		if ( ! empty( $atts['width'] ) ) {
 			$size[] = $atts['width'];
 		}
-		if ( $atts['height'] ) {
+		if ( ! empty( $atts['height'] ) ) {
 			$size[] = $atts['height'];
 		}
 
