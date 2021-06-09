@@ -10,6 +10,7 @@ namespace Cloudinary;
 use Cloudinary\Component\Setup;
 use Cloudinary\Media\Filter;
 use Cloudinary\String_Replace;
+use Cloudinary\UI\Component;
 
 /**
  * Plugin Delivery class.
@@ -63,7 +64,7 @@ class Delivery implements Setup {
 		add_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ), 10, 5 );
 		$this->filter = $this->media->filter;
 		// Add filters.
-		add_action( 'cloudinary_string_replace', array( $this, 'convert_urls' ) );
+		add_action( 'cloudinary_string_replace', array( $this, 'convert_tags' ) );
 		// @todo: Add filter for `cloudinary_string_replace` with method `convert_urls` To catch non ID's tags.
 	}
 
@@ -178,15 +179,99 @@ class Delivery implements Setup {
 	}
 
 	/**
-	 * Convert attachment URLS from HTML content.
+	 * Convert media tags from Local to Cloudinary, and register with String_Replace.
 	 *
-	 * @param string $content The HTML to convert URLS from.
+	 * @param string $content The HTML to find tags and prep replacement in.
 	 */
-	public function convert_urls( $content ) {
-		$known = $this->get_known_urls( $content );
-		foreach ( $known as $src => $replace ) {
-			String_Replace::replace( $src, $replace );
+	public function convert_tags( $content ) {
+
+		$tags = $this->filter->get_media_tags( $content );
+		foreach ( $tags as $element ) {
+			$attachment_id = $this->filter->get_id_from_tag( $element );
+			if ( empty( $attachment_id ) ) {
+				continue;
+			}
+
+			// Get the tag type.
+			$tag = strstr( trim( $element, '<' ), ' ', true );
+
+			// Break element up.
+			$atts = shortcode_parse_atts( $element );
+
+			// Remove the old srcset if it has one.
+			if ( isset( $atts['srcset'] ) ) {
+				unset( $atts['srcset'] );
+			}
+
+			// Remove head and tail.
+			array_shift( $atts );
+			array_pop( $atts );
+
+			// Get overwrite flag.
+			$overwrite = (bool) strpos( $atts['class'], 'cld-overwrite' );
+
+			// Get size.
+			$size = $this->get_size_from_atts( $atts['class'] );
+
+			// Get transformations if present.
+			$transformations = $this->get_transformations_maybe( $atts['src'] );
+
+			// Create new src url.
+			$atts['src'] = $this->media->cloudinary_url( $attachment_id, $size, $transformations, null, $overwrite );
+
+			// Setup new tag.
+			$new_tag = array(
+				$tag,
+				Component::build_attributes( $atts ),
+			);
+
+			$replace = Component::compile_tag( $new_tag );
+
+			// Add new srcset.
+			$replace = $this->media->apply_srcset( $replace, $attachment_id, $overwrite );
+
+			// Register replacement.
+			String_Replace::replace( $element, $replace );
 		}
+	}
+
+	/**
+	 * Get the size from the attributes.
+	 *
+	 * @param array $atts Attributes array.
+	 *
+	 * @return array
+	 */
+	protected function get_size_from_atts( $atts ) {
+		$size = array();
+		if ( $atts['width'] ) {
+			$size[] = $atts['width'];
+		}
+		if ( $atts['height'] ) {
+			$size[] = $atts['height'];
+		}
+
+		return $size;
+	}
+
+	/**
+	 * Maybe get the inline transformations from an image url.
+	 *
+	 * @param string $url The image src url.
+	 *
+	 * @return array|null
+	 */
+	protected function get_transformations_maybe( $url ) {
+		$transformations = null;
+		$query           = wp_parse_url( $url, PHP_URL_QUERY );
+		if ( ! empty( $query ) && false !== strpos( $query, 'cld_params' ) ) {
+			// Has params in src.
+			$args = array();
+			wp_parse_str( $query, $args );
+			$transformations = $this->media->get_transformations_from_string( $args['cld_params'] );
+		}
+
+		return $transformations;
 	}
 
 	/**
