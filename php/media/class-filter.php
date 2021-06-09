@@ -790,7 +790,7 @@ class Filter {
 		}
 
 		// Filter out locals and responsive images setup.
-		if ( $this->media->can_filter_out_local() ) {
+		if ( $this->media->can_filter_out_local() || is_admin() ) {
 			// Filtering out locals.
 			add_filter( 'the_editor_content', array( $this, 'filter_out_local' ) );
 			add_filter( 'the_content', array( $this, 'filter_out_local' ), 100 );

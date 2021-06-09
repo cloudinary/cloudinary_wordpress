@@ -466,6 +466,9 @@ class Setting {
 		// Register dynamics.
 		$this->register_dynamic_settings( $dynamic_params );
 
+		// Load data.
+		$this->load_value();
+
 		// Mark as setup.
 		$this->set_param( 'is_setup', true );
 
