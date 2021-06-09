@@ -280,6 +280,9 @@ class Delivery implements Setup {
 		// Update the post meta cache.
 		update_post_meta( $post_id, self::META_CACHE_KEY, $replacements );
 
+		// Catch others.
+		$this->catch_urls( $content );
+
 		return $replacements;
 	}
 
