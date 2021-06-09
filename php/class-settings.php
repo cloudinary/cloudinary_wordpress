@@ -8,7 +8,6 @@
 namespace Cloudinary;
 
 use Cloudinary\Settings\Setting;
-use WP_Screen;
 
 /**
  * Settings Class.
