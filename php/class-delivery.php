@@ -39,6 +39,13 @@ class Delivery implements Setup {
 	protected $filter;
 
 	/**
+	 * The meta data cache key to store URLS.
+	 *
+	 * @var string
+	 */
+	const META_CACHE_KEY = '_cld_replacements';
+
+	/**
 	 * Component constructor.
 	 *
 	 * @param Plugin $plugin Global instance of the main plugin.
@@ -64,8 +71,42 @@ class Delivery implements Setup {
 		add_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ), 10, 5 );
 		$this->filter = $this->media->filter;
 		// Add filters.
-		add_action( 'cloudinary_string_replace', array( $this, 'convert_tags' ) );
+		add_filter( 'the_content', array( $this, 'filter_local' ) );
 		// @todo: Add filter for `cloudinary_string_replace` with method `convert_urls` To catch non ID's tags.
+		add_action( 'save_post', array( $this, 'remove_replace_cache' ), 10, 2 );
+	}
+
+	/**
+	 * Delete the content replacement cache data.
+	 *
+	 * @param int    $post_id The post ID to remove cache from.
+	 * @param string $content The post content.
+	 */
+	public function remove_replace_cache( $post_id, $content ) {
+		delete_post_meta( $post_id, self::META_CACHE_KEY );
+		$this->convert_tags( $post_id, $content );
+	}
+
+	/**
+	 * Filter out the local URLS from the content.
+	 *
+	 * @param string $content The HTML of the content to filter.
+	 *
+	 * @return string
+	 */
+	public function filter_local( $content ) {
+		$post_id = get_queried_object_id();
+		if ( ! empty( $post_id ) ) {
+			$replacements = get_post_meta( $post_id, self::META_CACHE_KEY, true );
+			if ( empty( $replacements ) ) {
+				$replacements = $this->convert_tags( $post_id, $content );
+			}
+			foreach ( $replacements as $search => $replace ) {
+				String_Replace::replace( $search, $replace );
+			}
+		}
+
+		return $content;
 	}
 
 	/**
@@ -181,11 +222,13 @@ class Delivery implements Setup {
 	/**
 	 * Convert media tags from Local to Cloudinary, and register with String_Replace.
 	 *
+	 * @param int    $post_id The post ID.
 	 * @param string $content The HTML to find tags and prep replacement in.
 	 */
-	public function convert_tags( $content ) {
+	public function convert_tags( $post_id, $content ) {
 
-		$tags = $this->filter->get_media_tags( $content );
+		$tags         = $this->filter->get_media_tags( $content );
+		$replacements = array();
 		foreach ( $tags as $element ) {
 			$attachment_id = $this->filter->get_id_from_tag( $element );
 			if ( empty( $attachment_id ) ) {
@@ -231,10 +274,16 @@ class Delivery implements Setup {
 			$replace = $this->media->apply_srcset( $replace, $attachment_id, $overwrite );
 
 			// Register replacement.
-			String_Replace::replace( $element, $replace );
+			$replacements[ $element ] = $replace;
 		}
+
+		// Update the post meta cache.
+		update_post_meta( $post_id, self::META_CACHE_KEY, $replacements );
+
 		// Catch others.
 		$this->catch_urls( $content );
+
+		return $replacements;
 	}
 
 	/**
