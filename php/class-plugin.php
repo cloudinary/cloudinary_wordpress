@@ -279,7 +279,6 @@ final class Plugin {
 	public function register_hooks() {
 		add_action( 'plugins_loaded', array( $this, 'init' ), 9 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'register_enqueue_styles' ), 11 );
-		add_action( 'admin_footer', array( $this, 'maybe_enqueue_assets' ), 11 );
 		add_action( 'init', array( $this, 'setup' ), 10 );
 		add_action( 'init', array( $this, 'register_assets' ), 10 );
 		add_action( 'admin_notices', array( $this, 'admin_notices' ) );
@@ -328,34 +327,9 @@ final class Plugin {
 	}
 
 	/**
-	 * Maybe enqueue Cloudinary assets.
-	 */
-	public function maybe_enqueue_assets() {
-		$current_screen = get_current_screen();
-
-		if (
-			$current_screen instanceof WP_Screen &&
-			(
-				'cloudinary' === $current_screen->parent_base ||
-				in_array(
-					$current_screen->base,
-					array(
-						'post',
-						'edit-tags',
-					),
-					true
-				)
-			)
-		) {
-			$this->enqueue_assets();
-		}
-	}
-
-	/**
 	 * Enqueue the core scripts and styles as needed.
 	 */
 	public function enqueue_assets() {
-		wp_enqueue_style( 'cloudinary' );
 		wp_enqueue_script( 'cloudinary' );
 	}
 
