@@ -9,6 +9,7 @@ namespace Cloudinary;
 
 use Cloudinary\Component\Setup;
 use Cloudinary\Media\Filter;
+use Cloudinary\String_Replace;
 
 /**
  * Plugin Delivery class.
@@ -42,8 +43,9 @@ class Delivery implements Setup {
 	 * @param Plugin $plugin Global instance of the main plugin.
 	 */
 	public function __construct( Plugin $plugin ) {
-		$this->plugin = $plugin;
-		$this->media  = $this->plugin->get_component( 'media' );
+		$this->plugin                        = $plugin;
+		$this->plugin->components['replace'] = new String_Replace( $this->plugin );
+		$this->media                         = $this->plugin->get_component( 'media' );
 		$this->setup_hooks();
 	}
 
@@ -112,14 +114,19 @@ class Delivery implements Setup {
 	public function get_attachment_size_urls( $attachment_id ) {
 		$urls             = array();
 		$meta             = wp_get_attachment_metadata( $attachment_id );
-		$dirs             = wp_get_upload_dir();
-		$base             = trailingslashit( $dirs['baseurl'] );
 		$baseurl          = wp_get_attachment_url( $attachment_id );
+		$base             = trailingslashit( dirname( $baseurl ) );
 		$urls[ $baseurl ] = $this->media->cloudinary_url( $attachment_id );
 		// Ignore getting 'original_image' since this isn't used in the front end.
 		if ( ! empty( $meta['sizes'] ) ) {
 			foreach ( $meta['sizes'] as $data ) {
-				$urls[ $base . $data['file'] ] = $this->media->cloudinary_url( $attachment_id, array( $data['width'], $data['height'] ) );
+				$urls[ $base . $data['file'] ] = $this->media->cloudinary_url(
+					$attachment_id,
+					array(
+						$data['width'],
+						$data['height'],
+					)
+				);
 			}
 		}
 
@@ -158,7 +165,6 @@ class Delivery implements Setup {
 		$cached = wp_cache_get( $key );
 		if ( false === $cached ) {
 			$results = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared
-			$post_id = null;
 			if ( $results ) {
 				foreach ( $results as $result ) {
 					$found = array_merge( $found, $this->get_attachment_size_urls( $result->post_id ) );

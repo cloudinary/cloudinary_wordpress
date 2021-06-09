@@ -8,7 +8,7 @@
 namespace Cloudinary;
 
 /**
- * Plugin report class.
+ * Plugin Beta class.
  */
 class Beta {
 
@@ -24,11 +24,7 @@ class Beta {
 	 *
 	 * @var array
 	 */
-	protected $components = array(
-		'cache'    => 'Cloudinary\Cache',
-		'replace'  => 'Cloudinary\String_Replace',
-		'delivery' => 'Cloudinary\Delivery',
-	);
+	protected $components;
 
 	/**
 	 * Component constructor.
@@ -38,20 +34,29 @@ class Beta {
 	public function __construct( Plugin $plugin ) {
 		$this->plugin = $plugin;
 
-		foreach ( $this->components as $key => $class ) {
+		$this->components = array(
+			'delivery' => array(
+				'class'   => 'Cloudinary\Delivery',
+				'name'    => __( 'New Delivery method', 'cloudinary' ),
+				'options' => array(),
+			),
+		);
+
+		foreach ( $this->components as $key => $data ) {
 			/**
 			 * Filter to enable beta features for testing.
 			 *
 			 * @hook    cloudinary_beta
 			 * @default false
 			 *
-			 * @param $enable  {bool} Flag to enable beta features.
+			 * @param $enable  {bool}   Flag to enable beta features.
 			 * @param $feature {string} Optional feature type.
+			 * @param $data    {array}  The beta feature data.
 			 *
-			 * @return  {bool}
+			 * @return {bool}
 			 */
-			if ( apply_filters( 'cloudinary_beta', false, $key ) ) {
-				$this->plugin->components[ $key ] = new $class( $this->plugin );
+			if ( apply_filters( 'cloudinary_beta', false, $key, $data ) ) {
+				$this->plugin->components[ $key ] = new $data['class']( $this->plugin );
 			}
 		}
 	}
