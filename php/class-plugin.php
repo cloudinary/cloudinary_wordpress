@@ -15,7 +15,6 @@ use Cloudinary\Settings\Setting;
 use Cloudinary\Sync\Storage;
 use WP_REST_Request;
 use WP_REST_Server;
-use WP_Screen;
 use const E_USER_WARNING;
 use const WPCOM_IS_VIP_ENV;
 
