@@ -62,18 +62,26 @@ class Delivery implements Setup {
 	 */
 	protected function setup_hooks() {
 		add_filter( 'cloudinary_filter_out_local', '__return_false' );
+		add_action( 'update_option_cloudinary_media_display', array( $this, 'clear_cache' ) );
+	}
+
+	/**
+	 * Clear cached meta.
+	 */
+	public function clear_cache() {
+		delete_post_meta_by_key( self::META_CACHE_KEY );
 	}
 
 	/**
 	 * Setup component.
 	 */
 	public function setup() {
-		add_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ), 10, 5 );
 		$this->filter = $this->media->filter;
 		// Add filters.
 		add_filter( 'the_content', array( $this, 'filter_local' ) );
 		// @todo: Add filter for `cloudinary_string_replace` with method `convert_urls` To catch non ID's tags.
 		add_action( 'save_post', array( $this, 'remove_replace_cache' ), 10, 2 );
+		add_action( 'cloudinary_string_replace', array( $this, 'catch_urls' ) );
 	}
 
 	/**
@@ -226,7 +234,7 @@ class Delivery implements Setup {
 	 * @param string $content The HTML to find tags and prep replacement in.
 	 */
 	public function convert_tags( $post_id, $content ) {
-
+		add_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ), 10, 5 );
 		$tags         = $this->filter->get_media_tags( $content );
 		$replacements = array();
 		foreach ( $tags as $element ) {
@@ -251,10 +259,9 @@ class Delivery implements Setup {
 			array_pop( $atts );
 
 			// Get overwrite flag.
-			$overwrite = (bool) strpos( $atts['class'], 'cld-overwrite' );
-
+			$overwrite = isset( $atts['class'] ) ? (bool) strpos( $atts['class'], 'cld-overwrite' ) : false;
 			// Get size.
-			$size = $this->get_size_from_atts( $atts['class'] );
+			$size = $this->get_size_from_atts( $atts );
 
 			// Get transformations if present.
 			$transformations = $this->get_transformations_maybe( $atts['src'] );
@@ -275,13 +282,14 @@ class Delivery implements Setup {
 
 			// Register replacement.
 			$replacements[ $element ] = $replace;
+			$urls                     = $this->get_attachment_size_urls( $attachment_id );
+			foreach ( $urls as $local => $remote ) {
+				$replacements[ $local ] = $remote;
+			}
 		}
 
 		// Update the post meta cache.
 		update_post_meta( $post_id, self::META_CACHE_KEY, $replacements );
-
-		// Catch others.
-		$this->catch_urls( $content );
 
 		return $replacements;
 	}
@@ -346,7 +354,7 @@ class Delivery implements Setup {
 			$urls
 		);
 
-		$urls    = array_filter( $urls );
+		$urls    = array_filter( array_filter( $urls ), array( 'Cloudinary\String_Replace', 'string_not_set' ) );
 		$unknown = array_diff( $urls, array_keys( $known ) );
 		if ( ! empty( $unknown ) ) {
 			$known = array_merge( $known, $this->find_attachment_size_urls( $unknown ) );
