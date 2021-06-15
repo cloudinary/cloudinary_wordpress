@@ -256,16 +256,13 @@ class Api {
 			'https:/',
 			$this->url( $args['resource_type'], $asset_endpoint ),
 		);
-
-		if ( ! empty( $args['transformation'] ) ) {
-			$url_parts[] = self::generate_transformation_string( $args['transformation'], $args['resource_type'] );
-		}
-		$base = pathinfo( $public_id );
+		$base      = pathinfo( $public_id );
 		// Only do dynamic naming and sizes if upload type.
 		if ( 'image' === $args['resource_type'] && 'upload' === $args['delivery_type'] ) {
 			$new_path  = $base['filename'] . '/' . $base['basename'];
 			$public_id = str_replace( $base['basename'], $new_path, $public_id );
 		}
+
 		// Add size.
 		if ( ! empty( $size ) && is_array( $size ) ) {
 			$url_parts[] = self::generate_transformation_string( array( $size ), $args['resource_type'] );
@@ -273,6 +270,9 @@ class Api {
 			if ( ! empty( $size['file'] ) ) {
 				$public_id = str_replace( $base['basename'], $size['file'], $public_id );
 			}
+		}
+		if ( ! empty( $args['transformation'] ) ) {
+			$url_parts[] = self::generate_transformation_string( $args['transformation'], $args['resource_type'] );
 		}
 
 		$url_parts[] = $args['version'];
