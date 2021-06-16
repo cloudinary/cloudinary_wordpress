@@ -28,7 +28,6 @@ class Storage implements Notice {
 	 */
 	protected $plugin;
 
-
 	/**
 	 * Holds the Plugin Media instance.
 	 *
@@ -372,10 +371,11 @@ class Storage implements Notice {
 				update_post_meta( $attachment_id, Sync::META_KEYS['delay'], $now );
 				$timestamp = $now;
 			}
+			$diff = $now - $timestamp;
 			// If this is false, it will set the signature without running the sync method.
 			// When the sync expected sync signature changes, due to using this method as part of the signature,
 			// it will be forced to revalidate the sync method, with will be true and allow the sync to run.
-			$valid = $timestamp <= time() - self::DELETE_DELAY;
+			$valid = self::DELETE_DELAY <= $diff;
 		}
 
 		return $valid;
