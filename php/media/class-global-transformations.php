@@ -245,7 +245,7 @@ class Global_Transformations {
 	 */
 	public function get_taxonomy_transformations( $type ) {
 		$return_transformations = '';
-		if ( in_the_loop() ) {
+		if ( in_the_loop() || is_singular() ) {
 			$post = get_post();
 			if ( ! empty( $post ) ) {
 				$transformations = array();
@@ -273,7 +273,7 @@ class Global_Transformations {
 	 */
 	public function is_taxonomy_overwrite() {
 		$apply_type = false;
-		if ( in_the_loop() ) {
+		if ( in_the_loop() || is_singular() ) {
 			$post       = get_post();
 			$apply_type = get_post_meta( $post->ID, self::META_APPLY_KEY . '_terms', true );
 		}
