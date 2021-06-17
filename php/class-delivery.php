@@ -111,8 +111,7 @@ class Delivery implements Setup {
 	 * @param int $post_id The post ID to remove cache from.
 	 */
 	public function remove_replace_cache( $post_id ) {
-		delete_post_meta( $post_id, self::META_CACHE_KEY . '_http' );
-		delete_post_meta( $post_id, self::META_CACHE_KEY . '_https' );
+		delete_post_meta( $post_id, self::META_CACHE_KEY );
 	}
 
 	/**
