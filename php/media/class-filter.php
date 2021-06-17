@@ -706,35 +706,11 @@ class Filter {
 	 * @return string
 	 */
 	public function filter_image_block_render_block( $block_content, array $block ) {
-		if ( 'core/image' === $block['blockName'] && empty( $block['cld_render'] ) ) {
-			$filtered_block               = $this->filter_image_block_pre_render( $block, $block );
-			$filtered_block['cld_render'] = true;
-			$block_content                = render_block( $filtered_block );
-
+		if ( 'core/image' === $block['blockName'] && ! empty( $block['attrs']['overwrite_transformations'] ) ) {
+			$block_content = str_replace( 'wp-image-' . $block['attrs']['id'], 'wp-image-' . $block['attrs']['id'] . ' cld-overwrite', $block_content );
 		}
 
 		return $block_content;
-	}
-
-	/**
-	 * Filter an image block to add the class for cld-overriding.
-	 *
-	 * @param array $block        The current block structure.
-	 * @param array $source_block The source, unfiltered block structure.
-	 *
-	 * @return array
-	 */
-	public function filter_image_block_pre_render( $block, $source_block ) {
-
-		if ( 'core/image' === $source_block['blockName'] ) {
-			if ( ! empty( $source_block['attrs']['overwrite_transformations'] ) ) {
-				foreach ( $block['innerContent'] as &$content ) {
-					$content = str_replace( 'wp-image-' . $block['attrs']['id'], 'wp-image-' . $block['attrs']['id'] . ' cld-overwrite', $content );
-				}
-			}
-		}
-
-		return $block;
 	}
 
 	/**
@@ -782,12 +758,8 @@ class Filter {
 		add_action( 'admin_footer', array( $this, 'catch_media_templates_maybe' ), 9 );
 
 		// Filter for block rendering.
-		if ( has_filter( 'render_block_data' ) ) {
-			add_filter( 'render_block_data', array( $this, 'filter_image_block_pre_render' ), 10, 2 );
-		} else {
-			// The render_block_data filter was only introduced on WP 5.1.0. This is the fallback for 5.0.*.
-			add_filter( 'render_block', array( $this, 'filter_image_block_render_block' ), 10, 2 );
-		}
+		add_filter( 'render_block', array( $this, 'filter_image_block_render_block' ), 10, 2 );
+
 
 		// Filter out locals and responsive images setup.
 		if ( $this->media->can_filter_out_local() || is_admin() ) {
