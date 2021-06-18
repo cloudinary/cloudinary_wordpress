@@ -10,6 +10,7 @@ namespace Cloudinary;
 use Cloudinary\Component\Setup;
 use Cloudinary\Media\Filter;
 use Cloudinary\Media\Global_Transformations;
+use Cloudinary\Sync;
 use Cloudinary\String_Replace;
 use Cloudinary\UI\Component\HTML;
 use WP_Post;
@@ -39,6 +40,13 @@ class Delivery implements Setup {
 	 * @var Filter
 	 */
 	protected $filter;
+
+	/**
+	 * Holds the Sync component.
+	 *
+	 * @var Sync
+	 */
+	protected $sync;
 
 	/**
 	 * Hold the Post ID.
@@ -118,6 +126,8 @@ class Delivery implements Setup {
 	 */
 	public function setup() {
 		$this->filter = $this->media->filter;
+		$this->sync   = $this->media->sync;
+
 		// Add filters.
 		add_action( 'save_post', array( $this, 'remove_replace_cache' ) );
 		add_action( 'cloudinary_string_replace', array( $this, 'catch_urls' ) );
@@ -218,7 +228,9 @@ class Delivery implements Setup {
 			$results = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared
 			if ( $results ) {
 				foreach ( $results as $result ) {
-					$found = array_merge( $found, $this->get_attachment_size_urls( $result->post_id ) );
+					if ( $this->sync->is_synced( $result->post_id ) ) {
+						$found = array_merge( $found, $this->get_attachment_size_urls( $result->post_id ) );
+					}
 				}
 			}
 			$cached = $found;
@@ -251,7 +263,7 @@ class Delivery implements Setup {
 			$attachment_id         = $this->filter->get_id_from_tag( $element );
 			$this->current_post_id = $this->filter->get_id_from_tag( $element, 'wp-post-' );
 
-			if ( empty( $attachment_id ) ) {
+			if ( empty( $attachment_id ) || ! $this->sync->is_synced( $attachment_id ) ) {
 				continue;
 			}
 			// Register replacement.
