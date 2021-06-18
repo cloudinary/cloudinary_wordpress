@@ -242,7 +242,7 @@ class Global_Transformations {
 	 *
 	 * @param string $type The type to get.
 	 *
-	 * @return array
+	 * @return string
 	 */
 	public function get_taxonomy_transformations( $type ) {
 		$return_transformations = '';
