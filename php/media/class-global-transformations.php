@@ -245,8 +245,9 @@ class Global_Transformations {
 	 */
 	public function get_taxonomy_transformations( $type ) {
 		$return_transformations = '';
-		if ( in_the_loop() || is_singular() ) {
-			$post = get_post();
+		$maybe_post_id          = apply_filters( 'cloudinary_post_id_taxonomy', null );
+		if ( in_the_loop() || $maybe_post_id ) {
+			$post = get_post( $maybe_post_id );
 			if ( ! empty( $post ) ) {
 				$transformations = array();
 				$terms           = $this->get_terms( $post->ID );
@@ -272,8 +273,9 @@ class Global_Transformations {
 	 * @return bool
 	 */
 	public function is_taxonomy_overwrite() {
-		$apply_type = false;
-		if ( in_the_loop() || is_singular() ) {
+		$apply_type    = false;
+		$maybe_post_id = apply_filters( 'cloudinary_post_id_taxonomy', null );
+		if ( in_the_loop() || $maybe_post_id ) {
 			$post       = get_post();
 			$apply_type = get_post_meta( $post->ID, self::META_APPLY_KEY . '_terms', true );
 		}

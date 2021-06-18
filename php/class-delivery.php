@@ -41,6 +41,13 @@ class Delivery implements Setup {
 	protected $filter;
 
 	/**
+	 * Hold the Post ID.
+	 *
+	 * @var null|int
+	 */
+	protected $current_post_id = null;
+
+	/**
 	 * The meta data cache key to store URLS.
 	 *
 	 * @var string
@@ -65,6 +72,8 @@ class Delivery implements Setup {
 	protected function setup_hooks() {
 		add_filter( 'cloudinary_filter_out_local', '__return_false' );
 		add_action( 'update_option_cloudinary_media_display', array( $this, 'clear_cache' ) );
+		add_filter( 'cloudinary_post_id_taxonomy', array( $this, 'get_current_post_id' ) );
+		add_filter( 'the_content', array( $this, 'add_post_id' ) );
 	}
 
 	/**
@@ -72,6 +81,36 @@ class Delivery implements Setup {
 	 */
 	public function clear_cache() {
 		delete_post_meta_by_key( self::META_CACHE_KEY );
+	}
+
+	/**
+	 * Add the Post ID to images and videos.
+	 *
+	 * @param string $content The content.
+	 *
+	 * @return string
+	 */
+	public function add_post_id( $content ) {
+		return str_replace(
+			array(
+				'wp-image-',
+				'wp-video-',
+			),
+			array(
+				'wp-post-' . get_the_ID() . ' wp-image-',
+				'wp-post-' . get_the_ID() . ' wp-video-',
+			),
+			$content
+		);
+	}
+
+	/**
+	 * Get the current post ID.
+	 *
+	 * @return int|null
+	 */
+	public function get_current_post_id() {
+		return $this->current_post_id;
 	}
 
 	/**
@@ -98,6 +137,8 @@ class Delivery implements Setup {
 		// Get tag element.
 		$tag_element                    = $this->parse_element( $html );
 		$tag_element['atts']['class'][] = 'wp-image-' . $attachment_id;
+		$tag_element['atts']['class'][] = 'wp-post-' . $post_id;
+
 		if ( true === (bool) $this->media->get_post_meta( $post_id, Global_Transformations::META_FEATURED_IMAGE_KEY, true ) ) {
 			$tag_element['atts']['class'][] = 'cld-overwrite';
 		}
@@ -207,13 +248,16 @@ class Delivery implements Setup {
 		$replacements   = array();
 		$attachment_ids = array();
 		foreach ( $tags as $element ) {
-			$attachment_id = $this->filter->get_id_from_tag( $element );
+			$attachment_id         = $this->filter->get_id_from_tag( $element );
+			$this->current_post_id = $this->filter->get_id_from_tag( $element, 'wp-post-' );
+
 			if ( empty( $attachment_id ) ) {
 				continue;
 			}
 			// Register replacement.
 			$replacements[ $element ] = $this->rebuild_tag( $element, $attachment_id );
 			$attachment_ids[]         = $attachment_id;
+			$this->current_post_id    = null;
 		}
 
 		// Create other image sizes for ID's found.

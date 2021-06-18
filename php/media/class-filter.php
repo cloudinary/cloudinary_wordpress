@@ -87,13 +87,13 @@ class Filter {
 	 * Get the attachment ID from the media tag.
 	 *
 	 * @param string $asset The media tag.
-	 *
-	 * @return int|false
+	 * @param string $type  The type.
+	 * @return int|null
 	 */
-	public function get_id_from_tag( $asset ) {
-		$attachment_id = false;
+	public function get_id_from_tag( $asset, $type = 'wp-image-|wp-video-' ) {
+		$attachment_id = null;
 		// Get attachment id from class name.
-		if ( preg_match( '#class=["|\']?[^"\']*(wp-image-|wp-video-)([\d]+)[^"\']*["|\']?#i', $asset, $found ) ) {
+		if ( preg_match( '#class=["|\']?[^"\']*(' . $type . ')([\d]+)[^"\']*["|\']?#i', $asset, $found ) ) {
 			$attachment_id = intval( $found[2] );
 		}
 
