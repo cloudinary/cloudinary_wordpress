@@ -8,7 +8,11 @@
 namespace Cloudinary\Media;
 
 use Cloudinary\Connect\Api;
+use Cloudinary\Media;
 use Cloudinary\Utils;
+use WP_Post;
+use WP_REST_Request;
+use WP_REST_Response;
 
 /**
  * Class Filter.
@@ -22,16 +26,16 @@ class Filter {
 	 *
 	 * @since   0.1
 	 *
-	 * @var     \Cloudinary\Media Instance of the plugin.
+	 * @var     Media Instance of the plugin.
 	 */
 	private $media;
 
 	/**
 	 * Filter constructor.
 	 *
-	 * @param \Cloudinary\Media $media The plugin.
+	 * @param Media $media The plugin.
 	 */
-	public function __construct( \Cloudinary\Media $media ) {
+	public function __construct( Media $media ) {
 		$this->media = $media;
 		$this->setup_hooks();
 	}
@@ -442,9 +446,9 @@ class Filter {
 	/**
 	 * Return a Cloudinary URL for an attachment used in a REST REQUEST.
 	 *
-	 * @param \WP_REST_Response $attachment The attachment array to be used in JS.
+	 * @param WP_REST_Response $attachment The attachment array to be used in JS.
 	 *
-	 * @return \WP_REST_Response
+	 * @return WP_REST_Response
 	 * @uses filter:rest_prepare_attachment
 	 */
 	public function filter_attachment_for_rest( $attachment ) {
@@ -546,13 +550,13 @@ class Filter {
 	}
 
 	/**
-	 * Filter out local urls in an 'edit' context rest request ( i.e for Gutenburg ).
+	 * Filter out local urls in an 'edit' context rest request ( i.e for Gutenberg ).
 	 *
-	 * @param \WP_REST_Response $response The post data array to save.
-	 * @param \WP_Post          $post     The current post.
-	 * @param \WP_REST_Request  $request  The request object.
+	 * @param WP_REST_Response $response The post data array to save.
+	 * @param WP_Post          $post     The current post.
+	 * @param WP_REST_Request  $request  The request object.
 	 *
-	 * @return \WP_REST_Response
+	 * @return WP_REST_Response
 	 */
 	public function pre_filter_rest_content( $response, $post, $request ) {
 		$context = $request->get_param( 'context' );
