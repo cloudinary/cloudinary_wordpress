@@ -10,7 +10,7 @@ namespace Cloudinary;
 use Cloudinary\Component\Setup;
 use Cloudinary\Media\Filter;
 use Cloudinary\Media\Global_Transformations;
-use \Cloudinary\Sync;
+use Cloudinary\Sync;
 use Cloudinary\String_Replace;
 use Cloudinary\UI\Component\HTML;
 use WP_Post;
