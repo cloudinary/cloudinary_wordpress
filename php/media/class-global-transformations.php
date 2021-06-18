@@ -576,7 +576,13 @@ class Global_Transformations {
 		 *
 		 * @return  {WP_Post|null}
 		 */
-		return get_post( apply_filters( 'cloudinary_post_id', null ) );
+		$post_id = apply_filters( 'cloudinary_post_id', null );
+
+		if ( is_null( $post_id ) ) {
+			return null;
+		}
+
+		return get_post( $post_id );
 	}
 
 	/**
