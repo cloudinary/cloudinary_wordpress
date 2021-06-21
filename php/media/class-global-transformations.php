@@ -571,7 +571,7 @@ class Global_Transformations {
 		/**
 		 * Filter the post ID.
 		 *
-		 * @hook    cloudinary_post_id
+		 * @hook    cloudinary_current_post_id
 		 * @default null
 		 *
 		 * @return  {WP_Post|null}
