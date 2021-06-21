@@ -80,7 +80,7 @@ class Delivery implements Setup {
 	protected function setup_hooks() {
 		add_filter( 'cloudinary_filter_out_local', '__return_false' );
 		add_action( 'update_option_cloudinary_media_display', array( $this, 'clear_cache' ) );
-		add_filter( 'cloudinary_post_id_taxonomy', array( $this, 'get_current_post_id' ) );
+		add_filter( 'cloudinary_current_post_id', array( $this, 'get_current_post_id' ) );
 		add_filter( 'the_content', array( $this, 'add_post_id' ) );
 	}
 
