@@ -118,7 +118,7 @@ class Delivery implements Setup {
 	 * @return int|null
 	 */
 	public function get_current_post_id() {
-		return $this->current_post_id;
+		return $this->current_post_id ? $this->current_post_id : null;
 	}
 
 	/**

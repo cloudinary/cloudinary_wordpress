@@ -92,10 +92,10 @@ class Filter {
 	 *
 	 * @param string $asset The media tag.
 	 * @param string $type  The type.
-	 * @return int|null
+	 * @return int|false
 	 */
 	public function get_id_from_tag( $asset, $type = 'wp-image-|wp-video-' ) {
-		$attachment_id = null;
+		$attachment_id = false;
 		// Get attachment id from class name.
 		if ( preg_match( '#class=["|\']?[^"\']*(' . $type . ')([\d]+)[^"\']*["|\']?#i', $asset, $found ) ) {
 			$attachment_id = intval( $found[2] );
