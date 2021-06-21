@@ -82,6 +82,12 @@ class Delivery implements Setup {
 		add_action( 'update_option_cloudinary_media_display', array( $this, 'clear_cache' ) );
 		add_filter( 'cloudinary_current_post_id', array( $this, 'get_current_post_id' ) );
 		add_filter( 'the_content', array( $this, 'add_post_id' ) );
+
+		// Clear cache on taxonomy update.
+		$taxonomies = get_taxonomies( array( 'show_ui' => true ) );
+		foreach ( $taxonomies as $taxonomy ) {
+			add_action( "saved_{$taxonomy}", array( $this, 'clear_cache' ) );
+		}
 	}
 
 	/**
