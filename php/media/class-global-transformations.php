@@ -578,7 +578,7 @@ class Global_Transformations {
 		 */
 		$post_id = apply_filters( 'cloudinary_current_post_id', null );
 
-		if ( is_null( $post_id ) ) {
+		if ( is_null( $post_id ) && ! in_the_loop() ) {
 			return null;
 		}
 
