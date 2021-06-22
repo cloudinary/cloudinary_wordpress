@@ -852,20 +852,10 @@ class Media extends Settings_Component implements Setup {
 			'global' => array(),
 			'qf'     => array(),
 		);
-		// Get Taxonomies.
-		$new_transformations['tax'] = $this->global_transformations->get_taxonomy_transformations( $type );
+
 		if ( ! $this->global_transformations->is_taxonomy_overwrite() ) {
-			/**
-			 * Filter the default Quality and Format transformations for the specific media type.
-			 *
-			 * @param array $defaults        The default transformations array.
-			 * @param array $transformations The current transformations array.
-			 *
-			 * @return array
-			 */
-			$default                   = apply_filters( "cloudinary_default_qf_transformations_{$type}", array(), $transformations );
-			$default                   = array_filter( $default ); // Clear out empty settings.
-			$new_transformations['qf'] = Api::generate_transformation_string( array( $default ), $type );
+			// Get Taxonomies.
+			$new_transformations['tax'] = $this->global_transformations->get_taxonomy_transformations( $type );
 
 			/**
 			 * Filter the default Freeform transformations for the specific media type.
