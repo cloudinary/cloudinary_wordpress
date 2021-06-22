@@ -872,9 +872,23 @@ class Media extends Settings_Component implements Setup {
 				$new_transformations['global'] = implode( '/', $freeform );
 			}
 		}
+
+		/**
+		 * Filter the default Quality and Format transformations for the specific media type.
+		 *
+		 * @param array $defaults        The default transformations array.
+		 * @param array $transformations The current transformations array.
+		 *
+		 * @return array
+		 */
+		$default                   = apply_filters( "cloudinary_default_qf_transformations_{$type}", array(), $transformations );
+		$default                   = array_filter( $default ); // Clear out empty settings.
+		$new_transformations['qf'] = Api::generate_transformation_string( array( $default ), $type );
+
 		// Clean out empty parts, and join into a sectioned string.
 		$new_transformations = array_filter( $new_transformations );
 		$new_transformations = implode( '/', $new_transformations );
+
 		// Take sectioned string, and create a transformation array set.
 		$transformations = $this->get_transformations_from_string( $new_transformations, $type );
 		/**
