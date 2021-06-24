@@ -206,7 +206,6 @@ trait CLI_Trait {
 				$this->plugin->get_component( 'sync' )->managers['push']->process_assets( $asset, $bar );
 			}
 			delete_post_meta( $asset, '_cld_unsynced', true );
-			$bar->tick();
 		}
 		// Done message - reanalyze.
 		if ( $done === $total ) {

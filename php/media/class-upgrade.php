@@ -98,7 +98,7 @@ class Upgrade {
 			if ( empty( $public_id ) ) {
 				$public_id = implode( '/', $parts );
 			}
-			update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
+			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['version'], $asset_version );
 			if ( ! empty( $asset_transformations ) ) {
 				$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], $asset_transformations );
@@ -115,7 +115,7 @@ class Upgrade {
 				}
 				$public_id .= $suffix;
 				$this->media->delete_post_meta( $attachment_id, Sync::META_KEYS['suffix'] );
-				update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
+				$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
 			}
 			// Check folder sync in order.
 			if ( $this->media->is_folder_synced( $attachment_id ) ) {
@@ -142,8 +142,8 @@ class Upgrade {
 		if ( ! empty( $transformations ) ) {
 			$sync_key .= wp_json_encode( $transformations );
 		}
-		update_post_meta( $attachment_id, '_' . md5( $sync_key ), true );
-		update_post_meta( $attachment_id, '_' . md5( 'base_' . $public_id ), true );
+		delete_post_meta( $attachment_id, '_' . md5( $sync_key ), true );
+		delete_post_meta( $attachment_id, '_' . md5( 'base_' . $public_id ), true );
 		// Get a new uncached signature.
 		$this->sync->get_signature( $attachment_id, true );
 
