@@ -202,7 +202,11 @@ class Sync implements Setup, Assets {
 			$log = array_fill_keys( $keys, array() );
 		}
 		if ( isset( $log[ $type ] ) ) {
-			$log[ $type ] = $result;
+
+			$log[ $type ][ time() ] = $result;
+			if ( 5 < count( $log[ $type ] ) ) {
+				array_shift( $log[ $type ] );
+			}
 			$this->managers['media']->update_post_meta( $attachment_id, self::META_KEYS['process_log'], $log );
 		}
 	}
