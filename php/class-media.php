@@ -955,7 +955,7 @@ class Media extends Settings_Component implements Setup {
 	 * @return string The converted URL.
 	 */
 	public function cloudinary_url( $attachment_id, $size = array(), $transformations = array(), $cloudinary_id = null, $overwrite_transformations = false ) {
-		if ( ! ( $cloudinary_id ) ) {
+		if ( ! $cloudinary_id ) {
 			$cloudinary_id = $this->cloudinary_id( $attachment_id );
 			if ( ! $cloudinary_id ) {
 				return null;
