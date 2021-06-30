@@ -848,8 +848,8 @@ class Media extends Settings_Component implements Setup {
 		// Base image level.
 		$new_transformations = array(
 			'image'  => Api::generate_transformation_string( $transformations, $type ),
-			'global' => array(),
 			'tax'    => array(),
+			'global' => array(),
 			'qf'     => array(),
 		);
 		// Get Taxonomies.

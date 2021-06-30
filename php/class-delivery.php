@@ -9,8 +9,11 @@ namespace Cloudinary;
 
 use Cloudinary\Component\Setup;
 use Cloudinary\Media\Filter;
+use Cloudinary\Media\Global_Transformations;
+use Cloudinary\Sync;
 use Cloudinary\String_Replace;
 use Cloudinary\UI\Component\HTML;
+use WP_Post;
 
 /**
  * Plugin Delivery class.
@@ -39,6 +42,20 @@ class Delivery implements Setup {
 	protected $filter;
 
 	/**
+	 * Holds the Sync component.
+	 *
+	 * @var Sync
+	 */
+	protected $sync;
+
+	/**
+	 * Hold the Post ID.
+	 *
+	 * @var null|int
+	 */
+	protected $current_post_id = null;
+
+	/**
 	 * The meta data cache key to store URLS.
 	 *
 	 * @var string
@@ -62,88 +79,96 @@ class Delivery implements Setup {
 	 */
 	protected function setup_hooks() {
 		add_filter( 'cloudinary_filter_out_local', '__return_false' );
+		add_action( 'update_option_cloudinary_media_display', array( $this, 'clear_cache' ) );
+		add_filter( 'cloudinary_current_post_id', array( $this, 'get_current_post_id' ) );
+		add_filter( 'the_content', array( $this, 'add_post_id' ) );
+
+		// Clear cache on taxonomy update.
+		$taxonomies = get_taxonomies( array( 'show_ui' => true ) );
+		foreach ( $taxonomies as $taxonomy ) {
+			add_action( "saved_{$taxonomy}", array( $this, 'clear_cache' ) );
+		}
+	}
+
+	/**
+	 * Clear cached meta.
+	 */
+	public function clear_cache() {
+		delete_post_meta_by_key( self::META_CACHE_KEY );
+	}
+
+	/**
+	 * Add the Post ID to images and videos.
+	 *
+	 * @param string $content The content.
+	 *
+	 * @return string
+	 */
+	public function add_post_id( $content ) {
+		return str_replace(
+			array(
+				'wp-image-',
+				'wp-video-',
+			),
+			array(
+				'wp-post-' . get_the_ID() . ' wp-image-',
+				'wp-post-' . get_the_ID() . ' wp-video-',
+			),
+			$content
+		);
+	}
+
+	/**
+	 * Get the current post ID.
+	 *
+	 * @return int|null
+	 */
+	public function get_current_post_id() {
+		return $this->current_post_id ? $this->current_post_id : null;
 	}
 
 	/**
 	 * Setup component.
 	 */
 	public function setup() {
-		add_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ), 10, 5 );
 		$this->filter = $this->media->filter;
+		$this->sync   = $this->media->sync;
+
 		// Add filters.
-		add_filter( 'the_content', array( $this, 'filter_local' ) );
-		// @todo: Add filter for `cloudinary_string_replace` with method `convert_urls` To catch non ID's tags.
-		add_action( 'save_post', array( $this, 'remove_replace_cache' ), 10, 2 );
+		add_action( 'save_post', array( $this, 'remove_replace_cache' ) );
+		add_action( 'cloudinary_string_replace', array( $this, 'catch_urls' ) );
+		add_filter( 'post_thumbnail_html', array( $this, 'process_featured_image' ), 100, 3 );
+	}
+
+	/**
+	 * Add classes to the featured image tag.
+	 *
+	 * @param string $html          The image tah HTML to add to.
+	 * @param int    $post_id       Ignored.
+	 * @param int    $attachment_id The attachment_id.
+	 *
+	 * @return string
+	 */
+	public function process_featured_image( $html, $post_id, $attachment_id ) {
+		// Get tag element.
+		$tag_element                    = $this->parse_element( $html );
+		$tag_element['atts']['class'][] = 'wp-image-' . $attachment_id;
+		$tag_element['atts']['class'][] = 'wp-post-' . $post_id;
+
+		if ( true === (bool) $this->media->get_post_meta( $post_id, Global_Transformations::META_FEATURED_IMAGE_KEY, true ) ) {
+			$tag_element['atts']['class'][] = 'cld-overwrite';
+		}
+
+		return HTML::build_tag( $tag_element['tag'], $tag_element['atts'] );
 	}
 
 	/**
 	 * Delete the content replacement cache data.
 	 *
-	 * @param int    $post_id The post ID to remove cache from.
-	 * @param string $content The post content.
+	 * @param int $post_id The post ID to remove cache from.
 	 */
-	public function remove_replace_cache( $post_id, $content ) {
+	public function remove_replace_cache( $post_id ) {
 		delete_post_meta( $post_id, self::META_CACHE_KEY );
-		$this->convert_tags( $post_id, $content );
-	}
-
-	/**
-	 * Filter out the local URLS from the content.
-	 *
-	 * @param string $content The HTML of the content to filter.
-	 *
-	 * @return string
-	 */
-	public function filter_local( $content ) {
-		$post_id = get_queried_object_id();
-		if ( ! empty( $post_id ) ) {
-			$replacements = get_post_meta( $post_id, self::META_CACHE_KEY, true );
-			if ( empty( $replacements ) ) {
-				$replacements = $this->convert_tags( $post_id, $content );
-			}
-			foreach ( $replacements as $search => $replace ) {
-				String_Replace::replace( $search, $replace );
-			}
-		}
-
-		return $content;
-	}
-
-	/**
-	 * Get the attachment ID from the media tag.
-	 *
-	 * @param string $html The HTML.
-	 *
-	 * @return int[]
-	 */
-	public function get_id_from_tags( $html ) {
-		$attachment_ids = array();
-		// Get attachment id from class name.
-		if ( preg_match_all( '#class=["|\']?[^"\']*(wp-image-|wp-video-)([\d]+)[^"\']*["|\']?#i', $html, $found ) ) {
-			$attachment_ids = array_map( 'intval', $found[2] );
-		}
-
-		return $attachment_ids;
-	}
-
-	/**
-	 * Get known urls from image tags that have a wp-image-id.
-	 *
-	 * @param string $content The HTML content to get known urls from.
-	 *
-	 * @return array
-	 */
-	public function get_known_urls( $content ) {
-		$ids  = $this->get_id_from_tags( $content );
-		$urls = array();
-		foreach ( $ids as $id ) {
-			if ( ! $this->media->cloudinary_id( $id ) ) {
-				continue;
-			}
-			$urls = array_merge( $urls, $this->get_attachment_size_urls( $id ) );
-		}
-
-		return $urls;
 	}
 
 	/**
@@ -209,7 +234,9 @@ class Delivery implements Setup {
 			$results = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared
 			if ( $results ) {
 				foreach ( $results as $result ) {
-					$found = array_merge( $found, $this->get_attachment_size_urls( $result->post_id ) );
+					if ( $this->sync->is_synced( $result->post_id ) ) {
+						$found = array_merge( $found, $this->get_attachment_size_urls( $result->post_id ) );
+					}
 				}
 			}
 			$cached = $found;
@@ -222,68 +249,117 @@ class Delivery implements Setup {
 	/**
 	 * Convert media tags from Local to Cloudinary, and register with String_Replace.
 	 *
-	 * @param int    $post_id The post ID.
 	 * @param string $content The HTML to find tags and prep replacement in.
+	 *
+	 * @return array
 	 */
-	public function convert_tags( $post_id, $content ) {
-
-		$tags         = $this->filter->get_media_tags( $content );
-		$replacements = array();
+	public function convert_tags( $content ) {
+		if ( is_singular() ) {
+			$cache_key = self::META_CACHE_KEY;
+			$has_cache = get_post_meta( get_the_ID(), $cache_key, true );
+			$type      = is_ssl() ? 'https' : 'http';
+			if ( ! empty( $has_cache ) && ! empty( $has_cache[ $type ] ) ) {
+				return $has_cache[ $type ];
+			}
+		}
+		$tags           = $this->filter->get_media_tags( $content );
+		$replacements   = array();
+		$attachment_ids = array();
 		foreach ( $tags as $element ) {
-			$attachment_id = $this->filter->get_id_from_tag( $element );
-			if ( empty( $attachment_id ) ) {
+			$attachment_id         = $this->filter->get_id_from_tag( $element );
+			$this->current_post_id = $this->filter->get_id_from_tag( $element, 'wp-post-' );
+
+			if ( empty( $attachment_id ) || ! $this->sync->is_synced( $attachment_id ) ) {
 				continue;
 			}
-
-			// Get the tag type.
-			$tag = strstr( trim( $element, '<' ), ' ', true );
-
-			// Break element up.
-			$atts = shortcode_parse_atts( $element );
-
-			// Remove the old srcset if it has one.
-			if ( isset( $atts['srcset'] ) ) {
-				unset( $atts['srcset'] );
-			}
-
-			// Remove head and tail.
-			array_shift( $atts );
-			array_pop( $atts );
-
-			// Get overwrite flag.
-			$overwrite = (bool) strpos( $atts['class'], 'cld-overwrite' );
-
-			// Get size.
-			$size = $this->get_size_from_atts( $atts['class'] );
-
-			// Get transformations if present.
-			$transformations = $this->get_transformations_maybe( $atts['src'] );
-
-			// Create new src url.
-			$atts['src'] = $this->media->cloudinary_url( $attachment_id, $size, $transformations, null, $overwrite );
-
-			// Setup new tag.
-			$new_tag = array(
-				$tag,
-				HTML::build_attributes( $atts ),
-			);
-
-			$replace = HTML::compile_tag( $new_tag );
-
-			// Add new srcset.
-			$replace = $this->media->apply_srcset( $replace, $attachment_id, $overwrite );
-
 			// Register replacement.
-			$replacements[ $element ] = $replace;
+			$replacements[ $element ] = $this->rebuild_tag( $element, $attachment_id );
+			$attachment_ids[]         = $attachment_id;
+			$this->current_post_id    = null;
 		}
 
+		// Create other image sizes for ID's found.
+		foreach ( $attachment_ids as $attachment_id ) {
+			$urls = $this->get_attachment_size_urls( $attachment_id );
+			foreach ( $urls as $local => $remote ) {
+				$replacements[ $local ] = $remote;
+			}
+		}
 		// Update the post meta cache.
-		update_post_meta( $post_id, self::META_CACHE_KEY, $replacements );
-
-		// Catch others.
-		$this->catch_urls( $content );
+		if ( isset( $cache_key ) && isset( $type ) ) {
+			if ( empty( $has_cache ) ) {
+				$has_cache = array();
+			}
+			$has_cache[ $type ] = $replacements;
+			update_post_meta( get_the_ID(), $cache_key, $has_cache );
+		}
 
 		return $replacements;
+	}
+
+	/**
+	 * Rebuild a tag with cloudinary urls.
+	 *
+	 * @param string   $element       The original HTML tag.
+	 * @param null|int $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function rebuild_tag( $element, $attachment_id ) {
+		// Add our filter if not already added.
+		if ( ! has_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ) ) ) {
+			add_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ), 10, 5 );
+		}
+
+		// Get tag element.
+		$tag_element = $this->parse_element( $element );
+
+		// Remove the old srcset if it has one.
+		if ( isset( $tag_element['atts']['srcset'] ) ) {
+			unset( $tag_element['atts']['srcset'] );
+		}
+
+		// Get overwrite flag.
+		$overwrite = in_array( 'cld-overwrite', $tag_element['atts']['class'], true );
+
+		// Get size.
+		$size = $this->get_size_from_atts( $tag_element['atts'] );
+
+		// Get transformations if present.
+		$transformations = $this->get_transformations_maybe( $tag_element['atts']['src'] );
+
+		// Create new src url.
+		$tag_element['atts']['src'] = $this->media->cloudinary_url( $attachment_id, $size, $transformations, null, $overwrite );
+
+		// Setup new tag.
+		$replace = HTML::build_tag( $tag_element['tag'], $tag_element['atts'] );
+
+		// Add new srcset.
+		return $this->media->apply_srcset( $replace, $attachment_id, $overwrite );
+	}
+
+	/**
+	 * Parse an html element into tag, and attributes.
+	 *
+	 * @param string $element The HTML element.
+	 *
+	 * @return array
+	 */
+	public function parse_element( $element ) {
+		// Cleanup element.
+		$element = trim( $element, '</>' );
+
+		// Break element up.
+		$atts = shortcode_parse_atts( $element );
+		if ( ! empty( $atts['class'] ) ) {
+			$atts['class'] = explode( ' ', $atts['class'] );
+		}
+		$tag_element = array(
+			'tag'  => array_shift( $atts ),
+			'atts' => $atts,
+		);
+
+		return $tag_element;
 	}
 
 	/**
@@ -331,7 +407,7 @@ class Delivery implements Setup {
 	 * @param string $content The HTML to catch URLS from.
 	 */
 	public function catch_urls( $content ) {
-		$known = array();
+		$known = $this->convert_tags( $content );
 		$urls  = wp_extract_urls( $content );
 		$dirs  = wp_get_upload_dir();
 		$urls  = array_map(
@@ -346,7 +422,7 @@ class Delivery implements Setup {
 			$urls
 		);
 
-		$urls    = array_filter( $urls );
+		$urls    = array_filter( array_filter( $urls ), array( 'Cloudinary\String_Replace', 'string_not_set' ) );
 		$unknown = array_diff( $urls, array_keys( $known ) );
 		if ( ! empty( $unknown ) ) {
 			$known = array_merge( $known, $this->find_attachment_size_urls( $unknown ) );

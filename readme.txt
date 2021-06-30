@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: image, video, DAM, optimization, CDN
 Requires at least: 4.7
-Tested up to: 5.7.1
+Tested up to: 5.7.2
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -16,6 +16,8 @@ Cloudinary's [award-winning plugin](https://www.businesswire.com/news/home/20200
 Optimize your site performance and user experience with faster page load times, advanced auto-responsive delivery, and better visual experience. Automate image quality and video encoding settings, scale and crop images using AI to focus on the most important region, apply comprehensive video and image manipulations and effects, display assets via an interactive media gallery, and deliver optimized media experiences to any device in any resolution or pixel density.
 
 And with advanced digital asset management capabilities available in the plugin, you won’t need to leave your WordPress environment. Take full advantage of advanced search, AI-based tagging, rich media editing, collections, structured metadata, and an intuitive UI as well as our Video and Image APIs for headless DAM functionality, making it much easier to manage all of your media in WordPress.
+
+If you’re interested in gaining early access to our v3.0 plugin features - please fill this [form](https://forms.gle/bDyuYo3Zc3qMwHKq9) - We would love to have you as one of our beta testers!
 
 
 = Requirements =
@@ -127,6 +129,19 @@ The following plugins/themes/page-builders might not be fully compatible with th
 9. Use Interactive Media Gallery 
 
 == Changelog ==
+
+= 2.7.4 (23 June 2021) =
+
+Fixes and Improvements:
+
+* Improved the re-sync asset mechanism speed
+* Fixed compatibility issue with WP Webhooks plugin
+* Fixed invalid transformation message on the preview screen
+* Fixed the ordering of scaled transformations
+* Fixed legacy core compatibility issue on WP version prior to 5.3
+* Fixed the override the transformation of featured image
+* Fixed the system report which now includes Cloudinary’s configurations
+
 
 = 2.7.3 (26 May 2021) =
 
