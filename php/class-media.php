@@ -955,7 +955,7 @@ class Media extends Settings_Component implements Setup {
 	 * @return string The converted URL.
 	 */
 	public function cloudinary_url( $attachment_id, $size = array(), $transformations = array(), $cloudinary_id = null, $overwrite_transformations = false ) {
-		if ( ! ( $cloudinary_id ) ) {
+		if ( ! $cloudinary_id ) {
 			$cloudinary_id = $this->cloudinary_id( $attachment_id );
 			if ( ! $cloudinary_id ) {
 				return null;
@@ -1159,7 +1159,7 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @param int $attachment_id The ID to get Cloudinary id for.
 	 *
-	 * @return string|false the ID or null if not existing.
+	 * @return string|false the ID or false if not existing.
 	 */
 	public function cloudinary_id( $attachment_id ) {
 		static $cloudinary_ids = array();
@@ -1170,8 +1170,8 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		if ( ! $this->is_media( $attachment_id ) ) {
-			$cloudinary_ids[ $attachment_id ] = null;
-			return null;
+			$cloudinary_ids[ $attachment_id ] = false;
+			return false;
 		}
 
 		if ( ! $this->sync->is_synced( $attachment_id ) && ! defined( 'REST_REQUEST' ) ) {
@@ -1857,7 +1857,7 @@ class Media extends Settings_Component implements Setup {
 			}
 		}
 		if ( '' !== $key ) {
-			$meta = isset( $meta[ $key ] ) ? $meta[ $key ] : '';
+			$meta = isset( $meta[ $key ] ) ? $meta[ $key ] : null;
 		}
 
 		return $single ? $meta : (array) $meta;

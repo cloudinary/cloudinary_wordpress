@@ -503,7 +503,7 @@ class Sync implements Setup, Assets {
 				'priority' => 25,
 				'sync'     => array( $this->managers['upload'], 'explicit_update' ),
 				'validate' => function ( $attachment_id ) {
-					$delivery = $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['delivery'] );
+					$delivery = $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['delivery'], true );
 
 					return empty( $delivery ) || 'upload' === $delivery;
 				},
