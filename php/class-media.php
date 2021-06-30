@@ -1857,7 +1857,7 @@ class Media extends Settings_Component implements Setup {
 			}
 		}
 		if ( '' !== $key ) {
-			$meta = isset( $meta[ $key ] ) ? $meta[ $key ] : '';
+			$meta = isset( $meta[ $key ] ) ? $meta[ $key ] : null;
 		}
 
 		return $single ? $meta : (array) $meta;
