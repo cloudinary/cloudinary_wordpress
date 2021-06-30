@@ -397,6 +397,12 @@ class Api {
 			$file_url = wp_get_attachment_url( $attachment_id );
 		}
 		$media    = get_plugin_instance()->get_component( 'media' );
+		if ( ! $media->is_local_media( $attachment_id ) ) {
+			$disable_https_fetch = false; // Remote can upload via url.
+			// translators: variable is thread name and queue size.
+			$action_message = sprintf( __( 'Uploading remote url:  %1$s.', 'cloudinary' ), $file_url );
+			do_action( '_cloudinary_queue_action', $action_message );
+		}
 		$tempfile = false;
 		if ( $media && $media->is_cloudinary_url( $file_url ) ) {
 			// If this is a Cloudinary URL, then we can use it to fetch from that location.

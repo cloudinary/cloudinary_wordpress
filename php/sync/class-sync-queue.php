@@ -299,7 +299,7 @@ class Sync_Queue {
 					'compare' => 'NOT EXISTS',
 				),
 				array(
-					'key'     => Sync::META_KEYS['public_id'],
+					'key'     => Sync::META_KEYS['cloudinary'],
 					'compare' => 'NOT EXISTS',
 				),
 				array(

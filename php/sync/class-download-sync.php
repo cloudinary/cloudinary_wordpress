@@ -174,21 +174,8 @@ class Download_Sync {
 
 			// Prepare the asset.
 			update_attached_file( $attachment_id, $upload['file'] );
-			$old_meta = wp_get_attachment_metadata( $attachment_id );
-			ob_start(); // Catch possible errors in WordPress's ID3 module when setting meta for transformed videos.
-			$meta            = wp_generate_attachment_metadata( $attachment_id, $upload['file'] );
-			$captured_errors = ob_get_clean(); // Capture issues.
-			// Be sure to record v2 meta.
-			if ( ! empty( $old_meta[ Sync::META_KEYS['cloudinary'] ] ) ) {
-				$meta[ Sync::META_KEYS['cloudinary'] ] = $old_meta[ Sync::META_KEYS['cloudinary'] ];
-			} else {
-				// Maybe capture newest meta.
-				$maybe_new = wp_get_attachment_metadata( $attachment_id );
-				if ( ! empty( $maybe_new[ Sync::META_KEYS['cloudinary'] ] ) ) {
-					$meta[ Sync::META_KEYS['cloudinary'] ] = $maybe_new[ Sync::META_KEYS['cloudinary'] ];
-				}
-			}
-			wp_update_attachment_metadata( $attachment_id, $meta );
+			wp_generate_attachment_metadata( $attachment_id, $upload['file'] );
+
 			// Update the folder synced flag.
 			$public_id         = $this->media->get_public_id( $attachment_id );
 			$asset_folder      = strpos( $public_id, '/' ) ? dirname( $public_id ) : '/';
