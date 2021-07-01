@@ -87,6 +87,9 @@ $settings = array(
 				),
 				array(
 					'type' => 'group',
+					'title'        => __( 'Image Display', 'cloudinary' ),
+					'collapsible' => 'open',
+					'slug' => 'image_display',
 					array(
 						'type'         => 'on_off',
 						'slug'         => 'enable_breakpoints',
@@ -101,6 +104,7 @@ $settings = array(
 						'condition' => array(
 							'enable_breakpoints' => true,
 						),
+						'collapsible' => 'open',
 						array(
 							'type'         => 'number',
 							'slug'         => 'breakpoints',
