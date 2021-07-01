@@ -9,6 +9,7 @@ namespace Cloudinary;
 
 use Cloudinary\Component\Assets;
 use Cloudinary\Component\Setup;
+use Cloudinary\Connect\Api;
 
 /**
  * Class Responsive_Breakpoints
@@ -67,37 +68,9 @@ class Responsive_Breakpoints implements Setup, Assets {
 	 * @param Plugin $plugin Instance of the plugin.
 	 */
 	public function __construct( Plugin $plugin ) {
+
 		$this->plugin = $plugin;
 		$this->media  = $plugin->get_component( 'media' );
-	}
-
-	/**
-	 * Filter the URL components.
-	 *
-	 * @param array $url_parts The components.
-	 *
-	 * @return array|object|string
-	 */
-	public function filter_url_parts( $url_parts ) {
-		if ( false === $this->doing_responsive ) {
-			return $url_parts;
-		}
-		$default     = array(
-			'path'            => '',
-			'size'            => array(),
-			'transformations' => array(),
-			'placeholder'     => '--placehold--',
-			'version'         => '',
-			'public_id'       => '',
-			'seo_string'      => '',
-			'file_extension'  => '',
-		);
-		$breakpoints = $this->media->get_settings()->get_value( 'enable_breakpoints' );
-		if ( 'on' === $breakpoints ) {
-			$url_parts['size'] = '--size--';
-		}
-
-		return wp_parse_args( $url_parts, $default );
 	}
 
 	/**
@@ -108,6 +81,7 @@ class Responsive_Breakpoints implements Setup, Assets {
 	 * @return array
 	 */
 	public function get_placeholder_transformations( $placeholder ) {
+
 		$transformations = array(
 			'predominant' => array(
 				array(
@@ -176,26 +150,34 @@ class Responsive_Breakpoints implements Setup, Assets {
 
 		$meta   = wp_get_attachment_metadata( $attachment_id, true );
 		$format = $this->media->get_settings()->get_value( 'image_format' );
-		if ( isset( $tag_element['atts']['srcset'] ) ) {
-			unset( $tag_element['atts']['srcset'] );
-		}
-		$this->doing_responsive          = true;
-		$tag_element['atts']['data-src'] = $tag_element['atts']['src'];
-		$breakpoints                     = $this->media->get_settings()->get_value( 'enable_breakpoints' );
+
+		$src                       = $tag_element['atts']['src'];
+		$transformations           = $this->media->get_transformations_from_string( $src );
+		$placehold_transformations = $transformations;
+		$original_string           = Api::generate_transformation_string( $transformations );
+		$breakpoints               = $this->media->get_settings()->get_value( 'enable_breakpoints' );
 		if ( 'on' === $breakpoints ) {
-			$tag_element['atts']['data-src'] = $this->media->cloudinary_url( $attachment_id, array( 1 ) );
+			// Check if first is a size.
+			if ( isset( $transformations[0] ) && isset( $transformations[0]['width'] ) || isset( $transformations[0]['height'] ) ) {
+				// remove the size.
+				array_shift( $transformations );
+			}
+			$size_str                        = '--size--/' . Api::generate_transformation_string( $transformations );
+			$data_url                        = str_replace( $original_string, $size_str, $src );
+			$tag_element['atts']['data-src'] = $data_url;
+			if ( isset( $tag_element['atts']['srcset'] ) ) {
+				unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
+			}
 		}
-		$this->doing_responsive = false;
 
 		// placeholder.
 		if ( 'off' !== $settings['lazy_placeholder'] ) {
-			$placeholder                = $this->media->cloudinary_url(
-				$attachment_id,
-				'medium',
-				array( 'asset' => $this->get_placeholder_transformations( $settings['lazy_placeholder'] ) ),
-				null,
-				true
-			);
+			// Remove the optimize (last) transformation.
+			array_pop( $placehold_transformations );
+			$placehold_transformations = array_merge( $placehold_transformations, $this->get_placeholder_transformations( $settings['lazy_placeholder'] ) );
+			$palcehold_str             = Api::generate_transformation_string( $placehold_transformations );
+			$placeholder               = str_replace( $original_string, $palcehold_str, $src );
+
 			$tag_element['atts']['src'] = $placeholder;
 			if ( ! empty( $settings['lazy_preloader'] ) ) {
 				$tag_element['atts']['data-placeholder'] = $placeholder;
@@ -209,7 +191,6 @@ class Responsive_Breakpoints implements Setup, Assets {
 		}
 
 		unset( $tag_element['atts']['loading'] );
-		$this->doing_responsive            = false;
 		$tag_element['atts']['decoding']   = 'async';
 		$tag_element['atts']['data-width'] = $meta['width'];
 
@@ -222,6 +203,7 @@ class Responsive_Breakpoints implements Setup, Assets {
 	 * @return bool
 	 */
 	public function is_active() {
+
 		return ! is_admin();
 	}
 
@@ -229,6 +211,7 @@ class Responsive_Breakpoints implements Setup, Assets {
 	 * Register assets to be used for the class.
 	 */
 	public function register_assets() {
+
 		wp_register_script( 'cld-responsive-breakpoints', $this->plugin->dir_url . 'js/responsive-breakpoints.js', null, $this->plugin->version, false );
 		if ( ! is_admin() ) {
 			$this->enqueue_assets();
@@ -239,6 +222,7 @@ class Responsive_Breakpoints implements Setup, Assets {
 	 * Enqueue Assets
 	 */
 	public function enqueue_assets() {
+
 		wp_enqueue_script( 'cld-responsive-breakpoints' );
 		$breakpoints = $this->media->get_settings()->get_value( 'image_display' );
 		wp_add_inline_script( 'cld-responsive-breakpoints', 'var CLDLB = ' . wp_json_encode( $breakpoints ), 'before' );
@@ -248,12 +232,12 @@ class Responsive_Breakpoints implements Setup, Assets {
 	 * Setup the class.
 	 */
 	public function setup() {
+
 		$this->register_settings();
 		if ( ! is_admin() ) {
 			$settings = $this->settings->get_value();
 			if ( isset( $settings['use_lazy_loading'] ) && 'on' === $settings['use_lazy_loading'] ) {
 				add_filter( 'cloudinary_pre_image_tag', array( $this, 'add_features' ), 10, 3 );
-				add_filter( 'cloudinary_url_parts', array( $this, 'filter_url_parts' ) );
 			}
 		}
 	}
@@ -348,6 +332,5 @@ class Responsive_Breakpoints implements Setup, Assets {
 		$bk = $media_settings->get_setting( 'breakpoints' );
 		$bk->set_param( 'condition', $condition );
 		$bk->rebuild_component();
-
 	}
 }
