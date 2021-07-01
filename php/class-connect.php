@@ -332,7 +332,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			add_query_arg(
 				array(
 					'page' => 'dashboard',
-					'tab'  => 'connect',
+					'tab'  => 'connection',
 				),
 				admin_url( 'admin.php' )
 			)
@@ -766,7 +766,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		}
 
 		if ( 'signature' === $setting ) {
-			 $value = md5( $url );
+			$value = md5( $url );
 		}
 
 		if ( 'connect' === $setting ) {
@@ -811,7 +811,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			'page_title' => __( 'Getting Started', 'cloudinary' ),
 			'type'       => 'page',
 			'tabs'       => array(
-				'about'   => array(
+				'about'      => array(
 					'page_title' => __( 'About', 'cloudinary' ),
 					array(
 						'type'  => 'info_box',
@@ -857,7 +857,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 						'link_text' => __( 'See Examples', 'cloudinary' ),
 					),
 				),
-				'connect' => array(
+				'connection' => array(
 					'page_title' => __( 'Connect', 'cloudinary' ),
 					array(
 						'enabled' => function () use ( $self ) {

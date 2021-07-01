@@ -1935,7 +1935,7 @@ class Media extends Settings_Component implements Setup {
 		$settings    = $this->settings->get_setting( self::MEDIA_SETTINGS_SLUG )->get_value();
 
 		if ( 'on' === $settings['enable_breakpoints'] && wp_attachment_is_image( $attachment_id ) ) {
-			$meta = wp_get_attachment_metadata( $attachment_id );
+			$meta = wp_get_attachment_metadata( $attachment_id, true );
 			// Get meta image size if non exists.
 			if ( empty( $meta ) ) {
 				$meta          = array();

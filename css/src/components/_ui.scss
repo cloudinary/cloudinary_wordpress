@@ -198,8 +198,6 @@
 			align-self: center;
 			padding: 0 0.45rem;
 			cursor: pointer;
-			position: absolute;
-			right: 0;
 		}
 
 		&-title {
@@ -327,7 +325,7 @@
 
 		&-heading {
 			display: flex;
-
+			justify-content: space-between;
 			h3 {
 				font-size: 0.9rem;
 
