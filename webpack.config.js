@@ -142,6 +142,9 @@ const cldGalleryBlock = {
 		new MiniCssExtractPlugin( {
 			filename: '../css/[name].css',
 		} ),
+		new RtlCssPlugin( {
+			filename: '../css/[name]-rtl.css',
+		} ),
 	],
 };
 
