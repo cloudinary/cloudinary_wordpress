@@ -342,7 +342,7 @@ class Gallery {
 		$panel = array(
 			'type'  => 'panel',
 			'title' => __( 'Gallery Settings', 'cloudinary' ),
-			'icon'  => $this->media->plugin->dir_url . 'css/gallery.svg',
+			'icon'  => $this->media->plugin->dir_url . 'css/images/gallery.svg',
 		);
 
 		if ( WooCommerceGallery::woocommerce_active() ) {
