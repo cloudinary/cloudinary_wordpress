@@ -56,11 +56,13 @@ const ResponsiveBreakpoints = {
 			this.config.bytes_step
 		);
 		const rect = image.getBoundingClientRect();
-		const diff = window.innerHeight + parseInt( this.config.lazy_threshold, 10 );
+		const diff =
+			window.innerHeight + parseInt( this.config.lazy_threshold, 10 );
 		return (
 			! image.cld_loaded &&
 			rect.top < diff * 2 &&
-			( width > image.naturalWidth / this.density || ! image.cld_placehold )
+			( width > image.naturalWidth / this.density ||
+				! image.cld_placehold )
 		);
 	},
 	getResponsiveSteps( image ) {
@@ -77,7 +79,7 @@ const ResponsiveBreakpoints = {
 			navigator && navigator.connection
 				? navigator.connection.effectiveType
 				: 'none'
-			) {
+		) {
 			case 'none':
 				break;
 			case '4g':
@@ -101,8 +103,7 @@ const ResponsiveBreakpoints = {
 		let scaledSize = original - responsiveStep * diff;
 		if ( scaledSize > original ) {
 			scaledSize = original;
-		}
-		else if ( this.config.max_width < scaledSize ) {
+		} else if ( this.config.max_width < scaledSize ) {
 			scaledSize = original;
 		}
 		return scaledSize;
@@ -110,8 +111,7 @@ const ResponsiveBreakpoints = {
 	buildSize( image ) {
 		if ( this._shouldRebuild( image ) ) {
 			image.src = this.getSizeURL( image );
-		}
-		else if ( this._shouldPlacehold( image ) ) {
+		} else if ( this._shouldPlacehold( image ) ) {
 			image.src = this.getPlaceholderURL( image );
 		}
 	},
@@ -128,14 +128,15 @@ const ResponsiveBreakpoints = {
 			this.config.bytes_step
 		);
 		const newSize = 'w_' + width + ',dpr_' + this.density;
-		return image.dataset.src.replace( '--size--', newSize )
-		            .replace( '/--placehold--', '' )
-		            .replace( 'q_auto', this.getQuality() );
+		return image.dataset.src
+			.replace( '--size--', newSize )
+			.replace( '/--placehold--', '' )
+			.replace( 'q_auto', this.getQuality() );
 	},
 	getPlaceholderURL( image ) {
 		image.cld_placehold = true;
 		return image.dataset.placeholder;
-	}
+	},
 };
 // Init.
 window.addEventListener( 'load', () => {
