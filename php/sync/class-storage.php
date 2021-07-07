@@ -288,7 +288,7 @@ class Storage implements Notice {
 	 */
 	public function get_notices() {
 		$notices = array();
-		if ( 'cld' === $this->settings['offload'] ) {
+		if ( ! empty( $this->settings ) && 'cld' === $this->settings['offload'] ) {
 			$storage         = $this->connect->get_usage_stat( 'storage', 'used_percent' );
 			$transformations = $this->connect->get_usage_stat( 'transformations', 'used_percent' );
 			$bandwidth       = $this->connect->get_usage_stat( 'bandwidth', 'used_percent' );
