@@ -348,14 +348,18 @@ class Delivery implements Setup {
 			// Create new src url.
 			$tag_element['atts']['src'] = $this->media->cloudinary_url( $attachment_id, $size, $transformations, null, $overwrite );
 		}
+
 		/**
 		 * Filter the tag element.
 		 *
-		 * @param array  $tag_element   The tag and element array..
-		 * @param int    $attachment_id The attachment ID.
-		 * @param string $element       The original html tag.
+		 * @hook    cloudinary_pre_image_tag
+		 * @since   2.7.5
 		 *
-		 * @return array
+		 * @param $tag_element   {array}   The tag_element ( tag + attributes array).
+		 * @param $attachment_id {int} The attachment ID.
+		 * @param $element       {string}  The original HTML tag.
+		 *
+		 * @return  array
 		 */
 		$tag_element = apply_filters( 'cloudinary_pre_image_tag', $tag_element, $attachment_id, $element );
 
@@ -442,7 +446,7 @@ class Delivery implements Setup {
 		$urls  = wp_extract_urls( $content );
 		$dirs  = wp_get_upload_dir();
 		$urls  = array_map(
-			function( $url ) use ( $dirs ) {
+			function ( $url ) use ( $dirs ) {
 
 				if ( false === strpos( $url, $dirs['baseurl'] ) ) {
 					return null;

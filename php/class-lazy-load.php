@@ -218,17 +218,23 @@ class Lazy_Load implements Setup {
 					'use_lazy_loading' => true,
 				),
 				array(
-					'type'        => 'number',
-					'title'       => __( 'Lazy loading threshold', 'cloudinary' ),
-					'slug'        => 'lazy_threshold',
-					'description' => __( ' The threshold', 'cloudinary' ),
-					'default'     => 1000,
+					'type'       => 'text',
+					'title'      => __( 'Lazy loading threshold', 'cloudinary' ),
+					'slug'       => 'lazy_threshold',
+					'attributes' => array(
+						'style'            => array(
+							'width:100px;display:block;',
+						),
+						'data-auto-suffix' => '*px;em;rem;vw;vh',
+					),
+
+					'default' => '1000px',
 				),
 				array(
 					'type'        => 'radio',
 					'title'       => __( 'Placeholder generation', 'cloudinary' ),
 					'slug'        => 'lazy_placeholder',
-					'description' => __( ' The placeholder', 'cloudinary' ),
+					'description' => __( 'The placeholder', 'cloudinary' ),
 					'default'     => 'blur',
 					'options'     => array(
 						'blur'        => __( 'Blur', 'cloudinary' ),
@@ -242,7 +248,7 @@ class Lazy_Load implements Setup {
 					'type'        => 'checkbox',
 					'title'       => __( 'Initial preloader', 'cloudinary' ),
 					'slug'        => 'lazy_preloader',
-					'description' => __( ' The preloader', 'cloudinary' ),
+					'description' => __( 'The preloader', 'cloudinary' ),
 					'default'     => 'on',
 					'options'     => array(
 						'on' => __( 'Use an initial preloader', 'cloudinary' ),
@@ -252,7 +258,7 @@ class Lazy_Load implements Setup {
 					'type'        => 'checkbox',
 					'title'       => __( 'Use custom preloader', 'cloudinary' ),
 					'slug'        => 'lazy_custom_preloader',
-					'description' => __( ' The custom preloader', 'cloudinary' ),
+					'description' => __( 'The custom preloader', 'cloudinary' ),
 					'default'     => 'on',
 					'condition'   => array(
 						'lazy_preloader' => true,
@@ -273,7 +279,7 @@ class Lazy_Load implements Setup {
 	protected function register_settings() {
 
 		// Move setting to media.
-		$media_settings  = $this->media->get_settings()->get_setting( 'image_display' );
+		$media_settings = $this->media->get_settings()->get_setting( 'image_display' );
 
 		$settings_params = $this->settings();
 		$this->settings  = $media_settings->create_setting( $this->settings_slug, $settings_params, $media_settings );
@@ -281,10 +287,10 @@ class Lazy_Load implements Setup {
 		// Reset the option parent.
 		$this->settings->get_option_parent()->set_value( null );
 
-		$condition       = array(
+		$condition = array(
 			'use_lazy_loading' => false,
 		);
-		$bk = $media_settings->get_setting( 'breakpoints' );
+		$bk        = $media_settings->get_setting( 'breakpoints' );
 		$bk->set_param( 'condition', $condition );
 		$bk->rebuild_component();
 
