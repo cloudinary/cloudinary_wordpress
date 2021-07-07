@@ -30,6 +30,17 @@ const ResponsiveBreakpoints = {
 			this._build();
 		}, 100 );
 	},
+	_getDensity() {
+		const maxDensity = CLDLB.dpr;
+		let deviceDensity = this.density;
+		if ( CLDLB.dpr_precise && 'auto' !== deviceDensity ) {
+			deviceDensity =
+				deviceDensity > Math.ceil( maxDensity )
+					? maxDensity
+					: deviceDensity;
+		}
+		return deviceDensity;
+	},
 	_build() {
 		this.images.forEach( ( image ) => {
 			this.buildSize( image );
@@ -42,11 +53,12 @@ const ResponsiveBreakpoints = {
 			this.config.bytes_step
 		);
 		const rect = image.getBoundingClientRect();
+		const density = 'auto' !== this.density ? this._getDensity() : 1;
 		const diff =
 			window.innerHeight + parseInt( this.config.lazy_threshold, 10 );
 		return (
 			rect.top < diff &&
-			( width > image.naturalWidth / this.density || ! image.cld_loaded )
+			( width > image.naturalWidth / density || ! image.cld_loaded )
 		);
 	},
 	_shouldPlacehold( image ) {
@@ -56,13 +68,13 @@ const ResponsiveBreakpoints = {
 			this.config.bytes_step
 		);
 		const rect = image.getBoundingClientRect();
+		const density = 'auto' !== this.density ? this._getDensity() : 1;
 		const diff =
 			window.innerHeight + parseInt( this.config.lazy_threshold, 10 );
 		return (
 			! image.cld_loaded &&
 			rect.top < diff * 2 &&
-			( width > image.naturalWidth / this.density ||
-				! image.cld_placehold )
+			( width > image.naturalWidth / density || ! image.cld_placehold )
 		);
 	},
 	getResponsiveSteps( image ) {
@@ -127,11 +139,11 @@ const ResponsiveBreakpoints = {
 			image.width,
 			this.config.bytes_step
 		);
-		const newSize = 'w_' + width + ',dpr_' + this.density;
+		const newSize = 'w_' + width + ',dpr_' + this._getDensity();
 		return image.dataset.src
 			.replace( '--size--', newSize )
 			.replace( '/--placehold--', '' )
-			.replace( 'q_auto', this.getQuality() );
+			.replace( /q_auto(?!:)/gi, this.getQuality() );
 	},
 	getPlaceholderURL( image ) {
 		image.cld_placehold = true;
