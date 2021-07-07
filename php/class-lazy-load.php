@@ -278,6 +278,9 @@ class Lazy_Load implements Setup {
 		$settings_params = $this->settings();
 		$this->settings  = $media_settings->create_setting( $this->settings_slug, $settings_params, $media_settings );
 
+		// Reset the option parent.
+		$this->settings->get_option_parent()->set_value( null );
+
 		$condition       = array(
 			'use_lazy_loading' => false,
 		);
