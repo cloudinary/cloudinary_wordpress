@@ -159,7 +159,14 @@ class Lazy_Load implements Setup {
 		}
 
 		if ( ! empty( $settings['lazy_preloader'] ) ) {
-			$svg                              = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $meta['width'] . '" height="' . $meta['height'] . '"><rect width="100%" height="100%"><animate attributeName="fill" values="rgba(200,200,200,0.3);rgba(200,200,200,1);rgba(200,200,200,0.3)" dur="2s" repeatCount="indefinite" /></rect></svg>';
+			$color_str = $settings['lazy_custom_color'];
+			if ( 'on' === $settings['lazy_animate'] ) {
+				$colors    = explode( ',', rtrim( substr( $settings['lazy_custom_color'], 5 ), ')' ) );
+				$color1    = 'rgba(' . $colors[0] . ',' . $colors[1] . ',' . $colors[2] . ',' . $colors[3] . ')';
+				$color2    = 'rgba(' . $colors[0] . ',' . $colors[1] . ',' . $colors[2] . ',0)';
+				$color_str = $color1 . ';' . $color2 . ';' . $color1;
+			}
+			$svg                              = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $meta['width'] . '" height="' . $meta['height'] . '"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $color_str . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
 			$tag_element['atts']['src']       = 'data:image/svg+xml;utf8,' . $svg;
 			$tag_element['atts']['data-type'] = $format;
 		}
@@ -245,26 +252,31 @@ class Lazy_Load implements Setup {
 					),
 				),
 				array(
-					'type'        => 'checkbox',
-					'title'       => __( 'Initial preloader', 'cloudinary' ),
-					'slug'        => 'lazy_preloader',
-					'description' => __( 'The preloader', 'cloudinary' ),
-					'default'     => 'on',
-					'options'     => array(
+					'type'  => 'checkbox',
+					'title' => __( 'Initial preloader', 'cloudinary' ),
+					'slug'  => 'lazy_preloader',
+
+					'default' => 'on',
+					'options' => array(
 						'on' => __( 'Use an initial preloader', 'cloudinary' ),
 					),
 				),
 				array(
-					'type'        => 'checkbox',
-					'title'       => __( 'Use custom preloader', 'cloudinary' ),
-					'slug'        => 'lazy_custom_preloader',
-					'description' => __( 'The custom preloader', 'cloudinary' ),
-					'default'     => 'on',
-					'condition'   => array(
+					'type'      => 'color',
+					'title'     => __( 'Use custom color', 'cloudinary' ),
+					'slug'      => 'lazy_custom_color',
+					'default'   => 'rgba(153,153,153,0.5)',
+					'condition' => array(
 						'lazy_preloader' => true,
 					),
-					'options'     => array(
-						'on' => __( 'Use a custom preloader', 'cloudinary' ),
+				),
+				array(
+					'type'      => 'on_off',
+					'title'     => __( 'Animate', 'cloudinary' ),
+					'slug'      => 'lazy_animate',
+					'default'   => 'on',
+					'condition' => array(
+						'lazy_preloader' => true,
 					),
 				),
 			),
