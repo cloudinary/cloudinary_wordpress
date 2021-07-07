@@ -41,8 +41,8 @@ class Beta {
 				'options' => array(),
 			),
 			'responsive_breakpoints' => array(
-				'class'   => 'Cloudinary\Responsive_Breakpoints',
-				'name'    => __( 'New Responsive Breakpoints', 'cloudinary' ),
+				'class'   => array( 'Cloudinary\Lazy_Load', 'Cloudinary\Responsive_Breakpoints' ),
+				'name'    => __( 'New Lazy Load and Responsive Breakpoints', 'cloudinary' ),
 				'options' => array(),
 				'deps'    => array( 'delivery' ),
 			),
@@ -67,7 +67,11 @@ class Beta {
 			 * @return  {bool}
 			 */
 			if ( apply_filters( 'cloudinary_beta', false, $key, $data ) ) {
-				$this->plugin->components[ $key ] = new $data['class']( $this->plugin );
+				foreach ( (array) $data['class'] as $class ) {
+					$namespace                         = explode( '\\', $class );
+					$name                              = strtolower( array_pop( $namespace ) );
+					$this->plugin->components[ $name ] = new $class( $this->plugin );
+				}
 			}
 		}
 	}

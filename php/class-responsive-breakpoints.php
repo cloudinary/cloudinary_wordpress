@@ -74,68 +74,6 @@ class Responsive_Breakpoints implements Setup, Assets {
 	}
 
 	/**
-	 * Get the placeholder generation transformations.
-	 *
-	 * @param string $placeholder The placeholder to get.
-	 *
-	 * @return array
-	 */
-	public function get_placeholder_transformations( $placeholder ) {
-
-		$transformations = array(
-			'predominant' => array(
-				array(
-					'$currWidth'  => 'w',
-					'$currHeight' => 'h',
-				),
-				array(
-					'width'        => 'iw_div_2',
-					'aspect_ratio' => 1,
-					'crop'         => 'pad',
-					'background'   => 'auto',
-				),
-				array(
-					'crop'    => 'crop',
-					'width'   => 10,
-					'height'  => 10,
-					'gravity' => 'north_east',
-				),
-				array(
-					'width'  => '$currWidth',
-					'height' => '$currHeight',
-					'crop'   => 'fill',
-				),
-				array(
-					'fetch_format' => 'auto',
-					'quality'      => 'auto',
-				),
-			),
-			'vectorize'   => array(
-				array(
-					'effect'       => 'vectorize:3:0.1',
-					'fetch_format' => 'svg',
-				),
-			),
-			'blur'        => array(
-				array(
-					'effect'       => 'blur:2000',
-					'quality'      => 1,
-					'fetch_format' => 'auto',
-				),
-			),
-			'pixelate'    => array(
-				array(
-					'effect'       => 'pixelate',
-					'quality'      => 1,
-					'fetch_format' => 'auto',
-				),
-			),
-		);
-
-		return $transformations[ $placeholder ];
-	}
-
-	/**
 	 * Add features to a tag element set.
 	 *
 	 * @param array  $tag_element   The tag element set.
@@ -146,53 +84,24 @@ class Responsive_Breakpoints implements Setup, Assets {
 	 */
 	public function add_features( $tag_element, $attachment_id, $original_tag ) {
 
-		$settings = $this->settings->get_value();
-
-		$meta   = wp_get_attachment_metadata( $attachment_id, true );
-		$format = $this->media->get_settings()->get_value( 'image_format' );
-
-		$src                       = $tag_element['atts']['src'];
-		$transformations           = $this->media->get_transformations_from_string( $src );
-		$placehold_transformations = $transformations;
-		$original_string           = Api::generate_transformation_string( $transformations );
-		$breakpoints               = $this->media->get_settings()->get_value( 'enable_breakpoints' );
-		if ( 'on' === $breakpoints ) {
-			// Check if first is a size.
-			if ( isset( $transformations[0] ) && isset( $transformations[0]['width'] ) || isset( $transformations[0]['height'] ) ) {
-				// remove the size.
-				array_shift( $transformations );
-			}
-			$size_str                        = '--size--/' . Api::generate_transformation_string( $transformations );
-			$data_url                        = str_replace( $original_string, $size_str, $src );
-			$tag_element['atts']['data-src'] = $data_url;
-			if ( isset( $tag_element['atts']['srcset'] ) ) {
-				unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
-			}
+		$src = $tag_element['atts']['src'];
+		if ( ! $this->media->is_cloudinary_url( $src ) ) {
+			$src = $this->media->cloudinary_url( $attachment_id );
 		}
+		$transformations = $this->media->get_transformations_from_string( $src );
+		$original_string = Api::generate_transformation_string( $transformations );
 
-		// placeholder.
-		if ( 'off' !== $settings['lazy_placeholder'] ) {
-			// Remove the optimize (last) transformation.
-			array_pop( $placehold_transformations );
-			$placehold_transformations = array_merge( $placehold_transformations, $this->get_placeholder_transformations( $settings['lazy_placeholder'] ) );
-			$palcehold_str             = Api::generate_transformation_string( $placehold_transformations );
-			$placeholder               = str_replace( $original_string, $palcehold_str, $src );
-
-			$tag_element['atts']['src'] = $placeholder;
-			if ( ! empty( $settings['lazy_preloader'] ) ) {
-				$tag_element['atts']['data-placeholder'] = $placeholder;
-			}
+		// Check if first is a size.
+		if ( isset( $transformations[0] ) && isset( $transformations[0]['width'] ) || isset( $transformations[0]['height'] ) ) {
+			// remove the size.
+			array_shift( $transformations );
 		}
-
-		if ( ! empty( $settings['lazy_preloader'] ) ) {
-			$svg                              = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $meta['width'] . '" height="' . $meta['height'] . '"><rect width="100%" height="100%"><animate attributeName="fill" values="rgba(200,200,200,0.3);rgba(200,200,200,1);rgba(200,200,200,0.3)" dur="2s" repeatCount="indefinite" /></rect></svg>';
-			$tag_element['atts']['src']       = 'data:image/svg+xml;utf8,' . $svg;
-			$tag_element['atts']['data-type'] = $format;
+		$size_str                        = '--size--/' . Api::generate_transformation_string( $transformations );
+		$data_url                        = str_replace( $original_string, $size_str, $src );
+		$tag_element['atts']['data-src'] = $data_url;
+		if ( isset( $tag_element['atts']['srcset'] ) ) {
+			unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 		}
-
-		unset( $tag_element['atts']['loading'] );
-		$tag_element['atts']['decoding']   = 'async';
-		$tag_element['atts']['data-width'] = $meta['width'];
 
 		return $tag_element;
 	}
@@ -222,24 +131,37 @@ class Responsive_Breakpoints implements Setup, Assets {
 	 * Enqueue Assets
 	 */
 	public function enqueue_assets() {
-
 		wp_enqueue_script( 'cld-responsive-breakpoints' );
-		$breakpoints = $this->media->get_settings()->get_value( 'image_display' );
-		wp_add_inline_script( 'cld-responsive-breakpoints', 'var CLDLB = ' . wp_json_encode( $breakpoints ), 'before' );
+		$config = $this->media->get_settings()->get_value( 'image_display' );
+		wp_add_inline_script( 'cld-responsive-breakpoints', 'var CLDLB = ' . wp_json_encode( $config ), 'before' );
 	}
 
 	/**
 	 * Setup the class.
 	 */
 	public function setup() {
-
 		$this->register_settings();
+		add_filter( 'cloudinary_sync_base_struct', array( $this, 'remove_legacy_breakpoints' ) );
 		if ( ! is_admin() ) {
 			$settings = $this->settings->get_value();
-			if ( isset( $settings['use_lazy_loading'] ) && 'on' === $settings['use_lazy_loading'] ) {
+			if ( isset( $settings['use_lazy_loading'] ) && 'on' === $settings['use_lazy_loading'] && 'on' === $settings['enable_breakpoints'] ) {
 				add_filter( 'cloudinary_pre_image_tag', array( $this, 'add_features' ), 10, 3 );
 			}
 		}
+	}
+
+	/**
+	 * Remove the legacy breakpoints sync type and filters.
+	 *
+	 * @param array $structs The sync types structure.
+	 *
+	 * @return array
+	 */
+	public function remove_legacy_breakpoints( $structs ) {
+		unset( $structs['breakpoints'] );
+		remove_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ), 10 );
+
+		return $structs;
 	}
 
 	/**
@@ -248,71 +170,7 @@ class Responsive_Breakpoints implements Setup, Assets {
 	 * @return array
 	 */
 	public function settings() {
-
-		$args = array(
-			'type'     => 'group',
-			'title'    => __( 'Lazy Loading', 'cloudinary' ),
-			'slug'     => 'lazy_loading',
-			'priority' => 9,
-			array(
-				'type'        => 'on_off',
-				'description' => __( 'Enable lazy loading', 'cloudinary' ),
-				'slug'        => 'use_lazy_loading',
-				'default'     => 'off',
-			),
-			array(
-				'type'      => 'group',
-				'condition' => array(
-					'use_lazy_loading' => true,
-				),
-				array(
-					'type'        => 'number',
-					'title'       => __( 'Lazy loading threshold', 'cloudinary' ),
-					'slug'        => 'lazy_threshold',
-					'description' => __( ' The threshold', 'cloudinary' ),
-					'default'     => 1000,
-				),
-				array(
-					'type'        => 'radio',
-					'title'       => __( 'Placeholder generation', 'cloudinary' ),
-					'slug'        => 'lazy_placeholder',
-					'description' => __( ' The placeholder', 'cloudinary' ),
-					'default'     => 'blur',
-					'options'     => array(
-						'blur'        => __( 'Blur', 'cloudinary' ),
-						'pixelate'    => __( 'Pixelate', 'cloudinary' ),
-						'vectorize'   => __( 'Vectorize', 'cloudinary' ),
-						'predominant' => __( 'Dominant Color', 'cloudinary' ),
-						'off'         => __( 'Off', 'cloudinary' ),
-					),
-				),
-				array(
-					'type'        => 'checkbox',
-					'title'       => __( 'Initial preloader', 'cloudinary' ),
-					'slug'        => 'lazy_preloader',
-					'description' => __( ' The preloader', 'cloudinary' ),
-					'default'     => 'on',
-					'options'     => array(
-						'on' => __( 'Use an initial preloader', 'cloudinary' ),
-					),
-				),
-				array(
-					'type'        => 'checkbox',
-					'title'       => __( 'Use custom preloader', 'cloudinary' ),
-					'slug'        => 'lazy_custom_preloader',
-					'description' => __( ' The custom preloader', 'cloudinary' ),
-					'default'     => 'on',
-					'condition'   => array(
-						'lazy_preloader' => true,
-					),
-					'options'     => array(
-						'on' => __( 'Use a custom preloader', 'cloudinary' ),
-					),
-				),
-			),
-		);
-
-		return $args;
+		return array();
 	}
 
 	/**
@@ -320,17 +178,41 @@ class Responsive_Breakpoints implements Setup, Assets {
 	 */
 	protected function register_settings() {
 
-		// Move setting to media.
-		$media_settings  = $this->media->get_settings()->get_setting( 'image_display' );
-		$condition       = array(
-			'use_lazy_loading' => false,
+		$media_settings    = $this->media->get_settings()->get_setting( 'image_display' );
+		$image_breakpoints = $media_settings->get_setting( 'image_breakpoints' );
+		// Add pixel step.
+		$params = array(
+			'type'         => 'number',
+			'slug'         => 'pixel_step',
+			'priority'     => 9,
+			'title'        => __( 'Breakpoints distance', 'cloudinary' ),
+			'tooltip_text' => __( 'The distance from the original image for responsive breakpoints generation.', 'cloudinary' ),
+			'suffix'       => __( 'px', 'cloudinary' ),
+			'default'      => 100,
+			'condition'    => array(
+				'use_lazy_loading' => true,
+			),
 		);
-		$settings_params = $this->settings();
-		$this->settings  = $this->plugin->settings->create_setting( $this->settings_slug, $settings_params );
-		$media_settings->add_setting( $this->settings );
+		$image_breakpoints->create_setting( 'pixel_step', $params, $image_breakpoints );
 
-		$bk = $media_settings->get_setting( 'breakpoints' );
-		$bk->set_param( 'condition', $condition );
-		$bk->rebuild_component();
+		// Add density.
+		$params = array(
+			'type'         => 'select',
+			'slug'         => 'dpr',
+			'priority'     => 8,
+			'title'        => __( 'DPR settings', 'cloudinary' ),
+			'tooltip_text' => __( 'The distance from the original image for responsive breakpoints generation.', 'cloudinary' ),
+			'default'      => 'auto',
+			'options'      => array(
+				'0'    => __( 'None', 'cloudinary' ),
+				'auto' => __( 'Auto', 'cloudinary' ),
+				'2'    => __( '2X', 'cloudinary' ),
+				'3'    => __( '3X', 'cloudinary' ),
+				'4'    => __( '4X', 'cloudinary' ),
+			),
+		);
+		$image_breakpoints->create_setting( 'dpr', $params, $image_breakpoints )->get_value();
+
+		$this->settings = $media_settings;
 	}
 }

@@ -99,9 +99,10 @@ $settings = array(
 						'default'      => 'off',
 					),
 					array(
-						'type'      => 'group',
-						'title'     => __( 'Image breakpoints', 'cloudinary' ),
-						'condition' => array(
+						'type'        => 'group',
+						'title'       => __( 'Image breakpoints', 'cloudinary' ),
+						'slug'        => 'image_breakpoints',
+						'condition'   => array(
 							'enable_breakpoints' => true,
 						),
 						'collapsible' => 'open',
