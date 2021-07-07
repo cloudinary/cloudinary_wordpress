@@ -141,6 +141,7 @@ class Delivery implements Setup {
 		$this->sync   = $this->media->sync;
 
 		// Add filters.
+		add_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ), 10, 5 );
 		add_action( 'save_post', array( $this, 'remove_replace_cache' ) );
 		add_action( 'cloudinary_string_replace', array( $this, 'catch_urls' ) );
 		add_filter( 'post_thumbnail_html', array( $this, 'process_featured_image' ), 100, 3 );
@@ -318,34 +319,35 @@ class Delivery implements Setup {
 	 */
 	public function rebuild_tag( $element, $attachment_id ) {
 
-		// Add our filter if not already added.
-		if ( ! has_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ) ) ) {
-			add_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ), 10, 5 );
-		}
-
+		// Check overwrite.
 		$overwrite = (bool) strpos( $element, 'cld-overwrite' );
 
-		// Add new srcset.
-		$element = str_replace( 'srcsert=', 'old-srcset=', $element );
-		$element = str_replace( 'sizes=', 'old-sizes=', $element );
-		$element = $this->media->apply_srcset( $element, $attachment_id, $overwrite );
 		// Get tag element.
 		$tag_element = $this->parse_element( $element );
-
-		// Remove the old srcset if it has one.
-		if ( isset( $tag_element['atts']['old-srcset'] ) ) {
-			unset( $tag_element['atts']['old-srcset'], $tag_element['atts']['old-sizes'] );
-		}
 
 		// Get size.
 		$size = $this->get_size_from_atts( $tag_element['atts'] );
 
+		// If no srcset, lets see if we can create them (ie, featured image etc...).
+		if ( ! isset( $tag_element['atts']['srcset'] ) && ! empty( $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['breakpoints'] ) ) ) {
+			$image_meta                    = wp_get_attachment_metadata( $attachment_id );
+			$srcset                        = $this->media->image_srcset( array(), $size, $tag_element['atts']['src'], $image_meta, $attachment_id );
+			$srcset                        = array_map(
+				function ( $set ) {
+					return $set['url'] . ' ' . $set['value'] . $set['descriptor'];
+				},
+				$srcset
+			);
+			$tag_element['atts']['srcset'] = implode( ', ', $srcset );
+		}
 		// Get transformations if present.
 		$transformations = $this->get_transformations_maybe( $tag_element['atts']['src'] );
 
-		// Create new src url.
-		$tag_element['atts']['src'] = $this->media->cloudinary_url( $attachment_id, $size, $transformations, null, $overwrite );
-
+		// Get cloudinary URL, only if overwrite or has inline transformations. Catch all will replace standard urls.
+		if ( $overwrite || $transformations ) {
+			// Create new src url.
+			$tag_element['atts']['src'] = $this->media->cloudinary_url( $attachment_id, $size, $transformations, null, $overwrite );
+		}
 		/**
 		 * Filter the tag element.
 		 *
