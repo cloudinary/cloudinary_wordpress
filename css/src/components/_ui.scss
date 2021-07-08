@@ -323,6 +323,10 @@
 			clear: both;
 		}
 
+		.cld-group .cld-group hr.cld-group {
+			display: none;
+		}
+
 		&-heading {
 			display: flex;
 			justify-content: space-between;
