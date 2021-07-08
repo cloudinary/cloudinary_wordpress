@@ -35,14 +35,25 @@ class Beta {
 		$this->plugin = $plugin;
 
 		$this->components = array(
-			'delivery' => array(
+			'delivery'               => array(
 				'class'   => 'Cloudinary\Delivery',
 				'name'    => __( 'New Delivery method', 'cloudinary' ),
 				'options' => array(),
 			),
+			'responsive_breakpoints' => array(
+				'class'   => array( 'Cloudinary\Lazy_Load', 'Cloudinary\Responsive_Breakpoints' ),
+				'name'    => __( 'New Lazy Load and Responsive Breakpoints', 'cloudinary' ),
+				'options' => array(),
+				'deps'    => array( 'delivery' ),
+			),
 		);
 
 		foreach ( $this->components as $key => $data ) {
+
+			if ( ! empty( $data['deps'] ) && empty( array_intersect( $data['deps'], array_keys( $this->plugin->components ) ) ) ) {
+				continue;
+			}
+
 			/**
 			 * Filter to enable beta features for testing.
 			 *
@@ -53,10 +64,14 @@ class Beta {
 			 * @param $feature {string} Optional feature type.
 			 * @param $data    {array}  The beta feature data.
 			 *
-			 * @return {bool}
+			 * @return  {bool}
 			 */
 			if ( apply_filters( 'cloudinary_beta', false, $key, $data ) ) {
-				$this->plugin->components[ $key ] = new $data['class']( $this->plugin );
+				foreach ( (array) $data['class'] as $class ) {
+					$namespace                         = explode( '\\', $class );
+					$name                              = strtolower( array_pop( $namespace ) );
+					$this->plugin->components[ $name ] = new $class( $this->plugin );
+				}
 			}
 		}
 	}

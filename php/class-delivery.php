@@ -68,6 +68,7 @@ class Delivery implements Setup {
 	 * @param Plugin $plugin Global instance of the main plugin.
 	 */
 	public function __construct( Plugin $plugin ) {
+
 		$this->plugin                        = $plugin;
 		$this->plugin->components['replace'] = new String_Replace( $this->plugin );
 		$this->media                         = $this->plugin->get_component( 'media' );
@@ -78,8 +79,10 @@ class Delivery implements Setup {
 	 * Setup early needed hooks.
 	 */
 	protected function setup_hooks() {
+
 		add_filter( 'cloudinary_filter_out_local', '__return_false' );
 		add_action( 'update_option_cloudinary_media_display', array( $this, 'clear_cache' ) );
+		add_action( 'cloudinary_flush_cache', array( $this, 'clear_cache' ) );
 		add_filter( 'cloudinary_current_post_id', array( $this, 'get_current_post_id' ) );
 		add_filter( 'the_content', array( $this, 'add_post_id' ) );
 
@@ -94,6 +97,7 @@ class Delivery implements Setup {
 	 * Clear cached meta.
 	 */
 	public function clear_cache() {
+
 		delete_post_meta_by_key( self::META_CACHE_KEY );
 	}
 
@@ -105,6 +109,7 @@ class Delivery implements Setup {
 	 * @return string
 	 */
 	public function add_post_id( $content ) {
+
 		return str_replace(
 			array(
 				'wp-image-',
@@ -124,6 +129,7 @@ class Delivery implements Setup {
 	 * @return int|null
 	 */
 	public function get_current_post_id() {
+
 		return $this->current_post_id ? $this->current_post_id : null;
 	}
 
@@ -131,10 +137,12 @@ class Delivery implements Setup {
 	 * Setup component.
 	 */
 	public function setup() {
+
 		$this->filter = $this->media->filter;
 		$this->sync   = $this->media->sync;
 
 		// Add filters.
+		add_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ), 10, 5 );
 		add_action( 'save_post', array( $this, 'remove_replace_cache' ) );
 		add_action( 'cloudinary_string_replace', array( $this, 'catch_urls' ) );
 		add_filter( 'post_thumbnail_html', array( $this, 'process_featured_image' ), 100, 3 );
@@ -150,6 +158,7 @@ class Delivery implements Setup {
 	 * @return string
 	 */
 	public function process_featured_image( $html, $post_id, $attachment_id ) {
+
 		// Get tag element.
 		$tag_element                    = $this->parse_element( $html );
 		$tag_element['atts']['class'][] = 'wp-image-' . $attachment_id;
@@ -168,6 +177,7 @@ class Delivery implements Setup {
 	 * @param int $post_id The post ID to remove cache from.
 	 */
 	public function remove_replace_cache( $post_id ) {
+
 		delete_post_meta( $post_id, self::META_CACHE_KEY );
 	}
 
@@ -179,6 +189,7 @@ class Delivery implements Setup {
 	 * @return array
 	 */
 	public function get_attachment_size_urls( $attachment_id ) {
+
 		$urls             = array();
 		$meta             = wp_get_attachment_metadata( $attachment_id );
 		$baseurl          = wp_get_attachment_url( $attachment_id );
@@ -187,6 +198,9 @@ class Delivery implements Setup {
 		// Ignore getting 'original_image' since this isn't used in the front end.
 		if ( ! empty( $meta['sizes'] ) ) {
 			foreach ( $meta['sizes'] as $data ) {
+				if ( isset( $urls[ $base . $data['file'] ] ) ) {
+					continue;
+				}
 				$urls[ $base . $data['file'] ] = $this->media->cloudinary_url(
 					$attachment_id,
 					array(
@@ -208,6 +222,7 @@ class Delivery implements Setup {
 	 * @return array
 	 */
 	public function find_attachment_size_urls( $urls ) {
+
 		global $wpdb;
 		$dirs   = wp_get_upload_dir();
 		$search = array();
@@ -254,6 +269,7 @@ class Delivery implements Setup {
 	 * @return array
 	 */
 	public function convert_tags( $content ) {
+
 		if ( is_singular() ) {
 			$cache_key = self::META_CACHE_KEY;
 			$has_cache = get_post_meta( get_the_ID(), $cache_key, true );
@@ -306,36 +322,55 @@ class Delivery implements Setup {
 	 * @return string
 	 */
 	public function rebuild_tag( $element, $attachment_id ) {
-		// Add our filter if not already added.
-		if ( ! has_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ) ) ) {
-			add_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ), 10, 5 );
-		}
+
+		// Check overwrite.
+		$overwrite = (bool) strpos( $element, 'cld-overwrite' );
 
 		// Get tag element.
 		$tag_element = $this->parse_element( $element );
 
-		// Remove the old srcset if it has one.
-		if ( isset( $tag_element['atts']['srcset'] ) ) {
-			unset( $tag_element['atts']['srcset'] );
-		}
-
-		// Get overwrite flag.
-		$overwrite = in_array( 'cld-overwrite', $tag_element['atts']['class'], true );
-
 		// Get size.
 		$size = $this->get_size_from_atts( $tag_element['atts'] );
 
+		// If no srcset, lets see if we can create them (ie, featured image etc...).
+		if ( ! isset( $tag_element['atts']['srcset'] ) && ! empty( $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['breakpoints'] ) ) ) {
+			$image_meta                    = wp_get_attachment_metadata( $attachment_id );
+			$srcset                        = $this->media->image_srcset( array(), $size, $tag_element['atts']['src'], $image_meta, $attachment_id );
+			$srcset                        = array_map(
+				function ( $set ) {
+					return $set['url'] . ' ' . $set['value'] . $set['descriptor'];
+				},
+				$srcset
+			);
+			$tag_element['atts']['srcset'] = implode( ', ', $srcset );
+		}
 		// Get transformations if present.
 		$transformations = $this->get_transformations_maybe( $tag_element['atts']['src'] );
 
-		// Create new src url.
-		$tag_element['atts']['src'] = $this->media->cloudinary_url( $attachment_id, $size, $transformations, null, $overwrite );
+		// Get cloudinary URL, only if overwrite or has inline transformations. Catch all will replace standard urls.
+		if ( $overwrite || $transformations ) {
+			// Create new src url.
+			$tag_element['atts']['src'] = $this->media->cloudinary_url( $attachment_id, $size, $transformations, null, $overwrite );
+		}
+
+		/**
+		 * Filter the tag element.
+		 *
+		 * @hook    cloudinary_pre_image_tag
+		 * @since   2.7.5
+		 *
+		 * @param $tag_element   {array}   The tag_element ( tag + attributes array).
+		 * @param $attachment_id {int} The attachment ID.
+		 * @param $element       {string}  The original HTML tag.
+		 *
+		 * @return  array
+		 */
+		$tag_element = apply_filters( 'cloudinary_pre_image_tag', $tag_element, $attachment_id, $element );
 
 		// Setup new tag.
 		$replace = HTML::build_tag( $tag_element['tag'], $tag_element['atts'] );
 
-		// Add new srcset.
-		return $this->media->apply_srcset( $replace, $attachment_id, $overwrite );
+		return $replace;
 	}
 
 	/**
@@ -346,6 +381,7 @@ class Delivery implements Setup {
 	 * @return array
 	 */
 	public function parse_element( $element ) {
+
 		// Cleanup element.
 		$element = trim( $element, '</>' );
 
@@ -370,6 +406,7 @@ class Delivery implements Setup {
 	 * @return array
 	 */
 	protected function get_size_from_atts( $atts ) {
+
 		$size = array();
 		if ( ! empty( $atts['width'] ) ) {
 			$size[] = $atts['width'];
@@ -389,6 +426,7 @@ class Delivery implements Setup {
 	 * @return array|null
 	 */
 	protected function get_transformations_maybe( $url ) {
+
 		$transformations = null;
 		$query           = wp_parse_url( $url, PHP_URL_QUERY );
 		if ( ! empty( $query ) && false !== strpos( $query, 'cld_params' ) ) {
@@ -407,6 +445,7 @@ class Delivery implements Setup {
 	 * @param string $content The HTML to catch URLS from.
 	 */
 	public function catch_urls( $content ) {
+
 		$known = $this->convert_tags( $content );
 		$urls  = wp_extract_urls( $content );
 		$dirs  = wp_get_upload_dir();

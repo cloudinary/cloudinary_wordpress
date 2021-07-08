@@ -197,6 +197,14 @@ const cldVideoInit = {
 	},
 };
 
+const cldResponsiveBreakpoints = {
+	...defaultConfig,
+	...sharedConfig,
+	entry: {
+		'responsive-breakpoints': './js/src/responsive-breakpoints.js',
+	},
+};
+
 module.exports = [
 	cldBlockEditor,
 	cldCore,
@@ -206,4 +214,5 @@ module.exports = [
 	cldVideoInit,
 	cldSettingsGallery,
 	cldGalleryUI,
+	cldResponsiveBreakpoints,
 ];

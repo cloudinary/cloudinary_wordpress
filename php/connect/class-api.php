@@ -209,6 +209,8 @@ class Api {
 					$key = array_search( $type, $transformation_index, true );
 					if ( false !== $key ) {
 						$transform[] = $key . '_' . $value;
+					} elseif ( '$' === $type[0] ) {
+						$transform[] = $type . '_' . $value;
 					}
 				}
 
