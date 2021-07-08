@@ -122,7 +122,11 @@ const ResponsiveBreakpoints = {
 	},
 	buildSize( image ) {
 		if ( this._shouldRebuild( image ) ) {
-			image.src = this.getSizeURL( image );
+			if ( image.dataset.srcset ) {
+				image.srcset = image.dataset.srcset;
+			} else {
+				image.src = this.getSizeURL( image );
+			}
 		} else if ( this._shouldPlacehold( image ) ) {
 			image.src = this.getPlaceholderURL( image );
 		}

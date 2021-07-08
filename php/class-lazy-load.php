@@ -133,9 +133,23 @@ class Lazy_Load implements Setup {
 
 		$settings = $this->settings->get_value();
 
-		$meta   = wp_get_attachment_metadata( $attachment_id, true );
+		$meta = wp_get_attachment_metadata( $attachment_id, true );
+		$size = array(
+			'100%',
+			'100%',
+		);
+		if ( isset( $meta['width'] ) ) {
+			$size[0] = $meta['width'];
+		}
+		if ( isset( $meta['height'] ) ) {
+			$size[1] = $meta['height'];
+		}
 		$format = $this->media->get_settings()->get_value( 'image_format' );
 
+		if ( isset( $tag_element['atts']['srcset'] ) ) {
+			$tag_element['atts']['data-srcset'] = $tag_element['atts']['srcset'];
+			unset( $tag_element['atts']['srcset'] );
+		}
 		$src = $tag_element['atts']['src'];
 		if ( ! $this->media->is_cloudinary_url( $src ) ) {
 			$src = $this->media->cloudinary_url( $attachment_id );
@@ -162,13 +176,13 @@ class Lazy_Load implements Setup {
 			$color2    = 'rgba(' . $colors[0] . ',' . $colors[1] . ',' . $colors[2] . ',0)';
 			$color_str = $color1 . ';' . $color2 . ';' . $color1;
 		}
-		$svg                              = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $meta['width'] . '" height="' . $meta['height'] . '"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $color_str . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
+		$svg                              = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $size[0] . '" height="' . $size[1] . '"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $color_str . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
 		$tag_element['atts']['src']       = 'data:image/svg+xml;utf8,' . $svg;
 		$tag_element['atts']['data-type'] = $format;
 
 		unset( $tag_element['atts']['loading'] );
 		$tag_element['atts']['decoding']   = 'async';
-		$tag_element['atts']['data-width'] = $meta['width'];
+		$tag_element['atts']['data-width'] = $size[0];
 
 		return $tag_element;
 	}
@@ -192,7 +206,7 @@ class Lazy_Load implements Setup {
 		if ( ! is_admin() ) {
 			$settings = $this->settings->get_value();
 			if ( isset( $settings['use_lazy_loading'] ) && 'on' === $settings['use_lazy_loading'] ) {
-				add_filter( 'cloudinary_pre_image_tag', array( $this, 'add_features' ), 10, 3 );
+				add_filter( 'cloudinary_pre_image_tag', array( $this, 'add_features' ), 11, 3 );
 			}
 		}
 	}
@@ -205,9 +219,10 @@ class Lazy_Load implements Setup {
 	public function settings() {
 
 		$args = array(
-			'type'     => 'group',
-			'title'    => __( 'Lazy Loading', 'cloudinary' ),
-			'priority' => 9,
+			'type'        => 'group',
+			'title'       => __( 'Lazy Loading', 'cloudinary' ),
+			'priority'    => 9,
+			'collapsible' => 'open',
 			array(
 				'type'        => 'on_off',
 				'description' => __( 'Enable lazy loading', 'cloudinary' ),
@@ -232,12 +247,14 @@ class Lazy_Load implements Setup {
 					'default'    => '1000px',
 				),
 				array(
-					'type'        => 'radio',
-					'title'       => __( 'Placeholder generation', 'cloudinary' ),
-					'slug'        => 'lazy_placeholder',
-					'description' => __( 'The placeholder', 'cloudinary' ),
-					'default'     => 'blur',
-					'options'     => array(
+					'type'      => 'radio',
+					'title'     => __( 'Placeholder generation', 'cloudinary' ),
+					'slug'      => 'lazy_placeholder',
+					'default'   => 'blur',
+					'condition' => array(
+						'enable_breakpoints' => true,
+					),
+					'options'   => array(
 						'blur'        => __( 'Blur', 'cloudinary' ),
 						'pixelate'    => __( 'Pixelate', 'cloudinary' ),
 						'vectorize'   => __( 'Vectorize', 'cloudinary' ),

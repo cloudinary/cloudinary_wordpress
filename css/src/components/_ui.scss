@@ -316,6 +316,9 @@
 	}
 
 	&-group {
+		.cld-group .cld-group {
+			padding-left: 4px;
+		}
 
 		hr {
 			border-top: 1px solid $color-light-grey;
@@ -323,7 +326,7 @@
 			clear: both;
 		}
 
-		.cld-group .cld-group hr.cld-group {
+		.cld-group .cld-group hr {
 			display: none;
 		}
 

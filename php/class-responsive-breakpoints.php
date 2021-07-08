@@ -203,6 +203,9 @@ class Responsive_Breakpoints implements Setup, Assets {
 			'title'        => __( 'DPR settings', 'cloudinary' ),
 			'tooltip_text' => __( 'The distance from the original image for responsive breakpoints generation.', 'cloudinary' ),
 			'default'      => 'auto',
+			'condition' => array(
+				'use_lazy_loading' => true,
+			),
 			'options'      => array(
 				'0'    => __( 'None', 'cloudinary' ),
 				'auto' => __( 'Auto', 'cloudinary' ),
