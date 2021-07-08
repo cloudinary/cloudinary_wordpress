@@ -65,9 +65,9 @@ const UI = {
 			const type = value.replace( /[0-9]/g, '' ).toLowerCase();
 			if ( number ) {
 				if ( -1 === valid.indexOf( type ) ) {
-					input.value = number + ' ' + defaultSuffix;
+					input.value = number + defaultSuffix;
 				} else {
-					input.value = number + ' ' + type;
+					input.value = number + type;
 				}
 			}
 		} );

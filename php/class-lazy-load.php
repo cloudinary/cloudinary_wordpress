@@ -140,36 +140,31 @@ class Lazy_Load implements Setup {
 		if ( ! $this->media->is_cloudinary_url( $src ) ) {
 			$src = $this->media->cloudinary_url( $attachment_id );
 		}
-		$transformations           = $this->media->get_transformations_from_string( $src );
-		$placehold_transformations = $transformations;
-		$original_string           = Api::generate_transformation_string( $transformations );
+		$tag_element['atts']['data-src'] = $src;
+		$transformations                 = $this->media->get_transformations_from_string( $src );
+		$placehold_transformations       = $transformations;
+		$original_string                 = Api::generate_transformation_string( $transformations );
 
 		// placeholder.
 		if ( 'off' !== $settings['lazy_placeholder'] ) {
 			// Remove the optimize (last) transformation.
 			array_pop( $placehold_transformations );
-			$placehold_transformations = array_merge( $placehold_transformations, $this->get_placeholder_transformations( $settings['lazy_placeholder'] ) );
-			$palcehold_str             = Api::generate_transformation_string( $placehold_transformations );
-			$placeholder               = str_replace( $original_string, $palcehold_str, $src );
-
-			$tag_element['atts']['src'] = $placeholder;
-			if ( ! empty( $settings['lazy_preloader'] ) ) {
-				$tag_element['atts']['data-placeholder'] = $placeholder;
-			}
+			$placehold_transformations               = array_merge( $placehold_transformations, $this->get_placeholder_transformations( $settings['lazy_placeholder'] ) );
+			$palcehold_str                           = Api::generate_transformation_string( $placehold_transformations );
+			$placeholder                             = str_replace( $original_string, $palcehold_str, $src );
+			$tag_element['atts']['data-placeholder'] = $placeholder;
 		}
 
-		if ( ! empty( $settings['lazy_preloader'] ) ) {
-			$color_str = $settings['lazy_custom_color'];
-			if ( 'on' === $settings['lazy_animate'] ) {
-				$colors    = explode( ',', rtrim( substr( $settings['lazy_custom_color'], 5 ), ')' ) );
-				$color1    = 'rgba(' . $colors[0] . ',' . $colors[1] . ',' . $colors[2] . ',' . $colors[3] . ')';
-				$color2    = 'rgba(' . $colors[0] . ',' . $colors[1] . ',' . $colors[2] . ',0)';
-				$color_str = $color1 . ';' . $color2 . ';' . $color1;
-			}
-			$svg                              = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $meta['width'] . '" height="' . $meta['height'] . '"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $color_str . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
-			$tag_element['atts']['src']       = 'data:image/svg+xml;utf8,' . $svg;
-			$tag_element['atts']['data-type'] = $format;
+		$color_str = $settings['lazy_custom_color'];
+		if ( 'on' === $settings['lazy_animate'] ) {
+			$colors    = explode( ',', rtrim( substr( $settings['lazy_custom_color'], 5 ), ')' ) );
+			$color1    = 'rgba(' . $colors[0] . ',' . $colors[1] . ',' . $colors[2] . ',' . $colors[3] . ')';
+			$color2    = 'rgba(' . $colors[0] . ',' . $colors[1] . ',' . $colors[2] . ',0)';
+			$color_str = $color1 . ';' . $color2 . ';' . $color1;
 		}
+		$svg                              = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $meta['width'] . '" height="' . $meta['height'] . '"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $color_str . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
+		$tag_element['atts']['src']       = 'data:image/svg+xml;utf8,' . $svg;
+		$tag_element['atts']['data-type'] = $format;
 
 		unset( $tag_element['atts']['loading'] );
 		$tag_element['atts']['decoding']   = 'async';
@@ -217,7 +212,7 @@ class Lazy_Load implements Setup {
 				'type'        => 'on_off',
 				'description' => __( 'Enable lazy loading', 'cloudinary' ),
 				'slug'        => 'use_lazy_loading',
-				'default'     => 'off',
+				'default'     => 'on',
 			),
 			array(
 				'type'      => 'group',
@@ -234,8 +229,7 @@ class Lazy_Load implements Setup {
 						),
 						'data-auto-suffix' => '*px;em;rem;vw;vh',
 					),
-
-					'default' => '1000px',
+					'default'    => '1000px',
 				),
 				array(
 					'type'        => 'radio',
@@ -252,32 +246,16 @@ class Lazy_Load implements Setup {
 					),
 				),
 				array(
-					'type'  => 'checkbox',
-					'title' => __( 'Initial preloader', 'cloudinary' ),
-					'slug'  => 'lazy_preloader',
-
+					'type'    => 'color',
+					'title'   => __( 'Use custom color', 'cloudinary' ),
+					'slug'    => 'lazy_custom_color',
+					'default' => 'rgba(153,153,153,0.5)',
+				),
+				array(
+					'type'    => 'on_off',
+					'title'   => __( 'Animate', 'cloudinary' ),
+					'slug'    => 'lazy_animate',
 					'default' => 'on',
-					'options' => array(
-						'on' => __( 'Use an initial preloader', 'cloudinary' ),
-					),
-				),
-				array(
-					'type'      => 'color',
-					'title'     => __( 'Use custom color', 'cloudinary' ),
-					'slug'      => 'lazy_custom_color',
-					'default'   => 'rgba(153,153,153,0.5)',
-					'condition' => array(
-						'lazy_preloader' => true,
-					),
-				),
-				array(
-					'type'      => 'on_off',
-					'title'     => __( 'Animate', 'cloudinary' ),
-					'slug'      => 'lazy_animate',
-					'default'   => 'on',
-					'condition' => array(
-						'lazy_preloader' => true,
-					),
 				),
 			),
 		);

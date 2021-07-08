@@ -82,6 +82,7 @@ class Delivery implements Setup {
 
 		add_filter( 'cloudinary_filter_out_local', '__return_false' );
 		add_action( 'update_option_cloudinary_media_display', array( $this, 'clear_cache' ) );
+		add_action( 'cloudinary_flush_cache', array( $this, 'clear_cache' ) );
 		add_filter( 'cloudinary_current_post_id', array( $this, 'get_current_post_id' ) );
 		add_filter( 'the_content', array( $this, 'add_post_id' ) );
 
@@ -197,6 +198,9 @@ class Delivery implements Setup {
 		// Ignore getting 'original_image' since this isn't used in the front end.
 		if ( ! empty( $meta['sizes'] ) ) {
 			foreach ( $meta['sizes'] as $data ) {
+				if ( isset( $urls[ $base . $data['file'] ] ) ) {
+					continue;
+				}
 				$urls[ $base . $data['file'] ] = $this->media->cloudinary_url(
 					$attachment_id,
 					array(
