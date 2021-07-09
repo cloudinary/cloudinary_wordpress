@@ -41,7 +41,7 @@ class Beta {
 				'options' => array(),
 			),
 			'responsive_breakpoints' => array(
-				'class'   => array( 'Cloudinary\Lazy_Load', 'Cloudinary\Responsive_Breakpoints' ),
+				'class'   => array( 'Cloudinary\Delivery\Lazy_Load', 'Cloudinary\Delivery\Responsive_Breakpoints' ),
 				'name'    => __( 'New Lazy Load and Responsive Breakpoints', 'cloudinary' ),
 				'options' => array(),
 				'deps'    => array( 'delivery' ),

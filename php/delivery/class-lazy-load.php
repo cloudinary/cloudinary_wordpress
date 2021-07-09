@@ -5,35 +5,17 @@
  * @package Cloudinary
  */
 
-namespace Cloudinary;
+namespace Cloudinary\Delivery;
 
-use Cloudinary\Component\Assets;
-use Cloudinary\Component\Setup;
+use Cloudinary\Delivery_Feature;
 use Cloudinary\Connect\Api;
-use \Cloudinary\Settings\Setting;
 
 /**
  * Class Responsive_Breakpoints
  *
  * @package Cloudinary
  */
-class Lazy_Load implements Setup, Assets {
-
-	/**
-	 * Holds the plugin instance.
-	 *
-	 * @since   0.1
-	 *
-	 * @var     Plugin Instance of the global plugin.
-	 */
-	public $plugin;
-
-	/**
-	 * Holds the Media instance.
-	 *
-	 * @var Media
-	 */
-	protected $media;
+class Lazy_Load extends Delivery_Feature {
 
 	/**
 	 * Holds the settings slug.
@@ -43,21 +25,11 @@ class Lazy_Load implements Setup, Assets {
 	protected $settings_slug = 'lazy_load';
 
 	/**
-	 * Holds the settings.
+	 * Holds the enabler slug.
 	 *
-	 * @var Setting
+	 * @var string
 	 */
-	protected $settings;
-
-	/**
-	 * Responsive_Breakpoints constructor.
-	 *
-	 * @param Plugin $plugin Instance of the plugin.
-	 */
-	public function __construct( Plugin $plugin ) {
-		$this->plugin = $plugin;
-		$this->media  = $plugin->get_component( 'media' );
-	}
+	protected $enable_slug = 'use_lazy_load';
 
 	/**
 	 * Get the placeholder generation transformations.
@@ -172,7 +144,12 @@ class Lazy_Load implements Setup, Assets {
 
 		$color_str = $settings['lazy_custom_color'];
 		if ( 'on' === $settings['lazy_animate'] ) {
-			$colors    = explode( ',', rtrim( substr( $settings['lazy_custom_color'], 5 ), ')' ) );
+			preg_match_all( '/[0-9.^]+/', $settings['lazy_custom_color'], $custom );
+			$colors = array_shift( $custom );
+			if ( ! isset( $colors[3] ) ) {
+				$colors[3] = 1;
+			}
+
 			$color1    = 'rgba(' . $colors[0] . ',' . $colors[1] . ',' . $colors[2] . ',' . $colors[3] . ')';
 			$color2    = 'rgba(' . $colors[0] . ',' . $colors[1] . ',' . $colors[2] . ',0)';
 			$color_str = $color1 . ';' . $color2 . ';' . $color1;
@@ -192,17 +169,16 @@ class Lazy_Load implements Setup, Assets {
 	 * Register front end hooks.
 	 */
 	public function register_assets() {
-		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		wp_register_script( 'cld-lazy-load', $this->plugin->dir_url . 'js/lazy-load.js', null, $this->plugin->version, false );
 	}
 
 	/**
 	 * Apply front end filters on the enqueue_assets hook.
 	 */
 	public function enqueue_assets() {
-		$settings = $this->settings->get_value();
-		if ( isset( $settings['use_lazy_loading'] ) && 'on' === $settings['use_lazy_loading'] ) {
-			add_filter( 'cloudinary_pre_image_tag', array( $this, 'add_features' ), 11, 3 );
-		}
+		wp_enqueue_script( 'cld-lazy-load' );
+		$config = $this->settings->get_parent()->get_value(); // Get top most config.
+		wp_add_inline_script( 'cld-lazy-load', 'var CLDLB = ' . wp_json_encode( $config ), 'before' );
 	}
 
 	/**
@@ -213,13 +189,6 @@ class Lazy_Load implements Setup, Assets {
 	public function is_active() {
 
 		return ! is_admin();
-	}
-
-	/**
-	 * Setup the class.
-	 */
-	public function setup() {
-		$this->register_settings();
 	}
 
 	/**
@@ -237,13 +206,13 @@ class Lazy_Load implements Setup, Assets {
 			array(
 				'type'        => 'on_off',
 				'description' => __( 'Enable lazy loading', 'cloudinary' ),
-				'slug'        => 'use_lazy_loading',
+				'slug'        => 'use_lazy_load',
 				'default'     => 'on',
 			),
 			array(
 				'type'      => 'group',
 				'condition' => array(
-					'use_lazy_loading' => true,
+					'use_lazy_load' => true,
 				),
 				array(
 					'type'       => 'text',
@@ -299,14 +268,14 @@ class Lazy_Load implements Setup, Assets {
 		// Move setting to media.
 		$media_settings = $this->media->get_settings()->get_setting( 'image_display' );
 
-		$settings_params = $this->settings();
-		$this->settings  = $media_settings->create_setting( $this->settings_slug, $settings_params, $media_settings );
+		// Add to media.
+		$media_settings->add_setting( $this->settings );
 
 		// Reset the option parent.
 		$this->settings->get_option_parent()->set_value( null );
 
 		$condition = array(
-			'use_lazy_loading' => false,
+			'use_lazy_load' => false,
 		);
 		$bk        = $media_settings->get_setting( 'breakpoints' );
 		$bk->set_param( 'condition', $condition );
@@ -315,7 +284,7 @@ class Lazy_Load implements Setup, Assets {
 		$image_breakpoints = $media_settings->get_setting( 'image_breakpoints' );
 		$bytes_step        = $image_breakpoints->get_setting( 'bytes_step' );
 		$condition         = array(
-			'use_lazy_loading' => false,
+			'use_lazy_load' => false,
 		);
 		$bytes_step->set_param( 'condition', $condition );
 		$bytes_step->rebuild_component();
