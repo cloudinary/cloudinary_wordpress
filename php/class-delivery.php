@@ -85,6 +85,7 @@ class Delivery implements Setup {
 		add_action( 'cloudinary_flush_cache', array( $this, 'clear_cache' ) );
 		add_filter( 'cloudinary_current_post_id', array( $this, 'get_current_post_id' ) );
 		add_filter( 'the_content', array( $this, 'add_post_id' ) );
+		add_filter( 'wp_img_tag_add_srcset_and_sizes_attr', '__return_false' );
 
 		// Clear cache on taxonomy update.
 		$taxonomies = get_taxonomies( array( 'show_ui' => true ) );
@@ -142,10 +143,29 @@ class Delivery implements Setup {
 		$this->sync   = $this->media->sync;
 
 		// Add filters.
-		add_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ), 10, 5 );
 		add_action( 'save_post', array( $this, 'remove_replace_cache' ) );
 		add_action( 'cloudinary_string_replace', array( $this, 'catch_urls' ) );
 		add_filter( 'post_thumbnail_html', array( $this, 'process_featured_image' ), 100, 3 );
+	}
+
+	/**
+	 * Init delivery.
+	 */
+	protected function init_delivery() {
+
+		add_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ), 10, 5 );
+
+		/**
+		 * Action indicating that the delivery is starting.s
+		 *
+		 * @hook    cloudinary_pre_image_tag
+		 * @since   2.7.5
+		 *
+		 * @param $delivery {Delivery}  The delivery object.
+		 *
+		 * @return  void
+		 */
+		do_action( 'cloudinary_init_delivery', $this );
 	}
 
 	/**
