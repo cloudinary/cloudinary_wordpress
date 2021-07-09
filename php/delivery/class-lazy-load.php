@@ -222,7 +222,7 @@ class Lazy_Load extends Delivery_Feature {
 						'style'            => array(
 							'width:100px;display:block;',
 						),
-						'data-auto-suffix' => '*px;em;rem;vw;vh',
+						'data-auto-suffix' => '*px;em;rem;vh',
 					),
 					'default'    => '1000px',
 				),
