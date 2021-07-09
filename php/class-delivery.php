@@ -85,6 +85,7 @@ class Delivery implements Setup {
 		add_action( 'cloudinary_flush_cache', array( $this, 'clear_cache' ) );
 		add_filter( 'cloudinary_current_post_id', array( $this, 'get_current_post_id' ) );
 		add_filter( 'the_content', array( $this, 'add_post_id' ) );
+		add_filter( 'wp_img_tag_add_srcset_and_sizes_attr', '__return_false' );
 
 		// Clear cache on taxonomy update.
 		$taxonomies = get_taxonomies( array( 'show_ui' => true ) );
@@ -142,10 +143,29 @@ class Delivery implements Setup {
 		$this->sync   = $this->media->sync;
 
 		// Add filters.
-		add_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ), 10, 5 );
 		add_action( 'save_post', array( $this, 'remove_replace_cache' ) );
 		add_action( 'cloudinary_string_replace', array( $this, 'catch_urls' ) );
 		add_filter( 'post_thumbnail_html', array( $this, 'process_featured_image' ), 100, 3 );
+	}
+
+	/**
+	 * Init delivery.
+	 */
+	protected function init_delivery() {
+
+		add_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ), 10, 5 );
+
+		/**
+		 * Action indicating that the delivery is starting.s
+		 *
+		 * @hook    cloudinary_pre_image_tag
+		 * @since   2.7.5
+		 *
+		 * @param $delivery {Delivery}  The delivery object.
+		 *
+		 * @return  void
+		 */
+		do_action( 'cloudinary_init_delivery', $this );
 	}
 
 	/**
@@ -323,8 +343,12 @@ class Delivery implements Setup {
 	 */
 	public function rebuild_tag( $element, $attachment_id ) {
 
+		$image_meta = wp_get_attachment_metadata( $attachment_id );
 		// Check overwrite.
-		$overwrite = (bool) strpos( $element, 'cld-overwrite' );
+		$image_meta['overwrite_transformations'] = (bool) strpos( $element, 'cld-overwrite' );
+
+		// Try add srcset if not present.
+		$element = wp_image_add_srcset_and_sizes( $element, $image_meta, $attachment_id );
 
 		// Get tag element.
 		$tag_element = $this->parse_element( $element );
@@ -332,25 +356,12 @@ class Delivery implements Setup {
 		// Get size.
 		$size = $this->get_size_from_atts( $tag_element['atts'] );
 
-		// If no srcset, lets see if we can create them (ie, featured image etc...).
-		if ( ! isset( $tag_element['atts']['srcset'] ) && ! empty( $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['breakpoints'] ) ) ) {
-			$image_meta                    = wp_get_attachment_metadata( $attachment_id );
-			$srcset                        = $this->media->image_srcset( array(), $size, $tag_element['atts']['src'], $image_meta, $attachment_id );
-			$srcset                        = array_map(
-				function ( $set ) {
-					return $set['url'] . ' ' . $set['value'] . $set['descriptor'];
-				},
-				$srcset
-			);
-			$tag_element['atts']['srcset'] = implode( ', ', $srcset );
-		}
 		// Get transformations if present.
 		$transformations = $this->get_transformations_maybe( $tag_element['atts']['src'] );
 
 		// Get cloudinary URL, only if overwrite or has inline transformations. Catch all will replace standard urls.
-		if ( $overwrite || $transformations ) {
-			// Create new src url.
-			$tag_element['atts']['src'] = $this->media->cloudinary_url( $attachment_id, $size, $transformations, null, $overwrite );
+		if ( $image_meta['overwrite_transformations'] || $transformations ) {
+			$tag_element['atts']['src'] = $this->media->cloudinary_url( $attachment_id, $size, $transformations, null, $image_meta['overwrite_transformations'] );
 		}
 
 		/**
@@ -445,7 +456,7 @@ class Delivery implements Setup {
 	 * @param string $content The HTML to catch URLS from.
 	 */
 	public function catch_urls( $content ) {
-
+		$this->init_delivery();
 		$known = $this->convert_tags( $content );
 		$urls  = wp_extract_urls( $content );
 		$dirs  = wp_get_upload_dir();

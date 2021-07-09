@@ -197,11 +197,11 @@ const cldVideoInit = {
 	},
 };
 
-const cldResponsiveBreakpoints = {
+const cldLazyLoad = {
 	...defaultConfig,
 	...sharedConfig,
 	entry: {
-		'responsive-breakpoints': './js/src/responsive-breakpoints.js',
+		'lazy-load': './js/src/lazy-load.js',
 	},
 };
 
@@ -214,5 +214,5 @@ module.exports = [
 	cldVideoInit,
 	cldSettingsGallery,
 	cldGalleryUI,
-	cldResponsiveBreakpoints,
+	cldLazyLoad,
 ];

@@ -212,6 +212,18 @@ final class Plugin {
 			$connect_title = $connect->get_param( 'menu_title' ) . $count;
 			$connect->set_param( 'menu_title', $connect_title );
 		}
+
+		/**
+		 * Action indicating that the Settings are initialised.
+		 *
+		 * @hook    cloudinary_init_settings
+		 * @since   2.7.5
+		 *
+		 * @param $plugin {Plugin}  The core plugin object.
+		 *
+		 * @return  void
+		 */
+		do_action( 'cloudinary_init_settings', $this );
 	}
 
 	/**

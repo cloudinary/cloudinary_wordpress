@@ -1,9 +1,11 @@
-const ResponsiveBreakpoints = {
+const LazyLoad = {
 	density: window.devicePixelRatio ? window.devicePixelRatio : 'auto',
 	images: [],
 	debounce: null,
 	config: CLDLB ? CLDLB : {},
+	lazyThreshold: 0,
 	_init() {
+		this._calcThreshold();
 		[ ...document.images ].forEach( ( image ) => {
 			if ( ! image.dataset.src ) {
 				return;
@@ -22,6 +24,32 @@ const ResponsiveBreakpoints = {
 		// Build images.
 		this._build();
 	},
+	_calcThreshold() {
+		const number = this.config.lazy_threshold.replace( /[^0-9]/g, '' );
+		const type = this.config.lazy_threshold
+			.replace( /[0-9]/g, '' )
+			.toLowerCase();
+		let unit = 0;
+		switch ( type ) {
+			case 'em':
+				unit =
+					parseFloat( getComputedStyle( document.body ).fontSize ) *
+					number;
+				break;
+			case 'rem':
+				unit =
+					parseFloat(
+						getComputedStyle( document.documentElement ).fontSize
+					) * number;
+				break;
+			case 'vh':
+				unit = ( window.innerHeight / number ) * 100;
+				break;
+			default:
+				unit = number;
+		}
+		this.lazyThreshold = window.innerHeight + parseInt( unit, 10 );
+	},
 	_debounceBuild() {
 		if ( this.debounce ) {
 			clearTimeout( this.debounce );
@@ -31,14 +59,18 @@ const ResponsiveBreakpoints = {
 		}, 100 );
 	},
 	_getDensity() {
-		const maxDensity = CLDLB.dpr;
+		const maxDensity = CLDLB.dpr ? CLDLB.dpr.replace( 'X', '' ) : 'off';
+		if ( 'off' === maxDensity ) {
+			return 1;
+		}
 		let deviceDensity = this.density;
-		if ( CLDLB.dpr_precise && 'auto' !== deviceDensity ) {
+		if ( ! CLDLB.dpr_precise && 'auto' !== deviceDensity ) {
 			deviceDensity =
 				deviceDensity > Math.ceil( maxDensity )
 					? maxDensity
 					: deviceDensity;
 		}
+
 		return deviceDensity;
 	},
 	_build() {
@@ -50,14 +82,12 @@ const ResponsiveBreakpoints = {
 		const width = this.scaleSize(
 			image.originalWidth,
 			image.width,
-			this.config.bytes_step
+			this.config.pixel_step
 		);
 		const rect = image.getBoundingClientRect();
 		const density = 'auto' !== this.density ? this._getDensity() : 1;
-		const diff =
-			window.innerHeight + parseInt( this.config.lazy_threshold, 10 );
 		return (
-			rect.top < diff &&
+			rect.top < this.lazyThreshold &&
 			( width > image.naturalWidth / density || ! image.cld_loaded )
 		);
 	},
@@ -65,15 +95,13 @@ const ResponsiveBreakpoints = {
 		const width = this.scaleSize(
 			image.originalWidth,
 			image.width,
-			this.config.bytes_step
+			this.config.pixel_step
 		);
 		const rect = image.getBoundingClientRect();
 		const density = 'auto' !== this.density ? this._getDensity() : 1;
-		const diff =
-			window.innerHeight + parseInt( this.config.lazy_threshold, 10 );
 		return (
 			! image.cld_loaded &&
-			rect.top < diff * 2 &&
+			rect.top < this.lazyThreshold * 2 &&
 			( width > image.naturalWidth / density || ! image.cld_placehold )
 		);
 	},
@@ -141,20 +169,26 @@ const ResponsiveBreakpoints = {
 		const width = this.scaleSize(
 			image.originalWidth,
 			image.width,
-			this.config.bytes_step
+			this.config.pixel_step
 		);
-		const newSize = 'w_' + width + ',dpr_' + this._getDensity();
+		const density = this._getDensity();
+		let newSize = '';
+		if ( width ) {
+			newSize += 'w_' + width;
+			if ( 1 !== density ) {
+				newSize += ',dpr_' + density;
+			}
+		}
 		return image.dataset.src
 			.replace( '--size--', newSize )
-			.replace( '/--placehold--', '' )
 			.replace( /q_auto(?!:)/gi, this.getQuality() );
 	},
 	getPlaceholderURL( image ) {
 		image.cld_placehold = true;
-		return image.dataset.placeholder;
+		return image.dataset.placeholder.replace( '/--size--', '/' );
 	},
 };
 // Init.
 window.addEventListener( 'load', () => {
-	ResponsiveBreakpoints._init();
+	LazyLoad._init();
 } );
