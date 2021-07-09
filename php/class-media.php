@@ -988,14 +988,6 @@ class Media extends Settings_Component implements Setup {
 			$url = $this->convert_media_extension( $url );
 		}
 
-		// Add Cloudinary analytics.
-		$url = add_query_arg(
-			array(
-				'_i' => 'AA',
-			),
-			$url
-		);
-
 		/**
 		 * Filter the final Cloudinary URL.
 		 *
@@ -1005,7 +997,15 @@ class Media extends Settings_Component implements Setup {
 		 *
 		 * @return string
 		 */
-		return apply_filters( 'cloudinary_converted_url', $url, $attachment_id, $pre_args );
+		$url = apply_filters( 'cloudinary_converted_url', $url, $attachment_id, $pre_args );
+
+		// Add Cloudinary analytics.
+		return add_query_arg(
+			array(
+				'_i' => 'AA',
+			),
+			$url
+		);
 	}
 
 	/**
