@@ -64,11 +64,17 @@ const LazyLoad = {
 			return 1;
 		}
 		let deviceDensity = this.density;
-		if ( ! CLDLB.dpr_precise && 'auto' !== deviceDensity ) {
+		if (
+			! CLDLB.dpr_precise &&
+			'auto' !== maxDensity &&
+			'auto' !== deviceDensity
+		) {
 			deviceDensity =
 				deviceDensity > Math.ceil( maxDensity )
 					? maxDensity
 					: deviceDensity;
+		} else if ( 'auto' === CLDLB.dpr && 'auto' !== deviceDensity ) {
+			deviceDensity = 'auto';
 		}
 
 		return deviceDensity;
