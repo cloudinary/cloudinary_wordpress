@@ -1,4 +1,4 @@
-const ResponsiveBreakpoints = {
+const LazyLoad = {
 	density: window.devicePixelRatio ? window.devicePixelRatio : 'auto',
 	images: [],
 	debounce: null,
@@ -31,7 +31,7 @@ const ResponsiveBreakpoints = {
 		}, 100 );
 	},
 	_getDensity() {
-		const maxDensity = CLDLB.dpr.replace( 'X', '' );
+		const maxDensity = CLDLB.dpr ? CLDLB.dpr.replace( 'X', '' ) : 'off';
 		if ( 'off' === maxDensity ) {
 			return 1;
 		}
@@ -54,7 +54,7 @@ const ResponsiveBreakpoints = {
 		const width = this.scaleSize(
 			image.originalWidth,
 			image.width,
-			this.config.bytes_step
+			this.config.pixel_step
 		);
 		const rect = image.getBoundingClientRect();
 		const density = 'auto' !== this.density ? this._getDensity() : 1;
@@ -69,7 +69,7 @@ const ResponsiveBreakpoints = {
 		const width = this.scaleSize(
 			image.originalWidth,
 			image.width,
-			this.config.bytes_step
+			this.config.pixel_step
 		);
 		const rect = image.getBoundingClientRect();
 		const density = 'auto' !== this.density ? this._getDensity() : 1;
@@ -145,7 +145,7 @@ const ResponsiveBreakpoints = {
 		const width = this.scaleSize(
 			image.originalWidth,
 			image.width,
-			this.config.bytes_step
+			this.config.pixel_step
 		);
 		const density = this._getDensity();
 		let newSize = 'w_' + width;
@@ -163,5 +163,5 @@ const ResponsiveBreakpoints = {
 };
 // Init.
 window.addEventListener( 'load', () => {
-	ResponsiveBreakpoints._init();
+	LazyLoad._init();
 } );
