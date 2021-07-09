@@ -1941,7 +1941,7 @@ class Media extends Settings_Component implements Setup {
 			if ( empty( $meta ) ) {
 				$meta          = array();
 				$imagesize     = getimagesize( get_attached_file( $attachment_id ) );
-				$meta['width'] = $imagesize[0] ? $imagesize[0] : 0;
+				$meta['width'] = isset( $imagesize[0] ) ? $imagesize[0] : 0;
 			}
 			$max_width = $this->get_max_width();
 			// Add breakpoints request options.
