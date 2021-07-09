@@ -343,8 +343,12 @@ class Delivery implements Setup {
 	 */
 	public function rebuild_tag( $element, $attachment_id ) {
 
+		$image_meta = wp_get_attachment_metadata( $attachment_id );
 		// Check overwrite.
-		$overwrite = (bool) strpos( $element, 'cld-overwrite' );
+		$image_meta['overwrite_transformations'] = (bool) strpos( $element, 'cld-overwrite' );
+
+		// Try add srcset if not present.
+		$element = wp_image_add_srcset_and_sizes( $element, $image_meta, $attachment_id );
 
 		// Get tag element.
 		$tag_element = $this->parse_element( $element );
@@ -352,25 +356,12 @@ class Delivery implements Setup {
 		// Get size.
 		$size = $this->get_size_from_atts( $tag_element['atts'] );
 
-		// If no srcset, lets see if we can create them (ie, featured image etc...).
-		if ( ! isset( $tag_element['atts']['srcset'] ) && ! empty( $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['breakpoints'] ) ) ) {
-			$image_meta                    = wp_get_attachment_metadata( $attachment_id );
-			$srcset                        = $this->media->image_srcset( array(), $size, $tag_element['atts']['src'], $image_meta, $attachment_id );
-			$srcset                        = array_map(
-				function ( $set ) {
-					return $set['url'] . ' ' . $set['value'] . $set['descriptor'];
-				},
-				$srcset
-			);
-			$tag_element['atts']['srcset'] = implode( ', ', $srcset );
-		}
 		// Get transformations if present.
 		$transformations = $this->get_transformations_maybe( $tag_element['atts']['src'] );
 
 		// Get cloudinary URL, only if overwrite or has inline transformations. Catch all will replace standard urls.
-		if ( $overwrite || $transformations ) {
-			// Create new src url.
-			$tag_element['atts']['src'] = $this->media->cloudinary_url( $attachment_id, $size, $transformations, null, $overwrite );
+		if ( $image_meta['overwrite_transformations'] || $transformations ) {
+			$tag_element['atts']['src'] = $this->media->cloudinary_url( $attachment_id, $size, $transformations, null, $image_meta['overwrite_transformations'] );
 		}
 
 		/**
@@ -465,7 +456,7 @@ class Delivery implements Setup {
 	 * @param string $content The HTML to catch URLS from.
 	 */
 	public function catch_urls( $content ) {
-
+		$this->init_delivery();
 		$known = $this->convert_tags( $content );
 		$urls  = wp_extract_urls( $content );
 		$dirs  = wp_get_upload_dir();
