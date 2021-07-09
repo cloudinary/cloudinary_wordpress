@@ -31,14 +31,18 @@ const ResponsiveBreakpoints = {
 		}, 100 );
 	},
 	_getDensity() {
-		const maxDensity = CLDLB.dpr;
+		const maxDensity = CLDLB.dpr.replace( 'X', '' );
+		if ( 'off' === maxDensity ) {
+			return 1;
+		}
 		let deviceDensity = this.density;
-		if ( CLDLB.dpr_precise && 'auto' !== deviceDensity ) {
+		if ( ! CLDLB.dpr_precise && 'auto' !== deviceDensity ) {
 			deviceDensity =
 				deviceDensity > Math.ceil( maxDensity )
 					? maxDensity
 					: deviceDensity;
 		}
+
 		return deviceDensity;
 	},
 	_build() {
@@ -143,15 +147,18 @@ const ResponsiveBreakpoints = {
 			image.width,
 			this.config.bytes_step
 		);
-		const newSize = 'w_' + width + ',dpr_' + this._getDensity();
+		const density = this._getDensity();
+		let newSize = 'w_' + width;
+		if ( 1 !== density ) {
+			newSize += ',dpr_' + density;
+		}
 		return image.dataset.src
 			.replace( '--size--', newSize )
-			.replace( '/--placehold--', '' )
 			.replace( /q_auto(?!:)/gi, this.getQuality() );
 	},
 	getPlaceholderURL( image ) {
 		image.cld_placehold = true;
-		return image.dataset.placeholder;
+		return image.dataset.placeholder.replace( '/--size--', '/' );
 	},
 };
 // Init.
