@@ -10,6 +10,7 @@ namespace Cloudinary;
 use Cloudinary\Component\Assets;
 use Cloudinary\Component\Setup;
 use Cloudinary\Connect\Api;
+use Cloudinary\Settings\Setting;
 
 /**
  * Class Responsive_Breakpoints
@@ -51,7 +52,7 @@ class Responsive_Breakpoints implements Setup, Assets {
 	/**
 	 * Holds the settings.
 	 *
-	 * @var Settings
+	 * @var Setting
 	 */
 	protected $settings;
 
@@ -84,11 +85,10 @@ class Responsive_Breakpoints implements Setup, Assets {
 	 */
 	public function add_features( $tag_element, $attachment_id, $original_tag ) {
 
-		$src = $tag_element['atts']['src'];
-		if ( ! $this->media->is_cloudinary_url( $src ) ) {
-			$src = $this->media->cloudinary_url( $attachment_id );
+		if ( ! $this->media->is_cloudinary_url( $tag_element['atts']['src'] ) ) {
+			$tag_element['atts']['src'] = $this->media->cloudinary_url( $attachment_id );
 		}
-		$transformations = $this->media->get_transformations_from_string( $src );
+		$transformations = $this->media->get_transformations_from_string( $tag_element['atts']['src'] );
 		$original_string = Api::generate_transformation_string( $transformations );
 
 		// Check if first is a size.
@@ -96,9 +96,9 @@ class Responsive_Breakpoints implements Setup, Assets {
 			// remove the size.
 			array_shift( $transformations );
 		}
-		$size_str                        = '--size--/' . Api::generate_transformation_string( $transformations );
-		$data_url                        = str_replace( $original_string, $size_str, $src );
-		$tag_element['atts']['data-src'] = $data_url;
+		$size_str                   = '--size--/' . Api::generate_transformation_string( $transformations );
+		$data_url                   = str_replace( $original_string, $size_str, $tag_element['atts']['src'] );
+		$tag_element['atts']['src'] = $data_url;
 		if ( isset( $tag_element['atts']['srcset'] ) ) {
 			unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 		}
@@ -107,7 +107,7 @@ class Responsive_Breakpoints implements Setup, Assets {
 	}
 
 	/**
-	 * Check if component is active.§
+	 * Check if component is active.
 	 *
 	 * @return bool
 	 */
@@ -120,11 +120,8 @@ class Responsive_Breakpoints implements Setup, Assets {
 	 * Register assets to be used for the class.
 	 */
 	public function register_assets() {
-
 		wp_register_script( 'cld-responsive-breakpoints', $this->plugin->dir_url . 'js/responsive-breakpoints.js', null, $this->plugin->version, false );
-		if ( ! is_admin() ) {
-			$this->enqueue_assets();
-		}
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 	}
 
 	/**
@@ -132,8 +129,11 @@ class Responsive_Breakpoints implements Setup, Assets {
 	 */
 	public function enqueue_assets() {
 		wp_enqueue_script( 'cld-responsive-breakpoints' );
-		$config = $this->media->get_settings()->get_value( 'image_display' );
+		$config = $this->settings->get_value();
 		wp_add_inline_script( 'cld-responsive-breakpoints', 'var CLDLB = ' . wp_json_encode( $config ), 'before' );
+		if ( isset( $config['use_lazy_loading'] ) && 'on' === $config['use_lazy_loading'] && 'on' === $config['enable_breakpoints'] ) {
+			add_filter( 'cloudinary_pre_image_tag', array( $this, 'add_features' ), 10, 3 );
+		}
 	}
 
 	/**
@@ -142,12 +142,6 @@ class Responsive_Breakpoints implements Setup, Assets {
 	public function setup() {
 		$this->register_settings();
 		add_filter( 'cloudinary_sync_base_struct', array( $this, 'remove_legacy_breakpoints' ) );
-		if ( ! is_admin() ) {
-			$settings = $this->settings->get_value();
-			if ( isset( $settings['use_lazy_loading'] ) && 'on' === $settings['use_lazy_loading'] && 'on' === $settings['enable_breakpoints'] ) {
-				add_filter( 'cloudinary_pre_image_tag', array( $this, 'add_features' ), 10, 3 );
-			}
-		}
 	}
 
 	/**
@@ -203,11 +197,11 @@ class Responsive_Breakpoints implements Setup, Assets {
 			'title'        => __( 'DPR settings', 'cloudinary' ),
 			'tooltip_text' => __( 'The distance from the original image for responsive breakpoints generation.', 'cloudinary' ),
 			'default'      => 'auto',
-			'condition' => array(
+			'condition'    => array(
 				'use_lazy_loading' => true,
 			),
 			'options'      => array(
-				'0'    => __( 'None', 'cloudinary' ),
+				'off'  => __( 'None', 'cloudinary' ),
 				'auto' => __( 'Auto', 'cloudinary' ),
 				'2'    => __( '2X', 'cloudinary' ),
 				'3'    => __( '3X', 'cloudinary' ),
@@ -215,6 +209,8 @@ class Responsive_Breakpoints implements Setup, Assets {
 			),
 		);
 		$image_breakpoints->create_setting( 'dpr', $params, $image_breakpoints )->get_value();
+		// Reset the option parent.
+		$media_settings->get_option_parent()->set_value( null );
 
 		$this->settings = $media_settings;
 	}

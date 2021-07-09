@@ -7,6 +7,7 @@
 
 namespace Cloudinary;
 
+use Cloudinary\Component\Assets;
 use Cloudinary\Component\Setup;
 use Cloudinary\Connect\Api;
 use \Cloudinary\Settings\Setting;
@@ -16,7 +17,7 @@ use \Cloudinary\Settings\Setting;
  *
  * @package Cloudinary
  */
-class Lazy_Load implements Setup {
+class Lazy_Load implements Setup, Assets {
 
 	/**
 	 * Holds the plugin instance.
@@ -188,6 +189,23 @@ class Lazy_Load implements Setup {
 	}
 
 	/**
+	 * Register front end hooks.
+	 */
+	public function register_assets() {
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+	}
+
+	/**
+	 * Apply front end filters on the enqueue_assets hook.
+	 */
+	public function enqueue_assets() {
+		$settings = $this->settings->get_value();
+		if ( isset( $settings['use_lazy_loading'] ) && 'on' === $settings['use_lazy_loading'] ) {
+			add_filter( 'cloudinary_pre_image_tag', array( $this, 'add_features' ), 11, 3 );
+		}
+	}
+
+	/**
 	 * Check if component is active.
 	 *
 	 * @return bool
@@ -201,14 +219,7 @@ class Lazy_Load implements Setup {
 	 * Setup the class.
 	 */
 	public function setup() {
-
 		$this->register_settings();
-		if ( ! is_admin() ) {
-			$settings = $this->settings->get_value();
-			if ( isset( $settings['use_lazy_loading'] ) && 'on' === $settings['use_lazy_loading'] ) {
-				add_filter( 'cloudinary_pre_image_tag', array( $this, 'add_features' ), 11, 3 );
-			}
-		}
 	}
 
 	/**
