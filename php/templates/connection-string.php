@@ -29,4 +29,4 @@ $dir_url = Cloudinary\get_plugin_instance()->dir_url;
 	<li><?php esc_html_e( 'At the top of the dashboard you will find the Account Details section', 'cloudinary' ); ?></li>
 	<li><?php esc_html_e( 'Copy the API Environment variable', 'cloudinary' ); ?></li>
 </ol>
-<img src="<?php echo esc_url( $dir_url ); ?>css/connection-string.png" alt="<?php esc_attr_e( 'Where the connection string can be found on the cloudinary.com console.', 'cloudinary' ); ?>" class="img-connection-string"/>
+<img src="<?php echo esc_url( $dir_url ); ?>css/images/connection-string.png" alt="<?php esc_attr_e( 'Where the connection string can be found on the cloudinary.com console.', 'cloudinary' ); ?>" class="img-connection-string"/>

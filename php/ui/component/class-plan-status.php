@@ -95,7 +95,7 @@ class Plan_Status extends Component {
 
 		$icon                      = $this->get_part( 'icon' );
 		$icon['element']           = 'img';
-		$icon['attributes']['src'] = $this->dir_url . 'css/cloud.svg';
+		$icon['attributes']['src'] = $this->dir_url . 'css/images/cloud.svg';
 		$icon['render']            = true;
 
 		$limit                        = $this->get_part( 'span' );
@@ -129,7 +129,7 @@ class Plan_Status extends Component {
 
 		$icon                      = $this->get_part( 'icon' );
 		$icon['element']           = 'img';
-		$icon['attributes']['src'] = $this->dir_url . 'css/transformation.svg';
+		$icon['attributes']['src'] = $this->dir_url . 'css/images/transformation.svg';
 		$icon['render']            = true;
 
 		$limit                        = $this->get_part( 'span' );
@@ -162,7 +162,7 @@ class Plan_Status extends Component {
 
 		$icon                      = $this->get_part( 'icon' );
 		$icon['element']           = 'img';
-		$icon['attributes']['src'] = $this->dir_url . 'css/bandwidth.svg';
+		$icon['attributes']['src'] = $this->dir_url . 'css/images/bandwidth.svg';
 		$icon['render']            = true;
 
 		$limit                        = $this->get_part( 'span' );

@@ -456,7 +456,7 @@ class Cache extends Settings_Component implements Setup {
 	protected function get_upload_method() {
 		$method = get_transient( self::META_KEYS['upload_method'] );
 		if ( empty( $method ) ) {
-			$test_url = $this->media->base_url . '/image/fetch/' . $this->plugin->dir_url . 'css/logo.svg';
+			$test_url = $this->media->base_url . '/image/fetch/' . $this->plugin->dir_url . 'css/images/logo.svg';
 			$request  = wp_remote_head( $test_url );
 			$method   = 'direct';
 			if ( 200 === wp_remote_retrieve_response_code( $request ) ) {

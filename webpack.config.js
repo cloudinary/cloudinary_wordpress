@@ -73,23 +73,19 @@ const cldCore = {
 	...defaultConfig,
 	...sharedConfig,
 	entry: {
-		cloudinary: './js/src/main.js',
-		video: './css/src/video.scss',
-	},
-	output: {
-		path: path.resolve( process.cwd(), 'js' ),
-		filename: '[name].js',
+		cloudinary: './src/js/main.js',
+		video: './src/css/video.scss',
 	},
 	module: {
 		rules: [
 			{
-				test: /\.(png|svg|jpg|gif)$/,
+				test: /\.(png|svg|jpg|gif|webp)$/,
 				use: [
 					{
 						loader: 'file-loader',
 						options: {
 							name: '[name].[ext]',
-							outputPath: '../css/',
+							outputPath: '../css/images/',
 						},
 					},
 				],
@@ -132,17 +128,7 @@ const cldBlockEditor = {
 	...defaultConfig,
 	...sharedConfig,
 	entry: {
-		'block-editor': './js/src/blocks.js',
-	},
-	module: {
-		...sharedConfig.module,
-		rules: [
-			...sharedConfig.module.rules,
-			{
-				test: /\.(sa|sc|c)ss$/,
-				use: 'null-loader',
-			},
-		],
+		'block-editor': './src/js/blocks.js',
 	},
 };
 
@@ -150,19 +136,23 @@ const cldGalleryBlock = {
 	...defaultConfig,
 	...sharedConfig,
 	entry: {
-		'gallery-block': './js/src/gallery-block/index.js',
+		'gallery-block': './src/js/gallery-block/index.js',
 	},
-	output: {
-		path: path.resolve( process.cwd(), 'js' ),
-		filename: '[name].js',
-	},
+	plugins: [
+		new MiniCssExtractPlugin( {
+			filename: '../css/[name].css',
+		} ),
+		new RtlCssPlugin( {
+			filename: '../css/[name]-rtl.css',
+		} ),
+	],
 };
 
 const cldGalleryInit = {
 	...defaultConfig,
 	...sharedConfig,
 	entry: {
-		'gallery-init': './js/src/components/gallery-init.js',
+		'gallery-init': './src/js/components/gallery-init.js',
 	},
 };
 
@@ -170,14 +160,14 @@ const cldSettingsGallery = {
 	...defaultConfig,
 	...sharedConfig,
 	entry: {
-		gallery: './js/src/components/settings-gallery.js',
+		gallery: './src/js/components/settings-gallery.js',
 	},
 };
 
 const cldGalleryUI = {
 	...cldCore,
 	entry: {
-		'gallery-ui': './css/src/gallery-ui.scss',
+		'gallery-ui': './src/css/gallery-ui.scss',
 	},
 };
 
@@ -185,7 +175,7 @@ const cldDeactivate = {
 	...defaultConfig,
 	...sharedConfig,
 	entry: {
-		deactivate: './js/src/deactivate.js',
+		deactivate: './src/js/deactivate.js',
 	},
 };
 
@@ -193,7 +183,7 @@ const cldVideoInit = {
 	...defaultConfig,
 	...sharedConfig,
 	entry: {
-		'video-init': './js/src/video-init.js',
+		'video-init': './src/js/video-init.js',
 	},
 };
 
@@ -201,7 +191,7 @@ const cldLazyLoad = {
 	...defaultConfig,
 	...sharedConfig,
 	entry: {
-		'lazy-load': './js/src/lazy-load.js',
+		'lazy-load': './src/js/lazy-load.js',
 	},
 };
 

@@ -112,7 +112,7 @@ class Media_Status extends Component {
 
 			$icon                      = $this->get_part( 'icon' );
 			$icon['element']           = 'img';
-			$icon['attributes']['src'] = $this->dir_url . 'css/upload.svg';
+			$icon['attributes']['src'] = $this->dir_url . 'css/images/upload.svg';
 			$icon['render']            = true;
 
 			$status                        = $this->get_part( 'span' );

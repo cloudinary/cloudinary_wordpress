@@ -10,7 +10,7 @@ $settings = array(
 		'type'       => 'tag',
 		'element'    => 'img',
 		'attributes' => array(
-			'src'   => esc_url( $this->dir_url . 'css/logo.svg' ),
+			'src'   => esc_url( $this->dir_url . 'css/images/logo.svg' ),
 			'alt'   => __( "Cloudinary's logo", 'cloudinary' ),
 			'width' => '150px',
 		),

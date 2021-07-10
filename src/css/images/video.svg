@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="24px" viewBox="0 0 20 16" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>crop </title>
+    <defs>
+        <path d="M18,4 L20,8 L17,8 L15,4 L13,4 L15,8 L12,8 L10,4 L8,4 L10,8 L7,8 L5,4 L4,4 C2.9,4 2.01,4.9 2.01,6 L2,18 C2,19.1 2.9,20 4,20 L20,20 C21.1,20 22,19.1 22,18 L22,4 L18,4 Z" id="path-1"></path>
+    </defs>
+    <g id="Wordpress" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="New-Dashboard-Copy-22" transform="translate(-159.000000, -665.000000)">
+            <g id="Group-4-Copy" transform="translate(138.000000, 623.000000)">
+                <g id="crop-" transform="translate(19.000000, 38.000000)">
+                    <mask id="mask-2" fill="white">
+                        <use xlink:href="#path-1"></use>
+                    </mask>
+                    <use id="icon/av/movie_24px" fill="#D6364B" xlink:href="#path-1"></use>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

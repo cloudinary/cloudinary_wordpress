@@ -823,7 +823,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 					),
 					array(
 						'type'      => 'info_box',
-						'icon'      => $this->plugin->dir_url . 'css/crop.svg',
+						'icon'      => $this->plugin->dir_url . 'css/images/crop.svg',
 						'title'     => __( 'Image Delivery Settings', 'cloudinary' ),
 						'text'      => __(
 							'Configure how your images are shown on your site. You can apply transformations to adjust the quality, format or visual appearance and define other settings such as responsive images.',
@@ -835,7 +835,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 					),
 					array(
 						'type'      => 'info_box',
-						'icon'      => $this->plugin->dir_url . 'css/video.svg',
+						'icon'      => $this->plugin->dir_url . 'css/images/video.svg',
 						'title'     => __( 'Video Settings', 'cloudinary' ),
 						'text'      => __(
 							'Configure how your videos are shown on your site. You can apply transformations to adjust the quality, format or visual appearance and define other settings such as whether to use the Cloudinary video player.',
@@ -847,7 +847,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 					),
 					array(
 						'type'      => 'info_box',
-						'icon'      => $this->plugin->dir_url . 'css/transformation.svg',
+						'icon'      => $this->plugin->dir_url . 'css/images/transformation.svg',
 						'title'     => __( 'Learn More', 'cloudinary' ),
 						'text'      => __(
 							'You can upload and manage your images and videos in Cloudinary directly from your WordPress interface. The plugin also supports automated (single-click) migration of all media assets from your existing posts to Cloudinary. Once your WordPress media is stored in Cloudinary, you can take advantage of Cloudinary\'s transformation, optimization, and responsive features as well as fast CDN delivery.',

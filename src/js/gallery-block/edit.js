@@ -18,7 +18,7 @@ import { InspectorControls, MediaPlaceholder } from '@wordpress/block-editor';
 /**
  * Internal dependencies
  */
-import '../../../css/src/gallery.scss';
+import '../../css/gallery.scss';
 import Controls from './controls';
 import { ALLOWED_MEDIA_TYPES } from './options';
 import { generateId, setupAttributesForRendering, showNotice } from './utils';

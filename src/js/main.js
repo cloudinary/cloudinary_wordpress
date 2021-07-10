@@ -14,7 +14,22 @@ import MediaLibrary from './components/media-library';
 import Notices from './components/notices';
 import UI from './components/ui';
 
-import '../../css/src/main.scss';
+import '../css/main.scss';
+
+// include images.
+import '../css/images/bandwidth.svg';
+import '../css/images/circle.svg';
+import '../css/images/cloud.svg';
+import '../css/images/crop.svg';
+import '../css/images/gallery.svg';
+import '../css/images/image.svg';
+import '../css/images/learn.svg';
+import '../css/images/logo-icon.svg';
+import '../css/images/transformation.svg';
+import '../css/images/upload.svg';
+import '../css/images/video.svg';
+import '../css/images/connection-string.png';
+import '../css/images/sample.webp';
 
 // jQuery, because reasons.
 window.$ = window.jQuery;
