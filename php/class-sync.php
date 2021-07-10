@@ -152,7 +152,7 @@ class Sync implements Setup, Assets {
 	public function been_synced( $attachment_id ) {
 
 		$public_id = $this->managers['media']->has_public_id( $attachment_id );
-		$meta      = wp_get_attachment_metadata( $attachment_id );
+		$meta      = wp_get_attachment_metadata( $attachment_id, true );
 
 		return ! empty( $public_id ) || ! empty( $meta['cloudinary'] ); // From v1.
 	}

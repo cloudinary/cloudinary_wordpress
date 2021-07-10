@@ -187,6 +187,14 @@ const cldVideoInit = {
 	},
 };
 
+const cldLazyLoad = {
+	...defaultConfig,
+	...sharedConfig,
+	entry: {
+		'lazy-load': './src/js/lazy-load.js',
+	},
+};
+
 module.exports = [
 	cldBlockEditor,
 	cldCore,
@@ -196,4 +204,5 @@ module.exports = [
 	cldVideoInit,
 	cldSettingsGallery,
 	cldGalleryUI,
+	cldLazyLoad,
 ];

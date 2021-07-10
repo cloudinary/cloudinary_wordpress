@@ -7,6 +7,7 @@
     "jQuery": "readonly",
     "$": "readonly",
     "CLDN": "readonly",
+    "CLDLB": "readonly",
     "CLD_GLOBAL_TRANSFORMATIONS": "readonly",
     "samplePlayer": "readonly",
     "CLDCACHE": "readonly"

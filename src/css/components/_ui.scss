@@ -198,8 +198,6 @@
 			align-self: center;
 			padding: 0 0.45rem;
 			cursor: pointer;
-			position: absolute;
-			right: 0;
 		}
 
 		&-title {
@@ -318,6 +316,9 @@
 	}
 
 	&-group {
+		.cld-group .cld-group {
+			padding-left: 4px;
+		}
 
 		hr {
 			border-top: 1px solid $color-light-grey;
@@ -325,9 +326,13 @@
 			clear: both;
 		}
 
+		.cld-group .cld-group hr {
+			display: none;
+		}
+
 		&-heading {
 			display: flex;
-
+			justify-content: space-between;
 			h3 {
 				font-size: 0.9rem;
 

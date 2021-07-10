@@ -997,7 +997,15 @@ class Media extends Settings_Component implements Setup {
 		 *
 		 * @return string
 		 */
-		return apply_filters( 'cloudinary_converted_url', $url, $attachment_id, $pre_args );
+		$url = apply_filters( 'cloudinary_converted_url', $url, $attachment_id, $pre_args );
+
+		// Add Cloudinary analytics.
+		return add_query_arg(
+			array(
+				'_i' => 'AA',
+			),
+			$url
+		);
 	}
 
 	/**
@@ -1845,16 +1853,17 @@ class Media extends Settings_Component implements Setup {
 
 		$meta = get_post_meta( $post_id, Sync::META_KEYS['cloudinary'], true );
 		if ( empty( $meta ) ) {
-			$meta     = array();
-			$old_meta = wp_get_attachment_metadata( $post_id, true );
-			if ( isset( $old_meta[ Sync::META_KEYS['cloudinary'] ] ) ) {
-				$meta = $old_meta[ Sync::META_KEYS['cloudinary'] ];
-				// Add public ID.
-				$public_id                            = get_post_meta( $post_id, Sync::META_KEYS['public_id'], true );
-				$meta[ Sync::META_KEYS['public_id'] ] = $public_id;
-				update_post_meta( $post_id, Sync::META_KEYS['cloudinary'], $meta );
-				delete_post_meta( $post_id, Sync::META_KEYS['public_id'] );
-			}
+			/**
+			 * Filter the meta if not found, in order to migrate from a legacy plugin.
+			 *
+			 * @hook    cloudinary_migrate_legacy_meta
+			 * @since   2.7.5
+			 *
+			 * @param $attachment_id {int} The attachment ID.
+			 *
+			 * @return  array
+			 */
+			$meta = apply_filters( 'cloudinary_migrate_legacy_meta', $post_id );
 		}
 		if ( '' !== $key ) {
 			$meta = isset( $meta[ $key ] ) ? $meta[ $key ] : null;
@@ -1935,12 +1944,12 @@ class Media extends Settings_Component implements Setup {
 		$settings    = $this->settings->get_setting( self::MEDIA_SETTINGS_SLUG )->get_value();
 
 		if ( 'on' === $settings['enable_breakpoints'] && wp_attachment_is_image( $attachment_id ) ) {
-			$meta = wp_get_attachment_metadata( $attachment_id );
+			$meta = wp_get_attachment_metadata( $attachment_id, true );
 			// Get meta image size if non exists.
 			if ( empty( $meta ) ) {
 				$meta          = array();
 				$imagesize     = getimagesize( get_attached_file( $attachment_id ) );
-				$meta['width'] = $imagesize[0] ? $imagesize[0] : 0;
+				$meta['width'] = isset( $imagesize[0] ) ? $imagesize[0] : 0;
 			}
 			$max_width = $this->get_max_width();
 			// Add breakpoints request options.
