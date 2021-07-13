@@ -174,7 +174,8 @@ class Download_Sync {
 
 			// Prepare the asset.
 			update_attached_file( $attachment_id, $upload['file'] );
-			wp_generate_attachment_metadata( $attachment_id, $upload['file'] );
+
+			wp_update_attachment_metadata( $attachment_id, wp_generate_attachment_metadata( $attachment_id, $upload['file'] ) );
 
 			// Update the folder synced flag.
 			$public_id         = $this->media->get_public_id( $attachment_id );
