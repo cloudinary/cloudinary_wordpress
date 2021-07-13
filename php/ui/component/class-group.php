@@ -22,7 +22,7 @@ class Group extends Panel {
 	 *
 	 * @var string
 	 */
-	protected $blueprint = 'header|icon/|title/|collapse/|/header|wrap|settings/|hr/|/wrap';
+	protected $blueprint = 'div|header|icon/|title/|collapse/|/header|wrap|settings/|hr/|/wrap|/div';
 
 
 	/**

@@ -189,7 +189,9 @@ class Storage implements Notice {
 		switch ( $this->settings['offload'] ) {
 			case 'cld':
 				$this->remove_local_assets( $attachment_id );
-				update_post_meta( $attachment_id, '_wp_attached_file', $this->media->cloudinary_url( $attachment_id ) );
+				$url = $this->media->cloudinary_url( $attachment_id, false );
+				$url = remove_query_arg( '_i', $url );
+				update_post_meta( $attachment_id, '_wp_attached_file', $url );
 				break;
 			case 'dual_low':
 				$transformations = $this->media->get_transformation_from_meta( $attachment_id );
@@ -288,7 +290,7 @@ class Storage implements Notice {
 	 */
 	public function get_notices() {
 		$notices = array();
-		if ( 'cld' === $this->settings['offload'] ) {
+		if ( ! empty( $this->settings ) && 'cld' === $this->settings['offload'] ) {
 			$storage         = $this->connect->get_usage_stat( 'storage', 'used_percent' );
 			$transformations = $this->connect->get_usage_stat( 'transformations', 'used_percent' );
 			$bandwidth       = $this->connect->get_usage_stat( 'bandwidth', 'used_percent' );

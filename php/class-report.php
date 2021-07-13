@@ -163,7 +163,8 @@ class Report extends Settings_Component implements Setup {
 	 */
 	public function render( $post ) {
 		if ( 'attachment' === $post->post_type ) {
-			$meta = wp_get_attachment_metadata( $post->ID );
+			$sync = $this->plugin->get_component( 'sync' );
+			$meta = get_post_meta( $post->ID, $sync::META_KEYS['cloudinary'], true );
 
 			$args = array(
 				'type'       => 'tag',
