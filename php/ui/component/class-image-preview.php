@@ -202,7 +202,7 @@ class Image_Preview extends Component {
 	 * Setup the JS data before rendering.
 	 */
 	protected function pre_render() {
-		$url         = 'https://res.cloudinary.com/demo/image/upload/';
+		$url         = CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE;
 		$preview_src = $url . 'w_600/';
 		$sample      = '/sample.jpg';
 		$script_data = array(

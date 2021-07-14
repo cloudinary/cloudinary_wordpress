@@ -118,7 +118,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		if ( is_object( $screen ) && $screen->id === $this->handle ) {
 
 			// External assets.
-			wp_enqueue_script( 'cloudinary-media-library', 'https://media-library.cloudinary.com/global/all.js', array(), $this->plugin->version, true );
+			wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, array(), $this->plugin->version, true );
 			$params = array(
 				'nonce'     => wp_create_nonce( 'wp_rest' ),
 				'mloptions' => array(

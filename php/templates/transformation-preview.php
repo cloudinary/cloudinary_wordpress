@@ -5,7 +5,7 @@
  * @package Cloudinary
  */
 
-$url         = 'https://res.cloudinary.com/demo/image/upload/';
+$url         = CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE;
 $src         = $url . '/sample.jpg';
 $preview_src = $url . 'w_600/';
 $sample      = '/sample.jpg';

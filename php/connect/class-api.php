@@ -24,13 +24,6 @@ class Api {
 	public $credentials;
 
 	/**
-	 * Cloudinary API URL.
-	 *
-	 * @var string
-	 */
-	public $api_url = 'api.cloudinary.com';
-
-	/**
 	 * Cloudinary Asset URL.
 	 *
 	 * @var string
@@ -162,7 +155,7 @@ class Api {
 		$parts = array();
 
 		if ( $endpoint ) {
-			$parts[] = $this->api_url;
+			$parts[] = CLOUDINARY_ENDPOINTS_API;
 			$parts[] = $this->api_version;
 		} else {
 			$parts[] = $this->asset_url;

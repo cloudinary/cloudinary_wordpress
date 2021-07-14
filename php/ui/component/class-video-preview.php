@@ -59,7 +59,7 @@ class Video_Preview extends Image_Preview {
 	 * Setup the JS data before rendering.
 	 */
 	protected function pre_render() {
-		$url         = 'https://res.cloudinary.com/demo/video/upload/';
+		$url         = CLOUDINARY_ENDPOINTS_PREVIEW_VIDEO;
 		$preview_src = $url . 'w_600/';
 		$sample      = '/dog.mp4';
 		$script_data = array(

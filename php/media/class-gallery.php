@@ -27,13 +27,6 @@ class Gallery {
 	const GALLERY_LIBRARY_HANDLE = 'cld-gallery';
 
 	/**
-	 * The gallery widget lib cdn url.
-	 *
-	 * @var string
-	 */
-	const GALLERY_LIBRARY_URL = 'https://product-gallery.cloudinary.com/all.js';
-
-	/**
 	 * Holds the settings slug.
 	 *
 	 * @var string
@@ -155,7 +148,7 @@ class Gallery {
 
 		wp_enqueue_script(
 			self::GALLERY_LIBRARY_HANDLE,
-			self::GALLERY_LIBRARY_URL,
+			CLOUDINARY_ENDPOINTS_GALLERY,
 			array(),
 			$this->media->plugin->version,
 			true
