@@ -1508,6 +1508,12 @@ class Media extends Settings_Component implements Setup {
 			$this->update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], $asset['transformations'] );
 		}
 
+		// Create a trackable key in post meta to allow getting public id from URL with transformations.
+		update_post_meta( $attachment_id, '_' . md5( $sync_key ), true );
+
+		// Create a trackable key in post meta to allow getting public id from URL.
+		update_post_meta( $attachment_id, '_' . md5( 'base_' . $public_id ), true );
+
 		// capture the delivery type.
 		$this->update_post_meta( $attachment_id, Sync::META_KEYS['delivery'], $asset['type'] );
 		// Capture the ALT Text.
