@@ -189,9 +189,9 @@ class Storage implements Notice {
 		switch ( $this->settings['offload'] ) {
 			case 'cld':
 				$this->remove_local_assets( $attachment_id );
-				$url = $this->media->cloudinary_url( $attachment_id, false );
-				$url = remove_query_arg( '_i', $url );
-				update_post_meta( $attachment_id, '_wp_attached_file', $url );
+				$cloudinary_url = $this->media->cloudinary_url( $attachment_id, false );
+				$cloudinary_url = remove_query_arg( '_i', $cloudinary_url );
+				update_post_meta( $attachment_id, '_wp_attached_file', $cloudinary_url );
 				break;
 			case 'dual_low':
 				$transformations = $this->media->get_transformation_from_meta( $attachment_id );
@@ -222,6 +222,7 @@ class Storage implements Notice {
 				$this->remove_local_assets( $attachment_id );
 			}
 			$date = get_post_datetime( $attachment_id );
+			$url  = remove_query_arg( '_i', $url );
 			$this->download->download_asset( $attachment_id, $url, $date->format( 'Y/m' ) );
 		}
 
