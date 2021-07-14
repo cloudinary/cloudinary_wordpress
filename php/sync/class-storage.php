@@ -222,6 +222,7 @@ class Storage implements Notice {
 				$this->remove_local_assets( $attachment_id );
 			}
 			$date = get_post_datetime( $attachment_id );
+			$url  = remove_query_arg( '_i', $url );
 			$this->download->download_asset( $attachment_id, $url, $date->format( 'Y/m' ) );
 		}
 
