@@ -184,7 +184,7 @@ class Delivery implements Setup {
 		$tag_element['atts']['class'][] = 'wp-image-' . $attachment_id;
 		$tag_element['atts']['class'][] = 'wp-post-' . $post_id;
 
-		if ( true === (bool) $this->media->get_post_meta( $post_id, Global_Transformations::META_FEATURED_IMAGE_KEY, true ) ) {
+		if ( true === (bool) get_post_meta( $post_id, Global_Transformations::META_FEATURED_IMAGE_KEY, true ) ) {
 			$tag_element['atts']['class'][] = 'cld-overwrite';
 		}
 
