@@ -238,6 +238,7 @@ class Media extends Settings_Component implements Setup {
 	public function is_file_compatible( $file ) {
 
 		$types        = $this->get_compatible_media_types();
+		$file         = wp_parse_url( $file, PHP_URL_PATH );
 		$filename     = pathinfo( $file, PATHINFO_BASENAME );
 		$mime         = wp_check_filetype( $filename );
 		$type         = strstr( $mime['type'], '/', true );
@@ -352,6 +353,7 @@ class Media extends Settings_Component implements Setup {
 	 * @return string
 	 */
 	public function get_file_type( $file ) {
+		$file = wp_parse_url( $file, PHP_URL_PATH );
 		$file = pathinfo( $file, PATHINFO_BASENAME );
 		$mime = wp_check_filetype( $file );
 
