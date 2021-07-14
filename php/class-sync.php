@@ -94,6 +94,7 @@ class Sync implements Setup, Assets {
 		'process_log'    => '_process_log',
 		'storage'        => '_cloudinary_storage',
 		'queued'         => '_cloudinary_sync_queued',
+		'delay'          => '_cloudinary_sync_delay',
 	);
 
 	/**
