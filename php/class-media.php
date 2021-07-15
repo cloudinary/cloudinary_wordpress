@@ -2107,7 +2107,7 @@ class Media extends Settings_Component implements Setup {
 	public function maybe_overwrite_featured_image( $attachment_id ) {
 		$overwrite = false;
 		if ( $this->doing_featured_image && $this->doing_featured_image === (int) $attachment_id ) {
-			$overwrite = (bool) $this->get_post_meta( get_the_ID(), Global_Transformations::META_FEATURED_IMAGE_KEY, true );
+			$overwrite = (bool) get_post_meta( get_the_ID(), Global_Transformations::META_FEATURED_IMAGE_KEY, true );
 		}
 
 		return $overwrite;
