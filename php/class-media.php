@@ -1508,6 +1508,12 @@ class Media extends Settings_Component implements Setup {
 			$this->update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], $asset['transformations'] );
 		}
 
+		// Create a trackable key in post meta to allow getting the attachment id from URL with transformations.
+		update_post_meta( $attachment_id, '_' . md5( $sync_key ), true );
+
+		// Create a trackable key in post meta to allow getting the attachment id from URL.
+		update_post_meta( $attachment_id, '_' . md5( 'base_' . $public_id ), true );
+
 		// capture the delivery type.
 		$this->update_post_meta( $attachment_id, Sync::META_KEYS['delivery'], $asset['type'] );
 		// Capture the ALT Text.
@@ -2101,7 +2107,7 @@ class Media extends Settings_Component implements Setup {
 	public function maybe_overwrite_featured_image( $attachment_id ) {
 		$overwrite = false;
 		if ( $this->doing_featured_image && $this->doing_featured_image === (int) $attachment_id ) {
-			$overwrite = (bool) $this->get_post_meta( get_the_ID(), Global_Transformations::META_FEATURED_IMAGE_KEY, true );
+			$overwrite = (bool) get_post_meta( get_the_ID(), Global_Transformations::META_FEATURED_IMAGE_KEY, true );
 		}
 
 		return $overwrite;

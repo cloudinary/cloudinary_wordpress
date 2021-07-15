@@ -142,8 +142,8 @@ class Upgrade {
 		if ( ! empty( $transformations ) ) {
 			$sync_key .= wp_json_encode( $transformations );
 		}
-		delete_post_meta( $attachment_id, '_' . md5( $sync_key ), true );
-		delete_post_meta( $attachment_id, '_' . md5( 'base_' . $public_id ), true );
+		update_post_meta( $attachment_id, '_' . md5( $sync_key ), true );
+		update_post_meta( $attachment_id, '_' . md5( 'base_' . $public_id ), true );
 		// Get a new uncached signature.
 		$this->sync->get_signature( $attachment_id, true );
 
