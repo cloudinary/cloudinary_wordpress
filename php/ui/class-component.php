@@ -86,6 +86,25 @@ abstract class Component {
 		// Setup blueprint.
 		$this->blueprint = $this->setting->get_param( 'blueprint', $this->blueprint );
 
+		// Setup the components parts for render.
+		$this->setup_component_parts();
+
+		// Add scripts.
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+
+	}
+
+	/**
+	 * Setup the component.
+	 */
+	public function setup() {
+		$this->setup_conditions();
+	}
+
+	/**
+	 * Setup the conditions.
+	 */
+	public function setup_conditions() {
 		// Setup conditional logic.
 		if ( $this->setting->has_param( 'condition' ) ) {
 			$condition = $this->setting->get_param( 'condition' );
@@ -98,19 +117,6 @@ abstract class Component {
 				}
 			}
 		}
-
-		// Setup the components parts for render.
-		$this->setup_component_parts();
-
-		// Add scripts.
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
-	}
-
-	/**
-	 * Setup the component.
-	 */
-	public function setup() {
-
 	}
 
 	/**

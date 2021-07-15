@@ -161,7 +161,7 @@ class Media_Status extends Component {
 			'posts_per_page' => 1,
 			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery
 				array(
-					'key'     => Sync::META_KEYS['public_id'],
+					'key'     => Sync::META_KEYS['cloudinary'],
 					'compare' => 'EXISTS',
 				),
 

@@ -199,14 +199,13 @@ trait CLI_Trait {
 			$filename = self::pad_name( basename( $file ), 20, ' ', '*' );
 			$bar->tick( 1, 'Syncing (' . ( $done ) . ' of ' . $total . ') : ' . $filename );
 			if (
-				! $this->plugin->get_component( 'sync' )->is_synced( $asset )
+				! $this->plugin->get_component( 'sync' )->is_synced( $asset, true )
 				&& $this->plugin->get_component( 'media' )->is_local_media( $asset )
 				&& $this->plugin->get_component( 'sync' )->is_syncable( $asset )
 			) {
 				$this->plugin->get_component( 'sync' )->managers['push']->process_assets( $asset, $bar );
 			}
 			delete_post_meta( $asset, '_cld_unsynced', true );
-			$bar->tick();
 		}
 		// Done message - reanalyze.
 		if ( $done === $total ) {
@@ -249,7 +248,7 @@ trait CLI_Trait {
 			) {
 				// Add a key.
 				$key = '_cld_synced';
-				if ( ! $this->plugin->get_component( 'sync' )->is_synced( $asset ) ) {
+				if ( ! $this->plugin->get_component( 'sync' )->is_synced( $asset, true ) ) {
 					$key = '_cld_unsynced';
 					add_post_meta( $asset, $key, true, true );
 				}

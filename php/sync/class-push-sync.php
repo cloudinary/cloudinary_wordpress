@@ -194,8 +194,6 @@ class Push_Sync {
 		$ids = array_map( 'intval', (array) $attachments );
 		// Handle based on Sync Type.
 		foreach ( $ids as $attachment_id ) {
-			// Create synced post meta as a way to search for synced / unsynced items.
-			update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $this->media->get_public_id( $attachment_id ) );
 
 			// Skip external media.
 			if ( ! $this->media->is_local_media( $attachment_id ) ) {
@@ -209,21 +207,23 @@ class Push_Sync {
 			update_post_meta( $attachment_id, Sync::META_KEYS['syncing'], time() );
 			$stat[ $attachment_id ] = array();
 			while ( $type = $this->sync->get_sync_type( $attachment_id, false ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition
+				// translators: variable is sync type.
+				$action_message = sprintf( __( 'Sync type: %s', 'cloudinary' ), $type );
+				do_action( '_cloudinary_queue_action', $action_message );
 				if ( isset( $stat[ $attachment_id ][ $type ] ) ) {
 					// Loop prevention.
 					break;
 				}
-				$stat[ $attachment_id ][ $type ] = $this->sync->run_sync_method( $type, 'sync', $attachment_id );
+				$stat[ $attachment_id ][ $type ] = true;
+				$result                          = $this->sync->run_sync_method( $type, 'sync', $attachment_id );
+				if ( ! empty( $result ) ) {
+					$this->sync->log_sync_result( $attachment_id, $type, $result );
+				}
 			}
-			$prev_stat = $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['process_log'], true );
-			if ( empty( $prev_stat ) ) {
-				$prev_stat = array();
-			}
-			$stat[ $attachment_id ] = array_merge( $prev_stat, $stat );
+
 			// remove pending.
 			delete_post_meta( $attachment_id, Sync::META_KEYS['pending'] );
-			// Record Process log.
-			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['process_log'], $stat[ $attachment_id ] );
+
 			// Remove processing flag.
 			delete_post_meta( $attachment_id, Sync::META_KEYS['syncing'] );
 

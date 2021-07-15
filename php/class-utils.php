@@ -129,4 +129,27 @@ class Utils {
 
 		return $return;
 	}
+
+	/**
+	 * Get the depth of an array.
+	 *
+	 * @param array $array The array to check.
+	 *
+	 * @return int
+	 */
+	public static function array_depth( array $array ) {
+		$depth = 0;
+
+		foreach ( $array as $value ) {
+			if ( is_array( $value ) ) {
+				$level = self::array_depth( $value ) + 1;
+
+				if ( $level > $depth ) {
+					$depth = $level;
+				}
+			}
+		}
+
+		return $depth;
+	}
 }

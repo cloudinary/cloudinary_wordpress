@@ -151,7 +151,7 @@ class Sync extends Text {
 			'posts_per_page' => 1,
 			'meta_query'     => array( // phpcs:ignore
 				array(
-					'key'     => \Cloudinary\Sync::META_KEYS['public_id'],
+					'key'     => \Cloudinary\Sync::META_KEYS['cloudinary'],
 					'compare' => 'NOT EXISTS',
 				),
 
