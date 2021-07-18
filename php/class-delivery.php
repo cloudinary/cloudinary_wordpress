@@ -335,7 +335,7 @@ class Delivery implements Setup {
 			$attachment_id         = $this->get_id_from_tag( $element );
 			$this->current_post_id = $this->filter->get_id_from_tag( $element, 'wp-post-' );
 
-			if ( empty( $attachment_id ) || ! $this->sync->is_synced( $attachment_id ) ) {
+			if ( empty( $attachment_id ) || ! $this->media->cloudinary_id( $attachment_id ) ) {
 				continue;
 			}
 			// Register replacement.
