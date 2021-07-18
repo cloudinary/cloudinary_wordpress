@@ -423,6 +423,7 @@ class Assets {
 
 		$args = array(
 			'post_title'     => $url,
+			'post_content'   => $file_string,
 			'post_name'      => $hash_name,
 			'post_mime_type' => $wp_filetype['type'],
 			'post_type'      => self::POST_TYPE_SLUG,
