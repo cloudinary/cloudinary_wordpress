@@ -282,6 +282,33 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Get the attachment ID from the media tag.
+	 *
+	 * @param string $asset The media tag.
+	 * @param string $type  The type.
+	 *
+	 * @return int|false
+	 */
+	public function get_id_from_tag( $asset, $type = 'wp-image-|wp-video-' ) {
+		$attachment_id = $this->filter->get_id_from_tag( $asset, $type );
+		/**
+		 * Filter id from the tag.
+		 *
+		 * @hook    cloudinary_delivery_get_id
+		 * @since   2.7.6
+		 *
+		 * @param $attachment_id {int} The attachment ID.
+		 * @param $asset         {string} The html tag.
+		 * @param $type          {string} The asset type.
+		 *
+		 * @return  int|false
+		 */
+		$attachment_id = apply_filters( 'cloudinary_delivery_get_id', $attachment_id, $asset, $type );
+
+		return $attachment_id;
+	}
+
+	/**
 	 * Convert media tags from Local to Cloudinary, and register with String_Replace.
 	 *
 	 * @param string $content The HTML to find tags and prep replacement in.
@@ -302,7 +329,7 @@ class Delivery implements Setup {
 		$replacements   = array();
 		$attachment_ids = array();
 		foreach ( $tags as $element ) {
-			$attachment_id         = $this->filter->get_id_from_tag( $element );
+			$attachment_id         = $this->get_id_from_tag( $element );
 			$this->current_post_id = $this->filter->get_id_from_tag( $element, 'wp-post-' );
 
 			if ( empty( $attachment_id ) || ! $this->sync->is_synced( $attachment_id ) ) {
