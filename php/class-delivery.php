@@ -451,27 +451,62 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Checks if a url is for a local asset.
+	 *
+	 * @param string $url The url to check.
+	 *
+	 * @return bool
+	 */
+	protected function is_local_asset_url( $url ) {
+		static $base = '';
+		if ( empty( $base ) ) {
+			$dirs = wp_upload_dir();
+			$base = $dirs['baseurl'];
+		}
+
+		$is_local = substr( $url, 0, strlen( $base ) ) === $base;
+
+		/**
+		 * Filter if the url is a local asset.
+		 *
+		 * @hook    cloudinary_pre_image_tag
+		 * @since   2.7.6
+		 *
+		 * @param $is_local {bool}  If the url is a local asset.
+		 * @param $url      {string} The url.
+		 *
+		 * @return  bool
+		 */
+		return apply_filters( 'cloudinary_is_local_asset_url', $is_local, $url );
+	}
+
+	/**
+	 * Clean a url: adds scheme if missing, removes query and fragments.
+	 *
+	 * @param string $url The URL to clean.
+	 *
+	 * @return string
+	 */
+	public static function clean_url( $url ) {
+		static $default;
+		if ( ! $default ) {
+			$default = wp_parse_url( home_url( '/' ) );
+		}
+		$parts = wp_parse_args( wp_parse_url( $url ), $default );
+
+		return $parts['scheme'] . '://' . $parts['host'] . $parts['path'];
+	}
+
+	/**
 	 * Catch attachment URLS from HTML content.
 	 *
 	 * @param string $content The HTML to catch URLS from.
 	 */
 	public function catch_urls( $content ) {
 		$this->init_delivery();
-		$known = $this->convert_tags( $content );
-		$urls  = wp_extract_urls( $content );
-		$dirs  = wp_get_upload_dir();
-		$urls  = array_map(
-			function ( $url ) use ( $dirs ) {
-
-				if ( false === strpos( $url, $dirs['baseurl'] ) ) {
-					return null;
-				}
-
-				return $url;
-			},
-			$urls
-		);
-
+		$urls    = array_map( array( $this, 'clean_url' ), wp_extract_urls( $content ) );
+		$urls    = array_filter( $urls, array( $this, 'is_local_asset_url' ) );
+		$known   = $this->convert_tags( $content );
 		$urls    = array_filter( array_filter( $urls ), array( 'Cloudinary\String_Replace', 'string_not_set' ) );
 		$unknown = array_diff( $urls, array_keys( $known ) );
 		if ( ! empty( $unknown ) ) {
