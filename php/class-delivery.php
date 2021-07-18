@@ -210,9 +210,12 @@ class Delivery implements Setup {
 	 */
 	public function get_attachment_size_urls( $attachment_id ) {
 
-		$urls             = array();
-		$meta             = wp_get_attachment_metadata( $attachment_id );
-		$baseurl          = wp_get_attachment_url( $attachment_id );
+		$urls    = array();
+		$meta    = wp_get_attachment_metadata( $attachment_id );
+		$baseurl = wp_get_attachment_url( $attachment_id );
+		if ( false === $baseurl ) {
+			return $urls;
+		}
 		$base             = trailingslashit( dirname( $baseurl ) );
 		$urls[ $baseurl ] = $this->media->cloudinary_url( $attachment_id );
 		// Ignore getting 'original_image' since this isn't used in the front end.
