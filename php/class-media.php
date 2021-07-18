@@ -266,6 +266,7 @@ class Media extends Settings_Component implements Setup {
 		 * Filter the check if post is media.
 		 *
 		 * @hook    cloudinary_is_media
+		 * @since   2.7.6
 		 * @default false
 		 *
 		 * @param $is_media      {bool}   Flag if is media.
