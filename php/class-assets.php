@@ -91,7 +91,7 @@ class Assets {
 	protected function register_hooks() {
 		// Filters.
 		add_filter( 'cloudinary_is_local_asset_url', array( $this, 'check_asset' ), 10, 2 );
-		add_filter( 'cloudinary_delivery_id', array( $this, 'get_asset_id_from_tag' ), 10, 2 );
+		add_filter( 'cloudinary_delivery_get_id', array( $this, 'get_asset_id_from_tag' ), 10, 2 );
 		add_filter( 'cloudinary_is_media', array( $this, 'is_media' ), 10, 2 );
 		add_filter( 'get_attached_file', array( $this, 'get_attached_file' ), 10, 2 );
 		add_filter( 'cloudinary_sync_base_struct', array( $this, 'add_sync_type' ) );
