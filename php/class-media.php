@@ -262,7 +262,18 @@ class Media extends Settings_Component implements Setup {
 			$is_media    = in_array( $type, $media_types, true );
 		}
 
-		return $is_media;
+		/**
+		 * Filter the check if post is media.
+		 *
+		 * @hook    cloudinary_is_media
+		 * @default false
+		 *
+		 * @param $is_media      {bool}   Flag if is media.
+		 * @param $attachment_id {string} The attachment ID.
+		 *
+		 * @return  {bool}
+		 */
+		return apply_filters( 'cloudinary_is_media', $is_media, $attachment_id );
 	}
 
 	/**
