@@ -46,6 +46,12 @@ class Beta {
 				'options' => array(),
 				'deps'    => array( 'delivery' ),
 			),
+			'assets'                 => array(
+				'class'   => array( 'Cloudinary\Assets' ),
+				'name'    => __( 'Non-media library assets', 'cloudinary' ),
+				'options' => array(),
+				'deps'    => array( 'delivery' ),
+			),
 		);
 
 		foreach ( $this->components as $key => $data ) {
