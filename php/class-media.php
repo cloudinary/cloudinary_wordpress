@@ -769,6 +769,9 @@ class Media extends Settings_Component implements Setup {
 	 * @return array The array of found transformations within the string.
 	 */
 	public function get_transformations_from_string( $str, $type = 'image' ) {
+		if ( ! isset( Api::$transformation_index[ $type ] ) ) {
+			return array();
+		}
 
 		$params = Api::$transformation_index[ $type ];
 
