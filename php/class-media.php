@@ -1106,8 +1106,13 @@ class Media extends Settings_Component implements Setup {
 			if ( $this->is_folder_synced( $attachment_id ) ) {
 				$public_id = $this->get_cloudinary_folder() . pathinfo( $public_id, PATHINFO_BASENAME );
 			}
-			if ( true === $suffixed ) {
-				$public_id .= $this->get_post_meta( $attachment_id, Sync::META_KEYS['suffix'], true );
+			if ( true === $suffixed && ! empty( $this->get_post_meta( $attachment_id, Sync::META_KEYS['suffix'], true ) ) ) {
+				$suffix = $this->get_post_meta( $attachment_id, Sync::META_KEYS['suffix'], true );
+				if ( false === strrpos( $public_id, $suffix ) ) {
+					$public_id .= $suffix;
+					$this->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
+				}
+				$this->delete_post_meta( $attachment_id, Sync::META_KEYS['suffix'] );
 			}
 		} else {
 			$public_id = $this->sync->generate_public_id( $attachment_id );
