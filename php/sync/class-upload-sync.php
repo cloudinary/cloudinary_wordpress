@@ -163,6 +163,7 @@ class Upload_Sync {
 
 					// It's required to perform a new sync that Cloudinary and WordPress storage is set.
 					if (
+						$this->plugin->components['sync']->is_synced( $post_id ) &&
 						'dual_full' !== $this->plugin->settings->find_setting( 'offload' )->get_value()
 					) {
 						continue;
