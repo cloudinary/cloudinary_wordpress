@@ -203,7 +203,7 @@ class Sync implements Setup, Assets {
 		}
 		if ( isset( $log[ $type ] ) ) {
 
-			$log[ $type ][ time() ] = $result;
+			$log[ $type ][ '_' . time() ] = $result;
 			if ( 5 < count( $log[ $type ] ) ) {
 				array_shift( $log[ $type ] );
 			}
