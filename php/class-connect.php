@@ -85,7 +85,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		'signature'  => 'cloudinary_connection_signature',
 		'version'    => 'cloudinary_version',
 		'url'        => 'cloudinary_url',
-		'connect'    => 'cloudinary_connect',
+		'connection' => 'cloudinary_connect',
 		'status'     => 'cloudinary_status',
 	);
 
@@ -766,7 +766,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		}
 
 		if ( 'signature' === $setting ) {
-			 $value = md5( $url );
+			$value = md5( $url );
 		}
 
 		if ( 'connect' === $setting ) {
