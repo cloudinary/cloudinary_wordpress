@@ -162,7 +162,7 @@ class Video {
 			if ( empty( $attr['cloudinary'] ) ) {
 				$video                        = wp_get_attachment_metadata( $attr['id'] );
 				$url                          = $this->media->cloudinary_url( $attr['id'] );
-				$attr[ $video['fileformat'] ] = $url;
+				$attr[ $video['fileformat'] ] = strtok( $url, '?' );
 				$attr['cloudinary']           = true; // Flag Cloudinary to ensure we don't call it again.
 				$html                         = wp_video_shortcode( $attr, $html );
 			}
