@@ -8,7 +8,7 @@
 namespace Cloudinary\UI\Component;
 
 use Cloudinary\REST_API;
-use Cloudinary\Cache\Cache_Point;
+use Cloudinary\Assets;
 use function Cloudinary\get_plugin_instance;
 
 /**
@@ -33,11 +33,11 @@ class Folder_Table extends Table {
 	protected $slugs = array();
 
 	/**
-	 * Holds the cache point object.
+	 * Holds the assets instance.
 	 *
-	 * @var Cache_Point
+	 * @var Assets
 	 */
-	protected $cache_point;
+	protected $assets;
 
 	/**
 	 * Holds the script export data.
@@ -50,7 +50,7 @@ class Folder_Table extends Table {
 	 * Register table structures as components.
 	 */
 	public function setup() {
-		$this->cache_point = get_plugin_instance()->get_component( 'cache' )->cache_point;
+		$this->assets = get_plugin_instance()->get_component( 'assets' );
 		$this->setting->set_param( 'columns', $this->build_headers() );
 		$this->setting->set_param( 'rows', $this->build_rows() );
 		$this->setting->set_param( 'file_lists', $this->slugs );
@@ -76,6 +76,7 @@ class Folder_Table extends Table {
 					'type'        => 'on_off',
 					'default'     => 'on',
 					'description' => $this->setting->get_param( 'title', '' ),
+					'master'      => $this->setting->get_param( 'master', array() ),
 				),
 			),
 			'apply_changes' => array(
@@ -123,12 +124,12 @@ class Folder_Table extends Table {
 		$row_params = array();
 		$rows       = $this->get_rows();
 		foreach ( $rows as $slug => $row ) {
-			$cache_point = $this->cache_point->get_cache_point( $row['url'] );
+			$asset = $this->assets->get_asset_parent( $row['url'] );
 
 			$row_params[ $slug ]             = $this->build_column( $row );
 			$row_params[ $slug . '_spacer' ] = array();
 
-			if ( empty( $cache_point ) ) {
+			if ( empty( $asset ) ) {
 				$row_params[ $slug . '_tree' ] = array(
 					'title_column' => array(
 						'condition' => array(
@@ -239,7 +240,7 @@ class Folder_Table extends Table {
 						array(
 							'element'    => 'tbody',
 							'attributes' => array(
-								'data-cache-point' => $cache_point->ID,
+								'data-cache-point' => $asset->ID,
 								'data-browser'     => 'toggle_' . $slug,
 								'data-slug'        => $slug,
 								'data-apply'       => 'apply_' . $slug,
