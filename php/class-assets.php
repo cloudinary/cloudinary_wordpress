@@ -645,6 +645,9 @@ class Assets extends Settings_Component {
 		// Create attachment meta.
 		wp_generate_attachment_metadata( $id, $file_path );
 
+		// Init the auto sync.
+		$this->media->cloudinary_id( $id );
+
 		return $id;
 	}
 
