@@ -59,6 +59,12 @@ class Assets {
 	 * @var array
 	 */
 	protected $asset_ids;
+	/**
+	 * Holds the list of cache points requiring meta updates.
+	 *
+	 * @var array
+	 */
+	public $meta_updates = array();
 
 	/**
 	 * Holds the post type.
@@ -95,11 +101,180 @@ class Assets {
 		add_filter( 'cloudinary_is_media', array( $this, 'is_media' ), 10, 2 );
 		add_filter( 'get_attached_file', array( $this, 'get_attached_file' ), 10, 2 );
 		add_filter( 'cloudinary_sync_base_struct', array( $this, 'add_sync_type' ) );
-
+		add_filter( 'update_post_metadata', array( $this, 'update_meta' ), 10, 4 );
+		add_filter( 'add_post_metadata', array( $this, 'update_meta' ), 10, 4 );
+		add_filter( 'get_post_metadata', array( $this, 'get_meta' ), 10, 3 );
+		add_filter( 'delete_post_metadata', array( $this, 'delete_meta' ), 10, 4 );
+		add_filter( 'intermediate_image_sizes_advanced', array( $this, 'no_sizes' ), PHP_INT_MAX, 3 );
 		// Actions.
 		add_action( 'cloudinary_init_settings', array( $this, 'setup' ) );
 		add_action( 'pre_get_posts', array( $this, 'connect_post_type' ) );
 		add_action( 'cloudinary_string_replace', array( $this, 'add_url_replacements' ), 20 );
+		add_action( 'shutdown', array( $this, 'meta_updates' ) );
+
+	}
+
+	/**
+	 * Check if the post is a asset post type.
+	 *
+	 * @param int $post_id The ID to check.
+	 *
+	 * @return bool
+	 */
+	public static function is_asset_type( $post_id ) {
+		return self::POST_TYPE_SLUG === get_post_type( $post_id );
+	}
+
+	/**
+	 * Filter out sizes for assets.
+	 *
+	 * @param array $new_sizes     The sizes to remove.
+	 * @param array $image_meta    The image meta.
+	 * @param int   $attachment_id The asset ID.
+	 *
+	 * @return array
+	 */
+	public function no_sizes( $new_sizes, $image_meta, $attachment_id ) {
+		if ( self::is_asset_type( $attachment_id ) ) {
+			$new_sizes = array();
+		}
+
+		return $new_sizes;
+	}
+
+	/**
+	 * Update our cache point meta data.
+	 *
+	 * @hook update_post_metadata
+	 *
+	 * @param null|bool $check      The check to allow short circuit of get_metadata.
+	 * @param int       $object_id  The object ID.
+	 * @param string    $meta_key   The meta key.
+	 * @param mixed     $meta_value The meta value.
+	 *
+	 * @return bool|null
+	 */
+	public function update_meta( $check, $object_id, $meta_key, $meta_value ) {
+
+		if ( self::is_asset_type( $object_id ) ) {
+			$meta = $this->get_meta_cache( $object_id );
+			if ( ! isset( $meta[ $meta_key ] ) || $meta_value !== $meta[ $meta_key ] ) {
+				$meta[ $meta_key ] = $meta_value;
+				$this->set_meta_cache( $object_id, $meta );
+			}
+		}
+
+		return $check;
+	}
+
+	/**
+	 * Delete our cache point meta data.
+	 *
+	 * @param null|bool $check      The check to allow short circuit of get_metadata.
+	 * @param int       $object_id  The object ID.
+	 * @param string    $meta_key   The meta key.
+	 * @param mixed     $meta_value The meta value.
+	 *
+	 * @return bool
+	 */
+	public function delete_meta( $check, $object_id, $meta_key, $meta_value ) {
+
+		if ( self::is_asset_type( $object_id ) ) {
+			$meta = $this->get_meta_cache( $object_id );
+			if ( isset( $meta[ $meta_key ] ) && ( $meta[ $meta_key ] === $meta_value || empty( $meta_value ) ) ) {
+				unset( $meta[ $meta_key ] );
+				$this->set_meta_cache( $object_id, $meta );
+			}
+		}
+
+		return $check;
+	}
+
+	/**
+	 * Get our cache point meta data.
+	 *
+	 * @param null|bool $check     The check to allow short circuit of get_metadata.
+	 * @param int       $object_id The object ID.
+	 * @param string    $meta_key  The meta key.
+	 *
+	 * @return mixed
+	 */
+	public function get_meta( $check, $object_id, $meta_key ) {
+
+		if ( self::is_asset_type( $object_id ) ) {
+			$meta  = $this->get_meta_cache( $object_id );
+			$value = null;
+			if ( empty( $meta_key ) ) {
+				$value = $meta;
+			} elseif ( isset( $meta[ $meta_key ] ) ) {
+				$value[] = $meta[ $meta_key ];
+			}
+
+			if ( ! is_null( $value ) ) {
+				// Only return if we found meta, else allow to go into core meta.
+				return $value;
+			}
+		}
+
+		return $check;
+	}
+
+	/**
+	 * Get meta data for a cache point.
+	 *
+	 * @param int $object_id The post ID.
+	 *
+	 * @return mixed
+	 */
+	protected function get_meta_cache( $object_id ) {
+		$meta = wp_cache_get( $object_id, 'cloudinary_asset' );
+		if ( ! $meta ) {
+			$post = get_post( $object_id );
+			$meta = json_decode( $post->post_content, true );
+			wp_cache_add( $object_id, $meta, 'cloudinary_asset' );
+		}
+
+		return $meta;
+	}
+
+	/**
+	 * Set meta data for a cache point.
+	 *
+	 * @param int   $object_id The post ID.
+	 * @param mixed $meta      The meta to set.
+	 *
+	 * @return bool
+	 */
+	protected function set_meta_cache( $object_id, $meta ) {
+		if ( ! in_array( $object_id, $this->meta_updates, true ) ) {
+			$this->meta_updates[] = $object_id;
+		}
+
+		return wp_cache_replace( $object_id, $meta, 'cloudinary_asset' );
+	}
+
+	/**
+	 * Compiles all metadata and preps upload at shutdown.
+	 */
+	public function meta_updates() {
+
+		foreach ( $this->meta_updates as $id ) {
+
+			$meta = $this->get_meta_cache( $id );
+
+			$params = array(
+				'ID'           => $id,
+				'post_content' => wp_json_encode( $meta ),
+			);
+			wp_update_post( $params );
+		}
+		// Prep the upload for un-synced items.
+		if ( ! empty( $this->to_upload ) ) {
+			$api = $this->cache->plugin->get_component( 'api' );
+			if ( $api ) {
+				$api->background_request( 'upload_cache', array( 'ids' => $this->to_upload ), 'POST' );
+			}
+		}
 	}
 
 	/**
@@ -117,16 +292,13 @@ class Assets {
 	}
 
 	/**
-	 * Connect our post type to the attachments post type, when we are doing sync and counting.
+	 * Connect our post type to the sync query, to allow it to be queued.
 	 *
 	 * @param \WP_Query $query The Query.
 	 */
 	public function connect_post_type( $query ) {
-		if ( 'attachment' === $query->get( 'post_type' ) ) {
-			// Check if its not the main query and theres a meta_query (which we use when syncing).
-			if ( ! $query->is_main_query() && ! empty( $query->get( 'meta_query' ) ) ) {
-				$query->set( 'post_type', array( 'attachment', self::POST_TYPE_SLUG ) );
-			}
+		if ( ! $query->is_main_query() && 'attachment' === $query->get( 'post_type' ) && ! empty( $query->get( 'cloudinary_sync' ) ) ) {
+			$query->set( 'post_type', array( 'attachment', self::POST_TYPE_SLUG ) );
 		}
 	}
 
@@ -199,24 +371,28 @@ class Assets {
 	 * @return array|\WP_Error
 	 */
 	public function upload( $asset_id ) {
-		$connect   = $this->plugin->get_component( 'connect' );
-		$asset     = get_post( $asset_id );
-		$path      = trim( wp_normalize_path( str_replace( home_url(), '', $asset->post_title ) ), '/' );
-		$info      = pathinfo( $path );
-		$public_id = $info['dirname'] . '/' . $info['filename'];
-		$options   = array(
+		$connect           = $this->plugin->get_component( 'connect' );
+		$asset             = get_post( $asset_id );
+		$path              = trim( wp_normalize_path( str_replace( home_url(), '', $asset->post_title ) ), '/' );
+		$info              = pathinfo( $path );
+		$cloudinary_folder = $this->media->get_cloudinary_folder( true );
+		$public_id         = $cloudinary_folder . $info['dirname'] . '/' . $info['filename'];
+		$options           = array(
 			'unique_filename' => false,
 			'overwrite'       => true,
 			'resource_type'   => $this->media->get_resource_type( $asset_id ),
 			'public_id'       => $public_id,
 		);
-		$result    = $connect->api->upload( $asset_id, $options, array() );
+		$result            = $connect->api->upload( $asset_id, $options, array() );
 		if ( ! is_wp_error( $result ) && isset( $result['public_id'] ) ) {
 			$this->media->update_post_meta( $asset_id, Sync::META_KEYS['public_id'], $result['public_id'] );
+			$this->media->update_post_meta( $asset_id, Sync::META_KEYS['version'], $result['version'] );
 			$this->media->sync->set_signature_item( $asset_id, 'file' );
 			$this->media->sync->set_signature_item( $asset_id, 'cld_asset' );
 			$this->media->sync->set_signature_item( $asset_id, 'cloud_name' );
 			$this->media->sync->set_signature_item( $asset_id, 'storage' );
+			$this->media->sync->set_signature_item( $asset_id, 'download' );
+			$this->media->sync->set_signature_item( $asset_id, 'options' );
 		}
 
 		return $result;
@@ -317,9 +493,9 @@ class Assets {
 	 * @return string
 	 */
 	public function get_attached_file( $file, $asset_id ) {
-		if ( '' === $file && self::POST_TYPE_SLUG === get_post_type( $asset_id ) ) {
-			$post = get_post( $asset_id );
-			$file = $post->post_content;
+		if ( self::is_asset_type( $asset_id ) ) {
+			$dirs = wp_get_upload_dir();
+			$file = str_replace( trailingslashit( $dirs['basedir'] ), ABSPATH, $file );
 		}
 
 		return $file;
@@ -334,7 +510,7 @@ class Assets {
 	 * @return bool
 	 */
 	public function is_media( $is_media, $attachment_id ) {
-		if ( false === $is_media && self::POST_TYPE_SLUG === get_post_type( $attachment_id ) ) {
+		if ( false === $is_media && self::is_asset_type( $attachment_id ) ) {
 			$is_media = true;
 		}
 
@@ -413,24 +589,31 @@ class Assets {
 	 * @return false|int|\WP_Error
 	 */
 	protected function create_asset( $url, $parent_id ) {
-
-		$file_string = str_replace( home_url(), untrailingslashit( ABSPATH ), $url );
-		if ( ! file_exists( $file_string ) ) {
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+		$file_path = str_replace( home_url(), untrailingslashit( ABSPATH ), $url );
+		if ( ! file_exists( $file_path ) ) {
 			return false;
 		}
 		$hash_name   = md5( $url );
 		$wp_filetype = wp_check_filetype( basename( $url ), wp_get_mime_types() );
-
-		$args = array(
+		$file_string = str_replace( ABSPATH, '', $file_path );
+		$data        = array(
+			'_wp_attached_file' => $file_string,
+		);
+		$args        = array(
 			'post_title'     => $url,
-			'post_content'   => $file_string,
+			'post_content'   => wp_json_encode( $data ),
 			'post_name'      => $hash_name,
 			'post_mime_type' => $wp_filetype['type'],
 			'post_type'      => self::POST_TYPE_SLUG,
 			'post_parent'    => $parent_id,
 			'post_status'    => 'inherit',
 		);
-		$id   = wp_insert_post( $args );
+		$id          = wp_insert_post( $args );
+
+		// Create attachment meta.
+		wp_generate_attachment_metadata( $id, $file_path );
 
 		return $id;
 	}

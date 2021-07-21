@@ -86,12 +86,30 @@ class Delivery implements Setup {
 		add_filter( 'cloudinary_current_post_id', array( $this, 'get_current_post_id' ) );
 		add_filter( 'the_content', array( $this, 'add_post_id' ) );
 		add_filter( 'wp_img_tag_add_srcset_and_sizes_attr', '__return_false' );
+		add_action( 'wp_resource_hints', array( $this, 'dns_prefetch' ), 10, 2 );
 
 		// Clear cache on taxonomy update.
 		$taxonomies = get_taxonomies( array( 'show_ui' => true ) );
 		foreach ( $taxonomies as $taxonomy ) {
 			add_action( "saved_{$taxonomy}", array( $this, 'clear_cache' ) );
 		}
+	}
+
+	/**
+	 * Add DNS prefetch link tag for assets.
+	 *
+	 * @param array  $urls          URLs to print for resource hints.
+	 * @param string $relation_type The relation type the URLs are printed for, e.g. 'preconnect' or 'prerender'.
+	 *
+	 * @return array
+	 */
+	public function dns_prefetch( $urls, $relation_type ) {
+
+		if ( 'dns-prefetch' === $relation_type || 'preconnect' === $relation_type ) {
+			$urls[] = $this->media->base_url;
+		}
+
+		return $urls;
 	}
 
 	/**
@@ -319,29 +337,38 @@ class Delivery implements Setup {
 	 * @return array
 	 */
 	public function convert_tags( $content ) {
-
+		$cached = array();
 		if ( is_singular() ) {
 			$cache_key = self::META_CACHE_KEY;
 			$has_cache = get_post_meta( get_the_ID(), $cache_key, true );
 			$type      = is_ssl() ? 'https' : 'http';
 			if ( ! empty( $has_cache ) && ! empty( $has_cache[ $type ] ) ) {
-				return $has_cache[ $type ];
+				$cached = $has_cache[ $type ];
 			}
 		}
 		$tags           = $this->filter->get_media_tags( $content );
-		$replacements   = array();
 		$attachment_ids = array();
+		$replacements   = array();
 		foreach ( $tags as $element ) {
+			// Check cache and skip if needed.
+			if ( isset( $replacements[ $element ] ) ) {
+				continue;
+			}
 			$attachment_id         = $this->get_id_from_tag( $element );
 			$this->current_post_id = $this->filter->get_id_from_tag( $element, 'wp-post-' );
 
 			if ( empty( $attachment_id ) || ! $this->media->cloudinary_id( $attachment_id ) ) {
 				continue;
 			}
-			// Register replacement.
-			$replacements[ $element ] = $this->rebuild_tag( $element, $attachment_id );
-			$attachment_ids[]         = $attachment_id;
-			$this->current_post_id    = null;
+			// Use cached item if found.
+			if ( isset( $cached[ $element ] ) ) {
+				$replacements[ $element ] = $cached[ $element ];
+			} else {
+				// Register replacement.
+				$replacements[ $element ] = $this->rebuild_tag( $element, $attachment_id );
+			}
+			$attachment_ids[]      = $attachment_id;
+			$this->current_post_id = null;
 		}
 
 		// Create other image sizes for ID's found.

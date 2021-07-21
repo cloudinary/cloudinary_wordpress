@@ -286,6 +286,7 @@ class Sync_Queue {
 	public function build_queue() {
 
 		$args = array(
+			'cloudinary_sync'     => true,
 			'post_type'           => 'attachment',
 			'post_mime_type'      => array( 'image', 'video' ),
 			'post_status'         => 'inherit',
@@ -537,11 +538,12 @@ class Sync_Queue {
 	protected function get_thread_queue_details( $thread ) {
 
 		$args = array(
-			'post_type'      => 'attachment',
-			'post_status'    => 'inherit',
-			'posts_per_page' => 1,
-			'fields'         => 'ids',
-			'cache_results'  => false,
+			'cloudinary_sync'  => true,
+			'post_type'        => 'attachment',
+			'post_status'      => 'inherit',
+			'posts_per_page'   => 1,
+			'fields'           => 'ids',
+			'cache_results'    => false,
 			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 			'meta_query'     => array(
 				array(
