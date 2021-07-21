@@ -13,6 +13,8 @@ Use Cloudinary's plugin to efficiently create, manage and deliver images, videos
 == Description ==
 Cloudinary's [award-winning plugin](https://www.businesswire.com/news/home/20200923005566/en/Cloudinary-Wins-2020-MarTech-Breakthrough-Award-for-Best-WordPress-Plugin) makes automating your image, video, and rich media workflow easy, offering a variety of features. From media upload to image optimization, video transcoding and manipulation through delivery via global CDNs, everything is offered from within the plugin.
 
+https://youtu.be/B1Jx5hB1Ijk
+
 Optimize your site performance and user experience with faster page load times, advanced auto-responsive delivery, and better visual experience. Automate image quality and video encoding settings, scale and crop images using AI to focus on the most important region, apply comprehensive video and image manipulations and effects, display assets via an interactive media gallery, and deliver optimized media experiences to any device in any resolution or pixel density.
 
 And with advanced digital asset management capabilities available in the plugin, you won’t need to leave your WordPress environment. Take full advantage of advanced search, AI-based tagging, rich media editing, collections, structured metadata, and an intuitive UI as well as our Video and Image APIs for headless DAM functionality, making it much easier to manage all of your media in WordPress.
@@ -136,6 +138,7 @@ Fixes and Improvements:
 
 * Decoupling Cloudinary metadata from attachment metadata
 * Fixed the duplicated suffix when re-syncing assets to Cloudinary
+* Added a query parameter to the requested URL's
 
 
 = 2.7.4 (23 June 2021) =
