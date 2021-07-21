@@ -7,6 +7,7 @@
 
 namespace Cloudinary;
 
+use Cloudinary\Assets\Rest_Assets;
 use Cloudinary\Connect\Api;
 use Cloudinary\Sync;
 use Cloudinary\Utils;
@@ -16,7 +17,7 @@ use Cloudinary\Utils;
  *
  * @package Cloudinary
  */
-class Assets {
+class Assets extends Settings_Component {
 
 	/**
 	 * Holds the plugin instance.
@@ -47,6 +48,13 @@ class Assets {
 	protected $asset_parents;
 
 	/**
+	 * Holds active asset parents.
+	 *
+	 * @var \WP_Post[]
+	 */
+	protected $active_parents = array();
+
+	/**
 	 * Holds a list of found urls of asset parents.
 	 *
 	 * @var array
@@ -65,6 +73,13 @@ class Assets {
 	 * @var array
 	 */
 	public $meta_updates = array();
+
+	/**
+	 * Holds the Assets REST instance.
+	 *
+	 * @var Rest_Assets
+	 */
+	protected $rest;
 
 	/**
 	 * Holds the post type.
@@ -89,6 +104,7 @@ class Assets {
 		$this->register_post_type();
 		$this->init_asset_parents();
 		$this->register_hooks();
+		$this->rest = new Rest_Assets( $this );
 	}
 
 	/**
@@ -323,6 +339,18 @@ class Assets {
 			if ( $assets->media->get_post_meta( $asset_path->ID, Sync::META_KEYS['version'], true ) !== $version ) {
 				$assets->media->update_post_meta( $asset_path->ID, Sync::META_KEYS['version'], $version );
 			}
+			$assets->activate_parent( $path );
+		}
+	}
+
+	/**
+	 * Activate a parent asset path.
+	 *
+	 * @param string $url The path to activate.
+	 */
+	public function activate_parent( $url ) {
+		if ( isset( $this->asset_parents[ $url ] ) ) {
+			$this->active_parents[ $url ] = $this->asset_parents[ $url ];
 		}
 	}
 
@@ -450,7 +478,8 @@ class Assets {
 	public function check_asset( $is_local, $url ) {
 
 		if ( false === $is_local ) {
-			foreach ( $this->asset_parents as $asset_parent ) {
+
+			foreach ( $this->active_parents as $asset_parent ) {
 				if (
 					substr( $url, 0, strlen( $asset_parent->post_title ) ) === $asset_parent->post_title
 					&& true === $this->syncable_asset( basename( $url ) )
@@ -557,6 +586,7 @@ class Assets {
 	 * @return \WP_Post|null
 	 */
 	public function get_asset_parent( $url ) {
+		$url    = trailingslashit( $url );
 		$parent = null;
 		if ( isset( $this->asset_parents[ $url ] ) ) {
 			$parent = $this->asset_parents[ $url ];
@@ -673,27 +703,387 @@ class Assets {
 	 */
 	public function setup() {
 
-		// Setup plugins.
-		$active_plugins = wp_get_active_and_valid_plugins();
-		$plugins        = get_plugins();
-		foreach ( $active_plugins as $plugin ) {
-			$plugin_dir_file = basename( dirname( $plugin ) ) . '/' . basename( $plugin );
-			$data            = $plugins[ $plugin_dir_file ];
-			$url             = plugin_dir_url( $plugin_dir_file );
-			self::register_asset_path( $url, $data['Version'] );
+		$settings = $this->settings->get_settings_by_type( 'folder_table' );
+		foreach ( $settings as $setting ) {
+			$paths = $setting->get_param( 'root_paths' );
+			foreach ( $paths as $slug => $conf ) {
+				if ( 'on' === $this->settings->get_value( $slug ) ) {
+					self::register_asset_path( trailingslashit( $conf['url'] ), $conf['version'] );
+				}
+			}
+		}
+	}
+
+	/**
+	 * Returns the setting definitions.
+	 *
+	 * @return array|null
+	 */
+	public function settings() {
+		$args = array(
+			'type'       => 'page',
+			'menu_title' => __( 'Site Cache', 'cloudinary' ),
+			'tabs'       => array(
+				'main_cache_page' => array(
+					'page_title' => __( 'Site Cache', 'cloudinary' ),
+					array(
+						'slug'       => 'cache_paths',
+						'type'       => 'panel',
+						'title'      => __( 'Cache Settings', 'cloudinary' ),
+						'attributes' => array(
+							'header' => array(
+								'class' => array(
+									'full-width',
+								),
+							),
+							'wrap'   => array(
+								'class' => array(
+									'full-width',
+								),
+							),
+						),
+						array(
+							'type'         => 'on_off',
+							'slug'         => 'enable_full_site_cache',
+							'title'        => __( 'Full CDN', 'cloudinary' ),
+							'tooltip_text' => __(
+								'Deliver all assets from Cloudinary.',
+								'cloudinary'
+							),
+							'description'  => __( 'Enable caching site assets.', 'cloudinary' ),
+							'default'      => 'off',
+						),
+						array(
+							'slug' => 'cache_plugins',
+							'type' => 'frame',
+							$this->add_plugin_settings(),
+						),
+						array(
+							'slug' => 'cache_themes',
+							'type' => 'frame',
+							$this->add_theme_settings(),
+						),
+						array(
+							'slug' => 'cache_wordpress',
+							'type' => 'frame',
+							$this->add_wp_settings(),
+						),
+						array(
+							'slug' => 'cache_content',
+							'type' => 'frame',
+							$this->add_content_settings(),
+						),
+					),
+					array(
+						'type'       => 'submit',
+						'attributes' => array(
+							'wrap' => array(
+								'class' => array(
+									'full-width',
+								),
+							),
+						),
+					),
+				),
+			),
+		);
+
+		return $args;
+	}
+
+	/**
+	 * Get the plugins table structure.
+	 *
+	 * @return array
+	 */
+	protected function get_plugins_table() {
+
+		$plugins = get_plugins();
+		$active  = wp_get_active_and_valid_plugins();
+		$rows    = array();
+		foreach ( $active as $plugin_path ) {
+			$dir    = basename( dirname( $plugin_path ) );
+			$plugin = $dir . '/' . basename( $plugin_path );
+			if ( ! isset( $plugins[ $plugin ] ) ) {
+				continue;
+			}
+			$slug          = sanitize_file_name( $plugin );
+			$plugin_url    = plugins_url( $plugin );
+			$details       = $plugins[ $plugin ];
+			$rows[ $slug ] = array(
+				'title'   => $details['Name'],
+				'url'     => dirname( $plugin_url ),
+				'version' => $details['Version'],
+			);
 		}
 
-		// Setup theme.
-		$theme           = wp_get_theme();
-		$style_sheet_url = trailingslashit( $theme->get_stylesheet_directory_uri() );
-		$version         = $theme->get( 'Version' );
-		self::register_asset_path( $style_sheet_url, $version );
-		if ( $theme->parent() ) {
-			$theme           = $theme->parent();
-			$style_sheet_url = trailingslashit( $theme->get_stylesheet_directory_uri() );
-			$version         = $theme->get( 'Version' );
-			self::register_asset_path( $style_sheet_url, $version );
-		}
+		return array(
+			'slug'       => 'plugin_files',
+			'type'       => 'folder_table',
+			'title'      => __( 'Plugin', 'cloudinary' ),
+			'master'     => array(
+				'cache_all_plugins',
+			),
+			'root_paths' => $rows,
+		);
 
 	}
+
+	/**
+	 * Add the plugin cache settings page.
+	 */
+	protected function add_plugin_settings() {
+
+		$plugins_setup = $this->get_plugins_table();
+		$params        = array(
+			'type'        => 'panel',
+			'title'       => __( 'Plugins', 'cloudinary' ),
+			'collapsible' => 'closed',
+			'attributes'  => array(
+				'header' => array(
+					'class' => array(
+						'full-width',
+					),
+				),
+				'wrap'   => array(
+					'class' => array(
+						'full-width',
+					),
+				),
+			),
+			array(
+				'type'        => 'on_off',
+				'slug'        => 'cache_all_plugins',
+				'description' => __( 'Deliver assets from all plugin folders', 'cloudinary' ),
+				'default'     => 'off',
+				'master'      => array(
+					'enable_full_site_cache',
+				),
+			),
+			array(
+				'type' => 'group',
+				$plugins_setup,
+			),
+		);
+
+		return $params;
+	}
+
+	/**
+	 * Get the settings structure for the theme table.
+	 *
+	 * @return array
+	 */
+	protected function get_theme_table() {
+
+		$theme  = wp_get_theme();
+		$themes = array(
+			$theme,
+		);
+		if ( $theme->parent() ) {
+			$themes[] = $theme->parent();
+		}
+		$rows = array();
+		// Active Theme.
+		foreach ( $themes as $theme ) {
+			$theme_location = $theme->get_stylesheet_directory();
+			$theme_slug     = basename( dirname( $theme_location ) ) . '/' . basename( $theme_location );
+			$slug           = sanitize_file_name( $theme_slug );
+			$rows[ $slug ]  = array(
+				'title'   => $theme->get( 'Name' ),
+				'url'     => $theme->get_stylesheet_directory_uri(),
+				'version' => $theme->get( 'Version' ),
+			);
+		}
+
+		return array(
+			'slug'       => 'theme_files',
+			'type'       => 'folder_table',
+			'title'      => __( 'Theme', 'cloudinary' ),
+			'root_paths' => $rows,
+			'master'     => array(
+				'cache_all_themes',
+			),
+		);
+	}
+
+	/**
+	 * Add Theme Settings page.
+	 */
+	protected function add_theme_settings() {
+
+		$theme_setup = $this->get_theme_table();
+		$params      = array(
+			'type'        => 'panel',
+			'title'       => __( 'Themes', 'cloudinary' ),
+			'collapsible' => 'closed',
+			'attributes'  => array(
+				'header' => array(
+					'class' => array(
+						'full-width',
+					),
+				),
+				'wrap'   => array(
+					'class' => array(
+						'full-width',
+					),
+				),
+			),
+			array(
+				'type'        => 'on_off',
+				'slug'        => 'cache_all_themes',
+				'description' => __( 'Deliver all assets from active theme.', 'cloudinary' ),
+				'default'     => 'off',
+				'master'      => array(
+					'enable_full_site_cache',
+				),
+			),
+			array(
+				'type' => 'group',
+				$theme_setup,
+			),
+		);
+
+		return $params;
+	}
+
+	/**
+	 * Get the settings structure for the WordPress table.
+	 *
+	 * @return array
+	 */
+	protected function get_wp_table() {
+
+		$rows    = array();
+		$version = get_bloginfo( 'version' );
+		// Admin folder.
+		$rows['wp_admin'] = array(
+			'title'   => __( 'WordPress Admin', 'cloudinary' ),
+			'url'     => admin_url(),
+			'version' => $version,
+		);
+		// Includes folder.
+		$rows['wp_includes'] = array(
+			'title'   => __( 'WordPress Includes', 'cloudinary' ),
+			'url'     => includes_url(),
+			'version' => $version,
+		);
+
+		return array(
+			'slug'       => 'wordpress_files',
+			'type'       => 'folder_table',
+			'title'      => __( 'WordPress', 'cloudinary' ),
+			'root_paths' => $rows,
+			'master'     => array(
+				'cache_all_wp',
+			),
+		);
+	}
+
+	/**
+	 * Add WP Settings page.
+	 */
+	protected function add_wp_settings() {
+
+		$wordpress_setup = $this->get_wp_table();
+		$params          = array(
+			'type'        => 'panel',
+			'title'       => __( 'WordPress', 'cloudinary' ),
+			'collapsible' => 'closed',
+			'attributes'  => array(
+				'header' => array(
+					'class' => array(
+						'full-width',
+					),
+				),
+				'wrap'   => array(
+					'class' => array(
+						'full-width',
+					),
+				),
+			),
+			array(
+				'type'        => 'on_off',
+				'slug'        => 'cache_all_wp',
+				'description' => __( 'Deliver all assets from WordPress core.', 'cloudinary' ),
+				'default'     => 'off',
+				'master'      => array(
+					'enable_full_site_cache',
+				),
+			),
+			array(
+				'type' => 'group',
+				$wordpress_setup,
+			),
+		);
+
+		return $params;
+	}
+
+	/**
+	 * Get the settings structure for the WordPress table.
+	 *
+	 * @return array
+	 */
+	protected function get_content_table() {
+
+		$rows               = array();
+		$uploads            = wp_get_upload_dir();
+		$rows['wp_content'] = array(
+			'title'   => __( 'Uploads', 'cloudinary' ),
+			'url'     => $uploads['baseurl'],
+			'version' => 0,
+		);
+
+		return array(
+			'slug'       => 'content_files',
+			'type'       => 'folder_table',
+			'title'      => __( 'Content', 'cloudinary' ),
+			'root_paths' => $rows,
+			'master'     => array(
+				'cache_all_content',
+			),
+		);
+	}
+
+	/**
+	 * Add WP Settings page.
+	 */
+	protected function add_content_settings() {
+
+		$content_setup = $this->get_content_table();
+		$params        = array(
+			'type'        => 'panel',
+			'title'       => __( 'Content', 'cloudinary' ),
+			'collapsible' => 'closed',
+			'attributes'  => array(
+				'header' => array(
+					'class' => array(
+						'full-width',
+					),
+				),
+				'wrap'   => array(
+					'class' => array(
+						'full-width',
+					),
+				),
+			),
+			array(
+				'type'        => 'on_off',
+				'slug'        => 'cache_all_content',
+				'description' => __( 'Deliver all content assets from WordPress Media Library.', 'cloudinary' ),
+				'default'     => 'off',
+				'master'      => array(
+					'enable_full_site_cache',
+				),
+			),
+			array(
+				'type' => 'group',
+				$content_setup,
+			),
+		);
+
+		return $params;
+	}
+
 }
