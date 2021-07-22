@@ -148,11 +148,12 @@ class Folder_Table extends Table {
 							'tree',
 						),
 					),
+					'condition'  => array(
+						$slug => true,
+					),
 					array(
 						'element'    => 'table',
-						'condition'  => array(
-							$slug => true,
-						),
+
 						'attributes' => array(
 							'class' => array(
 								'striped',
