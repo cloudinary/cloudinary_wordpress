@@ -2346,7 +2346,7 @@ class Media extends Settings_Component implements Setup {
 					'page_title' => __( 'Media Display', 'cloudinary' ),
 					array(
 						'type'      => 'info_box',
-						'icon'      => $this->plugin->dir_url . 'css/transformation.svg',
+						'icon'      => $this->plugin->dir_url . 'css/images/transformation.svg',
 						'title'     => __( 'Transformations', 'cloudinary' ),
 						'text'      => __(
 							'Cloudinary allows you to easily transform your images on-the-fly to any required format, style and dimension, and also optimizes images for minimal file size alongside high visual quality for an improved user experience and minimal bandwidth. You can do all of this by implementing dynamic image transformation and delivery URLs.',
