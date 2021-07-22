@@ -36,6 +36,9 @@ const CacheManage = {
 			cachePoint.dataset.browser
 		);
 		const apply = document.getElementById( cachePoint.dataset.apply );
+		apply.style.float = 'right';
+		apply.style.marginLeft = '6px';
+
 		controller.addEventListener( 'change', ( ev ) => {
 			this._handleManager( ID );
 		} );
@@ -143,7 +146,7 @@ const CacheManage = {
 		this._evaluateApply( cachePoint );
 	},
 	_evaluateApply( cachePoint ) {
-		this.close( cachePoint.apply );
+		cachePoint.apply.disabled = 'disabled';
 		const lists = cachePoint.apply.cacheChanges;
 		let show = false;
 		for ( const state in lists ) {
@@ -152,7 +155,7 @@ const CacheManage = {
 			}
 		}
 		if ( show ) {
-			this.open( cachePoint.apply );
+			cachePoint.apply.disabled = '';
 		}
 	},
 	_applyChanges( cachePoint ) {
@@ -264,25 +267,6 @@ const CacheManage = {
 		const left = document.createElement( 'button' );
 		const right = document.createElement( 'button' );
 
-		if ( result.items.length ) {
-			const purge = document.createElement( 'button' );
-			purge.type = 'button';
-			purge.className = 'button';
-			purge.innerText = wp.i18n.__( 'Purge cache point', 'cloudinary' );
-			purge.style.float = 'left';
-			cachePoint.paginate.appendChild( purge );
-
-			purge.addEventListener( 'click', ( ev ) => {
-				if (
-					confirm(
-						wp.i18n.__( 'Purge entire cache point?', 'cloudinary' )
-					)
-				) {
-					this._purgeCache( cachePoint );
-				}
-			} );
-		}
-
 		left.type = 'button';
 		left.innerHTML = '&lsaquo;';
 		left.className = 'button cld-pagenav-prev';
@@ -316,6 +300,28 @@ const CacheManage = {
 		cachePoint.paginate.appendChild( left );
 		cachePoint.paginate.appendChild( text );
 		cachePoint.paginate.appendChild( right );
+		cachePoint.paginate.appendChild( cachePoint.apply );
+		cachePoint.apply.classList.remove( 'closed' );
+		cachePoint.apply.disabled = 'disabled';
+		// Add purge
+		if ( result.items.length ) {
+			const purge = document.createElement( 'button' );
+			purge.type = 'button';
+			purge.className = 'button';
+			purge.innerText = wp.i18n.__( 'Purge cache point', 'cloudinary' );
+			purge.style.float = 'right';
+			cachePoint.paginate.appendChild( purge );
+
+			purge.addEventListener( 'click', ( ev ) => {
+				if (
+					confirm(
+						wp.i18n.__( 'Purge entire cache point?', 'cloudinary' )
+					)
+				) {
+					this._purgeCache( cachePoint );
+				}
+			} );
+		}
 	},
 	_getNote( message ) {
 		const row = this._getRow();
@@ -397,7 +403,6 @@ const CacheManage = {
 		checkbox.type = 'checkbox';
 		checkbox.value = item.ID;
 		checkbox.checked = -1 < index ? false : item.active;
-		checkbox.dataset.master = JSON.stringify( masters );
 		slider.className = 'cld-input-on-off-control-slider';
 
 		wrap.appendChild( checkbox );

@@ -83,7 +83,6 @@ class Folder_Table extends Table {
 				'attributes' => array(
 					'style' => 'text-align:right;',
 				),
-
 			),
 		);
 
@@ -215,25 +214,6 @@ class Folder_Table extends Table {
 									'attributes' => array(
 										'style' => 'text-align:right;',
 									),
-									array(
-										'slug'       => $slug . '_selector',
-										'type'       => 'on_off',
-										'attributes' => array(
-											'wrap' => array(
-												'data-tooltip' => $slug . '_disable_tip',
-											),
-										),
-									),
-									array(
-										'element'    => 'span',
-										'content'    => __( 'Select cache items to bypass.', 'cloudinary' ),
-										'attributes' => array(
-											'id'    => $slug . '_disable_tip',
-											'class' => array(
-												'hidden',
-											),
-										),
-									),
 								),
 							),
 						),
@@ -331,7 +311,6 @@ class Folder_Table extends Table {
 						'data-changes' => array(),
 					),
 					'style'      => array(
-						'button-small',
 						'button-primary',
 						'closed',
 					),
