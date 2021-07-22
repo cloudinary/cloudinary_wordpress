@@ -1184,7 +1184,7 @@ class Assets extends Settings_Component {
 			array(
 				'type'        => 'on_off',
 				'slug'        => 'cache_external_assets',
-				'description' => __( 'Deliver all content assets from WordPress Media Library.', 'cloudinary' ),
+				'description' => __( 'Support external media.', 'cloudinary' ),
 				'default'     => 'off',
 
 			),
