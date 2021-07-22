@@ -34,6 +34,13 @@ class Assets extends Settings_Component {
 	protected $media;
 
 	/**
+	 * Holds the Delivery instance.
+	 *
+	 * @var Delivery
+	 */
+	protected $delivery;
+
+	/**
 	 * Post type.
 	 *
 	 * @var \WP_Post_Type
@@ -60,6 +67,13 @@ class Assets extends Settings_Component {
 	 * @var array
 	 */
 	protected $found_urls;
+
+	/**
+	 * Holds a list of found urls that need to be created.
+	 *
+	 * @var array
+	 */
+	protected $to_create;
 
 	/**
 	 * Holds the ID's of assets.
@@ -92,8 +106,9 @@ class Assets extends Settings_Component {
 	 * @param Plugin $plugin Instance of the plugin.
 	 */
 	public function __construct( Plugin $plugin ) {
-		$this->plugin = $plugin;
-		$this->media  = $plugin->get_component( 'media' );
+		$this->plugin   = $plugin;
+		$this->media    = $plugin->get_component( 'media' );
+		$this->delivery = $plugin->get_component( 'delivery' );
 		$this->init();
 	}
 
@@ -122,12 +137,29 @@ class Assets extends Settings_Component {
 		add_filter( 'get_post_metadata', array( $this, 'get_meta' ), 10, 3 );
 		add_filter( 'delete_post_metadata', array( $this, 'delete_meta' ), 10, 4 );
 		add_filter( 'intermediate_image_sizes_advanced', array( $this, 'no_sizes' ), PHP_INT_MAX, 3 );
+		add_filter( 'cloudinary_can_sync_asset', array( $this, 'can_sync' ), 10, 2 );
 		// Actions.
 		add_action( 'cloudinary_init_settings', array( $this, 'setup' ) );
 		add_action( 'pre_get_posts', array( $this, 'connect_post_type' ) );
 		add_action( 'cloudinary_string_replace', array( $this, 'add_url_replacements' ), 20 );
 		add_action( 'shutdown', array( $this, 'meta_updates' ) );
 
+	}
+
+	/**
+	 * Sets the autosync to work on cloudinary_assets even when the autosync is disabled.
+	 *
+	 * @param bool $can      The can sync check value.
+	 * @param int  $asset_id The asset ID.
+	 *
+	 * @return bool
+	 */
+	public function can_sync( $can, $asset_id ) {
+		if ( self::is_asset_type( $asset_id ) ) {
+			$can = true;
+		}
+
+		return $can;
 	}
 
 	/**
@@ -284,11 +316,11 @@ class Assets extends Settings_Component {
 			);
 			wp_update_post( $params );
 		}
-		// Prep the upload for un-synced items.
-		if ( ! empty( $this->to_upload ) ) {
-			$api = $this->cache->plugin->get_component( 'api' );
-			if ( $api ) {
-				$api->background_request( 'upload_cache', array( 'ids' => $this->to_upload ), 'POST' );
+
+		// Create missing assets.
+		if ( ! empty( $this->to_create ) ) {
+			foreach ( $this->to_create as $url => $parent ) {
+				$this->create_asset( $url, $parent );
 			}
 		}
 	}
@@ -476,18 +508,14 @@ class Assets extends Settings_Component {
 	 * @return bool
 	 */
 	public function check_asset( $is_local, $url ) {
-
-		if ( false === $is_local ) {
-
-			foreach ( $this->active_parents as $asset_parent ) {
-				if (
-					substr( $url, 0, strlen( $asset_parent->post_title ) ) === $asset_parent->post_title
-					&& true === $this->syncable_asset( basename( $url ) )
-				) {
-					$is_local                                = true;
-					$this->found_urls[ $asset_parent->ID ][] = $url;
-					break;
-				}
+		foreach ( $this->active_parents as $asset_parent ) {
+			if (
+				substr( $url, 0, strlen( $asset_parent->post_title ) ) === $asset_parent->post_title
+				&& true === $this->syncable_asset( basename( $url ) )
+			) {
+				$is_local                                = true;
+				$this->found_urls[ $asset_parent->ID ][] = $url;
+				break;
 			}
 		}
 
@@ -572,9 +600,7 @@ class Assets extends Settings_Component {
 			unset( $to_create[ $post->post_title ] );
 		}
 		if ( ! empty( $to_create ) ) {
-			foreach ( $to_create as $url => $parent ) {
-				$this->create_asset( $url, $parent );
-			}
+			$this->to_create = $to_create;
 		}
 	}
 
@@ -603,10 +629,6 @@ class Assets extends Settings_Component {
 	 * @return null|\WP_Post
 	 */
 	public function get_asset_id( $url ) {
-		if ( is_null( $this->asset_ids ) ) {
-			$this->build_asset_ids();
-		}
-
 		return isset( $this->asset_ids[ $url ] ) ? $this->asset_ids[ $url ] : null;
 	}
 
@@ -661,19 +683,63 @@ class Assets extends Settings_Component {
 	 */
 	public function get_asset_id_from_tag( $id, $asset ) {
 
-		if ( false === $id && ! empty( $this->found_urls ) ) {
+		if ( ! empty( $this->found_urls ) && $this->contains_found_url( $asset ) ) {
+			if ( ! empty( $id ) && ( $this->media->sync->been_synced( $id ) || $this->media->sync->can_sync( $id ) ) ) {
+				// Theres an ID and it can be synced or has been synced, we need to remove the urls from the to create list.
+				$this->clear_attachment_syncables( $id );
+			} else {
+				$atts = Utils::get_tag_attributes( $asset );
+				if ( ! empty( $atts['src'] ) ) {
+					$url = Delivery::clean_url( $atts['src'] );
 
-			$atts = Utils::get_tag_attributes( $asset );
-			if ( ! empty( $atts['src'] ) ) {
-				$url    = Delivery::clean_url( $atts['src'] );
-				$has_id = $this->get_asset_id( $url );
-				if ( ! empty( $has_id ) ) {
-					$id = $has_id;
+					$has_id = $this->get_asset_id( $url );
+					if ( ! empty( $has_id ) ) {
+						$id = $has_id;
+					}
 				}
 			}
 		}
 
 		return $id;
+	}
+
+	/**
+	 * Clear captured URLS for synced attachments.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 */
+	protected function clear_attachment_syncables( $attachment_id ) {
+		$sizes = array_keys( $this->delivery->get_attachment_size_urls( $attachment_id ) );
+		foreach ( $sizes as $size_url ) {
+			if ( isset( $this->to_create[ $size_url ] ) ) {
+				unset( $this->to_create[ $size_url ] );
+			}
+		}
+	}
+
+	/**
+	 * Check if the html tag contains found urls.
+	 *
+	 * @param string $asset_html The html tag.
+	 *
+	 * @return bool
+	 */
+	protected function contains_found_url( $asset_html ) {
+		// in case we haven't built the found assets up yet.
+		if ( is_null( $this->asset_ids ) ) {
+			$this->build_asset_ids();
+		}
+		$contains = false;
+		foreach ( $this->found_urls as $found_set ) {
+			foreach ( $found_set as $url ) {
+				if ( false !== strpos( $asset_html, $url ) ) {
+					$contains = true;
+					break;
+				}
+			}
+		}
+
+		return $contains;
 	}
 
 	/**
