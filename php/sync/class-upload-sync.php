@@ -163,17 +163,19 @@ class Upload_Sync {
 
 					// It's required to perform a new sync that Cloudinary and WordPress storage is set.
 					if (
-						'dual_full' !== $this->plugin->settings->find_setting( 'offload' )->get_value() &&
-						$this->plugin->components['sync']->is_synced( $post_id )
+						$this->plugin->components['sync']->been_synced( $post_id ) &&
+						'dual_full' !== $this->plugin->settings->find_setting( 'offload' )->get_value()
 					) {
 						continue;
 					}
 
 					// Clean up for previous syncs and start over.
-					$this->sync->delete_cloudinary_meta( $post_id );
-					$this->sync->set_signature_item( $post_id, 'file', '' );
-					$this->media->delete_post_meta( $post_id, Sync::META_KEYS['public_id'] );
-					$this->sync->add_to_sync( $post_id );
+					if ( ! $this->media->is_cloudinary_url( get_post_meta( $post_id, '_wp_attached_file', true ) ) ) {
+						$this->sync->delete_cloudinary_meta( $post_id );
+						$this->sync->set_signature_item( $post_id, 'file', '' );
+						$this->media->delete_post_meta( $post_id, Sync::META_KEYS['public_id'] );
+						$this->sync->add_to_sync( $post_id );
+					}
 				}
 				break;
 		}
@@ -218,11 +220,12 @@ class Upload_Sync {
 	/**
 	 * Upload an asset to Cloudinary.
 	 *
-	 * @param int $attachment_id The attachment ID.
+	 * @param int    $attachment_id The attachment ID.
+	 * @param string $suffix        An optional suffix.
 	 *
 	 * @return array|\WP_Error
 	 */
-	public function upload_asset( $attachment_id ) {
+	public function upload_asset( $attachment_id, $suffix = null ) {
 
 		add_filter( 'cloudinary_doing_upload', '__return_true' );
 
@@ -241,17 +244,10 @@ class Upload_Sync {
 
 		$type       = $this->sync->get_sync_type( $attachment_id );
 		$options    = $this->media->get_upload_options( $attachment_id );
-		$public_id  = $options['public_id'];
 		$try_remote = 'cloud_name' !== $type;
 
-		// Add the suffix before uploading.
-		if ( $this->media->get_public_id( $attachment_id ) === $public_id ) {
-			// Only apply the saved suffix if the public_id is the same. This is to allow filtered ID's a change to have a suffix removed.
-			$options['public_id'] .= $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['suffix'], true );
-		} else {
-			// If the public_id has been changed, remove the saved suffix.
-			$this->media->delete_post_meta( $attachment_id, Sync::META_KEYS['suffix'] );
-		}
+		// Add suffix.
+		$options['public_id'] .= $suffix;
 
 		// Run the upload Call.
 		$result = $this->connect->api->upload( $attachment_id, $options, array(), $try_remote );
@@ -262,16 +258,10 @@ class Upload_Sync {
 
 			// Check that this wasn't an existing.
 			if ( ! empty( $result['existing'] ) ) {
-				// Check to see if this is the same image.
-				$version = $this->media->get_cloudinary_version( $attachment_id );
-				if ( $version !== $result['version'] ) {
-					// New image with the same name.
-					// Add a suffix and try again.
-					$suffix = '_' . $attachment_id . substr( strrev( uniqid() ), 0, 5 );
-					$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['suffix'], $suffix );
+				// Add a suffix and try again.
+				$suffix = '_' . $attachment_id . substr( strrev( uniqid() ), 0, 5 );
 
-					return $this->upload_asset( $attachment_id );
-				}
+				return $this->upload_asset( $attachment_id, $suffix );
 			}
 
 			// Set folder Synced.
@@ -282,6 +272,13 @@ class Upload_Sync {
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['version'], $result['version'] );
 			// Set the delivery type.
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['delivery'], $result['type'] );
+
+			// Create a trackable key in post meta to allow getting the attachment id from URL with transformations.
+			update_post_meta( $attachment_id, '_' . md5( $options['public_id'] ), true );
+
+			// Create a trackable key in post meta to allow getting the attachment id from URL.
+			update_post_meta( $attachment_id, '_' . md5( 'base_' . $options['public_id'] ), true );
+
 			// Update signature for all that use the same method.
 			$this->sync->sync_signature_by_type( $attachment_id, $type );
 			// Update options and public_id as well (full sync).

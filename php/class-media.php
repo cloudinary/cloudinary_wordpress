@@ -769,6 +769,9 @@ class Media extends Settings_Component implements Setup {
 	 * @return array The array of found transformations within the string.
 	 */
 	public function get_transformations_from_string( $str, $type = 'image' ) {
+		if ( ! isset( Api::$transformation_index[ $type ] ) ) {
+			return array();
+		}
 
 		$params = Api::$transformation_index[ $type ];
 
@@ -1106,8 +1109,13 @@ class Media extends Settings_Component implements Setup {
 			if ( $this->is_folder_synced( $attachment_id ) ) {
 				$public_id = $this->get_cloudinary_folder() . pathinfo( $public_id, PATHINFO_BASENAME );
 			}
-			if ( true === $suffixed ) {
-				$public_id .= $this->get_post_meta( $attachment_id, Sync::META_KEYS['suffix'], true );
+			if ( true === $suffixed && ! empty( $this->get_post_meta( $attachment_id, Sync::META_KEYS['suffix'], true ) ) ) {
+				$suffix = $this->get_post_meta( $attachment_id, Sync::META_KEYS['suffix'], true );
+				if ( false === strrpos( $public_id, $suffix ) ) {
+					$public_id .= $suffix;
+					$this->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
+				}
+				$this->delete_post_meta( $attachment_id, Sync::META_KEYS['suffix'] );
 			}
 		} else {
 			$public_id = $this->sync->generate_public_id( $attachment_id );
@@ -1507,6 +1515,12 @@ class Media extends Settings_Component implements Setup {
 			$sync_key .= wp_json_encode( $asset['transformations'] );
 			$this->update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], $asset['transformations'] );
 		}
+
+		// Create a trackable key in post meta to allow getting the attachment id from URL with transformations.
+		update_post_meta( $attachment_id, '_' . md5( $sync_key ), true );
+
+		// Create a trackable key in post meta to allow getting the attachment id from URL.
+		update_post_meta( $attachment_id, '_' . md5( 'base_' . $public_id ), true );
 
 		// capture the delivery type.
 		$this->update_post_meta( $attachment_id, Sync::META_KEYS['delivery'], $asset['type'] );
@@ -2101,7 +2115,7 @@ class Media extends Settings_Component implements Setup {
 	public function maybe_overwrite_featured_image( $attachment_id ) {
 		$overwrite = false;
 		if ( $this->doing_featured_image && $this->doing_featured_image === (int) $attachment_id ) {
-			$overwrite = (bool) $this->get_post_meta( get_the_ID(), Global_Transformations::META_FEATURED_IMAGE_KEY, true );
+			$overwrite = (bool) get_post_meta( get_the_ID(), Global_Transformations::META_FEATURED_IMAGE_KEY, true );
 		}
 
 		return $overwrite;

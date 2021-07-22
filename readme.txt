@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: image, video, DAM, optimization, CDN
 Requires at least: 4.7
-Tested up to: 5.7.2
+Tested up to: 5.8
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -12,6 +12,8 @@ Use Cloudinary's plugin to efficiently create, manage and deliver images, videos
 
 == Description ==
 Cloudinary's [award-winning plugin](https://www.businesswire.com/news/home/20200923005566/en/Cloudinary-Wins-2020-MarTech-Breakthrough-Award-for-Best-WordPress-Plugin) makes automating your image, video, and rich media workflow easy, offering a variety of features. From media upload to image optimization, video transcoding and manipulation through delivery via global CDNs, everything is offered from within the plugin.
+
+https://youtu.be/B1Jx5hB1Ijk
 
 Optimize your site performance and user experience with faster page load times, advanced auto-responsive delivery, and better visual experience. Automate image quality and video encoding settings, scale and crop images using AI to focus on the most important region, apply comprehensive video and image manipulations and effects, display assets via an interactive media gallery, and deliver optimized media experiences to any device in any resolution or pixel density.
 
@@ -129,6 +131,15 @@ The following plugins/themes/page-builders might not be fully compatible with th
 9. Use Interactive Media Gallery 
 
 == Changelog ==
+
+= 2.7.5 (20 July 2021) =
+
+Fixes and Improvements:
+
+* Decoupling Cloudinary metadata from attachment metadata
+* Fixed the duplicated suffix when re-syncing assets to Cloudinary
+* Added a query parameter to the requested URL's
+
 
 = 2.7.4 (23 June 2021) =
 
