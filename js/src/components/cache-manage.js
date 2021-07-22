@@ -179,10 +179,9 @@ const CacheManage = {
 		} ).then( ( result ) => {
 			this._hideSpinners( result );
 			result.forEach( ( id ) => {
-				this.close( cachePoint.apply );
 				this._removeFromList( cachePoint, id, state );
 				this._evaluateApply( cachePoint );
-				cachePoint.apply.disabled = '';
+				cachePoint.apply.disabled = 'disabled';
 			} );
 			if ( 'delete' === state ) {
 				this._load( cachePoint.dataset.cachePoint );
