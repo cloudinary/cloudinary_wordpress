@@ -1176,7 +1176,7 @@ class Media extends Settings_Component implements Setup {
 				}
 			}
 			$cloudinary_id = $public_id;
-			if ( 'fetch' !== $this->get_media_delivery( $attachment_id ) ) {
+			if ( 'fetch' !== $this->get_media_delivery( $attachment_id ) && empty( pathinfo( $public_id, PATHINFO_EXTENSION ) ) ) {
 				$cloudinary_id = $public_id . '.' . $extension;
 			}
 		}
