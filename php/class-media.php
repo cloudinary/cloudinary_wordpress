@@ -238,6 +238,7 @@ class Media extends Settings_Component implements Setup {
 	public function is_file_compatible( $file ) {
 
 		$types        = $this->get_compatible_media_types();
+		$file         = wp_parse_url( $file, PHP_URL_PATH );
 		$filename     = pathinfo( $file, PATHINFO_BASENAME );
 		$mime         = wp_check_filetype( $filename );
 		$type         = strstr( $mime['type'], '/', true );
@@ -364,6 +365,7 @@ class Media extends Settings_Component implements Setup {
 	 * @return string
 	 */
 	public function get_file_type( $file ) {
+		$file = wp_parse_url( $file, PHP_URL_PATH );
 		$file = pathinfo( $file, PATHINFO_BASENAME );
 		$mime = wp_check_filetype( $file );
 
@@ -781,6 +783,9 @@ class Media extends Settings_Component implements Setup {
 	 * @return array The array of found transformations within the string.
 	 */
 	public function get_transformations_from_string( $str, $type = 'image' ) {
+		if ( ! isset( Api::$transformation_index[ $type ] ) ) {
+			return array();
+		}
 
 		$params = Api::$transformation_index[ $type ];
 
@@ -1118,8 +1123,13 @@ class Media extends Settings_Component implements Setup {
 			if ( $this->is_folder_synced( $attachment_id ) ) {
 				$public_id = $this->get_cloudinary_folder() . pathinfo( $public_id, PATHINFO_BASENAME );
 			}
-			if ( true === $suffixed ) {
-				$public_id .= $this->get_post_meta( $attachment_id, Sync::META_KEYS['suffix'], true );
+			if ( true === $suffixed && ! empty( $this->get_post_meta( $attachment_id, Sync::META_KEYS['suffix'], true ) ) ) {
+				$suffix = $this->get_post_meta( $attachment_id, Sync::META_KEYS['suffix'], true );
+				if ( false === strrpos( $public_id, $suffix ) ) {
+					$public_id .= $suffix;
+					$this->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
+				}
+				$this->delete_post_meta( $attachment_id, Sync::META_KEYS['suffix'] );
 			}
 		} else {
 			$public_id = $this->sync->generate_public_id( $attachment_id );
@@ -1448,7 +1458,7 @@ class Media extends Settings_Component implements Setup {
 	public function editor_assets() {
 
 		// External assets.
-		wp_enqueue_script( 'cloudinary-media-library', 'https://media-library.cloudinary.com/global/all.js', array(), $this->plugin->version, true );
+		wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, array(), $this->plugin->version, true );
 		$params = array(
 			'nonce'     => wp_create_nonce( 'wp_rest' ),
 			'mloptions' => array(
@@ -1519,6 +1529,12 @@ class Media extends Settings_Component implements Setup {
 			$sync_key .= wp_json_encode( $asset['transformations'] );
 			$this->update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], $asset['transformations'] );
 		}
+
+		// Create a trackable key in post meta to allow getting the attachment id from URL with transformations.
+		update_post_meta( $attachment_id, '_' . md5( $sync_key ), true );
+
+		// Create a trackable key in post meta to allow getting the attachment id from URL.
+		update_post_meta( $attachment_id, '_' . md5( 'base_' . $public_id ), true );
 
 		// capture the delivery type.
 		$this->update_post_meta( $attachment_id, Sync::META_KEYS['delivery'], $asset['type'] );
@@ -2113,7 +2129,7 @@ class Media extends Settings_Component implements Setup {
 	public function maybe_overwrite_featured_image( $attachment_id ) {
 		$overwrite = false;
 		if ( $this->doing_featured_image && $this->doing_featured_image === (int) $attachment_id ) {
-			$overwrite = (bool) $this->get_post_meta( get_the_ID(), Global_Transformations::META_FEATURED_IMAGE_KEY, true );
+			$overwrite = (bool) get_post_meta( get_the_ID(), Global_Transformations::META_FEATURED_IMAGE_KEY, true );
 		}
 
 		return $overwrite;
@@ -2344,7 +2360,7 @@ class Media extends Settings_Component implements Setup {
 					'page_title' => __( 'Media Display', 'cloudinary' ),
 					array(
 						'type'      => 'info_box',
-						'icon'      => $this->plugin->dir_url . 'css/transformation.svg',
+						'icon'      => $this->plugin->dir_url . 'css/images/transformation.svg',
 						'title'     => __( 'Transformations', 'cloudinary' ),
 						'text'      => __(
 							'Cloudinary allows you to easily transform your images on-the-fly to any required format, style and dimension, and also optimizes images for minimal file size alongside high visual quality for an improved user experience and minimal bandwidth. You can do all of this by implementing dynamic image transformation and delivery URLs.',

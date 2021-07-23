@@ -5,7 +5,7 @@
  * @package Cloudinary
  */
 
-$url         = 'https://res.cloudinary.com/demo/video/upload/';
+$url         = CLOUDINARY_ENDPOINTS_PREVIEW_VIDEO;
 $src         = $url . '/dog.mp4';
 $preview_src = $url . 'w_600/';
 $sample      = '/dog.mp4';

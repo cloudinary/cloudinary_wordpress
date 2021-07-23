@@ -43,20 +43,6 @@ class Video {
 	private $attachments = array();
 
 	/**
-	 * Cloudinary Stable Player Version.
-	 *
-	 * @var string
-	 */
-	const PLAYER_VER = '1.5.1';
-
-	/**
-	 * Cloudinary Core Version.
-	 *
-	 * @var string
-	 */
-	const CORE_VER = '2.6.3';
-
-	/**
 	 * Meta key to store usable video transformations for an attachment.
 	 *
 	 * @var string
@@ -162,7 +148,7 @@ class Video {
 			if ( empty( $attr['cloudinary'] ) ) {
 				$video                        = wp_get_attachment_metadata( $attr['id'] );
 				$url                          = $this->media->cloudinary_url( $attr['id'] );
-				$attr[ $video['fileformat'] ] = $url;
+				$attr[ $video['fileformat'] ] = strtok( $url, '?' );
 				$attr['cloudinary']           = true; // Flag Cloudinary to ensure we don't call it again.
 				$html                         = wp_video_shortcode( $attr, $html );
 			}
@@ -201,9 +187,13 @@ class Video {
 		}
 
 		if ( in_array( $current_screen->base, $requiring_screens, true ) ) {
-			wp_register_style( 'cld-player', 'https://unpkg.com/cloudinary-video-player@' . self::PLAYER_VER . '/dist/cld-video-player.min.css', null, self::PLAYER_VER );
-			wp_register_script( 'cld-core', 'https://unpkg.com/cloudinary-core@' . self::CORE_VER . '/cloudinary-core-shrinkwrap.min.js', null, self::CORE_VER, true );
-			wp_register_script( 'cld-player', 'https://unpkg.com/cloudinary-video-player@' . self::PLAYER_VER . '/dist/cld-video-player.min.js', array( 'cld-core' ), self::PLAYER_VER, true );
+			$core_url          = sprintf( CLOUDINARY_ENDPOINTS_CORE, CLOUDINARY_ENDPOINTS_CORE_VERSION );
+			$player_style_url  = sprintf( CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_STYLE, CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION );
+			$player_script_url = sprintf( CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_SCRIPT, CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION );
+
+			wp_register_style( 'cld-player', $player_style_url, null, CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION );
+			wp_register_script( 'cld-core', $core_url, null, CLOUDINARY_ENDPOINTS_CORE_VERSION, true );
+			wp_register_script( 'cld-player', $player_script_url, array( 'cld-core' ), CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION, true );
 		}
 	}
 
@@ -330,10 +320,10 @@ class Video {
 			unset( $attributes['poster'] );
 		}
 		// Add the player version to use.
-		$params['vpv'] = self::PLAYER_VER;
+		$params['vpv'] = CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION;
 		// Build URL.
 		$params['player'] = wp_parse_args( $attributes, $params['player'] );
-		$url              = add_query_arg( $params, 'https://player.cloudinary.com/embed/' );
+		$url              = add_query_arg( $params, CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_EMBED );
 
 		// Build the Player HTML.
 		$tag_args = array(

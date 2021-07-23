@@ -94,6 +94,7 @@ class Sync implements Setup, Assets {
 		'process_log'    => '_process_log',
 		'storage'        => '_cloudinary_storage',
 		'queued'         => '_cloudinary_sync_queued',
+		'delay'          => '_cloudinary_sync_delay',
 	);
 
 	/**
@@ -203,7 +204,7 @@ class Sync implements Setup, Assets {
 		}
 		if ( isset( $log[ $type ] ) ) {
 
-			$log[ $type ][ time() ] = $result;
+			$log[ $type ][ '_' . time() ] = $result;
 			if ( 5 < count( $log[ $type ] ) ) {
 				array_shift( $log[ $type ] );
 			}

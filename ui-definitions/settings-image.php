@@ -9,7 +9,7 @@ $settings = array(
 	array(
 		'type'   => 'panel',
 		'title'  => __( 'Image - Global Settings', 'cloudinary' ),
-		'icon'   => $this->plugin->dir_url . 'css/image.svg',
+		'icon'   => $this->plugin->dir_url . 'css/images/image.svg',
 		'slug'   => 'image_settings',
 		'anchor' => true,
 		array(
@@ -173,7 +173,7 @@ $settings = array(
 					'type'           => 'image_preview',
 					'title'          => __( 'Image preview', 'cloudinary' ),
 					'slug'           => 'image_preview',
-					'default'        => 'https://res.cloudinary.com/demo/image/upload/w_600/sample.jpg',
+					'default'        => CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE . 'w_600/sample.jpg',
 					'taxonomy_field' => array(
 						'context'  => 'image',
 						'priority' => 10,
