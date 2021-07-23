@@ -547,15 +547,17 @@ class Assets extends Settings_Component {
 	 * @return bool
 	 */
 	protected function syncable_asset( $filename ) {
-		// Check with paths.
-		$allowed_kinds = array(
-			'image',
-			'audio',
-			'video',
-		);
-		$type          = wp_check_filetype( $filename );
+		static $allowed_kinds = array();
+		if ( empty( $allowed_kinds ) ) {
+			// Check with paths.
+			$types           = wp_get_ext_types();
+			$allowed_kinds   = array_merge( $allowed_kinds, $types['image'] );
+			$allowed_kinds   = array_merge( $allowed_kinds, $types['audio'] );
+			$allowed_kinds   = array_merge( $allowed_kinds, $types['video'] );
+		}
+		$type = pathinfo( $filename, PATHINFO_EXTENSION );
 
-		return false !== $type['type'] && in_array( strstr( $type['type'], '/', true ), $allowed_kinds );
+		return in_array( $type, $allowed_kinds, true );
 	}
 
 	/**
