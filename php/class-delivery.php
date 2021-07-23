@@ -545,13 +545,56 @@ class Delivery implements Setup {
 	 * @return string
 	 */
 	public static function clean_url( $url ) {
-		static $default;
-		if ( ! $default ) {
-			$default = wp_parse_url( home_url( '/' ) );
-		}
-		$parts = wp_parse_args( wp_parse_url( $url ), $default );
+		$default = array(
+			'scheme' => '',
+			'host'   => '',
+			'path'   => '',
+		);
+		$parts   = wp_parse_args( wp_parse_url( $url ), $default );
 
 		return $parts['scheme'] . '://' . $parts['host'] . $parts['path'];
+	}
+
+	/**
+	 * Filter out excluded urls.
+	 *
+	 * @param string $url The url to filter out.
+	 *
+	 * @return bool
+	 */
+	public function validate_url( $url ) {
+		static $home;
+		if ( ! $home ) {
+			$home = wp_parse_url( home_url( '/' ) );
+		}
+		$parts = wp_parse_url( $url );
+		if ( empty( $parts['host'] ) ) {
+			return false; // If host is empty, it's a false positive url.
+		}
+		if ( empty( $parts['path'] ) || '/' === $parts['path'] ) {
+			return false; // exclude base domains.
+		}
+		$ext = pathinfo( $parts['path'], PATHINFO_EXTENSION );
+		if ( $parts['host'] === $home['host'] && empty( $ext ) || 'php' === $ext ) {
+			return false; // Local urls without an extension or ending in PHP will not be media.
+		}
+
+		return true;
+	}
+
+	/**
+	 * Get urls from HTML.
+	 *
+	 * @param string $content The content html.
+	 *
+	 * @return array
+	 */
+	protected function get_urls( $content ) {
+		$base_urls = array_map( array( $this, 'clean_url' ), wp_extract_urls( $content ) );
+		$urls      = array_filter( array_unique( $base_urls ), array( $this, 'validate_url' ) ); // clean out empty urls.
+		$urls      = array_filter( $urls, array( $this, 'is_local_asset_url' ) );
+
+		return $urls;
 	}
 
 	/**
@@ -561,10 +604,9 @@ class Delivery implements Setup {
 	 */
 	public function catch_urls( $content ) {
 		$this->init_delivery();
-		$urls    = array_map( array( $this, 'clean_url' ), wp_extract_urls( $content ) );
-		$urls    = array_filter( $urls, array( $this, 'is_local_asset_url' ) );
+		$urls    = $this->get_urls( $content );
 		$known   = $this->convert_tags( $content );
-		$urls    = array_filter( array_filter( $urls ), array( 'Cloudinary\String_Replace', 'string_not_set' ) );
+		$urls    = array_filter( $urls, array( 'Cloudinary\String_Replace', 'string_not_set' ) );
 		$unknown = array_diff( $urls, array_keys( $known ) );
 		if ( ! empty( $unknown ) ) {
 			$known = array_merge( $known, $this->find_attachment_size_urls( $unknown ) );

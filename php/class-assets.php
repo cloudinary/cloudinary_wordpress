@@ -101,6 +101,15 @@ class Assets extends Settings_Component {
 	const POST_TYPE_SLUG = 'cloudinary_asset';
 
 	/**
+	 * Holds the meta keys.
+	 *
+	 * @var array
+	 */
+	const META_KEYS = array(
+		'excludes' => '_excluded_urls',
+	);
+
+	/**
 	 * Assets constructor.
 	 *
 	 * @param Plugin $plugin Instance of the plugin.
@@ -305,6 +314,12 @@ class Assets extends Settings_Component {
 	 * Compiles all metadata and preps upload at shutdown.
 	 */
 	public function meta_updates() {
+		// Create missing assets.
+		if ( ! empty( $this->to_create ) ) {
+			foreach ( $this->to_create as $url => $parent ) {
+				$this->create_asset( $url, $parent );
+			}
+		}
 
 		foreach ( $this->meta_updates as $id ) {
 
@@ -315,13 +330,6 @@ class Assets extends Settings_Component {
 				'post_content' => wp_json_encode( $meta ),
 			);
 			wp_update_post( $params );
-		}
-
-		// Create missing assets.
-		if ( ! empty( $this->to_create ) ) {
-			foreach ( $this->to_create as $url => $parent ) {
-				$this->create_asset( $url, $parent );
-			}
 		}
 	}
 
@@ -381,9 +389,11 @@ class Assets extends Settings_Component {
 	 * @param string $url The path to activate.
 	 */
 	public function activate_parent( $url ) {
+		$url = trailingslashit( $url );
 		if ( isset( $this->asset_parents[ $url ] ) ) {
 			$this->active_parents[ $url ] = $this->asset_parents[ $url ];
 		}
+		krsort( $this->active_parents, SORT_STRING );
 	}
 
 	/**
@@ -396,7 +406,7 @@ class Assets extends Settings_Component {
 	 */
 	public function create_asset_parent( $path, $version ) {
 		$args      = array(
-			'post_title'  => $path,
+			'post_title'  => trailingslashit( $path ),
 			'post_name'   => md5( $path ),
 			'post_type'   => self::POST_TYPE_SLUG,
 			'post_status' => 'publish',
@@ -404,6 +414,8 @@ class Assets extends Settings_Component {
 		$parent_id = wp_insert_post( $args );
 		if ( $parent_id ) {
 			$this->media->update_post_meta( $parent_id, Sync::META_KEYS['version'], $version );
+			$this->media->update_post_meta( $parent_id, self::META_KEYS['excludes'], array() );
+			$this->asset_parents[ $path ] = get_post( $parent_id );
 		}
 
 		return $parent_id;
@@ -509,12 +521,17 @@ class Assets extends Settings_Component {
 	 */
 	public function check_asset( $is_local, $url ) {
 		foreach ( $this->active_parents as $asset_parent ) {
-			if (
-				substr( $url, 0, strlen( $asset_parent->post_title ) ) === $asset_parent->post_title
-				&& true === $this->syncable_asset( basename( $url ) )
-			) {
-				$is_local                                = true;
-				$this->found_urls[ $asset_parent->ID ][] = $url;
+			if ( substr( $url, 0, strlen( $asset_parent->post_title ) ) === $asset_parent->post_title ) {
+				$excludes = $this->media->get_post_meta( $asset_parent->ID, self::META_KEYS['excludes'], true );
+				if ( ! in_array( $url, $excludes, true ) ) {
+					if ( ! $this->syncable_asset( $url ) ) {
+						$excludes[] = $url;
+						$this->media->update_post_meta( $asset_parent->ID, self::META_KEYS['excludes'], $excludes );
+						break;
+					}
+					$is_local                                = true;
+					$this->found_urls[ $asset_parent->ID ][] = $url;
+				}
 				break;
 			}
 		}
@@ -1183,7 +1200,7 @@ class Assets extends Settings_Component {
 			),
 			array(
 				'type'        => 'on_off',
-				'slug'        => 'cache_external_assets',
+				'slug'        => 'external_assets',
 				'description' => __( 'Support external media.', 'cloudinary' ),
 				'default'     => 'off',
 
@@ -1191,13 +1208,12 @@ class Assets extends Settings_Component {
 			array(
 				'type'      => 'group',
 				'condition' => array(
-					'cache_external_assets' => true,
+					'external_assets' => true,
 				),
 				array(
 					'type'    => 'radio',
 					'slug'    => 'external_type',
 					'default' => 'all',
-					'inline'  => true,
 					'options' => array(
 						'all'  => __( 'Capture all external resources.', 'cloudinary' ),
 						'some' => __( 'Capture specific resources.', 'cloudinary' ),
