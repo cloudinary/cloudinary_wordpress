@@ -139,6 +139,13 @@ const cldGalleryBlock = {
 		'gallery-block': './src/js/gallery-block/index.js',
 	},
 	plugins: [
+		// Remove the CleanWebpackPlugin and  FixStyleWebpackPlugin plugins from `@wordpress/scripts` due to version conflicts.
+		...defaultConfig.plugins.filter(
+			( plugin ) =>
+				! [ 'CleanWebpackPlugin', 'FixStyleWebpackPlugin' ].includes(
+					plugin.constructor.name
+				)
+		),
 		new MiniCssExtractPlugin( {
 			filename: '../css/[name].css',
 		} ),
