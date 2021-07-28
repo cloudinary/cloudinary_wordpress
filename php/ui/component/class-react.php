@@ -102,6 +102,10 @@ class React extends Text {
 	 * @return array|bool|null
 	 */
 	public function sanitize_value( $value ) {
+		if ( is_array( $value ) ) {
+			return $value;
+		}
+
 		return json_decode( $value, true );
 	}
 }

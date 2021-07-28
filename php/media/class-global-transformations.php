@@ -8,6 +8,7 @@
 namespace Cloudinary\Media;
 
 use Cloudinary\Settings\Setting;
+use WP_Post;
 
 /**
  * Class Global Transformations.
@@ -193,6 +194,8 @@ class Global_Transformations {
 	 * Init term meta field values.
 	 */
 	public function init_term_transformations() {
+		// Enqueue Cloudinary.
+		$this->media->plugin->enqueue_assets();
 
 		$this->reset_taxonomy_field_values();
 
@@ -239,25 +242,23 @@ class Global_Transformations {
 	 *
 	 * @param string $type The type to get.
 	 *
-	 * @return array
+	 * @return string
 	 */
 	public function get_taxonomy_transformations( $type ) {
 		$return_transformations = '';
-		if ( in_the_loop() ) {
-			$post = get_post();
-			if ( ! empty( $post ) ) {
-				$transformations = array();
-				$terms           = $this->get_terms( $post->ID );
-				if ( ! empty( $terms ) ) {
-					foreach ( $terms as $item ) {
-						$transformation = $this->get_term_transformations( $item['term']->term_id, $type );
-						if ( ! empty( $transformation[ $type . '_freeform' ] ) ) {
-							$transformations[] = trim( $transformation[ $type . '_freeform' ] );
-						}
+		$post                   = $this->get_current_post();
+		if ( $post ) {
+			$transformations = array();
+			$terms           = $this->get_terms( $post->ID );
+			if ( ! empty( $terms ) ) {
+				foreach ( $terms as $item ) {
+					$transformation = $this->get_term_transformations( $item['term']->term_id, $type );
+					if ( ! empty( $transformation[ $type . '_freeform' ] ) ) {
+						$transformations[] = trim( $transformation[ $type . '_freeform' ] );
 					}
-					// Join the freeform.
-					$return_transformations = implode( '/', (array) $transformations );
 				}
+				// Join the freeform.
+				$return_transformations = implode( '/', (array) $transformations );
 			}
 		}
 
@@ -271,8 +272,8 @@ class Global_Transformations {
 	 */
 	public function is_taxonomy_overwrite() {
 		$apply_type = false;
-		if ( in_the_loop() ) {
-			$post       = get_post();
+		$post       = $this->get_current_post();
+		if ( $post ) {
 			$apply_type = get_post_meta( $post->ID, self::META_APPLY_KEY . '_terms', true );
 		}
 
@@ -559,6 +560,29 @@ class Global_Transformations {
 		if ( ! is_null( $field_value ) ) {
 			update_post_meta( $post_id, self::META_FEATURED_IMAGE_KEY, $field_value );
 		}
+	}
+
+	/**
+	 * Get the current post.
+	 *
+	 * @return WP_Post|null
+	 */
+	protected function get_current_post() {
+		/**
+		 * Filter the post ID.
+		 *
+		 * @hook    cloudinary_current_post_id
+		 * @default null
+		 *
+		 * @return  {WP_Post|null}
+		 */
+		$post_id = apply_filters( 'cloudinary_current_post_id', null );
+
+		if ( is_null( $post_id ) && ! in_the_loop() ) {
+			return null;
+		}
+
+		return get_post( $post_id );
 	}
 
 	/**

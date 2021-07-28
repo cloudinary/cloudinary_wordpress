@@ -152,7 +152,7 @@ class Sync implements Setup, Assets {
 	public function been_synced( $attachment_id ) {
 
 		$public_id = $this->managers['media']->has_public_id( $attachment_id );
-		$meta      = wp_get_attachment_metadata( $attachment_id );
+		$meta      = wp_get_attachment_metadata( $attachment_id, true );
 
 		return ! empty( $public_id ) || ! empty( $meta['cloudinary'] ); // From v1.
 	}
@@ -160,24 +160,55 @@ class Sync implements Setup, Assets {
 	/**
 	 * Checks if an asset is synced and up to date.
 	 *
-	 * @param int $post_id The post id to check.
+	 * @param int  $post_id  The post id to check.
+	 * @param bool $re_check Flag to bypass cache and recheck.
 	 *
 	 * @return bool
 	 */
-	public function is_synced( $post_id ) {
-		$expecting = $this->generate_signature( $post_id );
-
-		if ( ! is_wp_error( $expecting ) ) {
-			$signature = $this->get_signature( $post_id );
-			// Sort to align orders for comparison.
-			ksort( $signature );
-			ksort( $expecting );
-			if ( ! empty( $signature ) && ! empty( $expecting ) && $expecting === $signature ) {
-				return true;
+	public function is_synced( $post_id, $re_check = false ) {
+		static $synced = array();
+		if ( isset( $synced[ $post_id ] ) && false === $re_check ) {
+			return $synced[ $post_id ];
+		}
+		$return = false;
+		if ( $this->managers['media']->has_public_id( $post_id ) ) {
+			$expecting = $this->generate_signature( $post_id );
+			if ( ! is_wp_error( $expecting ) ) {
+				$signature = $this->get_signature( $post_id );
+				// Sort to align orders for comparison.
+				ksort( $signature );
+				ksort( $expecting );
+				if ( ! empty( $signature ) && ! empty( $expecting ) && $expecting === $signature ) {
+					$return = true;
+				}
 			}
 		}
+		$synced[ $post_id ] = $return;
 
-		return false;
+		return $synced[ $post_id ];
+	}
+
+	/**
+	 * Log a sync result.
+	 *
+	 * @param int    $attachment_id The attachment id.
+	 * @param string $type          The sync type.
+	 * @param mixed  $result        The result.
+	 */
+	public function log_sync_result( $attachment_id, $type, $result ) {
+		$log  = $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['process_log'], true );
+		$keys = array_keys( $this->sync_base_struct );
+		if ( empty( $log ) || count( $log ) !== count( $keys ) ) {
+			$log = array_fill_keys( $keys, array() );
+		}
+		if ( isset( $log[ $type ] ) ) {
+
+			$log[ $type ][ '_' . time() ] = $result;
+			if ( 5 < count( $log[ $type ] ) ) {
+				array_shift( $log[ $type ] );
+			}
+			$this->managers['media']->update_post_meta( $attachment_id, self::META_KEYS['process_log'], $log );
+		}
 	}
 
 	/**
@@ -272,7 +303,7 @@ class Sync implements Setup, Assets {
 	public function get_sync_version( $attachment_id ) {
 		$version = $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['plugin_version'], true );
 
-		return $version !== $this->plugin->version;
+		return $version . '-' . $this->plugin->version;
 	}
 
 	/**
@@ -474,7 +505,7 @@ class Sync implements Setup, Assets {
 				'priority' => 25,
 				'sync'     => array( $this->managers['upload'], 'explicit_update' ),
 				'validate' => function ( $attachment_id ) {
-					$delivery = $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['delivery'] );
+					$delivery = $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['delivery'], true );
 
 					return empty( $delivery ) || 'upload' === $delivery;
 				},
@@ -514,7 +545,7 @@ class Sync implements Setup, Assets {
 				'sync'     => function ( $attachment_id ) {
 					$meta = $this->managers['media']->get_post_meta( $attachment_id );
 					foreach ( $meta as $key => $value ) {
-						if ( self::META_KEYS['public_id'] === $key ) {
+						if ( Sync::META_KEYS['cloudinary'] === $key ) {
 							$this->managers['media']->delete_post_meta( $attachment_id, $key );
 							continue;
 						}
@@ -672,10 +703,17 @@ class Sync implements Setup, Assets {
 	 * @return string | null
 	 */
 	public function maybe_prepare_sync( $attachment_id ) {
-
-		$type = $this->get_sync_type( $attachment_id );
-		if ( $type && $this->can_sync( $attachment_id, $type ) ) {
-			$this->add_to_sync( $attachment_id );
+		$type = null;
+		if ( $this->can_sync( $attachment_id, $type ) ) {
+			$type = $this->get_sync_type( $attachment_id );
+			if ( $type ) {
+				$this->add_to_sync( $attachment_id );
+			} else {
+				// if null, and can sync but has no type, realtime syncs may have been applied. so recheck.
+				if ( $this->is_synced( $attachment_id, true ) ) {
+					$type = true;
+				}
+			}
 		}
 
 		return $type;

@@ -332,7 +332,7 @@ class Sync_Queue {
 					'compare' => 'NOT EXISTS',
 				),
 				array(
-					'key'     => Sync::META_KEYS['public_id'],
+					'key'     => Sync::META_KEYS['cloudinary'],
 					'compare' => 'NOT EXISTS',
 				),
 				array(
@@ -741,7 +741,7 @@ class Sync_Queue {
 			$thread_queue = $this->get_thread_queue( $thread );
 			$offset       = time() - $thread_queue['ping'];
 			$return       = 3; // If autosync is running, default is ready/stalled.
-			if ( empty( $thread_queue['next'] ) && 0 !== $thread_queue['next'] ) {
+			if ( empty( $thread_queue['next'] ) && empty( $thread_queue['count'] ) ) {
 				$return = 1; // Queue is empty, so nothing to sync, set as ended.
 			} elseif ( ! empty( $thread_queue['ping'] ) && $offset < $this->cron_start_offset ) {
 				$return = 2; // If the last ping is within the time frame, it's still active.

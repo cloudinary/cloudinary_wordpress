@@ -380,8 +380,8 @@ class Setting {
 	 */
 	public function setting_exists( $slug ) {
 		$exists  = false;
-		$setting = $this->get_root_setting()->get_setting( $slug, false );
-		if ( ! $this->is_private_slug( $slug ) && ! is_null( $setting ) && $setting->get_param( 'is_setup', false ) ) {
+		$setting = $this->get_root_setting()->get_param( 'index:' . $slug, null );
+		if ( ! $this->is_private_slug( $slug ) && ! is_null( $setting ) ) {
 			$exists = true;
 		}
 
@@ -399,19 +399,9 @@ class Setting {
 		if ( ! $this->is_root_setting() ) {
 			return $this->get_root_setting()->find_setting( $slug );
 		}
-		$parts = explode( ':', $slug );
-		$index = $this->get_param( 'index', array() );
+		$setting = $this->get_param( 'index:' . $slug, null );
 
-		$slug = sanitize_file_name( trim( array_shift( $parts ) ) );
-		if ( isset( $index[ $slug ] ) ) {
-			if ( ! empty( $parts ) ) {
-				return $index[ $slug ]->get_setting( implode( ':', $parts ) );
-			}
-
-			return $index[ $slug ];
-		}
-
-		return $this->get_setting( $slug );
+		return $setting ? $setting : $this->create_setting( $slug, null, $this ); // return a dynamic setting.
 	}
 
 	/**
@@ -468,6 +458,9 @@ class Setting {
 
 		// Register dynamics.
 		$this->register_dynamic_settings( $dynamic_params );
+
+		// Load data.
+		$this->load_value();
 
 		// Mark as setup.
 		$this->set_param( 'is_setup', true );
@@ -753,6 +746,14 @@ class Setting {
 	}
 
 	/**
+	 * Rebuild a component.
+	 */
+	public function rebuild_component() {
+		$this->component = null;
+		$this->setup_component();
+	}
+
+	/**
 	 * Render the settings Component.
 	 *
 	 * @param bool $echo Flag to echo output.
@@ -1010,13 +1011,23 @@ class Setting {
 	 * @return Setting
 	 */
 	public function create_setting( $slug, $params = array(), $parent = null ) {
-		$slug = sanitize_file_name( $slug );
+		$slug     = sanitize_file_name( $slug );
+		$existing = false;
 		if ( $this->setting_exists( $slug ) ) {
-			// translators: Placeholder is the slug.
-			$message = sprintf( __( 'Duplicate setting slug %s. This setting will not be usable.', 'cloudinary' ), $slug );
-			$this->add_admin_notice( 'duplicate_setting', $message, 'warning' );
+			$existing_maybe = $this->find_setting( $slug );
+			if ( $existing_maybe->get_param( 'is_setup' ) ) {
+				// translators: Placeholder is the slug.
+				$message = sprintf( __( 'Duplicate setting slug %s. This setting will not be usable.', 'cloudinary' ), $slug );
+				$this->add_admin_notice( 'duplicate_setting', $message, 'warning' );
+			} else {
+				// Use existing.
+				$existing = $existing_maybe;
+				if ( ! empty( $params ) ) {
+					$existing->setup_setting( $params );
+				}
+			}
 		}
-		$new_setting = new Setting( $slug, $params, $this->root_setting );
+		$new_setting = $existing ? $existing : new Setting( $slug, $params, $this->root_setting );
 		$new_setting->set_value( null ); // Set value to null.
 		if ( $parent ) {
 			$parent->add_setting( $new_setting );

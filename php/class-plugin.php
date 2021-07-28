@@ -134,21 +134,7 @@ final class Plugin {
 		$this->components['api']          = new REST_API( $this );
 		$this->components['storage']      = new Storage( $this );
 		$this->components['report']       = new Report( $this );
-
-		/**
-		 * Filter to enable beta features for testing.
-		 *
-		 * @hook    cloudinary_beta
-		 * @default false
-		 *
-		 * @param $enable  {bool} Flag to enable beata features.
-		 * @param $feature {string} Optional feature type.
-		 *
-		 * @return  {bool}
-		 */
-		if ( apply_filters( 'cloudinary_beta', false, 'site_cache' ) ) {
-			$this->components['cache'] = new Cache( $this );
-		}
+		$this->components['beta']         = new Beta( $this );
 	}
 
 	/**
@@ -226,6 +212,18 @@ final class Plugin {
 			$connect_title = $connect->get_param( 'menu_title' ) . $count;
 			$connect->set_param( 'menu_title', $connect_title );
 		}
+
+		/**
+		 * Action indicating that the Settings are initialised.
+		 *
+		 * @hook    cloudinary_init_settings
+		 * @since   2.7.5
+		 *
+		 * @param $plugin {Plugin}  The core plugin object.
+		 *
+		 * @return  void
+		 */
+		do_action( 'cloudinary_init_settings', $this );
 	}
 
 	/**
@@ -278,7 +276,6 @@ final class Plugin {
 	public function register_hooks() {
 		add_action( 'plugins_loaded', array( $this, 'init' ), 9 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'register_enqueue_styles' ), 11 );
-		add_action( 'admin_footer', array( $this, 'enqueue_assets' ), 11 );
 		add_action( 'init', array( $this, 'setup' ), 10 );
 		add_action( 'init', array( $this, 'register_assets' ), 10 );
 		add_action( 'admin_notices', array( $this, 'admin_notices' ) );
@@ -330,7 +327,6 @@ final class Plugin {
 	 * Enqueue the core scripts and styles as needed.
 	 */
 	public function enqueue_assets() {
-		wp_enqueue_style( 'cloudinary' );
 		wp_enqueue_script( 'cloudinary' );
 	}
 

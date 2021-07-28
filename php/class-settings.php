@@ -157,6 +157,8 @@ class Settings {
 	 * Render a page.
 	 */
 	public function render() {
+		// Enqueue Cloudinary.
+		get_plugin_instance()->enqueue_assets();
 		if ( $this->current_page->has_param( 'page_footer' ) ) {
 			add_action( 'admin_footer', array( $this, 'render_footer' ) );
 		}

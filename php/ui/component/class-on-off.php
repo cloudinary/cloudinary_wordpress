@@ -19,7 +19,7 @@ class On_Off extends Text {
 	 *
 	 * @var string
 	 */
-	protected $blueprint = 'label|title|tooltip/|/title|prefix/|/label|wrap|description_left/|control|false_value/|input/|slider/|/control|description/|/wrap';
+	protected $blueprint = 'div|label|title|tooltip/|/title|prefix/|/label|wrap|description_left/|control|false_value/|input/|slider/|/control|description/|/wrap|/div';
 
 	/**
 	 * Filter the false_value parts structure.

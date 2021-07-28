@@ -86,6 +86,25 @@ abstract class Component {
 		// Setup blueprint.
 		$this->blueprint = $this->setting->get_param( 'blueprint', $this->blueprint );
 
+		// Setup the components parts for render.
+		$this->setup_component_parts();
+
+		// Add scripts.
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+
+	}
+
+	/**
+	 * Setup the component.
+	 */
+	public function setup() {
+		$this->setup_conditions();
+	}
+
+	/**
+	 * Setup the conditions.
+	 */
+	public function setup_conditions() {
 		// Setup conditional logic.
 		if ( $this->setting->has_param( 'condition' ) ) {
 			$condition = $this->setting->get_param( 'condition' );
@@ -98,19 +117,6 @@ abstract class Component {
 				}
 			}
 		}
-
-		// Setup the components parts for render.
-		$this->setup_component_parts();
-
-		// Add scripts.
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
-	}
-
-	/**
-	 * Setup the component.
-	 */
-	public function setup() {
-
 	}
 
 	/**
@@ -489,7 +495,7 @@ abstract class Component {
 	 */
 	public function compile_part( $struct ) {
 		$this->open_tag( $struct );
-		if ( ! $this->is_void_element( $struct['element'] ) ) {
+		if ( ! self::is_void_element( $struct['element'] ) ) {
 			$this->add_content( $struct['content'] );
 			if ( ! empty( $struct['children'] ) ) {
 				foreach ( $struct['children'] as $child ) {
@@ -509,7 +515,7 @@ abstract class Component {
 	 */
 	protected function open_tag( $struct ) {
 		if ( ! empty( $struct['element'] ) ) {
-			$this->html[] = $this->build_tag( $struct['element'], 'open', $struct['attributes'] );
+			$this->html[] = self::build_tag( $struct['element'], $struct['attributes'] );
 		}
 	}
 
@@ -520,7 +526,7 @@ abstract class Component {
 	 */
 	protected function close_tag( $struct ) {
 		if ( ! empty( $struct['element'] ) ) {
-			$this->html[] = $this->build_tag( $struct['element'], 'close', $struct['attributes'] );
+			$this->html[] = self::build_tag( $struct['element'], $struct['attributes'], 'close' );
 		}
 	}
 
@@ -545,7 +551,7 @@ abstract class Component {
 	 *
 	 * @return bool
 	 */
-	public function is_void_element( $element ) {
+	public static function is_void_element( $element ) {
 		$void_elements = array(
 			'area',
 			'base',
@@ -570,12 +576,12 @@ abstract class Component {
 	 * Build an HTML tag.
 	 *
 	 * @param string $element    The element to build.
-	 * @param string $state      The element state.
 	 * @param array  $attributes The attributes for the tags.
+	 * @param string $state      The element state.
 	 *
 	 * @return string
 	 */
-	protected function build_tag( $element, $state, $attributes = array() ) {
+	public static function build_tag( $element, $attributes = array(), $state = 'open' ) {
 
 		$prefix_element = 'close' === $state ? '/' : '';
 		$tag            = array();
@@ -583,7 +589,7 @@ abstract class Component {
 		if ( 'close' !== $state ) {
 			$tag[] = self::build_attributes( $attributes );
 		}
-		$tag[] = $this->is_void_element( $element ) ? '/' : null;
+		$tag[] = self::is_void_element( $element ) ? '/' : null;
 
 		return self::compile_tag( $tag );
 	}
