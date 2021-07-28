@@ -28,23 +28,6 @@ class Rest_Assets {
 	protected $assets;
 
 	/**
-	 * Holds the meta keys.
-	 *
-	 * @var array
-	 */
-	const META_KEYS = array(
-		'excluded_urls' => 'excluded_urls',
-		'cached_urls'   => 'cached_urls',
-		'src_path'      => 'src_path',
-		'url'           => 'url',
-		'base_url'      => 'base_url',
-		'src_file'      => 'src_file',
-		'last_updated'  => 'last_updated',
-		'upload_error'  => 'upload_error',
-		'version'       => 'version',
-	);
-
-	/**
 	 * Rest_Assets constructor.
 	 *
 	 * @param Assets $assets The assets instance.
@@ -93,6 +76,13 @@ class Rest_Assets {
 			'args'                => array(),
 		);
 
+		$endpoints['purge_all'] = array(
+			'method'              => \WP_REST_Server::CREATABLE,
+			'callback'            => array( $this, 'rest_purge_all' ),
+			'permission_callback' => array( $this, 'rest_can_manage_options' ),
+			'args'                => array(),
+		);
+
 		return $endpoints;
 	}
 
@@ -105,30 +95,72 @@ class Rest_Assets {
 	 */
 	public function rest_purge( $request ) {
 
-		$asset      = $request->get_param( 'cachePoint' );
-		$query_args = array(
-			'post_type'      => Assets::POST_TYPE_SLUG,
-			'posts_per_page' => 20,
-			'paged'          => 1,
-			'post_parent'    => $asset,
-			'post_status'    => array( 'inherit', 'draft' ),
-			'fields'         => 'ids',
-		);
-		$query      = new \WP_Query( $query_args );
-		do {
-			$posts = $query->get_posts();
-			foreach ( $posts as $post_id ) {
-				wp_delete_post( $post_id );
+		$asset         = (int) $request->get_param( 'cachePoint' );
+		$transient_key = '_purge_cache' . $asset;
+		$parents       = $this->assets->get_asset_parents();
+		if ( empty( $parents ) ) {
+			return rest_ensure_response( true );
+		}
+
+		$tracker = get_transient( $transient_key );
+		foreach ( $parents as $parent ) {
+			if ( $asset && $asset !== $parent->ID ) {
+				continue;
 			}
-			// Paginate.
-			$query_args = $query->query_vars;
-			$query_args['paged'] ++;
-			$query = new \WP_Query( $query_args );
-		} while ( $query->have_posts() );
+			$tracker['time']           = time();
+			$tracker['current_parent'] = $asset;
+			set_transient( $transient_key, $tracker, MINUTE_IN_SECONDS );
+			$this->assets->purge_parent( $parent->ID );
+		}
+		delete_transient( $transient_key );
 
-		$deleted = wp_delete_post( $asset );
+		return rest_ensure_response( true );
+	}
 
-		return rest_ensure_response( $deleted );
+	/**
+	 * Purges a cache which forces the entire point to re-evaluate cached items when requested.
+	 *
+	 * @param WP_REST_Request $request The request object.
+	 *
+	 * @return WP_Error|WP_HTTP_Response|WP_REST_Response
+	 */
+	public function rest_purge_all( $request ) {
+
+		$count         = $request->get_param( 'count' );
+		$parent        = (int) $request->get_param( 'parent' );
+		$transient_key = '_purge_cache' . $parent;
+		$query_args    = array(
+			'post_type'              => Assets::POST_TYPE_SLUG,
+			'posts_per_page'         => 1,
+			'paged'                  => 1,
+			'post_status'            => array( 'inherit', 'draft', 'publish' ),
+			'fields'                 => 'ids',
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+		);
+		if ( ! empty( $parent ) ) {
+			$query_args['post_parent'] = $parent;
+		}
+		$query = new \WP_Query( $query_args );
+
+		$result  = array(
+			'total'   => $query->found_posts,
+			'pending' => $query->found_posts,
+			'percent' => empty( $query->found_posts ) ? 100 : 0,
+		);
+		$tracker = get_transient( $transient_key );
+
+		if ( ! empty( $tracker ) && isset( $tracker['time'] ) ) {
+			$result['percent'] = ( $tracker['total'] - $result['pending'] ) / $tracker['total'] * 100;
+		}
+		if ( empty( $count ) && ! empty( $query->found_posts ) ) {
+			if ( empty( $result['time'] ) ) {
+				set_transient( $transient_key, $result, MINUTE_IN_SECONDS );
+				$this->assets->plugin->get_component( 'api' )->background_request( 'purge_cache', array( 'cachePoint' => $parent ) );
+			}
+		}
+
+		return rest_ensure_response( $result );
 	}
 
 	/**
@@ -139,11 +171,12 @@ class Rest_Assets {
 	 * @return WP_REST_Response
 	 */
 	public function rest_get_caches( $request ) {
-		$id           = $request->get_param( 'ID' );
+		$url          = $request->get_param( 'ID' );
+		$parent       = $this->assets->get_asset_parent( $url );
 		$search       = $request->get_param( 'search' );
 		$page         = $request->get_param( 'page' );
 		$current_page = $page ? $page : 1;
-		$data         = $this->get_assets( $id, $search, $current_page );
+		$data         = $this->get_assets( $parent->ID, $search, $current_page );
 
 		return rest_ensure_response( $data );
 	}
@@ -203,11 +236,13 @@ class Rest_Assets {
 			return array();
 		}
 		$args = array(
-			'post_type'      => Assets::POST_TYPE_SLUG,
-			'posts_per_page' => 20,
-			'paged'          => $page,
-			'post_parent'    => $id,
-			'post_status'    => array( 'inherit', 'draft' ),
+			'post_type'              => Assets::POST_TYPE_SLUG,
+			'posts_per_page'         => 20,
+			'paged'                  => $page,
+			'post_parent'            => $id,
+			'post_status'            => array( 'inherit', 'draft' ),
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
 		);
 		if ( ! empty( $search ) ) {
 			$args['s'] = $search;
@@ -223,7 +258,7 @@ class Rest_Assets {
 				'active'    => 'inherit' === $post->post_status,
 			);
 		}
-		$total_items = count( $items );
+		$total_items = $posts->found_posts;
 		$pages       = ceil( $total_items / 20 );
 		// translators: The current page and total pages.
 		$description = sprintf( __( 'Page %1$d of %2$d', 'cloudinary' ), $page, $pages );

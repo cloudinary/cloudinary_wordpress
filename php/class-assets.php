@@ -31,14 +31,14 @@ class Assets extends Settings_Component {
 	 *
 	 * @var Media
 	 */
-	protected $media;
+	public $media;
 
 	/**
 	 * Holds the Delivery instance.
 	 *
 	 * @var Delivery
 	 */
-	protected $delivery;
+	public $delivery;
 
 	/**
 	 * Post type.
@@ -107,6 +107,7 @@ class Assets extends Settings_Component {
 	 */
 	const META_KEYS = array(
 		'excludes' => '_excluded_urls',
+		'lock'     => '_asset_lock',
 	);
 
 	/**
@@ -152,7 +153,40 @@ class Assets extends Settings_Component {
 		add_action( 'pre_get_posts', array( $this, 'connect_post_type' ) );
 		add_action( 'cloudinary_string_replace', array( $this, 'add_url_replacements' ), 20 );
 		add_action( 'shutdown', array( $this, 'meta_updates' ) );
+		add_action( 'admin_bar_menu', array( $this, 'admin_bar_cache' ), 100 );
 
+	}
+
+	/**
+	 * Add Cloudinary Beta menu to admin bar.
+	 *
+	 * @param \WP_Admin_Bar $admin_bar The admin bar object.
+	 */
+	public function admin_bar_cache( $admin_bar ) {
+		if ( ! current_user_can( 'manage_options' ) || is_admin() ) {
+			return;
+		}
+
+		$parent = array(
+			'id'    => 'cloudinary-cache',
+			'title' => __( 'Cloudinary Cache', 'cloudinary' ),
+			'meta'  => array(
+				'title' => __( 'Cloudinary Cache', 'cloudinary' ),
+			),
+		);
+		$admin_bar->add_menu( $parent );
+
+		$clear = array(
+			'id'     => 'cloudinary-clear-cache',
+			'parent' => 'cloudinary-cache',
+			'title'  => '{cld-cache-counter}',
+			'href'   => '?cloudinary-cache-clear=on',
+			'meta'   => array(
+				'title' => __( 'Purge', 'cloudinary' ),
+				'class' => 'cloudinary-{cld-cache-status}',
+			),
+		);
+		$admin_bar->add_menu( $clear );
 	}
 
 	/**
@@ -314,6 +348,9 @@ class Assets extends Settings_Component {
 	 * Compiles all metadata and preps upload at shutdown.
 	 */
 	public function meta_updates() {
+		if ( $this->is_locked() ) {
+			return;
+		}
 		// Create missing assets.
 		if ( ! empty( $this->to_create ) ) {
 			foreach ( $this->to_create as $url => $parent ) {
@@ -337,6 +374,18 @@ class Assets extends Settings_Component {
 	 * Set urls to be replaced.
 	 */
 	public function add_url_replacements() {
+		$clear = filter_input( INPUT_GET, 'cloudinary-cache-clear', FILTER_SANITIZE_STRING );
+		if ( $clear ) {
+			$referrer = filter_input( INPUT_SERVER, 'HTTP_REFERER', FILTER_SANITIZE_URL );
+			if ( $this->asset_ids ) {
+				foreach ( $this->asset_ids as $asset_id ) {
+					wp_delete_post( $asset_id );
+				}
+			}
+			wp_safe_redirect( $referrer );
+			exit;
+		}
+		$total = 0;
 		if ( $this->asset_ids ) {
 			foreach ( $this->asset_ids as $url => $id ) {
 				$cloudinary_url = $this->media->cloudinary_url( $id );
@@ -344,7 +393,14 @@ class Assets extends Settings_Component {
 					String_Replace::replace( $url, $cloudinary_url );
 				}
 			}
+			$total = count( $this->asset_ids );
+			String_Replace::replace( '{cld-cache-status}', 'on' );
+		} else {
+			String_Replace::replace( '{cld-cache-status}', 'off' );
 		}
+		// translators: Placeholders are the number of items.
+		$message = sprintf( _n( '%s cached item', '%s cached items', $total, 'cloudinary' ), number_format_i18n( $total ) );
+		String_Replace::replace( '{cld-cache-counter}', $message );
 	}
 
 	/**
@@ -366,7 +422,7 @@ class Assets extends Settings_Component {
 	 */
 	public static function register_asset_path( $path, $version ) {
 		$assets = get_plugin_instance()->get_component( 'assets' );
-		if ( $assets ) {
+		if ( $assets && ! $assets->is_locked() ) {
 			$asset_path = $assets->get_asset_parent( $path );
 			if ( null === $asset_path ) {
 				$asset_parent_id = $assets->create_asset_parent( $path, $version );
@@ -389,11 +445,27 @@ class Assets extends Settings_Component {
 	 * @param string $url The path to activate.
 	 */
 	public function activate_parent( $url ) {
-		$url = trailingslashit( $url );
+		$url = $this->clean_path( $url );
 		if ( isset( $this->asset_parents[ $url ] ) ) {
 			$this->active_parents[ $url ] = $this->asset_parents[ $url ];
 		}
 		krsort( $this->active_parents, SORT_STRING );
+	}
+
+	/**
+	 * Clean a path for saving as a title.
+	 *
+	 * @param string $path The path to clean.
+	 *
+	 * @return string
+	 */
+	protected function clean_path( $path ) {
+		$path = ltrim( $path, wp_parse_url( $path, PHP_URL_SCHEME ) . ':' );
+		if ( empty( pathinfo( $path, PATHINFO_EXTENSION ) ) ) {
+			$path = trailingslashit( $path );
+		}
+
+		return $path;
 	}
 
 	/**
@@ -405,8 +477,9 @@ class Assets extends Settings_Component {
 	 * @return int|\WP_Error
 	 */
 	public function create_asset_parent( $path, $version ) {
+		$path      = $this->clean_path( $path );
 		$args      = array(
-			'post_title'  => trailingslashit( $path ),
+			'post_title'  => $path,
 			'post_name'   => md5( $path ),
 			'post_type'   => self::POST_TYPE_SLUG,
 			'post_status' => 'publish',
@@ -419,6 +492,64 @@ class Assets extends Settings_Component {
 		}
 
 		return $parent_id;
+	}
+
+	/**
+	 * Purge a single asset parent.
+	 *
+	 * @param int $parent_id The Asset parnet to purge.
+	 */
+	public function purge_parent( $parent_id ) {
+		$query_args     = array(
+			'post_type'              => self::POST_TYPE_SLUG,
+			'posts_per_page'         => 100,
+			'post_parent'            => $parent_id,
+			'post_status'            => array( 'inherit', 'draft' ),
+			'fields'                 => 'ids',
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+		);
+		$query          = new \WP_Query( $query_args );
+		$previous_total = $query->found_posts;
+		do {
+			$this->lock_assets();
+			$posts = $query->get_posts();
+			foreach ( $posts as $post_id ) {
+				wp_delete_post( $post_id );
+			}
+
+			$query_args = $query->query_vars;
+			$query      = new \WP_Query( $query_args );
+			if ( $previous_total === $query->found_posts ) {
+				break;
+			}
+		} while ( $query->have_posts() );
+
+		// Clear out excludes.
+		wp_delete_post( $parent_id );
+	}
+
+	/**
+	 * Lock asset creation for performing things like purging that require no changes.
+	 */
+	public function lock_assets() {
+		set_transient( self::META_KEYS['lock'], true, 10 );
+	}
+
+	/**
+	 * Unlock asset creation.
+	 */
+	public function unlock_assets() {
+		delete_transient( self::META_KEYS['lock'] );
+	}
+
+	/**
+	 * Check if assets are locked.
+	 *
+	 * @return bool
+	 */
+	public function is_locked() {
+		return get_transient( self::META_KEYS['lock'] );
 	}
 
 	/**
@@ -520,9 +651,13 @@ class Assets extends Settings_Component {
 	 * @return bool
 	 */
 	public function check_asset( $is_local, $url ) {
+		$clean_url = $this->clean_path( $url );
 		foreach ( $this->active_parents as $asset_parent ) {
-			if ( substr( $url, 0, strlen( $asset_parent->post_title ) ) === $asset_parent->post_title ) {
+			if ( substr( $clean_url, 0, strlen( $asset_parent->post_title ) ) === $asset_parent->post_title ) {
 				$excludes = $this->media->get_post_meta( $asset_parent->ID, self::META_KEYS['excludes'], true );
+				if ( empty( $excludes ) ) {
+					$excludes = array();
+				}
 				if ( ! in_array( $url, $excludes, true ) ) {
 					if ( ! $this->syncable_asset( $url ) ) {
 						$excludes[] = $url;
@@ -550,10 +685,10 @@ class Assets extends Settings_Component {
 		static $allowed_kinds = array();
 		if ( empty( $allowed_kinds ) ) {
 			// Check with paths.
-			$types           = wp_get_ext_types();
-			$allowed_kinds   = array_merge( $allowed_kinds, $types['image'] );
-			$allowed_kinds   = array_merge( $allowed_kinds, $types['audio'] );
-			$allowed_kinds   = array_merge( $allowed_kinds, $types['video'] );
+			$types         = wp_get_ext_types();
+			$allowed_kinds = array_merge( $allowed_kinds, $types['image'] );
+			$allowed_kinds = array_merge( $allowed_kinds, $types['audio'] );
+			$allowed_kinds = array_merge( $allowed_kinds, $types['video'] );
 		}
 		$type = pathinfo( $filename, PATHINFO_EXTENSION );
 
@@ -624,6 +759,34 @@ class Assets extends Settings_Component {
 	}
 
 	/**
+	 * Get all asset parents.
+	 *
+	 * @return \WP_Post[]
+	 */
+	public function get_asset_parents() {
+		$parents = array();
+		if ( ! empty( $this->asset_parents ) ) {
+			$parents = $this->asset_parents;
+		}
+
+		return $parents;
+	}
+
+	/**
+	 * Get all asset parents.
+	 *
+	 * @return \WP_Post[]
+	 */
+	public function get_active_asset_parents() {
+		$parents = array();
+		if ( ! empty( $this->active_parents ) ) {
+			$parents = $this->active_parents;
+		}
+
+		return $parents;
+	}
+
+	/**
 	 * Get an asset parent.
 	 *
 	 * @param string $url The URL of the parent.
@@ -631,7 +794,7 @@ class Assets extends Settings_Component {
 	 * @return \WP_Post|null
 	 */
 	public function get_asset_parent( $url ) {
-		$url    = trailingslashit( $url );
+		$url    = $this->clean_path( $url );
 		$parent = null;
 		if ( isset( $this->asset_parents[ $url ] ) ) {
 			$parent = $this->asset_parents[ $url ];
@@ -840,6 +1003,18 @@ class Assets extends Settings_Component {
 							),
 							'description'  => __( 'Enable caching site assets.', 'cloudinary' ),
 							'default'      => 'off',
+						),
+						array(
+							'type'       => 'button',
+							'slug'       => 'cld_purge_all',
+							'attributes' => array(
+								'type'        => 'button',
+								'html_button' => array(
+									'disabled' => 'disabled',
+									'style'    => 'width: 100px',
+								),
+							),
+							'label'      => 'Purge all',
 						),
 						array(
 							'slug' => 'cache_plugins',
