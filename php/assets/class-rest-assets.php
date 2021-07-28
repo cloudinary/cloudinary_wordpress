@@ -72,7 +72,7 @@ class Rest_Assets {
 		$endpoints['disable_cache_items'] = array(
 			'method'              => \WP_REST_Server::CREATABLE,
 			'permission_callback' => array( $this, 'rest_can_manage_options' ),
-			'callback'            => array( $this, 'rest_disable_items' ),
+			'callback'            => array( $this, 'rest_handle_state' ),
 			'args'                => array(
 				'ids'   => array(
 					'type'        => 'array',
@@ -160,13 +160,16 @@ class Rest_Assets {
 	}
 
 	/**
-	 * Change the status of a cache_point.
+	 * Handle the state of a cache_point.
+	 * Active : post_status = inherit.
+	 * Inactive : post_status = draft.
+	 * Deleted : delete post.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 *
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
 	 */
-	public function rest_disable_items( $request ) {
+	public function rest_handle_state( $request ) {
 		$ids   = $request['ids'];
 		$state = $request['state'];
 		foreach ( $ids as $id ) {
@@ -189,7 +192,7 @@ class Rest_Assets {
 	}
 
 	/**
-	 * Get a cache point from a url.
+	 * Get assets for a cache point.
 	 *
 	 * @param Int         $id     The cache point ID to get cache for.
 	 * @param string|null $search Optional search.
