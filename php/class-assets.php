@@ -111,15 +111,24 @@ class Assets extends Settings_Component {
 	);
 
 	/**
+	 * Static instance of this class.
+	 *
+	 * @var self
+	 */
+	public static $instance;
+
+	/**
 	 * Assets constructor.
 	 *
 	 * @param Plugin $plugin Instance of the plugin.
 	 */
 	public function __construct( Plugin $plugin ) {
-		$this->plugin   = $plugin;
+		parent::__construct( $plugin );
+
 		$this->media    = $plugin->get_component( 'media' );
 		$this->delivery = $plugin->get_component( 'delivery' );
 		$this->init();
+		self::$instance = $this;
 	}
 
 	/**
@@ -150,12 +159,14 @@ class Assets extends Settings_Component {
 		add_filter( 'cloudinary_can_sync_asset', array( $this, 'can_sync' ), 10, 2 );
 		// Actions.
 		add_action( 'cloudinary_init_settings', array( $this, 'setup' ) );
-		add_action( 'pre_get_posts', array( $this, 'connect_post_type' ) );
+		add_action( 'cloudinary_thread_queue_details_query', array( $this, 'connect_post_type' ) );
+		add_action( 'cloudinary_build_queue_query', array( $this, 'connect_post_type' ) );
 		add_action( 'cloudinary_string_replace', array( $this, 'add_url_replacements' ), 20 );
 		add_action( 'shutdown', array( $this, 'meta_updates' ) );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_cache' ), 100 );
-
 	}
+
+
 
 	/**
 	 * Add Cloudinary Beta menu to admin bar.
@@ -192,6 +203,8 @@ class Assets extends Settings_Component {
 	/**
 	 * Sets the autosync to work on cloudinary_assets even when the autosync is disabled.
 	 *
+	 * @hook cloudinary_can_sync_asset
+	 *
 	 * @param bool $can      The can sync check value.
 	 * @param int  $asset_id The asset ID.
 	 *
@@ -219,13 +232,18 @@ class Assets extends Settings_Component {
 	/**
 	 * Filter out sizes for assets.
 	 *
-	 * @param array $new_sizes     The sizes to remove.
-	 * @param array $image_meta    The image meta.
-	 * @param int   $attachment_id The asset ID.
+	 * @hook intermediate_image_sizes_advanced
+	 *
+	 * @param array    $new_sizes     The sizes to remove.
+	 * @param array    $image_meta    The image meta.
+	 * @param int|null $attachment_id The asset ID.
 	 *
 	 * @return array
 	 */
-	public function no_sizes( $new_sizes, $image_meta, $attachment_id ) {
+	public function no_sizes( $new_sizes, $image_meta, $attachment_id = null ) {
+		if ( is_null( $attachment_id ) ) {
+			$attachment_id = $this->plugin->settings->get_param( '_currrent_attachment', 0 );
+		}
 		if ( self::is_asset_type( $attachment_id ) ) {
 			$new_sizes = array();
 		}
@@ -236,7 +254,7 @@ class Assets extends Settings_Component {
 	/**
 	 * Update our cache point meta data.
 	 *
-	 * @hook update_post_metadata
+	 * @hook update_post_metadata, add_post_metadata
 	 *
 	 * @param null|bool $check      The check to allow short circuit of get_metadata.
 	 * @param int       $object_id  The object ID.
@@ -261,6 +279,8 @@ class Assets extends Settings_Component {
 	/**
 	 * Delete our cache point meta data.
 	 *
+	 * @hook delete_post_metadata
+	 *
 	 * @param null|bool $check      The check to allow short circuit of get_metadata.
 	 * @param int       $object_id  The object ID.
 	 * @param string    $meta_key   The meta key.
@@ -283,6 +303,8 @@ class Assets extends Settings_Component {
 
 	/**
 	 * Get our cache point meta data.
+	 *
+	 * @hook get_post_metadata
 	 *
 	 * @param null|bool $check     The check to allow short circuit of get_metadata.
 	 * @param int       $object_id The object ID.
@@ -346,6 +368,8 @@ class Assets extends Settings_Component {
 
 	/**
 	 * Compiles all metadata and preps upload at shutdown.
+	 *
+	 * @hook shutdown
 	 */
 	public function meta_updates() {
 		if ( $this->is_locked() ) {
@@ -372,6 +396,8 @@ class Assets extends Settings_Component {
 
 	/**
 	 * Set urls to be replaced.
+	 *
+	 * @hook cloudinary_string_replace
 	 */
 	public function add_url_replacements() {
 		$clear = filter_input( INPUT_GET, 'cloudinary-cache-clear', FILTER_SANITIZE_STRING );
@@ -406,12 +432,17 @@ class Assets extends Settings_Component {
 	/**
 	 * Connect our post type to the sync query, to allow it to be queued.
 	 *
-	 * @param \WP_Query $query The Query.
+	 * @hook cloudinary_thread_queue_details_query, cloudinary_build_queue_query
+	 *
+	 * @param array $query The Query.
+	 *
+	 * @return array
 	 */
 	public function connect_post_type( $query ) {
-		if ( ! $query->is_main_query() && 'attachment' === $query->get( 'post_type' ) && ! empty( $query->get( 'cloudinary_sync' ) ) ) {
-			$query->set( 'post_type', array( 'attachment', self::POST_TYPE_SLUG ) );
-		}
+
+		$query['post_type'] = array_merge( (array) $query['post_type'], (array) self::POST_TYPE_SLUG );
+
+		return $query;
 	}
 
 	/**
@@ -421,7 +452,7 @@ class Assets extends Settings_Component {
 	 * @param string $version The version.
 	 */
 	public static function register_asset_path( $path, $version ) {
-		$assets = get_plugin_instance()->get_component( 'assets' );
+		$assets = self::$instance;
 		if ( $assets && ! $assets->is_locked() ) {
 			$asset_path = $assets->get_asset_parent( $path );
 			if ( null === $asset_path ) {
@@ -578,8 +609,8 @@ class Assets extends Settings_Component {
 		$asset             = get_post( $asset_id );
 		$path              = trim( wp_normalize_path( str_replace( home_url(), '', $asset->post_title ) ), '/' );
 		$info              = pathinfo( $path );
-		$cloudinary_folder = $this->media->get_cloudinary_folder( true );
-		$public_id         = $cloudinary_folder . $info['dirname'] . '/' . $info['filename'];
+		$cloudinary_folder = wp_parse_url( home_url(), PHP_URL_HOST );
+		$public_id         = $cloudinary_folder . '/' . $info['dirname'] . '/' . $info['filename'];
 		$options           = array(
 			'unique_filename' => false,
 			'overwrite'       => true,
@@ -603,6 +634,8 @@ class Assets extends Settings_Component {
 
 	/**
 	 * Register our sync type.
+	 *
+	 * @hook  cloudinary_sync_base_struct
 	 *
 	 * @param array $structs The structure of all sync types.
 	 *
@@ -630,20 +663,33 @@ class Assets extends Settings_Component {
 	protected function init_asset_parents() {
 
 		$args                = array(
-			'post_type'      => self::POST_TYPE_SLUG,
-			'post_parent'    => 0,
-			'posts_per_page' => 100,
-			'post_status'    => 'publish',
+			'post_type'              => self::POST_TYPE_SLUG,
+			'post_parent'            => 0,
+			'posts_per_page'         => 100,
+			'paged'                  => 1,
+			'post_status'            => 'publish',
+			'no_found_rows'          => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
 		);
 		$query               = new \WP_Query( $args );
 		$this->asset_parents = array();
-		foreach ( $query->get_posts() as $post ) {
-			$this->asset_parents[ $post->post_title ] = $post;
-		}
+
+		do {
+			foreach ( $query->get_posts() as $post ) {
+				$this->asset_parents[ $post->post_title ] = $post;
+			}
+			$args = $query->query_vars;
+			$args['paged'] ++;
+			$query = new \WP_Query( $args );
+		} while ( $query->have_posts() );
+
 	}
 
 	/**
 	 * Check if the non-local URL should be added as an asset.
+	 *
+	 * @hook cloudinary_is_local_asset_url
 	 *
 	 * @param bool   $is_local The is_local flag.
 	 * @param string $url      The URL to check.
@@ -686,9 +732,7 @@ class Assets extends Settings_Component {
 		if ( empty( $allowed_kinds ) ) {
 			// Check with paths.
 			$types         = wp_get_ext_types();
-			$allowed_kinds = array_merge( $allowed_kinds, $types['image'] );
-			$allowed_kinds = array_merge( $allowed_kinds, $types['audio'] );
-			$allowed_kinds = array_merge( $allowed_kinds, $types['video'] );
+			$allowed_kinds = array_merge( $allowed_kinds, $types['image'], $types['audio'], $types['video'] );
 		}
 		$type = pathinfo( $filename, PATHINFO_EXTENSION );
 
@@ -697,6 +741,8 @@ class Assets extends Settings_Component {
 
 	/**
 	 * Get the asset src file.
+	 *
+	 * @hook get_attached_file
 	 *
 	 * @param string $file     The file as from the filter.
 	 * @param int    $asset_id The asset ID.
@@ -714,6 +760,8 @@ class Assets extends Settings_Component {
 
 	/**
 	 * Check to see if the post is a media item.
+	 *
+	 * @hook cloudinary_is_media
 	 *
 	 * @param bool $is_media      The is_media flag.
 	 * @param int  $attachment_id The attachment ID.
@@ -733,8 +781,10 @@ class Assets extends Settings_Component {
 	 */
 	public function build_asset_ids() {
 
-		$names     = array();
-		$to_create = array();
+		$names           = array();
+		$to_create       = array();
+		$this->asset_ids = array();
+
 		foreach ( $this->found_urls as $parent => $urls ) {
 			foreach ( $urls as $url ) {
 				$names[]           = md5( $url );
@@ -742,17 +792,30 @@ class Assets extends Settings_Component {
 			}
 		}
 
-		$args  = array(
-			'post_type'      => self::POST_TYPE_SLUG,
-			'posts_per_page' => 100,
-			'post_status'    => 'inherit',
-			'post_name__in'  => $names,
+		$args = array(
+			'post_type'              => self::POST_TYPE_SLUG,
+			'posts_per_page'         => 100,
+			'paged'                  => 1,
+			'post_status'            => 'inherit',
+			'post_name__in'          => $names,
+			'no_found_rows'          => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
 		);
+
 		$query = new \WP_Query( $args );
-		foreach ( $query->get_posts() as $post ) {
-			$this->asset_ids[ $post->post_title ] = $post->ID;
-			unset( $to_create[ $post->post_title ] );
-		}
+
+		do {
+			foreach ( $query->get_posts() as $post ) {
+				$this->asset_ids[ $post->post_title ] = $post->ID;
+				unset( $to_create[ $post->post_title ] );
+			}
+			$args = $query->query_vars;
+			$args['paged'] ++;
+			$query = new \WP_Query( $args );
+		} while ( $query->have_posts() );
+
+		// Add to the create queue.
 		if ( ! empty( $to_create ) ) {
 			$this->to_create = $to_create;
 		}
@@ -858,6 +921,8 @@ class Assets extends Settings_Component {
 	/**
 	 * Try get an asset ID from an asset tag.
 	 *
+	 * @hook cloudinary_delivery_get_id
+	 *
 	 * @param int    $id    The ID from the filter.
 	 * @param string $asset The asset HTML tag.
 	 *
@@ -951,6 +1016,8 @@ class Assets extends Settings_Component {
 
 	/**
 	 * Setup the class.
+	 *
+	 * @hook cloudinary_init_settings
 	 */
 	public function setup() {
 

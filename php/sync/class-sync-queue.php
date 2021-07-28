@@ -286,7 +286,6 @@ class Sync_Queue {
 	public function build_queue() {
 
 		$args = array(
-			'cloudinary_sync'     => true,
 			'post_type'           => 'attachment',
 			'post_mime_type'      => array( 'image', 'video' ),
 			'post_status'         => 'inherit',
@@ -311,6 +310,18 @@ class Sync_Queue {
 			'ignore_sticky_posts' => false,
 			'no_found_rows'       => true,
 		);
+
+		/**
+		 * Filter the params for the query used to build a queue.
+		 *
+		 * @hook  cloudinary_build_queue_query
+		 * @since 2.7.6
+		 *
+		 * @param $args {array} The arguments for the query.
+		 *
+		 * @return {array}
+		 */
+		$args = apply_filters( 'cloudinary_build_queue_query', $args );
 
 		// translators: variable is page number.
 		$action_message = __( 'Building Queue.', 'cloudinary' );
@@ -538,12 +549,11 @@ class Sync_Queue {
 	protected function get_thread_queue_details( $thread ) {
 
 		$args = array(
-			'cloudinary_sync'  => true,
-			'post_type'        => 'attachment',
-			'post_status'      => 'inherit',
-			'posts_per_page'   => 1,
-			'fields'           => 'ids',
-			'cache_results'    => false,
+			'post_type'      => 'attachment',
+			'post_status'    => 'inherit',
+			'posts_per_page' => 1,
+			'fields'         => 'ids',
+			'cache_results'  => false,
 			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 			'meta_query'     => array(
 				array(
@@ -552,6 +562,19 @@ class Sync_Queue {
 				),
 			),
 		);
+
+		/**
+		 * Filter the params for the query used to get thread queue details.
+		 *
+		 * @hook  cloudinary_thread_queue_details_query
+		 * @since 2.7.6
+		 *
+		 * @param $args   {array}  The arguments for the query.
+		 * @param $thread {string} The thread name.
+		 *
+		 * @return {array}
+		 */
+		$args = apply_filters( 'cloudinary_thread_queue_details_query', $args, $thread );
 
 		$query = new \WP_Query( $args );
 

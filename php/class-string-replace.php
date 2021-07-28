@@ -138,7 +138,7 @@ class String_Replace {
 		/**
 		 * Do replacement action.
 		 *
-		 * @hook    cloudinary_string_replace
+		 * @hook cloudinary_string_replace
 		 *
 		 * @param $html {string} The html of the page.
 		 */
