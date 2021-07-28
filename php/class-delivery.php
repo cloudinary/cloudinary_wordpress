@@ -174,14 +174,12 @@ class Delivery implements Setup {
 		add_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ), 10, 5 );
 
 		/**
-		 * Action indicating that the delivery is starting.s
+		 * Action indicating that the delivery is starting.
 		 *
-		 * @hook    cloudinary_pre_image_tag
-		 * @since   2.7.5
+		 * @hook  cloudinary_pre_image_tag
+		 * @since 2.7.5
 		 *
-		 * @param $delivery {Delivery}  The delivery object.
-		 *
-		 * @return  void
+		 * @param $delivery {Delivery} The delivery object.
 		 */
 		do_action( 'cloudinary_init_delivery', $this );
 	}
@@ -315,14 +313,14 @@ class Delivery implements Setup {
 		/**
 		 * Filter id from the tag.
 		 *
-		 * @hook    cloudinary_delivery_get_id
-		 * @since   2.7.6
+		 * @hook  cloudinary_delivery_get_id
+		 * @since 2.7.6
 		 *
-		 * @param $attachment_id {int} The attachment ID.
+		 * @param $attachment_id {int}    The attachment ID.
 		 * @param $asset         {string} The html tag.
 		 * @param $type          {string} The asset type.
 		 *
-		 * @return  int|false
+		 * @return {int|false}
 		 */
 		$attachment_id = apply_filters( 'cloudinary_delivery_get_id', $attachment_id, $asset, $type );
 
@@ -424,14 +422,14 @@ class Delivery implements Setup {
 		/**
 		 * Filter the tag element.
 		 *
-		 * @hook    cloudinary_pre_image_tag
-		 * @since   2.7.5
+		 * @hook  cloudinary_pre_image_tag
+		 * @since 2.7.5
 		 *
-		 * @param $tag_element   {array}   The tag_element ( tag + attributes array).
-		 * @param $attachment_id {int} The attachment ID.
-		 * @param $element       {string}  The original HTML tag.
+		 * @param $tag_element   {array}  The tag_element ( tag + attributes array).
+		 * @param $attachment_id {int}    The attachment ID.
+		 * @param $element       {string} The original HTML tag.
 		 *
-		 * @return  array
+		 * @return {array}
 		 */
 		$tag_element = apply_filters( 'cloudinary_pre_image_tag', $tag_element, $attachment_id, $element );
 
@@ -526,13 +524,13 @@ class Delivery implements Setup {
 		/**
 		 * Filter if the url is a local asset.
 		 *
-		 * @hook    cloudinary_pre_image_tag
-		 * @since   2.7.6
+		 * @hook  cloudinary_pre_image_tag
+		 * @since 2.7.6
 		 *
-		 * @param $is_local {bool}  If the url is a local asset.
+		 * @param $is_local {bool}   If the url is a local asset.
 		 * @param $url      {string} The url.
 		 *
-		 * @return  bool
+		 * @return {bool}
 		 */
 		return apply_filters( 'cloudinary_is_local_asset_url', $is_local, $url );
 	}

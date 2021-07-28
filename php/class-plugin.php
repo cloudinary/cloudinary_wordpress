@@ -217,12 +217,10 @@ final class Plugin {
 		/**
 		 * Action indicating that the Settings are initialised.
 		 *
-		 * @hook    cloudinary_init_settings
-		 * @since   2.7.5
+		 * @hook  cloudinary_init_settings
+		 * @since 2.7.5
 		 *
-		 * @param $plugin {Plugin}  The core plugin object.
-		 *
-		 * @return  void
+		 * @param $plugin {Plugin} The core plugin object.
 		 */
 		do_action( 'cloudinary_init_settings', $this );
 	}

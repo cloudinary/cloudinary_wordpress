@@ -314,12 +314,12 @@ class Sync_Queue {
 		/**
 		 * Filter the params for the query used to build a queue.
 		 *
-		 * @hook    cloudinary_build_queue_query
-		 * @since   2.7.6
+		 * @hook  cloudinary_build_queue_query
+		 * @since 2.7.6
 		 *
 		 * @param $args {array} The arguments for the query.
 		 *
-		 * @return  array
+		 * @return {array}
 		 */
 		$args = apply_filters( 'cloudinary_build_queue_query', $args );
 
@@ -566,13 +566,13 @@ class Sync_Queue {
 		/**
 		 * Filter the params for the query used to get thread queue details.
 		 *
-		 * @hook    cloudinary_thread_queue_details_query
-		 * @since   2.7.6
+		 * @hook  cloudinary_thread_queue_details_query
+		 * @since 2.7.6
 		 *
-		 * @param $args   {array} The arguments for the query.
+		 * @param $args   {array}  The arguments for the query.
 		 * @param $thread {string} The thread name.
 		 *
-		 * @return  array
+		 * @return {array}
 		 */
 		$args = apply_filters( 'cloudinary_thread_queue_details_query', $args, $thread );
 

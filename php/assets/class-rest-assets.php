@@ -194,7 +194,7 @@ class Rest_Assets {
 	/**
 	 * Get assets for a cache point.
 	 *
-	 * @param Int         $id     The cache point ID to get cache for.
+	 * @param int         $id     The cache point ID to get cache for.
 	 * @param string|null $search Optional search.
 	 * @param int         $page   The page or results to load.
 	 *

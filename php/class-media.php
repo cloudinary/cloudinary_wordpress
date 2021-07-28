@@ -270,10 +270,10 @@ class Media extends Settings_Component implements Setup {
 		 * @since   2.7.6
 		 * @default false
 		 *
-		 * @param $is_media      {bool}   Flag if is media.
-		 * @param $attachment_id {string} The attachment ID.
+		 * @param $is_media      {bool} Flag if is media.
+		 * @param $attachment_id {int}  The attachment ID.
 		 *
-		 * @return  {bool}
+		 * @return {bool}
 		 */
 		return apply_filters( 'cloudinary_is_media', $is_media, $attachment_id );
 	}
@@ -1884,12 +1884,12 @@ class Media extends Settings_Component implements Setup {
 			/**
 			 * Filter the meta if not found, in order to migrate from a legacy plugin.
 			 *
-			 * @hook    cloudinary_migrate_legacy_meta
-			 * @since   2.7.5
+			 * @hook  cloudinary_migrate_legacy_meta
+			 * @since 2.7.5
 			 *
 			 * @param $attachment_id {int} The attachment ID.
 			 *
-			 * @return  array
+			 * @return {array}
 			 */
 			$meta = apply_filters( 'cloudinary_migrate_legacy_meta', $post_id );
 		}
