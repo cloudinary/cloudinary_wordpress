@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Filter: cloudinary_settings_save_setting - Cloudinary Docs</title>
+	<title>Source: php/class-beta.php - Cloudinary Docs</title>
 
 	<script src="scripts/prettify/prettify.js"></script>
 	<script src="scripts/prettify/lang-css.js"></script>
@@ -22,223 +22,97 @@
 <div id="main">
 
 	
-	<h1 class="page-title">Filter: cloudinary_settings_save_setting</h1>
+	<h1 class="page-title">Source: php/class-beta.php</h1>
 	
 
 	
 
 
 
-
-<section>
-
-<header>
-    <h2></h2>
     
-</header>
-
-<article>
-    <div class="container-overview">
-    
-        
-
-    
-
-    <h4 class="name" id="cloudinary_settings_save_setting">apply_filters( 'cloudinary_settings_save_setting', <span class="signature">$new_value, $current_value, $setting )</span><span class="type-signature"> &rarr; {mixed}</span></h4>
-
-    
-
-
-
-<div class="description">
-    Filter the value before saving a setting.
-</div>
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>$new_value</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">mixed</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">The new setting value.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>$current_value</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">mixed</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">The setting current value.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>$setting</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Setting</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">The setting object.</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="php_settings_class-setting.php.html">php/settings/class-setting.php</a>, <a href="php_settings_class-setting.php.html#line516">line 516</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">mixed</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-    
-    </div>
-
-    
-</article>
-
-</section>
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>&lt;?php
+/**
+ * Cloudinary Beta, to add functionality under a beta filter.
+ *
+ * @package Cloudinary
+ */
+
+namespace Cloudinary;
+
+/**
+ * Plugin Beta class.
+ */
+class Beta {
+
+	/**
+	 * Holds the core plugin.
+	 *
+	 * @var Plugin
+	 */
+	protected $plugin;
+
+	/**
+	 * Holds a list of Beta components.
+	 *
+	 * @var array
+	 */
+	protected $components;
+
+	/**
+	 * Component constructor.
+	 *
+	 * @param Plugin $plugin Global instance of the main plugin.
+	 */
+	public function __construct( Plugin $plugin ) {
+		$this->plugin = $plugin;
+
+		$this->components = array(
+			'delivery'               => array(
+				'class'   => 'Cloudinary\Delivery',
+				'name'    => __( 'New Delivery method', 'cloudinary' ),
+				'options' => array(),
+			),
+			'responsive_breakpoints' => array(
+				'class'   => array( 'Cloudinary\Delivery\Lazy_Load', 'Cloudinary\Delivery\Responsive_Breakpoints' ),
+				'name'    => __( 'New Lazy Load and Responsive Breakpoints', 'cloudinary' ),
+				'options' => array(),
+				'deps'    => array( 'delivery' ),
+			),
+		);
+
+		foreach ( $this->components as $key => $data ) {
+
+			if ( ! empty( $data['deps'] ) &amp;&amp; empty( array_intersect( $data['deps'], array_keys( $this->plugin->components ) ) ) ) {
+				continue;
+			}
+
+			/**
+			 * Filter to enable beta features for testing.
+			 *
+			 * @hook    cloudinary_beta
+			 * @default false
+			 *
+			 * @param $enable  {bool}   Flag to enable beta features.
+			 * @param $feature {string} Optional feature type.
+			 * @param $data    {array}  The beta feature data.
+			 *
+			 * @return  {bool}
+			 */
+			if ( apply_filters( 'cloudinary_beta', false, $key, $data ) ) {
+				foreach ( (array) $data['class'] as $class ) {
+					$namespace                         = explode( '\\', $class );
+					$name                              = strtolower( array_pop( $namespace ) );
+					$this->plugin->components[ $name ] = new $class( $this->plugin );
+				}
+			}
+		}
+	}
+}
+</code></pre>
+        </article>
+    </section>
 
 
 

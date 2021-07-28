@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Filter: cloudinary_settings_save_setting - Cloudinary Docs</title>
+	<title>Filter: cloudinary_init_settings - Cloudinary Docs</title>
 
 	<script src="scripts/prettify/prettify.js"></script>
 	<script src="scripts/prettify/lang-css.js"></script>
@@ -22,7 +22,7 @@
 <div id="main">
 
 	
-	<h1 class="page-title">Filter: cloudinary_settings_save_setting</h1>
+	<h1 class="page-title">Filter: cloudinary_init_settings</h1>
 	
 
 	
@@ -44,14 +44,14 @@
 
     
 
-    <h4 class="name" id="cloudinary_settings_save_setting">apply_filters( 'cloudinary_settings_save_setting', <span class="signature">$new_value, $current_value, $setting )</span><span class="type-signature"> &rarr; {mixed}</span></h4>
+    <h4 class="name" id="cloudinary_init_settings">apply_filters( 'cloudinary_init_settings', <span class="signature">$plugin )</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    Filter the value before saving a setting.
+    Action indicating that the Settings are initialised.
 </div>
 
 
@@ -85,13 +85,13 @@
 
         <tr>
             
-                <td class="name"><code>$new_value</code></td>
+                <td class="name"><code>$plugin</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">mixed</span>
+<span class="param-type">Plugin</span>
 
 
             
@@ -101,53 +101,7 @@
 
             
 
-            <td class="description last">The new setting value.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>$current_value</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">mixed</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">The setting current value.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>$setting</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Setting</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">The setting object.</td>
+            <td class="description last">The core plugin object.</td>
         </tr>
 
     
@@ -163,6 +117,9 @@
 
     
 
+    
+    <dt class="tag-since">Since:</dt>
+    <dd class="tag-since"><ul class="dummy"><li>2.7.5</li></ul></dd>
     
 
     
@@ -188,7 +145,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="php_settings_class-setting.php.html">php/settings/class-setting.php</a>, <a href="php_settings_class-setting.php.html#line516">line 516</a>
+        <a href="php_class-plugin.php.html">php/class-plugin.php</a>, <a href="php_class-plugin.php.html#line216">line 216</a>
     </li></ul></dd>
     
 
@@ -214,19 +171,11 @@
 <h5>Returns:</h5>
 
         
+<div class="param-desc">
+    void
+</div>
 
 
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">mixed</span>
-
-
-    </dd>
-</dl>
 
     
 

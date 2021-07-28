@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Filter: cloudinary_settings_save_setting - Cloudinary Docs</title>
+	<title>Filter: cloudinary_current_post_id - Cloudinary Docs</title>
 
 	<script src="scripts/prettify/prettify.js"></script>
 	<script src="scripts/prettify/lang-css.js"></script>
@@ -22,7 +22,7 @@
 <div id="main">
 
 	
-	<h1 class="page-title">Filter: cloudinary_settings_save_setting</h1>
+	<h1 class="page-title">Filter: cloudinary_current_post_id</h1>
 	
 
 	
@@ -44,115 +44,20 @@
 
     
 
-    <h4 class="name" id="cloudinary_settings_save_setting">apply_filters( 'cloudinary_settings_save_setting', <span class="signature">$new_value, $current_value, $setting )</span><span class="type-signature"> &rarr; {mixed}</span></h4>
+    <h4 class="name" id="cloudinary_current_post_id">apply_filters( 'cloudinary_current_post_id' )</h4>
 
     
 
 
 
 <div class="description">
-    Filter the value before saving a setting.
+    Filter the post ID.
 </div>
 
 
 
 
 
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>$new_value</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">mixed</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">The new setting value.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>$current_value</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">mixed</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">The setting current value.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>$setting</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Setting</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">The setting object.</td>
-        </tr>
-
-    
-    </tbody>
-</table>
 
 
 
@@ -184,11 +89,16 @@
     
 
     
+    <dt class="tag-default">Default Value:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>null</li>
+        </ul></dd>
+    
 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="php_settings_class-setting.php.html">php/settings/class-setting.php</a>, <a href="php_settings_class-setting.php.html#line516">line 516</a>
+        <a href="php_media_class-global-transformations.php.html">php/media/class-global-transformations.php</a>, <a href="php_media_class-global-transformations.php.html#line571">line 571</a>
     </li></ul></dd>
     
 
@@ -222,7 +132,10 @@
     </dt>
     <dd>
         
-<span class="param-type">mixed</span>
+<span class="param-type">WP_Post</span>
+|
+
+<span class="param-type">null</span>
 
 
     </dd>
