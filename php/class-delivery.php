@@ -162,8 +162,6 @@ class Delivery implements Setup {
 		 * @since 2.7.5
 		 *
 		 * @param $delivery {Delivery} The delivery object.
-		 *
-		 * @return void
 		 */
 		do_action( 'cloudinary_init_delivery', $this );
 	}
