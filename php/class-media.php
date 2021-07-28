@@ -2238,14 +2238,16 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Filters the new sizes to ensure non upload (sprites), don't get resized.
 	 *
-	 * @param array $new_sizes     Array of sizes.
-	 * @param array $image_meta    Image metadata.
-	 * @param int   $attachment_id The attachment ID.
+	 * @param array    $new_sizes     Array of sizes.
+	 * @param array    $image_meta    Image metadata.
+	 * @param int|null $attachment_id The attachment ID.
 	 *
 	 * @return array
 	 */
-	public function manage_sizes( $new_sizes, $image_meta, $attachment_id ) {
-
+	public function manage_sizes( $new_sizes, $image_meta, $attachment_id = null ) {
+		if ( is_null( $attachment_id ) ) {
+			$attachment_id = $this->plugin->settings->get_param( '_currrent_attachment', 0 );
+		}
 		if ( $this->has_public_id( $attachment_id ) ) {
 			// Get delivery type.
 			$delivery = $this->get_media_delivery( $attachment_id );

@@ -162,8 +162,9 @@ class Assets extends Settings_Component {
 		add_action( 'cloudinary_build_queue_query', array( $this, 'connect_post_type' ) );
 		add_action( 'cloudinary_string_replace', array( $this, 'add_url_replacements' ), 20 );
 		add_action( 'shutdown', array( $this, 'meta_updates' ) );
-
 	}
+
+
 
 	/**
 	 * Sets the autosync to work on cloudinary_assets even when the autosync is disabled.
@@ -199,13 +200,16 @@ class Assets extends Settings_Component {
 	 *
 	 * @hook intermediate_image_sizes_advanced
 	 *
-	 * @param array $new_sizes     The sizes to remove.
-	 * @param array $image_meta    The image meta.
-	 * @param int   $attachment_id The asset ID.
+	 * @param array    $new_sizes     The sizes to remove.
+	 * @param array    $image_meta    The image meta.
+	 * @param int|null $attachment_id The asset ID.
 	 *
 	 * @return array
 	 */
-	public function no_sizes( $new_sizes, $image_meta, $attachment_id ) {
+	public function no_sizes( $new_sizes, $image_meta, $attachment_id = null ) {
+		if ( is_null( $attachment_id ) ) {
+			$attachment_id = $this->plugin->settings->get_param( '_currrent_attachment', 0 );
+		}
 		if ( self::is_asset_type( $attachment_id ) ) {
 			$new_sizes = array();
 		}
