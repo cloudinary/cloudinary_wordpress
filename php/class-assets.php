@@ -475,7 +475,7 @@ class Assets extends Settings_Component {
 		$path              = trim( wp_normalize_path( str_replace( home_url(), '', $asset->post_title ) ), '/' );
 		$info              = pathinfo( $path );
 		$cloudinary_folder = wp_parse_url( home_url(), PHP_URL_HOST );
-		$public_id         = $cloudinary_folder . $info['dirname'] . '/' . $info['filename'];
+		$public_id         = $cloudinary_folder . '/' . $info['dirname'] . '/' . $info['filename'];
 		$options           = array(
 			'unique_filename' => false,
 			'overwrite'       => true,
