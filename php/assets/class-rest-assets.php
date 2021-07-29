@@ -95,8 +95,8 @@ class Rest_Assets {
 	 */
 	public function rest_purge( $request ) {
 
-		$asset         = (int) $request->get_param( 'cachePoint' );
-		$transient_key = '_purge_cache' . $asset;
+		$asset_parent  = (int) $request->get_param( 'asset_parent' );
+		$transient_key = '_purge_cache' . $asset_parent;
 		$parents       = $this->assets->get_asset_parents();
 		if ( empty( $parents ) ) {
 			return rest_ensure_response( true );
@@ -104,11 +104,11 @@ class Rest_Assets {
 
 		$tracker = get_transient( $transient_key );
 		foreach ( $parents as $parent ) {
-			if ( $asset && $asset !== $parent->ID ) {
+			if ( $asset_parent && $asset_parent !== $parent->ID ) {
 				continue;
 			}
 			$tracker['time']           = time();
-			$tracker['current_parent'] = $asset;
+			$tracker['current_parent'] = $asset_parent;
 			set_transient( $transient_key, $tracker, MINUTE_IN_SECONDS );
 			$this->assets->purge_parent( $parent->ID );
 		}
@@ -127,8 +127,8 @@ class Rest_Assets {
 	public function rest_purge_all( $request ) {
 
 		$count         = $request->get_param( 'count' );
-		$parent        = (int) $request->get_param( 'parent' );
-		$transient_key = '_purge_cache' . $parent;
+		$asset_parent  = (int) $request->get_param( 'parent' );
+		$transient_key = '_purge_cache' . $asset_parent;
 		$query_args    = array(
 			'post_type'              => Assets::POST_TYPE_SLUG,
 			'posts_per_page'         => 1,
@@ -138,8 +138,8 @@ class Rest_Assets {
 			'update_post_meta_cache' => false,
 			'update_post_term_cache' => false,
 		);
-		if ( ! empty( $parent ) ) {
-			$query_args['post_parent'] = $parent;
+		if ( ! empty( $asset_parent ) ) {
+			$query_args['post_parent'] = $asset_parent;
 		}
 		$query = new \WP_Query( $query_args );
 
@@ -156,7 +156,7 @@ class Rest_Assets {
 		if ( empty( $count ) && ! empty( $query->found_posts ) ) {
 			if ( empty( $result['time'] ) ) {
 				set_transient( $transient_key, $result, MINUTE_IN_SECONDS );
-				$this->assets->plugin->get_component( 'api' )->background_request( 'purge_cache', array( 'cachePoint' => $parent ) );
+				$this->assets->plugin->get_component( 'api' )->background_request( 'purge_cache', array( 'asset_parent' => $asset_parent ) );
 			}
 		}
 
