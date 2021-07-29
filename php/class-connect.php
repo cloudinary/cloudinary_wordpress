@@ -692,7 +692,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 
 		if ( version_compare( $old_version, '2.0.0', '>' ) ) {
 			// Post V1 - quick check all details are valid.
-			$data = get_option( self::META_KEYS['connect'], array() );
+			$data = get_option( self::META_KEYS['connection'], array() );
 			if ( ! isset( $data['cloudinary_url'] ) || empty( $data['cloudinary_url'] ) ) {
 				return; // Not setup at all, abort upgrade.
 			}
@@ -727,7 +727,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 
 			// remove filters as we've already verified it and 'add_settings_error()' isn't available yet.
 			remove_filter( 'pre_update_option_cloudinary_connect', array( $this, 'verify_connection' ) );
-			update_option( self::META_KEYS['connect'], $data );
+			update_option( self::META_KEYS['connection'], $data );
 			update_option( self::META_KEYS['signature'], $signature );
 			update_option( self::META_KEYS['version'], $this->plugin->version );
 		}
