@@ -24,7 +24,7 @@ class Color extends Text {
 
 		$instance = get_plugin_instance();
 		wp_enqueue_style( 'wp-color-picker' );
-		wp_enqueue_script( 'wp-color-picker-alpha', $instance->dir_url . '/js/wp-color-picker-alpha.min.js', array( 'wp-color-picker' ), $instance->version, true );
+		wp_enqueue_script( 'wp-color-picker-alpha', $instance->dir_url . '/js/wp-color-picker-alpha.js', array( 'wp-color-picker' ), $instance->version, true );
 	}
 
 	/**
