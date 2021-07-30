@@ -73,6 +73,8 @@ class Delivery implements Setup {
 		$this->plugin->components['replace'] = new String_Replace( $this->plugin );
 		$this->media                         = $this->plugin->get_component( 'media' );
 		add_filter( 'cloudinary_filter_out_local', '__return_false' );
+		add_action( 'update_option_cloudinary_media_display', array( $this, 'clear_cache' ) );
+		add_action( 'cloudinary_flush_cache', array( $this, 'clear_cache' ) );
 	}
 
 	/**
@@ -84,8 +86,6 @@ class Delivery implements Setup {
 		add_action( 'cloudinary_string_replace', array( $this, 'catch_urls' ) );
 		add_filter( 'post_thumbnail_html', array( $this, 'process_featured_image' ), 100, 3 );
 
-		add_action( 'update_option_cloudinary_media_display', array( $this, 'clear_cache' ) );
-		add_action( 'cloudinary_flush_cache', array( $this, 'clear_cache' ) );
 		add_filter( 'cloudinary_current_post_id', array( $this, 'get_current_post_id' ) );
 		add_filter( 'the_content', array( $this, 'add_post_id' ) );
 		add_filter( 'wp_img_tag_add_srcset_and_sizes_attr', '__return_false' );
