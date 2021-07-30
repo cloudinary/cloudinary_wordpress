@@ -75,6 +75,7 @@ class Responsive_Breakpoints extends Delivery_Feature {
 		if ( isset( $tag_element['atts']['srcset'] ) ) {
 			unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 		}
+		$tag_element['delivery'] = 'cld';
 
 		return $tag_element;
 	}

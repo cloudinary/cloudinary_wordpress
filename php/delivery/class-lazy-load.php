@@ -161,6 +161,7 @@ class Lazy_Load extends Delivery_Feature {
 		unset( $tag_element['atts']['loading'] );
 		$tag_element['atts']['decoding']   = 'async';
 		$tag_element['atts']['data-width'] = $size[0];
+		$tag_element['delivery']           = 'cld';
 
 		return $tag_element;
 	}

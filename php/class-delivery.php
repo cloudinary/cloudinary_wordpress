@@ -389,24 +389,6 @@ class Delivery implements Setup {
 	 */
 	public function rebuild_tag( $tag_element ) {
 
-		$image_meta = wp_get_attachment_metadata( $tag_element['id'] );
-		// Check overwrite.
-		$image_meta['overwrite_transformations'] = $tag_element['cld-overwrite'];
-
-		// Try add srcset if not present.
-		$element = wp_image_add_srcset_and_sizes( $tag_element['original'], $image_meta, $tag_element['id'] );
-
-		// Get size.
-		$size = $this->get_size_from_atts( $tag_element['atts'] );
-
-		// Get transformations if present.
-		$transformations = $this->get_transformations_maybe( $tag_element['atts']['src'] );
-
-		// Get cloudinary URL, only if overwrite or has inline transformations. Catch all will replace standard urls.
-		if ( $image_meta['overwrite_transformations'] || $transformations ) {
-			$tag_element['atts']['src'] = $this->media->cloudinary_url( $tag_element['id'], $size, $transformations, null, $image_meta['overwrite_transformations'] );
-		}
-
 		/**
 		 * Filter the tag element.
 		 *
@@ -421,6 +403,32 @@ class Delivery implements Setup {
 		 */
 		$tag_element = apply_filters( 'cloudinary_pre_image_tag', $tag_element, $tag_element['id'], $tag_element['original'] );
 
+		if ( 'wp' === $tag_element['delivery'] ) {
+
+			$image_meta = wp_get_attachment_metadata( $tag_element['id'] );
+			// Check overwrite.
+			$image_meta['overwrite_transformations'] = $tag_element['cld-overwrite'];
+
+			// Try add srcset if not present.
+			$element = wp_image_add_srcset_and_sizes( $tag_element['original'], $image_meta, $tag_element['id'] );
+			$atts    = Utils::get_tag_attributes( $element );
+
+			if ( $atts['srcset'] ) {
+				$tag_element['atts']['srcset'] = $atts['srcset'];
+			}
+			if ( $atts['sizes'] ) {
+				$tag_element['atts']['sizes'] = $atts['sizes'];
+			}
+
+			// Get size.
+			$size = $this->get_size_from_atts( $tag_element['atts'] );
+
+			// Get transformations if present.
+			$transformations = $this->get_transformations_maybe( $tag_element['atts']['src'] );
+
+			// Get cloudinary URL, only if overwrite or has inline transformations. Catch all will replace standard urls.
+			$tag_element['atts']['src'] = $this->media->cloudinary_url( $tag_element['id'], $size, $transformations, null, $image_meta['overwrite_transformations'] );
+		}
 		// Setup new tag.
 		$replace = HTML::build_tag( $tag_element['tag'], $tag_element['atts'] );
 
@@ -443,6 +451,7 @@ class Delivery implements Setup {
 			'cld-overwrite' => false,
 			'context'       => 0,
 			'id'            => 0,
+			'delivery'      => 'wp',
 		);
 		// Cleanup element.
 		$element = trim( $element, '</>' );
