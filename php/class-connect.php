@@ -214,6 +214,10 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 * @return boolean
 	 */
 	public function is_connected() {
+		$connected = $this->plugin->settings->get_param( 'connected', null );
+		if ( ! is_null( $connected ) ) {
+			return $connected;
+		}
 		$signature = $this->settings->get_value( 'signature' );
 
 		if ( null === $signature ) {
