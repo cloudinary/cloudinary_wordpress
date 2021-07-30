@@ -166,15 +166,13 @@ class Assets extends Settings_Component {
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_cache' ), 100 );
 	}
 
-
-
 	/**
 	 * Add Cloudinary Beta menu to admin bar.
 	 *
 	 * @param \WP_Admin_Bar $admin_bar The admin bar object.
 	 */
 	public function admin_bar_cache( $admin_bar ) {
-		if ( ! current_user_can( 'manage_options' ) || is_admin() ) {
+		if ( ! Utils::user_can( 'clear_cache' ) || is_admin() ) {
 			return;
 		}
 
@@ -187,11 +185,12 @@ class Assets extends Settings_Component {
 		);
 		$admin_bar->add_menu( $parent );
 
+		$nonce = wp_create_nonce( 'cloudinary-cache-clear' );
 		$clear = array(
 			'id'     => 'cloudinary-clear-cache',
 			'parent' => 'cloudinary-cache',
 			'title'  => '{cld-cache-counter}',
-			'href'   => '?cloudinary-cache-clear=on',
+			'href'   => '?cloudinary-cache-clear=' . $nonce,
 			'meta'   => array(
 				'title' => __( 'Purge', 'cloudinary' ),
 				'class' => 'cloudinary-{cld-cache-status}',
@@ -401,7 +400,7 @@ class Assets extends Settings_Component {
 	 */
 	public function add_url_replacements() {
 		$clear = filter_input( INPUT_GET, 'cloudinary-cache-clear', FILTER_SANITIZE_STRING );
-		if ( $clear ) {
+		if ( $clear && wp_verify_nonce( $clear, 'cloudinary-cache-clear' ) ) {
 			$referrer = filter_input( INPUT_SERVER, 'HTTP_REFERER', FILTER_SANITIZE_URL );
 			if ( $this->asset_ids ) {
 				foreach ( $this->asset_ids as $asset_id ) {
