@@ -197,6 +197,8 @@ class Delivery implements Setup {
 
 		// Get tag element.
 		$tag_element                    = $this->parse_element( $html );
+		$tag_element['id']              = $attachment_id;
+		$tag_element['context']         = $post_id;
 		$tag_element['atts']['class'][] = 'wp-image-' . $attachment_id;
 		$tag_element['atts']['class'][] = 'wp-post-' . $post_id;
 
@@ -301,33 +303,6 @@ class Delivery implements Setup {
 	}
 
 	/**
-	 * Get the attachment ID from the media tag.
-	 *
-	 * @param string $asset The media tag.
-	 * @param string $type  The type.
-	 *
-	 * @return int|false
-	 */
-	public function get_id_from_tag( $asset, $type = 'wp-image-|wp-video-' ) {
-		$attachment_id = $this->filter->get_id_from_tag( $asset, $type );
-		/**
-		 * Filter id from the tag.
-		 *
-		 * @hook   cloudinary_delivery_get_id
-		 * @since  2.7.6
-		 *
-		 * @param $attachment_id {int}    The attachment ID.
-		 * @param $asset         {string} The html tag.
-		 * @param $type          {string} The asset type.
-		 *
-		 * @return {int|false}
-		 */
-		$attachment_id = apply_filters( 'cloudinary_delivery_get_id', $attachment_id, $asset, $type );
-
-		return $attachment_id;
-	}
-
-	/**
 	 * Convert media tags from Local to Cloudinary, and register with String_Replace.
 	 *
 	 * @param string $content The HTML to find tags and prep replacement in.
@@ -354,6 +329,19 @@ class Delivery implements Setup {
 			if ( isset( $replacements[ $set['original'] ] ) ) {
 				continue;
 			}
+			/**
+			 * Filter id from the tag.
+			 *
+			 * @hook   cloudinary_delivery_get_id
+			 * @since  2.7.6
+			 *
+			 * @param $attachment_id {int}    The attachment ID.
+			 * @param $html_tag      {string} The html tag.
+			 * @param $type          {string} The asset type.
+			 *
+			 * @return {int|false}
+			 */
+			$set['id'] = apply_filters( 'cloudinary_delivery_get_id', $set['id'], $set['original'], $set['type'] );
 			if ( empty( $set['id'] ) || ! $this->media->cloudinary_id( $set['id'] ) ) {
 				continue;
 			}
@@ -451,6 +439,7 @@ class Delivery implements Setup {
 			'cld-overwrite' => false,
 			'context'       => 0,
 			'id'            => 0,
+			'type'          => '',
 			'delivery'      => 'wp',
 		);
 		// Cleanup element.
@@ -462,8 +451,13 @@ class Delivery implements Setup {
 		if ( ! empty( $tag_element['atts']['class'] ) ) {
 			$tag_element['atts']['class'] = explode( ' ', $tag_element['atts']['class'] );
 			foreach ( $tag_element['atts']['class'] as $class ) {
-				if ( 0 === strpos( $class, 'wp-image-' ) || 0 === strpos( $class, 'wp-video-' ) ) {
-					$tag_element['id'] = intval( substr( $class, 9 ) );
+				if ( 0 === strpos( $class, 'wp-video-' ) ) {
+					$tag_element['id']   = intval( substr( $class, 9 ) );
+					$tag_element['type'] = 'video';
+				}
+				if ( 0 === strpos( $class, 'wp-image-' ) ) {
+					$tag_element['id']   = intval( substr( $class, 9 ) );
+					$tag_element['type'] = 'image';
 				}
 				if ( 0 === strpos( $class, 'wp-post-' ) ) {
 					$tag_element['context'] = intval( substr( $class, 8 ) );
