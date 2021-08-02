@@ -202,7 +202,8 @@ final class Plugin {
 		\Cloudinary\Settings::init_setting( $this->slug );
 
 		// Add count notice if not connected.
-		if ( ! $this->get_component( 'connect' )->is_connected() ) {
+		$this->settings->set_param( 'connected', $this->get_component( 'connect' )->is_connected() );
+		if ( ! $this->settings->get_param( 'connected' ) ) {
 			$count      = sprintf( ' <span class="update-plugins count-%d"><span class="update-count">%d</span></span>', 1, number_format_i18n( 1 ) );
 			$main_title = $this->settings->get_param( 'menu_title' ) . $count;
 			$this->settings->set_param( 'menu_title', $main_title );
@@ -217,12 +218,10 @@ final class Plugin {
 		/**
 		 * Action indicating that the Settings are initialised.
 		 *
-		 * @hook    cloudinary_init_settings
-		 * @since   2.7.5
+		 * @hook  cloudinary_init_settings
+		 * @since 2.7.5
 		 *
-		 * @param $plugin {Plugin}  The core plugin object.
-		 *
-		 * @return  void
+		 * @param $plugin {Plugin} The core plugin object.
 		 */
 		do_action( 'cloudinary_init_settings', $this );
 	}
@@ -441,19 +440,20 @@ final class Plugin {
 	public function setup() {
 		$this->set_config();
 
-		/**
-		 * Component that implements Component\Setup.
-		 *
-		 * @var  Component\Setup $component
-		 */
-		foreach ( $this->components as $key => $component ) {
-			if ( ! $this->is_setup_component( $component ) ) {
-				continue;
+		if ( $this->settings->get_param( 'connected' ) ) {
+			/**
+			 * Component that implements Component\Setup.
+			 *
+			 * @var  Component\Setup $component
+			 */
+			foreach ( $this->components as $key => $component ) {
+				if ( ! $this->is_setup_component( $component ) ) {
+					continue;
+				}
+
+				$component->setup();
 			}
-
-			$component->setup();
 		}
-
 	}
 
 	/**

@@ -189,7 +189,7 @@ class Upgrade {
 		} else {
 			// Attempt old post meta.
 			$public_id = get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
-			if ( isset( $public_id ) ) {
+			if ( ! empty( $public_id ) ) {
 				// Loop through all types and create new meta item.
 				$meta = array(
 					Sync::META_KEYS['public_id'] => $public_id,

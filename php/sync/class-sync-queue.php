@@ -311,6 +311,18 @@ class Sync_Queue {
 			'no_found_rows'       => true,
 		);
 
+		/**
+		 * Filter the params for the query used to build a queue.
+		 *
+		 * @hook  cloudinary_build_queue_query
+		 * @since 2.7.6
+		 *
+		 * @param $args {array} The arguments for the query.
+		 *
+		 * @return {array}
+		 */
+		$args = apply_filters( 'cloudinary_build_queue_query', $args );
+
 		// translators: variable is page number.
 		$action_message = __( 'Building Queue.', 'cloudinary' );
 		do_action( '_cloudinary_queue_action', $action_message );
@@ -550,6 +562,19 @@ class Sync_Queue {
 				),
 			),
 		);
+
+		/**
+		 * Filter the params for the query used to get thread queue details.
+		 *
+		 * @hook  cloudinary_thread_queue_details_query
+		 * @since 2.7.6
+		 *
+		 * @param $args   {array}  The arguments for the query.
+		 * @param $thread {string} The thread name.
+		 *
+		 * @return {array}
+		 */
+		$args = apply_filters( 'cloudinary_thread_queue_details_query', $args, $thread );
 
 		$query = new \WP_Query( $args );
 

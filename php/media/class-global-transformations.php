@@ -245,8 +245,14 @@ class Global_Transformations {
 	 * @return string
 	 */
 	public function get_taxonomy_transformations( $type ) {
+		static $cache = array();
+
+		$post = $this->get_current_post();
+		$key  = wp_json_encode( func_get_args() ) . ( $post ? $post->ID : 0 );
+		if ( isset( $cache[ $key ] ) ) {
+			return $cache[ $key ];
+		}
 		$return_transformations = '';
-		$post                   = $this->get_current_post();
 		if ( $post ) {
 			$transformations = array();
 			$terms           = $this->get_terms( $post->ID );
@@ -262,7 +268,9 @@ class Global_Transformations {
 			}
 		}
 
-		return $return_transformations;
+		$cache[ $key ] = $return_transformations;
+
+		return $cache[ $key ];
 	}
 
 	/**
@@ -574,7 +582,7 @@ class Global_Transformations {
 		 * @hook    cloudinary_current_post_id
 		 * @default null
 		 *
-		 * @return  {WP_Post|null}
+		 * @return {WP_Post|null}
 		 */
 		$post_id = apply_filters( 'cloudinary_current_post_id', null );
 

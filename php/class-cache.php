@@ -263,7 +263,7 @@ class Cache extends Settings_Component implements Setup {
 		 *
 		 * @param $bypass {bool} True to bypass, false to not.
 		 *
-		 * @return  {bool}
+		 * @return {bool}
 		 */
 		return apply_filters( 'cloudinary_bypass_cache', ! is_null( $bypass ) );
 	}
@@ -486,7 +486,7 @@ class Cache extends Settings_Component implements Setup {
 		 *
 		 * @param $inline_types {array} The types of files to be encoded inline.
 		 *
-		 * @return  {array}
+		 * @return {array}
 		 */
 		return apply_filters( 'cloudinary_plugin_asset_cache_inline_types', $inline_types );
 	}
@@ -577,7 +577,7 @@ class Cache extends Settings_Component implements Setup {
 		 *
 		 * @param $default_filters {array} The types of files to be filtered.
 		 *
-		 * @return  {array}
+		 * @return {array}
 		 */
 		return apply_filters( 'cloudinary_plugin_asset_cache_filters', $default_filters );
 	}

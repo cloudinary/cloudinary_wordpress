@@ -735,6 +735,23 @@ class Filter {
 	}
 
 	/**
+	 * Record attachment with meta being updated.
+	 *
+	 * @hook wp_update_attachment_metadata
+	 *
+	 * @param array $data The new meta array.
+	 * @param int   $id   The id.
+	 *
+	 * @return array
+	 */
+	public function record_meta_update( $data, $id ) {
+		$this->media->plugin->settings->set_param( '_currrent_attachment', $id );
+		$this->media->plugin->settings->set_param( '_currrent_meta', $data );
+
+		return $data;
+	}
+
+	/**
 	 * Setup hooks for the filters.
 	 */
 	public function setup_hooks() {
@@ -764,6 +781,8 @@ class Filter {
 		// Filter for block rendering.
 		add_filter( 'render_block', array( $this, 'filter_image_block_render_block' ), 10, 2 );
 
+		// Filter to record current meta updating attachment.
+		add_filter( 'wp_update_attachment_metadata', array( $this, 'record_meta_update' ), 10, 2 );
 
 		// Filter out locals and responsive images setup.
 		if ( $this->media->can_filter_out_local() || is_admin() ) {

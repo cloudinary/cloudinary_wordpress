@@ -152,4 +152,42 @@ class Utils {
 
 		return $depth;
 	}
+
+	/**
+	 * Check if the current user can perform a task.
+	 *
+	 * @param string $task The task to check.
+	 *
+	 * @return bool
+	 */
+	public static function user_can( $task ) {
+
+		/**
+		 * Filter the capability required for a specific cloudinary task.
+		 *
+		 * @hook    cloudinary_task_capability_{task}
+		 * @since   2.7.6
+		 *
+		 * @param $capability {string} The capability.
+		 *
+		 * @default 'manage_options'
+		 * @return  {string}
+		 */
+		$capability = apply_filters( "cloudinary_task_capability_{$task}", 'manage_options' );
+
+		/**
+		 * Filter the capability required for cloudinary tasks.
+		 *
+		 * @hook    cloudinary_task_capability
+		 * @since   2.7.6
+		 *
+		 * @param $capability {string} The current capability for the task.
+		 * @param $task       {string} The task.
+		 *
+		 * @return  {string}
+		 */
+		$capability = apply_filters( 'cloudinary_task_capability', $capability, $task );
+
+		return current_user_can( $capability );
+	}
 }
