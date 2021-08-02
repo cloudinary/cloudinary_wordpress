@@ -58,6 +58,7 @@ class Folder_Table extends Table {
 			'update_url' => rest_url( REST_API::BASE . '/disable_cache_items' ),
 			'fetch_url'  => rest_url( REST_API::BASE . '/show_cache' ),
 			'purge_url'  => rest_url( REST_API::BASE . '/purge_cache' ),
+			'purge_all'  => rest_url( REST_API::BASE . '/purge_all' ),
 			'nonce'      => wp_create_nonce( 'wp_rest' ),
 		);
 		parent::setup();
@@ -221,7 +222,7 @@ class Folder_Table extends Table {
 						array(
 							'element'    => 'tbody',
 							'attributes' => array(
-								'data-cache-point' => $asset->ID,
+								'data-cache-point' => $asset->post_title,
 								'data-browser'     => 'toggle_' . $slug,
 								'data-slug'        => $slug,
 								'data-apply'       => 'apply_' . $slug,

@@ -7,10 +7,12 @@
 
 namespace Cloudinary;
 
+use Cloudinary\Component\Setup;
+
 /**
  * String replace class.
  */
-class String_Replace {
+class String_Replace implements Setup {
 
 	/**
 	 * Holds the plugin instance.
@@ -33,6 +35,12 @@ class String_Replace {
 	 */
 	public function __construct( Plugin $plugin ) {
 		$this->plugin = $plugin;
+	}
+
+	/**
+	 * Setup the object.
+	 */
+	public function setup() {
 		add_action( 'template_redirect', array( $this, 'init' ), 1 );
 		add_action( 'template_include', array( $this, 'init_debug' ), 1 );
 		$types = get_post_types_by_support( 'editor' );
