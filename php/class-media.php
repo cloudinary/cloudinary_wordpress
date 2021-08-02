@@ -238,6 +238,7 @@ class Media extends Settings_Component implements Setup {
 	public function is_file_compatible( $file ) {
 
 		$types        = $this->get_compatible_media_types();
+		$file         = wp_parse_url( $file, PHP_URL_PATH );
 		$filename     = pathinfo( $file, PATHINFO_BASENAME );
 		$mime         = wp_check_filetype( $filename );
 		$type         = strstr( $mime['type'], '/', true );
@@ -262,7 +263,19 @@ class Media extends Settings_Component implements Setup {
 			$is_media    = in_array( $type, $media_types, true );
 		}
 
-		return $is_media;
+		/**
+		 * Filter the check if post is media.
+		 *
+		 * @hook    cloudinary_is_media
+		 * @since   2.7.6
+		 * @default false
+		 *
+		 * @param $is_media      {bool} Flag if is media.
+		 * @param $attachment_id {int}  The attachment ID.
+		 *
+		 * @return  {bool}
+		 */
+		return apply_filters( 'cloudinary_is_media', $is_media, $attachment_id );
 	}
 
 	/**
@@ -352,6 +365,7 @@ class Media extends Settings_Component implements Setup {
 	 * @return string
 	 */
 	public function get_file_type( $file ) {
+		$file = wp_parse_url( $file, PHP_URL_PATH );
 		$file = pathinfo( $file, PATHINFO_BASENAME );
 		$mime = wp_check_filetype( $file );
 
@@ -694,6 +708,13 @@ class Media extends Settings_Component implements Setup {
 	 * @return array
 	 */
 	public function get_transformations( $attachment_id, $transformations = array(), $overwrite_transformations = false ) {
+		static $cache = array();
+
+		$key = wp_json_encode( func_get_args() );
+		if ( isset( $cache[ $key ] ) ) {
+			return $cache[ $key ];
+		}
+
 		// If not provided, get transformations from the attachment meta.
 		if ( empty( $transformations ) ) {
 			$transformations = $this->get_transformation_from_meta( $attachment_id );
@@ -715,7 +736,9 @@ class Media extends Settings_Component implements Setup {
 		 *
 		 * @return array
 		 */
-		return apply_filters( 'cloudinary_transformations', $transformations, $attachment_id );
+		$cache[ $key ] = apply_filters( 'cloudinary_transformations', $transformations, $attachment_id );
+
+		return $cache[ $key ];
 	}
 
 	/**
@@ -769,6 +792,9 @@ class Media extends Settings_Component implements Setup {
 	 * @return array The array of found transformations within the string.
 	 */
 	public function get_transformations_from_string( $str, $type = 'image' ) {
+		if ( ! isset( Api::$transformation_index[ $type ] ) ) {
+			return array();
+		}
 
 		$params = Api::$transformation_index[ $type ];
 
@@ -833,6 +859,12 @@ class Media extends Settings_Component implements Setup {
 	 * @return array
 	 */
 	public function apply_default_transformations( array $transformations, $attachment_id ) {
+		static $cache = array(), $freeform = array();
+
+		$key = wp_json_encode( func_get_args() );
+		if ( isset( $cache[ $key ] ) ) {
+			return $cache[ $key ];
+		}
 		/**
 		 * Filter to allow bypassing defaults. Return false to not apply defaults.
 		 *
@@ -848,8 +880,8 @@ class Media extends Settings_Component implements Setup {
 		// Base image level.
 		$new_transformations = array(
 			'image'  => Api::generate_transformation_string( $transformations, $type ),
-			'global' => array(),
 			'tax'    => array(),
+			'global' => array(),
 			'qf'     => array(),
 		);
 		// Get Taxonomies.
@@ -867,16 +899,18 @@ class Media extends Settings_Component implements Setup {
 			$default                   = array_filter( $default ); // Clear out empty settings.
 			$new_transformations['qf'] = Api::generate_transformation_string( array( $default ), $type );
 
-			/**
-			 * Filter the default Freeform transformations for the specific media type.
-			 *
-			 * @param array $defaults        The default transformations array.
-			 * @param array $transformations The current transformations array.
-			 *
-			 * @return array
-			 */
-			$freeform = apply_filters( "cloudinary_default_freeform_transformations_{$type}", array(), $transformations );
-			$freeform = array_filter( $freeform ); // Clear out empty settings.
+			if ( empty( $freeform ) ) {
+				/**
+				 * Filter the default Freeform transformations for the specific media type.
+				 *
+				 * @param array $defaults        The default transformations array.
+				 * @param array $transformations The current transformations array.
+				 *
+				 * @return array
+				 */
+				$freeform = apply_filters( "cloudinary_default_freeform_transformations_{$type}", array(), $transformations );
+				$freeform = array_filter( $freeform ); // Clear out empty settings.
+			}
 			// Add freeform global transformations.
 			if ( ! empty( $freeform ) ) {
 				$new_transformations['global'] = implode( '/', $freeform );
@@ -894,12 +928,12 @@ class Media extends Settings_Component implements Setup {
 		 *
 		 * @return array
 		 */
-		$defaults = apply_filters(
+		$cache[ $key ] = apply_filters(
 			'cloudinary_default_transformations',
 			$transformations
 		);
 
-		return $defaults;
+		return $cache[ $key ];
 	}
 
 	/**
@@ -955,11 +989,17 @@ class Media extends Settings_Component implements Setup {
 	 * @return string The converted URL.
 	 */
 	public function cloudinary_url( $attachment_id, $size = array(), $transformations = array(), $cloudinary_id = null, $overwrite_transformations = false ) {
-		if ( ! ( $cloudinary_id ) ) {
+		static $cache = array();
+
+		if ( ! $cloudinary_id ) {
 			$cloudinary_id = $this->cloudinary_id( $attachment_id );
 			if ( ! $cloudinary_id ) {
 				return null;
 			}
+		}
+		$key = wp_json_encode( func_get_args() );
+		if ( isset( $cache[ $key ] ) ) {
+			return $cache[ $key ];
 		}
 
 		// Get the attachment resource type.
@@ -997,7 +1037,17 @@ class Media extends Settings_Component implements Setup {
 		 *
 		 * @return string
 		 */
-		return apply_filters( 'cloudinary_converted_url', $url, $attachment_id, $pre_args );
+		$url = apply_filters( 'cloudinary_converted_url', $url, $attachment_id, $pre_args );
+
+		// Add Cloudinary analytics.
+		$cache[ $key ] = add_query_arg(
+			array(
+				'_i' => 'AA',
+			),
+			$url
+		);
+
+		return $cache[ $key ];
 	}
 
 	/**
@@ -1094,12 +1144,17 @@ class Media extends Settings_Component implements Setup {
 	public function get_public_id( $attachment_id, $suffixed = false ) {
 		// Check for a public_id.
 		if ( $this->has_public_id( $attachment_id ) ) {
-			$public_id = get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
+			$public_id = $this->get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
 			if ( $this->is_folder_synced( $attachment_id ) ) {
 				$public_id = $this->get_cloudinary_folder() . pathinfo( $public_id, PATHINFO_BASENAME );
 			}
-			if ( true === $suffixed ) {
-				$public_id .= $this->get_post_meta( $attachment_id, Sync::META_KEYS['suffix'], true );
+			if ( true === $suffixed && ! empty( $this->get_post_meta( $attachment_id, Sync::META_KEYS['suffix'], true ) ) ) {
+				$suffix = $this->get_post_meta( $attachment_id, Sync::META_KEYS['suffix'], true );
+				if ( false === strrpos( $public_id, $suffix ) ) {
+					$public_id .= $suffix;
+					$this->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
+				}
+				$this->delete_post_meta( $attachment_id, Sync::META_KEYS['suffix'] );
 			}
 		} else {
 			$public_id = $this->sync->generate_public_id( $attachment_id );
@@ -1116,7 +1171,10 @@ class Media extends Settings_Component implements Setup {
 	 * @return bool
 	 */
 	public function has_public_id( $attachment_id ) {
-		return ! empty( get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true ) );
+		$new_id = $this->get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
+		$id     = get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
+
+		return ! empty( $new_id ) || ! empty( $id );
 	}
 
 	/**
@@ -1143,7 +1201,7 @@ class Media extends Settings_Component implements Setup {
 				}
 			}
 			$cloudinary_id = $public_id;
-			if ( 'fetch' !== $this->get_media_delivery( $attachment_id ) ) {
+			if ( 'fetch' !== $this->get_media_delivery( $attachment_id ) && empty( pathinfo( $public_id, PATHINFO_EXTENSION ) ) ) {
 				$cloudinary_id = $public_id . '.' . $extension;
 			}
 		}
@@ -1156,23 +1214,31 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @param int $attachment_id The ID to get Cloudinary id for.
 	 *
-	 * @return string|null the ID or null if not existing.
+	 * @return string|false the ID or false if not existing.
 	 */
 	public function cloudinary_id( $attachment_id ) {
+		static $cloudinary_ids = array();
+
+		// Return cached ID if we've already gotten it before.
+		if ( isset( $cloudinary_ids[ $attachment_id ] ) ) {
+			return $cloudinary_ids[ $attachment_id ];
+		}
 
 		if ( ! $this->is_media( $attachment_id ) ) {
-			return null;
+			$cloudinary_ids[ $attachment_id ] = false;
+
+			return false;
 		}
-		// Return cached ID if we've already gotten it before.
-		if ( isset( $this->cloudinary_ids[ $attachment_id ] ) ) {
-			return $this->cloudinary_ids[ $attachment_id ];
-		}
+
 		if ( ! $this->sync->is_synced( $attachment_id ) && ! defined( 'REST_REQUEST' ) ) {
 			$sync_type = $this->sync->maybe_prepare_sync( $attachment_id );
 			// Check sync type allows for continued rendering. i.e meta update, breakpoints etc, will still allow the URL to work,
 			// Where is type "file" will not since it's still being uploaded.
-			if ( ! is_null( $sync_type ) && $this->sync->is_required( $sync_type, $attachment_id ) ) {
-				return null; // Return and render local URLs.
+			if ( is_null( $sync_type ) || $this->sync->is_required( $sync_type, $attachment_id ) ) {
+				// Cache ID to prevent multiple lookups.
+				$cloudinary_ids[ $attachment_id ] = false;
+
+				return false; // Return and render local URLs.
 			}
 		}
 
@@ -1195,8 +1261,8 @@ class Media extends Settings_Component implements Setup {
 		 * @param int         $attachment_id The id of the asset.
 		 */
 		do_action( 'cloudinary_id', $cloudinary_id, $attachment_id );
-		// Cache ID to prevent multiple lookups.
-		$this->cloudinary_ids[ $attachment_id ] = $cloudinary_id;
+
+		$cloudinary_ids[ $attachment_id ] = $cloudinary_id;
 
 		return $cloudinary_id;
 	}
@@ -1385,7 +1451,7 @@ class Media extends Settings_Component implements Setup {
 		$parts = explode( '/', $path );
 
 		// Remove public id and file name.
-		array_splice( $parts, -2 );
+		array_splice( $parts, - 2 );
 
 		foreach ( $parts as $part ) {
 			array_shift( $parts );
@@ -1418,7 +1484,7 @@ class Media extends Settings_Component implements Setup {
 	public function editor_assets() {
 
 		// External assets.
-		wp_enqueue_script( 'cloudinary-media-library', 'https://media-library.cloudinary.com/global/all.js', array(), $this->plugin->version, true );
+		wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, array(), $this->plugin->version, true );
 		$params = array(
 			'nonce'     => wp_create_nonce( 'wp_rest' ),
 			'mloptions' => array(
@@ -1480,7 +1546,8 @@ class Media extends Settings_Component implements Setup {
 
 		$sync_key = $asset['sync_key'];
 		// Capture public_id. Use core update_post_meta since this attachment data doesnt exist yet.
-		update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
+		$this->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
+
 		// Capture version number.
 		$this->update_post_meta( $attachment_id, Sync::META_KEYS['version'], $asset['version'] );
 		if ( ! empty( $asset['transformations'] ) ) {
@@ -1488,10 +1555,13 @@ class Media extends Settings_Component implements Setup {
 			$sync_key .= wp_json_encode( $asset['transformations'] );
 			$this->update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], $asset['transformations'] );
 		}
-		// create a trackable key in post meta.
+
+		// Create a trackable key in post meta to allow getting the attachment id from URL with transformations.
 		update_post_meta( $attachment_id, '_' . md5( $sync_key ), true );
-		// record a base to ensure primary isn't deleted.
+
+		// Create a trackable key in post meta to allow getting the attachment id from URL.
 		update_post_meta( $attachment_id, '_' . md5( 'base_' . $public_id ), true );
+
 		// capture the delivery type.
 		$this->update_post_meta( $attachment_id, Sync::META_KEYS['delivery'], $asset['type'] );
 		// Capture the ALT Text.
@@ -1835,23 +1905,25 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function get_post_meta( $post_id, $key = '', $single = false ) {
 
-		$meta_data = wp_get_attachment_metadata( $post_id, true );
-		if ( ! is_array( $meta_data ) ) {
-			return get_post_meta( $post_id, $key, $single );
+		$meta = get_post_meta( $post_id, Sync::META_KEYS['cloudinary'], true );
+		if ( empty( $meta ) ) {
+			/**
+			 * Filter the meta if not found, in order to migrate from a legacy plugin.
+			 *
+			 * @hook   cloudinary_migrate_legacy_meta
+			 * @since  2.7.5
+			 *
+			 * @param $attachment_id {int} The attachment ID.
+			 *
+			 * @return {array}
+			 */
+			$meta = apply_filters( 'cloudinary_migrate_legacy_meta', $post_id );
 		}
-		if ( ! isset( $meta_data[ Sync::META_KEYS['cloudinary'] ] ) ) {
-			$meta_data[ Sync::META_KEYS['cloudinary'] ] = array();
+		if ( '' !== $key ) {
+			$meta = isset( $meta[ $key ] ) ? $meta[ $key ] : null;
 		}
 
-		if ( '' === $key ) {
-			$data = $meta_data[ Sync::META_KEYS['cloudinary'] ];
-		} elseif ( ! empty( $meta_data[ Sync::META_KEYS['cloudinary'] ][ $key ] ) ) {
-			$data = $meta_data[ Sync::META_KEYS['cloudinary'] ][ $key ];
-		} else {
-			$data = $this->build_cached_meta( $post_id, $key, $single );
-		}
-
-		return $data;
+		return $single ? $meta : (array) $meta;
 	}
 
 	/**
@@ -1878,19 +1950,21 @@ class Media extends Settings_Component implements Setup {
 	 * @param int          $post_id The attachment ID.
 	 * @param string       $key     The meta key to get.
 	 * @param string|array $data    $the meta data to update.
+	 *
+	 * @return bool
 	 */
 	public function update_post_meta( $post_id, $key, $data ) {
-		$meta_data = wp_get_attachment_metadata( $post_id, true );
-		if ( is_array( $meta_data ) ) {
-			if ( ! isset( $meta_data[ Sync::META_KEYS['cloudinary'] ] ) ) {
-				$meta_data[ Sync::META_KEYS['cloudinary'] ] = array();
-			}
-			$meta_data[ Sync::META_KEYS['cloudinary'] ][ $key ] = $data;
-			wp_update_attachment_metadata( $post_id, $meta_data );
-		} else {
-			// Update core mete data for consistency.
-			update_post_meta( $post_id, $key, $data );
+
+		$meta = $this->get_post_meta( $post_id );
+		if ( ! isset( $meta[ $key ] ) ) {
+			$meta[ $key ] = '';
 		}
+
+		if ( $meta[ $key ] !== $data ) {
+			$meta[ $key ] = $data;
+		}
+
+		return update_post_meta( $post_id, Sync::META_KEYS['cloudinary'], $meta );
 	}
 
 	/**
@@ -1898,14 +1972,17 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @param int    $post_id The attachment ID.
 	 * @param string $key     The meta key to get.
+	 *
+	 * @return bool
 	 */
 	public function delete_post_meta( $post_id, $key ) {
-		$meta_data = wp_get_attachment_metadata( $post_id, true );
-		if ( is_array( $meta_data ) && isset( $meta_data[ Sync::META_KEYS['cloudinary'] ] ) && is_array( $meta_data[ Sync::META_KEYS['cloudinary'] ] ) ) {
-			// Only do this side if has been set before.
-			unset( $meta_data[ Sync::META_KEYS['cloudinary'] ][ $key ] );
-			wp_update_attachment_metadata( $post_id, $meta_data );
+
+		$meta = $this->get_post_meta( $post_id );
+		if ( isset( $meta[ $key ] ) ) {
+			unset( $meta[ $key ] );
 		}
+
+		return update_post_meta( $post_id, Sync::META_KEYS['cloudinary'], $meta );
 	}
 
 	/**
@@ -1921,12 +1998,12 @@ class Media extends Settings_Component implements Setup {
 		$settings    = $this->settings->get_setting( self::MEDIA_SETTINGS_SLUG )->get_value();
 
 		if ( 'on' === $settings['enable_breakpoints'] && wp_attachment_is_image( $attachment_id ) ) {
-			$meta = wp_get_attachment_metadata( $attachment_id );
+			$meta = wp_get_attachment_metadata( $attachment_id, true );
 			// Get meta image size if non exists.
 			if ( empty( $meta ) ) {
 				$meta          = array();
 				$imagesize     = getimagesize( get_attached_file( $attachment_id ) );
-				$meta['width'] = $imagesize[0] ? $imagesize[0] : 0;
+				$meta['width'] = isset( $imagesize[0] ) ? $imagesize[0] : 0;
 			}
 			$max_width = $this->get_max_width();
 			// Add breakpoints request options.
@@ -2078,7 +2155,7 @@ class Media extends Settings_Component implements Setup {
 	public function maybe_overwrite_featured_image( $attachment_id ) {
 		$overwrite = false;
 		if ( $this->doing_featured_image && $this->doing_featured_image === (int) $attachment_id ) {
-			$overwrite = (bool) $this->get_post_meta( get_the_ID(), Global_Transformations::META_FEATURED_IMAGE_KEY, true );
+			$overwrite = (bool) get_post_meta( get_the_ID(), Global_Transformations::META_FEATURED_IMAGE_KEY, true );
 		}
 
 		return $overwrite;
@@ -2187,14 +2264,16 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Filters the new sizes to ensure non upload (sprites), don't get resized.
 	 *
-	 * @param array $new_sizes     Array of sizes.
-	 * @param array $image_meta    Image metadata.
-	 * @param int   $attachment_id The attachment ID.
+	 * @param array    $new_sizes     Array of sizes.
+	 * @param array    $image_meta    Image metadata.
+	 * @param int|null $attachment_id The attachment ID.
 	 *
 	 * @return array
 	 */
-	public function manage_sizes( $new_sizes, $image_meta, $attachment_id ) {
-
+	public function manage_sizes( $new_sizes, $image_meta, $attachment_id = null ) {
+		if ( is_null( $attachment_id ) ) {
+			$attachment_id = $this->plugin->settings->get_param( '_currrent_attachment', 0 );
+		}
 		if ( $this->has_public_id( $attachment_id ) ) {
 			// Get delivery type.
 			$delivery = $this->get_media_delivery( $attachment_id );
@@ -2257,7 +2336,7 @@ class Media extends Settings_Component implements Setup {
 			add_filter( 'upload_dir', array( $this, 'upload_dir' ) );
 
 			// Filter live URLS. (functions that return a URL).
-			if ( $this->can_filter_out_local() ) {
+			if ( $this->can_filter_out_local() || is_admin() ) {
 				add_filter( 'wp_calculate_image_srcset', array( $this, 'image_srcset' ), 10, 5 );
 				add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
 				add_filter( 'image_downsize', array( $this, 'filter_downsize' ), 10, 3 );
@@ -2309,7 +2388,7 @@ class Media extends Settings_Component implements Setup {
 					'page_title' => __( 'Media Display', 'cloudinary' ),
 					array(
 						'type'      => 'info_box',
-						'icon'      => $this->plugin->dir_url . 'css/transformation.svg',
+						'icon'      => $this->plugin->dir_url . 'css/images/transformation.svg',
 						'title'     => __( 'Transformations', 'cloudinary' ),
 						'text'      => __(
 							'Cloudinary allows you to easily transform your images on-the-fly to any required format, style and dimension, and also optimizes images for minimal file size alongside high visual quality for an improved user experience and minimal bandwidth. You can do all of this by implementing dynamic image transformation and delivery URLs.',

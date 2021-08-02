@@ -98,7 +98,7 @@ class Upgrade {
 			if ( empty( $public_id ) ) {
 				$public_id = implode( '/', $parts );
 			}
-			update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
+			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['version'], $asset_version );
 			if ( ! empty( $asset_transformations ) ) {
 				$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], $asset_transformations );
@@ -115,7 +115,7 @@ class Upgrade {
 				}
 				$public_id .= $suffix;
 				$this->media->delete_post_meta( $attachment_id, Sync::META_KEYS['suffix'] );
-				update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
+				$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
 			}
 			// Check folder sync in order.
 			if ( $this->media->is_folder_synced( $attachment_id ) ) {
@@ -170,9 +170,56 @@ class Upgrade {
 	}
 
 	/**
+	 * Migrate legacy meta data to new meta.
+	 *
+	 * @param int $attachment_id The attachment ID to migrate.
+	 *
+	 * @return array();
+	 */
+	public function migrate_legacy_meta( $attachment_id ) {
+		$meta     = array();
+		$old_meta = wp_get_attachment_metadata( $attachment_id, true );
+		if ( isset( $old_meta[ Sync::META_KEYS['cloudinary'] ] ) ) {
+			$meta = $old_meta[ Sync::META_KEYS['cloudinary'] ];
+			// Add public ID.
+			$public_id                            = get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
+			$meta[ Sync::META_KEYS['public_id'] ] = $public_id;
+			update_post_meta( $attachment_id, Sync::META_KEYS['cloudinary'], $meta );
+			delete_post_meta( $attachment_id, Sync::META_KEYS['public_id'] );
+		} else {
+			// Attempt old post meta.
+			$public_id = get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
+			if ( ! empty( $public_id ) ) {
+				// Loop through all types and create new meta item.
+				$meta = array(
+					Sync::META_KEYS['public_id'] => $public_id,
+				);
+				update_post_meta( $attachment_id, Sync::META_KEYS['cloudinary'], $meta );
+				foreach ( Sync::META_KEYS as $meta_key ) {
+					if ( Sync::META_KEYS['cloudinary'] === $meta_key ) {
+						// Dont use the root as it will be an infinite loop.
+						continue;
+					}
+					$value = get_post_meta( $attachment_id, $meta_key, true );
+					if ( ! empty( $value ) ) {
+						$meta[ $meta_key ] = $value;
+						$this->media->update_post_meta( $attachment_id, $meta_key, $value );
+					}
+				}
+			}
+		}
+
+		return $meta;
+	}
+
+	/**
 	 * Setup hooks for the filters.
 	 */
 	public function setup_hooks() {
+
+		// Add filter to manage legacy items.
+		// @todo: cleanup `convert_cloudinary_version` by v2 upgrades to here.
+		add_filter( 'cloudinary_migrate_legacy_meta', array( $this, 'migrate_legacy_meta' ) );
 
 		// Add a redirection to the new plugin settings, from the old plugin.
 		if ( is_admin() ) {

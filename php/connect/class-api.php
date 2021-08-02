@@ -24,13 +24,6 @@ class Api {
 	public $credentials;
 
 	/**
-	 * Cloudinary API URL.
-	 *
-	 * @var string
-	 */
-	public $api_url = 'api.cloudinary.com';
-
-	/**
 	 * Cloudinary Asset URL.
 	 *
 	 * @var string
@@ -162,7 +155,7 @@ class Api {
 		$parts = array();
 
 		if ( $endpoint ) {
-			$parts[] = $this->api_url;
+			$parts[] = CLOUDINARY_ENDPOINTS_API;
 			$parts[] = $this->api_version;
 		} else {
 			$parts[] = $this->asset_url;
@@ -209,6 +202,8 @@ class Api {
 					$key = array_search( $type, $transformation_index, true );
 					if ( false !== $key ) {
 						$transform[] = $key . '_' . $value;
+					} elseif ( '$' === $type[0] ) {
+						$transform[] = $type . '_' . $value;
 					}
 				}
 
@@ -256,16 +251,13 @@ class Api {
 			'https:/',
 			$this->url( $args['resource_type'], $asset_endpoint ),
 		);
-
-		if ( ! empty( $args['transformation'] ) ) {
-			$url_parts[] = self::generate_transformation_string( $args['transformation'], $args['resource_type'] );
-		}
-		$base = pathinfo( $public_id );
+		$base      = pathinfo( $public_id );
 		// Only do dynamic naming and sizes if upload type.
 		if ( 'image' === $args['resource_type'] && 'upload' === $args['delivery_type'] ) {
 			$new_path  = $base['filename'] . '/' . $base['basename'];
 			$public_id = str_replace( $base['basename'], $new_path, $public_id );
 		}
+
 		// Add size.
 		if ( ! empty( $size ) && is_array( $size ) ) {
 			$url_parts[] = self::generate_transformation_string( array( $size ), $args['resource_type'] );
@@ -273,6 +265,9 @@ class Api {
 			if ( ! empty( $size['file'] ) ) {
 				$public_id = str_replace( $base['basename'], $size['file'], $public_id );
 			}
+		}
+		if ( ! empty( $args['transformation'] ) ) {
+			$url_parts[] = self::generate_transformation_string( $args['transformation'], $args['resource_type'] );
 		}
 
 		$url_parts[] = $args['version'];
@@ -388,12 +383,24 @@ class Api {
 		$url                 = $this->url( $resource, 'upload', true );
 		$args                = $this->clean_args( $args );
 		$disable_https_fetch = get_transient( '_cld_disable_http_upload' );
-		if ( wp_attachment_is_image( $attachment_id ) ) {
+		if (
+			function_exists( 'wp_get_original_image_url' ) &&
+			wp_attachment_is_image( $attachment_id )
+		) {
 			$file_url = wp_get_original_image_url( $attachment_id );
 		} else {
 			$file_url = wp_get_attachment_url( $attachment_id );
 		}
+		if ( empty( $file_url ) ) {
+			$disable_https_fetch = true;
+		}
 		$media    = get_plugin_instance()->get_component( 'media' );
+		if ( ! $media->is_local_media( $attachment_id ) ) {
+			$disable_https_fetch = false; // Remote can upload via url.
+			// translators: variable is thread name and queue size.
+			$action_message = sprintf( __( 'Uploading remote url:  %1$s.', 'cloudinary' ), $file_url );
+			do_action( '_cloudinary_queue_action', $action_message );
+		}
 		$tempfile = false;
 		if ( $media && $media->is_cloudinary_url( $file_url ) ) {
 			// If this is a Cloudinary URL, then we can use it to fetch from that location.

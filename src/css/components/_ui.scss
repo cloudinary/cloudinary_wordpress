@@ -13,7 +13,6 @@
 .cld {
 	&-pagenav{
 		margin-top: 5px;
-		text-align: right;
 		line-height: 2.4em;
 		color: #555;
 		&-text{
@@ -55,7 +54,7 @@
 	}
 
 	&-syncing {
-		background: url("./loading.svg") no-repeat center center;
+		background: url("./images/loading.svg") no-repeat center center;
 		width: 30px;
 		height: 20px;
 		margin-left: 12px;
@@ -198,8 +197,6 @@
 			align-self: center;
 			padding: 0 0.45rem;
 			cursor: pointer;
-			position: absolute;
-			right: 0;
 		}
 
 		&-title {
@@ -318,6 +315,9 @@
 	}
 
 	&-group {
+		.cld-group .cld-group {
+			padding-left: 4px;
+		}
 
 		hr {
 			border-top: 1px solid $color-light-grey;
@@ -325,9 +325,13 @@
 			clear: both;
 		}
 
+		.cld-group .cld-group hr {
+			display: none;
+		}
+
 		&-heading {
 			display: flex;
-
+			justify-content: space-between;
 			h3 {
 				font-size: 0.9rem;
 
@@ -905,6 +909,7 @@ td.tree {
 		padding: 4px 6px;
 		font-size: 0.9em;
 		margin-right: 12px;
+		width: 300px;
 	}
 
 	.file-size {

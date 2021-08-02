@@ -38,12 +38,14 @@ class Image_Preview extends Component {
 	 * @var string
 	 */
 	protected $preview_type = 'image';
+
 	/**
 	 * Flag if component is a capture type.
 	 *
 	 * @var bool
 	 */
 	public $capture = true;
+
 	/**
 	 * Filter the notice parts structure.
 	 *
@@ -53,7 +55,14 @@ class Image_Preview extends Component {
 	 */
 	protected function notice( $struct ) {
 
-		$struct['element'] = 'span';
+		$struct['element']             = 'div';
+		$struct['attributes']['id']    = 'cld-preview-error';
+		$struct['attributes']['class'] = array(
+			'settings-alert',
+			'settings-alert-error',
+		);
+		$struct['attributes']['style'] = 'display: none; margin-bottom: 10px;';
+		$struct['render']              = true;
 
 		return $struct;
 	}
@@ -193,7 +202,7 @@ class Image_Preview extends Component {
 	 * Setup the JS data before rendering.
 	 */
 	protected function pre_render() {
-		$url         = 'https://res.cloudinary.com/demo/image/upload/';
+		$url         = CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE;
 		$preview_src = $url . 'w_600/';
 		$sample      = '/sample.jpg';
 		$script_data = array(

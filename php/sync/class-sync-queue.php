@@ -299,7 +299,7 @@ class Sync_Queue {
 					'compare' => 'NOT EXISTS',
 				),
 				array(
-					'key'     => Sync::META_KEYS['public_id'],
+					'key'     => Sync::META_KEYS['cloudinary'],
 					'compare' => 'NOT EXISTS',
 				),
 				array(
@@ -310,6 +310,18 @@ class Sync_Queue {
 			'ignore_sticky_posts' => false,
 			'no_found_rows'       => true,
 		);
+
+		/**
+		 * Filter the params for the query used to build a queue.
+		 *
+		 * @hook  cloudinary_build_queue_query
+		 * @since 2.7.6
+		 *
+		 * @param $args {array} The arguments for the query.
+		 *
+		 * @return {array}
+		 */
+		$args = apply_filters( 'cloudinary_build_queue_query', $args );
 
 		// translators: variable is page number.
 		$action_message = __( 'Building Queue.', 'cloudinary' );
@@ -551,6 +563,19 @@ class Sync_Queue {
 			),
 		);
 
+		/**
+		 * Filter the params for the query used to get thread queue details.
+		 *
+		 * @hook  cloudinary_thread_queue_details_query
+		 * @since 2.7.6
+		 *
+		 * @param $args   {array}  The arguments for the query.
+		 * @param $thread {string} The thread name.
+		 *
+		 * @return {array}
+		 */
+		$args = apply_filters( 'cloudinary_thread_queue_details_query', $args, $thread );
+
 		$query = new \WP_Query( $args );
 
 		$return = array(
@@ -673,7 +698,7 @@ class Sync_Queue {
 			$thread_queue = $this->get_thread_queue( $thread );
 			$offset       = time() - $thread_queue['ping'];
 			$return       = 3; // If autosync is running, default is ready/stalled.
-			if ( empty( $thread_queue['next'] ) && 0 !== $thread_queue['next'] ) {
+			if ( empty( $thread_queue['next'] ) && empty( $thread_queue['count'] ) ) {
 				$return = 1; // Queue is empty, so nothing to sync, set as ended.
 			} elseif ( ! empty( $thread_queue['ping'] ) && $offset < $this->cron_start_offset ) {
 				$return = 2; // If the last ping is within the time frame, it's still active.

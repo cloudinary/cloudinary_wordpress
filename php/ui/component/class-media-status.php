@@ -112,7 +112,7 @@ class Media_Status extends Component {
 
 			$icon                      = $this->get_part( 'icon' );
 			$icon['element']           = 'img';
-			$icon['attributes']['src'] = $this->dir_url . 'css/upload.svg';
+			$icon['attributes']['src'] = $this->dir_url . 'css/images/upload.svg';
 			$icon['render']            = true;
 
 			$status                        = $this->get_part( 'span' );
@@ -161,7 +161,7 @@ class Media_Status extends Component {
 			'posts_per_page' => 1,
 			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery
 				array(
-					'key'     => Sync::META_KEYS['public_id'],
+					'key'     => Sync::META_KEYS['cloudinary'],
 					'compare' => 'EXISTS',
 				),
 

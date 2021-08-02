@@ -8,7 +8,11 @@
 namespace Cloudinary\Media;
 
 use Cloudinary\Connect\Api;
+use Cloudinary\Media;
 use Cloudinary\Utils;
+use WP_Post;
+use WP_REST_Request;
+use WP_REST_Response;
 
 /**
  * Class Filter.
@@ -22,16 +26,16 @@ class Filter {
 	 *
 	 * @since   0.1
 	 *
-	 * @var     \Cloudinary\Media Instance of the plugin.
+	 * @var     Media Instance of the plugin.
 	 */
 	private $media;
 
 	/**
 	 * Filter constructor.
 	 *
-	 * @param \Cloudinary\Media $media The plugin.
+	 * @param Media $media The plugin.
 	 */
-	public function __construct( \Cloudinary\Media $media ) {
+	public function __construct( Media $media ) {
 		$this->media = $media;
 		$this->setup_hooks();
 	}
@@ -87,13 +91,13 @@ class Filter {
 	 * Get the attachment ID from the media tag.
 	 *
 	 * @param string $asset The media tag.
-	 *
+	 * @param string $type  The type.
 	 * @return int|false
 	 */
-	public function get_id_from_tag( $asset ) {
+	public function get_id_from_tag( $asset, $type = 'wp-image-|wp-video-' ) {
 		$attachment_id = false;
 		// Get attachment id from class name.
-		if ( preg_match( '#class=["|\']?[^"\']*(wp-image-|wp-video-)([\d]+)[^"\']*["|\']?#i', $asset, $found ) ) {
+		if ( preg_match( '#class=["|\']?[^"\']*(' . $type . ')([\d]+)[^"\']*["|\']?#i', $asset, $found ) ) {
 			$attachment_id = intval( $found[2] );
 		}
 
@@ -442,9 +446,9 @@ class Filter {
 	/**
 	 * Return a Cloudinary URL for an attachment used in a REST REQUEST.
 	 *
-	 * @param \WP_REST_Response $attachment The attachment array to be used in JS.
+	 * @param WP_REST_Response $attachment The attachment array to be used in JS.
 	 *
-	 * @return \WP_REST_Response
+	 * @return WP_REST_Response
 	 * @uses filter:rest_prepare_attachment
 	 */
 	public function filter_attachment_for_rest( $attachment ) {
@@ -546,13 +550,13 @@ class Filter {
 	}
 
 	/**
-	 * Filter out local urls in an 'edit' context rest request ( i.e for Gutenburg ).
+	 * Filter out local urls in an 'edit' context rest request ( i.e for Gutenberg ).
 	 *
-	 * @param \WP_REST_Response $response The post data array to save.
-	 * @param \WP_Post          $post     The current post.
-	 * @param \WP_REST_Request  $request  The request object.
+	 * @param WP_REST_Response $response The post data array to save.
+	 * @param WP_Post          $post     The current post.
+	 * @param WP_REST_Request  $request  The request object.
 	 *
-	 * @return \WP_REST_Response
+	 * @return WP_REST_Response
 	 */
 	public function pre_filter_rest_content( $response, $post, $request ) {
 		$context = $request->get_param( 'context' );
@@ -706,35 +710,11 @@ class Filter {
 	 * @return string
 	 */
 	public function filter_image_block_render_block( $block_content, array $block ) {
-		if ( 'core/image' === $block['blockName'] && empty( $block['cld_render'] ) ) {
-			$filtered_block               = $this->filter_image_block_pre_render( $block, $block );
-			$filtered_block['cld_render'] = true;
-			$block_content                = render_block( $filtered_block );
-
+		if ( 'core/image' === $block['blockName'] && ! empty( $block['attrs']['overwrite_transformations'] ) ) {
+			$block_content = str_replace( 'wp-image-' . $block['attrs']['id'], 'wp-image-' . $block['attrs']['id'] . ' cld-overwrite', $block_content );
 		}
 
 		return $block_content;
-	}
-
-	/**
-	 * Filter an image block to add the class for cld-overriding.
-	 *
-	 * @param array $block        The current block structure.
-	 * @param array $source_block The source, unfiltered block structure.
-	 *
-	 * @return array
-	 */
-	public function filter_image_block_pre_render( $block, $source_block ) {
-
-		if ( 'core/image' === $source_block['blockName'] ) {
-			if ( ! empty( $source_block['attrs']['overwrite_transformations'] ) ) {
-				foreach ( $block['innerContent'] as &$content ) {
-					$content = str_replace( 'wp-image-' . $block['attrs']['id'], 'wp-image-' . $block['attrs']['id'] . ' cld-overwrite', $content );
-				}
-			}
-		}
-
-		return $block;
 	}
 
 	/**
@@ -752,6 +732,23 @@ class Filter {
 				add_filter( 'rest_prepare_' . $type, array( $this, 'pre_filter_rest_content' ), 10, 3 );
 			}
 		}
+	}
+
+	/**
+	 * Record attachment with meta being updated.
+	 *
+	 * @hook wp_update_attachment_metadata
+	 *
+	 * @param array $data The new meta array.
+	 * @param int   $id   The id.
+	 *
+	 * @return array
+	 */
+	public function record_meta_update( $data, $id ) {
+		$this->media->plugin->settings->set_param( '_currrent_attachment', $id );
+		$this->media->plugin->settings->set_param( '_currrent_meta', $data );
+
+		return $data;
 	}
 
 	/**
@@ -782,15 +779,13 @@ class Filter {
 		add_action( 'admin_footer', array( $this, 'catch_media_templates_maybe' ), 9 );
 
 		// Filter for block rendering.
-		if ( has_filter( 'render_block_data' ) ) {
-			add_filter( 'render_block_data', array( $this, 'filter_image_block_pre_render' ), 10, 2 );
-		} else {
-			// The render_block_data filter was only introduced on WP 5.1.0. This is the fallback for 5.0.*.
-			add_filter( 'render_block', array( $this, 'filter_image_block_render_block' ), 10, 2 );
-		}
+		add_filter( 'render_block', array( $this, 'filter_image_block_render_block' ), 10, 2 );
+
+		// Filter to record current meta updating attachment.
+		add_filter( 'wp_update_attachment_metadata', array( $this, 'record_meta_update' ), 10, 2 );
 
 		// Filter out locals and responsive images setup.
-		if ( $this->media->can_filter_out_local() ) {
+		if ( $this->media->can_filter_out_local() || is_admin() ) {
 			// Filtering out locals.
 			add_filter( 'the_editor_content', array( $this, 'filter_out_local' ) );
 			add_filter( 'the_content', array( $this, 'filter_out_local' ), 100 );

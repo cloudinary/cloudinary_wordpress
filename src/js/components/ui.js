@@ -17,12 +17,13 @@ const UI = {
 		const triggers = context.querySelectorAll( '[data-bind-trigger]' );
 		const masters = context.querySelectorAll( '[data-master]' );
 		const files = context.querySelectorAll( '[data-file]' );
+		const autoSuffix = context.querySelectorAll( '[data-auto-suffix]' );
 		const self = this;
 		const compilerDebounce = {};
 
 		// Bind on offs.
 		OnOff.bind( masters );
-
+		autoSuffix.forEach( ( input ) => this._autoSuffix( input ) );
 		triggers.forEach( ( input ) => this._trigger( input ) );
 		toggles.forEach( ( toggle ) => this._toggle( toggle ) );
 		conditions.forEach( ( condition ) => this._bind( condition ) );
@@ -47,6 +48,30 @@ const UI = {
 
 		// Start cache manager.
 		CacheManage.init( context );
+	},
+	_autoSuffix( input ) {
+		const suffixes = input.dataset.autoSuffix;
+		let defaultSuffix = '';
+		const valid = [ ...suffixes.split( ';' ) ].map( ( suffix ) => {
+			if ( 0 === suffix.indexOf( '*' ) ) {
+				defaultSuffix = suffix.replace( '*', '' );
+				return defaultSuffix;
+			}
+			return suffix;
+		} );
+		input.addEventListener( 'change', () => {
+			const value = input.value.replace( ' ', '' );
+			const number = value.replace( /[^0-9]/g, '' );
+			const type = value.replace( /[0-9]/g, '' ).toLowerCase();
+			if ( number ) {
+				if ( -1 === valid.indexOf( type ) ) {
+					input.value = number + defaultSuffix;
+				} else {
+					input.value = number + type;
+				}
+			}
+		} );
+		input.dispatchEvent( new Event( 'change' ) );
 	},
 	_files( file, compilerDebounce ) {
 		const parent = file.dataset.parent;
@@ -105,8 +130,11 @@ const UI = {
 		} );
 		input.addEventListener( 'input', function () {
 			self.bindings[ trigger ].value = input.value;
-			if ( 'checkbox' === input.type || 'radio' === input.type ) {
+			if ( 'checkbox' === input.type ) {
 				self.bindings[ trigger ].checked = input.checked;
+			}
+			if ( 'radio' === input.type && false === input.checked ) {
+				return; // Ignore an unchecked radio.
 			}
 			for ( const bound in self.bindings[ trigger ].elements ) {
 				self.toggle(

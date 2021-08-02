@@ -21,12 +21,6 @@ use WP_REST_Response;
  * @package Cloudinary
  */
 class Deactivation {
-	/**
-	 * The Cloudinary endpoint to submit the feedback.
-	 *
-	 * @var string
-	 */
-	protected static $cld_endpoint = 'https://analytics-api.cloudinary.com/wp_deactivate_reason';
 
 	/**
 	 * The internal endpoint to capture the administrator feedback.
@@ -291,7 +285,7 @@ class Deactivation {
 			$args['contact'] = $contact;
 		}
 
-		$url = add_query_arg( $args, self::$cld_endpoint );
+		$url = add_query_arg( $args, CLOUDINARY_ENDPOINTS_DEACTIVATION );
 
 		$response = wp_safe_remote_get( $url );
 

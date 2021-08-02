@@ -28,7 +28,6 @@ class Storage implements Notice {
 	 */
 	protected $plugin;
 
-
 	/**
 	 * Holds the Plugin Media instance.
 	 *
@@ -71,6 +70,11 @@ class Storage implements Notice {
 	 * @var array
 	 */
 	protected $settings;
+
+	/**
+	 * The delay in seconds before local assets get deleted if Cloudinary only storage.
+	 */
+	const DELETE_DELAY = MINUTE_IN_SECONDS;
 
 	/**
 	 * Filter constructor.
@@ -162,15 +166,25 @@ class Storage implements Notice {
 	 * @return string
 	 */
 	public function generate_signature( $attachment_id ) {
-		$file_exists = true;
+		$extension       = true;
+		$attachment_file = get_attached_file( $attachment_id );
+
 		if ( 'cld' !== $this->settings['offload'] ) {
-			$attachment_file = get_attached_file( $attachment_id );
 			if ( ! file_exists( $attachment_file ) ) {
-				$file_exists = $attachment_file;
+				$extension = $attachment_file;
+			}
+		} else {
+			// A fully synced signature for cld, will have the extension as true.
+			// If coming from cld_dual, the extension in that signature will have the path.
+			// This means the new signature will not match.
+			if ( file_exists( $attachment_file ) ) {
+				// The validate method will return false the first time it's run in cld mode.
+				// After the delay, it will return true. Making the signature different again.
+				$extension = $this->validate( $attachment_id );
 			}
 		}
 
-		return $this->settings['offload'] . $this->media->get_public_id( $attachment_id ) . $file_exists;
+		return $this->settings['offload'] . $this->media->get_public_id( $attachment_id ) . $extension;
 	}
 
 	/**
@@ -189,7 +203,9 @@ class Storage implements Notice {
 		switch ( $this->settings['offload'] ) {
 			case 'cld':
 				$this->remove_local_assets( $attachment_id );
-				update_post_meta( $attachment_id, '_wp_attached_file', $this->media->cloudinary_url( $attachment_id ) );
+				$cloudinary_url = $this->media->cloudinary_url( $attachment_id, false );
+				$cloudinary_url = remove_query_arg( '_i', $cloudinary_url );
+				update_post_meta( $attachment_id, '_wp_attached_file', $cloudinary_url );
 				break;
 			case 'dual_low':
 				$transformations = $this->media->get_transformation_from_meta( $attachment_id );
@@ -220,6 +236,7 @@ class Storage implements Notice {
 				$this->remove_local_assets( $attachment_id );
 			}
 			$date = get_post_datetime( $attachment_id );
+			$url  = remove_query_arg( '_i', $url );
 			$this->download->download_asset( $attachment_id, $url, $date->format( 'Y/m' ) );
 		}
 
@@ -256,6 +273,9 @@ class Storage implements Notice {
 			$meta['file'] = get_the_guid( $attachment_id );
 		}
 
+		// Remove the delay meta.
+		delete_post_meta( $attachment_id, Sync::META_KEYS['delay'] );
+
 		return wp_delete_attachment_files( $attachment_id, $meta, $backup_sizes, get_attached_file( $attachment_id ) );
 	}
 
@@ -288,7 +308,7 @@ class Storage implements Notice {
 	 */
 	public function get_notices() {
 		$notices = array();
-		if ( 'cld' === $this->settings['offload'] ) {
+		if ( ! empty( $this->settings ) && 'cld' === $this->settings['offload'] ) {
 			$storage         = $this->connect->get_usage_stat( 'storage', 'used_percent' );
 			$transformations = $this->connect->get_usage_stat( 'transformations', 'used_percent' );
 			$bandwidth       = $this->connect->get_usage_stat( 'bandwidth', 'used_percent' );
@@ -337,6 +357,34 @@ class Storage implements Notice {
 	}
 
 	/**
+	 * Validates the storage mechanism.
+	 * Returning a false on the validate method within a sync type bypasses the sync method and sets the signature.
+	 *
+	 * @param int $attachment_id The attachment ID to validate.
+	 *
+	 * @return bool
+	 */
+	public function validate( $attachment_id ) {
+		$valid = true;
+		if ( 'cld' === $this->settings['offload'] ) {
+			// In cld mode, we want to delay the deletion.
+			$now       = time();
+			$timestamp = get_post_meta( $attachment_id, Sync::META_KEYS['delay'], true );
+			if ( empty( $timestamp ) ) {
+				update_post_meta( $attachment_id, Sync::META_KEYS['delay'], $now );
+				$timestamp = $now;
+			}
+			$diff = $now - $timestamp;
+			// If this is false, it will set the signature without running the sync method.
+			// When the sync expected sync signature changes, due to using this method as part of the signature,
+			// it will be forced to revalidate the sync method, with will be true and allow the sync to run.
+			$valid = self::DELETE_DELAY <= $diff;
+		}
+
+		return $valid;
+	}
+
+	/**
 	 * Setup hooks for the filters.
 	 */
 	public function setup() {
@@ -354,6 +402,7 @@ class Storage implements Notice {
 			$this->settings = wp_parse_args( $settings, $defaults );
 			$structure      = array(
 				'generate' => array( $this, 'generate_signature' ),
+				'validate' => array( $this, 'validate' ),
 				'priority' => 15,
 				'sync'     => array( $this, 'sync' ),
 				'state'    => 'info syncing',
