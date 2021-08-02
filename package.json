@@ -27,7 +27,7 @@
     "deploy-assets": "grunt deploy-assets",
     "postinstall": "composer install",
     "readme": "composer readme",
-    "release": "release-it",
+    "release": "release-it --no-increment",
     "release:ci": "release-it --ci",
     "release:dry": "release-it --dry-run"
   },
