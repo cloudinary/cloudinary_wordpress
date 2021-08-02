@@ -391,6 +391,9 @@ class Api {
 		} else {
 			$file_url = wp_get_attachment_url( $attachment_id );
 		}
+		if ( empty( $file_url ) ) {
+			$disable_https_fetch = true;
+		}
 		$media    = get_plugin_instance()->get_component( 'media' );
 		if ( ! $media->is_local_media( $attachment_id ) ) {
 			$disable_https_fetch = false; // Remote can upload via url.

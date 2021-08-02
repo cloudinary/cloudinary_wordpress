@@ -263,7 +263,19 @@ class Media extends Settings_Component implements Setup {
 			$is_media    = in_array( $type, $media_types, true );
 		}
 
-		return $is_media;
+		/**
+		 * Filter the check if post is media.
+		 *
+		 * @hook    cloudinary_is_media
+		 * @since   2.7.6
+		 * @default false
+		 *
+		 * @param $is_media      {bool} Flag if is media.
+		 * @param $attachment_id {int}  The attachment ID.
+		 *
+		 * @return {bool}
+		 */
+		return apply_filters( 'cloudinary_is_media', $is_media, $attachment_id );
 	}
 
 	/**
@@ -1164,7 +1176,7 @@ class Media extends Settings_Component implements Setup {
 				}
 			}
 			$cloudinary_id = $public_id;
-			if ( 'fetch' !== $this->get_media_delivery( $attachment_id ) ) {
+			if ( 'fetch' !== $this->get_media_delivery( $attachment_id ) && empty( pathinfo( $public_id, PATHINFO_EXTENSION ) ) ) {
 				$cloudinary_id = $public_id . '.' . $extension;
 			}
 		}
@@ -1872,12 +1884,12 @@ class Media extends Settings_Component implements Setup {
 			/**
 			 * Filter the meta if not found, in order to migrate from a legacy plugin.
 			 *
-			 * @hook    cloudinary_migrate_legacy_meta
-			 * @since   2.7.5
+			 * @hook  cloudinary_migrate_legacy_meta
+			 * @since 2.7.5
 			 *
 			 * @param $attachment_id {int} The attachment ID.
 			 *
-			 * @return  array
+			 * @return {array}
 			 */
 			$meta = apply_filters( 'cloudinary_migrate_legacy_meta', $post_id );
 		}
@@ -2226,14 +2238,16 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Filters the new sizes to ensure non upload (sprites), don't get resized.
 	 *
-	 * @param array $new_sizes     Array of sizes.
-	 * @param array $image_meta    Image metadata.
-	 * @param int   $attachment_id The attachment ID.
+	 * @param array    $new_sizes     Array of sizes.
+	 * @param array    $image_meta    Image metadata.
+	 * @param int|null $attachment_id The attachment ID.
 	 *
 	 * @return array
 	 */
-	public function manage_sizes( $new_sizes, $image_meta, $attachment_id ) {
-
+	public function manage_sizes( $new_sizes, $image_meta, $attachment_id = null ) {
+		if ( is_null( $attachment_id ) ) {
+			$attachment_id = $this->plugin->settings->get_param( '_currrent_attachment', 0 );
+		}
 		if ( $this->has_public_id( $attachment_id ) ) {
 			// Get delivery type.
 			$delivery = $this->get_media_delivery( $attachment_id );

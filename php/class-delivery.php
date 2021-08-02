@@ -72,26 +72,47 @@ class Delivery implements Setup {
 		$this->plugin                        = $plugin;
 		$this->plugin->components['replace'] = new String_Replace( $this->plugin );
 		$this->media                         = $this->plugin->get_component( 'media' );
-		$this->setup_hooks();
+		add_filter( 'cloudinary_filter_out_local', '__return_false' );
+		add_action( 'update_option_cloudinary_media_display', array( $this, 'clear_cache' ) );
+		add_action( 'cloudinary_flush_cache', array( $this, 'clear_cache' ) );
 	}
 
 	/**
 	 * Setup early needed hooks.
 	 */
 	protected function setup_hooks() {
+		// Add filters.
+		add_action( 'save_post', array( $this, 'remove_replace_cache' ) );
+		add_action( 'cloudinary_string_replace', array( $this, 'catch_urls' ) );
+		add_filter( 'post_thumbnail_html', array( $this, 'process_featured_image' ), 100, 3 );
 
-		add_filter( 'cloudinary_filter_out_local', '__return_false' );
-		add_action( 'update_option_cloudinary_media_display', array( $this, 'clear_cache' ) );
-		add_action( 'cloudinary_flush_cache', array( $this, 'clear_cache' ) );
 		add_filter( 'cloudinary_current_post_id', array( $this, 'get_current_post_id' ) );
 		add_filter( 'the_content', array( $this, 'add_post_id' ) );
 		add_filter( 'wp_img_tag_add_srcset_and_sizes_attr', '__return_false' );
+		add_action( 'wp_resource_hints', array( $this, 'dns_prefetch' ), 10, 2 );
 
 		// Clear cache on taxonomy update.
 		$taxonomies = get_taxonomies( array( 'show_ui' => true ) );
 		foreach ( $taxonomies as $taxonomy ) {
 			add_action( "saved_{$taxonomy}", array( $this, 'clear_cache' ) );
 		}
+	}
+
+	/**
+	 * Add DNS prefetch link tag for assets.
+	 *
+	 * @param array  $urls          URLs to print for resource hints.
+	 * @param string $relation_type The relation type the URLs are printed for, e.g. 'preconnect' or 'prerender'.
+	 *
+	 * @return array
+	 */
+	public function dns_prefetch( $urls, $relation_type ) {
+
+		if ( 'dns-prefetch' === $relation_type || 'preconnect' === $relation_type ) {
+			$urls[] = $this->media->base_url;
+		}
+
+		return $urls;
 	}
 
 	/**
@@ -142,10 +163,7 @@ class Delivery implements Setup {
 		$this->filter = $this->media->filter;
 		$this->sync   = $this->media->sync;
 
-		// Add filters.
-		add_action( 'save_post', array( $this, 'remove_replace_cache' ) );
-		add_action( 'cloudinary_string_replace', array( $this, 'catch_urls' ) );
-		add_filter( 'post_thumbnail_html', array( $this, 'process_featured_image' ), 100, 3 );
+		$this->setup_hooks();
 	}
 
 	/**
@@ -156,14 +174,12 @@ class Delivery implements Setup {
 		add_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ), 10, 5 );
 
 		/**
-		 * Action indicating that the delivery is starting.s
+		 * Action indicating that the delivery is starting.
 		 *
-		 * @hook    cloudinary_pre_image_tag
-		 * @since   2.7.5
+		 * @hook  cloudinary_pre_image_tag
+		 * @since 2.7.5
 		 *
-		 * @param $delivery {Delivery}  The delivery object.
-		 *
-		 * @return  void
+		 * @param $delivery {Delivery} The delivery object.
 		 */
 		do_action( 'cloudinary_init_delivery', $this );
 	}
@@ -210,9 +226,12 @@ class Delivery implements Setup {
 	 */
 	public function get_attachment_size_urls( $attachment_id ) {
 
-		$urls             = array();
-		$meta             = wp_get_attachment_metadata( $attachment_id );
-		$baseurl          = wp_get_attachment_url( $attachment_id );
+		$urls    = array();
+		$meta    = wp_get_attachment_metadata( $attachment_id );
+		$baseurl = wp_get_attachment_url( $attachment_id );
+		if ( false === $baseurl ) {
+			return $urls;
+		}
 		$base             = trailingslashit( dirname( $baseurl ) );
 		$urls[ $baseurl ] = $this->media->cloudinary_url( $attachment_id );
 		// Ignore getting 'original_image' since this isn't used in the front end.
@@ -282,6 +301,33 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Get the attachment ID from the media tag.
+	 *
+	 * @param string $asset The media tag.
+	 * @param string $type  The type.
+	 *
+	 * @return int|false
+	 */
+	public function get_id_from_tag( $asset, $type = 'wp-image-|wp-video-' ) {
+		$attachment_id = $this->filter->get_id_from_tag( $asset, $type );
+		/**
+		 * Filter id from the tag.
+		 *
+		 * @hook  cloudinary_delivery_get_id
+		 * @since 2.7.6
+		 *
+		 * @param $attachment_id {int}    The attachment ID.
+		 * @param $asset         {string} The html tag.
+		 * @param $type          {string} The asset type.
+		 *
+		 * @return {int|false}
+		 */
+		$attachment_id = apply_filters( 'cloudinary_delivery_get_id', $attachment_id, $asset, $type );
+
+		return $attachment_id;
+	}
+
+	/**
 	 * Convert media tags from Local to Cloudinary, and register with String_Replace.
 	 *
 	 * @param string $content The HTML to find tags and prep replacement in.
@@ -289,29 +335,38 @@ class Delivery implements Setup {
 	 * @return array
 	 */
 	public function convert_tags( $content ) {
-
+		$cached = array();
 		if ( is_singular() ) {
 			$cache_key = self::META_CACHE_KEY;
 			$has_cache = get_post_meta( get_the_ID(), $cache_key, true );
 			$type      = is_ssl() ? 'https' : 'http';
 			if ( ! empty( $has_cache ) && ! empty( $has_cache[ $type ] ) ) {
-				return $has_cache[ $type ];
+				$cached = $has_cache[ $type ];
 			}
 		}
 		$tags           = $this->filter->get_media_tags( $content );
-		$replacements   = array();
 		$attachment_ids = array();
+		$replacements   = array();
 		foreach ( $tags as $element ) {
-			$attachment_id         = $this->filter->get_id_from_tag( $element );
-			$this->current_post_id = $this->filter->get_id_from_tag( $element, 'wp-post-' );
-
-			if ( empty( $attachment_id ) || ! $this->sync->is_synced( $attachment_id ) ) {
+			// Check cache and skip if needed.
+			if ( isset( $replacements[ $element ] ) ) {
 				continue;
 			}
-			// Register replacement.
-			$replacements[ $element ] = $this->rebuild_tag( $element, $attachment_id );
-			$attachment_ids[]         = $attachment_id;
-			$this->current_post_id    = null;
+			$attachment_id         = $this->get_id_from_tag( $element );
+			$this->current_post_id = $this->filter->get_id_from_tag( $element, 'wp-post-' );
+
+			if ( empty( $attachment_id ) || ! $this->media->cloudinary_id( $attachment_id ) ) {
+				continue;
+			}
+			// Use cached item if found.
+			if ( isset( $cached[ $element ] ) ) {
+				$replacements[ $element ] = $cached[ $element ];
+			} else {
+				// Register replacement.
+				$replacements[ $element ] = $this->rebuild_tag( $element, $attachment_id );
+			}
+			$attachment_ids[]      = $attachment_id;
+			$this->current_post_id = null;
 		}
 
 		// Create other image sizes for ID's found.
@@ -367,14 +422,14 @@ class Delivery implements Setup {
 		/**
 		 * Filter the tag element.
 		 *
-		 * @hook    cloudinary_pre_image_tag
-		 * @since   2.7.5
+		 * @hook  cloudinary_pre_image_tag
+		 * @since 2.7.5
 		 *
-		 * @param $tag_element   {array}   The tag_element ( tag + attributes array).
-		 * @param $attachment_id {int} The attachment ID.
-		 * @param $element       {string}  The original HTML tag.
+		 * @param $tag_element   {array}  The tag_element ( tag + attributes array).
+		 * @param $attachment_id {int}    The attachment ID.
+		 * @param $element       {string} The original HTML tag.
 		 *
-		 * @return  array
+		 * @return {array}
 		 */
 		$tag_element = apply_filters( 'cloudinary_pre_image_tag', $tag_element, $attachment_id, $element );
 
@@ -451,28 +506,105 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Checks if a url is for a local asset.
+	 *
+	 * @param string $url The url to check.
+	 *
+	 * @return bool
+	 */
+	protected function is_local_asset_url( $url ) {
+		static $base = '';
+		if ( empty( $base ) ) {
+			$dirs = wp_upload_dir();
+			$base = $dirs['baseurl'];
+		}
+
+		$is_local = substr( $url, 0, strlen( $base ) ) === $base;
+
+		/**
+		 * Filter if the url is a local asset.
+		 *
+		 * @hook  cloudinary_pre_image_tag
+		 * @since 2.7.6
+		 *
+		 * @param $is_local {bool}   If the url is a local asset.
+		 * @param $url      {string} The url.
+		 *
+		 * @return {bool}
+		 */
+		return apply_filters( 'cloudinary_is_local_asset_url', $is_local, $url );
+	}
+
+	/**
+	 * Clean a url: adds scheme if missing, removes query and fragments.
+	 *
+	 * @param string $url The URL to clean.
+	 *
+	 * @return string
+	 */
+	public static function clean_url( $url ) {
+		$default = array(
+			'scheme' => '',
+			'host'   => '',
+			'path'   => '',
+		);
+		$parts   = wp_parse_args( wp_parse_url( $url ), $default );
+
+		return $parts['scheme'] . '://' . $parts['host'] . $parts['path'];
+	}
+
+	/**
+	 * Filter out excluded urls.
+	 *
+	 * @param string $url The url to filter out.
+	 *
+	 * @return bool
+	 */
+	public function validate_url( $url ) {
+		static $home;
+		if ( ! $home ) {
+			$home = wp_parse_url( home_url( '/' ) );
+		}
+		$parts = wp_parse_url( $url );
+		if ( empty( $parts['host'] ) ) {
+			return false; // If host is empty, it's a false positive url.
+		}
+		if ( empty( $parts['path'] ) || '/' === $parts['path'] ) {
+			return false; // exclude base domains.
+		}
+		$ext = pathinfo( $parts['path'], PATHINFO_EXTENSION );
+		if ( $parts['host'] === $home['host'] && empty( $ext ) || 'php' === $ext ) {
+			return false; // Local urls without an extension or ending in PHP will not be media.
+		}
+
+		return true;
+	}
+
+	/**
+	 * Get urls from HTML.
+	 *
+	 * @param string $content The content html.
+	 *
+	 * @return array
+	 */
+	protected function get_urls( $content ) {
+		$base_urls = array_map( array( $this, 'clean_url' ), wp_extract_urls( $content ) );
+		$urls      = array_filter( array_unique( $base_urls ), array( $this, 'validate_url' ) ); // clean out empty urls.
+		$urls      = array_filter( $urls, array( $this, 'is_local_asset_url' ) );
+
+		return $urls;
+	}
+
+	/**
 	 * Catch attachment URLS from HTML content.
 	 *
 	 * @param string $content The HTML to catch URLS from.
 	 */
 	public function catch_urls( $content ) {
 		$this->init_delivery();
-		$known = $this->convert_tags( $content );
-		$urls  = wp_extract_urls( $content );
-		$dirs  = wp_get_upload_dir();
-		$urls  = array_map(
-			function ( $url ) use ( $dirs ) {
-
-				if ( false === strpos( $url, $dirs['baseurl'] ) ) {
-					return null;
-				}
-
-				return $url;
-			},
-			$urls
-		);
-
-		$urls    = array_filter( array_filter( $urls ), array( 'Cloudinary\String_Replace', 'string_not_set' ) );
+		$urls    = $this->get_urls( $content );
+		$known   = $this->convert_tags( $content );
+		$urls    = array_filter( $urls, array( 'Cloudinary\String_Replace', 'string_not_set' ) );
 		$unknown = array_diff( $urls, array_keys( $known ) );
 		if ( ! empty( $unknown ) ) {
 			$known = array_merge( $known, $this->find_attachment_size_urls( $unknown ) );

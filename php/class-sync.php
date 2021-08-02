@@ -334,7 +334,7 @@ class Sync implements Setup, Assets {
 		/**
 		 * Filter the get signature of the asset.
 		 *
-		 * @hook   cloudinary_get_signature
+		 * @hook cloudinary_get_signature
 		 *
 		 * @param $return        {array} The attachment signature.
 		 * @param $attachment_id {int}   The attachment ID.
