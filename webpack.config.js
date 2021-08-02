@@ -138,14 +138,6 @@ const cldGalleryBlock = {
 	entry: {
 		'gallery-block': './src/js/gallery-block/index.js',
 	},
-	plugins: [
-		new MiniCssExtractPlugin( {
-			filename: '../css/[name].css',
-		} ),
-		new RtlCssPlugin( {
-			filename: '../css/[name]-rtl.css',
-		} ),
-	],
 };
 
 const cldGalleryInit = {
