@@ -197,6 +197,8 @@ class Delivery implements Setup {
 
 		// Get tag element.
 		$tag_element                    = $this->parse_element( $html );
+		$tag_element['id']              = $attachment_id;
+		$tag_element['context']         = $post_id;
 		$tag_element['atts']['class'][] = 'wp-image-' . $attachment_id;
 		$tag_element['atts']['class'][] = 'wp-post-' . $post_id;
 
@@ -301,33 +303,6 @@ class Delivery implements Setup {
 	}
 
 	/**
-	 * Get the attachment ID from the media tag.
-	 *
-	 * @param string $asset The media tag.
-	 * @param string $type  The type.
-	 *
-	 * @return int|false
-	 */
-	public function get_id_from_tag( $asset, $type = 'wp-image-|wp-video-' ) {
-		$attachment_id = $this->filter->get_id_from_tag( $asset, $type );
-		/**
-		 * Filter id from the tag.
-		 *
-		 * @hook  cloudinary_delivery_get_id
-		 * @since 2.7.6
-		 *
-		 * @param $attachment_id {int}    The attachment ID.
-		 * @param $asset         {string} The html tag.
-		 * @param $type          {string} The asset type.
-		 *
-		 * @return {int|false}
-		 */
-		$attachment_id = apply_filters( 'cloudinary_delivery_get_id', $attachment_id, $asset, $type );
-
-		return $attachment_id;
-	}
-
-	/**
 	 * Convert media tags from Local to Cloudinary, and register with String_Replace.
 	 *
 	 * @param string $content The HTML to find tags and prep replacement in.
@@ -344,38 +319,43 @@ class Delivery implements Setup {
 				$cached = $has_cache[ $type ];
 			}
 		}
-		$tags           = $this->filter->get_media_tags( $content );
-		$attachment_ids = array();
-		$replacements   = array();
-		foreach ( $tags as $element ) {
-			// Check cache and skip if needed.
-			if ( isset( $replacements[ $element ] ) ) {
-				continue;
-			}
-			$attachment_id         = $this->get_id_from_tag( $element );
-			$this->current_post_id = $this->filter->get_id_from_tag( $element, 'wp-post-' );
 
-			if ( empty( $attachment_id ) || ! $this->media->cloudinary_id( $attachment_id ) ) {
+		$tags         = $this->filter->get_media_tags( $content );
+		$tags         = array_map( array( $this, 'parse_element' ), array_unique( $tags ) );
+		$replacements = array();
+		foreach ( $tags as $set ) {
+
+			// Check cache and skip if needed.
+			if ( isset( $replacements[ $set['original'] ] ) ) {
 				continue;
 			}
+			/**
+			 * Filter id from the tag.
+			 *
+			 * @hook   cloudinary_delivery_get_id
+			 * @since  2.7.6
+			 *
+			 * @param $attachment_id {int}    The attachment ID.
+			 * @param $html_tag      {string} The html tag.
+			 * @param $type          {string} The asset type.
+			 *
+			 * @return {int|false}
+			 */
+			$set['id'] = apply_filters( 'cloudinary_delivery_get_id', $set['id'], $set['original'], $set['type'] );
+			if ( empty( $set['id'] ) || ! $this->media->cloudinary_id( $set['id'] ) ) {
+				continue;
+			}
+			$this->current_post_id = $set['context'];
 			// Use cached item if found.
-			if ( isset( $cached[ $element ] ) ) {
-				$replacements[ $element ] = $cached[ $element ];
+			if ( isset( $cached[ $set['original'] ] ) ) {
+				$replacements[ $set['original'] ] = $cached[ $set['original'] ];
 			} else {
 				// Register replacement.
-				$replacements[ $element ] = $this->rebuild_tag( $element, $attachment_id );
+				$replacements[ $set['original'] ] = $this->rebuild_tag( $set );
 			}
-			$attachment_ids[]      = $attachment_id;
 			$this->current_post_id = null;
 		}
 
-		// Create other image sizes for ID's found.
-		foreach ( $attachment_ids as $attachment_id ) {
-			$urls = $this->get_attachment_size_urls( $attachment_id );
-			foreach ( $urls as $local => $remote ) {
-				$replacements[ $local ] = $remote;
-			}
-		}
 		// Update the post meta cache.
 		if ( isset( $cache_key ) && isset( $type ) ) {
 			if ( empty( $has_cache ) ) {
@@ -391,39 +371,17 @@ class Delivery implements Setup {
 	/**
 	 * Rebuild a tag with cloudinary urls.
 	 *
-	 * @param string   $element       The original HTML tag.
-	 * @param null|int $attachment_id The attachment ID.
+	 * @param array $tag_element The original HTML tag.
 	 *
 	 * @return string
 	 */
-	public function rebuild_tag( $element, $attachment_id ) {
-
-		$image_meta = wp_get_attachment_metadata( $attachment_id );
-		// Check overwrite.
-		$image_meta['overwrite_transformations'] = (bool) strpos( $element, 'cld-overwrite' );
-
-		// Try add srcset if not present.
-		$element = wp_image_add_srcset_and_sizes( $element, $image_meta, $attachment_id );
-
-		// Get tag element.
-		$tag_element = $this->parse_element( $element );
-
-		// Get size.
-		$size = $this->get_size_from_atts( $tag_element['atts'] );
-
-		// Get transformations if present.
-		$transformations = $this->get_transformations_maybe( $tag_element['atts']['src'] );
-
-		// Get cloudinary URL, only if overwrite or has inline transformations. Catch all will replace standard urls.
-		if ( $image_meta['overwrite_transformations'] || $transformations ) {
-			$tag_element['atts']['src'] = $this->media->cloudinary_url( $attachment_id, $size, $transformations, null, $image_meta['overwrite_transformations'] );
-		}
+	public function rebuild_tag( $tag_element ) {
 
 		/**
 		 * Filter the tag element.
 		 *
-		 * @hook  cloudinary_pre_image_tag
-		 * @since 2.7.5
+		 * @hook   cloudinary_pre_image_tag
+		 * @since  2.7.5
 		 *
 		 * @param $tag_element   {array}  The tag_element ( tag + attributes array).
 		 * @param $attachment_id {int}    The attachment ID.
@@ -431,8 +389,34 @@ class Delivery implements Setup {
 		 *
 		 * @return {array}
 		 */
-		$tag_element = apply_filters( 'cloudinary_pre_image_tag', $tag_element, $attachment_id, $element );
+		$tag_element = apply_filters( 'cloudinary_pre_image_tag', $tag_element, $tag_element['id'], $tag_element['original'] );
 
+		if ( 'wp' === $tag_element['delivery'] ) {
+
+			$image_meta = wp_get_attachment_metadata( $tag_element['id'] );
+			// Check overwrite.
+			$image_meta['overwrite_transformations'] = $tag_element['cld-overwrite'];
+
+			// Try add srcset if not present.
+			$element = wp_image_add_srcset_and_sizes( $tag_element['original'], $image_meta, $tag_element['id'] );
+			$atts    = Utils::get_tag_attributes( $element );
+
+			if ( $atts['srcset'] ) {
+				$tag_element['atts']['srcset'] = $atts['srcset'];
+			}
+			if ( $atts['sizes'] ) {
+				$tag_element['atts']['sizes'] = $atts['sizes'];
+			}
+
+			// Get size.
+			$size = $this->get_size_from_atts( $tag_element['atts'] );
+
+			// Get transformations if present.
+			$transformations = $this->get_transformations_maybe( $tag_element['atts']['src'] );
+
+			// Get cloudinary URL, only if overwrite or has inline transformations. Catch all will replace standard urls.
+			$tag_element['atts']['src'] = $this->media->cloudinary_url( $tag_element['id'], $size, $transformations, null, $image_meta['overwrite_transformations'] );
+		}
 		// Setup new tag.
 		$replace = HTML::build_tag( $tag_element['tag'], $tag_element['atts'] );
 
@@ -448,18 +432,41 @@ class Delivery implements Setup {
 	 */
 	public function parse_element( $element ) {
 
+		$tag_element = array(
+			'tag'           => '',
+			'atts'          => array(),
+			'original'      => $element,
+			'cld-overwrite' => false,
+			'context'       => 0,
+			'id'            => 0,
+			'type'          => '',
+			'delivery'      => 'wp',
+		);
 		// Cleanup element.
 		$element = trim( $element, '</>' );
 
 		// Break element up.
-		$atts = shortcode_parse_atts( $element );
-		if ( ! empty( $atts['class'] ) ) {
-			$atts['class'] = explode( ' ', $atts['class'] );
+		$tag_element['atts'] = shortcode_parse_atts( $element );
+		$tag_element['tag']  = array_shift( $tag_element['atts'] );
+		if ( ! empty( $tag_element['atts']['class'] ) ) {
+			$tag_element['atts']['class'] = explode( ' ', $tag_element['atts']['class'] );
+			foreach ( $tag_element['atts']['class'] as $class ) {
+				if ( 0 === strpos( $class, 'wp-video-' ) ) {
+					$tag_element['id']   = intval( substr( $class, 9 ) );
+					$tag_element['type'] = 'video';
+				}
+				if ( 0 === strpos( $class, 'wp-image-' ) ) {
+					$tag_element['id']   = intval( substr( $class, 9 ) );
+					$tag_element['type'] = 'image';
+				}
+				if ( 0 === strpos( $class, 'wp-post-' ) ) {
+					$tag_element['context'] = intval( substr( $class, 8 ) );
+				}
+			}
+			if ( in_array( 'cld-overwrite', $tag_element['atts']['class'], true ) ) {
+				$tag_element['cld-overwrite'] = true;
+			}
 		}
-		$tag_element = array(
-			'tag'  => array_shift( $atts ),
-			'atts' => $atts,
-		);
 
 		return $tag_element;
 	}
@@ -524,8 +531,8 @@ class Delivery implements Setup {
 		/**
 		 * Filter if the url is a local asset.
 		 *
-		 * @hook  cloudinary_pre_image_tag
-		 * @since 2.7.6
+		 * @hook   cloudinary_pre_image_tag
+		 * @since  2.7.6
 		 *
 		 * @param $is_local {bool}   If the url is a local asset.
 		 * @param $url      {string} The url.
