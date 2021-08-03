@@ -24,22 +24,28 @@ $settings = array(
 		),
 		array(
 			'type'       => 'tag',
-			'element'    => 'span',
-			'content'    => $this->version . ' | ',
-			'attributes' => array(
-				'class' => array(
-					'description',
-				),
-			),
-		),
-		array(
-			'type'       => 'tag',
 			'element'    => 'a',
 			'content'    => __( 'Need help?', 'cloudinary' ),
 			'attributes' => array(
 				'href'   => 'https://cloudinary.com/documentation/wordpress_integration',
 				'target' => '_blank',
 				'rel'    => 'noreferrer',
+				'class'  => array(
+					'cld-page-header-button',
+				),
+			),
+		),
+		array(
+			'type'       => 'tag',
+			'element'    => 'a',
+			'content'    => __( 'Rate our plugin', 'cloudinary' ),
+			'attributes' => array(
+				'href'   => 'https://cloudinary.com/documentation/wordpress_integration',
+				'target' => '_blank',
+				'rel'    => 'noreferrer',
+				'class'  => array(
+					'cld-page-header-button',
+				),
 			),
 		),
 	),

@@ -329,6 +329,28 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	}
 
 	/**
+	 * Get historical usage data.
+	 *
+	 * @param int $days Number of days to get.
+	 *
+	 * @return array
+	 */
+	public function history( $days = 1 ) {
+		$return  = array();
+		$history = get_option( '_cld_history', array() );
+		for ( $i = 1; $i <= $days; $i ++ ) {
+			$date = date_i18n( 'd-m-Y', strtotime( '- ' . $i . ' days' ) );
+			if ( ! isset( $history[ $date ] ) ) {
+				$history[ $date ] = $this->api->usage( $date );
+			}
+			$return[ $date ] = $history[ $date ];
+		}
+		update_option( '_cld_history', $history );
+
+		return $return;
+	}
+
+	/**
 	 * After updating the cloudinary_connect option, remove flag.
 	 */
 	public function updated_option() {

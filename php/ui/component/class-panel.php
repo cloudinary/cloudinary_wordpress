@@ -54,10 +54,18 @@ class Panel extends Component {
 	 */
 	protected function title( $struct ) {
 
-		$struct['element'] = 'h2';
-		$struct['content'] = $this->setting->get_param( 'title' );
+		$struct['element'] = 'div';
+
+		$struct['children']['title']            = $this->get_part( 'h2' );
+		$struct['children']['title']['content'] = $this->setting->get_param( 'title' );
 		if ( $this->setting->has_param( 'collapsible' ) ) {
 			$struct['attributes']['class'][] = 'collapsible';
+		}
+		if ( $this->setting->has_param( 'description' ) ) {
+			$struct['children']['description']                          = $this->get_part( 'div' );
+			$struct['children']['description']['content']               = $this->setting->get_param( 'description' );
+			$struct['children']['description']['attributes']['class'][] = 'description';
+			$struct['children']['title']['attributes']['class'][]       = 'has-description';
 		}
 
 		return $struct;

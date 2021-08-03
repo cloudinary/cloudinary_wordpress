@@ -4,6 +4,7 @@ import tippy from 'tippy.js';
 import 'tippy.js/dist/tippy.css';
 import OnOff from './onoff';
 import CacheManage from './cache-manage';
+import Progress from './progress';
 
 const UI = {
 	bindings: {},
@@ -48,6 +49,7 @@ const UI = {
 
 		// Start cache manager.
 		CacheManage.init( context );
+		Progress.init( context );
 	},
 	_autoSuffix( input ) {
 		const suffixes = input.dataset.autoSuffix;

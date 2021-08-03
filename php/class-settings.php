@@ -124,7 +124,9 @@ class Settings {
 			if ( 'page' !== $sub_setting->get_param( 'type' ) || ! apply_filters( "cloudinary_settings_enabled_{$sub_setting->get_slug()}", true ) ) {
 				continue;
 			}
-			$sub_setting->set_param( 'page_header', $setting->get_param( 'page_header' ) );
+			if ( ! $sub_setting->has_param( 'page_header' ) ) {
+				$sub_setting->set_param( 'page_header', $setting->get_param( 'page_header' ) );
+			}
 			$sub_setting->set_param( 'page_footer', $setting->get_param( 'page_footer' ) );
 			$capability                    = $sub_setting->get_param( 'capability', $setting->get_param( 'capability' ) );
 			$page_handle                   = add_submenu_page(

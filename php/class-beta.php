@@ -52,6 +52,11 @@ class Beta {
 				'options' => array(),
 				'deps'    => array( 'delivery' ),
 			),
+			'dash'                   => array(
+				'class'   => array( 'Cloudinary\Dashboard' ),
+				'name'    => __( 'New UI', 'cloudinary' ),
+				'options' => array(),
+			),
 		);
 
 		foreach ( $this->components as $key => $data ) {
@@ -70,7 +75,7 @@ class Beta {
 			 * @param $feature {string} Optional feature type.
 			 * @param $data    {array}  The beta feature data.
 			 *
-			 * @return {bool}
+			 * @return  {bool}
 			 */
 			if ( apply_filters( 'cloudinary_beta', false, $key, $data ) ) {
 				foreach ( (array) $data['class'] as $class ) {
