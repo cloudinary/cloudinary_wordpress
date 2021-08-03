@@ -201,7 +201,12 @@ const UI = {
 		}
 	},
 };
-// Init.
-window.addEventListener( 'load', UI._init( document ) );
+
+const context = document.getElementById( 'cloudinary-settings-page' );
+
+if ( context ) {
+	// Init.
+	window.addEventListener( 'load', UI._init( context ) );
+}
 
 export default UI;
