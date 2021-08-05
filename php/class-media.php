@@ -948,8 +948,8 @@ class Media extends Settings_Component implements Setup {
 		$config = $this->settings->get_value( 'image_settings' );
 
 		if ( 'on' === $config['image_optimization'] ) {
-			if ( 'auto' === $config['image_format'] ) {
-				$default['fetch_format'] = 'auto';
+			if ( 'none' !== $config['image_format'] ) {
+				$default['fetch_format'] = $config['image_format'];
 			}
 			if ( isset( $config['image_quality'] ) ) {
 				$default['quality'] = 'none' !== $config['image_quality'] ? $config['image_quality'] : null;
@@ -2124,6 +2124,10 @@ class Media extends Settings_Component implements Setup {
 			'context'         => $this->get_context_options( $attachment_id ),
 		);
 
+		if ( 'image' == $options['resource_type'] || 'video' === $options['resource_type'] ) {
+			$options['eager']       = Api::generate_transformation_string( $this->apply_default_transformations( array(), $attachment_id ) );
+			$options['eager_async'] = 'video' === $options['resource_type'];
+		}
 		/**
 		 * Filter the options to allow other plugins to add requested options for uploading.
 		 *

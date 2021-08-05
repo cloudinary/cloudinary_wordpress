@@ -57,16 +57,9 @@ class Dashboard extends Settings_Component {
 							array(
 								'type' => 'column',
 								array(
-									'type'       => 'tag',
-									'element'    => 'span',
-									'attributes' => array(
-										'class'         => array(
-											'cld-progress-circular',
-										),
-										'data-value'    => 64,
-										'data-text'     => '3.1 MB',
-										'data-progress' => 'circle',
-									),
+									'type'  => 'progress_sync',
+									'value' => 'size_percent',
+									'text'  => 'size_difference',
 								),
 							),
 							array(
@@ -105,16 +98,10 @@ class Dashboard extends Settings_Component {
 							array(
 								'type' => 'column',
 								array(
-									'type'       => 'tag',
-									'element'    => 'span',
-									'attributes' => array(
-										'class'         => array(
-											'cld-progress-circular',
-										),
-										'data-value'    => 50,
-										'data-text'     => 'Total Assets',
-										'data-progress' => 'circle',
-									),
+									'type'  => 'progress_sync',
+									'value' => 'percentage_synced',
+									'text'  => 'Total Assets',
+									'poll'  => true,
 								),
 							),
 						),

@@ -78,8 +78,8 @@ class Chart_Stat extends Component {
 			$data[]  = $stats[ $stat ]['usage'];
 			$dates[] = date_i18n( 'j M', strtotime( $date ) );
 		}
-		$struct['attributes']['data-data']  = wp_json_encode( $data );
-		$struct['attributes']['data-dates'] = wp_json_encode( $dates );
+		$struct['attributes']['data-data']  = wp_json_encode( array_reverse( $data ) );
+		$struct['attributes']['data-dates'] = wp_json_encode( array_reverse( $dates ) );
 		$struct['attributes']['width']      = '400px';
 		$struct['attributes']['height']     = '300px';
 

@@ -245,6 +245,7 @@ class Sync_Queue {
 	 * @return int|false
 	 */
 	public function get_post( $thread ) {
+
 		$return = false;
 		if ( ( $this->is_running( $this->get_thread_type( $thread ) ) ) ) {
 			$thread_queue = $this->get_thread_queue( $thread );
@@ -281,6 +282,93 @@ class Sync_Queue {
 	}
 
 	/**
+	 * Get the sync status.
+	 *
+	 * @return array
+	 */
+	public function get_total_synced_media() {
+
+		$args = array(
+			'post_type'      => 'attachment',
+			'post_status'    => 'inherit',
+			'fields'         => 'ids',
+			'posts_per_page' => 1,
+			'meta_query'     => array( // phpcs:ignore
+				array(
+					'key'     => Sync::META_KEYS['cloudinary'],
+					'compare' => 'EXISTS',
+				),
+
+			),
+		);
+
+		$params = apply_filters( 'cloudinary_build_queue_query', $args );
+		$query  = new \WP_Query( $params );
+		$total  = $query->found_posts;
+
+		$args = array(
+			'post_type'      => 'attachment',
+			'post_status'    => 'inherit',
+			'fields'         => 'ids',
+			'posts_per_page' => 1,
+			'meta_query'     => array( // phpcs:ignore
+				'relation' => 'OR',
+				array(
+					'key'     => Sync::META_KEYS['queued'],
+					'compare' => 'EXISTS',
+				),
+				array(
+					'key'     => '_cld_unsynced',
+					'compare' => 'EXISTS',
+				),
+
+			),
+		);
+		$params = apply_filters( 'cloudinary_build_queue_query', $args );
+		$query  = new \WP_Query( $params );
+		$queued = $query->found_posts;
+		$synced = $total - $queued;
+		$return = array(
+			'total_assets'      => $total,
+			'total_queued'      => $queued,
+			'total_synced'      => $synced,
+			'percentage_synced' => $synced / $total * 100,
+		);
+
+		global $wpdb;
+
+		$sql  = "SELECT `meta_key` as `type`, SUM(`meta_value`) as `totals`, COUNT(`meta_id`) as `count` FROM {$wpdb->postmeta} WHERE `meta_key` IN ( '_cld_remote_size','_cld_local_size') GROUP BY `meta_key`";
+		$data = $wpdb->get_results( $wpdb->prepare( $sql, null ), ARRAY_A ); // phpcs:ignore
+
+		$return['size_difference'] = 0;
+		$return['size_percent']    = 0;
+		$return['total_sized']     = 0;
+		$return['size_remote']     = '';
+		$return['size_local']      = '';
+		$return['size_difference'] = '';
+		$return['local_remote']    = '';
+		if ( ! empty( $data ) ) {
+			foreach ( $data as $item ) {
+				if ( '_cld_local_size' === $item['type'] ) {
+					$return['local_total'] = $item['totals'];
+					// Add to the totals.
+					$return['total_sized'] += $item['count'];
+				} elseif ( '_cld_remote_size' === $item['type'] ) {
+					$return['remote_total'] = $item['totals'];
+				}
+			}
+			$return['size_difference'] = $return['local_total'] - $return['remote_total'];
+			$return['size_percent']    = round( $return['size_difference'] / $return['local_total'] * 100 );
+			$return['size_remote']     = size_format( $return['remote_total'], 1 );
+			$return['size_local']      = size_format( $return['local_total'], 1 );
+			$return['size_difference'] = size_format( $return['size_difference'] );
+			$return['local_remote']    = $return['size_local'] . ' / ' . $return['size_remote'];
+		}
+
+		return $return;
+	}
+
+	/**
 	 * Build the upload sync queue.
 	 */
 	public function build_queue() {
@@ -314,8 +402,8 @@ class Sync_Queue {
 		/**
 		 * Filter the params for the query used to build a queue.
 		 *
-		 * @hook  cloudinary_build_queue_query
-		 * @since 2.7.6
+		 * @hook   cloudinary_build_queue_query
+		 * @since  2.7.6
 		 *
 		 * @param $args {array} The arguments for the query.
 		 *
@@ -566,8 +654,8 @@ class Sync_Queue {
 		/**
 		 * Filter the params for the query used to get thread queue details.
 		 *
-		 * @hook  cloudinary_thread_queue_details_query
-		 * @since 2.7.6
+		 * @hook   cloudinary_thread_queue_details_query
+		 * @since  2.7.6
 		 *
 		 * @param $args   {array}  The arguments for the query.
 		 * @param $thread {string} The thread name.

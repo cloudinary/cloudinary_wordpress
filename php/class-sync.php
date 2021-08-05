@@ -512,7 +512,12 @@ class Sync implements Setup, Assets {
 				'note'     => __( 'Updating breakpoints', 'cloudinary' ),
 			),
 			'options'      => array(
-				'generate' => array( $this->managers['media'], 'get_upload_options' ),
+				'generate' => function ( $attachment_id ) {
+					$options = $this->managers['media']->get_upload_options( $attachment_id );
+					unset( $options['eager'], $options['eager_async'] );
+
+					return $options;
+				},
 				'priority' => 30,
 				'sync'     => array( $this->managers['upload'], 'context_update' ),
 				'state'    => 'info syncing',

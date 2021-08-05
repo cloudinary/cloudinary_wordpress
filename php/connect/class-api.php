@@ -351,7 +351,7 @@ class Api {
 				'X-Unique-Upload-Id' => $upload_id,
 			);
 			$args['file'] = $temp_file_name;
-			$result       = $this->upload( $temp_file_name, $args, $headers );
+			$result       = $this->upload( $attachment_id, $args, $headers );
 			if ( is_wp_error( $result ) ) {
 				break;
 			}
@@ -384,8 +384,8 @@ class Api {
 		$args                = $this->clean_args( $args );
 		$disable_https_fetch = get_transient( '_cld_disable_http_upload' );
 		if (
-			function_exists( 'wp_get_original_image_url' ) &&
-			wp_attachment_is_image( $attachment_id )
+			function_exists( 'wp_get_original_image_url' )
+			&& wp_attachment_is_image( $attachment_id )
 		) {
 			$file_url = wp_get_original_image_url( $attachment_id );
 		} else {
@@ -394,8 +394,9 @@ class Api {
 		if ( empty( $file_url ) ) {
 			$disable_https_fetch = true;
 		}
-		$media    = get_plugin_instance()->get_component( 'media' );
-		if ( ! $media->is_local_media( $attachment_id ) ) {
+
+		$media = get_plugin_instance()->get_component( 'media' );
+		if ( empty( $args['file'] ) && ! $media->is_local_media( $attachment_id ) ) {
 			$disable_https_fetch = false; // Remote can upload via url.
 			// translators: variable is thread name and queue size.
 			$action_message = sprintf( __( 'Uploading remote url:  %1$s.', 'cloudinary' ), $file_url );

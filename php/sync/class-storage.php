@@ -385,6 +385,37 @@ class Storage implements Notice {
 	}
 
 	/**
+	 * Generate the signature for the size.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return false|string
+	 */
+	public function size_signature( $attachment_id ) {
+		$local = get_post_meta( $attachment_id, '_cld_local_size', true );
+
+		return empty( $local ) ? false : wp_json_encode( $this->media->apply_default_transformations( array(), $attachment_id ) );
+	}
+
+	/**
+	 * Sync the file size differences.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 */
+	public function size_sync( $attachment_id ) {
+		$url         = $this->media->cloudinary_url( $attachment_id );
+		$re          = wp_remote_head( $url );
+		$remote_size = wp_remote_retrieve_header( $re, 'Content-Length' );
+		$local_size  = get_post_meta( $attachment_id, '_cld_local_size', true );
+		if ( empty( $local_size ) ) {
+			$local_size = filesize( get_attached_file( $attachment_id ) );
+			update_post_meta( $attachment_id, '_cld_local_size', $local_size );
+		}
+		update_post_meta( $attachment_id, '_cld_remote_size', $remote_size );
+		$this->sync->set_signature_item( $attachment_id, 'size' );
+	}
+
+	/**
 	 * Setup hooks for the filters.
 	 */
 	public function setup() {
@@ -409,6 +440,16 @@ class Storage implements Notice {
 				'note'     => array( $this, 'status' ),
 			);
 			$this->sync->register_sync_type( 'storage', $structure );
+
+			$structure = array(
+				'generate' => array( $this, 'size_signature' ),
+				'priority' => 16,
+				'sync'     => array( $this, 'size_sync' ),
+				'state'    => 'info syncing',
+				'note'     => __( 'Calculating stats', 'cloudinary' ),
+				'required' => false,
+			);
+			$this->sync->register_sync_type( 'size', $structure );
 
 			// Tag the deactivate button.
 			$plugin_file = pathinfo( dirname( CLDN_CORE ), PATHINFO_BASENAME ) . '/' . basename( CLDN_CORE );
