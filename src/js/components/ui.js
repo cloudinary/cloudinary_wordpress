@@ -38,9 +38,7 @@ const UI = {
 				expanded: 'auto',
 			},
 			content: ( reference ) =>
-				context.getElementById(
-					reference.getAttribute( 'data-tooltip' )
-				).innerHTML,
+				document.getElementById( reference.dataset.tooltip ).innerHTML,
 		} );
 		[ ...triggers ].forEach( ( input ) => {
 			input.dispatchEvent( new Event( 'input' ) );

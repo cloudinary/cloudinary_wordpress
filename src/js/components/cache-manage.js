@@ -12,7 +12,7 @@ const CacheManage = {
 				'[data-cache-point]'
 			);
 			cachePoints.forEach( ( cachePoint ) => this._bind( cachePoint ) );
-			const purgeAll = context.getElementById( 'cld_purge_all' );
+			const purgeAll = document.getElementById( 'cld_purge_all' );
 			if ( purgeAll ) {
 				purgeAll.disabled = 'disabled';
 				purgeAll.style.width = '100px';
