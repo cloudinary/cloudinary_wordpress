@@ -899,7 +899,7 @@ class Media extends Settings_Component implements Setup {
 			$default                   = array_filter( $default ); // Clear out empty settings.
 			$new_transformations['qf'] = Api::generate_transformation_string( array( $default ), $type );
 
-			if ( empty( $freeform ) ) {
+			if ( empty( $freeform[ $type ] ) ) {
 				/**
 				 * Filter the default Freeform transformations for the specific media type.
 				 *
@@ -908,12 +908,12 @@ class Media extends Settings_Component implements Setup {
 				 *
 				 * @return array
 				 */
-				$freeform = apply_filters( "cloudinary_default_freeform_transformations_{$type}", array(), $transformations );
-				$freeform = array_filter( $freeform ); // Clear out empty settings.
+				$freeform[ $type ] = apply_filters( "cloudinary_default_freeform_transformations_{$type}", array(), $transformations );
+				$freeform[ $type ] = array_filter( $freeform[ $type ] ); // Clear out empty settings.
 			}
 			// Add freeform global transformations.
-			if ( ! empty( $freeform ) ) {
-				$new_transformations['global'] = implode( '/', $freeform );
+			if ( ! empty( $freeform[ $type ] ) ) {
+				$new_transformations['global'] = implode( '/', $freeform[ $type ] );
 			}
 		}
 		// Clean out empty parts, and join into a sectioned string.
