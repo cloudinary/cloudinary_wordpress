@@ -1,18 +1,34 @@
 import ProgressBar from 'progressbar.js';
 import Chart from 'chart.js/auto';
 import humanFormat from 'human-format';
+import apiFetch from '@wordpress/api-fetch';
+import { __ } from '@wordpress/i18n';
 
 const Progress = {
+	data: {},
 	init( context ) {
 		const items = context.querySelectorAll( '[data-progress]' );
 		const charts = context.querySelectorAll( '[data-chart]' );
 		[ ...items ].forEach( ( item ) => {
+			if ( item.dataset.url ) {
+				if ( ! this.data[ item.dataset.url ] ) {
+					this.data[ item.dataset.url ] = {
+						items: [],
+						poll: null,
+					};
+				}
+				this.data[ item.dataset.url ].items.push( item );
+			}
 			if ( 'line' === item.dataset.progress ) {
 				this.line( item );
 			} else if ( 'circle' === item.dataset.progress ) {
 				this.circle( item );
 			}
 		} );
+
+		for ( const url in this.data ) {
+			this.getValues( url );
+		}
 
 		[ ...charts ].forEach( ( item ) => {
 			const data = {
@@ -84,7 +100,11 @@ const Progress = {
 		bar.animate( item.dataset.value / 100 ); // Number from 0.0 to 1.0
 	},
 	circle( item ) {
-		const bar = new ProgressBar.Circle( item, {
+		item.dataset.basetext = item.dataset.text;
+		item.dataset.text = '';
+		const value = item.dataset.value;
+		const self = this;
+		item.bar = new ProgressBar.Circle( item, {
 			strokeWidth: 3,
 			easing: 'easeInOut',
 			duration: 1400,
@@ -99,29 +119,49 @@ const Progress = {
 				},
 			},
 			step( state, circle ) {
-				const value = Math.round( circle.value() * 100 );
-				if ( value === 0 ) {
-					circle.setText( '' );
-				} else {
-					circle.setText(
-						'<h2>' + value + '%</h2>' + item.dataset.text
-					);
-				}
+				const newValue = Math.round( circle.value() * 100 );
+				self.setText( circle, newValue, item.dataset.text );
 			},
 		} );
-		const val = item.dataset.value / 100;
-		bar.animate( val ); // Number from 0.0 to 1.0
 
-		/*setInterval( () => {
-		 if ( val < 1 ) {
-		 val = val + 0.1;
-		 if ( val > 1 ) {
-		 val = 1;
-		 }
-
-		 bar.animate( val ); // Number from 0.0 to 1.0
-		 }
-		 }, 5000 );*/
+		if ( ! item.dataset.url ) {
+			const val = value / 100;
+			item.bar.animate( val );
+		}
+	},
+	getValues( url ) {
+		if ( this.data[ url ].poll ) {
+			clearTimeout( this.data[ url ].poll );
+			this.data[ url ].poll = null;
+		}
+		apiFetch( {
+			path: url,
+			method: 'GET',
+		} ).then( ( result ) => {
+			this.data[ url ].items.forEach( ( item ) => {
+				if ( typeof result[ item.dataset.basetext ] !== 'undefined' ) {
+					item.dataset.text = result[ item.dataset.basetext ];
+				}
+				item.bar.animate( result[ item.dataset.value ] / 100 );
+				if ( item.dataset.poll && ! this.data[ url ].poll ) {
+					this.data[ url ].poll = setTimeout( () => {
+						this.getValues( url );
+					}, 500 );
+				}
+			} );
+		} );
+	},
+	setText( bar, value, text ) {
+		if ( ! bar ) {
+			return;
+		}
+		const content = document.createElement( 'span' );
+		const h2 = document.createElement( 'h2' );
+		const desc = document.createTextNode( text );
+		h2.innerText = value + '%';
+		content.appendChild( h2 );
+		content.appendChild( desc );
+		bar.setText( content );
 	},
 };
 
