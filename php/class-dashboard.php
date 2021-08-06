@@ -60,6 +60,7 @@ class Dashboard extends Settings_Component {
 									'type'  => 'progress_sync',
 									'value' => 'size_percent',
 									'text'  => 'size_difference',
+									'poll'  => true,
 								),
 							),
 							array(
@@ -100,7 +101,7 @@ class Dashboard extends Settings_Component {
 								array(
 									'type'  => 'progress_sync',
 									'value' => 'percentage_synced',
-									'text'  => 'Total Assets',
+									'text'  => 'total_assets',
 									'poll'  => true,
 								),
 							),

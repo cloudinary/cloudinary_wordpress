@@ -290,12 +290,12 @@ class Upload_Sync {
 
 			// Save size data.
 			if ( ! empty( $result['eager'] ) ) {
-				update_post_meta( $attachment_id, '_cld_local_size', $result['bytes'] );
+				update_post_meta( $attachment_id, Sync::META_KEYS['local_size'], $result['bytes'] );
 				$remote_size = $result['bytes'];
 				if ( ! empty( $result['eager'][0]['bytes'] ) ) {
 					$remote_size = $result['eager'][0]['bytes'];
 				}
-				update_post_meta( $attachment_id, '_cld_remote_size', $remote_size );
+				update_post_meta( $attachment_id, Sync::META_KEYS['remote_size'], $remote_size );
 				$this->sync->set_signature_item( $attachment_id, 'size' );
 			}
 		}

@@ -392,7 +392,7 @@ class Storage implements Notice {
 	 * @return false|string
 	 */
 	public function size_signature( $attachment_id ) {
-		$local = get_post_meta( $attachment_id, '_cld_local_size', true );
+		$local = get_post_meta( $attachment_id, Sync::META_KEYS['local_size'], true );
 
 		return empty( $local ) ? false : wp_json_encode( $this->media->apply_default_transformations( array(), $attachment_id ) );
 	}
@@ -406,12 +406,12 @@ class Storage implements Notice {
 		$url         = $this->media->cloudinary_url( $attachment_id );
 		$re          = wp_remote_head( $url );
 		$remote_size = wp_remote_retrieve_header( $re, 'Content-Length' );
-		$local_size  = get_post_meta( $attachment_id, '_cld_local_size', true );
+		$local_size  = get_post_meta( $attachment_id, Sync::META_KEYS['local_size'], true );
 		if ( empty( $local_size ) ) {
 			$local_size = filesize( get_attached_file( $attachment_id ) );
-			update_post_meta( $attachment_id, '_cld_local_size', $local_size );
+			update_post_meta( $attachment_id, Sync::META_KEYS['local_size'], $local_size );
 		}
-		update_post_meta( $attachment_id, '_cld_remote_size', $remote_size );
+		update_post_meta( $attachment_id, Sync::META_KEYS['remote_size'], $remote_size );
 		$this->sync->set_signature_item( $attachment_id, 'size' );
 	}
 

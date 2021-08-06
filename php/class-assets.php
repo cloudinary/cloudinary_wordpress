@@ -225,7 +225,9 @@ class Assets extends Settings_Component {
 	 * @return bool
 	 */
 	public static function is_asset_type( $post_id ) {
-		return self::POST_TYPE_SLUG === get_post_type( $post_id );
+		$post = get_post( $post_id );
+
+		return ! in_array( $post, self::$instance->get_asset_parents(), true ) && self::POST_TYPE_SLUG === get_post_type( $post_id );
 	}
 
 	/**
@@ -264,7 +266,7 @@ class Assets extends Settings_Component {
 	 */
 	public function update_meta( $check, $object_id, $meta_key, $meta_value ) {
 
-		if ( self::is_asset_type( $object_id ) ) {
+		if ( self::is_asset_type( $object_id ) && $this->can_cache_meta( $meta_key, $object_id ) ) {
 			$meta = $this->get_meta_cache( $object_id );
 			if ( ! isset( $meta[ $meta_key ] ) || $meta_value !== $meta[ $meta_key ] ) {
 				$meta[ $meta_key ] = $meta_value;
@@ -289,7 +291,7 @@ class Assets extends Settings_Component {
 	 */
 	public function delete_meta( $check, $object_id, $meta_key, $meta_value ) {
 
-		if ( self::is_asset_type( $object_id ) ) {
+		if ( self::is_asset_type( $object_id ) && $this->can_cache_meta( $meta_key, $object_id ) ) {
 			$meta = $this->get_meta_cache( $object_id );
 			if ( isset( $meta[ $meta_key ] ) && ( $meta[ $meta_key ] === $meta_value || empty( $meta_value ) ) ) {
 				unset( $meta[ $meta_key ] );
@@ -313,7 +315,7 @@ class Assets extends Settings_Component {
 	 */
 	public function get_meta( $check, $object_id, $meta_key ) {
 
-		if ( self::is_asset_type( $object_id ) ) {
+		if ( self::is_asset_type( $object_id ) && $this->can_cache_meta( $meta_key, $object_id ) ) {
 			$meta  = $this->get_meta_cache( $object_id );
 			$value = null;
 			if ( empty( $meta_key ) ) {
@@ -329,6 +331,20 @@ class Assets extends Settings_Component {
 		}
 
 		return $check;
+	}
+
+	/**
+	 * Check if the current meta can be cached.
+	 *
+	 * @param string $meta_key The meta key to be cached.
+	 * @param int    $post_id  The post ID to check.
+	 *
+	 * @return bool
+	 */
+	protected function can_cache_meta( $meta_key, $post_id ) {
+		$post = get_post( $post_id );
+
+		return ( in_array( $meta_key, Sync::META_KEYS, true ) && empty( $post->post_parent ) ) || ! in_array( $meta_key, Sync::META_KEYS, true );
 	}
 
 	/**
@@ -909,6 +925,7 @@ class Assets extends Settings_Component {
 		$id          = wp_insert_post( $args );
 
 		// Create attachment meta.
+		update_attached_file( $id, $file_path );
 		wp_generate_attachment_metadata( $id, $file_path );
 
 		// Init the auto sync.

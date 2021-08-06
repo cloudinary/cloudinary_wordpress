@@ -119,8 +119,12 @@ const Progress = {
 				},
 			},
 			step( state, circle ) {
-				const newValue = Math.round( circle.value() * 100 );
-				self.setText( circle, newValue, item.dataset.text );
+				const newValue = Math.floor( circle.value() * 100 );
+				self.setText(
+					circle,
+					parseFloat( newValue ),
+					item.dataset.text
+				);
 			},
 		} );
 
@@ -141,12 +145,14 @@ const Progress = {
 			this.data[ url ].items.forEach( ( item ) => {
 				if ( typeof result[ item.dataset.basetext ] !== 'undefined' ) {
 					item.dataset.text = result[ item.dataset.basetext ];
+				} else {
+					item.dataset.text = item.dataset.basetext;
 				}
-				item.bar.animate( result[ item.dataset.value ] / 100 );
+				item.bar.animate( result[ item.dataset.value ] );
 				if ( item.dataset.poll && ! this.data[ url ].poll ) {
 					this.data[ url ].poll = setTimeout( () => {
 						this.getValues( url );
-					}, 500 );
+					}, 10000 );
 				}
 			} );
 		} );

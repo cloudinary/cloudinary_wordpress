@@ -23,7 +23,7 @@ class Folder_Table extends Table {
 	 *
 	 * @var bool
 	 */
-	public $capture = true;
+	protected static $capture = true;
 
 	/**
 	 * Holds the slugs for the file lists.

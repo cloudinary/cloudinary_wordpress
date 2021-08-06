@@ -62,7 +62,7 @@ abstract class Component {
 	 *
 	 * @var bool
 	 */
-	public $capture = false;
+	protected static $capture = false;
 
 	/**
 	 * Holds the conditional logic sequence.
@@ -869,5 +869,16 @@ abstract class Component {
 	 * Setup action before rendering.
 	 */
 	protected function pre_render() {
+	}
+
+	/**
+	 * Check if this is a capture component.
+	 *
+	 * @return bool
+	 */
+	final public static function is_capture() {
+		$caller = get_called_class();
+		// Check that this type of component exists.
+		return $caller::$capture;
 	}
 }

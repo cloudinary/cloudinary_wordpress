@@ -28,7 +28,7 @@ class Data extends Component {
 	 *
 	 * @var bool
 	 */
-	public $capture = true;
+	protected static $capture = true;
 
 	/**
 	 * Return stored data.

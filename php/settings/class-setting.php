@@ -1244,14 +1244,10 @@ class Setting {
 	 * @return bool
 	 */
 	public function is_capture() {
-		$capture = $this->get_component()->capture;
-		if ( false === $capture && $this->has_settings() ) {
-			foreach ( $this->get_settings() as $setting ) {
-				if ( $setting->is_capture() ) {
-					$capture = true;
-					break;
-				}
-			}
+		$capture = false;
+		$type    = $this->get_param( 'type', 'tag' );
+		if ( Component::is_component_type( $type ) ) {
+			$capture = call_user_func( array( 'Cloudinary\UI\Component\\' . $type, 'is_capture' ) );
 		}
 
 		return $capture;

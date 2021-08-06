@@ -95,6 +95,11 @@ class Sync implements Setup, Assets {
 		'storage'        => '_cloudinary_storage',
 		'queued'         => '_cloudinary_sync_queued',
 		'delay'          => '_cloudinary_sync_delay',
+		'local_size'     => '_cld_local_size',
+		'remote_size'    => '_cld_remote_size',
+		'unsynced'       => '_cld_unsynced',
+		'synced'         => '_cld_synced',
+		'unsupported'    => '_cld_unsupported',
 	);
 
 	/**
@@ -334,7 +339,7 @@ class Sync implements Setup, Assets {
 		/**
 		 * Filter the get signature of the asset.
 		 *
-		 * @hook cloudinary_get_signature
+		 * @hook   cloudinary_get_signature
 		 *
 		 * @param $return        {array} The attachment signature.
 		 * @param $attachment_id {int}   The attachment ID.

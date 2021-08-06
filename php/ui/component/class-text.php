@@ -28,7 +28,7 @@ class Text extends Component {
 	 *
 	 * @var bool
 	 */
-	public $capture = true;
+	protected static $capture = true;
 
 	/**
 	 * Filter the wrap parts structure.
