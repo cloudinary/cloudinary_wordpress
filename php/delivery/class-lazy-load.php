@@ -125,7 +125,7 @@ class Lazy_Load extends Delivery_Feature {
 		}
 		$src = $tag_element['atts']['src'];
 		if ( ! $this->media->is_cloudinary_url( $src ) ) {
-			$src = $this->media->cloudinary_url( $attachment_id );
+			$src = $this->media->cloudinary_url( $attachment_id, array(), array(), array(), $tag_element['cld-overwrite'] );
 		}
 		$tag_element['atts']['data-src'] = $src;
 		$transformations                 = $this->media->get_transformations_from_string( $src );
