@@ -861,7 +861,10 @@ class Media extends Settings_Component implements Setup {
 	public function apply_default_transformations( array $transformations, $attachment_id ) {
 		static $cache = array(), $freeform = array();
 
-		$key = wp_json_encode( func_get_args() );
+		$taxonomy_overwrite = $this->global_transformations->is_taxonomy_overwrite();
+		$args               = func_get_args();
+		$args[]             = $taxonomy_overwrite;
+		$key                = wp_json_encode( $args );
 		if ( isset( $cache[ $key ] ) ) {
 			return $cache[ $key ];
 		}
