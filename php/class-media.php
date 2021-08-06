@@ -710,7 +710,7 @@ class Media extends Settings_Component implements Setup {
 	public function get_transformations( $attachment_id, $transformations = array(), $overwrite_transformations = false ) {
 		static $cache = array();
 
-		$key = wp_json_encode( func_get_args() );
+		$key = $this->get_cache_key( func_get_args() );
 		if ( isset( $cache[ $key ] ) ) {
 			return $cache[ $key ];
 		}
@@ -861,10 +861,7 @@ class Media extends Settings_Component implements Setup {
 	public function apply_default_transformations( array $transformations, $attachment_id ) {
 		static $cache = array(), $freeform = array();
 
-		$taxonomy_overwrite = $this->global_transformations->is_taxonomy_overwrite();
-		$args               = func_get_args();
-		$args[]             = $taxonomy_overwrite;
-		$key                = wp_json_encode( $args );
+		$key = $this->get_cache_key( func_get_args() );
 		if ( isset( $cache[ $key ] ) ) {
 			return $cache[ $key ];
 		}
@@ -981,6 +978,19 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Get a cache key for static caching.
+	 *
+	 * @param array $args The arguments array to generate a key with.
+	 *
+	 * @return string
+	 */
+	protected function get_cache_key( $args ) {
+		$args[] = $this->global_transformations->get_current_post();
+
+		return md5( wp_json_encode( $args ) );
+	}
+
+	/**
 	 * Generate a Cloudinary URL based on attachment ID and required size.
 	 *
 	 * @param int          $attachment_id             The id of the attachment.
@@ -1000,7 +1010,7 @@ class Media extends Settings_Component implements Setup {
 				return null;
 			}
 		}
-		$key = wp_json_encode( func_get_args() );
+		$key = $this->get_cache_key( func_get_args() );
 		if ( isset( $cache[ $key ] ) ) {
 			return $cache[ $key ];
 		}

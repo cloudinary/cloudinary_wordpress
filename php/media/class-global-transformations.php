@@ -575,14 +575,14 @@ class Global_Transformations {
 	 *
 	 * @return WP_Post|null
 	 */
-	protected function get_current_post() {
+	public function get_current_post() {
 		/**
 		 * Filter the post ID.
 		 *
 		 * @hook    cloudinary_current_post_id
 		 * @default null
 		 *
-		 * @return {WP_Post|null}
+		 * @return  {WP_Post|null}
 		 */
 		$post_id = apply_filters( 'cloudinary_current_post_id', null );
 
