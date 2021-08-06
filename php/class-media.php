@@ -996,7 +996,7 @@ class Media extends Settings_Component implements Setup {
 	 * @param int          $attachment_id             The id of the attachment.
 	 * @param array|string $size                      The wp size to set for the URL.
 	 * @param array        $transformations           Set of transformations to apply to this url.
-	 * @param string       $cloudinary_id             Optional forced cloudinary ID.
+	 * @param string|null  $cloudinary_id             Optional forced cloudinary ID.
 	 * @param bool         $overwrite_transformations Flag url is a breakpoint URL to stop re-applying default transformations.
 	 *
 	 * @return string The converted URL.
