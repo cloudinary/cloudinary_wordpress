@@ -1102,6 +1102,11 @@ class Assets extends Settings_Component {
 							'type' => 'frame',
 							$this->add_content_settings(),
 						),
+						array(
+							'slug' => 'cache_external',
+							'type' => 'frame',
+							$this->add_external_settings(),
+						),
 					),
 					array(
 						'type'       => 'submit',
@@ -1409,6 +1414,72 @@ class Assets extends Settings_Component {
 			array(
 				'type' => 'group',
 				$content_setup,
+			),
+		);
+
+		return $params;
+	}
+
+	/**
+	 * Add WP Settings page.
+	 */
+	protected function add_external_settings() {
+
+		$params = array(
+			'type'        => 'panel',
+			'title'       => __( 'External', 'cloudinary' ),
+			'collapsible' => 'closed',
+			'attributes'  => array(
+				'header' => array(
+					'class' => array(
+						'full-width',
+					),
+				),
+				'wrap'   => array(
+					'class' => array(
+						'full-width',
+					),
+				),
+			),
+			array(
+				'type'        => 'on_off',
+				'slug'        => 'external_assets',
+				'description' => __( 'Support external media.', 'cloudinary' ),
+				'default'     => 'off',
+
+			),
+			array(
+				'type'      => 'group',
+				'condition' => array(
+					'external_assets' => true,
+				),
+				array(
+					'type'    => 'radio',
+					'slug'    => 'external_type',
+					'default' => 'all',
+					'options' => array(
+						'all'  => __( 'Capture all external resources.', 'cloudinary' ),
+						'some' => __( 'Capture specific resources.', 'cloudinary' ),
+					),
+				),
+				array(
+					'type'        => 'textarea',
+					'title'       => __( 'Except the following domains', 'cloudinary' ),
+					'description' => __( 'One domain per line.', 'cloudinary' ),
+					'slug'        => 'capture_excludes',
+					'condition'   => array(
+						'external_type' => 'all',
+					),
+				),
+				array(
+					'type'        => 'textarea',
+					'title'       => __( 'Only from the following domains', 'cloudinary' ),
+					'description' => __( 'One domain per line.', 'cloudinary' ),
+					'slug'        => 'capture_includes',
+					'condition'   => array(
+						'external_type' => 'some',
+					),
+				),
 			),
 		);
 
