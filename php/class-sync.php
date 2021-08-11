@@ -452,6 +452,30 @@ class Sync implements Setup, Assets {
 			'download'     => array(
 				'generate' => '__return_false',
 				'validate' => function ( $attachment_id ) {
+					$sync_settings = $this->managers['media']->get_settings()->get_value( 'sync_media' );
+					$v1_upgrading  = (bool) $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['upgrading'], true );
+
+					// Bypass Cloudinary Only storage.
+					if (
+						! empty( $sync_settings['offload'] ) &&
+						'cld' === $sync_settings['offload'] &&
+						! $v1_upgrading
+					) {
+						return false;
+					}
+
+					// Bypass non local media.
+					if (
+						! empty( $sync_settings['offload'] ) &&
+						'cld' !== $sync_settings['offload'] &&
+						! $this->managers['media']->is_local_media( $attachment_id ) &&
+						! $this->managers['media']->is_cloudinary_url(
+							wp_get_attachment_url( $attachment_id )
+						)
+					) {
+						return false;
+					}
+
 					$file = get_attached_file( $attachment_id );
 
 					return ! file_exists( $file );
