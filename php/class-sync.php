@@ -34,7 +34,7 @@ class Sync implements Setup, Assets {
 	/**
 	 * Contains all the different sync components.
 	 *
-	 * @var Delete_Sync[]|Push_Sync[]|Upload_Sync[]
+	 * @var Delete_Sync[]|Push_Sync[]|Upload_Sync[]|Media[]
 	 */
 	public $managers;
 
