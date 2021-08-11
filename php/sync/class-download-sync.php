@@ -141,7 +141,8 @@ class Download_Sync {
 			$cloudinary_id = $this->media->get_cloudinary_id( $attachment_id );
 			$source        = $this->media->cloudinary_url( $attachment_id, array(), array(), $cloudinary_id, false );
 		}
-		$file_name = basename( $source );
+
+		$file_name = basename( strtok( $source, '?' ) );
 		try {
 			// Prime a file to stream to.
 			$upload = wp_upload_bits( $file_name, null, 'temp', $date );
