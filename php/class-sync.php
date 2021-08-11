@@ -95,6 +95,7 @@ class Sync implements Setup, Assets {
 		'storage'        => '_cloudinary_storage',
 		'queued'         => '_cloudinary_sync_queued',
 		'delay'          => '_cloudinary_sync_delay',
+		'upgrading'      => '_cloudinary_upgrading',
 	);
 
 	/**
@@ -542,9 +543,13 @@ class Sync implements Setup, Assets {
 				},
 				'priority' => 100, // Always be the highest.
 				'sync'     => function ( $attachment_id ) {
-					$meta = $this->managers['media']->get_post_meta( $attachment_id );
+					$meta         = $this->managers['media']->get_post_meta( $attachment_id );
+					$cleanup_keys = array(
+						self::META_KEYS['cloudinary'],
+						self::META_KEYS['upgrading'],
+					);
 					foreach ( $meta as $key => $value ) {
-						if ( Sync::META_KEYS['cloudinary'] === $key ) {
+						if ( in_array( $key, $cleanup_keys, true ) ) {
 							$this->managers['media']->delete_post_meta( $attachment_id, $key );
 							continue;
 						}

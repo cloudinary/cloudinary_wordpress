@@ -100,6 +100,7 @@ class Upgrade {
 			}
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['version'], $asset_version );
+			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['upgrading'], true );
 			if ( ! empty( $asset_transformations ) ) {
 				$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], $asset_transformations );
 			}
