@@ -1454,31 +1454,10 @@ class Assets extends Settings_Component {
 					'external_assets' => true,
 				),
 				array(
-					'type'    => 'radio',
-					'slug'    => 'external_type',
-					'default' => 'all',
-					'options' => array(
-						'all'  => __( 'Capture all external resources.', 'cloudinary' ),
-						'some' => __( 'Capture specific resources.', 'cloudinary' ),
-					),
-				),
-				array(
-					'type'        => 'textarea',
-					'title'       => __( 'Except the following domains', 'cloudinary' ),
-					'description' => __( 'One domain per line.', 'cloudinary' ),
-					'slug'        => 'capture_excludes',
-					'condition'   => array(
-						'external_type' => 'all',
-					),
-				),
-				array(
 					'type'        => 'textarea',
 					'title'       => __( 'Only from the following domains', 'cloudinary' ),
 					'description' => __( 'One domain per line.', 'cloudinary' ),
-					'slug'        => 'capture_includes',
-					'condition'   => array(
-						'external_type' => 'some',
-					),
+					'slug'        => 'uploadable_domains',
 				),
 			),
 		);
