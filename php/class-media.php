@@ -330,6 +330,42 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Check if the attachment is uploadable.
+	 *
+	 * @param int $attachment_id The attachment ID to check.
+	 *
+	 * @return bool
+	 */
+	public function is_uploadable_media( $attachment_id ) {
+		$is_uploadable = $this->is_local_media( $attachment_id );
+		$guid          = get_the_guid( $attachment_id );
+		$media_host    = wp_parse_url( $guid, PHP_URL_HOST );
+
+		if ( ! $is_uploadable ) {
+			$additional_urls = $this->plugin->settings->find_setting( 'uploadable_domains' )->get_value();
+
+			if ( ! empty( $additional_urls ) ) {
+				$additional_urls = explode( ' ', $additional_urls );
+
+				$is_uploadable = in_array( $media_host, $additional_urls, true );
+			}
+		}
+
+		/**
+		 * Filter local media.
+		 *
+		 * @hook   cloudinary_is_uploadable_media
+		 * @since  2.7.7
+		 *
+		 * @param $is_local   {bool}   The attachment ID.
+		 * @param $media_host {string} The html tag.
+		 *
+		 * @return {bool}
+		 */
+		return apply_filters( 'cloudinary_is_uploadable_media', $is_uploadable, $media_host );
+	}
+
+	/**
 	 * Get the Cloudinary delivery type.
 	 *
 	 * @param int $attachment_id The attachment ID.
@@ -1812,7 +1848,7 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function media_column_value( $column_name, $attachment_id ) {
 		if ( 'cld_status' === $column_name ) {
-			if ( $this->sync->is_syncable( $attachment_id ) ) :
+			if ( $this->sync->is_syncable( $attachment_id ) && $this->is_uploadable_media( $attachment_id ) ) :
 				$status = array(
 					'state' => 'inactive',
 					'note'  => esc_html__( 'Not Synced', 'cloudinary' ),
@@ -1838,7 +1874,7 @@ class Media extends Settings_Component implements Setup {
 				?>
 				<span class="dashicons-cloudinary <?php echo esc_attr( $status['state'] ); ?>" title="<?php echo esc_attr( $status['note'] ); ?>"></span>
 				<?php
-			elseif ( ! $this->is_local_media( $attachment_id ) ) :
+			elseif ( ! $this->is_uploadable_media( $attachment_id ) ) :
 				?>
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'Not syncable. This is an external media.', 'cloudinary' ); ?>"></span>
 				<?php

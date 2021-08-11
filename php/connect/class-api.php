@@ -395,7 +395,7 @@ class Api {
 			$disable_https_fetch = true;
 		}
 		$media    = get_plugin_instance()->get_component( 'media' );
-		if ( ! $media->is_local_media( $attachment_id ) ) {
+		if ( ! $media->is_uploadable_media( $attachment_id ) ) {
 			$disable_https_fetch = false; // Remote can upload via url.
 			// translators: variable is thread name and queue size.
 			$action_message = sprintf( __( 'Uploading remote url:  %1$s.', 'cloudinary' ), $file_url );
@@ -407,7 +407,7 @@ class Api {
 			$disable_https_fetch = false;
 		}
 		// Check if we can try http file upload.
-		if ( empty( $headers ) && empty( $disable_https_fetch ) && true === $try_remote ) {
+		if ( ( empty( $headers ) && empty( $disable_https_fetch ) && true === $try_remote ) || ! $media->is_uploadable_media( $attachment_id ) ) {
 			$args['file'] = $file_url;
 		} else {
 			// We should have the file in args at this point, but if the transient was set, it will be defaulting here.

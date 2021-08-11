@@ -272,7 +272,7 @@ class Sync implements Setup, Assets {
 			$can = true;
 		}
 
-		if ( ! $this->managers['media']->is_local_media( $attachment_id ) ) {
+		if ( ! $this->managers['media']->is_uploadable_media( $attachment_id ) ) {
 			$can = false;
 		}
 
