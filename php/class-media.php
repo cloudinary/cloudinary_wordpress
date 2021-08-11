@@ -288,9 +288,45 @@ class Media extends Settings_Component implements Setup {
 	public function is_local_media( $attachment_id ) {
 		$local_host = wp_parse_url( get_site_url(), PHP_URL_HOST );
 		$guid       = get_the_guid( $attachment_id );
+
+		// Maybe GUID is a path.
+		if ( ! filter_var( $guid, FILTER_VALIDATE_URL ) ) {
+			$url = home_url( $guid );
+			if ( $this->maybe_file_exist_in_url( $url ) ) {
+				$guid = home_url( $guid );
+			}
+		}
+
 		$media_host = wp_parse_url( $guid, PHP_URL_HOST );
 
 		return $local_host === $media_host || $this->is_cloudinary_url( $guid );
+	}
+
+	/**
+	 * Checks if asset URL is valid.
+	 *
+	 * @param string $url The URL to test.
+	 *
+	 * @return bool
+	 */
+	public function maybe_file_exist_in_url( $url ) {
+		if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
+			return false;
+		}
+		$ch = curl_init( $url );
+		curl_setopt( $ch, CURLOPT_NOBODY, true );
+		curl_exec( $ch );
+		$code = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
+
+		if ( 200 === $code ) {
+			$status = true;
+		} else {
+			$status = false;
+		}
+
+		curl_close( $ch );
+
+		return $status;
 	}
 
 	/**
