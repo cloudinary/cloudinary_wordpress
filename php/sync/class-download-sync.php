@@ -138,8 +138,7 @@ class Download_Sync {
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 		if ( empty( $source ) ) {
-			$cloudinary_id = $this->media->get_cloudinary_id( $attachment_id );
-			$source        = $this->media->cloudinary_url( $attachment_id, array(), array(), $cloudinary_id, false );
+			$source = wp_get_attachment_url( $attachment_id );
 		}
 
 		$file_name = basename( strtok( $source, '?' ) );

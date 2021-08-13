@@ -452,33 +452,7 @@ class Sync implements Setup, Assets {
 			'download'     => array(
 				'generate' => '__return_false',
 				'validate' => function ( $attachment_id ) {
-					$sync_settings = $this->managers['media']->get_settings()->get_value( 'sync_media' );
-					$v1_upgrading  = (bool) $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['upgrading'], true );
-
-					// Bypass Cloudinary Only storage.
-					if (
-						! empty( $sync_settings['offload'] ) &&
-						'cld' === $sync_settings['offload'] &&
-						! $v1_upgrading
-					) {
-						return false;
-					}
-
-					// Bypass non local media.
-					if (
-						! empty( $sync_settings['offload'] ) &&
-						'cld' !== $sync_settings['offload'] &&
-						! $this->managers['media']->is_local_media( $attachment_id ) &&
-						! $this->managers['media']->is_cloudinary_url(
-							wp_get_attachment_url( $attachment_id )
-						)
-					) {
-						return false;
-					}
-
-					$file = get_attached_file( $attachment_id );
-
-					return ! file_exists( $file );
+					return (bool) $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['upgrading'], true );
 				},
 				'priority' => 1,
 				'sync'     => array( $this->managers['download'], 'download_asset' ),
@@ -794,7 +768,10 @@ class Sync implements Setup, Assets {
 		} else {
 			// Check if this is a realtime process.
 			if ( ! empty( $this->sync_base_struct[ $type ]['realtime'] ) ) {
-				$this->run_sync_method( $type, 'sync', $attachment_id );
+				$result = $this->run_sync_method( $type, 'sync', $attachment_id );
+				if ( ! empty( $result ) ) {
+					$this->log_sync_result( $attachment_id, $type, $result );
+				}
 				$type = $this->get_sync_type( $attachment_id, false ); // Set cache to false to get the new signature.
 			}
 		}

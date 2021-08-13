@@ -409,6 +409,8 @@ class Api {
 		// Check if we can try http file upload.
 		if ( ( empty( $headers ) && empty( $disable_https_fetch ) && true === $try_remote ) || ! $media->is_uploadable_media( $attachment_id ) ) {
 			$args['file'] = $file_url;
+		} elseif ( ! $media->is_local_media( $attachment_id ) ) {
+			$args['file'] = $file_url;
 		} else {
 			// We should have the file in args at this point, but if the transient was set, it will be defaulting here.
 			if ( empty( $args['file'] ) ) {
