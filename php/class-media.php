@@ -914,7 +914,7 @@ class Media extends Settings_Component implements Setup {
 			 */
 			&& ! apply_filters( 'cloudinary_doing_upload', false )
 		) {
-			if ( $this->cloudinary_id( $attachment_id ) ) {
+			if ( $this->has_public_id( $attachment_id ) ) {
 				$url = $this->cloudinary_url( $attachment_id );
 			}
 		}
