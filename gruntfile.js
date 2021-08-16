@@ -79,7 +79,56 @@ module.exports = function ( grunt ) {
 				},
 			},
 		},
+
+		addtextdomain: {
+			options: {
+				textdomain: 'cloudinary',
+			},
+			update_all_domains: {
+				options: {
+					updateDomains: true,
+				},
+				src: [
+					'*.php',
+					'**/*.php',
+					'!.git/**/*',
+					'!bin/**/*',
+					'!node_modules/**/*',
+					'!tests/**/*',
+					'!build/**/*',
+					'!vendor/**/*',
+				],
+			},
+		},
+
+		makepot: {
+			target: {
+				options: {
+					domainPath: '/languages',
+					exclude: [
+						'.git/*',
+						'bin/*',
+						'node_modules/*',
+						'tests/*',
+						'build/*',
+						'vendor/*',
+					],
+					mainFile: 'cloudinary.php',
+					potFilename: 'cloudinary.pot',
+					potHeaders: {
+						poedit: true,
+						'x-poedit-keywordslist': true,
+						'Report-Msgid-Bugs-To':
+							'https://github.com/cloudinary/cloudinary_wordpress',
+					},
+					type: 'wp-plugin',
+					updateTimestamp: true,
+				},
+			},
+		},
 	} );
+
+	grunt.registerTask( 'i18n', [ 'addtextdomain', 'makepot' ] );
 
 	grunt.registerTask( 'package', [ 'clean', 'copy', 'replace', 'compress' ] );
 

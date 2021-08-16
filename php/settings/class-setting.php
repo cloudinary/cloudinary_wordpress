@@ -331,6 +331,30 @@ class Setting {
 	}
 
 	/**
+	 * Get settings recursively of a specific type.
+	 *
+	 * @param string $type The type of settings to get.
+	 *
+	 * @return array
+	 */
+	public function get_settings_by_type( $type ) {
+		$settings = array();
+		if ( $type === $this->get_param( 'type' ) ) {
+			$settings[] = $this;
+		}
+		if ( $this->has_settings() ) {
+			foreach ( $this->settings as $setting ) {
+				$has = $setting->get_settings_by_type( $type );
+				if ( ! empty( $has ) ) {
+					$settings = array_merge( $settings, $has );
+				}
+			}
+		}
+
+		return $settings;
+	}
+
+	/**
 	 * Get all slugs of settings.
 	 *
 	 * @return array

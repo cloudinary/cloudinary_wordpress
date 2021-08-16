@@ -125,7 +125,7 @@ class Lazy_Load extends Delivery_Feature {
 		}
 		$src = $tag_element['atts']['src'];
 		if ( ! $this->media->is_cloudinary_url( $src ) ) {
-			$src = $this->media->cloudinary_url( $attachment_id );
+			$src = $this->media->cloudinary_url( $attachment_id, array(), array(), null, $tag_element['cld-overwrite'] );
 		}
 		$tag_element['atts']['data-src'] = $src;
 		$transformations                 = $this->media->get_transformations_from_string( $src );
@@ -161,6 +161,7 @@ class Lazy_Load extends Delivery_Feature {
 		unset( $tag_element['atts']['loading'] );
 		$tag_element['atts']['decoding']   = 'async';
 		$tag_element['atts']['data-width'] = $size[0];
+		$tag_element['delivery']           = 'cld';
 
 		return $tag_element;
 	}

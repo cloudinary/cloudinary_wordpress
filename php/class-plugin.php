@@ -115,6 +115,7 @@ final class Plugin {
 		$this->dir_path      = $location['dir_path'];
 		$this->template_path = $this->dir_path . 'php/templates/';
 		$this->dir_url       = $location['dir_url'];
+		$this->setup_endpoints();
 		spl_autoload_register( array( $this, 'autoload' ) );
 		$this->register_hooks();
 	}
@@ -201,7 +202,8 @@ final class Plugin {
 		\Cloudinary\Settings::init_setting( $this->slug );
 
 		// Add count notice if not connected.
-		if ( ! $this->get_component( 'connect' )->is_connected() ) {
+		$this->settings->set_param( 'connected', $this->get_component( 'connect' )->is_connected() );
+		if ( ! $this->settings->get_param( 'connected' ) ) {
 			$count      = sprintf( ' <span class="update-plugins count-%d"><span class="update-count">%d</span></span>', 1, number_format_i18n( 1 ) );
 			$main_title = $this->settings->get_param( 'menu_title' ) . $count;
 			$this->settings->set_param( 'menu_title', $main_title );
@@ -216,12 +218,10 @@ final class Plugin {
 		/**
 		 * Action indicating that the Settings are initialised.
 		 *
-		 * @hook    cloudinary_init_settings
-		 * @since   2.7.5
+		 * @hook  cloudinary_init_settings
+		 * @since 2.7.5
 		 *
-		 * @param $plugin {Plugin}  The core plugin object.
-		 *
-		 * @return  void
+		 * @param $plugin {Plugin} The core plugin object.
 		 */
 		do_action( 'cloudinary_init_settings', $this );
 	}
@@ -440,19 +440,20 @@ final class Plugin {
 	public function setup() {
 		$this->set_config();
 
-		/**
-		 * Component that implements Component\Setup.
-		 *
-		 * @var  Component\Setup $component
-		 */
-		foreach ( $this->components as $key => $component ) {
-			if ( ! $this->is_setup_component( $component ) ) {
-				continue;
+		if ( $this->settings->get_param( 'connected' ) ) {
+			/**
+			 * Component that implements Component\Setup.
+			 *
+			 * @var  Component\Setup $component
+			 */
+			foreach ( $this->components as $key => $component ) {
+				if ( ! $this->is_setup_component( $component ) ) {
+					continue;
+				}
+
+				$component->setup();
 			}
-
-			$component->setup();
 		}
-
 	}
 
 	/**
@@ -495,6 +496,99 @@ final class Plugin {
 				$notice = wp_parse_args( $notice, $default );
 				$setting->add_admin_notice( 'cld_general', $notice['message'], $notice['type'], $notice['dismissible'], $notice['duration'], $notice['icon'] );
 			}
+		}
+	}
+
+	/**
+	 * Setup the Cloudinary endpoints.
+	 */
+	protected function setup_endpoints() {
+
+		/**
+		 * The Cloudinary API URL.
+		 */
+		if ( ! defined( 'CLOUDINARY_ENDPOINTS_API' ) ) {
+			define( 'CLOUDINARY_ENDPOINTS_API', 'api.cloudinary.com' );
+		}
+
+		/**
+		 * The Cloudinary endpoint for the Core.
+		 */
+		if ( ! defined( 'CLOUDINARY_ENDPOINTS_CORE' ) ) {
+			// The %s stands for the version of Core. Use the constant CLOUDINARY_ENDPOINTS_CORE_VERSION to set it.
+			define( 'CLOUDINARY_ENDPOINTS_CORE', 'https://unpkg.com/cloudinary-core@%s/cloudinary-core-shrinkwrap.min.js' );
+		}
+
+		/**
+		 * The Cloudinary Core version.
+		 */
+		if ( ! defined( 'CLOUDINARY_ENDPOINTS_CORE_VERSION' ) ) {
+			define( 'CLOUDINARY_ENDPOINTS_CORE_VERSION', '2.6.3' );
+		}
+
+		/**
+		 * The Cloudinary endpoint to submit the deactivation feedback.
+		 */
+		if ( ! defined( 'CLOUDINARY_ENDPOINTS_DEACTIVATION' ) ) {
+			define( 'CLOUDINARY_ENDPOINTS_DEACTIVATION', 'https://analytics-api.cloudinary.com/wp_deactivate_reason' );
+		}
+
+		/**
+		 * The Cloudinary Gallery widget lib cdn url.
+		 */
+		if ( ! defined( 'CLOUDINARY_ENDPOINTS_GALLERY' ) ) {
+			define( 'CLOUDINARY_ENDPOINTS_GALLERY', 'https://product-gallery.cloudinary.com/all.js' );
+		}
+
+		/**
+		 * The Cloudinary endpoint for the Media Library.
+		 */
+		if ( ! defined( 'CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY' ) ) {
+			define( 'CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY', 'https://media-library.cloudinary.com/global/all.js' );
+		}
+
+		/**
+		 * The Cloudinary endpoint for the Preview Image.
+		 */
+		if ( ! defined( 'CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE' ) ) {
+			define( 'CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE', 'https://res.cloudinary.com/demo/image/upload/' );
+		}
+
+		/**
+		 * The Cloudinary endpoint for the Preview Video.
+		 */
+		if ( ! defined( 'CLOUDINARY_ENDPOINTS_PREVIEW_VIDEO' ) ) {
+			define( 'CLOUDINARY_ENDPOINTS_PREVIEW_VIDEO', 'https://res.cloudinary.com/demo/video/upload/' );
+		}
+
+		/**
+		 * The Cloudinary endpoint for the Video Player Embed.
+		 */
+		if ( ! defined( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_EMBED' ) ) {
+			define( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_EMBED', 'https://player.cloudinary.com/embed/' );
+		}
+
+		/**
+		 * The Cloudinary endpoint for the Video Player Script.
+		 */
+		if ( ! defined( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_SCRIPT' ) ) {
+			// The %s stands for the version of Video Player. Use the constant CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION to set it.
+			define( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_SCRIPT', 'https://unpkg.com/cloudinary-video-player@%s/dist/cld-video-player.min.js' );
+		}
+
+		/**
+		 * The Cloudinary endpoint for the Video Player Style.
+		 */
+		if ( ! defined( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_STYLE' ) ) {
+			// The %s stands for the version of Video Player. Use the constant CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION to set it.
+			define( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_STYLE', 'https://unpkg.com/cloudinary-video-player@%s/dist/cld-video-player.min.css' );
+		}
+
+		/**
+		 * The Cloudinary Video Player version.
+		 */
+		if ( ! defined( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION' ) ) {
+			define( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION', '1.5.1' );
 		}
 	}
 

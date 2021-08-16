@@ -24,13 +24,6 @@ class Api {
 	public $credentials;
 
 	/**
-	 * Cloudinary API URL.
-	 *
-	 * @var string
-	 */
-	public $api_url = 'api.cloudinary.com';
-
-	/**
 	 * Cloudinary Asset URL.
 	 *
 	 * @var string
@@ -162,7 +155,7 @@ class Api {
 		$parts = array();
 
 		if ( $endpoint ) {
-			$parts[] = $this->api_url;
+			$parts[] = CLOUDINARY_ENDPOINTS_API;
 			$parts[] = $this->api_version;
 		} else {
 			$parts[] = $this->asset_url;
@@ -397,6 +390,9 @@ class Api {
 			$file_url = wp_get_original_image_url( $attachment_id );
 		} else {
 			$file_url = wp_get_attachment_url( $attachment_id );
+		}
+		if ( empty( $file_url ) ) {
+			$disable_https_fetch = true;
 		}
 		$media    = get_plugin_instance()->get_component( 'media' );
 		if ( ! $media->is_local_media( $attachment_id ) ) {

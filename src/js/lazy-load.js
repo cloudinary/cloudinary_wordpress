@@ -106,6 +106,7 @@ const LazyLoad = {
 		const rect = image.getBoundingClientRect();
 		const density = 'auto' !== this.density ? this._getDensity() : 1;
 		return (
+			image.dataset.placeholder &&
 			! image.cld_loaded &&
 			rect.top < this.lazyThreshold * 2 &&
 			( width > image.naturalWidth / density || ! image.cld_placehold )
@@ -191,7 +192,20 @@ const LazyLoad = {
 	},
 	getPlaceholderURL( image ) {
 		image.cld_placehold = true;
-		return image.dataset.placeholder.replace( '/--size--', '/' );
+		const width = this.scaleSize(
+			image.originalWidth,
+			image.width,
+			this.config.pixel_step
+		);
+		const density = this._getDensity();
+		let newSize = '';
+		if ( width ) {
+			newSize += 'w_' + width;
+			if ( 1 !== density ) {
+				newSize += ',dpr_' + density;
+			}
+		}
+		return image.dataset.placeholder.replace( '--size--', newSize );
 	},
 };
 // Init.
