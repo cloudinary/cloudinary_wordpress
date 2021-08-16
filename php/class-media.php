@@ -1206,15 +1206,18 @@ class Media extends Settings_Component implements Setup {
 			// Get the file, and use the same extension.
 			$file = get_attached_file( $attachment_id );
 			// @todo: Make this use the globals, overrides, and application conversion.
-			$extension = pathinfo( $file, PATHINFO_EXTENSION );
-			if ( wp_attachment_is_image( $attachment_id ) ) {
-				$image_format = $this->settings->find_setting( 'image_format' )->get_value();
-				if ( ! in_array( $image_format, array( 'none', 'auto' ), true ) ) {
-					$extension = $image_format;
-				}
-			}
+			$extension     = pathinfo( $file, PATHINFO_EXTENSION );
 			$cloudinary_id = $public_id;
-			if ( 'fetch' !== $this->get_media_delivery( $attachment_id ) && empty( pathinfo( $public_id, PATHINFO_EXTENSION ) ) ) {
+			$type          = $this->get_resource_type( $attachment_id );
+			if ( in_array( $type, array( 'image', 'video' ), true ) ) {
+				$format = $this->settings->find_setting( $type . '_format' )->get_value();
+				if ( ! in_array( $format, array( 'none', 'auto' ), true ) ) {
+					$extension = $format;
+				}
+				if ( 'fetch' !== $this->get_media_delivery( $attachment_id ) ) {
+					$cloudinary_id = $public_id . '.' . $extension;
+				}
+			} elseif ( empty( pathinfo( $public_id, PATHINFO_EXTENSION ) ) ) {
 				$cloudinary_id = $public_id . '.' . $extension;
 			}
 		}
