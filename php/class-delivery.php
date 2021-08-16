@@ -401,10 +401,10 @@ class Delivery implements Setup {
 			$element = wp_image_add_srcset_and_sizes( $tag_element['original'], $image_meta, $tag_element['id'] );
 			$atts    = Utils::get_tag_attributes( $element );
 
-			if ( $atts['srcset'] ) {
+			if ( ! empty( $atts['srcset'] ) ) {
 				$tag_element['atts']['srcset'] = $atts['srcset'];
 			}
-			if ( $atts['sizes'] ) {
+			if ( ! empty( $atts['sizes'] ) ) {
 				$tag_element['atts']['sizes'] = $atts['sizes'];
 			}
 

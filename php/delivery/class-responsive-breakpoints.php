@@ -57,7 +57,7 @@ class Responsive_Breakpoints extends Delivery_Feature {
 	public function add_features( $tag_element, $attachment_id, $original_tag ) {
 
 		if ( ! $this->media->is_cloudinary_url( $tag_element['atts']['src'] ) ) {
-			$tag_element['atts']['src'] = $this->media->cloudinary_url( $attachment_id );
+			$tag_element['atts']['src'] = $this->media->cloudinary_url( $attachment_id, array(), array(), null, $tag_element['cld-overwrite'] );
 		}
 		$transformations = $this->media->get_transformations_from_string( $tag_element['atts']['src'] );
 		$original_string = Api::generate_transformation_string( $transformations );

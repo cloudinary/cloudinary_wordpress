@@ -132,6 +132,15 @@ The following plugins/themes/page-builders might not be fully compatible with th
 
 == Changelog ==
 
+= 2.7.6 (16 August 2021) =
+
+Fixes and Improvements:
+
+* Added context to Cloudinary scripts to prevent conflict with other plugins
+* Fixed raw files delivery duplicating the file extension
+* Fixed typo when upgrading from v1 to v2 of the plugin
+* Fixed Cloudinary Only storage where image pulled from Cloudinary are saved locally
+
 = 2.7.5 (20 July 2021) =
 
 Fixes and Improvements:

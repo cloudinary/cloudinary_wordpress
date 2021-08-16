@@ -384,7 +384,7 @@ class Report extends Settings_Component implements Setup {
 	 */
 	protected function config() {
 		$config = $this->plugin->settings->get_root_setting()->get_value();
-		unset( $config['connect'] );
+		unset( $config['connect'], $config['connection'] );
 		// The Gallery setting might not be set, so we need ensure it exists before using it.
 		if ( $this->plugin->get_component( 'media' )->gallery ) {
 			$config['gallery'] = $this->plugin->get_component( 'media' )->gallery->get_config();
