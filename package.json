@@ -28,7 +28,7 @@
     "package": "npm run build && grunt package",
     "postinstall": "composer install",
     "readme": "composer readme",
-    "release": "release-it",
+    "release": "release-it --no-increment",
     "release:ci": "release-it --ci",
     "release:dry": "release-it --dry-run"
   },
@@ -148,5 +148,5 @@
     "chart.js": "^3.5.0",
     "human-format": "^0.11.0"
   },
-  "version": "2.7.5"
+  "version": "2.7.6"
 }

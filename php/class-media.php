@@ -710,7 +710,7 @@ class Media extends Settings_Component implements Setup {
 	public function get_transformations( $attachment_id, $transformations = array(), $overwrite_transformations = false ) {
 		static $cache = array();
 
-		$key = wp_json_encode( func_get_args() );
+		$key = $this->get_cache_key( func_get_args() );
 		if ( isset( $cache[ $key ] ) ) {
 			return $cache[ $key ];
 		}
@@ -861,7 +861,7 @@ class Media extends Settings_Component implements Setup {
 	public function apply_default_transformations( array $transformations, $attachment_id ) {
 		static $cache = array(), $freeform = array();
 
-		$key = wp_json_encode( func_get_args() );
+		$key = $this->get_cache_key( func_get_args() );
 		if ( isset( $cache[ $key ] ) ) {
 			return $cache[ $key ];
 		}
@@ -899,7 +899,7 @@ class Media extends Settings_Component implements Setup {
 			$default                   = array_filter( $default ); // Clear out empty settings.
 			$new_transformations['qf'] = Api::generate_transformation_string( array( $default ), $type );
 
-			if ( empty( $freeform ) ) {
+			if ( empty( $freeform[ $type ] ) ) {
 				/**
 				 * Filter the default Freeform transformations for the specific media type.
 				 *
@@ -908,12 +908,12 @@ class Media extends Settings_Component implements Setup {
 				 *
 				 * @return array
 				 */
-				$freeform = apply_filters( "cloudinary_default_freeform_transformations_{$type}", array(), $transformations );
-				$freeform = array_filter( $freeform ); // Clear out empty settings.
+				$freeform[ $type ] = apply_filters( "cloudinary_default_freeform_transformations_{$type}", array(), $transformations );
+				$freeform[ $type ] = array_filter( $freeform[ $type ] ); // Clear out empty settings.
 			}
 			// Add freeform global transformations.
-			if ( ! empty( $freeform ) ) {
-				$new_transformations['global'] = implode( '/', $freeform );
+			if ( ! empty( $freeform[ $type ] ) ) {
+				$new_transformations['global'] = implode( '/', $freeform[ $type ] );
 			}
 		}
 		// Clean out empty parts, and join into a sectioned string.
@@ -978,12 +978,25 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Get a cache key for static caching.
+	 *
+	 * @param array $args The arguments array to generate a key with.
+	 *
+	 * @return string
+	 */
+	protected function get_cache_key( $args ) {
+		$args[] = $this->global_transformations->get_current_post();
+
+		return md5( wp_json_encode( $args ) );
+	}
+
+	/**
 	 * Generate a Cloudinary URL based on attachment ID and required size.
 	 *
 	 * @param int          $attachment_id             The id of the attachment.
 	 * @param array|string $size                      The wp size to set for the URL.
 	 * @param array        $transformations           Set of transformations to apply to this url.
-	 * @param string       $cloudinary_id             Optional forced cloudinary ID.
+	 * @param string|null  $cloudinary_id             Optional forced cloudinary ID.
 	 * @param bool         $overwrite_transformations Flag url is a breakpoint URL to stop re-applying default transformations.
 	 *
 	 * @return string The converted URL.
@@ -997,7 +1010,7 @@ class Media extends Settings_Component implements Setup {
 				return null;
 			}
 		}
-		$key = wp_json_encode( func_get_args() );
+		$key = $this->get_cache_key( func_get_args() );
 		if ( isset( $cache[ $key ] ) ) {
 			return $cache[ $key ];
 		}
@@ -1193,15 +1206,18 @@ class Media extends Settings_Component implements Setup {
 			// Get the file, and use the same extension.
 			$file = get_attached_file( $attachment_id );
 			// @todo: Make this use the globals, overrides, and application conversion.
-			$extension = pathinfo( $file, PATHINFO_EXTENSION );
-			if ( wp_attachment_is_image( $attachment_id ) ) {
-				$image_format = $this->settings->find_setting( 'image_format' )->get_value();
-				if ( ! in_array( $image_format, array( 'none', 'auto' ), true ) ) {
-					$extension = $image_format;
-				}
-			}
+			$extension     = pathinfo( $file, PATHINFO_EXTENSION );
 			$cloudinary_id = $public_id;
-			if ( 'fetch' !== $this->get_media_delivery( $attachment_id ) && empty( pathinfo( $public_id, PATHINFO_EXTENSION ) ) ) {
+			$type          = $this->get_resource_type( $attachment_id );
+			if ( in_array( $type, array( 'image', 'video' ), true ) ) {
+				$format = $this->settings->find_setting( $type . '_format' )->get_value();
+				if ( ! in_array( $format, array( 'none', 'auto' ), true ) ) {
+					$extension = $format;
+				}
+				if ( 'fetch' !== $this->get_media_delivery( $attachment_id ) ) {
+					$cloudinary_id = $public_id . '.' . $extension;
+				}
+			} elseif ( empty( pathinfo( $public_id, PATHINFO_EXTENSION ) ) ) {
 				$cloudinary_id = $public_id . '.' . $extension;
 			}
 		}
