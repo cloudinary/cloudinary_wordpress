@@ -2011,7 +2011,7 @@ class Media extends Settings_Component implements Setup {
 	public function get_breakpoint_options( $attachment_id ) {
 		// Add breakpoints if we have an image.
 		$breakpoints = array();
-		$settings    = $this->settings->get_setting( self::MEDIA_SETTINGS_SLUG )->get_value();
+		$settings    = $this->settings->get_value( 'responsive' );
 
 		if ( 'on' === $settings['enable_breakpoints'] && wp_attachment_is_image( $attachment_id ) ) {
 			$meta = wp_get_attachment_metadata( $attachment_id, true );

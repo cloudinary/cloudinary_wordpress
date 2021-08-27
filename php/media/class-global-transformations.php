@@ -73,17 +73,17 @@ class Global_Transformations {
 	 */
 	public function __construct( \Cloudinary\Media $media ) {
 		$this->media            = $media;
-		$this->media_settings   = $this->media->get_settings()->get_setting( $media::MEDIA_SETTINGS_SLUG );
+		$this->media_settings   = $this->media->get_settings();
 		$this->globals['image'] = $this->media_settings->get_setting( 'image_settings' );
 		$this->globals['video'] = $this->media_settings->get_setting( 'video_settings' );
 		// Set value to null, to rebuild data to get defaults.
-		$this->media_settings->set_value( null );
-		$field_slugs = array_keys( $this->media_settings->get_value() );
+		$field_slugs = array_keys( $this->globals['image']->get_value() );
+		$field_slugs = array_merge( $field_slugs, array_keys( $this->globals['image']->get_value() ) );
 		foreach ( $field_slugs as $slug ) {
 			$setting = $this->media_settings->get_setting( $slug );
 			if ( $setting->has_param( 'taxonomy_field' ) ) {
-				$context  = $setting->get_param( 'taxonomy_field:context', 'global' );
-				$priority = intval( $setting->get_param( 'taxonomy_field:priority', 10 ) ) * 1000;
+				$context  = $setting->get_param( 'taxonomy_field.context', 'global' );
+				$priority = intval( $setting->get_param( 'taxonomy_field.priority', 10 ) ) * 1000;
 				while ( isset( $this->taxonomy_fields[ $context ][ $priority ] ) ) {
 					$priority ++;
 				}

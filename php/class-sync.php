@@ -114,6 +114,9 @@ class Sync implements Setup, Assets {
 		$this->managers['download'] = new Download_Sync( $this->plugin );
 		$this->managers['delete']   = new Delete_Sync( $this->plugin );
 		$this->managers['queue']    = new Sync_Queue( $this->plugin );
+
+		// Register Settings.
+		add_filter( 'cloudinary_admin_pages', array( $this, 'settings' ) );
 	}
 
 	/**
@@ -1018,8 +1021,6 @@ class Sync implements Setup, Assets {
 			$this->managers['connect'] = $this->plugin->components['connect'];
 			$this->managers['api']     = $this->plugin->components['api'];
 
-			// Register Settings.
-			$this->register_settings();
 			// Setup sync queue.
 			$this->managers['queue']->setup( $this );
 
@@ -1029,17 +1030,15 @@ class Sync implements Setup, Assets {
 	}
 
 	/**
-	 * Define the settings.
+	 * Define the settings on the general settings page.
+	 *
+	 * @param array $pages The pages to add to.
 	 *
 	 * @return array
 	 */
-	public function settings() {
+	public function settings( $pages ) {
 
-		$args = array(
-			'type'        => 'page',
-			'menu_title'  => __( 'Sync', 'cloudinary' ),
-			'option_name' => 'cloudinary_sync_media',
-			'priority'    => 9,
+		$pages['connect']['settings'][] = array(
 			array(
 				'type'  => 'panel',
 				'title' => __( 'Sync Settings', 'cloudinary' ),
@@ -1097,12 +1096,9 @@ class Sync implements Setup, Assets {
 					),
 				),
 			),
-			array(
-				'type' => 'submit',
-			),
 		);
 
-		return $args;
+		return $pages;
 	}
 
 	/**
@@ -1116,18 +1112,5 @@ class Sync implements Setup, Assets {
 		$path = get_attached_file( $attachment_id );
 
 		return basename( $path );
-	}
-
-	/**
-	 * Register the setting under media.
-	 */
-	protected function register_settings() {
-
-		$settings_params = $this->settings();
-		$this->settings  = $this->plugin->settings->create_setting( $this->settings_slug, $settings_params );
-
-		// Move setting to media.
-		$media_settings = $this->managers['media']->get_settings();
-		$media_settings->add_setting( $this->settings );
 	}
 }
