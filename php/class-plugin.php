@@ -28,7 +28,7 @@ final class Plugin {
 	 *
 	 * @since   0.1
 	 *
-	 * @var     Media[]|Sync[]|Settings_Page[]|REST_API[]|Connect[]
+	 * @var     Media[]|Sync[]|Admin[]|REST_API[]|Connect[]
 	 */
 	public $components;
 	/**
@@ -41,7 +41,7 @@ final class Plugin {
 	/**
 	 * The core Settings object.
 	 *
-	 * @var Setting
+	 * @var Settings
 	 */
 	public $settings;
 
@@ -128,6 +128,7 @@ final class Plugin {
 	 * that extend the Customizer to ensure resources are available in time.
 	 */
 	public function init() {
+		$this->components['admin']        = new Admin( $this );
 		$this->components['connect']      = new Connect( $this );
 		$this->components['deactivation'] = new Deactivation( $this );
 		$this->components['sync']         = new Sync( $this );
@@ -143,7 +144,7 @@ final class Plugin {
 	 *
 	 * @param mixed $component The component.
 	 *
-	 * @return Report|Connect|Media|REST_API|Settings_Page|Sync|Cache|null
+	 * @return Report|Connect|Media|REST_API|Admin|Sync|Cache|null
 	 */
 	public function get_component( $component ) {
 		$return = null;
@@ -162,9 +163,7 @@ final class Plugin {
 	private function get_settings_page_structure() {
 
 		$parts = array(
-			'header' => array(),
-			'pages'  => array(),
-			'footer' => array(),
+			'pages' => array(),
 		);
 
 		foreach ( $parts as $slug => $part ) {
@@ -174,15 +173,14 @@ final class Plugin {
 		}
 
 		$structure = array(
-			'version'     => $this->version,
-			'page_title'  => __( 'Cloudinary', 'cloudinary' ),
-			'menu_title'  => __( 'Cloudinary', 'cloudinary' ),
-			'capability'  => 'manage_options',
-			'icon'        => 'dashicons-cloudinary',
-			'option_name' => $this->slug,
-			'page_header' => $parts['header'],
-			'page_footer' => $parts['footer'],
-			'pages'       => $parts['pages'],
+			'version'    => $this->version,
+			'page_title' => __( 'Cloudinary', 'cloudinary' ),
+			'menu_title' => __( 'Cloudinary', 'cloudinary' ),
+			'capability' => 'manage_options',
+			'icon'       => 'dashicons-cloudinary',
+			'slug'       => $this->slug,
+			'settings'   => $parts['pages'],
+			'sidebar'    => include CLDN_PATH . 'ui-definitions/settings-sidebar.php',
 		);
 
 		return $structure;
@@ -193,13 +191,19 @@ final class Plugin {
 	 */
 	public function setup_settings() {
 		$params         = $this->get_settings_page_structure();
-		$this->settings = \Cloudinary\Settings::create_setting( $this->slug, $params );
+		$this->settings = new Settings( $this->slug, $params );
 		$components     = array_filter( $this->components, array( $this, 'is_setting_component' ) );
 		$this->init_component_settings( $components );
-		$this->register_component_settings( $components );
 
-		// Init settings.
-		\Cloudinary\Settings::init_setting( $this->slug );
+		/**
+		 * Action indicating that the Settings are initialised.
+		 *
+		 * @hook  cloudinary_init_settings
+		 * @since 2.7.5
+		 *
+		 * @param $plugin {Plugin} The core plugin object.
+		 */
+		do_action( 'cloudinary_init_settings', $this );
 
 		// Add count notice if not connected.
 		$this->settings->set_param( 'connected', $this->get_component( 'connect' )->is_connected() );
@@ -208,12 +212,10 @@ final class Plugin {
 			$main_title = $this->settings->get_param( 'menu_title' ) . $count;
 			$this->settings->set_param( 'menu_title', $main_title );
 			$this->settings->set_param( 'connect_count', $count );
-
-			// Set the Getting Started title.
-			$connect       = $this->settings->find_setting( 'dashboard' );
-			$connect_title = $connect->get_param( 'menu_title' ) . $count;
-			$connect->set_param( 'menu_title', $connect_title );
 		}
+
+		// Register with admin.
+		$this->components['admin']->register_page( $this->slug, $this->settings->get_params() );
 
 		/**
 		 * Action indicating that the Settings are initialised.
@@ -239,22 +241,6 @@ final class Plugin {
 			 * @var  Component\Settings $component
 			 */
 			$component->init_settings( $this->settings );
-		}
-	}
-
-	/**
-	 * Register settings.
-	 *
-	 * @param Settings_Component[] $components Array of components to register settings for.
-	 */
-	private function register_component_settings( $components ) {
-		foreach ( $components as $slug => $component ) {
-			/**
-			 * Component that implements Settings.
-			 *
-			 * @var  Component\Settings $component
-			 */
-			$component->register_settings( $this->settings );
 		}
 	}
 

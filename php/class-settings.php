@@ -524,4 +524,64 @@ class Settings {
 		return $this->get_storage( $setting->get_parent()->get_slug() );
 	}
 
+	/**
+	 * Set an error/notice for a setting.
+	 *
+	 * @param string $error_code    The error code/slug.
+	 * @param string $error_message The error text/message.
+	 * @param string $type          The error type.
+	 * @param bool   $dismissible   If notice is dismissible.
+	 * @param int    $duration      How long it's dismissible for.
+	 * @param string $icon          Optional icon.
+	 */
+	public function add_admin_notice( $error_code, $error_message, $type = 'error', $dismissible = false, $duration = 0, $icon = null ) {
+
+		// Format message array into paragraphs.
+		if ( is_array( $error_message ) ) {
+			$message       = implode( "\n\r", $error_message );
+			$error_message = wpautop( $message );
+		}
+
+		$icons = array(
+			'success' => 'dashicons-yes-alt',
+			'created' => 'dashicons-saved',
+			'updated' => 'dashicons-saved',
+			'error'   => 'dashicons-no-alt',
+			'warning' => 'dashicons-warning',
+		);
+
+		if ( null === $icon && ! empty( $icons[ $type ] ) ) {
+			$icon = $icons[ $type ];
+		}
+
+		$notices = $this->get_param( '@notices', array() );
+
+		// Set new notice.
+		$params                  = array(
+			'type'     => 'notice',
+			'level'    => $type,
+			'message'  => $error_message,
+			'code'     => $error_code,
+			'dismiss'  => $dismissible,
+			'duration' => $duration,
+			'icon'     => $icon,
+		);
+		$notice_slug             = md5( wp_json_encode( $params ) );
+		$notices[ $notice_slug ] = $params;
+		$this->set_param( '@notices', $notices );
+	}
+
+	/**
+	 * Get admin notices.
+	 *
+	 * @return Setting[]
+	 */
+	public function get_admin_notices() {
+		$setting_notices = get_settings_errors();
+		foreach ( $setting_notices as $key => $notice ) {
+			$this->add_admin_notice( $notice['code'], $notice['message'], $notice['type'], true );
+		}
+
+		return $setting_notices;
+	}
 }
