@@ -520,8 +520,6 @@ class Gallery {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_gallery_library' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_filter( 'render_block', array( $this, 'prepare_block_render' ), 10, 2 );
-
-		// Register Settings.
-		$this->register_settings();
+		// @todo: register settings.
 	}
 }

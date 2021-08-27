@@ -156,33 +156,9 @@ abstract class Delivery_Feature implements Assets {
 	}
 
 	/**
-	 * Create the settings.
-	 */
-	protected function create_settings() {
-		$this->settings = $this->plugin->settings->create_setting( $this->settings_slug, $this->settings() );
-	}
-
-	/**
 	 * Setup the class.
 	 */
 	public function setup() {
-		$this->create_settings();
-		$this->register_settings();
 		$this->init();
-	}
-
-	/**
-	 * Define the settings.
-	 *
-	 * @return array
-	 */
-	public function settings() {
-		return array();
-	}
-
-	/**
-	 * Register the setting under media.
-	 */
-	protected function register_settings() {
 	}
 }
