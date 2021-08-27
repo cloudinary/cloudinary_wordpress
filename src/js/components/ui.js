@@ -5,6 +5,7 @@ import 'tippy.js/dist/tippy.css';
 import OnOff from './onoff';
 import CacheManage from './cache-manage';
 import Progress from './progress';
+import States from './states';
 
 const UI = {
 	bindings: {},
@@ -21,6 +22,8 @@ const UI = {
 		const autoSuffix = context.querySelectorAll( '[data-auto-suffix]' );
 		const self = this;
 		const compilerDebounce = {};
+		// Init states.
+		States.init();
 
 		// Bind on offs.
 		OnOff.bind( masters );
@@ -152,16 +155,20 @@ const UI = {
 	},
 	_toggle( element ) {
 		const self = this;
+		const wrap = document.querySelector(
+			'[data-wrap="' + element.dataset.toggle + '"]'
+		);
+		const state = States.get( element.id );
 		element.addEventListener( 'click', function ( ev ) {
 			ev.stopPropagation();
-			const wrap = document.querySelector(
-				'[data-wrap="' + element.dataset.toggle + '"]'
-			);
 			const action = wrap.classList.contains( 'open' )
 				? 'closed'
 				: 'open';
 			self.toggle( wrap, element, action );
 		} );
+		if ( state !== element.dataset.state ) {
+			this.toggle( wrap, element, state );
+		}
 	},
 	toggle( element, trigger, action ) {
 		if ( ! action ) {
@@ -177,28 +184,37 @@ const UI = {
 				}
 			}
 		}
-		const inputs = element.getElementsByClassName( 'cld-ui-input' );
+
 		if ( 'closed' === action ) {
-			element.classList.remove( 'open' );
-			element.classList.add( 'closed' );
-			if ( trigger && trigger.classList.contains( 'dashicons' ) ) {
-				trigger.classList.remove( 'dashicons-arrow-up-alt2' );
-				trigger.classList.add( 'dashicons-arrow-down-alt2' );
-			}
-			[ ...inputs ].forEach( function ( input ) {
-				input.dataset.disabled = true;
-			} );
+			this.close( element, trigger );
 		} else {
-			element.classList.remove( 'closed' );
-			element.classList.add( 'open' );
-			if ( trigger && trigger.classList.contains( 'dashicons' ) ) {
-				trigger.classList.remove( 'dashicons-arrow-down-alt2' );
-				trigger.classList.add( 'dashicons-arrow-up-alt2' );
-			}
-			[ ...inputs ].forEach( function ( input ) {
-				input.dataset.disabled = false;
-			} );
+			this.open( element, trigger );
 		}
+		States.set( trigger.id, action );
+	},
+	open( element, trigger ) {
+		const inputs = element.getElementsByClassName( 'cld-ui-input' );
+		element.classList.remove( 'closed' );
+		element.classList.add( 'open' );
+		if ( trigger && trigger.classList.contains( 'dashicons' ) ) {
+			trigger.classList.remove( 'dashicons-arrow-down-alt2' );
+			trigger.classList.add( 'dashicons-arrow-up-alt2' );
+		}
+		[ ...inputs ].forEach( function ( input ) {
+			input.dataset.disabled = false;
+		} );
+	},
+	close( element, trigger ) {
+		const inputs = element.getElementsByClassName( 'cld-ui-input' );
+		element.classList.remove( 'open' );
+		element.classList.add( 'closed' );
+		if ( trigger && trigger.classList.contains( 'dashicons' ) ) {
+			trigger.classList.remove( 'dashicons-arrow-up-alt2' );
+			trigger.classList.add( 'dashicons-arrow-down-alt2' );
+		}
+		[ ...inputs ].forEach( function ( input ) {
+			input.dataset.disabled = true;
+		} );
 	},
 };
 

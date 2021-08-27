@@ -21,13 +21,6 @@ use function Cloudinary\get_plugin_instance;
 class State {
 
 	/**
-	 * Holds the insance.
-	 *
-	 * @var self
-	 */
-	public static $instance;
-
-	/**
 	 * Holds the instance of the plugin.
 	 *
 	 * @var Plugin
@@ -64,8 +57,10 @@ class State {
 
 	/**
 	 * State constructor.
+	 *
+	 * @param Plugin $plugin Instance of the plugin.
 	 */
-	public function __construct() {
+	public function __construct( Plugin $plugin ) {
 		$this->plugin  = get_plugin_instance();
 		$this->user_id = get_current_user_id();
 
@@ -81,8 +76,8 @@ class State {
 	 */
 	public function setup_state() {
 		$url = rest_url( REST_API::BASE . '/ui-state' );
-		Settings::add_script_data( 'stateURL', $url );
-		Settings::add_script_data( 'stateNonce', $this->nonce );
+		$this->plugin->add_script_data( 'stateURL', $url );
+		$this->plugin->add_script_data( 'stateNonce', $this->nonce );
 		$this->state = get_user_meta( $this->user_id, self::STATE_KEY, true );
 		if ( empty( $this->state ) ) {
 			$this->state = array();
@@ -169,21 +164,8 @@ class State {
 			$this->state[ $key ] = $default;
 		}
 
-		Settings::add_script_data( 'stateData', $this->state );
+		$this->plugin->add_script_data( 'stateData', $this->state );
 
 		return $this->state[ $key ];
-	}
-
-	/**
-	 * Get an instance of this.
-	 *
-	 * @return self
-	 */
-	public static function get_instance() {
-		if ( ! self::$instance ) {
-			self::$instance = new self();
-		}
-
-		return self::$instance;
 	}
 }

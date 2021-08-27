@@ -11,8 +11,8 @@ use Cloudinary\Component\Assets;
 use Cloudinary\Component\Config;
 use Cloudinary\Component\Notice;
 use Cloudinary\Component\Setup;
-use Cloudinary\Settings\Setting;
 use Cloudinary\Sync\Storage;
+use Cloudinary\UI\State;
 use WP_REST_Request;
 use WP_REST_Server;
 use const E_USER_WARNING;
@@ -129,6 +129,7 @@ final class Plugin {
 	 */
 	public function init() {
 		$this->components['admin']        = new Admin( $this );
+		$this->components['state']        = new State( $this );
 		$this->components['connect']      = new Connect( $this );
 		$this->components['deactivation'] = new Deactivation( $this );
 		$this->components['sync']         = new Sync( $this );
@@ -268,6 +269,8 @@ final class Plugin {
 		add_filter( 'plugin_row_meta', array( $this, 'force_visit_plugin_site_link' ), 10, 4 );
 		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
 		add_action( 'wp_enqueue_editor', array( $this, 'enqueue_assets' ) );
+		add_action( 'admin_print_footer_scripts', array( $this, 'print_script_data' ), 1 );
+		add_action( 'wp_print_footer_scripts', array( $this, 'print_script_data' ), 1 );
 	}
 
 	/**
@@ -685,6 +688,27 @@ final class Plugin {
 			// @phpcs:disable
 			trigger_error( esc_html( get_class( $this ) . ': ' . $message ), $code );
 			// @phpcs:enable
+		}
+	}
+
+	/**
+	 * Add Script data.
+	 *
+	 * @param string $slug  The slug to add.
+	 * @param mixed  $value The value to set.
+	 */
+	public function add_script_data( $slug, $value ) {
+		$this->settings->set_param( '@script' . $this->settings->separator . $slug, $value );
+	}
+
+	/**
+	 * Output script data if set.
+	 */
+	public function print_script_data() {
+		$data = $this->settings->get_param( '@script' );
+		if ( ! empty( $data ) ) {
+			$json = wp_json_encode( $data );
+			wp_add_inline_script( $this->slug, 'var cldData = ' . $json, 'before' );
 		}
 	}
 

@@ -8,6 +8,8 @@
 namespace Cloudinary\UI;
 
 use Cloudinary\Settings\Setting;
+use Cloudinary\UI\State;
+use function Cloudinary\get_plugin_instance;
 
 /**
  * Abstract Component.
@@ -72,6 +74,13 @@ abstract class Component {
 	protected static $condition = array();
 
 	/**
+	 * Holds the UI state.
+	 *
+	 * @var State
+	 */
+	protected $state;
+
+	/**
 	 * Render component for a setting.
 	 * Component constructor.
 	 *
@@ -79,6 +88,7 @@ abstract class Component {
 	 */
 	public function __construct( $setting ) {
 		$this->setting = $setting;
+		$this->state   = get_plugin_instance()->get_component( 'state' );
 		$class         = strtolower( get_class( $this ) );
 		$class_name    = substr( strrchr( $class, '\\' ), 1 );
 		$this->type    = str_replace( '_', '-', $class_name );
@@ -90,8 +100,7 @@ abstract class Component {
 		$this->setup_component_parts();
 
 		// Add scripts.
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
-
+		$this->enqueue_scripts();
 	}
 
 	/**

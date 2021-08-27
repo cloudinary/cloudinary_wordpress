@@ -7,8 +7,11 @@
 
 namespace Cloudinary\UI\Component;
 
+use Cloudinary\REST_API;
+use Cloudinary\Settings;
 use Cloudinary\UI\Component;
 use Cloudinary\Settings\Setting;
+use Cloudinary\UI\State;
 
 /**
  * Class Component
@@ -23,6 +26,21 @@ class Panel extends Component {
 	 * @var string
 	 */
 	protected $blueprint = 'header|icon/|title/|collapse/|/header|wrap|body|/body|section/|/wrap';
+
+	/**
+	 * Holds the state.
+	 *
+	 * @var string
+	 */
+	protected $current_state;
+
+	/**
+	 * Setup the component.
+	 */
+	public function setup() {
+		parent::setup();
+		$this->current_state = $this->state->get_state( $this->setting->get_slug(), $this->setting->get_param( 'collapsible' ) );
+	}
 
 	/**
 	 * Filter the header parts structure.
@@ -84,8 +102,7 @@ class Panel extends Component {
 			$struct['element']                   = 'span';
 			$struct['render']                    = true;
 			$struct['attributes']['class'][]     = 'dashicons';
-			$state                               = $this->setting->get_param( 'collapsible' );
-			$struct['attributes']['class'][]     = 'open' === $state ? 'dashicons-arrow-up-alt2' : 'dashicons-arrow-down-alt2';
+			$struct['attributes']['class'][]     = 'open' === $this->current_state ? 'dashicons-arrow-up-alt2' : 'dashicons-arrow-down-alt2';
 			$struct['attributes']['data-toggle'] = $this->setting->get_slug();
 			$struct['attributes']['id']          = $this->setting->get_slug();
 		}
@@ -106,8 +123,9 @@ class Panel extends Component {
 			$struct['attributes']['class'][] = 'has-heading';
 
 			if ( $this->setting->has_param( 'collapsible' ) ) {
-				$struct['attributes']['class'][]   = $this->setting->get_param( 'collapsible' );
-				$struct['attributes']['data-wrap'] = $this->setting->get_slug();
+				$struct['attributes']['class'][]    = $this->current_state;
+				$struct['attributes']['data-wrap']  = $this->setting->get_slug();
+				$struct['attributes']['data-state'] = $this->current_state;
 			}
 		}
 
