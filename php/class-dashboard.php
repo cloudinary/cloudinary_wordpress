@@ -12,252 +12,199 @@ namespace Cloudinary;
  *
  * @package Cloudinary
  */
-class Dashboard extends Settings_Component {
+class Dashboard {
 
 	/**
-	 * Holds the settings slug.
+	 * Holds the plugin instance.
 	 *
-	 * @var string
+	 * @var     Plugin Instance of the global plugin.
 	 */
-	protected $settings_slug = 'new_dashboard';
+	public $plugin;
 
 	/**
-	 * Get the settings aregs.
+	 * Delivery_Feature constructor.
+	 *
+	 * @param Plugin $plugin Instance of the plugin.
+	 */
+	public function __construct( Plugin $plugin ) {
+		$this->plugin = $plugin;
+		add_filter( 'cloudinary_admin_pages', array( $this, 'register_settings' ) );
+	}
+
+	/**
+	 * Add the settings.
+	 *
+	 * @param array $pages The pages to add to.
 	 *
 	 * @return array
 	 */
-	public function settings() {
-		$args = array(
-			'menu_title' => __( 'Dashboard', 'cloudinary' ),
-			'page_title' => __( 'Dashboard', 'cloudinary' ),
-			'type'       => 'page',
-			array(
-				'type' => 'row',
+	public function register_settings( $pages ) {
+		$pages['dashboard'] = array(
+			'page_title'          => __( 'Cloudinary Dashboard', 'cloudinary' ),
+			'menu_title'          => __( 'Dashboard', 'cloudinary' ),
+			'priority'            => 1,
+			'requires_connection' => true,
+			'sidebar'             => true,
+			'settings'            => array(
 				array(
-					'type' => 'column',
+					'type'  => 'panel',
+					'title' => __( 'How much you optimize', 'cloudinary' ),
 					array(
-						'type'  => 'panel',
-						'title' => __( 'How much you optimize', 'cloudinary' ),
+						'type'  => 'row',
+						'align' => 'center',
 						array(
-							'type'  => 'row',
-							'align' => 'center',
+							'type' => 'column',
 							array(
-								'type' => 'column',
+								'type'       => 'tag',
+								'attributes' => array(
+									'class' => array(
+										'cld-center-column',
+										'cld-info-text',
+									),
+								),
+								'content'    => __( 'Average percentage of compression', 'cloudinary' ),
+							),
+						),
+						array(
+							'type' => 'column',
+							array(
+								'type'  => 'progress_sync',
+								'value' => 'size_percent',
+								'text'  => 'size_difference',
+								'poll'  => true,
+							),
+						),
+						array(
+							'type' => 'column',
+							array(
+								'type'       => 'tag',
+								'attributes' => array(
+									'class' => array(
+										'cld-center-column',
+										'cld-info-text',
+									),
+								),
+								'content'    => __( 'Percentage of optimized precessing images', 'cloudinary' ),
 								array(
 									'type'       => 'tag',
+									'element'    => 'div',
+									'content'    => __( '13 Assets unoptimized by your selection', 'cloudinary' ),
 									'attributes' => array(
 										'class' => array(
-											'cld-center-column',
-											'cld-info-text',
+											'description',
 										),
 									),
-									'content'    => __( 'Average percentage of compression', 'cloudinary' ),
 								),
-							),
-							array(
-								'type' => 'column',
-								array(
-									'type'  => 'progress_sync',
-									'value' => 'size_percent',
-									'text'  => 'size_difference',
-									'poll'  => true,
-								),
-							),
-							array(
-								'type' => 'column',
 								array(
 									'type'       => 'tag',
+									'element'    => 'div',
+									'content'    => __( '40/200 Assets being optimized now', 'cloudinary' ),
 									'attributes' => array(
 										'class' => array(
-											'cld-center-column',
-											'cld-info-text',
-										),
-									),
-									'content'    => __( 'Percentage of optimized precessing images', 'cloudinary' ),
-									array(
-										'type'       => 'tag',
-										'element'    => 'div',
-										'content'    => __( '13 Assets unoptimized by your selection', 'cloudinary' ),
-										'attributes' => array(
-											'class' => array(
-												'description',
-											),
-										),
-									),
-									array(
-										'type'       => 'tag',
-										'element'    => 'div',
-										'content'    => __( '40/200 Assets being optimized now', 'cloudinary' ),
-										'attributes' => array(
-											'class' => array(
-												'description',
-											),
+											'description',
 										),
 									),
 								),
 							),
-							array(
-								'type' => 'column',
-								array(
-									'type'  => 'progress_sync',
-									'value' => 'percentage_synced',
-									'text'  => 'total_assets',
-									'poll'  => true,
-								),
-							),
-						),
-					),
-					array(
-						'type'  => 'panel',
-						'title' => __( 'Your plan status', 'cloudinary' ),
-						array(
-							'type' => 'row',
-							array(
-								'type' => 'column',
-								array(
-									'type'  => 'chart_stat',
-									'title' => 'Transformations',
-									'stat'  => 'transformations',
-								),
-							),
-							array(
-								'type' => 'column',
-								array(
-									'type'  => 'chart_stat',
-									'title' => 'Bandwidth',
-									'stat'  => 'bandwidth',
-								),
-							),
-							array(
-								'type' => 'column',
-								array(
-									'type'  => 'chart_stat',
-									'title' => 'Storage',
-									'stat'  => 'storage',
-								),
-							),
-
-						),
-					),
-					array(
-						'type'  => 'panel',
-						'title' => __( 'Plan details', 'cloudinary' ),
-						array(
-							'type' => 'row',
-							array(
-								'type' => 'column',
-								array(
-									'type'    => 'html',
-									'content' => __( 'Icon', 'cloudinary' ),
-								),
-							),
-							array(
-								'type' => 'column',
-								array(
-									'type'    => 'html',
-									'content' => __( 'Icon', 'cloudinary' ),
-								),
-							),
-							array(
-								'type' => 'column',
-								array(
-									'type'    => 'html',
-									'content' => __( 'Icon', 'cloudinary' ),
-								),
-							),
 						),
 						array(
-							'type' => 'row',
+							'type' => 'column',
 							array(
-								'type' => 'column',
-								array(
-									'type'    => 'html',
-									'content' => __( 'Icon', 'cloudinary' ),
-								),
-							),
-							array(
-								'type' => 'column',
-								array(
-									'type'    => 'html',
-									'content' => __( 'Icon', 'cloudinary' ),
-								),
-							),
-							array(
-								'type' => 'column',
-								array(
-									'type'    => 'html',
-									'content' => __( 'Icon', 'cloudinary' ),
-								),
+								'type'  => 'progress_sync',
+								'value' => 'percentage_synced',
+								'text'  => 'total_assets',
+								'poll'  => true,
 							),
 						),
 					),
 				),
 				array(
-					'type'  => 'column',
-					'class' => array(
-						'cld-ui-accordion',
-					),
+					'type'  => 'panel',
+					'title' => __( 'Your plan status', 'cloudinary' ),
 					array(
-						'type'        => 'panel',
-						'title'       => __( 'Account status', 'cloudinary' ),
-						'description' => __( 'Subscription plan name', 'cloudinary' ),
-						'collapsible' => 'open',
+						'type' => 'row',
 						array(
-							'type'        => 'line_stat',
-							'title'       => __( 'Storage', 'cloudinary' ),
-							'stat'        => 'storage',
-							'format_size' => true,
+							'type' => 'column',
+							array(
+								'type'  => 'chart_stat',
+								'title' => 'Transformations',
+								'stat'  => 'transformations',
+							),
 						),
 						array(
-							'type'  => 'line_stat',
-							'title' => __( 'Transformations', 'cloudinary' ),
-							'stat'  => 'transformations',
+							'type' => 'column',
+							array(
+								'type'  => 'chart_stat',
+								'title' => 'Bandwidth',
+								'stat'  => 'bandwidth',
+							),
 						),
 						array(
-							'type'        => 'line_stat',
-							'title'       => __( 'Bandwidth', 'cloudinary' ),
-							'stat'        => 'bandwidth',
-							'format_size' => true,
+							'type' => 'column',
+							array(
+								'type'  => 'chart_stat',
+								'title' => 'Storage',
+								'stat'  => 'storage',
+							),
+						),
+					),
+				),
+				array(
+					'type'  => 'panel',
+					'title' => __( 'Plan details', 'cloudinary' ),
+					array(
+						'type' => 'row',
+						array(
+							'type' => 'column',
+							array(
+								'type'    => 'html',
+								'content' => __( 'Icon', 'cloudinary' ),
+							),
 						),
 						array(
-							'type'       => 'tag',
-							'element'    => 'a',
-							'content'    => __( 'View my account status', 'cloudinary' ),
-							'attributes' => array(
-								'href'   => 'https://cloudinary.com/documentation/wordpress_integration',
-								'target' => '_blank',
-								'rel'    => 'noreferrer',
-								'class'  => array(
-									'cld-link-button',
-								),
+							'type' => 'column',
+							array(
+								'type'    => 'html',
+								'content' => __( 'Icon', 'cloudinary' ),
+							),
+						),
+						array(
+							'type' => 'column',
+							array(
+								'type'    => 'html',
+								'content' => __( 'Icon', 'cloudinary' ),
 							),
 						),
 					),
 					array(
-						'type'        => 'panel',
-						'title'       => __( 'Optimization level', 'cloudinary' ),
-						'description' => __( '40% Optimized', 'cloudinary' ),
-						'collapsible' => 'closed',
+						'type' => 'row',
 						array(
-							'type'    => 'html',
-							'content' => __( 'Some stuff', 'cloudinary' ),
+							'type' => 'column',
+							array(
+								'type'    => 'html',
+								'content' => __( 'Icon', 'cloudinary' ),
+							),
 						),
-					),
-					array(
-						'type'        => 'panel',
-						'title'       => __( 'Extensions', 'cloudinary' ),
-						'description' => __( '1 Active extension', 'cloudinary' ),
-						'collapsible' => 'closed',
 						array(
-							'type'    => 'html',
-							'content' => __( 'Some stuff', 'cloudinary' ),
+							'type' => 'column',
+							array(
+								'type'    => 'html',
+								'content' => __( 'Icon', 'cloudinary' ),
+							),
+						),
+						array(
+							'type' => 'column',
+							array(
+								'type'    => 'html',
+								'content' => __( 'Icon', 'cloudinary' ),
+							),
 						),
 					),
 				),
 			),
 		);
 
-		return $args;
+		return $pages;
 	}
 
 }
