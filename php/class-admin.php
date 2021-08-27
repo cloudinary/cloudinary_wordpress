@@ -44,7 +44,7 @@ class Admin {
 	 *
 	 * @var Component
 	 */
-	public static $component;
+	protected $component;
 
 	/**
 	 * Option name for settings based internal data.
@@ -60,6 +60,7 @@ class Admin {
 	 */
 	public function __construct( Plugin $plugin ) {
 		$this->plugin = $plugin;
+		add_action( 'cloudinary_init_settings', array( $this, 'init_settings' ) );
 		add_action( 'admin_init', array( $this, 'init_setting_save' ), PHP_INT_MAX );
 		add_action( 'admin_menu', array( $this, 'build_menus' ) );
 	}
@@ -108,13 +109,17 @@ class Admin {
 			'',
 			$page['icon']
 		);
-
+		$connected   = $this->settings->get_param( 'connected' );
 		// Setup the Child page handles.
 		foreach ( $page['settings'] as $slug => $sub_page ) {
 			if ( empty( $sub_page ) ) {
 				continue;
 			}
-			$render_slug = $slug;
+			// Check if the page contains settings that require connection.
+			if ( ! empty( $sub_page['requires_connection'] ) && empty( $connected ) ) {
+				continue;
+			}
+			$render_slug = $page['slug'] . '_' . $slug;
 			if ( ! isset( $first ) ) {
 				$render_slug = $page['slug'];
 				$first       = true;
@@ -122,11 +127,11 @@ class Admin {
 			if ( ! apply_filters( "cloudinary_settings_enabled_{$slug}", true ) ) {
 				continue;
 			}
-			$capability  = ! empty( $sub_page['capability'] ) ? $sub_page['capability'] : $page['capability'];
-			$page_title  = ! empty( $sub_page['page_title'] ) ? $sub_page['page_title'] : $page['page_title'];
-			$menu_title  = ! empty( $sub_page['menu_title'] ) ? $sub_page['menu_title'] : $page_title;
-			$position    = ! empty( $sub_page['position'] ) ? $sub_page['position'] : 50;
-			$page_handle = add_submenu_page(
+			$capability       = ! empty( $sub_page['capability'] ) ? $sub_page['capability'] : $page['capability'];
+			$page_title       = ! empty( $sub_page['page_title'] ) ? $sub_page['page_title'] : $page['page_title'];
+			$menu_title       = ! empty( $sub_page['menu_title'] ) ? $sub_page['menu_title'] : $page_title;
+			$position         = ! empty( $sub_page['position'] ) ? $sub_page['position'] : 50;
+			$page_handle      = add_submenu_page(
 				$page['slug'],
 				$page_title,
 				$menu_title,
@@ -135,7 +140,7 @@ class Admin {
 				$render_function,
 				$position
 			);
-
+			$sub_page['slug'] = $slug;
 			$this->set_param( $page_handle, $sub_page );
 		}
 	}
@@ -152,9 +157,19 @@ class Admin {
 				'type' => 'submit',
 			);
 		}
-		$setting         = $this->init_settings( $page, $screen->id );
-		self::$component = $setting->get_component();
+		$this->set_param( 'active_slug', $page['slug'] );
+		$setting         = $this->init_components( $page, $screen->id );
+		$this->component = $setting->get_component();
 		include $this->plugin->dir_path . 'ui-definitions/components/page.php';
+	}
+
+	/**
+	 * Get the component.
+	 *
+	 * @return Component
+	 */
+	public function get_component() {
+		return $this->component;
 	}
 
 	/**
@@ -165,7 +180,7 @@ class Admin {
 	 *
 	 * @return Setting
 	 */
-	public function init_settings( $template, $slug ) {
+	public function init_components( $template, $slug ) {
 		$settings = get_plugin_instance()->settings;
 		$setting  = $settings->add( $slug, array(), $template );
 		foreach ( $template as $index => $component ) {
@@ -176,7 +191,7 @@ class Admin {
 				$component['type'] = 'frame';
 			}
 			if ( ! isset( $component['setting'] ) ) {
-				$component['setting'] = $this->init_settings( $component, $slug . '.' . $component['type'] . '_' . $index );
+				$component['setting'] = $this->init_components( $component, $slug . '.' . $component['type'] . '_' . $index );
 			} else {
 				$setting->add( $component['setting'] );
 			}
@@ -208,30 +223,38 @@ class Admin {
 	}
 
 	/**
+	 * Init the plugin settings.
+	 */
+	public function init_settings() {
+		$this->settings = $this->plugin->settings;
+	}
+
+	/**
 	 * Register settings with WordPress.
 	 */
 	public function init_setting_save() {
-		$this->settings = $this->plugin->settings;
-		$args           = array(
-			'_wpnonce'            => FILTER_SANITIZE_STRING,
-			'_wp_http_referer'    => FILTER_SANITIZE_URL,
-			'cloudinary_settings' => array(
+		$settings_slug = $this->settings->get_slug();
+		$args          = array(
+			'_cld_nonce'             => FILTER_SANITIZE_STRING,
+			'_wp_http_referer'       => FILTER_SANITIZE_URL,
+			'cloudinary-active-slug' => FILTER_SANITIZE_STRING,
+			$settings_slug           => array(
 				'flags' => FILTER_REQUIRE_ARRAY,
 			),
 		);
-		$saving         = filter_input_array( INPUT_POST, $args, false );
-		if ( ! empty( $saving ) && ! empty( $saving['cloudinary_settings'] ) && wp_verify_nonce( $saving['_wpnonce'], 'cloudinary-settings' ) ) {
+		$saving        = filter_input_array( INPUT_POST, $args, false );
+
+		if ( ! empty( $saving ) && ! empty( $saving[ $settings_slug ] ) && wp_verify_nonce( $saving['_cld_nonce'], 'cloudinary-settings' ) ) {
 			$referer = $saving['_wp_http_referer'];
 			wp_parse_str( wp_parse_url( $referer, PHP_URL_QUERY ), $query );
 
-			$slug = $query['page'];
-			foreach ( $saving['cloudinary_settings'] as $key => $value ) {
+			$slug = $saving['cloudinary-active-slug'];
+			foreach ( $saving[ $settings_slug ] as $key => $value ) {
 				$capture_setting = $this->settings->get_setting( $key );
 				$value           = $capture_setting->get_component()->sanitize_value( $value );
 				$this->settings->set_pending( $key, $value );
 			}
-
-			$this->settings->save();
+			$this->settings->save( $slug );
 			wp_safe_redirect( $referer );
 			exit;
 		}

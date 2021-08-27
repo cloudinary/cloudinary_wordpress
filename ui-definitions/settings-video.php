@@ -9,16 +9,11 @@ $settings = array(
 	array(
 		'type'   => 'panel',
 		'title'  => __( 'Video - Global Settings', 'cloudinary' ),
-		'icon'   => $this->plugin->dir_url . 'css/images/video.svg',
-		'slug'   => 'video_settings',
 		'anchor' => true,
 		array(
 			'type' => 'row',
 			array(
-				'type'  => 'column',
-				'class' => array(
-					'column-45',
-				),
+				'type' => 'column',
 				array(
 					'type' => 'group',
 					array(
@@ -34,7 +29,6 @@ $settings = array(
 					),
 					array(
 						'type'      => 'group',
-						'title'     => __( 'Player options', 'cloudinary' ),
 						'condition' => array(
 							'video_player' => 'cld',
 						),
@@ -61,39 +55,19 @@ $settings = array(
 								'on-scroll' => __( 'On-scroll (autoplay when in view)', 'cloudinary' ),
 							),
 							'description' => sprintf(
-								// translators: Placeholders are <a> tags.
-								__( 'Please note that when choosing "always", the video will autoplay without sound (muted). This is a built-in browser feature and applies to all major browsers.%1$sRead more about muted autoplay%2$s', 'cloudinary' ),
+							// translators: Placeholders are <a> tags.
+								__(
+									'Please note that when choosing "always", the video will autoplay without sound (muted). This is a built-in browser feature and applies to all major browsers.%1$sRead more about muted autoplay%2$s',
+									'cloudinary'
+								),
 								'<br><a href="https://developers.google.com/web/updates/2016/07/autoplay" target="_blank">',
 								'</a>'
 							),
 						),
 					),
 					array(
-						'type'         => 'on_off',
-						'slug'         => 'video_limit_bitrate',
-						'title'        => __( 'Bitrate', 'cloudinary' ),
-						'description'  => __( 'Enable bitrate limiter', 'cloudinary' ),
-						'tooltip_text' => __( 'If set, all videos will be delivered in the defined bitrate.', 'cloudinary' ),
-						'default'      => 'off',
-						'attributes'   => array(
-							'data-context' => 'video',
-						),
-					),
-					array(
-						'type'        => 'number',
-						'slug'        => 'video_bitrate',
-						'prefix'      => __( 'Bitrate limit', 'cloudinary' ),
-						'description' => __( 'Maximum number of bits per second in Kilobytes.', 'cloudinary' ),
-						'default'     => '500',
-						'suffix'      => 'k',
-						'condition'   => array(
-							'video_limit_bitrate' => true,
-						),
-						'attributes'  => array(
-							'data-context' => 'video',
-							'data-meta'    => 'br',
-							'data-suffix'  => 'k',
-						),
+						'type'    => 'tag',
+						'element' => 'hr',
 					),
 				),
 				array(
@@ -102,7 +76,10 @@ $settings = array(
 						'type'         => 'on_off',
 						'slug'         => 'video_optimization',
 						'title'        => __( 'Video optimization', 'cloudinary' ),
-						'tooltip_text' => __( 'Videos will be delivered using Cloudinary’s automatic format and quality algorithms for the best tradeoff between visual quality and file size. Use Advanced Optimization options to manually tune format and quality.', 'cloudinary' ),
+						'tooltip_text' => __(
+							'Videos will be delivered using Cloudinary’s automatic format and quality algorithms for the best tradeoff between visual quality and file size. Use Advanced Optimization options to manually tune format and quality.',
+							'cloudinary'
+						),
 						'description'  => __( 'Optimize videos on my site.', 'cloudinary' ),
 						'default'      => 'on',
 						'attributes'   => array(
@@ -111,17 +88,18 @@ $settings = array(
 					),
 				),
 				array(
-					'type'        => 'group',
-					'title'       => __( 'Advanced optimization', 'cloudinary' ),
-					'collapsible' => 'open',
-					'condition'   => array(
+					'type'      => 'group',
+					'condition' => array(
 						'video_optimization' => true,
 					),
 					array(
 						'type'         => 'select',
 						'slug'         => 'video_format',
 						'title'        => __( 'Video format', 'cloudinary' ),
-						'tooltip_text' => __( "The video format to use for delivery. Leave as Auto to automatically deliver the most optimal format based on the user's browser and device.", 'cloudinary' ),
+						'tooltip_text' => __(
+							"The video format to use for delivery. Leave as Auto to automatically deliver the most optimal format based on the user's browser and device.",
+							'cloudinary'
+						),
 						'default'      => 'auto',
 						'options'      => array(
 							'none' => __( 'Not set', 'cloudinary' ),
@@ -136,7 +114,10 @@ $settings = array(
 						'type'         => 'select',
 						'slug'         => 'video_quality',
 						'title'        => __( 'Video quality', 'cloudinary' ),
-						'tooltip_text' => __( 'The compression quality to apply when delivering videos. Leave as Auto to apply an algorithm that finds the best tradeoff between visual quality and file size.', 'cloudinary' ),
+						'tooltip_text' => __(
+							'The compression quality to apply when delivering videos. Leave as Auto to apply an algorithm that finds the best tradeoff between visual quality and file size.',
+							'cloudinary'
+						),
 						'default'      => 'auto',
 						'options'      => array(
 							'none'      => __( 'Not set', 'cloudinary' ),
@@ -159,6 +140,10 @@ $settings = array(
 
 				),
 				array(
+					'type'    => 'tag',
+					'element' => 'hr',
+				),
+				array(
 					'type'           => 'text',
 					'slug'           => 'video_freeform',
 					'title'          => __( 'Custom transformation', 'cloudinary' ),
@@ -170,6 +155,15 @@ $settings = array(
 					'taxonomy_field' => array(
 						'context'  => 'video',
 						'priority' => 10,
+					),
+				),
+				array(
+					'type'  => 'info_box',
+					'icon'  => $this->dir_url . 'css/images/video.svg',
+					'title' => __( 'What are transformation', 'cloudinary' ),
+					'text'  => __(
+						'Configure how your images are shown on your site. You can apply transformations to adjust the quality, format or visual appearance and define other settings such as responsive images.',
+						'cloudinary'
 					),
 				),
 			),
@@ -191,9 +185,6 @@ $settings = array(
 
 		),
 	),
-	array(
-		'type' => 'submit',
-	),
 );
 
-return apply_filters( 'cloudinary_admin_tab_global_transformations', $settings );
+return apply_filters( 'cloudinary_admin_video_settings', $settings );

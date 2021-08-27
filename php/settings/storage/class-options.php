@@ -22,7 +22,10 @@ class Options extends Storage {
 	protected function load() {
 		$data = get_option( $this->slug, array() );
 		if ( ! empty( $data ) && is_string( $data ) ) {
-			$data = json_decode( $data, true );
+			$decode_maybe = json_decode( $data, true );
+			if ( $decode_maybe ) {
+				$data = $decode_maybe;
+			}
 		}
 
 		return $data;
@@ -34,7 +37,7 @@ class Options extends Storage {
 	 * @return bool|void
 	 */
 	public function save() {
-		$data = wp_json_encode( $this->get(), JSON_PRETTY_PRINT );
+		$data = wp_json_encode( $this->get() );
 
 		return update_option( $this->slug, $data );
 	}

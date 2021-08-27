@@ -207,6 +207,9 @@ trait Params_Trait {
 	public function get_param( $param, $default = null ) {
 
 		$value = $this->get_array_param( $param );
+		if ( is_array( $value ) && isset( $value['_value'] ) ) {
+			$value = $value['_value']; // Get a value based if a param was set, then a later deeper was set.
+		}
 
 		return ! is_null( $value ) ? $value : $default;
 	}

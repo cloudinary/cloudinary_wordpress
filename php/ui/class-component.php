@@ -328,7 +328,10 @@ abstract class Component {
 			return null;
 		}
 		// Build the blueprint parts list.
-		$blueprint   = $this->setting->get_param( 'blueprint', $this->blueprint );
+		$blueprint = $this->setting->get_param( 'blueprint', $this->blueprint );
+		if ( empty( $blueprint ) ) {
+			return null;
+		}
 		$build_parts = explode( '|', $blueprint );
 
 		// Build the multi-dimensional array.
@@ -888,6 +891,7 @@ abstract class Component {
 	 */
 	final public static function is_capture() {
 		$caller = get_called_class();
+
 		// Check that this type of component exists.
 		return $caller::$capture;
 	}

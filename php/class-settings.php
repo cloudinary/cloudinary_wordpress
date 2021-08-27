@@ -28,9 +28,9 @@ class Settings {
 	protected $settings = array();
 
 	/**
-	 * Holds the storage object.
+	 * Holds the storage objects.
 	 *
-	 * @var Storage
+	 * @var Storage[]
 	 */
 	protected $storage;
 
@@ -60,6 +60,9 @@ class Settings {
 			$params['storage'] = 'Cloudinary\\Settings\\Storage\\Options';
 		}
 
+		// Set the storage.
+		$this->set_param( 'storage', $params['storage'] );
+
 		if ( ! empty( $params['settings'] ) ) {
 
 			foreach ( $params['settings'] as $key => &$param ) {
@@ -85,6 +88,9 @@ class Settings {
 		if ( isset( $params['slug'] ) ) {
 			$initial .= $this->separator . $params['slug'];
 		}
+		if ( isset( $params['option_name'] ) ) {
+			$this->set_alias( $initial, $params['option_name'] );
+		}
 
 		foreach ( $params as $key => &$param ) {
 			if ( ! is_numeric( $key ) && 'settings' !== $key ) {
@@ -94,11 +100,15 @@ class Settings {
 			if ( isset( $param[0] ) || isset( $param['settings'] ) ) {
 				$param = $this->get_default_settings( $param, $initial );
 			} elseif ( isset( $param['slug'] ) ) {
+
 				$default = '';
 				if ( isset( $param['default'] ) ) {
 					$default = $param['default'];
 				}
-				$slug             = $initial . $this->separator . $param['slug'];
+				$slug = $initial . $this->separator . $param['slug'];
+				if ( isset( $param['option_name'] ) ) {
+					$this->set_alias( $slug, $param['option_name'] );
+				}
 				$param['setting'] = $this->add( $slug, $default, $param );
 			}
 		}
@@ -146,10 +156,18 @@ class Settings {
 	 */
 	protected function init() {
 
-		$storage       = $this->get_param( 'storage' );
-		$this->storage = new $storage( $this->slug );
-		$data          = wp_parse_args( $this->storage->get(), $this->get_value() );
-		$this->set_param( '@data', $data );
+	}
+
+	/**
+	 * Register a settings storage point.
+	 *
+	 * @param string $slug The slug (option-name) to store under.
+	 */
+	protected function register_storage( $slug ) {
+		$storage                = $this->get_param( 'storage' );
+		$storage_slug           = $this->get_alias( $slug );
+		$this->storage[ $slug ] = new $storage( $storage_slug );
+		$this->set_param( '@data' . $this->separator . $slug, $this->storage[ $slug ]->get() );
 	}
 
 	/**
@@ -167,7 +185,9 @@ class Settings {
 		$path       = array();
 		$value      = array();
 		$last_child = null;
-		$this->set_param( '@primaries' . $this->separator . $parts[0] );
+		if ( ! empty( $params['option_name'] ) ) {
+			$this->set_alias( $parts[0], $params['option_name'] );
+		}
 		while ( ! empty( $parts ) ) {
 			$path[] = array_shift( $parts );
 			if ( empty( $parts ) ) {
@@ -190,6 +210,49 @@ class Settings {
 	}
 
 	/**
+	 * Sanitize a slug to be a clean alias.
+	 *
+	 * @param string $slug SLug to sanitize.
+	 *
+	 * @return string
+	 */
+	protected function sanitize_alias( $slug ) {
+		return md5( $slug );
+	}
+
+	/**
+	 * Set an alias for a slug.
+	 *
+	 * @param string $slug  The original slug.
+	 * @param string $alias The alias slug.
+	 */
+	protected function set_alias( $slug, $alias ) {
+		$this->set_param( '@alias' . $this->separator . $this->sanitize_alias( $slug ), $alias );
+	}
+
+	/**
+	 * Get an alias for a slug.
+	 *
+	 * @param string $slug The original slug.
+	 *
+	 * @return string
+	 */
+	protected function get_alias( $slug ) {
+		return $this->get_param( '@alias' . $this->separator . $this->sanitize_alias( $slug ), $this->get_slug() . '_' . $slug );
+	}
+
+	/**
+	 * Checks if the slug has an alias.
+	 *
+	 * @param string $slug Slug to check.
+	 *
+	 * @return bool
+	 */
+	protected function has_alias( $slug ) {
+		return $this->has_param( '@alias' . $this->separator . $this->sanitize_alias( $slug ) );
+	}
+
+	/**
 	 * Register a new setting with internals.
 	 *
 	 * @param string $slug    The setting slug.
@@ -206,11 +269,13 @@ class Settings {
 				return new \WP_Error();
 			}
 		}
-		$current_value = $this->get_param( '@data' . $this->separator . $slug, $default );
-		$slug_parts    = explode( $this->separator, $slug );
+		$slug_parts = explode( $this->separator, $slug );
 		array_pop( $slug_parts );
 		$parent = implode( $this->separator, $slug_parts );
 		if ( ! isset( $this->settings[ $slug ] ) ) {
+			if ( empty( $parent ) || $this->has_alias( $slug ) ) {
+				$this->register_storage( $slug );
+			}
 			$setting = $this->create_child( $slug, $params );
 			$setting->set_type( gettype( $default ) );
 			if ( ! empty( $parent ) ) {
@@ -218,7 +283,10 @@ class Settings {
 			}
 			$this->settings[ $slug ] = $setting;
 		}
-		$this->set_param( '@data' . $this->separator . $slug, $current_value );
+
+		if ( ! $this->has_param( '@data' . $this->separator . $slug ) ) {
+			$this->set_param( '@data' . $this->separator . $slug, $default );
+		}
 
 		return $this->settings[ $slug ];
 	}
@@ -293,6 +361,7 @@ class Settings {
 	public function find_setting( $slug ) {
 
 		$results = array();
+		$setting = null;
 		foreach ( $this->flatten() as $key ) {
 			$parts = explode( $this->separator, $key );
 			$index = array_search( $slug, $parts, true );
@@ -301,11 +370,11 @@ class Settings {
 				$results[ $setting_slug ] = $this->settings[ $setting_slug ];
 			}
 		}
-		if ( 1 === count( $results ) ) {
-			$results = array_shift( $results );
+		if ( ! empty( $results ) ) {
+			$setting = array_shift( $results );
 		}
 
-		return $results;
+		return $setting ? $setting : $this->add( '@dynamic' . $this->separator . $slug );
 	}
 
 	/**
@@ -322,17 +391,23 @@ class Settings {
 			$found = $this->settings[ $slug ];
 		}
 
-		if ( ! $found ) {
-			$found = $this->find_setting( $slug );
-		}
 		if ( empty( $found ) ) {
-			$found = null;
-			if ( true === $create ) {
-				$found = $this->add( $slug, null );
+			$found = $this->find_setting( $slug );
+			if ( false === $create && '@' === $found->get_slug()[0] ) {
+				$found = null;
 			}
 		}
 
 		return $found;
+	}
+
+	/**
+	 * Get the root setting.
+	 *
+	 * @return self
+	 */
+	public function get_root_setting() {
+		return $this;
 	}
 
 	/**
@@ -369,24 +444,30 @@ class Settings {
 	/**
 	 * Get a setting's pending value for update.
 	 *
+	 * @param string $slug The slug to get the pending data for.
+	 *
 	 * @return mixed
 	 */
-	public function get_pending() {
-		return $this->get_param( '@save' );
+	public function get_pending( $slug ) {
+		return $this->get_param( '@save' . $this->separator . $slug );
 	}
 
 	/**
 	 * Save the settings values to the storage.
 	 *
+	 * @param string $slug The slug to save.
+	 *
 	 * @return bool|\WP_Error
 	 */
-	public function save() {
+	public function save( $slug ) {
 
-		$pending   = $this->get_pending();
-		$slug      = $this->slug;
+		$pending = $this->get_pending( $slug );
+
+		$this->remove_param( '@save' );
+
 		$new_value = array();
-		foreach ( $pending as $slug => $new_value ) {
-			$setting       = $this->get_setting( $slug );
+		foreach ( $pending as $child_slug => &$new_value ) {
+			$setting       = $this->get_setting( $child_slug );
 			$current_value = $setting->get_value();
 			/**
 			 * Pre-Filter the value before saving a setting.
@@ -401,19 +482,17 @@ class Settings {
 			 *
 			 * @return {mixed}
 			 */
-			$new_value = apply_filters( "cloudinary_pre_save_settings_{$slug}", $new_value, $current_value, $setting );
+			$new_value = apply_filters( "cloudinary_pre_save_settings_{$child_slug}", $new_value, $current_value, $setting );
 			$new_value = apply_filters( 'cloudinary_pre_save_settings', $new_value, $current_value, $setting );
 			if ( is_wp_error( $new_value ) ) {
 				return $new_value;
 			}
-
-			$this->set_value( $slug, $new_value );
 		}
 
-		$this->remove_param( '@save' );
-		$this->storage->set( $this->get_value() );
+		$storage = $this->get_storage( $slug );
+		$storage->set( $pending );
 
-		$saved = $this->storage->save();
+		$saved = $storage->save();
 		if ( $saved ) {
 			/**
 			 * Action to announce the saving of a setting.
@@ -427,6 +506,22 @@ class Settings {
 			do_action( "cloudinary_save_settings_{$slug}", $new_value );
 			do_action( 'cloudinary_save_settings', $new_value );
 		}
+	}
+
+	/**
+	 * Get the storage object for a slug.
+	 *
+	 * @param string $slug The slug to get storage object for.
+	 *
+	 * @return Storage
+	 */
+	protected function get_storage( $slug ) {
+		if ( isset( $this->storage[ $slug ] ) ) {
+			return $this->storage[ $slug ];
+		}
+		$setting = $this->get_setting( $slug );
+
+		return $this->get_storage( $setting->get_parent()->get_slug() );
 	}
 
 }

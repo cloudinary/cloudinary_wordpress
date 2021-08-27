@@ -274,7 +274,20 @@ class Setting {
 	 * @return string
 	 */
 	public function get_option_name() {
+
 		return $this->root->get_slug();
+	}
+
+	/**
+	 * Get the option parent.
+	 *
+	 * @return Settings
+	 */
+	public function get_option_parent() {
+		$path        = explode( $this->separator, $this->parent );
+		$parent_name = array_shift( $path );
+
+		return $this->root->get_setting( $parent_name );
 	}
 
 	/**
@@ -299,9 +312,11 @@ class Setting {
 
 	/**
 	 * Save the setting value.
+	 *
+	 * @param mixed $value The value to save.
 	 */
-	public function save() {
-
-		$this->root->save();
+	public function save_value( $value ) {
+		$this->root->set_pending( $this->slug, $value );
+		$this->root->save( $this->slug );
 	}
 }
