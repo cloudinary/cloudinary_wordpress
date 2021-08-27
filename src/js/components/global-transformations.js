@@ -17,8 +17,8 @@ const GlobalTransformations = {
 		video: document.getElementById( 'video-loader' ),
 	},
 	optimization: {
-		image: document.getElementById( 'image.image_optimization' ),
-		video: document.getElementById( 'video.video_optimization' ),
+		image: document.getElementById( 'image_settings.image_optimization' ),
+		video: document.getElementById( 'video_settings.video_optimization' ),
 	},
 	error_container: document.getElementById( 'cld-preview-error' ),
 	activeItem: null,
@@ -42,11 +42,17 @@ const GlobalTransformations = {
 		}
 	},
 	_setLoading( type ) {
+		if ( ! this.sample[ type ] ) {
+			return;
+		}
 		this.button[ type ].style.display = 'block';
 		this._placeItem( this.button[ type ] );
 		this.preview[ type ].style.opacity = '0.1';
 	},
 	_build( type ) {
+		if ( ! this.sample[ type ] ) {
+			return;
+		}
 		this.sample[ type ].innerHTML = '';
 		this.elements[ type ] = [];
 		for ( const item of this.fields ) {
@@ -108,6 +114,9 @@ const GlobalTransformations = {
 		if ( e ) {
 			e.preventDefault();
 		}
+		if ( ! this.sample[ type ] ) {
+			return;
+		}
 		const self = this;
 		const newSrc =
 			CLD_GLOBAL_TRANSFORMATIONS[ type ].preview_url +
@@ -139,7 +148,8 @@ const GlobalTransformations = {
 							'settings-alert-error'
 						);
 					} else {
-						// temporary, will be replaced with i18n.sprintf instead of .replace
+						// temporary, will be replaced with i18n.sprintf
+						// instead of .replace
 						self.error_container.innerHTML = CLD_GLOBAL_TRANSFORMATIONS[
 							type
 						].warning.replace( '%s', 'f_mp4' );
