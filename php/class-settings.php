@@ -1,272 +1,432 @@
 <?php
 /**
- * Settings class for Cloudinary.
+ * Cloudinary Settings represents a collection of settings.
  *
- * @package Cloudinary
+ * @package   Cloudinary
  */
 
 namespace Cloudinary;
 
 use Cloudinary\Settings\Setting;
-use WP_Screen;
+use Cloudinary\Traits\Params_Trait;
+use Cloudinary\Settings\Storage\Storage;
 
 /**
- * Settings Class.
+ * Class Settings
+ *
+ * @package Cloudinary
  */
 class Settings {
 
+	use Params_Trait;
+
 	/**
-	 * The single instance of the class.
-	 *
-	 * @var Settings
-	 */
-	protected static $instance = null;
-	/**
-	 * The setting to test.
+	 * Holds the child settings.
 	 *
 	 * @var Setting[]
 	 */
-	protected $settings;
+	protected $settings = array();
 
 	/**
-	 * List of Page handles.
+	 * Holds the storage object.
 	 *
-	 * @var array
+	 * @var Storage
 	 */
-	public $handles = array();
+	protected $storage;
 
 	/**
-	 * Holds the current active setting.
-	 *
-	 * @var Setting
-	 */
-	protected $current_setting;
-
-	/**
-	 * Holds the current Page.
-	 *
-	 * @var Setting
-	 */
-	protected $current_page;
-
-	/**
-	 * Holds the current tab.
-	 *
-	 * @var Setting
-	 */
-	protected $current_tab;
-
-	/**
-	 * Option name for settings based internal data.
+	 * Holds the slug.
 	 *
 	 * @var string
 	 */
-	const SETTINGS_DATA = '_settings_version';
+	protected $slug;
 
 	/**
-	 * Initiate the settings object.
-	 */
-	protected function __construct() {
-		add_action( 'admin_init', array( $this, 'register_wordpress_settings' ) );
-		add_action( 'admin_menu', array( $this, 'build_menus' ) );
-	}
-
-	/**
-	 * Check settings version to allow settings to update or upgrade.
+	 * Setting constructor.
 	 *
-	 * @param string $slug The slug for the settings set to check.
+	 * @param string $slug   The slug/name of the settings set.
+	 * @param array  $params Optional params for the setting.
 	 */
-	protected static function check_version( $slug ) {
-		$key              = '_' . $slug . self::SETTINGS_DATA;
-		$settings_version = get_option( $key, 2.4 );
-		$plugin_version   = get_plugin_instance()->version;
-		if ( version_compare( $settings_version, $plugin_version, '<' ) ) {
-			// Allow for updating.
-			do_action( "{$slug}_settings_upgrade", $settings_version, $plugin_version );
-			// Update version.
-			update_option( $key, $plugin_version );
+	public function __construct( $slug, $params = array() ) {
+
+		$this->slug = $slug;
+		if ( isset( $params['storage'] ) ) {
+			// Test if shorthand was used.
+			if ( class_exists( 'Cloudinary\\Settings\\Storage\\' . $params['storage'] ) ) {
+				$params['storage'] = 'Cloudinary\\Settings\\Storage\\' . $params['storage'];
+			}
+		} else {
+			// Default.
+			$params['storage'] = 'Cloudinary\\Settings\\Storage\\Options';
 		}
+
+		if ( ! empty( $params['settings'] ) ) {
+
+			foreach ( $params['settings'] as $key => &$param ) {
+				$param = $this->get_default_settings( $param, $key );
+			}
+
+			$this->set_params( $params );
+		}
+
+		$this->init();
 	}
 
 	/**
-	 * Register the page.
-	 */
-	public function build_menus() {
-		foreach ( $this->settings as $setting ) {
-			$this->register_admin( $setting );
-		}
-	}
-
-	/**
-	 * Register the page.
+	 * Get the default settings based on the Params.
 	 *
-	 * @param Setting $setting The settings to create pages.
+	 * @param array       $params  The params to get defaults from.
+	 * @param null|string $initial The initial slug to be pre-pended..
+	 *
+	 * @return array
 	 */
-	public function register_admin( $setting ) {
+	public function get_default_settings( $params, $initial = null ) {
 
-		$render_function = array( $this, 'render' );
+		if ( isset( $params['slug'] ) ) {
+			$initial .= $this->separator . $params['slug'];
+		}
 
-		// Setup the main page.
-		$page_handle                   = add_menu_page(
-			$setting->get_param( 'page_title' ),
-			$setting->get_param( 'menu_title' ),
-			$setting->get_param( 'capability' ),
-			$setting->get_slug(),
-			$render_function,
-			$setting->get_param( 'icon' )
-		);
-		$this->handles[ $page_handle ] = $setting;
-		$setting->set_param( 'page_handle', $page_handle );
-
-		add_action( "load-{$page_handle}", array( $this, 'set_active_setting' ) );
-		// Setup the Child page handles.
-		foreach ( $setting->get_settings() as $sub_setting ) {
-			if ( 'page' !== $sub_setting->get_param( 'type' ) || ! apply_filters( "cloudinary_settings_enabled_{$sub_setting->get_slug()}", true ) ) {
+		foreach ( $params as $key => &$param ) {
+			if ( ! is_numeric( $key ) && 'settings' !== $key ) {
 				continue;
 			}
-			if ( ! $sub_setting->has_param( 'page_header' ) ) {
-				$sub_setting->set_param( 'page_header', $setting->get_param( 'page_header' ) );
+
+			if ( isset( $param[0] ) || isset( $param['settings'] ) ) {
+				$param = $this->get_default_settings( $param, $initial );
+			} elseif ( isset( $param['slug'] ) ) {
+				$default = '';
+				if ( isset( $param['default'] ) ) {
+					$default = $param['default'];
+				}
+				$slug             = $initial . $this->separator . $param['slug'];
+				$param['setting'] = $this->add( $slug, $default, $param );
 			}
-			$sub_setting->set_param( 'page_footer', $setting->get_param( 'page_footer' ) );
-			$capability                    = $sub_setting->get_param( 'capability', $setting->get_param( 'capability' ) );
-			$page_handle                   = add_submenu_page(
-				$setting->get_slug(),
-				$sub_setting->get_param( 'page_title', $setting->get_param( 'page_title' ) ),
-				$sub_setting->get_param( 'menu_title', $sub_setting->get_param( 'page_title' ) ),
-				$capability,
-				$sub_setting->get_slug(),
-				$render_function,
-				$sub_setting->get_param( 'position' )
-			);
-			$this->handles[ $page_handle ] = $sub_setting;
-			$sub_setting->set_param( 'page_handle', $page_handle );
-
-			add_action( "load-{$page_handle}", array( $this, 'set_active_setting' ) );
 		}
+
+		return $params;
 	}
 
 	/**
-	 * Render a page.
+	 * Flatten a setting into a string.
+	 *
+	 * @return array
 	 */
-	public function render() {
-		// Enqueue Cloudinary.
-		get_plugin_instance()->enqueue_assets();
-		if ( $this->current_page->has_param( 'page_footer' ) ) {
-			add_action( 'admin_footer', array( $this, 'render_footer' ) );
-		}
-		echo $this->current_page->get_component()->render(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	public function flatten() {
+		return array_keys( $this->settings );
 	}
 
 	/**
-	 * Set the current active settings and tabs.
+	 * Magic method to get a chainable setting.
+	 *
+	 * @param string $name The name of the setting to get dynamically.
+	 *
+	 * @return Setting|null
 	 */
-	public function set_active_setting() {
-		$this->current_page = $this->get_active_page();
-		$this->current_page->set_param( 'is_active', true );
-		$this->current_setting = $this->current_page->get_root_setting();
-		$this->current_setting->set_param( 'active_setting', $this->current_page );
-		// Setup default tab.
-		if ( $this->current_page->has_parent() && $this->current_page->has_settings() ) {
-			$settings          = $this->current_page->get_settings();
-			$this->current_tab = array_shift( $settings );
+	public function __get( $name ) {
+
+		if ( ! isset( $this->settings[ $name ] ) ) {
+			$this->settings[ $name ] = $this->add( $name );
 		}
 
-		$active_setting = filter_input( INPUT_GET, 'tab', FILTER_SANITIZE_STRING );
-		if ( is_null( $active_setting ) ) {
-			$active_setting = filter_input( INPUT_POST, 'tab', FILTER_SANITIZE_STRING );
-		}
-		if ( ! is_null( $active_setting ) && $this->current_page->setting_exists( $active_setting ) ) {
-			$this->current_tab = $this->current_page->get_setting( $active_setting );
-		}
-
-		// Setup current tab.
-		if ( $this->current_tab && $this->current_page !== $this->current_tab ) {
-			$this->current_tab->set_param( 'is_active', true );
-			$this->current_page->set_param( 'active_tab', $this->current_tab );
-		}
-
+		return $this->settings[ $name ];
 	}
 
 	/**
-	 * Get the currently active page.
+	 * Remove a setting.
+	 *
+	 * @param string $slug The setting to remove.
+	 */
+	public function delete( $slug ) {
+
+		$this->remove_param( '@data' . $this->separator . $slug );
+	}
+
+	/**
+	 * Init the settings.
+	 */
+	protected function init() {
+
+		$storage       = $this->get_param( 'storage' );
+		$this->storage = new $storage( $this->slug );
+		$data          = wp_parse_args( $this->storage->get(), $this->get_value() );
+		$this->set_param( '@data', $data );
+	}
+
+	/**
+	 * Add a setting.
+	 *
+	 * @param string $slug    The setting slug.
+	 * @param mixed  $default The default value.
+	 * @param array  $params  The params.
+	 *
+	 * @return Setting|\WP_Error
+	 */
+	public function add( $slug, $default = array(), $params = array() ) {
+
+		$parts      = explode( $this->separator, $slug );
+		$path       = array();
+		$value      = array();
+		$last_child = null;
+		$this->set_param( '@primaries' . $this->separator . $parts[0] );
+		while ( ! empty( $parts ) ) {
+			$path[] = array_shift( $parts );
+			if ( empty( $parts ) ) {
+				$value = $default;
+			}
+
+			$name  = implode( $this->separator, $path );
+			$child = $this->register( $name, $value, $params );
+			if ( is_wp_error( $child ) ) {
+				return $child;
+			}
+
+			if ( $last_child ) {
+				$last_child->add( $child );
+			}
+			$last_child = $child;
+		}
+
+		return $this->settings[ $slug ];
+	}
+
+	/**
+	 * Register a new setting with internals.
+	 *
+	 * @param string $slug    The setting slug.
+	 * @param mixed  $default The default value.
+	 * @param array  $params  The params.
+	 *
+	 * @return mixed|Setting|\WP_Error
+	 */
+	protected function register( $slug, $default, $params ) {
+
+		if ( isset( $this->settings[ $slug ] ) ) {
+			$exists = $this->settings[ $slug ];
+			if ( $exists->get_type() !== 'array' ) {
+				return new \WP_Error();
+			}
+		}
+		$current_value = $this->get_param( '@data' . $this->separator . $slug, $default );
+		$slug_parts    = explode( $this->separator, $slug );
+		array_pop( $slug_parts );
+		$parent = implode( $this->separator, $slug_parts );
+		if ( ! isset( $this->settings[ $slug ] ) ) {
+			$setting = $this->create_child( $slug, $params );
+			$setting->set_type( gettype( $default ) );
+			if ( ! empty( $parent ) ) {
+				$setting->set_parent( $parent );
+			}
+			$this->settings[ $slug ] = $setting;
+		}
+		$this->set_param( '@data' . $this->separator . $slug, $current_value );
+
+		return $this->settings[ $slug ];
+	}
+
+	/**
+	 * Create a new child.
+	 *
+	 * @param string $slug   The slug.
+	 * @param array  $params Optional Params.
 	 *
 	 * @return Setting
 	 */
-	public function get_active_page() {
-		$screen = get_current_screen();
-		$page   = $this->settings;
-		if ( $screen instanceof WP_Screen && isset( $this->handles[ $screen->id ] ) ) {
-			$page = $this->handles[ $screen->id ];
+	protected function create_child( $slug, $params ) {
+
+		return new Settings\Setting( $slug, $this, $params );
+	}
+
+	/**
+	 * Get a setting value.
+	 *
+	 * @param string $slug The slug to get.
+	 *
+	 * @return Setting|null
+	 */
+	public function get_value( $slug = null ) {
+
+		$key = '@data';
+		if ( $slug ) {
+			if ( ! isset( $this->settings[ $slug ] ) ) {
+				$setting = $this->find_setting( $slug );
+				if ( $setting ) {
+					$slug = $setting->get_slug();
+				}
+			}
+			$key .= $this->separator . $slug;
 		}
 
-		return $page;
+		$value = $this->get_param( $key );
+		if ( ! $slug ) {
+			$slug = $this->slug;
+		}
+		$base_slug = explode( $this->separator, $slug );
+		$base_slug = array_pop( $base_slug );
+
+		/**
+		 * Filter the setting value.
+		 *
+		 * @hook cloudinary_setting_get_value
+		 *
+		 * @param $value {mixed} The setting value.
+		 * @param $slug  {string}  The setting slug.
+		 */
+		return apply_filters( 'cloudinary_setting_get_value', $value, $slug );
 	}
 
 	/**
-	 * Render the footer in admin page.
-	 */
-	public function render_footer() {
-		echo $this->get_active_page()->get_param( 'page_footer' )->get_component()->render(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-	}
-
-	/**
-	 * Register a setting.
+	 * Get the slug.
 	 *
-	 * @param string $slug   The new setting slug.
-	 * @param array  $params The setting parameters.
-	 *
-	 * @return Setting
+	 * @return string
 	 */
-	protected function register_setting( $slug, $params = array() ) {
-
-		// Create new setting instance.
-		$setting = new Setting( $slug, $params );
-
-		// Register internals.
-		$this->settings[ $slug ] = $setting;
-
-		return $setting;
+	public function get_slug() {
+		return $this->slug;
 	}
 
 	/**
-	 * Register settings with WordPress.
+	 * Find a Setting.
+	 *
+	 * @param string $slug The setting slug.
+	 *
+	 * @return self|Setting
 	 */
-	public function register_wordpress_settings() {
+	public function find_setting( $slug ) {
 
-		foreach ( $this->settings as $setting ) {
-			$setting->register_settings();
+		$results = array();
+		foreach ( $this->flatten() as $key ) {
+			$parts = explode( $this->separator, $key );
+			$index = array_search( $slug, $parts, true );
+			if ( false !== $index ) {
+				$setting_slug             = implode( $this->separator, array_splice( $parts, 0, $index + 1 ) );
+				$results[ $setting_slug ] = $this->settings[ $setting_slug ];
+			}
+		}
+		if ( 1 === count( $results ) ) {
+			$results = array_shift( $results );
+		}
+
+		return $results;
+	}
+
+	/**
+	 * Get a setting.
+	 *
+	 * @param string $slug   The slug to get.
+	 * @param bool   $create Flag to create setting if not found.
+	 *
+	 * @return Setting|null
+	 */
+	public function get_setting( $slug, $create = true ) {
+		$found = null;
+		if ( isset( $this->settings[ $slug ] ) ) {
+			$found = $this->settings[ $slug ];
+		}
+
+		if ( ! $found ) {
+			$found = $this->find_setting( $slug );
+		}
+		if ( empty( $found ) ) {
+			$found = null;
+			if ( true === $create ) {
+				$found = $this->add( $slug, null );
+			}
+		}
+
+		return $found;
+	}
+
+	/**
+	 * Set a setting's value.
+	 *
+	 * @param string $slug  The slag of the setting to set.
+	 * @param mixed  $value The value to set.
+	 *
+	 * @return bool
+	 */
+	public function set_value( $slug, $value ) {
+		$set = false;
+		if ( isset( $this->settings[ $slug ] ) ) {
+			$current = $this->get_param( '@data' . $this->separator . $slug );
+			if ( $current !== $value ) {
+				$this->set_param( '@data' . $this->separator . $slug, $value );
+				$set = true;
+			}
+		}
+
+		return $set;
+	}
+
+	/**
+	 * Pend a setting's value, for prep to update.
+	 *
+	 * @param string $slug  The slag of the setting to pend set.
+	 * @param mixed  $value The value to set.
+	 */
+	public function set_pending( $slug, $value ) {
+		$this->set_param( '@save' . $this->separator . $slug, $value );
+	}
+
+	/**
+	 * Get a setting's pending value for update.
+	 *
+	 * @return mixed
+	 */
+	public function get_pending() {
+		return $this->get_param( '@save' );
+	}
+
+	/**
+	 * Save the settings values to the storage.
+	 *
+	 * @return bool|\WP_Error
+	 */
+	public function save() {
+
+		$pending   = $this->get_pending();
+		$slug      = $this->slug;
+		$new_value = array();
+		foreach ( $pending as $slug => $new_value ) {
+			$setting       = $this->get_setting( $slug );
+			$current_value = $setting->get_value();
+			/**
+			 * Pre-Filter the value before saving a setting.
+			 *
+			 * @hook   cloudinary_pre_save_settings_{$slug}
+			 * @hook   cloudinary_pre_save_settings
+			 * @since  2.7.6
+			 *
+			 * @param $new_value     {int}     The new setting value.
+			 * @param $current_value {string}  The setting current value.
+			 * @param $setting       {Setting} The setting object.
+			 *
+			 * @return {mixed}
+			 */
+			$new_value = apply_filters( "cloudinary_pre_save_settings_{$slug}", $new_value, $current_value, $setting );
+			$new_value = apply_filters( 'cloudinary_pre_save_settings', $new_value, $current_value, $setting );
+			if ( is_wp_error( $new_value ) ) {
+				return $new_value;
+			}
+
+			$this->set_value( $slug, $new_value );
+		}
+
+		$this->remove_param( '@save' );
+		$this->storage->set( $this->get_value() );
+
+		$saved = $this->storage->save();
+		if ( $saved ) {
+			/**
+			 * Action to announce the saving of a setting.
+			 *
+			 * @hook   cloudinary_save_settings_{$slug}
+			 * @hook   cloudinary_save_settings
+			 * @since  2.7.6
+			 *
+			 * @param $new_value {int}     The new setting value.
+			 */
+			do_action( "cloudinary_save_settings_{$slug}", $new_value );
+			do_action( 'cloudinary_save_settings', $new_value );
 		}
 	}
 
-	/**
-	 * Create a new setting on the Settings object.
-	 *
-	 * @param string $slug   The setting slug.
-	 * @param array  $params The settings params.
-	 *
-	 * @return Setting
-	 */
-	public static function create_setting( $slug, $params = array() ) {
-		if ( is_null( self::$instance ) ) {
-			self::$instance = new self();
-		}
-		$params['option_name'] = $slug; // Root option.
-		$params['type']        = 'page';
-		$params['priority']    = 0;
-
-		return self::$instance->register_setting( $slug, $params );
-	}
-
-	/**
-	 * Initialise the registered settings by loading the data and registering the settings with WordPress.
-	 *
-	 * @param string $slug The setting slug to initialise.
-	 */
-	public static function init_setting( $slug ) {
-		if ( ! is_null( self::$instance ) && ! empty( self::$instance->settings[ $slug ] ) ) {
-			self::check_version( $slug );
-			$settings = self::$instance->settings[ $slug ];
-			$settings->setup_component();
-		}
-	}
 }

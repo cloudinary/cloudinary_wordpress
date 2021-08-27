@@ -17,8 +17,8 @@ const GlobalTransformations = {
 		video: document.getElementById( 'video-loader' ),
 	},
 	optimization: {
-		image: document.getElementById( 'image_optimization' ),
-		video: document.getElementById( 'video_optimization' ),
+		image: document.getElementById( 'image.image_optimization' ),
+		video: document.getElementById( 'video.video_optimization' ),
 	},
 	error_container: document.getElementById( 'cld-preview-error' ),
 	activeItem: null,

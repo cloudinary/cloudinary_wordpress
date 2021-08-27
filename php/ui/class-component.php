@@ -111,7 +111,12 @@ abstract class Component {
 			foreach ( $condition as $slug => $value ) {
 				$bound = $this->setting->get_root_setting()->get_setting( $slug, false );
 				if ( ! is_null( $bound ) ) {
-					$bound->set_param( 'attributes:input:data-bind-trigger', $bound->get_slug() );
+					$path = array(
+						'attributes',
+						'input',
+						'data-bind-trigger',
+					);
+					$bound->set_param( implode( $this->setting->separator, $path ), $bound->get_slug() );
 				} else {
 					$this->setting->set_param( 'condition', null );
 				}
@@ -611,8 +616,8 @@ abstract class Component {
 		if ( isset( $this->build_parts[ $part ] ) ) {
 			$struct = wp_parse_args( $this->build_parts[ $part ], $struct );
 		}
-		if ( $this->setting->has_param( "attributes:{$part}" ) ) {
-			$struct['attributes'] = wp_parse_args( $this->setting->get_param( "attributes:{$part}" ), $struct['attributes'] );
+		if ( $this->setting->has_param( 'attributes' . $this->setting->separator . $part ) ) {
+			$struct['attributes'] = wp_parse_args( $this->setting->get_param( 'attributes' . $this->setting->separator . $part ), $struct['attributes'] );
 		}
 
 		return $struct;
@@ -717,7 +722,7 @@ abstract class Component {
 	 */
 	protected function settings( $struct ) {
 		$struct['element'] = null;
-		if ( $this->setting->has_parent() && $this->setting->has_settings() ) {
+		if ( $this->setting->has_settings() ) {
 			$html = array();
 			foreach ( $this->setting->get_settings() as $setting ) {
 				$html[] = $setting->get_component()->render();
@@ -805,8 +810,10 @@ abstract class Component {
 			// Set Caller.
 			$component = "{$caller}\\{$type}";
 		}
+		$component = new $component( $setting );
+		$component->setup();
 
-		return new $component( $setting );
+		return $component;
 	}
 
 	/**
@@ -833,12 +840,15 @@ abstract class Component {
 	protected function conditional( $struct ) {
 
 		if ( $this->setting->has_param( 'condition' ) ) {
-			$conditions = $this->setting->get_param( 'condition' );
-			$results    = array();
-			$class      = 'open';
+			$conditions     = $this->setting->get_param( 'condition' );
+			$results        = array();
+			$class          = 'open';
+			$condition_data = array();
 			foreach ( $conditions as $slug => $value ) {
-				$compare_value = $this->setting->find_setting( $slug )->get_value();
-				$results[]     = $value === $compare_value;
+				$setting                                = $this->setting->find_setting( $slug );
+				$compare_value                          = $setting->get_value();
+				$results[]                              = $value === $compare_value;
+				$condition_data[ $setting->get_slug() ] = $value;
 			}
 			$struct['attributes']['class'][] = 'cld-ui-conditional';
 
@@ -846,7 +856,7 @@ abstract class Component {
 				$class = 'closed';
 			}
 			$struct['attributes']['class'][]        = $class;
-			$struct['attributes']['data-condition'] = wp_json_encode( $this->setting->get_param( 'condition', array() ) );
+			$struct['attributes']['data-condition'] = wp_json_encode( $condition_data );
 		}
 
 		return $struct;
