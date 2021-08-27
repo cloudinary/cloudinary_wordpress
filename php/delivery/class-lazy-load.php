@@ -193,102 +193,82 @@ class Lazy_Load extends Delivery_Feature {
 	}
 
 	/**
-	 * Define the settings.
+	 * Add the settings.
+	 *
+	 * @param array $pages The pages to add to.
 	 *
 	 * @return array
 	 */
-	public function settings() {
+	public function register_settings( $pages ) {
 
-		$args = array(
-			'type'        => 'group',
-			'title'       => __( 'Lazy Loading', 'cloudinary' ),
-			'priority'    => 9,
-			'collapsible' => 'open',
-			array(
-				'type'        => 'on_off',
-				'description' => __( 'Enable lazy loading', 'cloudinary' ),
-				'slug'        => 'use_lazy_load',
-				'default'     => 'on',
-			),
-			array(
-				'type'      => 'group',
-				'condition' => array(
-					'use_lazy_load' => true,
-				),
+		$pages['lazy_loading'] = array(
+			'page_title'          => __( 'Lazy Loading', 'cloudinary' ),
+			'menu_title'          => __( 'Lazy Loading', 'cloudinary' ),
+			'priority'            => 5,
+			'requires_connection' => true,
+			'sidebar'             => true,
+			'option_name'         => 'media_display',
+			'settings'            => array(
 				array(
-					'type'       => 'text',
-					'title'      => __( 'Lazy loading threshold', 'cloudinary' ),
-					'slug'       => 'lazy_threshold',
-					'attributes' => array(
-						'style'            => array(
-							'width:100px;display:block;',
+					'type'     => 'panel',
+					'title'    => __( 'Lazy Loading', 'cloudinary' ),
+					'priority' => 9,
+					array(
+						'type'        => 'on_off',
+						'description' => __( 'Enable lazy loading', 'cloudinary' ),
+						'slug'        => 'use_lazy_load',
+						'default'     => 'on',
+					),
+					array(
+						'type'      => 'group',
+						'condition' => array(
+							'use_lazy_load' => true,
 						),
-						'data-auto-suffix' => '*px;em;rem;vh',
+						array(
+							'type'       => 'text',
+							'title'      => __( 'Lazy loading threshold', 'cloudinary' ),
+							'slug'       => 'lazy_threshold',
+							'attributes' => array(
+								'style'            => array(
+									'width:100px;display:block;',
+								),
+								'data-auto-suffix' => '*px;em;rem;vh',
+							),
+							'default'    => '1000px',
+						),
+						array(
+							'type'      => 'radio',
+							'title'     => __( 'Placeholder generation', 'cloudinary' ),
+							'slug'      => 'lazy_placeholder',
+							'default'   => 'blur',
+							'condition' => array(
+								'enable_breakpoints' => true,
+							),
+							'options'   => array(
+								'blur'        => __( 'Blur', 'cloudinary' ),
+								'pixelate'    => __( 'Pixelate', 'cloudinary' ),
+								'vectorize'   => __( 'Vectorize', 'cloudinary' ),
+								'predominant' => __( 'Dominant Color', 'cloudinary' ),
+								'off'         => __( 'Off', 'cloudinary' ),
+							),
+						),
+						array(
+							'type'    => 'color',
+							'title'   => __( 'Use custom color', 'cloudinary' ),
+							'slug'    => 'lazy_custom_color',
+							'default' => 'rgba(153,153,153,0.5)',
+						),
+						array(
+							'type'    => 'on_off',
+							'title'   => __( 'Animate', 'cloudinary' ),
+							'slug'    => 'lazy_animate',
+							'default' => 'on',
+						),
 					),
-					'default'    => '1000px',
-				),
-				array(
-					'type'      => 'radio',
-					'title'     => __( 'Placeholder generation', 'cloudinary' ),
-					'slug'      => 'lazy_placeholder',
-					'default'   => 'blur',
-					'condition' => array(
-						'enable_breakpoints' => true,
-					),
-					'options'   => array(
-						'blur'        => __( 'Blur', 'cloudinary' ),
-						'pixelate'    => __( 'Pixelate', 'cloudinary' ),
-						'vectorize'   => __( 'Vectorize', 'cloudinary' ),
-						'predominant' => __( 'Dominant Color', 'cloudinary' ),
-						'off'         => __( 'Off', 'cloudinary' ),
-					),
-				),
-				array(
-					'type'    => 'color',
-					'title'   => __( 'Use custom color', 'cloudinary' ),
-					'slug'    => 'lazy_custom_color',
-					'default' => 'rgba(153,153,153,0.5)',
-				),
-				array(
-					'type'    => 'on_off',
-					'title'   => __( 'Animate', 'cloudinary' ),
-					'slug'    => 'lazy_animate',
-					'default' => 'on',
 				),
 			),
 		);
 
-		return $args;
-	}
-
-	/**
-	 * Register the setting under media.
-	 */
-	protected function register_settings() {
-
-		// Move setting to media.
-		$media_settings = $this->media->get_settings()->get_setting( 'image_display' );
-
-		// Add to media.
-		$media_settings->add_setting( $this->settings );
-
-		// Reset the option parent.
-		$this->settings->get_option_parent()->set_value( null );
-
-		$condition = array(
-			'use_lazy_load' => false,
-		);
-		$bk        = $media_settings->get_setting( 'breakpoints' );
-		$bk->set_param( 'condition', $condition );
-		$bk->rebuild_component();
-
-		$image_breakpoints = $media_settings->get_setting( 'image_breakpoints' );
-		$bytes_step        = $image_breakpoints->get_setting( 'bytes_step' );
-		$condition         = array(
-			'use_lazy_load' => false,
-		);
-		$bytes_step->set_param( 'condition', $condition );
-		$bytes_step->rebuild_component();
-
+		return $pages;
 	}
 }

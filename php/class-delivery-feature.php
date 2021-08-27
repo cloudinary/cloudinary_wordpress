@@ -78,6 +78,7 @@ abstract class Delivery_Feature implements Assets {
 		$this->plugin = $plugin;
 		$this->media  = $plugin->get_component( 'media' );
 
+		add_action( 'cloudinary_admin_pages', array( $this, 'register_settings' ) );
 		add_action( 'cloudinary_init_settings', array( $this, 'setup' ) );
 	}
 
@@ -98,7 +99,6 @@ abstract class Delivery_Feature implements Assets {
 	 * Setup hooks used when enabled.
 	 */
 	protected function setup_hooks() {
-
 	}
 
 	/**
@@ -156,9 +156,21 @@ abstract class Delivery_Feature implements Assets {
 	}
 
 	/**
+	 * Add the settings.
+	 *
+	 * @param array $pages The pages to add to.
+	 *
+	 * @return array
+	 */
+	public function register_settings( $pages ) {
+		return $pages;
+	}
+
+	/**
 	 * Setup the class.
 	 */
 	public function setup() {
+		$this->settings = $this->plugin->settings;
 		$this->init();
 	}
 }

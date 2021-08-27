@@ -128,53 +128,49 @@ class Responsive_Breakpoints extends Delivery_Feature {
 	}
 
 	/**
-	 * Register the setting under media.
+	 * Add the settings.
+	 *
+	 * @param array $pages The pages to add to.
+	 *
+	 * @return array
 	 */
-	protected function register_settings() {
+	public function register_settings( $pages ) {
 
-		$image_breakpoints = $this->settings->get_setting( 'image_breakpoints' );
-		// Add pixel step.
-		$params = array(
-			'type'         => 'number',
-			'slug'         => 'pixel_step',
-			'priority'     => 9,
-			'title'        => __( 'Breakpoints distance', 'cloudinary' ),
-			'tooltip_text' => __( 'The distance from the original image for responsive breakpoints generation.', 'cloudinary' ),
-			'suffix'       => __( 'px', 'cloudinary' ),
-			'default'      => 100,
-			'condition'    => array(
-				'use_lazy_loading' => true,
+		$pages['responsive'] = array(
+			'page_title'          => __( 'Responsive', 'cloudinary' ),
+			'menu_title'          => __( 'Responsive', 'cloudinary' ),
+			'priority'            => 5,
+			'requires_connection' => true,
+			'sidebar'             => true,
+			'option_name'         => 'media_display',
+			'settings'            => array(
+				array(
+					'type'         => 'number',
+					'slug'         => 'pixel_step',
+					'priority'     => 9,
+					'title'        => __( 'Breakpoints distance', 'cloudinary' ),
+					'tooltip_text' => __( 'The distance from the original image for responsive breakpoints generation.', 'cloudinary' ),
+					'suffix'       => __( 'px', 'cloudinary' ),
+					'default'      => 100,
+				),
+				array(
+					'type'         => 'select',
+					'slug'         => 'dpr',
+					'priority'     => 8,
+					'title'        => __( 'DPR settings', 'cloudinary' ),
+					'tooltip_text' => __( 'The distance from the original image for responsive breakpoints generation.', 'cloudinary' ),
+					'default'      => 'auto',
+					'options'      => array(
+						'off'  => __( 'None', 'cloudinary' ),
+						'auto' => __( 'Auto', 'cloudinary' ),
+						'2'    => __( '2X', 'cloudinary' ),
+						'3'    => __( '3X', 'cloudinary' ),
+						'4'    => __( '4X', 'cloudinary' ),
+					),
+				),
 			),
 		);
-		$image_breakpoints->create_setting( 'pixel_step', $params, $image_breakpoints );
 
-		$self = $this;
-		// Add density.
-		$params = array(
-			'type'         => 'select',
-			'slug'         => 'dpr',
-			'priority'     => 8,
-			'title'        => __( 'DPR settings', 'cloudinary' ),
-			'tooltip_text' => __( 'The distance from the original image for responsive breakpoints generation.', 'cloudinary' ),
-			'default'      => 'auto',
-			'condition'    => array(
-				'use_lazy_loading' => true,
-			),
-			'enabled'      => function () use ( $self ) {
-				$settings = $self->settings->get_value();
-
-				return ! isset( $settings['dpr_precise'] );
-			},
-			'options'      => array(
-				'off'  => __( 'None', 'cloudinary' ),
-				'auto' => __( 'Auto', 'cloudinary' ),
-				'2'    => __( '2X', 'cloudinary' ),
-				'3'    => __( '3X', 'cloudinary' ),
-				'4'    => __( '4X', 'cloudinary' ),
-			),
-		);
-		$image_breakpoints->create_setting( 'dpr', $params, $image_breakpoints )->get_value();
-		// Reset the option parent.
-		$this->settings->get_option_parent()->set_value( null );
+		return $pages;
 	}
 }
