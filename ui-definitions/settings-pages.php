@@ -5,6 +5,7 @@
  * @package Cloudinary
  */
 
+$media    = $this->get_component( 'media' );
 $settings = array(
 	'dashboard'      => array(
 		'page_title'          => __( 'Cloudinary Dashboard', 'cloudinary' ),
