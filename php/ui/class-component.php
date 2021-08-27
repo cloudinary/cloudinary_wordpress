@@ -199,7 +199,7 @@ abstract class Component {
 				),
 			),
 			'tooltip'     => array(
-				'element'    => 'span',
+				'element'    => 'div',
 				'attributes' => array(
 					'class' => array(),
 				),
@@ -649,21 +649,11 @@ abstract class Component {
 	protected function tooltip( $struct ) {
 		$struct['content'] = null;
 		if ( $this->setting->has_param( 'tooltip_text' ) ) {
-
-			$struct['render']                     = true;
-			$struct['attributes']['class']        = array(
-				'dashicons',
-				'dashicons-info',
+			$struct['render']              = true;
+			$struct['attributes']['class'] = array(
 				'cld-tooltip',
 			);
-			$tooltip_id                           = 'tooltip_' . $this->setting->get_slug();
-			$struct['attributes']['data-tooltip'] = $tooltip_id;
-
-			$content                        = $this->get_part( 'span' );
-			$content['content']             = $this->setting->get_param( 'tooltip_text' );
-			$content['attributes']['id']    = $tooltip_id;
-			$content['attributes']['class'] = 'hidden';
-			$struct['children']['content']  = $content;
+			$struct['content']             = $this->setting->get_param( 'tooltip_text' );
 		}
 
 		return $struct;

@@ -19,7 +19,7 @@ class Info_Box extends Panel {
 	 *
 	 * @var string
 	 */
-	protected $blueprint = 'wrap|icon/|body|title/|text/|/body|link/|/wrap';
+	protected $blueprint = 'wrap|div|icon/|/div|body|title/|text/|/body|link/|/wrap';
 
 	/**
 	 * Filter the link parts structure.
@@ -39,6 +39,19 @@ class Info_Box extends Panel {
 			$struct['attributes']['target'] = '_blank';
 			$struct['attributes']['rel']    = 'noreferrer';
 		}
+
+		return $struct;
+	}
+
+	/**
+	 * Filter the link parts structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function div( $struct ) {
+		$struct['attributes']['class'] = array( 'cld-info-icon' );
 
 		return $struct;
 	}
@@ -66,8 +79,9 @@ class Info_Box extends Panel {
 	 */
 	protected function text( $struct ) {
 
-		$struct['element'] = 'p';
-		$struct['content'] = $this->setting->get_param( 'text' );
+		$struct['element']             = 'div';
+		$struct['attributes']['class'] = array( 'description' );
+		$struct['content']             = $this->setting->get_param( 'text' );
 
 		return $struct;
 	}

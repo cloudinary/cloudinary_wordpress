@@ -21,7 +21,7 @@ class Text extends Component {
 	 *
 	 * @var string
 	 */
-	protected $blueprint = 'wrap|icon/|div|label|title|tooltip/|/title|/label|/div|prefix/|input/|suffix/|description/|/wrap';
+	protected $blueprint = 'wrap|icon/|div|label|title|/title|/label|/div|prefix/|input/|suffix/|description/|tooltip/|/wrap';
 
 	/**
 	 * Flag if component is a capture type.
