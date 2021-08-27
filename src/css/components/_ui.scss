@@ -1,7 +1,7 @@
 // Vars
 @mixin input {
 
-	margin-bottom: 1.4rem;
+	margin: 1.8rem 0;
 	display: block;
 
 	&-label {
@@ -12,7 +12,7 @@
 
 .cld {
 
-	&-chart{
+	&-chart {
 		&-stat {
 			padding-bottom: 2em;
 
@@ -22,6 +22,7 @@
 			}
 		}
 	}
+
 	&-link {
 		&-button {
 			background-color: $color-cld-blue;
@@ -45,7 +46,8 @@
 			&.cld-info-text {
 				padding-left: 2em;
 				font-weight: bolder;
-				.description{
+
+				.description {
 					font-size: 0.6em;
 				}
 			}
@@ -91,6 +93,7 @@
 			font-weight: bolder;
 			padding: 1em 0;
 			font-size: 0.8em;
+
 			&-titles {
 				display: flex;
 				justify-content: space-between;
@@ -205,9 +208,10 @@
 	}
 
 	&-tooltip {
-		margin-left: 2px;
-		margin-top: 1px;
-		font-size: 1rem;
+		color: #999;
+		font-size: 0.8em;
+		line-height: 1.3em;
+		margin: 8px 0;
 	}
 
 	&-notice-box {
@@ -293,7 +297,18 @@
 	}
 
 	&-ui {
-		&-accordion {
+		&-suffix{
+			display: inline-block;
+			padding: 1px 11px;
+			background-color: #e8e8e8;
+			color: #999;
+			vertical-align: text-top;
+			line-height: 1.7em;
+			margin-left: 13px;
+			border-radius: 4px;
+		}
+		&-accordion, &-preview {
+
 			.cld-ui-header {
 				margin-top: -1px;
 			}
@@ -311,6 +326,7 @@
 
 		&-title {
 			text-transform: capitalize;
+
 			h2 {
 				font-size: 1em;
 
@@ -319,10 +335,7 @@
 				}
 			}
 
-			.description {
-				font-size: 0.8em;
-				color: #999;
-			}
+
 
 			&.collapsible {
 				cursor: pointer;
@@ -337,6 +350,10 @@
 		}
 
 		&-wrap {
+			.description {
+				font-size: 0.8em;
+				color: #999;
+			}
 			.button, .button:hover {
 				background-color: $color-cld-blue;
 			}
@@ -363,12 +380,14 @@
 			}
 
 			.cld-column {
-				padding: 0;
+
 				width: 100%;
 				box-sizing: border-box;
-				&.cld-ui-accordion{
+				padding: 0 10px;
+				&.cld-ui-accordion, &.cld-ui-preview {
 					width: 450px;
 				}
+
 				@media only screen and (min-width: $size-small) {
 
 					&.column-45 {
@@ -381,8 +400,13 @@
 				}
 				@media only screen and (max-width: $size-small) {
 					min-width: 100%;
-					.cld-info-text{
+					.cld-info-text {
 						text-align: center;
+					}
+				}
+				@media only screen and (max-width: $size-medium) {
+					&.cld-ui-preview{
+						display: none;
 					}
 				}
 			}
@@ -399,10 +423,9 @@
 	&-video {
 
 		&-preview {
-			background-color: rgba(216, 216, 216, 0.5);
 			padding: 7px;
 			border-radius: 5px;
-
+			border: 1px solid $color-cld-grey-blue;
 			&-wrapper {
 				position: relative;
 			}
@@ -449,18 +472,22 @@
 
 		&-tabs {
 			background-color: #fff;
-			display: flex;
-			border-top: 1px solid $color-light-grey;
-			border-bottom: 1px solid $color-light-grey;
-			padding: 0 1rem;
-			margin-left: -20px;
-			margin-top: 0;
-			flex-wrap: wrap;
-
+			display: none;
+			border-top: 1px solid #e5e5e5;
+			border-bottom: 1px solid #e5e5e5;
+			padding: 0 !important;
+			margin: -20px -18px 20px;
+			justify-content: center;
+			flex-wrap: nowrap;
+			@media only screen and (max-width: $size-medium) {
+				display: flex;
+			}
 			&-tab {
+
 				list-style: none;
 				text-indent: 0;
 				margin-bottom: 0;
+				width: 100%;
 
 				a {
 					display: block;
@@ -544,9 +571,9 @@
 
 		.regular-select {
 			margin-top: 0.6rem;
-			display: block;
+			display: inline;
 			appearance: none;
-			width: 100%;
+			min-width: 150px;
 			border: 1px solid #d0d0d0;
 			border-radius: 3px;
 			padding: 0.1rem 0.5rem;
@@ -555,6 +582,7 @@
 		&-on-off {
 			display: inline-flex;
 			align-items: center;
+			margin: 0.4rem 0;
 
 			.description {
 				margin: 0;
@@ -604,7 +632,7 @@
 					border-radius: 34px;
 
 					input:checked + & {
-						background-color: $color-success !important;
+						background-color: $color-cld-blue !important;
 					}
 
 					input:checked.partial + & {
@@ -748,7 +776,7 @@
 	&-info-box,
 	&-panel-short {
 		margin-top: 1rem;
-		padding: 0.5rem 1.75rem;
+		padding: 1.15rem;
 
 		&-inner {
 			padding: 1.3rem;
@@ -944,12 +972,27 @@
 
 	&-info-box {
 		display: flex;
-		flex-direction: column;
-
+		padding: 0;
+		margin: 0;
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+		box-shadow: 57px 0 0 $color-blue-grey inset;
+		border-radius: 8px;
 		@media only screen and (min-width: $size-small) {
 			flex-direction: row;
 		}
+		.cld-ui-title{
+			h2 {
+				margin: 0;
+			}
+		}
+		.cld-info-icon{
+			width: 120px;
+			text-align: center;
+			vertical-align: center;
 
+		}
 		img,
 		a.button {
 			align-self: center;
@@ -957,6 +1000,7 @@
 
 		.cld-ui-body {
 			margin: 0 1.2rem;
+			padding: 12px 0;
 		}
 	}
 
