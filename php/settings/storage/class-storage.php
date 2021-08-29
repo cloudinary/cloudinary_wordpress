@@ -70,6 +70,13 @@ abstract class Storage {
 	abstract protected function load();
 
 	/**
+	 * Delete the data from storage source.
+	 *
+	 * @return bool
+	 */
+	abstract protected function delete();
+
+	/**
 	 * Save the data to storage source.
 	 *
 	 * @return bool

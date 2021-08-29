@@ -470,7 +470,7 @@ class Media extends Settings_Component implements Setup {
 
 		if ( $as_sync_key ) {
 			$transformations = $this->get_transformations_from_string( $url );
-			$public_id      .= ! empty( $transformations ) ? wp_json_encode( $transformations ) : '';
+			$public_id       .= ! empty( $transformations ) ? wp_json_encode( $transformations ) : '';
 		}
 
 		return $public_id;
@@ -628,8 +628,8 @@ class Media extends Settings_Component implements Setup {
 			foreach ( $meta['sizes'] as $size_name => $size ) {
 				if ( $file === $size['file'] ) {
 					$cropped = ! wp_image_matches_ratio(
-						// PDFs do not always have width and height, but they do have full sizes.
-						// This is important for the thumbnail crops on the media library.
+					// PDFs do not always have width and height, but they do have full sizes.
+					// This is important for the thumbnail crops on the media library.
 						! empty( $meta['width'] ) ? $meta['width'] : $meta['sizes']['full']['width'],
 						! empty( $meta['height'] ) ? $meta['height'] : $meta['sizes']['full']['height'],
 						$size['width'],
@@ -1658,14 +1658,14 @@ class Media extends Settings_Component implements Setup {
 		// Check for transformations.
 		$transformations = $this->get_transformations_from_string( $asset['url'] );
 		if ( ! empty( $transformations ) ) {
-			$asset['sync_key']       .= wp_json_encode( $transformations );
+			$asset['sync_key']        .= wp_json_encode( $transformations );
 			$asset['transformations'] = $transformations;
 		}
 
 		// Check Format.
 		$url_format = pathinfo( $asset['url'], PATHINFO_EXTENSION );
 		if ( strtolower( $url_format ) !== strtolower( $asset['format'] ) ) {
-			$asset['format']    = $url_format;
+			$asset['format']   = $url_format;
 			$asset['sync_key'] .= $url_format;
 		}
 
@@ -1804,19 +1804,19 @@ class Media extends Settings_Component implements Setup {
 				$status = apply_filters( 'cloudinary_media_status', $status, $attachment_id );
 				?>
 				<span class="dashicons-cloudinary <?php echo esc_attr( $status['state'] ); ?>" title="<?php echo esc_attr( $status['note'] ); ?>"></span>
-				<?php
+			<?php
 			elseif ( ! $this->is_local_media( $attachment_id ) ) :
 				?>
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'Not syncable. This is an external media.', 'cloudinary' ); ?>"></span>
-				<?php
+			<?php
 			elseif ( 'fetch' === $this->get_media_delivery( $attachment_id ) ) :
 				?>
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'This media is Fetch type.', 'cloudinary' ); ?>"></span>
-				<?php
+			<?php
 			elseif ( 'sprite' === $this->get_media_delivery( $attachment_id ) ) :
 				?>
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'This media is Sprite type.', 'cloudinary' ); ?>"></span>
-				<?php
+			<?php
 			endif;
 		}
 	}
@@ -2161,6 +2161,7 @@ class Media extends Settings_Component implements Setup {
 			// add in folder if not empty (not in root).
 			$options['public_id'] = trailingslashit( $folder ) . basename( $options['public_id'] );
 		}
+		$options['public_id'] = trim( $options['public_id'], '/.' );
 
 		return $options;
 	}
@@ -2338,7 +2339,7 @@ class Media extends Settings_Component implements Setup {
 
 			// Internal components.
 			$this->global_transformations = new Global_Transformations( $this );
-			$this->gallery                = new Gallery( $this );
+			$this->gallery                = $this->plugin->get_component( 'gallery' );
 			$this->woocommerce_gallery    = new WooCommerceGallery( $this->gallery );
 			$this->filter                 = new Filter( $this );
 			$this->upgrade                = new Upgrade( $this );

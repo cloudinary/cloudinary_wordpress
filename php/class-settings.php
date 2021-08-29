@@ -48,8 +48,11 @@ class Settings {
 	 * @param array  $params Optional params for the setting.
 	 */
 	public function __construct( $slug, $params = array() ) {
-
 		$this->slug = $slug;
+		$cached     = get_transient( 'cache' . $this->slug );
+		if ( ! empty( $cached ) ) {
+			$this->set_param( '@data', $cached );
+		}
 		if ( isset( $params['storage'] ) ) {
 			// Test if shorthand was used.
 			if ( class_exists( 'Cloudinary\\Settings\\Storage\\' . $params['storage'] ) ) {
@@ -73,6 +76,7 @@ class Settings {
 		}
 
 		$this->init();
+
 	}
 
 	/**
@@ -117,15 +121,6 @@ class Settings {
 	}
 
 	/**
-	 * Flatten a setting into a string.
-	 *
-	 * @return array
-	 */
-	public function flatten() {
-		return array_keys( $this->settings );
-	}
-
-	/**
 	 * Magic method to get a chainable setting.
 	 *
 	 * @param string $name The name of the setting to get dynamically.
@@ -155,7 +150,8 @@ class Settings {
 	 * Init the settings.
 	 */
 	protected function init() {
-
+		set_transient( 'cache' . $this->slug, $this->get_param( '@data' ), 120 );
+		$this->set_param( '@cache', $this->flatten() );
 	}
 
 	/**
@@ -167,7 +163,14 @@ class Settings {
 		$storage                = $this->get_param( 'storage' );
 		$storage_slug           = $this->get_alias( $slug );
 		$this->storage[ $slug ] = new $storage( $storage_slug );
-		$this->set_param( '@data' . $this->separator . $slug, $this->storage[ $slug ]->get() );
+		if ( ! $this->has_param( '@data' . $this->separator . $slug ) ) {
+			$data = $this->storage[ $slug ]->get();
+			if ( $data ) {
+				$this->set_param( '@data' . $this->separator . $slug, $data );
+			}
+		}
+		// Keep in reverse order.
+		krsort( $this->storage, SORT_STRING );
 	}
 
 	/**
@@ -264,10 +267,7 @@ class Settings {
 	protected function register( $slug, $default, $params ) {
 
 		if ( isset( $this->settings[ $slug ] ) ) {
-			$exists = $this->settings[ $slug ];
-			if ( $exists->get_type() !== 'array' ) {
-				return new \WP_Error();
-			}
+			return $this->settings[ $slug ];
 		}
 		$slug_parts = explode( $this->separator, $slug );
 		array_pop( $slug_parts );
@@ -309,22 +309,24 @@ class Settings {
 	 *
 	 * @param string $slug The slug to get.
 	 *
-	 * @return Setting|null
+	 * @return mixed
 	 */
 	public function get_value( $slug = null ) {
-
 		$key = '@data';
 		if ( $slug ) {
+			if ( isset( $this->params['@cache'][ $slug ] ) ) {
+				return $this->params['@cache'][ $slug ];
+			}
 			if ( ! isset( $this->settings[ $slug ] ) ) {
 				$setting = $this->find_setting( $slug );
-				if ( $setting ) {
+				if ( ! $setting->has_param( 'dynamic' ) ) {
 					$slug = $setting->get_slug();
 				}
 			}
 			$key .= $this->separator . $slug;
 		}
 
-		$value = $this->get_param( $key );
+		$value = $this->get_param( $key, array() );
 		if ( ! $slug ) {
 			$slug = $this->slug;
 		}
@@ -340,6 +342,60 @@ class Settings {
 		 * @param $slug  {string}  The setting slug.
 		 */
 		return apply_filters( 'cloudinary_setting_get_value', $value, $slug );
+	}
+
+	public function flatten( $items = null, $prepend = '' ) {
+		$flatten = [];
+
+		if ( is_null( $items ) ) {
+			$items = $this->get_value();
+		}
+
+		foreach ( $items as $key => $value ) {
+			if ( is_array( $value ) && ! empty( $value ) ) {
+				$flatten = array_merge( $flatten, $this->flatten( $value, $prepend . $key . $this->separator ) );
+			} else {
+				$flatten[ $prepend . $key ] = $value;
+			}
+		}
+
+		return $flatten;
+	}
+
+	protected function value_map_setting( $slug ) {
+		$parts = explode( $this->separator, $slug );
+		while ( ! empty( $parts ) ) {
+			$part    = array_shift( $parts );
+			$setting = $this->get_setting( $part );
+			if ( $setting ) {
+				$value = $setting->get_value();
+			} elseif ( is_array( $value ) && isset( $value[ $part ] ) ) {
+				$value = $value['part'];
+			}
+		}
+		if ( isset( $parts[1] ) ) {
+			$setting = null;
+			foreach ( $parts as $part ) {
+				if ( is_array( $value ) && isset( $value[ $part ] ) ) {
+					$value = $value[ $part ];
+					continue;
+				}
+				if ( $setting && ! $setting->has_setting( $part ) ) {
+					$value = $setting->get_value();
+					if ( is_array( $value ) && isset( $value[ $part ] ) ) {
+						$value = $value[ $part ];
+						continue;
+					}
+					continue;
+				}
+				$setting = $this->get_setting( $part, false );
+			}
+			if ( $value ) {
+				return $value;
+			}
+		}
+
+		return $value;
 	}
 
 	/**
@@ -362,7 +418,13 @@ class Settings {
 
 		$results = array();
 		$setting = null;
-		foreach ( $this->flatten() as $key ) {
+		foreach ( array_keys( $this->settings ) as $key ) {
+			if ( false !== strpos( $key, $slug ) ) {
+				$maybe = strstr( $key, $slug, true ) . $slug;
+				if ( isset( $this->settings[ $maybe ] ) ) {
+					return $this->settings[ $maybe ];
+				}
+			}
 			$parts = explode( $this->separator, $key );
 			$index = array_search( $slug, $parts, true );
 			if ( false !== $index ) {
@@ -374,7 +436,7 @@ class Settings {
 			$setting = array_shift( $results );
 		}
 
-		return $setting ? $setting : $this->add( '@dynamic' . $this->separator . $slug );
+		return $setting ? $setting : $this->add( '@dynamic' . $this->separator . $slug, null, array( 'dynamic' => true ) );
 	}
 
 	/**
@@ -426,6 +488,11 @@ class Settings {
 				$this->set_param( '@data' . $this->separator . $slug, $value );
 				$set = true;
 			}
+		} else {
+			$found = $this->find_setting( $slug );
+			if ( $found ) {
+				$set = $this->set_value( $found->get_slug(), $value );
+			}
 		}
 
 		return $set;
@@ -436,9 +503,38 @@ class Settings {
 	 *
 	 * @param string $slug  The slag of the setting to pend set.
 	 * @param mixed  $value The value to set.
+	 *
+	 * @return bool|\WP_Error
 	 */
 	public function set_pending( $slug, $value ) {
+
 		$this->set_param( '@save' . $this->separator . $slug, $value );
+		$root_slug     = $this->get_storage_parent( $slug );
+		$setting       = $this->get_setting( $root_slug );
+		$new_value     = $this->get_pending( $root_slug );
+		$current_value = $setting->get_value();
+		/**
+		 * Pre-Filter the value before saving a setting.
+		 *
+		 * @hook   cloudinary_pre_save_settings_{$slug}
+		 * @hook   cloudinary_pre_save_settings
+		 * @since  2.7.6
+		 *
+		 * @param $new_value     {int}     The new setting value.
+		 * @param $current_value {string}  The setting current value.
+		 * @param $setting       {Setting} The setting object.
+		 *
+		 * @return {mixed}
+		 */
+		$new_value = apply_filters( "cloudinary_pre_save_settings_{$root_slug}", $new_value, $current_value, $setting );
+		$new_value = apply_filters( 'cloudinary_pre_save_settings', $new_value, $current_value, $setting );
+		if ( is_wp_error( $new_value ) ) {
+			$this->remove_param( '@save' . $this->separator . $slug );
+
+			return $new_value;
+		}
+
+		return true;
 	}
 
 	/**
@@ -453,59 +549,65 @@ class Settings {
 	}
 
 	/**
+	 * Check if a slug has a pending set of changes.
+	 *
+	 * @param string $slug The slug to get the pending data for.
+	 *
+	 * @return bool
+	 */
+	public function has_pending( $slug ) {
+		return $this->has_param( '@save' . $this->separator . $slug );
+	}
+
+	/**
+	 * Remove a pending set.
+	 *
+	 * @param string $slug The slug to get the pending data for.
+	 */
+	public function remove_pending( $slug ) {
+		$this->remove_param( '@save' . $this->separator . $slug );
+	}
+
+	/**
+	 * Save settings.
+	 *
+	 * @return bool[]|\WP_Error[]
+	 */
+	public function save() {
+		$stores    = array_keys( $this->storage );
+		$responses = array();
+		foreach ( $stores as $slug ) {
+			if ( $this->has_pending( $slug ) ) {
+				$responses[ $slug ] = $this->save_setting( $slug );
+			}
+		}
+
+		return $responses;
+	}
+
+	/**
 	 * Save the settings values to the storage.
 	 *
 	 * @param string $slug The slug to save.
 	 *
 	 * @return bool|\WP_Error
 	 */
-	public function save( $slug ) {
+	public function save_setting( $slug ) {
 
-		$pending = $this->get_pending( $slug );
+		$pending   = $this->get_pending( $slug );
+		$new_value = array_merge( $this->get_value( $slug ), $pending );
 
-		$this->remove_param( '@save' );
-
-		$new_value = array();
-		foreach ( $pending as $child_slug => &$new_value ) {
-			$setting       = $this->get_setting( $child_slug );
-			$current_value = $setting->get_value();
-			/**
-			 * Pre-Filter the value before saving a setting.
-			 *
-			 * @hook   cloudinary_pre_save_settings_{$slug}
-			 * @hook   cloudinary_pre_save_settings
-			 * @since  2.7.6
-			 *
-			 * @param $new_value     {int}     The new setting value.
-			 * @param $current_value {string}  The setting current value.
-			 * @param $setting       {Setting} The setting object.
-			 *
-			 * @return {mixed}
-			 */
-			$new_value = apply_filters( "cloudinary_pre_save_settings_{$child_slug}", $new_value, $current_value, $setting );
-			$new_value = apply_filters( 'cloudinary_pre_save_settings', $new_value, $current_value, $setting );
-			if ( is_wp_error( $new_value ) ) {
-				return $new_value;
-			}
-		}
+		$this->remove_pending( $slug );
 
 		$storage = $this->get_storage( $slug );
-		$storage->set( $pending );
+		$storage->set( $new_value );
 
 		$saved = $storage->save();
-		if ( $saved ) {
-			/**
-			 * Action to announce the saving of a setting.
-			 *
-			 * @hook   cloudinary_save_settings_{$slug}
-			 * @hook   cloudinary_save_settings
-			 * @since  2.7.6
-			 *
-			 * @param $new_value {int}     The new setting value.
-			 */
-			do_action( "cloudinary_save_settings_{$slug}", $new_value );
-			do_action( 'cloudinary_save_settings', $new_value );
+		if ( true === $saved ) {
+			$this->set_value( $slug, $new_value );
 		}
+
+		return $saved;
 	}
 
 	/**
@@ -516,72 +618,24 @@ class Settings {
 	 * @return Storage
 	 */
 	protected function get_storage( $slug ) {
+		$storage_parent = $this->get_storage_parent( $slug );
+
+		return $this->storage[ $storage_parent ];
+	}
+
+	/**
+	 * Get the storage parent.
+	 *
+	 * @param string $slug The slug to get storage object for.
+	 *
+	 * @return string
+	 */
+	protected function get_storage_parent( $slug ) {
 		if ( isset( $this->storage[ $slug ] ) ) {
-			return $this->storage[ $slug ];
+			return $slug;
 		}
 		$setting = $this->get_setting( $slug );
 
-		return $this->get_storage( $setting->get_parent()->get_slug() );
-	}
-
-	/**
-	 * Set an error/notice for a setting.
-	 *
-	 * @param string $error_code    The error code/slug.
-	 * @param string $error_message The error text/message.
-	 * @param string $type          The error type.
-	 * @param bool   $dismissible   If notice is dismissible.
-	 * @param int    $duration      How long it's dismissible for.
-	 * @param string $icon          Optional icon.
-	 */
-	public function add_admin_notice( $error_code, $error_message, $type = 'error', $dismissible = false, $duration = 0, $icon = null ) {
-
-		// Format message array into paragraphs.
-		if ( is_array( $error_message ) ) {
-			$message       = implode( "\n\r", $error_message );
-			$error_message = wpautop( $message );
-		}
-
-		$icons = array(
-			'success' => 'dashicons-yes-alt',
-			'created' => 'dashicons-saved',
-			'updated' => 'dashicons-saved',
-			'error'   => 'dashicons-no-alt',
-			'warning' => 'dashicons-warning',
-		);
-
-		if ( null === $icon && ! empty( $icons[ $type ] ) ) {
-			$icon = $icons[ $type ];
-		}
-
-		$notices = $this->get_param( '@notices', array() );
-
-		// Set new notice.
-		$params                  = array(
-			'type'     => 'notice',
-			'level'    => $type,
-			'message'  => $error_message,
-			'code'     => $error_code,
-			'dismiss'  => $dismissible,
-			'duration' => $duration,
-			'icon'     => $icon,
-		);
-		$notice_slug             = md5( wp_json_encode( $params ) );
-		$notices[ $notice_slug ] = $params;
-		$this->set_param( '@notices', $notices );
-	}
-
-	/**
-	 * Get admin notices.
-	 *
-	 * @return Setting[]
-	 */
-	public function get_admin_notices() {
-		$setting_notices = get_settings_errors();
-		foreach ( $setting_notices as $key => $notice ) {
-			$this->add_admin_notice( $notice['code'], $notice['message'], $notice['type'], true );
-		}
-
-		return $setting_notices;
+		return $this->get_storage_parent( $setting->get_parent()->get_slug() );
 	}
 }

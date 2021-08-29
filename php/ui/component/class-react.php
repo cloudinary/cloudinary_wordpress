@@ -39,7 +39,7 @@ class React extends Text {
 	 * @return array
 	 */
 	protected function app( $struct ) {
-		$struct['attributes']['id'] = 'app_gallery_' . $this->setting->get_slug();
+		$struct['attributes']['id'] = 'app_gallery_gallery_config';
 		$struct['render']           = true;
 
 		return $struct;

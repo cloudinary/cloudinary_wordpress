@@ -12,7 +12,7 @@ $admin       = $cloudinary->get_component( 'admin' );
 $component   = $admin->get_component();
 $connected   = $cloudinary->settings->get_param( 'connected' );
 $active_slug = $admin->get_param( 'active_slug' );
-
+$admin->render_notices();
 ?>
 <form method="post" novalidate="novalidate">
 	<div class="cld-ui-wrap cld-row">

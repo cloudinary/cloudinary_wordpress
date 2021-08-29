@@ -95,7 +95,7 @@ class Setting {
 	 * @return Settings|Setting
 	 */
 	public function get_parent() {
-		return $this->root->find_setting( $this->parent );
+		return $this->root->get_setting( $this->parent );
 	}
 
 	/**
@@ -139,6 +139,32 @@ class Setting {
 	 */
 	public function get_settings() {
 		return $this->children;
+	}
+
+	/**
+	 * Get a setting.
+	 *
+	 * @param string $slug The slug of the setting to get.
+	 *
+	 * @return Setting
+	 */
+	public function get_setting( $slug ) {
+		if ( isset( $this->children[ $slug ] ) ) {
+			return $this->children[ $slug ];
+		} elseif ( $this->has_setting( $slug ) ) {
+			foreach ( $this->children as $child ) {
+				if ( $child->has_setting( $slug ) ) {
+					return $child->get_setting( $slug );
+				}
+			}
+		}
+
+		$found = $this->root->get_setting( $this->slug . $this->separator . $slug );
+		if ( $found ) {
+			$found = $this->root->get_setting( $slug );
+		}
+
+		return $found;
 	}
 
 	/**
@@ -200,7 +226,6 @@ class Setting {
 	 * @return Setting|\WP_Error
 	 */
 	public function add( $component ) {
-
 		$parts                   = explode( $this->separator, $component->get_slug() );
 		$slug                    = array_pop( $parts );
 		$this->children[ $slug ] = $component;
@@ -231,13 +256,20 @@ class Setting {
 	}
 
 	/**
-	 * Get the value of the setting.
+	 * Get a setting value.
+	 *
+	 * @param string $slug The slug to get.
 	 *
 	 * @return mixed
 	 */
-	public function get_value() {
+	public function get_value( $slug = null ) {
+		if ( null !== $slug ) {
+			if ( isset( $this->children[ $slug ] ) ) {
+				return $this->children[ $slug ]->get_value();
+			}
+		}
 
-		return $this->root->get_value( $this->slug );
+		return $this->root->get_value( $slug ? $slug : $this->slug );
 	}
 
 	/**
@@ -248,6 +280,41 @@ class Setting {
 	public function set_value( $value ) {
 
 		$this->root->set_value( $this->slug, $value );
+	}
+
+	/**
+	 * Pend a setting's value, for prep to update.
+	 *
+	 * @param mixed $value The value to set.
+	 */
+	public function set_pending( $value ) {
+		$this->root->set_pending( $this->slug, $value );
+	}
+
+	/**
+	 * Get a setting's pending value for update.
+	 *
+	 * @return mixed
+	 */
+	public function get_pending() {
+		return $this->root->get_pending( $this->slug );
+	}
+
+	/**
+	 * Check if a slug has a pending set of changes.
+	 *
+	 * @return bool
+	 */
+	public function has_pending() {
+		return $this->root->has_pending( $this->slug );
+	}
+
+	/**
+	 * Remove a pending set.
+	 *
+	 */
+	public function remove_pending() {
+		$this->root->remove_pending( $this->slug );
 	}
 
 	/**
@@ -266,6 +333,26 @@ class Setting {
 	 */
 	public function has_settings() {
 		return ! empty( $this->children );
+	}
+
+	/**
+	 * Check if the setting has a child setting with the slug.
+	 *
+	 * @param string $slug The slug to check for.
+	 *
+	 * @return bool
+	 */
+	public function has_setting( $slug ) {
+		if ( isset( $this->children[ $slug ] ) ) {
+			return true;
+		}
+		foreach ( $this->children as $child ) {
+			if ( $child->has_setting( $slug ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -317,6 +404,6 @@ class Setting {
 	 */
 	public function save_value( $value ) {
 		$this->root->set_pending( $this->slug, $value );
-		$this->root->save( $this->slug );
+		$this->root->save_setting( $this->slug );
 	}
 }

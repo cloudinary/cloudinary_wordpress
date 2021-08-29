@@ -47,7 +47,8 @@ class Table extends Text {
 			$this->build_head(),
 			$this->build_body(),
 		);
-		$this->setting->get_setting( $this->setting->get_slug() . '_table' )->setup_setting( $table );
+		$slug = $this->setting->get_slug();
+		$this->setting->get_root_setting()->add( $slug, array(), $table );
 	}
 
 	/**

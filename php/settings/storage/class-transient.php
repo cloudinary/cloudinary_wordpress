@@ -1,6 +1,6 @@
 <?php
 /**
- * Storage Options. handles storing setting in WP Options.
+ * Storage Transient. handles storing setting in WP Options.
  *
  * @package   Cloudinary\Settings\Storage
  */
@@ -12,7 +12,7 @@ namespace Cloudinary\Settings\Storage;
  *
  * @package Cloudinary\Settings\Storage
  */
-class Options extends Storage {
+class Transient extends Storage {
 
 	/**
 	 * Load the data from storage source.
@@ -20,13 +20,7 @@ class Options extends Storage {
 	 * @return mixed
 	 */
 	protected function load() {
-		$data = get_option( $this->slug, array() );
-		if ( ! empty( $data ) && is_string( $data ) ) {
-			$decode_maybe = json_decode( $data, true );
-			if ( $decode_maybe ) {
-				$data = $decode_maybe;
-			}
-		}
+		$data = get_transient( $this->slug );
 
 		return $data;
 	}
@@ -37,7 +31,11 @@ class Options extends Storage {
 	 * @return bool|void
 	 */
 	public function save() {
-		return update_option( $this->slug, $this->get(), false );
+		if ( empty( $this->data ) ) {
+			return $this->delete();
+		}
+
+		return set_transient( $this->slug, $this->get() );
 	}
 
 	/**
@@ -46,6 +44,6 @@ class Options extends Storage {
 	 * @return bool
 	 */
 	public function delete() {
-		return delete_option( $this->slug );
+		return delete_transient( $this->slug );
 	}
 }

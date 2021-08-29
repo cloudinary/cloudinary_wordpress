@@ -355,8 +355,7 @@ class Video {
 			),
 		);
 
-		$new_tag = $this->media->get_settings()->create_setting( $public_id, $tag_args );
-
+		$new_tag = $this->media->plugin->get_component('admin')->init_components($tag_args, $public_id);
 		return $new_tag->get_component()->render();
 	}
 

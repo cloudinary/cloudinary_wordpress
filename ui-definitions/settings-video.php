@@ -66,6 +66,33 @@ $settings = array(
 						),
 					),
 					array(
+						'type'         => 'on_off',
+						'slug'         => 'video_limit_bitrate',
+						'title'        => __( 'Bitrate', 'cloudinary' ),
+						'description'  => __( 'Enable bitrate limiter', 'cloudinary' ),
+						'tooltip_text' => __( 'If set, all videos will be delivered in the defined bitrate.', 'cloudinary' ),
+						'default'      => 'off',
+						'attributes'   => array(
+							'data-context' => 'video',
+						),
+					),
+					array(
+						'type'        => 'number',
+						'slug'        => 'video_bitrate',
+						'prefix'      => __( 'Bitrate limit', 'cloudinary' ),
+						'description' => __( 'Maximum number of bits per second in Kilobytes.', 'cloudinary' ),
+						'default'     => '500',
+						'suffix'      => 'k',
+						'condition'   => array(
+							'video_limit_bitrate' => true,
+						),
+						'attributes'  => array(
+							'data-context' => 'video',
+							'data-meta'    => 'br',
+							'data-suffix'  => 'k',
+						),
+					),
+					array(
 						'type'    => 'tag',
 						'element' => 'hr',
 					),
@@ -184,6 +211,9 @@ $settings = array(
 			),
 
 		),
+	),
+	array(
+		'type' => 'submit',
 	),
 );
 

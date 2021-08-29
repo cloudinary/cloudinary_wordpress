@@ -148,6 +148,9 @@ $settings = array(
 			),
 		),
 	),
+	array(
+		'type' => 'submit',
+	),
 );
 
 return apply_filters( 'cloudinary_admin_image_settings', $settings );

@@ -68,6 +68,9 @@ $settings = array(
 					),
 				),
 			),
+			array(
+				'type' => 'submit',
+			),
 		),
 	),
 	'image_settings' => array(
@@ -88,6 +91,7 @@ $settings = array(
 		'option_name'         => 'media_display',
 		'settings'            => include $this->dir_path . 'ui-definitions/settings-video.php',
 	),
+	'gallery'        => array(),
 	'lazy_loading'   => array(),
 	'responsive'     => array(
 		'page_title'          => __( 'Responsive', 'cloudinary' ),
@@ -159,6 +163,9 @@ $settings = array(
 						'default' => 800,
 					),
 				),
+			),
+			array(
+				'type' => 'submit',
 			),
 		),
 	),

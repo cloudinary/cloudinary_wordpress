@@ -176,19 +176,19 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 *
 	 * @param array $data The submitted data to verify.
 	 *
-	 * @return array The data if cleared.
+	 * @return array|\WP_Error The data if cleared.
 	 */
 	public function verify_connection( $data ) {
+		$admin = $this->plugin->get_component( 'admin' );
 		if ( empty( $data['cloudinary_url'] ) ) {
 			delete_option( self::META_KEYS['signature'] );
-
-			$this->settings->add_admin_notice(
+			$admin->add_admin_notice(
 				'cloudinary_connect',
 				__( 'Connection to Cloudinary has been removed.', 'cloudinary' ),
-				'connection_error',
+				'error',
 				true
 			);
-
+			$this->plugin->settings->set_param( 'connected', false );
 			return $data;
 		}
 
@@ -202,33 +202,31 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 
 		// Pattern match to ensure validity of the provided url.
 		if ( ! preg_match( '~' . self::CLOUDINARY_VARIABLE_REGEX . '~', $data['cloudinary_url'] ) ) {
-			add_settings_error(
-				'cloudinary_connect',
+			return new \WP_Error(
 				'format_mismatch',
 				__( 'The environment variable URL must be in this format: cloudinary://API_KEY:API_SECRET@CLOUD_NAME', 'cloudinary' ),
 				'error'
 			);
-
-			return $current;
 		}
 
 		$result = $this->test_connection( $data['cloudinary_url'] );
 
 		if ( ! empty( $result['message'] ) ) {
-			add_settings_error( 'cloudinary_connect', $result['type'], $result['message'], 'error' );
-
-			return $current;
+			return new \WP_Error(
+				$result['type'],
+				$result['message'],
+				'error'
+			);
 		}
 
-		add_settings_error(
-			'cloudinary_connect',
+		$admin->add_admin_notice(
 			'connection_success',
 			__( 'Successfully connected to Cloudinary.', 'cloudinary' ),
 			'updated'
 		);
 
 		$this->settings->get_setting( 'signature' )->save_value( md5( $data['cloudinary_url'] ) );
-
+		$this->plugin->settings->set_param( 'connected', true );
 		return $data;
 	}
 

@@ -10,7 +10,8 @@ namespace Cloudinary;
 use Cloudinary\Traits\Params_Trait;
 use Cloudinary\UI\Component;
 use Cloudinary\Settings\Setting;
-use WP_Screen;
+use WP_REST_Server;
+use WP_REST_Request;
 
 /**
  * Settings Class.
@@ -32,6 +33,14 @@ class Admin {
 	 * @var Settings
 	 */
 	protected $settings;
+
+	/**
+	 * Holds notices object.
+	 *
+	 * @var Settings
+	 */
+	protected $notices;
+
 	/**
 	 * Holds the pages.
 	 *
@@ -54,6 +63,13 @@ class Admin {
 	const SETTINGS_DATA = '_settings_version';
 
 	/**
+	 * Slug for notices
+	 *
+	 * @var string
+	 */
+	const NOTICE_SLUG = '_cld_notices';
+
+	/**
 	 * Initiate the settings object.
 	 *
 	 * @param Plugin $plugin The main plugin instance.
@@ -63,6 +79,43 @@ class Admin {
 		add_action( 'cloudinary_init_settings', array( $this, 'init_settings' ) );
 		add_action( 'admin_init', array( $this, 'init_setting_save' ), PHP_INT_MAX );
 		add_action( 'admin_menu', array( $this, 'build_menus' ) );
+		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
+		$notice_params = array(
+			'storage' => 'transient',
+		);
+		$notices       = new Settings( self::NOTICE_SLUG, $notice_params );
+		$this->notices = $notices->add( 'cld_general', array() );
+		add_action( 'shutdown', array( $notices, 'save' ) );
+	}
+
+	/**
+	 * Add endpoints to the \Cloudinary\REST_API::$endpoints array.
+	 *
+	 * @param array $endpoints Endpoints from the filter.
+	 *
+	 * @return array
+	 */
+	public function rest_endpoints( $endpoints ) {
+
+		$endpoints['dismiss_notice'] = array(
+			'method'   => WP_REST_Server::CREATABLE,
+			'callback' => array( $this, 'rest_dismiss_notice' ),
+			'args'     => array(),
+		);
+
+		return $endpoints;
+	}
+
+	/**
+	 * Set a transient with the duration using a token as an identifier.
+	 *
+	 * @param WP_REST_Request $request The request object.
+	 */
+	public function rest_dismiss_notice( WP_REST_Request $request ) {
+		$token    = $request->get_param( 'token' );
+		$duration = $request->get_param( 'duration' );
+
+		set_transient( $token, true, $duration );
 	}
 
 	/**
@@ -142,6 +195,21 @@ class Admin {
 			);
 			$sub_page['slug'] = $slug;
 			$this->set_param( $page_handle, $sub_page );
+			// Dynamically call to set active setting.
+			add_action( "load-{$page_handle}", array( $this, $page_handle ) );
+		}
+	}
+
+	/**
+	 * Dynamically set the active page.
+	 *
+	 * @param string $name      The name called (page in this case).
+	 * @param array  $arguments Arguments passed to call.
+	 */
+	public function __call( $name, $arguments ) {
+		if ( $this->has_param( $name ) ) {
+			$page = $this->get_param( $name );
+			$this->settings->set_param( 'active_setting', $page['slug'] );
 		}
 	}
 
@@ -152,11 +220,7 @@ class Admin {
 		wp_enqueue_script( $this->plugin->slug );
 		$screen = get_current_screen();
 		$page   = $this->get_param( $screen->id );
-		if ( ! empty( $page['settings'] ) ) {
-			$page['settings'][] = array(
-				'type' => 'submit',
-			);
-		}
+
 		$this->set_param( 'active_slug', $page['slug'] );
 		$setting         = $this->init_components( $page, $screen->id );
 		$this->component = $setting->get_component();
@@ -178,11 +242,13 @@ class Admin {
 	 * @param array  $template The template structure.
 	 * @param string $slug     The slug of the template ti init.
 	 *
-	 * @return Setting
+	 * @return Setting|null
 	 */
 	public function init_components( $template, $slug ) {
-		$settings = get_plugin_instance()->settings;
-		$setting  = $settings->add( $slug, array(), $template );
+		if ( ! empty( $template['requires_connection'] ) && ! $this->settings->get_param( 'connected' ) ) {
+			return null;
+		}
+		$setting = $this->settings->add( $slug, array(), $template );
 		foreach ( $template as $index => $component ) {
 			if ( ! self::filter_template( $index ) ) {
 				continue;
@@ -248,32 +314,116 @@ class Admin {
 			$referer = $saving['_wp_http_referer'];
 			wp_parse_str( wp_parse_url( $referer, PHP_URL_QUERY ), $query );
 
-			$slug = $saving['cloudinary-active-slug'];
+			$errors = array();
+			$updated = false;
 			foreach ( $saving[ $settings_slug ] as $key => $value ) {
+				$current = $this->settings->get_value( $key );
+				if( $current === $value ){
+					continue;
+				}
 				$capture_setting = $this->settings->get_setting( $key );
 				$value           = $capture_setting->get_component()->sanitize_value( $value );
-				$this->settings->set_pending( $key, $value );
+				$result          = $this->settings->set_pending( $key, $value );
+				if ( is_wp_error( $result ) ) {
+					$errors[] = $result;
+					break;
+				}
+				$updated = true;
 			}
-			$this->settings->save( $slug );
+			if ( empty( $errors ) && true === $updated ) {
+				$this->add_admin_notice( 'success_notice', __( 'Settings updated successfully', 'cloudinary' ), 'success' );
+				$this->settings->save();
+				$slug      = $saving['cloudinary-active-slug'];
+				$new_value = $this->settings->get_value( $slug );
+				/**
+				 * Action to announce the saving of a setting.
+				 *
+				 * @hook   cloudinary_save_settings_{$slug}
+				 * @hook   cloudinary_save_settings
+				 * @since  2.7.6
+				 *
+				 * @param $new_value {int}     The new setting value.
+				 */
+				do_action( "cloudinary_save_settings_{$slug}", $new_value );
+				do_action( 'cloudinary_save_settings', $new_value );
+			}
+			foreach ( $errors as $error ) {
+				$this->add_admin_notice( $error->get_error_code(), $error->get_error_message(), $error->get_error_data() );
+			}
+
 			wp_safe_redirect( $referer );
 			exit;
 		}
 	}
 
 	/**
-	 * Register the setting with WordPress.
+	 * Set an error/notice for a setting.
 	 *
-	 * @param string $option_name The option name so save.
+	 * @param string $error_code    The error code/slug.
+	 * @param string $error_message The error text/message.
+	 * @param string $type          The error type.
+	 * @param bool   $dismissible   If notice is dismissible.
+	 * @param int    $duration      How long it's dismissible for.
+	 * @param string $icon          Optional icon.
 	 */
-	protected function register_setting( $option_name ) {
+	public function add_admin_notice( $error_code, $error_message, $type = 'error', $dismissible = true, $duration = 0, $icon = null ) {
 
-		$args = array(
-			'type'              => 'array',
-			'sanitize_callback' => array( $this, 'prepare_sanitizer' ),
-			'show_in_rest'      => false,
+		// Format message array into paragraphs.
+		if ( is_array( $error_message ) ) {
+			$message       = implode( "\n\r", $error_message );
+			$error_message = wpautop( $message );
+		}
+
+		$icons = array(
+			'success' => 'dashicons-yes-alt',
+			'created' => 'dashicons-saved',
+			'updated' => 'dashicons-saved',
+			'error'   => 'dashicons-no-alt',
+			'warning' => 'dashicons-warning',
 		);
-		register_setting( $option_name, $option_name, $args );
-		add_filter( 'pre_update_site_option_' . $option_name, array( $this, 'set_notices' ), 10, 3 );
-		add_filter( 'pre_update_option_' . $option_name, array( $this, 'set_notices' ), 10, 3 );
+
+		if ( null === $icon && ! empty( $icons[ $type ] ) ) {
+			$icon = $icons[ $type ];
+		}
+		$notices = $this->notices->get_value();
+		// Set new notice.
+		$params    = array(
+			'type'     => 'notice',
+			'level'    => $type,
+			'message'  => $error_message,
+			'code'     => $error_code,
+			'dismiss'  => $dismissible,
+			'duration' => $duration,
+			'icon'     => $icon,
+		);
+		$notices[] = $params;
+		$this->notices->set_pending( $notices );
+		$this->notices->set_value( $notices );
+	}
+
+	/**
+	 * Render the notices.
+	 */
+	public function render_notices() {
+		$notices = $this->notices->get_value();
+		if ( ! empty( $notices ) ) {
+			$notice = $this->init_components( $notices, self::NOTICE_SLUG );
+			$notice->get_component()->render( true );
+			$this->notices->set_pending( array() );
+		}
+	}
+
+	/**
+	 * Get admin notices.
+	 *
+	 * @return Setting[]
+	 */
+	public function get_admin_notices() {
+		$setting_notices = get_settings_errors();
+		foreach ( $setting_notices as $key => $notice ) {
+			$this->add_admin_notice( $notice['code'], $notice['message'], $notice['type'], true );
+		}
+
+		return $setting_notices;
 	}
 }

@@ -82,7 +82,14 @@ class On_Off extends Text {
 
 		$struct['render'] = true;
 		if ( $this->setting->has_param( 'master' ) ) {
-			$struct['attributes']['data-master'] = wp_json_encode( $this->setting->get_param( 'master' ) );
+			$slave       = $this->setting->get_param( 'master' );
+			$controllers = array();
+			foreach ( $slave as $slave_slug ) {
+				$slave_setting = $this->setting->get_setting( $slave_slug );
+				$controllers[] = $slave_setting->get_slug();
+			}
+
+			$struct['attributes']['data-master'] = wp_json_encode( $controllers );
 		}
 
 		if ( true === $this->setting->get_param( 'disabled', false ) || true === $this->setting->has_param( 'master_required', false ) && empty( $struct['attributes']['data-master'] ) ) {
@@ -109,14 +116,14 @@ class On_Off extends Text {
 			$struct['attributes']['class'][] = 'mini';
 		}
 		if (
-			true === $this->setting->get_param( 'disabled', false ) ||
-			true === $this->setting->get_param( 'master_required', false ) &&
-			empty(
-				$this->setting->get_param(
-					'master',
-					array()
-				)
-			)
+			true === $this->setting->get_param( 'disabled', false )
+			|| true === $this->setting->get_param( 'master_required', false )
+			   && empty(
+			   $this->setting->get_param(
+				   'master',
+				   array()
+			   )
+			   )
 		) {
 			$struct['attributes']['class'][] = 'disabled';
 		}

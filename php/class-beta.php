@@ -52,7 +52,7 @@ class Beta {
 				'options' => array(),
 				'deps'    => array( 'delivery' ),
 			),
-			'dash'                   => array(
+			'dashboard'              => array(
 				'class'   => array( 'Cloudinary\Dashboard' ),
 				'name'    => __( 'New UI', 'cloudinary' ),
 				'options' => array(),
