@@ -172,7 +172,7 @@ class Gallery extends Settings_Component {
 	 * Enqueue admin UI scripts if needed.
 	 */
 	public function enqueue_admin_scripts() {
-		if ( Utils::get_active_setting() !== $this->settings ) {
+		if ( Utils::get_active_setting() !== $this->settings->get_setting( $this->settings_slug ) ) {
 			return;
 		}
 
@@ -337,12 +337,12 @@ class Gallery extends Settings_Component {
 			'priority'            => 5,
 			'requires_connection' => true,
 			'sidebar'             => true,
-			'option_name'         => 'cloudinary_gallery',
 		);
 
 		$panel = array(
-			'type'  => 'panel',
-			'title' => __( 'Gallery Settings', 'cloudinary' ),
+			'type'        => 'panel',
+			'title'       => __( 'Gallery Settings', 'cloudinary' ),
+			'option_name' => 'gallery',
 		);
 
 		if ( WooCommerceGallery::woocommerce_active() ) {

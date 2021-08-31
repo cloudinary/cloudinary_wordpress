@@ -299,58 +299,50 @@ class Admin {
 	 * Register settings with WordPress.
 	 */
 	public function init_setting_save() {
-		$settings_slug = $this->settings->get_slug();
-		$args          = array(
-			'_cld_nonce'             => FILTER_SANITIZE_STRING,
-			'_wp_http_referer'       => FILTER_SANITIZE_URL,
-			'cloudinary-active-slug' => FILTER_SANITIZE_STRING,
-			$settings_slug           => array(
+
+		$submission = filter_input( INPUT_POST, 'cloudinary-active-slug', FILTER_SANITIZE_STRING );
+		if ( ! $submission ) {
+			return; // Bail.
+		}
+
+		$args = array(
+			'_cld_nonce'       => FILTER_SANITIZE_STRING,
+			'_wp_http_referer' => FILTER_SANITIZE_URL,
+			$submission        => array(
 				'flags' => FILTER_REQUIRE_ARRAY,
 			),
 		);
-		$saving        = filter_input_array( INPUT_POST, $args, false );
 
-		if ( ! empty( $saving ) && ! empty( $saving[ $settings_slug ] ) && wp_verify_nonce( $saving['_cld_nonce'], 'cloudinary-settings' ) ) {
+		$page   = $this->settings->get_setting( $submission );
+		$saving = filter_input_array( INPUT_POST, $args, false );
+		if ( ! empty( $saving ) && ! empty( $saving[ $submission ] ) && wp_verify_nonce( $saving['_cld_nonce'], 'cloudinary-settings' ) ) {
 			$referer = $saving['_wp_http_referer'];
 			wp_parse_str( wp_parse_url( $referer, PHP_URL_QUERY ), $query );
 
-			$errors = array();
-			$updated = false;
-			foreach ( $saving[ $settings_slug ] as $key => $value ) {
-				$current = $this->settings->get_value( $key );
-				if( $current === $value ){
+			$errors  = array();
+			$pending = false;
+			foreach ( $saving[ $submission ] as $key => $value ) {
+				$slug    = $submission . $page->separator . $key;
+				$current = $this->settings->get_value( $slug );
+				if ( $current === $value ) {
 					continue;
 				}
 				$capture_setting = $this->settings->get_setting( $key );
 				$value           = $capture_setting->get_component()->sanitize_value( $value );
-				$result          = $this->settings->set_pending( $key, $value );
+				$result          = $this->settings->set_pending( $key, $value, $current );
 				if ( is_wp_error( $result ) ) {
-					$errors[] = $result;
+					$this->add_admin_notice( $result->get_error_code(), $result->get_error_message(), $result->get_error_data() );
 					break;
 				}
-				$updated = true;
-			}
-			if ( empty( $errors ) && true === $updated ) {
-				$this->add_admin_notice( 'success_notice', __( 'Settings updated successfully', 'cloudinary' ), 'success' );
-				$this->settings->save();
-				$slug      = $saving['cloudinary-active-slug'];
-				$new_value = $this->settings->get_value( $slug );
-				/**
-				 * Action to announce the saving of a setting.
-				 *
-				 * @hook   cloudinary_save_settings_{$slug}
-				 * @hook   cloudinary_save_settings
-				 * @since  2.7.6
-				 *
-				 * @param $new_value {int}     The new setting value.
-				 */
-				do_action( "cloudinary_save_settings_{$slug}", $new_value );
-				do_action( 'cloudinary_save_settings', $new_value );
-			}
-			foreach ( $errors as $error ) {
-				$this->add_admin_notice( $error->get_error_code(), $error->get_error_message(), $error->get_error_data() );
+				$pending = true;
 			}
 
+			if ( empty( $errors ) && true === $pending ) {
+				$results = $this->settings->save();
+				if ( ! empty( $results ) ) {
+					$this->add_admin_notice( 'error_notice', __( 'Settings updated successfully', 'cloudinary' ), 'success' );
+				}
+			}
 			wp_safe_redirect( $referer );
 			exit;
 		}
@@ -387,7 +379,7 @@ class Admin {
 		}
 		$notices = $this->notices->get_value();
 		// Set new notice.
-		$params    = array(
+		$params                 = array(
 			'type'     => 'notice',
 			'level'    => $type,
 			'message'  => $error_message,
@@ -396,7 +388,7 @@ class Admin {
 			'duration' => $duration,
 			'icon'     => $icon,
 		);
-		$notices[] = $params;
+		$notices[ $error_code ] = $params;
 		$this->notices->set_pending( $notices );
 		$this->notices->set_value( $notices );
 	}
@@ -405,11 +397,13 @@ class Admin {
 	 * Render the notices.
 	 */
 	public function render_notices() {
+
 		$notices = $this->notices->get_value();
 		if ( ! empty( $notices ) ) {
+			sort( $notices );
 			$notice = $this->init_components( $notices, self::NOTICE_SLUG );
 			$notice->get_component()->render( true );
-			$this->notices->set_pending( array() );
+			$this->notices->delete();
 		}
 	}
 

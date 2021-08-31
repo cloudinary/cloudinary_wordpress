@@ -470,7 +470,7 @@ class Media extends Settings_Component implements Setup {
 
 		if ( $as_sync_key ) {
 			$transformations = $this->get_transformations_from_string( $url );
-			$public_id       .= ! empty( $transformations ) ? wp_json_encode( $transformations ) : '';
+			$public_id      .= ! empty( $transformations ) ? wp_json_encode( $transformations ) : '';
 		}
 
 		return $public_id;
@@ -1658,14 +1658,14 @@ class Media extends Settings_Component implements Setup {
 		// Check for transformations.
 		$transformations = $this->get_transformations_from_string( $asset['url'] );
 		if ( ! empty( $transformations ) ) {
-			$asset['sync_key']        .= wp_json_encode( $transformations );
+			$asset['sync_key']       .= wp_json_encode( $transformations );
 			$asset['transformations'] = $transformations;
 		}
 
 		// Check Format.
 		$url_format = pathinfo( $asset['url'], PATHINFO_EXTENSION );
 		if ( strtolower( $url_format ) !== strtolower( $asset['format'] ) ) {
-			$asset['format']   = $url_format;
+			$asset['format']    = $url_format;
 			$asset['sync_key'] .= $url_format;
 		}
 
@@ -1804,19 +1804,19 @@ class Media extends Settings_Component implements Setup {
 				$status = apply_filters( 'cloudinary_media_status', $status, $attachment_id );
 				?>
 				<span class="dashicons-cloudinary <?php echo esc_attr( $status['state'] ); ?>" title="<?php echo esc_attr( $status['note'] ); ?>"></span>
-			<?php
+				<?php
 			elseif ( ! $this->is_local_media( $attachment_id ) ) :
 				?>
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'Not syncable. This is an external media.', 'cloudinary' ); ?>"></span>
-			<?php
+				<?php
 			elseif ( 'fetch' === $this->get_media_delivery( $attachment_id ) ) :
 				?>
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'This media is Fetch type.', 'cloudinary' ); ?>"></span>
-			<?php
+				<?php
 			elseif ( 'sprite' === $this->get_media_delivery( $attachment_id ) ) :
 				?>
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'This media is Sprite type.', 'cloudinary' ); ?>"></span>
-			<?php
+				<?php
 			endif;
 		}
 	}

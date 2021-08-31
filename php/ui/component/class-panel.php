@@ -25,7 +25,7 @@ class Panel extends Component {
 	 *
 	 * @var string
 	 */
-	protected $blueprint = 'header|icon/|title/|collapse/|/header|wrap|body|/body|section/|/wrap';
+	protected $blueprint = 'header|icon/|title/|collapse/|/header|wrap|body|/body|section/|/wrap|save/';
 
 	/**
 	 * Holds the state.
@@ -40,6 +40,33 @@ class Panel extends Component {
 	public function setup() {
 		parent::setup();
 		$this->current_state = $this->state->get_state( $this->setting->get_slug(), $this->setting->get_param( 'collapsible' ) );
+	}
+
+	/**
+	 * Holds the save button id an options name is set.
+	 *
+	 * @param array $struct The struct.
+	 *
+	 * @return array
+	 */
+	protected function save( $struct ) {
+		$struct['element'] = null;
+		if ( $this->setting->has_param( 'option_name' ) ) {
+			$struct                          = $this->get_part( 'wrap' );
+			$struct['attributes']['class'][] = 'cld-submit';
+			$button                          = $this->get_part( 'button' );
+			$button['content']               = $this->setting->get_param( 'label', __( 'Save Changes', 'cloudinary' ) );
+			$button['attributes']['type']    = $this->type;
+			$button['attributes']['name']    = 'cld_submission';
+			$button['attributes']['value']   = $this->setting->get_param( 'option_name' );
+			$classes                         = array(
+				'button',
+			);
+			$button['attributes']['class']   = array_merge( $classes, (array) $this->setting->get_param( 'style', array( 'button-primary' ) ) );
+			$struct['children']['button']    = $button;
+		}
+
+		return $struct;
 	}
 
 	/**

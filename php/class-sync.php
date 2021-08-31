@@ -401,11 +401,11 @@ class Sync implements Setup, Assets {
 	/**
 	 * Register a new sync type.
 	 *
-	 * @param string         $type      Sync type key. Must not exceed 20 characters and may
-	 *                                  only contain lowercase alphanumeric characters, dashes,
-	 *                                  and underscores. See sanitize_key().
-	 * @param array          $structure {
-	 *                                  Array of arguments for registering a sync type.
+	 * @param string $type      Sync type key. Must not exceed 20 characters and may
+	 *                          only contain lowercase alphanumeric characters, dashes,
+	 *                          and underscores. See sanitize_key().
+	 * @param array  $structure {
+	 *                          Array of arguments for registering a sync type.
 	 *
 	 * @type   callable      $generate  Callback method that generates the values to be used to sign a state.
 	 *                                    Returns a string or array.
@@ -1043,8 +1043,9 @@ class Sync implements Setup, Assets {
 				'type'                => 'frame',
 				'requires_connection' => true,
 				array(
-					'type'  => 'panel',
-					'title' => __( 'Sync Settings', 'cloudinary' ),
+					'type'        => 'panel',
+					'title'       => __( 'Sync Settings', 'cloudinary' ),
+					'option_name' => 'sync_media',
 					array(
 						'type'         => 'radio',
 						'title'        => __( 'Sync method', 'cloudinary' ),
@@ -1098,9 +1099,6 @@ class Sync implements Setup, Assets {
 							'cld'       => __( 'Cloudinary only', 'cloudinary' ),
 						),
 					),
-				),
-				array(
-					'type' => 'submit',
 				),
 			),
 		);

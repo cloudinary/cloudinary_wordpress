@@ -72,7 +72,7 @@ class On_Off extends Text {
 		$struct['element']                       = 'input';
 		$struct['attributes']['type']            = 'checkbox';
 		$struct['attributes']['name']            = $this->get_name();
-		$struct['attributes']['id']              = $this->setting->get_slug();
+		$struct['attributes']['id']              = $this->get_id();
 		$struct['attributes']['value']           = 'on';
 		$struct['attributes']['data-controller'] = $this->setting->get_slug();
 		if ( 'on' === $this->setting->get_value() ) {
@@ -118,12 +118,12 @@ class On_Off extends Text {
 		if (
 			true === $this->setting->get_param( 'disabled', false )
 			|| true === $this->setting->get_param( 'master_required', false )
-			   && empty(
-			   $this->setting->get_param(
-				   'master',
-				   array()
-			   )
-			   )
+			&& empty(
+				$this->setting->get_param(
+					'master',
+					array()
+				)
+			)
 		) {
 			$struct['attributes']['class'][] = 'disabled';
 		}

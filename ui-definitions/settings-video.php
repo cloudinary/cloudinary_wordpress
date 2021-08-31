@@ -7,9 +7,10 @@
 
 $settings = array(
 	array(
-		'type'   => 'panel',
-		'title'  => __( 'Video - Global Settings', 'cloudinary' ),
-		'anchor' => true,
+		'type'        => 'panel',
+		'title'       => __( 'Video - Global Settings', 'cloudinary' ),
+		'anchor'      => true,
+		'option_name' => 'media_display',
 		array(
 			'type' => 'row',
 			array(
@@ -211,9 +212,6 @@ $settings = array(
 			),
 
 		),
-	),
-	array(
-		'type' => 'submit',
 	),
 );
 

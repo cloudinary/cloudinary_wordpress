@@ -47,8 +47,9 @@ $settings = array(
 		'sidebar'    => true,
 		'settings'   => array(
 			array(
-				'title' => __( 'Connect to Cloudinary!', 'cloudinary' ),
-				'type'  => 'panel',
+				'title'       => __( 'Connect to Cloudinary!', 'cloudinary' ),
+				'type'        => 'panel',
+				'option_name' => 'connect',
 				array(
 					'content' => __( 'You need to connect your Cloudinary account to WordPress by adding your unique connection string. See below for where to find this.', 'cloudinary' ),
 				),
@@ -68,9 +69,6 @@ $settings = array(
 					),
 				),
 			),
-			array(
-				'type' => 'submit',
-			),
 		),
 	),
 	'image_settings' => array(
@@ -79,7 +77,6 @@ $settings = array(
 		'priority'            => 5,
 		'requires_connection' => true,
 		'sidebar'             => true,
-		'option_name'         => 'media_display',
 		'settings'            => include $this->dir_path . 'ui-definitions/settings-image.php',
 	),
 	'video_settings' => array(
@@ -88,7 +85,6 @@ $settings = array(
 		'priority'            => 5,
 		'requires_connection' => true,
 		'sidebar'             => true,
-		'option_name'         => 'media_display',
 		'settings'            => include $this->dir_path . 'ui-definitions/settings-video.php',
 	),
 	'gallery'        => array(),
@@ -99,11 +95,11 @@ $settings = array(
 		'priority'            => 5,
 		'requires_connection' => true,
 		'sidebar'             => true,
-		'option_name'         => 'media_display',
 		'settings'            => array(
 			array(
-				'type'  => 'panel',
-				'title' => __( 'Image breakpoints', 'cloudinary' ),
+				'type'        => 'panel',
+				'title'       => __( 'Image breakpoints', 'cloudinary' ),
+				'option_name' => 'media_display',
 				array(
 					'type'         => 'on_off',
 					'slug'         => 'enable_breakpoints',
@@ -163,9 +159,6 @@ $settings = array(
 						'default' => 800,
 					),
 				),
-			),
-			array(
-				'type' => 'submit',
 			),
 		),
 	),

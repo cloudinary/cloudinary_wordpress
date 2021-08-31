@@ -8,9 +8,10 @@
 $media    = $this->get_component( 'media' );
 $settings = array(
 	array(
-		'type'   => 'panel',
-		'title'  => __( 'Image - Global Settings', 'cloudinary' ),
-		'anchor' => true,
+		'type'        => 'panel',
+		'title'       => __( 'Image - Global Settings', 'cloudinary' ),
+		'anchor'      => true,
+		'option_name' => 'media_display',
 		array(
 			'type' => 'tabs',
 			'tabs' => array(
@@ -147,9 +148,6 @@ $settings = array(
 				),
 			),
 		),
-	),
-	array(
-		'type' => 'submit',
 	),
 );
 

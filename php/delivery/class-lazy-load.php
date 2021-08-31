@@ -207,12 +207,12 @@ class Lazy_Load extends Delivery_Feature {
 			'priority'            => 5,
 			'requires_connection' => true,
 			'sidebar'             => true,
-			'option_name'         => 'media_display',
 			'settings'            => array(
 				array(
-					'type'     => 'panel',
-					'title'    => __( 'Lazy Loading', 'cloudinary' ),
-					'priority' => 9,
+					'type'        => 'panel',
+					'title'       => __( 'Lazy Loading', 'cloudinary' ),
+					'priority'    => 9,
+					'option_name' => 'media_display',
 					array(
 						'type'        => 'on_off',
 						'description' => __( 'Enable lazy loading', 'cloudinary' ),

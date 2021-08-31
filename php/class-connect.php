@@ -102,8 +102,8 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	public function __construct( Plugin $plugin ) {
 		$this->plugin        = $plugin;
 		$this->settings_slug = 'dashboard';
-		add_filter( 'cloudinary_pre_save_settings_connect', array( $this, 'verify_connection' ) );
-		add_action( 'cloudinary_save_settings_connect', array( $this, 'updated_option' ) );
+		add_filter( 'pre_update_option_cloudinary_connect', array( $this, 'verify_connection' ) );
+		add_action( 'update_option_cloudinary_connect', array( $this, 'updated_option' ) );
 		add_action( 'cloudinary_status', array( $this, 'check_status' ) );
 		add_action( 'cloudinary_version_upgrade', array( $this, 'upgrade_connection' ) );
 		add_filter( 'cloudinary_setting_get_value', array( $this, 'maybe_connection_string_constant' ), 10, 2 );
@@ -121,8 +121,8 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 
 		// Add data storage.
 		foreach ( self::META_KEYS as $slug => $option_name ) {
-			if ( 'url' === $slug ) {
-				continue; // URL already set.
+			if ( 'url' === $slug || 'connection' === $slug ) {
+				continue; // URL and connection already set.
 			}
 			$pages['connect']['settings'][] = array(
 				'slug'        => $slug,
@@ -183,7 +183,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		if ( empty( $data['cloudinary_url'] ) ) {
 			delete_option( self::META_KEYS['signature'] );
 			$admin->add_admin_notice(
-				'cloudinary_connect',
+				'connection_error',
 				__( 'Connection to Cloudinary has been removed.', 'cloudinary' ),
 				'error',
 				true
@@ -202,11 +202,12 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 
 		// Pattern match to ensure validity of the provided url.
 		if ( ! preg_match( '~' . self::CLOUDINARY_VARIABLE_REGEX . '~', $data['cloudinary_url'] ) ) {
-			return new \WP_Error(
+			$admin->add_admin_notice(
 				'format_mismatch',
 				__( 'The environment variable URL must be in this format: cloudinary://API_KEY:API_SECRET@CLOUD_NAME', 'cloudinary' ),
 				'error'
 			);
+			return $current;
 		}
 
 		$result = $this->test_connection( $data['cloudinary_url'] );

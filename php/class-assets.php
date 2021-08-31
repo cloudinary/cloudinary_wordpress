@@ -1048,20 +1048,6 @@ class Assets extends Settings_Component {
 				}
 			}
 		}
-		//$map = $this->settings->flatten();
-		return;
-
-		$full_enable = $this->settings->get_value( 'enable' );
-		foreach ( $areas as $area ) {
-			$setting = $this->settings->get_setting( $area );
-			if ( 'on' === $full_enable || 'on' === $setting->get_value( 'enabled' ) ) {
-				$paths = $setting->get_setting( 'paths' );
-				foreach ( $paths->get_settings() as $path ) {
-					$conf = $path->get_params();
-					self::register_asset_path( trailingslashit( $conf['url'] ), $conf['version'] );
-				}
-			}
-		}
 	}
 
 	/**
@@ -1073,12 +1059,12 @@ class Assets extends Settings_Component {
 	 */
 	public function register_settings( $pages ) {
 		$pages['connect']['settings'][] = array(
-			'type'        => 'panel',
-			'title'       => __( 'Cache Settings', 'cloudinary' ),
-			'slug'        => 'cache',
-			'option_name' => 'site_cache',
+			'type'                => 'panel',
+			'title'               => __( 'Cache Settings', 'cloudinary' ),
+			'slug'                => 'cache',
+			'option_name'         => 'site_cache',
 			'requires_connection' => true,
-			'attributes'  => array(
+			'attributes'          => array(
 				'header' => array(
 					'class' => array(
 						'full-width',

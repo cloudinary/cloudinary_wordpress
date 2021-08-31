@@ -80,18 +80,10 @@ class React extends Text {
 				'in_footer' => true,
 			);
 			$this->script   = wp_parse_args( $this->setting->get_param( 'script' ), $script_default );
+			wp_enqueue_script( $this->script['slug'], $this->script['src'], $this->script['depts'], $this->script['ver'], $this->script['in_footer'] );
 		}
 
 		return $struct;
-	}
-
-	/**
-	 * Enqueue scripts for this component.
-	 */
-	public function enqueue_scripts() {
-		if ( ! empty( $this->script ) ) {
-			wp_enqueue_script( $this->script['slug'], $this->script['src'], $this->script['depts'], $this->script['ver'], $this->script['in_footer'] );
-		}
 	}
 
 	/**

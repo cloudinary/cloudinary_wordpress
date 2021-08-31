@@ -168,21 +168,6 @@ class Setting {
 	}
 
 	/**
-	 * Get the child components.
-	 *
-	 * @return array
-	 */
-	public function get_params_recursive() {
-
-		$params = $this->get_params();
-		foreach ( $this->children as $slug => $child ) {
-			$params['settings'][ $slug ] = $child->get_params_recursive();
-		}
-
-		return $params;
-	}
-
-	/**
 	 * Magic method to chain directly to the child settings by slug.
 	 *
 	 * @param string $name The name/slug of the child setting.
@@ -215,7 +200,7 @@ class Setting {
 	 */
 	public function __set( $name, $value ) {
 
-		$this->{$name}->set( $value );
+		$this->{$name}->set_value( $value );
 	}
 
 	/**
@@ -241,18 +226,6 @@ class Setting {
 	public function get_slug() {
 
 		return $this->slug;
-	}
-
-	/**
-	 * Flatten the setting.
-	 *
-	 * @return array
-	 */
-	public function flatten() {
-
-		return array(
-			$this->get_slug() => $this->get_value(),
-		);
 	}
 
 	/**
@@ -311,7 +284,6 @@ class Setting {
 
 	/**
 	 * Remove a pending set.
-	 *
 	 */
 	public function remove_pending() {
 		$this->root->remove_pending( $this->slug );
@@ -361,8 +333,7 @@ class Setting {
 	 * @return string
 	 */
 	public function get_option_name() {
-
-		return $this->root->get_slug();
+		return explode( $this->separator, $this->get_param( Settings::META_KEYS['storage'] ), 2 )[0];
 	}
 
 	/**
@@ -371,10 +342,9 @@ class Setting {
 	 * @return Settings
 	 */
 	public function get_option_parent() {
-		$path        = explode( $this->separator, $this->parent );
-		$parent_name = array_shift( $path );
+		$root = explode( $this->separator, $this->slug, 2 )[0];
 
-		return $this->root->get_setting( $parent_name );
+		return $this->root->get_setting( $root );
 	}
 
 	/**
@@ -404,6 +374,15 @@ class Setting {
 	 */
 	public function save_value( $value ) {
 		$this->root->set_pending( $this->slug, $value );
-		$this->root->save_setting( $this->slug );
+		$this->root->save_setting( $this->get_param( Settings::META_KEYS['storage'] ) );
+	}
+
+	/**
+	 * Delete a settings data.
+	 *
+	 * @return bool
+	 */
+	public function delete() {
+		return $this->root->delete( $this->get_param( Settings::META_KEYS['storage'] ) );
 	}
 }

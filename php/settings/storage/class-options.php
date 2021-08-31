@@ -17,35 +17,35 @@ class Options extends Storage {
 	/**
 	 * Load the data from storage source.
 	 *
+	 * @param string $prefixed_slug The slug to load.
+	 *
 	 * @return mixed
 	 */
-	protected function load() {
-		$data = get_option( $this->slug, array() );
-		if ( ! empty( $data ) && is_string( $data ) ) {
-			$decode_maybe = json_decode( $data, true );
-			if ( $decode_maybe ) {
-				$data = $decode_maybe;
-			}
-		}
+	protected function load( $prefixed_slug ) {
+		$data = get_option( $prefixed_slug, array() );
 
 		return $data;
 	}
 
 	/**
-	 * Save the data to the option.
+	 * Save the data to storage source.
 	 *
-	 * @return bool|void
-	 */
-	public function save() {
-		return update_option( $this->slug, $this->get(), false );
-	}
-
-	/**
-	 * Delete the data.
+	 * @param string $slug The slug of the setting storage to save.
 	 *
 	 * @return bool
 	 */
-	public function delete() {
-		return delete_option( $this->slug );
+	public function save( $slug ) {
+		return update_option( $this->prefix( $slug ), $this->get( $slug ), false );
+	}
+
+	/**
+	 * Delete the data from storage source.
+	 *
+	 * @param string $slug The slug of the setting storage to delete.
+	 *
+	 * @return bool
+	 */
+	public function delete( $slug ) {
+		return delete_option( $this->prefix( $slug ) );
 	}
 }
