@@ -437,13 +437,14 @@ class Global_Transformations {
 	private function init_taxonomy_manager( $post ) {
 		wp_enqueue_script( 'wp-api' );
 
+		$terms = $this->get_terms( $post->ID );
+
 		$out   = array();
 		$out[] = '<div class="cld-tax-order">';
+		$out[] = '<p style="font-size: 12px; font-style: normal; color: rgb( 117, 117, 117 );">' . esc_html__( 'If you placed custom transformations on categories/tags you may order them below. ', 'cloudinary' ) . '</li>';
 		$out[] = '<ul class="cld-tax-order-list" id="cld-tax-items">';
 		$out[] = '<li class="cld-tax-order-list-item no-items">' . esc_html__( 'No terms added', 'cloudinary' ) . '</li>';
-		$terms = $this->get_terms( $post->ID );
 		if ( ! empty( $terms ) ) {
-			$out[] = '<p style="font-size: 12px; font-style: normal; color: rgb( 117, 117, 117 );">' . esc_html__( 'If you placed custom transformations on categories/tags you may order them below. ', 'cloudinary' ) . '</p>';
 			foreach ( (array) $terms as $item ) {
 				$out[] = $this->make_term_sort_item( $item['value'], $item['term']->name );
 			}
