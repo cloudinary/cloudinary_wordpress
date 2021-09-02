@@ -34,7 +34,7 @@ class Sync implements Setup, Assets {
 	/**
 	 * Contains all the different sync components.
 	 *
-	 * @var Delete_Sync[]|Push_Sync[]|Upload_Sync[]
+	 * @var Delete_Sync[]|Push_Sync[]|Upload_Sync[]|Media[]
 	 */
 	public $managers;
 
@@ -95,6 +95,7 @@ class Sync implements Setup, Assets {
 		'storage'        => '_cloudinary_storage',
 		'queued'         => '_cloudinary_sync_queued',
 		'delay'          => '_cloudinary_sync_delay',
+		'upgrading'      => '_cloudinary_upgrading',
 	);
 
 	/**
@@ -272,7 +273,7 @@ class Sync implements Setup, Assets {
 			$can = true;
 		}
 
-		if ( ! $this->managers['media']->is_local_media( $attachment_id ) ) {
+		if ( ! $this->managers['media']->is_uploadable_media( $attachment_id ) ) {
 			$can = false;
 		}
 
@@ -451,9 +452,7 @@ class Sync implements Setup, Assets {
 			'download'     => array(
 				'generate' => '__return_false',
 				'validate' => function ( $attachment_id ) {
-					$file = get_attached_file( $attachment_id );
-
-					return ! file_exists( $file );
+					return (bool) $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['upgrading'], true );
 				},
 				'priority' => 1,
 				'sync'     => array( $this->managers['download'], 'download_asset' ),
@@ -555,9 +554,13 @@ class Sync implements Setup, Assets {
 				},
 				'priority' => 100, // Always be the highest.
 				'sync'     => function ( $attachment_id ) {
-					$meta = $this->managers['media']->get_post_meta( $attachment_id );
+					$meta         = $this->managers['media']->get_post_meta( $attachment_id );
+					$cleanup_keys = array(
+						self::META_KEYS['cloudinary'],
+						self::META_KEYS['upgrading'],
+					);
 					foreach ( $meta as $key => $value ) {
-						if ( Sync::META_KEYS['cloudinary'] === $key ) {
+						if ( in_array( $key, $cleanup_keys, true ) ) {
 							$this->managers['media']->delete_post_meta( $attachment_id, $key );
 							continue;
 						}
@@ -778,7 +781,10 @@ class Sync implements Setup, Assets {
 		} else {
 			// Check if this is a realtime process.
 			if ( ! empty( $this->sync_base_struct[ $type ]['realtime'] ) ) {
-				$this->run_sync_method( $type, 'sync', $attachment_id );
+				$result = $this->run_sync_method( $type, 'sync', $attachment_id );
+				if ( ! empty( $result ) ) {
+					$this->log_sync_result( $attachment_id, $type, $result );
+				}
 				$type = $this->get_sync_type( $attachment_id, false ); // Set cache to false to get the new signature.
 			}
 		}

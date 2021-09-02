@@ -195,8 +195,8 @@ class Push_Sync {
 		// Handle based on Sync Type.
 		foreach ( $ids as $attachment_id ) {
 
-			// Skip external media.
-			if ( ! $this->media->is_local_media( $attachment_id ) ) {
+			// Skip non uploadable media.
+			if ( ! $this->media->is_uploadable_media( $attachment_id ) ) {
 				continue;
 			}
 			// Skip unsyncable delivery types.
