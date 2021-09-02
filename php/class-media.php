@@ -948,8 +948,8 @@ class Media extends Settings_Component implements Setup {
 		$config = $this->settings->get_value( 'image_settings' );
 
 		if ( 'on' === $config['image_optimization'] ) {
-			if ( 'auto' === $config['image_format'] ) {
-				$default['fetch_format'] = 'auto';
+			if ( ! empty( $config['image_format'] ) && 'none' !== $config['image_format'] ) {
+				$default['fetch_format'] = $config['image_format'];
 			}
 			if ( isset( $config['image_quality'] ) ) {
 				$default['quality'] = 'none' !== $config['image_quality'] ? $config['image_quality'] : null;
