@@ -520,6 +520,19 @@ class Sync implements Setup, Assets {
 			),
 			'cloud_name'   => array(
 				'generate' => array( $this->managers['connect'], 'get_cloud_name' ),
+				'validate' => function ( $attachment_id ) {
+					$valid       = true;
+					$credentials = $this->managers['connect']->get_credentials();
+					if ( isset( $credentials['cname'] ) ) {
+						$url = get_post_meta( $attachment_id, '_wp_attached_file', true );
+						if ( wp_http_validate_url( $url ) ) {
+							$domain = wp_parse_url( $url, PHP_URL_HOST );
+							$valid  = $domain !== $credentials['cname'];
+						}
+					}
+
+					return $valid;
+				},
 				'priority' => 5.5,
 				'sync'     => array( $this->managers['upload'], 'upload_asset' ),
 				'state'    => 'uploading',
