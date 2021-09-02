@@ -432,6 +432,8 @@ class Gallery {
 		}
 		unset( $attributes['selectedImages'], $attributes['customSettings'] );
 
+		$attributes['queryParam'] = 'AA';
+
 		ob_start();
 		?>
 		<script>
