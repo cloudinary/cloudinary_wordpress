@@ -52,11 +52,14 @@ const Terms = {
 		} );
 	},
 	event( taxonomy ) {
-		const selection = [
-			...select( 'core/editor' ).getEditedPostAttribute(
-				taxonomy.rest_base
-			),
-		];
+		const hasSelection = select( 'core/editor' ).getEditedPostAttribute(
+			taxonomy.rest_base
+		);
+		if ( ! hasSelection ) {
+			return;
+		}
+
+		const selection = [ ...hasSelection ];
 		const selected = Array.from(
 			this.wrapper.querySelectorAll( `[data-item*="${ taxonomy.slug }"]` )
 		);
