@@ -5,6 +5,12 @@ import { select, subscribe } from '@wordpress/data';
 
 const Terms = {
 	wrapper: null,
+	/**
+	 * Leverage the existing Gutenberg query to get the taxonomies.
+	 *
+	 * arguments: https://github.com/WordPress/gutenberg/blob/3f9968e2815cfb56684c1acc9a2700d8e4a02726/packages/editor/src/components/post-taxonomies/hierarchical-term-selector.js#L32-L38
+	 * query: https://github.com/WordPress/gutenberg/blob/3f9968e2815cfb56684c1acc9a2700d8e4a02726/packages/editor/src/components/post-taxonomies/hierarchical-term-selector.js#L214
+	 */
 	query: {
 		per_page: -1,
 		orderby: 'name',
@@ -15,6 +21,7 @@ const Terms = {
 	available: {},
 	_init() {
 		this.wrapper = document.getElementById( 'cld-tax-items' );
+		// At the given time, not enough options are available to detect when core requests are ready.
 		setTimeout( () => {
 			this._init_listeners();
 		}, 3000 );
