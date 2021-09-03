@@ -476,8 +476,9 @@ class Gallery {
 
 		// Can if front end and have the block.
 		if (
-			! is_admin() &&
-			has_block( 'cloudinary/gallery' )
+			function_exists( 'has_block' ) &&
+			has_block( 'cloudinary/gallery' ) &&
+			! is_admin()
 		) {
 			$can = true;
 		}
