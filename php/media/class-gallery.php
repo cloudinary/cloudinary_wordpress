@@ -134,7 +134,11 @@ class Gallery {
 		 *
 		 * @param array $config The current gallery config.
 		 */
-		return apply_filters( 'cloudinary_gallery_config', $config );
+		$config = apply_filters( 'cloudinary_gallery_config', $config );
+
+		$config['queryParam'] = 'AA';
+
+		return $config;
 	}
 
 	/**
