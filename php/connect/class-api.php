@@ -379,13 +379,16 @@ class Api {
 	 */
 	public function upload( $attachment_id, $args, $headers = array(), $try_remote = true ) {
 
+		$media               = get_plugin_instance()->get_component( 'media' );
 		$resource            = ! empty( $args['resource_type'] ) ? $args['resource_type'] : 'image';
 		$url                 = $this->url( $resource, 'upload', true );
 		$args                = $this->clean_args( $args );
 		$disable_https_fetch = get_transient( '_cld_disable_http_upload' );
+		add_filter( 'wp_get_attachment_url', array( $media, 'attachment_url' ), 10, 2 );
+		add_filter( 'wp_get_original_image_url', array( $media, 'attachment_url' ), 10, 2 );
 		if (
-			function_exists( 'wp_get_original_image_url' ) &&
-			wp_attachment_is_image( $attachment_id )
+			function_exists( 'wp_get_original_image_url' )
+			&& wp_attachment_is_image( $attachment_id )
 		) {
 			$file_url = wp_get_original_image_url( $attachment_id );
 		} else {
@@ -394,7 +397,6 @@ class Api {
 		if ( empty( $file_url ) ) {
 			$disable_https_fetch = true;
 		}
-		$media    = get_plugin_instance()->get_component( 'media' );
 		if ( ! $media->is_uploadable_media( $attachment_id ) ) {
 			$disable_https_fetch = false; // Remote can upload via url.
 			// translators: variable is thread name and queue size.
@@ -422,7 +424,7 @@ class Api {
 				}
 			}
 			// Headers indicate chunked upload.
-			if ( empty( $headers ) ) {
+			if ( empty( $headers ) && file_exists( $args['file'] ) ) {
 				$size = filesize( $args['file'] );
 				if ( 'video' === $resource || $size > 100000000 ) {
 					return $this->upload_large( $attachment_id, $args );

@@ -897,10 +897,12 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function attachment_url( $url, $attachment_id ) {
 		// Previous v1 and Cloudinary only storage.
-		$previous_url = strpos( $url, untrailingslashit( $this->base_url ) );
-		if ( false !== $previous_url ) {
-			return substr( $url, $previous_url );
+		if ( false !== strpos( $url, 'https://', 5 ) ) {
+			$dirs = wp_get_upload_dir();
+
+			return str_replace( trailingslashit( $dirs['baseurl'] ), '', $url );
 		}
+
 		if (
 			! doing_action( 'wp_insert_post_data' )
 			&& false === $this->in_downsize
@@ -2427,6 +2429,8 @@ class Media extends Settings_Component implements Setup {
 			if ( $this->can_filter_out_local() || is_admin() ) {
 				add_filter( 'wp_calculate_image_srcset', array( $this, 'image_srcset' ), 10, 5 );
 				add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
+				add_filter( 'wp_get_original_image_url', array( $this, 'attachment_url' ), 10, 2 );
+
 				add_filter( 'image_downsize', array( $this, 'filter_downsize' ), 10, 3 );
 				// Hook into Featured Image cycle.
 				add_action( 'begin_fetch_post_thumbnail_html', array( $this, 'set_doing_featured' ), 10, 2 );
