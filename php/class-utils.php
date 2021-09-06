@@ -48,7 +48,13 @@ class Utils {
 	 * @return Setting
 	 */
 	public static function get_active_setting() {
-		return get_plugin_instance()->settings;
+		$settings = get_plugin_instance()->settings;
+		$active   = null;
+		if ( $settings->has_param( 'active_setting' ) ) {
+			$active = $settings->get_setting( $settings->get_param( 'active_setting' ) );
+		}
+
+		return $active;
 	}
 
 	/**

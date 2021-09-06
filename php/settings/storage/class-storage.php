@@ -31,49 +31,89 @@ abstract class Storage {
 	/**
 	 * Storage constructor.
 	 *
-	 * @param string $slug The storage slug.
+	 * @param string $slug The default slug.
 	 */
 	public function __construct( $slug ) {
 		$this->slug = $slug;
-		$this->load();
 	}
 
 	/**
 	 * Get the data.
 	 *
-	 * @param false $reload Flag to force a reload.
+	 * @param string $slug   The slug of the setting storage to get.
+	 * @param false  $reload Flag to force a reload.
 	 *
 	 * @return mixed
 	 */
-	public function get( $reload = false ) {
-		if ( null === $this->data || true === $reload ) {
-			$this->set( $this->load() );
+	public function get( $slug, $reload = false ) {
+		$prefixed = $this->prefix( $slug );
+		if ( ! isset( $this->data[ $prefixed ] ) || true === $reload ) {
+			$this->set( $slug, $this->load( $prefixed ) );
 		}
 
-		return $this->data;
+		return $this->data[ $prefixed ];
+	}
+
+	/**
+	 * Prefix the  slug for saving data.
+	 *
+	 * @param string $slug The slug to prefix.
+	 *
+	 * @return string
+	 */
+	protected function prefix( $slug ) {
+		$prefix = null;
+		if ( '_' !== $slug[0] && 0 !== strpos( $slug, $this->slug ) ) {
+			$prefix = $this->slug . '_';
+		}
+
+		return $prefix . $slug;
 	}
 
 	/**
 	 * Set the data.
 	 *
-	 * @param mixed $data The data to set.
+	 * @param string $slug The slug of the setting storage to get.
+	 * @param mixed  $data The data to set.
 	 */
-	public function set( $data ) {
-		$this->data = $data;
+	public function set( $slug, $data ) {
+		$this->data[ $this->prefix( $slug ) ] = $data;
+	}
+
+	/**
+	 * Get the storage keys.
+	 *
+	 * @return array
+	 */
+	public function get_keys() {
+		return array_keys( $this->data );
 	}
 
 	/**
 	 * Load the data from storage source.
 	 *
+	 * @param string $pefixed_slug The prefixed slug to load.
+	 *
 	 * @return mixed
 	 */
-	abstract protected function load();
+	abstract protected function load( $pefixed_slug );
+
+	/**
+	 * Delete the data from storage source.
+	 *
+	 * @param string $slug The slug of the setting storage to delete.
+	 *
+	 * @return bool
+	 */
+	abstract public function delete( $slug );
 
 	/**
 	 * Save the data to storage source.
 	 *
+	 * @param string $slug The slug of the setting storage to save.
+	 *
 	 * @return bool
 	 */
-	abstract public function save();
+	abstract public function save( $slug );
 
 }

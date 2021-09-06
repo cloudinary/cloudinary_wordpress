@@ -586,7 +586,8 @@
 
 			.description {
 				margin: 0;
-
+				font-size: inherit;
+				color: inherit;
 				&.left {
 					margin-left: 0;
 					margin-right: 0.4rem;

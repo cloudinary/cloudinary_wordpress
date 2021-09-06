@@ -73,7 +73,7 @@ class Text extends Component {
 
 		$struct['element']               = 'input';
 		$struct['attributes']['name']    = $this->get_name();
-		$struct['attributes']['id']      = $this->setting->get_slug();
+		$struct['attributes']['id']      = $this->get_id();
 		$struct['attributes']['value']   = $this->setting->get_value();
 		$struct['attributes']['class'][] = 'regular-' . $this->type;
 		$struct['render']                = true;
@@ -120,7 +120,22 @@ class Text extends Component {
 	 * @return string
 	 */
 	protected function get_name() {
-		return $this->setting->get_option_name() . '[' . $this->setting->get_slug() . ']';
+		$parts = explode( $this->setting->separator, $this->setting->get_slug() );
+		$name  = array_shift( $parts );
+		if ( ! empty( $parts ) ) {
+			$name .= '[' . implode( $this->setting->separator, $parts ) . ']';
+		}
+
+		return $name;
+	}
+
+	/**
+	 * Get the field ID.
+	 *
+	 * @return string
+	 */
+	protected function get_id() {
+		return $this->setting->get_slug();
 	}
 
 	/**

@@ -628,8 +628,8 @@ class Media extends Settings_Component implements Setup {
 			foreach ( $meta['sizes'] as $size_name => $size ) {
 				if ( $file === $size['file'] ) {
 					$cropped = ! wp_image_matches_ratio(
-						// PDFs do not always have width and height, but they do have full sizes.
-						// This is important for the thumbnail crops on the media library.
+					// PDFs do not always have width and height, but they do have full sizes.
+					// This is important for the thumbnail crops on the media library.
 						! empty( $meta['width'] ) ? $meta['width'] : $meta['sizes']['full']['width'],
 						! empty( $meta['height'] ) ? $meta['height'] : $meta['sizes']['full']['height'],
 						$size['width'],
@@ -2161,6 +2161,7 @@ class Media extends Settings_Component implements Setup {
 			// add in folder if not empty (not in root).
 			$options['public_id'] = trailingslashit( $folder ) . basename( $options['public_id'] );
 		}
+		$options['public_id'] = trim( $options['public_id'], '/.' );
 
 		return $options;
 	}
@@ -2338,7 +2339,7 @@ class Media extends Settings_Component implements Setup {
 
 			// Internal components.
 			$this->global_transformations = new Global_Transformations( $this );
-			$this->gallery                = new Gallery( $this );
+			$this->gallery                = $this->plugin->get_component( 'gallery' );
 			$this->woocommerce_gallery    = new WooCommerceGallery( $this->gallery );
 			$this->filter                 = new Filter( $this );
 			$this->upgrade                = new Upgrade( $this );

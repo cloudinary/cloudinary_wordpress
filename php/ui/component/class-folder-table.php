@@ -96,15 +96,15 @@ class Folder_Table extends Table {
 	 * @return  array
 	 */
 	protected function get_rows() {
-		$roots       = $this->setting->get_param( 'root_paths', array() );
+		$roots       = $this->setting->get_settings();
 		$row_default = array(
 			'title'    => null,
 			'src_path' => null,
 			'url'      => null,
 		);
 		$rows        = array();
-		foreach ( $roots as $slug => $row ) {
-			$row             = wp_parse_args( $row, $row_default );
+		foreach ( $roots as $slug => $path ) {
+			$row             = wp_parse_args( $path->get_params(), $row_default );
 			$row['slug']     = $slug;
 			$row['src_path'] = str_replace( ABSPATH, '', $row['src_path'] );
 			// Add to list.
@@ -339,7 +339,7 @@ class Folder_Table extends Table {
 	 * @return string
 	 */
 	protected function get_title_slug() {
-		return $this->setting->get_slug() . '_title';
+		return $this->setting->get_param( 'slug' ) . '_title';
 	}
 
 	/**

@@ -20,5 +20,5 @@ namespace Cloudinary;
 			</a>
 		</p>
 	</header>
-	<?php include CLDN_PATH . 'ui-definitions/components/settings.php'; ?>
+	<?php require CLDN_PATH . 'ui-definitions/components/settings.php'; ?>
 </div>

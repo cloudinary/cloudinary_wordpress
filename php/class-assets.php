@@ -157,6 +157,7 @@ class Assets extends Settings_Component {
 		add_filter( 'delete_post_metadata', array( $this, 'delete_meta' ), 10, 4 );
 		add_filter( 'intermediate_image_sizes_advanced', array( $this, 'no_sizes' ), PHP_INT_MAX, 3 );
 		add_filter( 'cloudinary_can_sync_asset', array( $this, 'can_sync' ), 10, 2 );
+		add_filter( 'cloudinary_admin_pages', array( $this, 'register_settings' ) );
 		// Actions.
 		add_action( 'cloudinary_init_settings', array( $this, 'setup' ) );
 		add_action( 'cloudinary_thread_queue_details_query', array( $this, 'connect_post_type' ) );
@@ -1037,11 +1038,12 @@ class Assets extends Settings_Component {
 	 */
 	public function setup() {
 
-		$settings = $this->settings->get_settings_by_type( 'folder_table' );
-		foreach ( $settings as $setting ) {
-			$paths = $setting->get_param( 'root_paths' );
-			foreach ( $paths as $slug => $conf ) {
-				if ( 'on' === $this->settings->get_value( $slug ) ) {
+		$assets = $this->settings->get_setting( 'assets' )->get_settings();
+		foreach ( $assets as $asset ) {
+			if ( 'on' === $asset->get_value( 'enabled' ) ) {
+				$paths = $asset->get_setting( 'paths' );
+				foreach ( $paths->get_settings() as $path ) {
+					$conf = $path->get_params();
 					self::register_asset_path( trailingslashit( $conf['url'] ), $conf['version'] );
 				}
 			}
@@ -1051,90 +1053,75 @@ class Assets extends Settings_Component {
 	/**
 	 * Returns the setting definitions.
 	 *
-	 * @return array|null
+	 * @param array $pages The pages to add to.
+	 *
+	 * @return array
 	 */
-	public function settings() {
-		$args = array(
-			'type'       => 'page',
-			'menu_title' => __( 'Site Cache', 'cloudinary' ),
-			'tabs'       => array(
-				'main_cache_page' => array(
-					'page_title' => __( 'Site Cache', 'cloudinary' ),
-					array(
-						'slug'       => 'cache_paths',
-						'type'       => 'panel',
-						'title'      => __( 'Cache Settings', 'cloudinary' ),
-						'attributes' => array(
-							'header' => array(
-								'class' => array(
-									'full-width',
-								),
-							),
-							'wrap'   => array(
-								'class' => array(
-									'full-width',
-								),
-							),
-						),
-						array(
-							'type'         => 'on_off',
-							'slug'         => 'enable_full_site_cache',
-							'title'        => __( 'Full CDN', 'cloudinary' ),
-							'tooltip_text' => __(
-								'Deliver all assets from Cloudinary.',
-								'cloudinary'
-							),
-							'description'  => __( 'Enable caching site assets.', 'cloudinary' ),
-							'default'      => 'off',
-						),
-						array(
-							'type'       => 'button',
-							'slug'       => 'cld_purge_all',
-							'attributes' => array(
-								'type'        => 'button',
-								'html_button' => array(
-									'disabled' => 'disabled',
-									'style'    => 'width: 100px',
-								),
-							),
-							'label'      => 'Purge all',
-						),
-						array(
-							'slug' => 'cache_plugins',
-							'type' => 'frame',
-							$this->add_plugin_settings(),
-						),
-						array(
-							'slug' => 'cache_themes',
-							'type' => 'frame',
-							$this->add_theme_settings(),
-						),
-						array(
-							'slug' => 'cache_wordpress',
-							'type' => 'frame',
-							$this->add_wp_settings(),
-						),
-						array(
-							'slug' => 'cache_content',
-							'type' => 'frame',
-							$this->add_content_settings(),
-						),
+	public function register_settings( $pages ) {
+		$pages['connect']['settings'][] = array(
+			'type'                => 'panel',
+			'title'               => __( 'Cache Settings', 'cloudinary' ),
+			'slug'                => 'cache',
+			'option_name'         => 'site_cache',
+			'requires_connection' => true,
+			'attributes'          => array(
+				'header' => array(
+					'class' => array(
+						'full-width',
 					),
-					array(
-						'type'       => 'submit',
-						'attributes' => array(
-							'wrap' => array(
-								'class' => array(
-									'full-width',
-								),
-							),
-						),
+				),
+				'wrap'   => array(
+					'class' => array(
+						'full-width',
 					),
 				),
 			),
+			array(
+				'type'         => 'on_off',
+				'slug'         => 'enable',
+				'title'        => __( 'Full CDN', 'cloudinary' ),
+				'tooltip_text' => __(
+					'Deliver all assets from Cloudinary.',
+					'cloudinary'
+				),
+				'description'  => __( 'Enable caching site assets.', 'cloudinary' ),
+				'default'      => 'off',
+			),
+			array(
+				'type'       => 'button',
+				'slug'       => 'cld_purge_all',
+				'attributes' => array(
+					'type'        => 'button',
+					'html_button' => array(
+						'disabled' => 'disabled',
+						'style'    => 'width: 100px',
+					),
+				),
+				'label'      => 'Purge all',
+			),
+			array(
+				'slug' => 'assets',
+				'type' => 'frame',
+				$this->add_plugin_settings(),
+			),
+			array(
+				'slug' => 'assets',
+				'type' => 'frame',
+				$this->add_theme_settings(),
+			),
+			array(
+				'slug' => 'assets',
+				'type' => 'frame',
+				$this->add_wp_settings(),
+			),
+			array(
+				'slug' => 'assets',
+				'type' => 'frame',
+				$this->add_content_settings(),
+			),
 		);
 
-		return $args;
+		return $pages;
 	}
 
 	/**
@@ -1146,32 +1133,32 @@ class Assets extends Settings_Component {
 
 		$plugins = get_plugins();
 		$active  = wp_get_active_and_valid_plugins();
-		$rows    = array();
+		$rows    = array(
+			'slug'   => 'paths',
+			'type'   => 'asset',
+			'title'  => __( 'Plugin', 'cloudinary' ),
+			'master' => array(
+				'cache_all_plugins',
+			),
+		);
 		foreach ( $active as $plugin_path ) {
 			$dir    = basename( dirname( $plugin_path ) );
 			$plugin = $dir . '/' . basename( $plugin_path );
 			if ( ! isset( $plugins[ $plugin ] ) ) {
 				continue;
 			}
-			$slug          = sanitize_file_name( $plugin );
-			$plugin_url    = plugins_url( $plugin );
-			$details       = $plugins[ $plugin ];
-			$rows[ $slug ] = array(
+			$slug       = sanitize_file_name( pathinfo( $plugin, PATHINFO_FILENAME ) );
+			$plugin_url = plugins_url( $plugin );
+			$details    = $plugins[ $plugin ];
+			$rows[]     = array(
+				'slug'    => $slug,
 				'title'   => $details['Name'],
 				'url'     => dirname( $plugin_url ),
 				'version' => $details['Version'],
 			);
 		}
 
-		return array(
-			'slug'       => 'plugin_files',
-			'type'       => 'folder_table',
-			'title'      => __( 'Plugin', 'cloudinary' ),
-			'master'     => array(
-				'cache_all_plugins',
-			),
-			'root_paths' => $rows,
-		);
+		return $rows;
 
 	}
 
@@ -1185,6 +1172,7 @@ class Assets extends Settings_Component {
 			'type'        => 'panel',
 			'title'       => __( 'Plugins', 'cloudinary' ),
 			'collapsible' => 'closed',
+			'slug'        => 'plugins',
 			'attributes'  => array(
 				'header' => array(
 					'class' => array(
@@ -1199,11 +1187,11 @@ class Assets extends Settings_Component {
 			),
 			array(
 				'type'        => 'on_off',
-				'slug'        => 'cache_all_plugins',
+				'slug'        => 'enabled',
 				'description' => __( 'Deliver assets from all plugin folders', 'cloudinary' ),
 				'default'     => 'off',
 				'master'      => array(
-					'enable_full_site_cache',
+					'enable',
 				),
 			),
 			array(
@@ -1229,28 +1217,28 @@ class Assets extends Settings_Component {
 		if ( $theme->parent() ) {
 			$themes[] = $theme->parent();
 		}
-		$rows = array();
+		$rows = array(
+			'slug'   => 'paths',
+			'type'   => 'asset',
+			'title'  => __( 'Theme', 'cloudinary' ),
+			'master' => array(
+				'cache_all_themes',
+			),
+		);
 		// Active Theme.
 		foreach ( $themes as $theme ) {
 			$theme_location = $theme->get_stylesheet_directory();
 			$theme_slug     = basename( dirname( $theme_location ) ) . '/' . basename( $theme_location );
-			$slug           = sanitize_file_name( $theme_slug );
-			$rows[ $slug ]  = array(
+			$slug           = sanitize_file_name( pathinfo( $theme_slug, PATHINFO_FILENAME ) );
+			$rows[]         = array(
+				'slug'    => $slug,
 				'title'   => $theme->get( 'Name' ),
 				'url'     => $theme->get_stylesheet_directory_uri(),
 				'version' => $theme->get( 'Version' ),
 			);
 		}
 
-		return array(
-			'slug'       => 'theme_files',
-			'type'       => 'folder_table',
-			'title'      => __( 'Theme', 'cloudinary' ),
-			'root_paths' => $rows,
-			'master'     => array(
-				'cache_all_themes',
-			),
-		);
+		return $rows;
 	}
 
 	/**
@@ -1262,6 +1250,7 @@ class Assets extends Settings_Component {
 		$params      = array(
 			'type'        => 'panel',
 			'title'       => __( 'Themes', 'cloudinary' ),
+			'slug'        => 'themes',
 			'collapsible' => 'closed',
 			'attributes'  => array(
 				'header' => array(
@@ -1277,11 +1266,11 @@ class Assets extends Settings_Component {
 			),
 			array(
 				'type'        => 'on_off',
-				'slug'        => 'cache_all_themes',
+				'slug'        => 'enabled',
 				'description' => __( 'Deliver all assets from active theme.', 'cloudinary' ),
 				'default'     => 'off',
 				'master'      => array(
-					'enable_full_site_cache',
+					'enable',
 				),
 			),
 			array(
@@ -1300,30 +1289,31 @@ class Assets extends Settings_Component {
 	 */
 	protected function get_wp_table() {
 
-		$rows    = array();
+		$rows    = array(
+			'slug'   => 'paths',
+			'type'   => 'asset',
+			'title'  => __( 'WordPress', 'cloudinary' ),
+			'master' => array(
+				'cache_all_wp',
+			),
+		);
 		$version = get_bloginfo( 'version' );
 		// Admin folder.
-		$rows['wp_admin'] = array(
+		$rows[] = array(
+			'slug'    => 'wp_admin',
 			'title'   => __( 'WordPress Admin', 'cloudinary' ),
 			'url'     => admin_url(),
 			'version' => $version,
 		);
 		// Includes folder.
-		$rows['wp_includes'] = array(
+		$rows[] = array(
+			'slug'    => 'wp_includes',
 			'title'   => __( 'WordPress Includes', 'cloudinary' ),
 			'url'     => includes_url(),
 			'version' => $version,
 		);
 
-		return array(
-			'slug'       => 'wordpress_files',
-			'type'       => 'folder_table',
-			'title'      => __( 'WordPress', 'cloudinary' ),
-			'root_paths' => $rows,
-			'master'     => array(
-				'cache_all_wp',
-			),
-		);
+		return $rows;
 	}
 
 	/**
@@ -1335,6 +1325,7 @@ class Assets extends Settings_Component {
 		$params          = array(
 			'type'        => 'panel',
 			'title'       => __( 'WordPress', 'cloudinary' ),
+			'slug'        => 'wordpress',
 			'collapsible' => 'closed',
 			'attributes'  => array(
 				'header' => array(
@@ -1350,11 +1341,11 @@ class Assets extends Settings_Component {
 			),
 			array(
 				'type'        => 'on_off',
-				'slug'        => 'cache_all_wp',
+				'slug'        => 'enabled',
 				'description' => __( 'Deliver all assets from WordPress core.', 'cloudinary' ),
 				'default'     => 'off',
 				'master'      => array(
-					'enable_full_site_cache',
+					'enable',
 				),
 			),
 			array(
@@ -1373,23 +1364,23 @@ class Assets extends Settings_Component {
 	 */
 	protected function get_content_table() {
 
-		$rows               = array();
-		$uploads            = wp_get_upload_dir();
-		$rows['wp_content'] = array(
+		$uploads = wp_get_upload_dir();
+		$rows    = array(
+			'slug'   => 'paths',
+			'type'   => 'asset',
+			'title'  => __( 'Content', 'cloudinary' ),
+			'master' => array(
+				'cache_all_content',
+			),
+		);
+		$rows[]  = array(
+			'slug'    => 'wp_content',
 			'title'   => __( 'Uploads', 'cloudinary' ),
 			'url'     => $uploads['baseurl'],
 			'version' => 0,
 		);
 
-		return array(
-			'slug'       => 'content_files',
-			'type'       => 'folder_table',
-			'title'      => __( 'Content', 'cloudinary' ),
-			'root_paths' => $rows,
-			'master'     => array(
-				'cache_all_content',
-			),
-		);
+		return $rows;
 	}
 
 	/**
@@ -1401,6 +1392,7 @@ class Assets extends Settings_Component {
 		$params        = array(
 			'type'        => 'panel',
 			'title'       => __( 'Content', 'cloudinary' ),
+			'slug'        => 'content',
 			'collapsible' => 'closed',
 			'attributes'  => array(
 				'header' => array(
@@ -1416,11 +1408,11 @@ class Assets extends Settings_Component {
 			),
 			array(
 				'type'        => 'on_off',
-				'slug'        => 'cache_all_content',
+				'slug'        => 'enabled',
 				'description' => __( 'Deliver all content assets from WordPress Media Library.', 'cloudinary' ),
 				'default'     => 'off',
 				'master'      => array(
-					'enable_full_site_cache',
+					'enable',
 				),
 			),
 			array(

@@ -72,7 +72,7 @@ class On_Off extends Text {
 		$struct['element']                       = 'input';
 		$struct['attributes']['type']            = 'checkbox';
 		$struct['attributes']['name']            = $this->get_name();
-		$struct['attributes']['id']              = $this->setting->get_slug();
+		$struct['attributes']['id']              = $this->get_id();
 		$struct['attributes']['value']           = 'on';
 		$struct['attributes']['data-controller'] = $this->setting->get_slug();
 		if ( 'on' === $this->setting->get_value() ) {
@@ -82,7 +82,14 @@ class On_Off extends Text {
 
 		$struct['render'] = true;
 		if ( $this->setting->has_param( 'master' ) ) {
-			$struct['attributes']['data-master'] = wp_json_encode( $this->setting->get_param( 'master' ) );
+			$slave       = $this->setting->get_param( 'master' );
+			$controllers = array();
+			foreach ( $slave as $slave_slug ) {
+				$slave_setting = $this->setting->get_setting( $slave_slug );
+				$controllers[] = $slave_setting->get_slug();
+			}
+
+			$struct['attributes']['data-master'] = wp_json_encode( $controllers );
 		}
 
 		if ( true === $this->setting->get_param( 'disabled', false ) || true === $this->setting->has_param( 'master_required', false ) && empty( $struct['attributes']['data-master'] ) ) {
@@ -109,9 +116,9 @@ class On_Off extends Text {
 			$struct['attributes']['class'][] = 'mini';
 		}
 		if (
-			true === $this->setting->get_param( 'disabled', false ) ||
-			true === $this->setting->get_param( 'master_required', false ) &&
-			empty(
+			true === $this->setting->get_param( 'disabled', false )
+			|| true === $this->setting->get_param( 'master_required', false )
+			&& empty(
 				$this->setting->get_param(
 					'master',
 					array()

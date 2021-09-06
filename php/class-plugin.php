@@ -11,6 +11,7 @@ use Cloudinary\Component\Assets;
 use Cloudinary\Component\Config;
 use Cloudinary\Component\Notice;
 use Cloudinary\Component\Setup;
+use Cloudinary\Media\Gallery;
 use Cloudinary\Sync\Storage;
 use Cloudinary\UI\State;
 use WP_REST_Request;
@@ -133,6 +134,7 @@ final class Plugin {
 		$this->components['connect']      = new Connect( $this );
 		$this->components['deactivation'] = new Deactivation( $this );
 		$this->components['sync']         = new Sync( $this );
+		$this->components['gallery']      = new Gallery( $this );
 		$this->components['media']        = new Media( $this );
 		$this->components['api']          = new REST_API( $this );
 		$this->components['storage']      = new Storage( $this );
@@ -267,28 +269,9 @@ final class Plugin {
 		add_action( 'init', array( $this, 'register_assets' ), 10 );
 		add_action( 'admin_notices', array( $this, 'admin_notices' ) );
 		add_filter( 'plugin_row_meta', array( $this, 'force_visit_plugin_site_link' ), 10, 4 );
-		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
 		add_action( 'wp_enqueue_editor', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_print_footer_scripts', array( $this, 'print_script_data' ), 1 );
 		add_action( 'wp_print_footer_scripts', array( $this, 'print_script_data' ), 1 );
-	}
-
-	/**
-	 * Add endpoints to the \Cloudinary\REST_API::$endpoints array.
-	 *
-	 * @param array $endpoints Endpoints from the filter.
-	 *
-	 * @return array
-	 */
-	public function rest_endpoints( $endpoints ) {
-
-		$endpoints['dismiss_notice'] = array(
-			'method'   => WP_REST_Server::CREATABLE,
-			'callback' => array( $this, 'rest_dismiss_notice' ),
-			'args'     => array(),
-		);
-
-		return $endpoints;
 	}
 
 	/**
@@ -446,18 +429,6 @@ final class Plugin {
 	}
 
 	/**
-	 * Set a transient with the duration using a token as an identifier.
-	 *
-	 * @param WP_REST_Request $request The request object.
-	 */
-	public function rest_dismiss_notice( WP_REST_Request $request ) {
-		$token    = $request->get_param( 'token' );
-		$duration = $request->get_param( 'duration' );
-
-		set_transient( $token, true, $duration );
-	}
-
-	/**
 	 * Load admin notices where needed.
 	 *
 	 * @since  0.1
@@ -483,7 +454,7 @@ final class Plugin {
 			$notices = $component->get_notices();
 			foreach ( $notices as $notice ) {
 				$notice = wp_parse_args( $notice, $default );
-				$setting->add_admin_notice( 'cld_general', $notice['message'], $notice['type'], $notice['dismissible'], $notice['duration'], $notice['icon'] );
+				$this->components['admin']->add_admin_notice( 'cld_general', $notice['message'], $notice['type'], $notice['dismissible'], $notice['duration'], $notice['icon'] );
 			}
 		}
 	}
