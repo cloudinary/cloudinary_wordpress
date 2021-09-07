@@ -115,7 +115,7 @@ class Upload_Sync {
 				),
 				'upload.php'
 			);
-			if ( ! $this->media->is_local_media( $post->ID ) ) {
+			if ( ! $this->media->is_uploadable_media( $post->ID ) ) {
 				return $actions;
 			}
 			if ( ! $this->sync->is_syncable( $post->ID ) ) {

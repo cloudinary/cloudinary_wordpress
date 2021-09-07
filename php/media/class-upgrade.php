@@ -54,8 +54,13 @@ class Upgrade {
 	 */
 	public function convert_cloudinary_version( $attachment_id ) {
 
+		if ( ! empty( get_post_meta( $attachment_id, Sync::META_KEYS['cloudinary'], true ) ) ) {
+			// V2.5 changed the meta. if it had, theres no upgrades needed.
+			$this->sync->set_signature_item( $attachment_id, 'upgrade' );
+			return $this->media->get_public_id( $attachment_id );
+		}
 		$file = get_post_meta( $attachment_id, '_wp_attached_file', true );
-		if ( wp_http_validate_url( $file ) ) {
+		if ( ! $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true ) && wp_http_validate_url( $file ) ) {
 			// Version 1 upgrade.
 			$path                  = wp_parse_url( $file, PHP_URL_PATH );
 			$media                 = $this->media;
@@ -100,6 +105,7 @@ class Upgrade {
 			}
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['version'], $asset_version );
+			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['upgrading'], true );
 			if ( ! empty( $asset_transformations ) ) {
 				$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], $asset_transformations );
 			}
@@ -117,8 +123,8 @@ class Upgrade {
 				$this->media->delete_post_meta( $attachment_id, Sync::META_KEYS['suffix'] );
 				$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
 			}
-			// Check folder sync in order.
-			if ( $this->media->is_folder_synced( $attachment_id ) ) {
+			// Check folder sync in order and if it's not a URL.
+			if ( ! wp_http_validate_url( $file ) && $this->media->is_folder_synced( $attachment_id ) ) {
 				$public_id_folder = ltrim( dirname( $this->media->get_public_id( $attachment_id ) ) );
 				$test_signature   = md5( false );
 				$folder_signature = md5( $public_id_folder );
