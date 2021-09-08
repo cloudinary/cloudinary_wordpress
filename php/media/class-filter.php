@@ -31,6 +31,13 @@ class Filter {
 	private $media;
 
 	/**
+	 * Doing Media Library flag.
+	 *
+	 * @var bool
+	 */
+	protected $doing_media_library = false;
+
+	/**
 	 * Filter constructor.
 	 *
 	 * @param Media $media The plugin.
@@ -410,6 +417,12 @@ class Filter {
 	 * @uses filter:wp_prepare_attachment_for_js
 	 */
 	public function filter_attachment_for_js( $attachment ) {
+
+		// Sizes already prepared in the image_downsize filter.
+		if ( $this->doing_media_library ) {
+			return $attachment;
+		}
+
 		$cloudinary_id = $this->media->get_cloudinary_id( $attachment['id'] );
 
 		if ( $cloudinary_id ) {
@@ -752,6 +765,13 @@ class Filter {
 	}
 
 	/**
+	 * Ajax handler for querying attachments.
+	 */
+	public function wp_ajax_query_attachments() {
+		$this->doing_media_library = true;
+	}
+
+	/**
 	 * Setup hooks for the filters.
 	 */
 	public function setup_hooks() {
@@ -783,6 +803,9 @@ class Filter {
 
 		// Filter to record current meta updating attachment.
 		add_filter( 'wp_update_attachment_metadata', array( $this, 'record_meta_update' ), 10, 2 );
+
+		// Filter Media Library results.
+		add_action( 'wp_ajax_query-attachments', array( $this, 'wp_ajax_query_attachments' ), -1 );
 
 		// Filter out locals and responsive images setup.
 		if ( $this->media->can_filter_out_local() || is_admin() ) {
