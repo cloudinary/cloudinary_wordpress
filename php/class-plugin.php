@@ -224,7 +224,7 @@ final class Plugin {
 		 * Action indicating that the Settings are initialised.
 		 *
 		 * @hook  cloudinary_init_settings
-		 * @since 2.7.5
+		 * @since 3.0.0
 		 *
 		 * @param $plugin {Plugin} The core plugin object.
 		 */

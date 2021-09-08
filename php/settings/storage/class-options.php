@@ -1,6 +1,6 @@
 <?php
 /**
- * Storage Options. handles storing setting in WP Options.
+ * Storage Options. Handles storing setting in WP Options.
  *
  * @package   Cloudinary\Settings\Storage
  */

@@ -17,12 +17,12 @@ class Dashboard {
 	/**
 	 * Holds the plugin instance.
 	 *
-	 * @var     Plugin Instance of the global plugin.
+	 * @var Plugin Instance of the global plugin.
 	 */
 	public $plugin;
 
 	/**
-	 * Delivery_Feature constructor.
+	 * Class constructor.
 	 *
 	 * @param Plugin $plugin Instance of the plugin.
 	 */

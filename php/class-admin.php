@@ -14,7 +14,7 @@ use WP_REST_Server;
 use WP_REST_Request;
 
 /**
- * Settings Class.
+ * Admin Class.
  */
 class Admin {
 

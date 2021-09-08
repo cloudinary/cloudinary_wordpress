@@ -92,11 +92,11 @@ abstract class Storage {
 	/**
 	 * Load the data from storage source.
 	 *
-	 * @param string $pefixed_slug The prefixed slug to load.
+	 * @param string $prefixed_slug The prefixed slug to load.
 	 *
 	 * @return mixed
 	 */
-	abstract protected function load( $pefixed_slug );
+	abstract protected function load( $prefixed_slug );
 
 	/**
 	 * Delete the data from storage source.
