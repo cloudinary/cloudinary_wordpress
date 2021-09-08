@@ -2140,7 +2140,7 @@ class Media extends Settings_Component implements Setup {
 			'context'         => $this->get_context_options( $attachment_id ),
 		);
 
-		if ( 'image' == $options['resource_type'] || 'video' === $options['resource_type'] ) {
+		if ( 'image' === $options['resource_type'] || 'video' === $options['resource_type'] ) {
 			$options['eager']       = Api::generate_transformation_string( $this->apply_default_transformations( array(), $attachment_id ) );
 			$options['eager_async'] = 'video' === $options['resource_type'];
 		}
