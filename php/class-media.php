@@ -1072,6 +1072,9 @@ class Media extends Settings_Component implements Setup {
 	 * @return array|string
 	 */
 	public function prepare_size( $attachment_id, $size ) {
+		if( 'raw' === $size ){
+			return array();
+		}
 		// Check size and correct if string or size.
 		if ( empty( $size ) || 'full' === $size ) {
 			// Maybe get full size if scaled.

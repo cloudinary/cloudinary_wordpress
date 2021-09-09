@@ -29,7 +29,7 @@ class Responsive_Breakpoints extends Delivery_Feature {
 	 *
 	 * @var string
 	 */
-	protected $settings_slug = 'responsive_breakpoints';
+	protected $settings_slug = 'media_display';
 
 	/**
 	 * Holds the enabler slug.
@@ -48,34 +48,20 @@ class Responsive_Breakpoints extends Delivery_Feature {
 	/**
 	 * Add features to a tag element set.
 	 *
-	 * @param array  $tag_element   The tag element set.
-	 * @param int    $attachment_id The attachment id.
-	 * @param string $original_tag  The original html tag.
+	 * @param array $tag_element The tag element set.
 	 *
 	 * @return array
 	 */
-	public function add_features( $tag_element, $attachment_id, $original_tag ) {
+	public function add_features( $tag_element ) {
 
-		if ( ! $this->media->is_cloudinary_url( $tag_element['atts']['src'] ) ) {
-			$tag_element['atts']['src'] = $this->media->cloudinary_url( $attachment_id, array(), array(), null, $tag_element['cld-overwrite'] );
-		}
-		$transformations = $this->media->get_transformations_from_string( $tag_element['atts']['src'] );
-		$original_string = Api::generate_transformation_string( $transformations );
-
-		// Check if first is a size.
-		if ( isset( $transformations[0] ) && isset( $transformations[0]['width'] ) || isset( $transformations[0]['height'] ) ) {
-			// remove the size.
-			array_shift( $transformations );
-		}
-		$size_str = '--size--';
-		if ( ! empty( $transformations ) ) {
-			$size_str .= '/' . Api::generate_transformation_string( $transformations );
-		}
-		$tag_element['atts']['src'] = str_replace( $original_string, $size_str, $tag_element['atts']['src'] );
-		if ( isset( $tag_element['atts']['srcset'] ) ) {
-			unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
-		}
-		$tag_element['delivery'] = 'cld';
+		$tag_element['atts']['data-responsive'] = true;
+		$tag_element['breakpoints']             = false;
+		$tag_element['delivery']                = 'cld';
+		$tag_element['atts']['data-size']       = array(
+			$tag_element['atts']['width'],
+			$tag_element['atts']['height'],
+		);
+		unset( $tag_element['atts']['width'], $tag_element['atts']['height'] );
 
 		return $tag_element;
 	}
@@ -99,10 +85,10 @@ class Responsive_Breakpoints extends Delivery_Feature {
 	 * @return bool
 	 */
 	public function is_enabled() {
-		$lazy         = $this->plugin->get_component( 'lazy_load' );
-		$lazy_enabled = $lazy->is_enabled();
+		$lazy    = $this->plugin->get_component( 'lazy_load' );
+		$enabled = parent::is_enabled();
 
-		return ! is_null( $lazy ) && $lazy->is_enabled() && parent::is_enabled();
+		return ! is_null( $lazy ) && $lazy->is_enabled() && $enabled;
 	}
 
 	/**

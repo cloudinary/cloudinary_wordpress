@@ -281,7 +281,8 @@ class Delivery implements Setup {
 		$in = implode( ',', array_fill( 0, count( $search ), '%s' ) );
 
 		$sql    = $wpdb->prepare(
-			"SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = '_wp_attached_file' AND meta_value IN ({$in})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+			"SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = '_wp_attached_file' AND meta_value IN ({$in})",
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 			$search
 		);
 		$key    = md5( $sql );
@@ -316,7 +317,7 @@ class Delivery implements Setup {
 			$has_cache = get_post_meta( get_the_ID(), $cache_key, true );
 			$type      = is_ssl() ? 'https' : 'http';
 			if ( ! empty( $has_cache ) && ! empty( $has_cache[ $type ] ) ) {
-				$cached = $has_cache[ $type ];
+				//$cached = $has_cache[ $type ];
 			}
 		}
 
@@ -383,31 +384,32 @@ class Delivery implements Setup {
 		 * @hook   cloudinary_pre_image_tag
 		 * @since  2.7.5
 		 *
-		 * @param $tag_element   {array}  The tag_element ( tag + attributes array).
-		 * @param $attachment_id {int}    The attachment ID.
-		 * @param $element       {string} The original HTML tag.
+		 * @param $tag_element {array}  The tag_element ( tag + attributes array).
 		 *
 		 * @return {array}
 		 */
-		$tag_element = apply_filters( 'cloudinary_pre_image_tag', $tag_element, $tag_element['id'], $tag_element['original'] );
+		$tag_element = apply_filters( 'cloudinary_pre_image_tag', $tag_element );
 
+		$image_meta = wp_get_attachment_metadata( $tag_element['id'] );
+		// Set breakpoints.
+		//if ( true === $tag_element['breakpoints'] ) {
+		// Check overwrite.
+		$image_meta['overwrite_transformations'] = $tag_element['overwrite_transformations'];
+
+		// Try add srcset if not present.
+		$element = wp_image_add_srcset_and_sizes( $tag_element['original'], $image_meta, $tag_element['id'] );
+		$atts    = Utils::get_tag_attributes( $element );
+
+		if ( ! empty( $atts['srcset'] ) ) {
+			$tag_element['atts']['srcset'] = $atts['srcset'];
+		}
+		if ( ! empty( $atts['sizes'] ) ) {
+			$tag_element['atts']['sizes'] = $atts['sizes'];
+		}
+
+
+		// Set URL.
 		if ( 'wp' === $tag_element['delivery'] ) {
-
-			$image_meta = wp_get_attachment_metadata( $tag_element['id'] );
-			// Check overwrite.
-			$image_meta['overwrite_transformations'] = $tag_element['cld-overwrite'];
-
-			// Try add srcset if not present.
-			$element = wp_image_add_srcset_and_sizes( $tag_element['original'], $image_meta, $tag_element['id'] );
-			$atts    = Utils::get_tag_attributes( $element );
-
-			if ( ! empty( $atts['srcset'] ) ) {
-				$tag_element['atts']['srcset'] = $atts['srcset'];
-			}
-			if ( ! empty( $atts['sizes'] ) ) {
-				$tag_element['atts']['sizes'] = $atts['sizes'];
-			}
-
 			// Get size.
 			$size = $this->get_size_from_atts( $tag_element['atts'] );
 
@@ -417,10 +419,22 @@ class Delivery implements Setup {
 			// Get cloudinary URL, only if overwrite or has inline transformations. Catch all will replace standard urls.
 			$tag_element['atts']['src'] = $this->media->cloudinary_url( $tag_element['id'], $size, $transformations, null, $image_meta['overwrite_transformations'] );
 		}
+
 		// Setup new tag.
 		$replace = HTML::build_tag( $tag_element['tag'], $tag_element['atts'] );
 
-		return $replace;
+		/**
+		 * Filter the new built tag element.
+		 *
+		 * @hook   cloudinary_image_tag
+		 * @since  2.7.8
+		 *
+		 * @param $replace     {string}  The new HTML tag.
+		 * @param $tag_element {array}  The tag_element ( tag + attributes array).
+		 *
+		 * @return {array}
+		 */
+		return apply_filters( 'cloudinary_image_tag', $replace, $tag_element );
 	}
 
 	/**
@@ -433,14 +447,16 @@ class Delivery implements Setup {
 	public function parse_element( $element ) {
 
 		$tag_element = array(
-			'tag'           => '',
-			'atts'          => array(),
-			'original'      => $element,
-			'cld-overwrite' => false,
-			'context'       => 0,
-			'id'            => 0,
-			'type'          => '',
-			'delivery'      => 'wp',
+			'tag'                       => '',
+			'atts'                      => array(),
+			'original'                  => $element,
+			'overwrite_transformations' => false,
+			'context'                   => 0,
+			'id'                        => 0,
+			'type'                      => '',
+			'delivery'                  => 'wp',
+			'breakpoints'               => true,
+			'transformations'           => array(),
 		);
 		// Cleanup element.
 		$element = trim( $element, '</>' );
@@ -464,9 +480,15 @@ class Delivery implements Setup {
 				}
 			}
 			if ( in_array( 'cld-overwrite', $tag_element['atts']['class'], true ) ) {
-				$tag_element['cld-overwrite'] = true;
+				$tag_element['overwrite_transformations'] = true;
 			}
 		}
+
+		if ( ! empty( $tag_element['id'] ) && $this->media->has_public_id( $tag_element['id'] ) ) {
+			$tag_element['atts']['data-public-id'] = $this->media->get_public_id( $tag_element['id'] );
+		}
+
+		$tag_element['transformations'] = $this->get_transformations_maybe( $tag_element['atts']['src'] );
 
 		return $tag_element;
 	}
