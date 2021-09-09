@@ -60,9 +60,23 @@ class Line_Stat extends Component {
 	protected $avail;
 
 	/**
+	 * Holds the used (left) text.
+	 *
+	 * @var string
+	 */
+	protected $used_text;
+
+	/**
+	 * Holds teh avail (right) text.
+	 *
+	 * @var string
+	 */
+	protected $avail_text;
+
+	/**
 	 * Holds the connect instance.
 	 *
-	 * @var \Cloudinary\Connect
+	 * @var Connect
 	 */
 	protected $connect;
 
@@ -71,11 +85,9 @@ class Line_Stat extends Component {
 	 */
 	public function setup() {
 		parent::setup();
-		$this->connect      = get_plugin_instance()->get_component( 'connect' );
-		$this->limit        = $this->connect->get_usage_stat( $this->setting->get_param( 'stat' ), 'limit' );
-		$this->used_percent = $this->connect->get_usage_stat( $this->setting->get_param( 'stat' ), 'used_percent' );
-		$used               = $this->limit * $this->used_percent / 100;
-		$avail              = $this->limit - $used;
+		$this->set_stats();
+		$used  = $this->limit * $this->used_percent / 100;
+		$avail = $this->limit - $used;
 		if ( $this->setting->get_param( 'format_size' ) ) {
 			$this->limit_formatted = size_format( $this->limit );
 			$this->used            = size_format( $used, 1 );
@@ -85,6 +97,28 @@ class Line_Stat extends Component {
 			$this->used            = number_format_i18n( $used );
 			$this->avail           = number_format_i18n( $avail );
 		}
+
+		$this->set_texts();
+	}
+
+	/**
+	 * Set the end texts.
+	 */
+	protected function set_texts() {
+		/* translators: %s is the amount used. */
+		$this->used_text = sprintf( '%s used', $this->used );
+
+		/* translators: %s is the amount available. */
+		$this->avail_text = sprintf( '%s available', $this->avail );
+	}
+
+	/**
+	 * Set the usage stats.
+	 */
+	protected function set_stats() {
+		$this->connect      = get_plugin_instance()->get_component( 'connect' );
+		$this->limit        = $this->connect->get_usage_stat( $this->setting->get_param( 'stat' ), 'limit' );
+		$this->used_percent = $this->connect->get_usage_stat( $this->setting->get_param( 'stat' ), 'used_percent' );
 	}
 
 	/**
@@ -96,7 +130,7 @@ class Line_Stat extends Component {
 	 */
 	protected function title( $struct ) {
 		$struct                          = parent::title( $struct );
-		$struct['content']              .= ': ' . $this->limit_formatted;
+		$struct['content']               .= ': ' . $this->limit_formatted;
 		$struct['attributes']['class'][] = 'cld-progress-header';
 
 		return $struct;
@@ -126,8 +160,7 @@ class Line_Stat extends Component {
 	protected function used( $struct ) {
 		$struct['element']               = 'div';
 		$struct['attributes']['class'][] = 'cld-progress-header-titles-left';
-		/* translators: %s is the amount used. */
-		$struct['content'] = sprintf( '%s used', $this->used );
+		$struct['content']               = $this->used_text;
 
 		return $struct;
 	}
@@ -142,8 +175,7 @@ class Line_Stat extends Component {
 	protected function avail( $struct ) {
 		$struct['element']               = 'div';
 		$struct['attributes']['class'][] = 'cld-progress-header-titles-right';
-		/* translators: %s is the amount available. */
-		$struct['content'] = sprintf( '%s available', $this->avail );
+		$struct['content']               = $this->avail_text;
 
 		return $struct;
 	}
@@ -160,6 +192,7 @@ class Line_Stat extends Component {
 		$struct['attributes']['class'][]       = 'cld-progress-line';
 		$struct['attributes']['data-progress'] = 'line';
 		$struct['attributes']['data-value']    = $this->used_percent;
+		$struct['attributes']['data-color']    = $this->setting->get_param( 'color', '#304ec4' );
 		$struct['render']                      = true;
 
 		return $struct;

@@ -12,6 +12,28 @@
 
 .cld {
 
+	&-optimisation {
+		margin-bottom: 0.4em;
+
+		&-item {
+			color: $color-cld-blue;
+			&:hover{
+				color: $color-cld-dark-blue;
+			}
+
+			&-active {
+				color: $color-success;
+				font-size: 0.8em;
+				font-weight: bold;
+				.dashicons {
+					line-height: 1.8em;
+					font-size: 1.2em;
+				}
+			}
+
+		}
+	}
+
 	&-chart {
 		&-stat {
 			padding-bottom: 2em;
@@ -297,7 +319,7 @@
 	}
 
 	&-ui {
-		&-suffix{
+		&-suffix {
 			display: inline-block;
 			padding: 1px 11px;
 			background-color: #e8e8e8;
@@ -307,6 +329,7 @@
 			margin-left: 13px;
 			border-radius: 4px;
 		}
+
 		&-accordion, &-preview {
 
 			.cld-ui-header {
@@ -336,7 +359,6 @@
 			}
 
 
-
 			&.collapsible {
 				cursor: pointer;
 			}
@@ -354,6 +376,7 @@
 				font-size: 0.8em;
 				color: #999;
 			}
+
 			.button, .button:hover {
 				background-color: $color-cld-blue;
 			}
@@ -384,6 +407,7 @@
 				width: 100%;
 				box-sizing: border-box;
 				padding: 0 10px;
+
 				&.cld-ui-accordion, &.cld-ui-preview {
 					width: 450px;
 				}
@@ -405,7 +429,7 @@
 					}
 				}
 				@media only screen and (max-width: $size-medium) {
-					&.cld-ui-preview{
+					&.cld-ui-preview {
 						display: none;
 					}
 				}
@@ -426,6 +450,7 @@
 			padding: 7px;
 			border-radius: 5px;
 			border: 1px solid $color-cld-grey-blue;
+
 			&-wrapper {
 				position: relative;
 			}
@@ -482,6 +507,7 @@
 			@media only screen and (max-width: $size-medium) {
 				display: flex;
 			}
+
 			&-tab {
 
 				list-style: none;
@@ -588,6 +614,7 @@
 				margin: 0;
 				font-size: inherit;
 				color: inherit;
+
 				&.left {
 					margin-left: 0;
 					margin-right: 0.4rem;
@@ -983,17 +1010,20 @@
 		@media only screen and (min-width: $size-small) {
 			flex-direction: row;
 		}
-		.cld-ui-title{
+
+		.cld-ui-title {
 			h2 {
 				margin: 0;
 			}
 		}
-		.cld-info-icon{
+
+		.cld-info-icon {
 			width: 120px;
 			text-align: center;
 			vertical-align: center;
 
 		}
+
 		img,
 		a.button {
 			align-self: center;

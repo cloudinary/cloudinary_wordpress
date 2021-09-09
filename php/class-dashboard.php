@@ -31,6 +31,67 @@ class Dashboard {
 		add_filter( 'cloudinary_admin_pages', array( $this, 'register_settings' ) );
 	}
 
+	protected function plan_details() {
+
+		$connect = $this->plugin->get_component( 'connect' );
+
+		$details = array(
+			'type'  => 'panel',
+			'title' => __( 'Plan details', 'cloudinary' ),
+			array(
+				'type' => 'row',
+				array(
+					'type' => 'column',
+					array(
+						'type'    => 'html',
+						'content' => __( 'Icon', 'cloudinary' ),
+					),
+				),
+				array(
+					'type' => 'column',
+					array(
+						'type'    => 'html',
+						'content' => __( 'Icon', 'cloudinary' ),
+					),
+				),
+				array(
+					'type' => 'column',
+					array(
+						'type'    => 'html',
+						'content' => __( 'Icon', 'cloudinary' ),
+					),
+				),
+			),
+			array(
+				'type' => 'row',
+				array(
+					'type' => 'column',
+					array(
+						'type'    => 'html',
+						'content' => __( 'Icon', 'cloudinary' ),
+					),
+				),
+				array(
+					'type' => 'column',
+					array(
+						'type'    => 'html',
+						'content' => __( 'Icon', 'cloudinary' ),
+					),
+				),
+				array(
+					'type' => 'column',
+					array(
+						'type'    => 'html',
+						'content' => __( 'Icon', 'cloudinary' ),
+					),
+				),
+			),
+		);
+
+		return $details;
+
+	}
+
 	/**
 	 * Add the settings.
 	 *
@@ -39,6 +100,7 @@ class Dashboard {
 	 * @return array
 	 */
 	public function register_settings( $pages ) {
+		$details            = $this->plan_details();
 		$pages['dashboard'] = array(
 			'page_title'          => __( 'Cloudinary Dashboard', 'cloudinary' ),
 			'menu_title'          => __( 'Dashboard', 'cloudinary' ),
@@ -63,7 +125,18 @@ class Dashboard {
 									),
 								),
 								'content'    => __( 'Average percentage of compression', 'cloudinary' ),
+								array(
+									'type'       => 'tag',
+									'element'    => 'div',
+									'content'    => __( '13 Assets unoptimized by your selection', 'cloudinary' ),
+									'attributes' => array(
+										'class' => array(
+											'description',
+										),
+									),
+								),
 							),
+
 						),
 						array(
 							'type' => 'column',
@@ -113,6 +186,7 @@ class Dashboard {
 								'type'  => 'progress_sync',
 								'value' => 'percentage_synced',
 								'text'  => 'total_assets',
+								'color' => '#58c4d8',
 								'poll'  => true,
 							),
 						),
@@ -129,6 +203,7 @@ class Dashboard {
 								'type'  => 'chart_stat',
 								'title' => 'Transformations',
 								'stat'  => 'transformations',
+
 							),
 						),
 						array(
@@ -137,6 +212,7 @@ class Dashboard {
 								'type'  => 'chart_stat',
 								'title' => 'Bandwidth',
 								'stat'  => 'bandwidth',
+								'color' => '#58c4d8',
 							),
 						),
 						array(
@@ -145,6 +221,7 @@ class Dashboard {
 								'type'  => 'chart_stat',
 								'title' => 'Storage',
 								'stat'  => 'storage',
+								'color' => '#ec4c4f',
 							),
 						),
 					),
@@ -153,52 +230,7 @@ class Dashboard {
 					'type'  => 'panel',
 					'title' => __( 'Plan details', 'cloudinary' ),
 					array(
-						'type' => 'row',
-						array(
-							'type' => 'column',
-							array(
-								'type'    => 'html',
-								'content' => __( 'Icon', 'cloudinary' ),
-							),
-						),
-						array(
-							'type' => 'column',
-							array(
-								'type'    => 'html',
-								'content' => __( 'Icon', 'cloudinary' ),
-							),
-						),
-						array(
-							'type' => 'column',
-							array(
-								'type'    => 'html',
-								'content' => __( 'Icon', 'cloudinary' ),
-							),
-						),
-					),
-					array(
-						'type' => 'row',
-						array(
-							'type' => 'column',
-							array(
-								'type'    => 'html',
-								'content' => __( 'Icon', 'cloudinary' ),
-							),
-						),
-						array(
-							'type' => 'column',
-							array(
-								'type'    => 'html',
-								'content' => __( 'Icon', 'cloudinary' ),
-							),
-						),
-						array(
-							'type' => 'column',
-							array(
-								'type'    => 'html',
-								'content' => __( 'Icon', 'cloudinary' ),
-							),
-						),
+						'type' => 'plan_details',
 					),
 				),
 			),

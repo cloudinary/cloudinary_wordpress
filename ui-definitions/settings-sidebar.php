@@ -56,8 +56,8 @@ $settings = array(
 		'description' => __( '40% Optimized', 'cloudinary' ),
 		'collapsible' => 'closed',
 		array(
-			'type'    => 'html',
-			'content' => __( 'Some stuff', 'cloudinary' ),
+			'type'  => 'opt_level',
+			'title' => __( 'Optimized Images', 'cloudinary' ),
 		),
 	),
 	array(
@@ -66,8 +66,17 @@ $settings = array(
 		'description' => __( '1 Active extension', 'cloudinary' ),
 		'collapsible' => 'closed',
 		array(
-			'type'    => 'html',
-			'content' => __( 'Some stuff', 'cloudinary' ),
+			'type'  => 'info_box',
+			'icon'  => $this->dir_url . 'css/images/cloud.svg',
+			'title' => __( 'Cloudinary', 'cloudinary' ),
+			'text'  => __(
+				'Cloudinary\'s digital asset management solution bridges the gap between asset management and delivery, enabling creative.',
+				'cloudinary'
+			),
+
+			'link_text' => 'Active',
+			'url'       => '#',
+			
 		),
 	),
 );
