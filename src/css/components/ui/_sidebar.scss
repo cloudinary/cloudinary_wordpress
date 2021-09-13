@@ -1,0 +1,29 @@
+// Sidebar.
+&-optimisation {
+	margin-bottom: 0.4em;
+
+	&-item {
+		color: $color-cld-blue;
+		&:hover{
+			color: $color-cld-dark-blue;
+		}
+
+		&-active {
+			color: $color-success;
+			font-size: 8px;
+			font-weight: bold;
+			.dashicons {
+				line-height: 1.8em;
+				font-size: 1.2em;
+			}
+		}
+
+	}
+}
+&-ui-sidebar{
+	.cld-ui-title {
+		h2 {
+			font-size: 12px;
+		}
+	}
+}

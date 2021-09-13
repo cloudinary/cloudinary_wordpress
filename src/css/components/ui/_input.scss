@@ -1,0 +1,39 @@
+// Inputs for forms etc.
+@mixin input {
+
+	margin: 1.8rem 0;
+	display: block;
+	font-size: 9.5px;
+	&-label {
+		font-weight: 700;
+		display: block;
+		margin-bottom: 8px;
+		&-link{
+			font-size: 9.5px;
+			margin-left: 8px;
+			color: $color-cld-blue;
+			&:hover{
+				color: $color-cld-dark-blue;
+			}
+		}
+	}
+}
+
+&-input {
+	@include input;
+
+	@import "controls/text";
+	@import "controls/select";
+	@import "controls/on-off";
+	@import "controls/icon-toggle";
+
+	.prefixed {
+		width: 40%;
+		margin-left: 6px;
+	}
+
+	.suffixed {
+		width: 40%;
+		margin-right: 6px;
+	}
+}

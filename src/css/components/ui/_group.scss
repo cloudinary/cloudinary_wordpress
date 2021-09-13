@@ -1,0 +1,32 @@
+// Group component.
+&-group {
+	.cld-group .cld-group {
+		padding-left: 4px;
+	}
+
+	hr {
+		border-top: 1px solid $color-light-grey;
+		margin: 1.5rem 0;
+		clear: both;
+	}
+
+	.cld-group .cld-group hr {
+		display: none;
+	}
+
+	&-heading {
+		display: flex;
+		justify-content: space-between;
+
+		h3 {
+			font-size: 0.9rem;
+
+			.description {
+				font-size: 0.7rem;
+				margin-left: 0.7em;
+				font-weight: normal;
+			}
+		}
+	}
+
+}
