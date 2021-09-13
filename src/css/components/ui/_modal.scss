@@ -1,0 +1,115 @@
+&-modal {
+	visibility: hidden;
+	background-color: rgba(0, 0, 0, 0.8);
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	top: 0;
+	z-index: 10000;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	align-content: center;
+	align-items: center;
+	opacity: 0;
+	transition: opacity 0.1s;
+
+	.modal-uninstall{
+		display: none;
+	}
+	&-box {
+		background-color: #fff;
+		width: 263px;
+		position: relative;
+		margin: 0 auto;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		padding: 25px;
+		font-size: 10.5px;
+		font-weight: 600;
+		box-shadow: 0 2px 14px 0 rgba(0, 0, 0, 0.5);
+		transition: height 1s;
+		.modal-footer {
+			display: flex;
+			flex-direction: row;
+			align-items: stretch;
+			justify-content: flex-end;
+		}
+
+		.more {
+			display: none;
+		}
+
+		input[type="radio"]:checked ~ .more {
+			color: #32373c;
+			display: block;
+			line-height: 2;
+			margin-left: 2em;
+			margin-top: 0.5em;
+		}
+
+		input[type=radio]:checked {
+			border: 1px solid $color-cld-blue;
+
+			&::before {
+				content: "";
+				border-radius: 50%;
+				width: .5rem;
+				height: .5rem;
+				margin: .1875rem;
+				background-color: $color-cld-blue;
+				line-height: 1.14285714;
+				@media screen and (max-width: 782px) {
+					vertical-align: middle;
+					width: .5625rem;
+					height: .5625rem;
+					margin: .4375rem;
+					line-height: .76190476;
+				}
+			}
+		}
+
+		input[type="radio"]:focus {
+			border-color: $color-cld-blue;
+			box-shadow: 0 0 0 1px $color-cld-blue;
+			outline: 2px solid transparent;
+		}
+
+		input[type="checkbox"] ~ label {
+			margin-left: .25em;
+		}
+
+		textarea {
+			resize: none;
+			width: 100%;
+			font-size: inherit;
+		}
+
+		ul {
+			margin-bottom: 21px;
+		}
+
+		p {
+			display: flex;
+			margin: 0 0 12px;
+			font-size: 10.5px;
+		}
+
+		.button {
+			margin: 22px 0 0 10px;
+			padding: 4px 14px;
+			background-color: $color-blue-grey;
+			color: black;
+			font-size: 9.5px;
+			font-weight: bold;
+			border: 0;
+
+			&.button-primary {
+				background-color: $color-cld-blue;
+				color: $color-white;
+			}
+		}
+	}
+}

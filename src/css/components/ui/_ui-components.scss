@@ -1,0 +1,71 @@
+// UI sub components.
+&-ui {
+	&-suffix {
+		display: inline-block;
+		padding: 4px 6px;
+		background-color: #e8e8e8;
+		color: #999;
+		line-height: 1.7em;
+		margin-left: 13px;
+		border-radius: 4px;
+		font-size: 8px;
+
+	}
+
+	&-sidebar, &-preview {
+		width: 600px;
+
+		.cld-ui-header {
+			margin-top: -1px;
+		}
+
+		.cld-ui-header:first-child {
+			margin-top: 13px;
+		}
+	}
+
+	&-collapse {
+		align-self: center;
+		padding: 0 0.45rem;
+		cursor: pointer;
+	}
+
+	&-title {
+		text-transform: capitalize;
+		font-size: 10.5px;
+
+		h2 {
+			font-size: 13px;
+			font-weight: bold;
+			&.has-description {
+				margin: 0;
+			}
+		}
+
+
+		&.collapsible {
+			cursor: pointer;
+		}
+	}
+
+	&-wrap,
+	&-conditional {
+		.closed {
+			display: none;
+		}
+	}
+
+	&-wrap {
+		.description {
+			color: $color-cld-description;
+		}
+
+		.button, .button:hover {
+			background-color: $color-cld-blue;
+			font-size: 9.5px;
+			font-weight: bold;
+			padding: 0 14px;
+		}
+
+	}
+}

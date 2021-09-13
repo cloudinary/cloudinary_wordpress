@@ -1,0 +1,19 @@
+// Text : Number : Textarea.
+.regular-text,
+.regular-number {
+	border: 1px solid #d0d0d0;
+	border-radius: 3px;
+	padding: 0.1rem 0.5rem;
+	width: 100%;
+	font-size: 9.5px;
+	font-weight: 600;
+}
+
+.regular-text-small,
+.regular-number-small {
+	width: 40%;
+}
+
+.regular-number {
+	width: 100px;
+}
