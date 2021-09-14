@@ -15,10 +15,10 @@ const Deactivate = {
 	triggers: document.getElementsByClassName( 'cld-deactivate' ),
 	// The reasons.
 	options: document.querySelectorAll(
-		'.cloudinary-deactivation input[type="radio"]:checked'
+		'.cloudinary-deactivation .reasons input[type="radio"]'
 	),
-	//report: document.getElementById( 'cld-report' ),
-	//contact: document.getElementById( 'cld-contact' ).parentNode,
+	report: document.getElementById( 'cld-report' ),
+	contact: document.getElementById( 'cld-contact' ),
 	// The feedback submit button.
 	submitButton: document.querySelector(
 		'.cloudinary-deactivation .button-primary'
@@ -99,27 +99,29 @@ const Deactivate = {
 		} );
 
 		// Allowing Cloudinary contact should include the System Report.
-		/*context.report.addEventListener( 'change', function () {
-		 if ( context.report.checked ) {
-		 context.contact.removeAttribute( 'style' );
-		 } else {
-		 context.contact.style.display = 'none';
-		 }
-		 } );*/
+		if ( context.contact ) {
+			context.report.addEventListener( 'change', function () {
+				if ( context.report.checked ) {
+					context.contact.parentNode.removeAttribute( 'style' );
+				} else {
+					context.contact.parentNode.style.display = 'none';
+				}
+			} );
+		}
 
 		// Add event listener to submit the feedback.
 		context.submitButton.addEventListener( 'click', function() {
 			const option = document.querySelector(
-				'.cloudinary-deactivation input[name="option"]:checked' );
+				'.cloudinary-deactivation .data input[name="option"]:checked' );
 
-			if ( 'uninstall' === option.value ) {
+			if ( option && 'uninstall' === option.value ) {
 				context.modalBody.style.display = 'none';
 				context.modalFooter.style.display = 'none';
 				context.modalUninstall.style.display = 'block';
 
 				context.uninstall();
-			} else{
-				window.location.href = context.deactivationUrl;
+			} else {
+				context.submit( option.value );
 			}
 		} );
 	},
@@ -134,15 +136,16 @@ const Deactivate = {
 	uninstall() {
 
 	},
-	submit() {
+	submit( dataHandling = '' ) {
 		wp.ajax
 			.send( {
 				url: CLD_Deactivate.endpoint,
 				data: {
-					reason: context.reason,
-					more: context.more?.value,
-					//report: context.report.checked,
-					//contact: context.contact.checked,
+					reason: this.reason,
+					more: this.more?.value,
+					report: this.report.checked,
+					contact: this.contact.checked,
+					dataHandling
 				},
 				beforeSend( request ) {
 					request.setRequestHeader(
@@ -152,7 +155,7 @@ const Deactivate = {
 				},
 			} )
 			.always( function() {
-				window.location.href = context.deactivationUrl;
+				// window.location.href = context.deactivationUrl;
 			} );
 	},
 	/**
