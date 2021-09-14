@@ -50,7 +50,7 @@ const CacheManage = {
 		loaderTd.colSpan = 2;
 		loaderTd.className = 'cld-loading';
 		loader.appendChild( loaderTd );
-		const master = document.getElementById( cachePoint.dataset.slug );
+		const master = document.getElementById( cachePoint.dataset.browser );
 		const search = document.getElementById(
 			cachePoint.dataset.slug + '_search'
 		);
@@ -64,7 +64,7 @@ const CacheManage = {
 		apply.style.float = 'right';
 		apply.style.marginLeft = '6px';
 
-		controller.addEventListener( 'change', ( ev ) => {
+		master.addEventListener( 'change', ( ev ) => {
 			this._handleManager( ID );
 		} );
 		window.addEventListener( 'CacheToggle', ( ev ) => {
@@ -114,7 +114,7 @@ const CacheManage = {
 		const cachePoint = this.getCachePoint( ID );
 		let open = false;
 		if ( cachePoint ) {
-			open = cachePoint.controller.checked && cachePoint.master.checked;
+			open = cachePoint.master.checked;
 		}
 		return open;
 	},
@@ -160,8 +160,10 @@ const CacheManage = {
 			method: 'POST',
 		} ).then( ( result ) => {
 			cachePoint.removeChild( cachePoint.loader );
-			this._buildList( cachePoint, result.items );
-			this._buildNav( cachePoint, result );
+			if ( result.items ) {
+				this._buildList( cachePoint, result.items );
+				this._buildNav( cachePoint, result );
+			}
 			const masters = cachePoint.querySelectorAll( '[data-master]' );
 			OnOff.bind( masters );
 			cachePoint.loaded = true;
