@@ -77,7 +77,7 @@ class Folder_Table extends Table {
 					'type'        => 'on_off',
 					'default'     => 'on',
 					'description' => $this->setting->get_param( 'title', '' ),
-					'master'      => $this->setting->get_param( 'master', array() ),
+					'main'        => $this->setting->get_param( 'main', array() ),
 				),
 			),
 			'apply_changes' => array(
@@ -153,7 +153,7 @@ class Folder_Table extends Table {
 						$slug => true,
 					),
 					array(
-						'element'    => 'table',
+						'element' => 'table',
 
 						'attributes' => array(
 							'class' => array(
@@ -260,7 +260,7 @@ class Folder_Table extends Table {
 					'default'   => 'on',
 					'base_path' => $row['src_path'],
 					'action'    => 'all_selector',
-					'master'    => array(
+					'main'      => array(
 						$this->get_title_slug(),
 					),
 				),

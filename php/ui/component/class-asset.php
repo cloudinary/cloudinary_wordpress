@@ -132,7 +132,7 @@ class Asset extends Panel {
 				<div class="cld-input cld-input-on-off">
 					<label class="cld-input-on-off-control">
 						<input type="hidden" name="cloudinary_main_cache_page[plugin_files_title]" value="off">
-						<input type="checkbox" class="cld-ui-input cld-ui-input" name="cloudinary_main_cache_page[plugin_files_title]" id="plugin_files_title" value="on" data-controller="plugin_files_title" checked="checked" data-master="[&quot;cache_all_plugins&quot;]" data-disabled="false">
+						<input type="checkbox" class="cld-ui-input cld-ui-input" name="cloudinary_main_cache_page[plugin_files_title]" id="plugin_files_title" value="on" data-controller="plugin_files_title" checked="checked" data-main="[&quot;cache_all_plugins&quot;]" data-disabled="false">
 						<span class="cld-input-on-off-control-slider" style="">
 							<i class="icon-on dashicons ">
 
@@ -158,7 +158,7 @@ class Asset extends Panel {
 				<div class="cld-input cld-input-on-off">
 					<label class="cld-input-on-off-control">
 						<input type="hidden" name="cloudinary_main_cache_page[query-monitorquery-monitor.php]" value="off">
-						<input type="checkbox" class="cld-ui-input cld-ui-input" data-bind-trigger="query-monitorquery-monitor.php" name="cloudinary_main_cache_page[query-monitorquery-monitor.php]" id="query-monitorquery-monitor.php" value="on" data-controller="query-monitorquery-monitor.php" checked="checked" data-master="[&quot;plugin_files_title&quot;]" data-disabled="false">
+						<input type="checkbox" class="cld-ui-input cld-ui-input" data-bind-trigger="query-monitorquery-monitor.php" name="cloudinary_main_cache_page[query-monitorquery-monitor.php]" id="query-monitorquery-monitor.php" value="on" data-controller="query-monitorquery-monitor.php" checked="checked" data-main="[&quot;plugin_files_title&quot;]" data-disabled="false">
 						<span class="cld-input-on-off-control-slider" style="">
 							<i class="icon-on dashicons ">
 

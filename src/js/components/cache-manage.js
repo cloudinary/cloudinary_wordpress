@@ -50,7 +50,7 @@ const CacheManage = {
 		loaderTd.colSpan = 2;
 		loaderTd.className = 'cld-loading';
 		loader.appendChild( loaderTd );
-		const master = document.getElementById( cachePoint.dataset.slug );
+		const main = document.getElementById( cachePoint.dataset.slug );
 		const search = document.getElementById(
 			cachePoint.dataset.slug + '_search'
 		);
@@ -91,7 +91,7 @@ const CacheManage = {
 			enable: [],
 			delete: [],
 		};
-		cachePoint.master = master;
+		cachePoint.main = main;
 		cachePoint.search = search;
 		cachePoint.controller = controller;
 		cachePoint.viewer = cachePoint.parentNode.parentNode;
@@ -114,7 +114,7 @@ const CacheManage = {
 		const cachePoint = this.getCachePoint( ID );
 		let open = false;
 		if ( cachePoint ) {
-			open = cachePoint.controller.checked && cachePoint.master.checked;
+			open = cachePoint.controller.checked && cachePoint.main.checked;
 		}
 		return open;
 	},
@@ -162,8 +162,8 @@ const CacheManage = {
 			cachePoint.removeChild( cachePoint.loader );
 			this._buildList( cachePoint, result.items );
 			this._buildNav( cachePoint, result );
-			const masters = cachePoint.querySelectorAll( '[data-master]' );
-			OnOff.bind( masters );
+			const mains = cachePoint.querySelectorAll( '[data-main]' );
+			OnOff.bind( mains );
 			cachePoint.loaded = true;
 		} );
 	},
@@ -463,13 +463,13 @@ const CacheManage = {
 	},
 	_getDeleter( cachePoint, file, item ) {
 		const checkbox = document.createElement( 'input' );
-		const masters = [ cachePoint.dataset.slug + '_deleter' ];
+		const mains = [ cachePoint.dataset.slug + '_deleter' ];
 		const index = this._getListIndex( cachePoint, item.ID, 'delete' );
 
 		checkbox.type = 'checkbox';
 		checkbox.value = item.ID;
 		checkbox.id = item.key;
-		checkbox.dataset.master = JSON.stringify( masters );
+		checkbox.dataset.main = JSON.stringify( mains );
 		if ( -1 < index ) {
 			checkbox.checked = true;
 			file.style.textDecoration = 'line-through';
@@ -503,7 +503,7 @@ const CacheManage = {
 		const wrap = document.createElement( 'label' );
 		const checkbox = document.createElement( 'input' );
 		const slider = document.createElement( 'span' );
-		const masters = [ cachePoint.dataset.slug + '_selector' ];
+		const mains = [ cachePoint.dataset.slug + '_selector' ];
 		const index = this._getListIndex( cachePoint, item.ID, 'disable' );
 		column.style.textAlign = 'right';
 		wrap.className = 'cld-input-on-off-control mini';

@@ -1134,10 +1134,10 @@ class Assets extends Settings_Component {
 		$plugins = get_plugins();
 		$active  = wp_get_active_and_valid_plugins();
 		$rows    = array(
-			'slug'   => 'paths',
-			'type'   => 'asset',
-			'title'  => __( 'Plugin', 'cloudinary' ),
-			'master' => array(
+			'slug'  => 'paths',
+			'type'  => 'asset',
+			'title' => __( 'Plugin', 'cloudinary' ),
+			'main'  => array(
 				'cache_all_plugins',
 			),
 		);
@@ -1190,7 +1190,7 @@ class Assets extends Settings_Component {
 				'slug'        => 'enabled',
 				'description' => __( 'Deliver assets from all plugin folders', 'cloudinary' ),
 				'default'     => 'off',
-				'master'      => array(
+				'main'        => array(
 					'enable',
 				),
 			),
@@ -1218,10 +1218,10 @@ class Assets extends Settings_Component {
 			$themes[] = $theme->parent();
 		}
 		$rows = array(
-			'slug'   => 'paths',
-			'type'   => 'asset',
-			'title'  => __( 'Theme', 'cloudinary' ),
-			'master' => array(
+			'slug'  => 'paths',
+			'type'  => 'asset',
+			'title' => __( 'Theme', 'cloudinary' ),
+			'main'  => array(
 				'cache_all_themes',
 			),
 		);
@@ -1269,7 +1269,7 @@ class Assets extends Settings_Component {
 				'slug'        => 'enabled',
 				'description' => __( 'Deliver all assets from active theme.', 'cloudinary' ),
 				'default'     => 'off',
-				'master'      => array(
+				'main'        => array(
 					'enable',
 				),
 			),
@@ -1290,10 +1290,10 @@ class Assets extends Settings_Component {
 	protected function get_wp_table() {
 
 		$rows    = array(
-			'slug'   => 'paths',
-			'type'   => 'asset',
-			'title'  => __( 'WordPress', 'cloudinary' ),
-			'master' => array(
+			'slug'  => 'paths',
+			'type'  => 'asset',
+			'title' => __( 'WordPress', 'cloudinary' ),
+			'main'  => array(
 				'cache_all_wp',
 			),
 		);
@@ -1344,7 +1344,7 @@ class Assets extends Settings_Component {
 				'slug'        => 'enabled',
 				'description' => __( 'Deliver all assets from WordPress core.', 'cloudinary' ),
 				'default'     => 'off',
-				'master'      => array(
+				'main'        => array(
 					'enable',
 				),
 			),
@@ -1366,10 +1366,10 @@ class Assets extends Settings_Component {
 
 		$uploads = wp_get_upload_dir();
 		$rows    = array(
-			'slug'   => 'paths',
-			'type'   => 'asset',
-			'title'  => __( 'Content', 'cloudinary' ),
-			'master' => array(
+			'slug'  => 'paths',
+			'type'  => 'asset',
+			'title' => __( 'Content', 'cloudinary' ),
+			'main'  => array(
 				'cache_all_content',
 			),
 		);
@@ -1411,7 +1411,7 @@ class Assets extends Settings_Component {
 				'slug'        => 'enabled',
 				'description' => __( 'Deliver all content assets from WordPress Media Library.', 'cloudinary' ),
 				'default'     => 'off',
-				'master'      => array(
+				'main'        => array(
 					'enable',
 				),
 			),

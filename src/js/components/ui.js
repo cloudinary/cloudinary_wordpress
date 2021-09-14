@@ -17,7 +17,7 @@ const UI = {
 		const aliases = context.querySelectorAll( '[data-for]' );
 		const tooltips = context.querySelectorAll( '[data-tooltip]' );
 		const triggers = context.querySelectorAll( '[data-bind-trigger]' );
-		const masters = context.querySelectorAll( '[data-master]' );
+		const mains = context.querySelectorAll( '[data-main]' );
 		const files = context.querySelectorAll( '[data-file]' );
 		const autoSuffix = context.querySelectorAll( '[data-auto-suffix]' );
 		const self = this;
@@ -26,7 +26,7 @@ const UI = {
 		States.init();
 
 		// Bind on offs.
-		OnOff.bind( masters );
+		OnOff.bind( mains );
 		autoSuffix.forEach( ( input ) => this._autoSuffix( input ) );
 		triggers.forEach( ( input ) => this._trigger( input ) );
 		toggles.forEach( ( toggle ) => this._toggle( toggle ) );
