@@ -7,6 +7,8 @@
 
 namespace Cloudinary;
 
+use Cloudinary\Media\Gallery;
+use Cloudinary\Media\Global_Transformations;
 use WP_REST_Server;
 use WP_REST_Request;
 use WP_Error;
@@ -37,6 +39,13 @@ class Deactivation {
 	protected $plugin;
 
 	/**
+	 * Cleaning data key.
+	 *
+	 * @var string
+	 */
+	const CLEANING_KEY = 'cloudinary_cleaning_up';
+
+	/**
 	 * Initiate the plugin deactivation.
 	 *
 	 * @param Plugin $plugin Instance of the plugin.
@@ -46,6 +55,8 @@ class Deactivation {
 
 		add_action( 'init', array( $this, 'load_hooks' ) );
 		add_action( 'current_screen', array( $this, 'maybe_load_hooks' ) );
+
+		add_filter( 'plugin_action_links_' . $this->plugin->plugin_file, array( $this, 'tag_deactivate' ) );
 	}
 
 	/**
@@ -327,10 +338,7 @@ class Deactivation {
 
 		$report = $this->plugin->get_component( 'report' )->get_report_data();
 		$temp   = get_temp_dir() . $report['filename'];
-		file_put_contents( // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_file_put_contents
-			$temp,
-			wp_json_encode( $report['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES )
-		);
+		file_put_contents( $temp, wp_json_encode( $report['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_file_put_contents
 		$args = array(
 			'file'          => $temp,
 			'public_id'     => $report['filename'],
@@ -360,11 +368,11 @@ class Deactivation {
 		}
 
 		if (
-		! in_array(
-			$reason,
-			array_column( $this->get_reasons(), 'id' ),
-			true
-		)
+			! in_array(
+				$reason,
+				array_column( $this->get_reasons(), 'id' ),
+				true
+			)
 		) {
 			return rest_ensure_response( 418 );
 		}
@@ -386,10 +394,133 @@ class Deactivation {
 
 		$url = add_query_arg( $args, CLOUDINARY_ENDPOINTS_DEACTIVATION );
 
-		$response = wp_safe_remote_get( $url );
+		// $response = wp_safe_remote_get( $url );
+		$response['response']['code'] = 200;
+
+		if ( 'uninstall' === $data ) {
+			$this->cleanup();
+			deactivate_plugins( $this->plugin->plugin_file );
+		}
 
 		return rest_ensure_response(
 			wp_remote_retrieve_response_code( $response )
 		);
+	}
+
+	/**
+	 * Add a deactivate class to the deactivate link to trigger a warning if storage is only on Cloudinary.
+	 *
+	 * @param array $actions The actions for the plugin.
+	 *
+	 * @return array
+	 */
+	public function tag_deactivate( $actions ) {
+		if ( get_option( self::CLEANING_KEY ) ) {
+			$actions['deactivate'] = __( 'Data clean up. The plugin will self deactivate once complete. ', 'cloudinary' );
+		}
+
+		return $actions;
+	}
+
+	/**
+	 * Cleanup Cloudinary data.
+	 */
+	protected function cleanup() {
+		add_option( self::CLEANING_KEY, true, '', false );
+		$this->cleanup_post_meta();
+		$this->cleanup_term_meta();
+		$this->cleanup_post_type();
+		$this->cleanup_options();
+	}
+
+	/**
+	 * Cleanup Cloudinary's user data related.
+	 */
+	protected function cleanup_user_data() {
+		$user_meta_keys = array(
+			'_cld_ui_state',
+		);
+
+		foreach ( $user_meta_keys as $key ) {
+			// Inspired on https://developer.wordpress.org/reference/functions/delete_post_meta_by_key/.
+			delete_metadata( 'user', null, $key, '', true );
+		}
+	}
+
+	/**
+	 * Cleanup Cloudinary's post meta related.
+	 */
+	protected function cleanup_post_meta() {
+		$post_meta_keys = array_merge(
+			Sync::META_KEYS,
+			array(
+				Global_Transformations::META_FEATURED_IMAGE_KEY,
+				Global_Transformations::META_ORDER_KEY . '_terms',
+				Delivery::META_CACHE_KEY,
+			)
+		);
+
+		foreach ( $post_meta_keys as $key ) {
+			delete_post_meta_by_key( $key );
+		}
+	}
+
+	/**
+	 * Cleanup Cloudinary's term meta related.
+	 */
+	protected function cleanup_term_meta() {
+		$term_meta_keys = array(
+			'cloudinary_transformations_image_freeform',
+			'cloudinary_transformations_video_freeform',
+		);
+
+		foreach ( $term_meta_keys as $key ) {
+			// Inspired on https://developer.wordpress.org/reference/functions/delete_post_meta_by_key/.
+			delete_metadata( 'term', null, $key, '', true );
+		}
+	}
+
+	/**
+	 * Cleanup Cloudinary's post types related.
+	 */
+	protected function cleanup_post_type() {
+		global $wpdb;
+
+		$post_types = array(
+			Assets::POST_TYPE_SLUG,
+		);
+
+		foreach ( $post_types as $type ) {
+			$wpdb->delete(
+				$wpdb->posts,
+				array(
+					'post_type' => $type,
+				)
+			);
+		}
+	}
+
+	/**
+	 * Cleanup Cloudinary's options related.
+	 */
+	protected function cleanup_options() {
+		$option_keys = array_merge(
+			Connect::META_KEYS,
+			array(
+				Sync::SYNC_MEDIA,
+				'cloudinary_setup',
+				'cloudinary_' . Media::MEDIA_SETTINGS_SLUG,
+				'cloudinary_main_cache_page',
+				Gallery::GALLERY_KEY,
+				'cloudinary_' . Settings::SETTINGS_DATA,
+				'_cld_disable_http_upload',
+				self::CLEANING_KEY,
+			)
+		);
+
+		foreach ( $option_keys as $key ) {
+			delete_option( $key );
+			delete_transient( $key );
+		}
 	}
 }
