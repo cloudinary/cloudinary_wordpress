@@ -214,10 +214,11 @@ class Lazy_Load extends Delivery_Feature {
 					'priority'    => 9,
 					'option_name' => 'media_display',
 					array(
-						'type'        => 'on_off',
-						'description' => __( 'Enable lazy loading', 'cloudinary' ),
-						'slug'        => 'use_lazy_load',
-						'default'     => 'on',
+						'type'               => 'on_off',
+						'description'        => __( 'Enable lazy loading', 'cloudinary' ),
+						'optimisation_title' => __( 'Lazy loading', 'cloudinary' ),
+						'slug'               => 'use_lazy_load',
+						'default'            => 'on',
 					),
 					array(
 						'type'      => 'group',
@@ -237,14 +238,11 @@ class Lazy_Load extends Delivery_Feature {
 							'default'    => '1000px',
 						),
 						array(
-							'type'      => 'radio',
-							'title'     => __( 'Placeholder generation', 'cloudinary' ),
-							'slug'      => 'lazy_placeholder',
-							'default'   => 'blur',
-							'condition' => array(
-								'enable_breakpoints' => true,
-							),
-							'options'   => array(
+							'type'    => 'radio',
+							'title'   => __( 'Placeholder generation', 'cloudinary' ),
+							'slug'    => 'lazy_placeholder',
+							'default' => 'blur',
+							'options' => array(
 								'blur'        => __( 'Blur', 'cloudinary' ),
 								'pixelate'    => __( 'Pixelate', 'cloudinary' ),
 								'vectorize'   => __( 'Vectorize', 'cloudinary' ),

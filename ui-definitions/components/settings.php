@@ -24,7 +24,7 @@ $admin->render_notices();
 			?>
 		</div>
 		<?php if ( ! empty( $connected ) && ! empty( $page['sidebar'] ) ) : ?>
-			<div class="cld-column cld-ui-accordion">
+			<div class="cld-column cld-ui-sidebar">
 				<?php
 				$def     = $cloudinary->settings->get_param( 'sidebar' );
 				$sidebar = $this->init_components( $def, 'sidebar' );

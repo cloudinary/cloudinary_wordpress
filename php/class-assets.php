@@ -1043,8 +1043,10 @@ class Assets extends Settings_Component {
 			if ( 'on' === $asset->get_value( 'enabled' ) ) {
 				$paths = $asset->get_setting( 'paths' );
 				foreach ( $paths->get_settings() as $path ) {
-					$conf = $path->get_params();
-					self::register_asset_path( trailingslashit( $conf['url'] ), $conf['version'] );
+					if ( 'on' === $path->get_parent( 2 )->_enabled ) {
+						$conf = $path->get_params();
+						self::register_asset_path( trailingslashit( $conf['url'] ), $conf['version'] );
+					}
 				}
 			}
 		}
@@ -1077,15 +1079,16 @@ class Assets extends Settings_Component {
 				),
 			),
 			array(
-				'type'         => 'on_off',
-				'slug'         => 'enable',
-				'title'        => __( 'Full CDN', 'cloudinary' ),
-				'tooltip_text' => __(
+				'type'               => 'on_off',
+				'slug'               => 'enable',
+				'title'              => __( 'Full CDN', 'cloudinary' ),
+				'optimisation_title' => __( 'Non-media library files optimisation', 'cloudinary' ),
+				'tooltip_text'       => __(
 					'Deliver all assets from Cloudinary.',
 					'cloudinary'
 				),
-				'description'  => __( 'Enable caching site assets.', 'cloudinary' ),
-				'default'      => 'off',
+				'description'        => __( 'Enable caching site assets.', 'cloudinary' ),
+				'default'            => 'off',
 			),
 			array(
 				'type'       => 'button',
@@ -1155,6 +1158,9 @@ class Assets extends Settings_Component {
 				'title'   => $details['Name'],
 				'url'     => dirname( $plugin_url ),
 				'version' => $details['Version'],
+				'master'  => array(
+					'plugins.enabled',
+				),
 			);
 		}
 
@@ -1235,6 +1241,9 @@ class Assets extends Settings_Component {
 				'title'   => $theme->get( 'Name' ),
 				'url'     => $theme->get_stylesheet_directory_uri(),
 				'version' => $theme->get( 'Version' ),
+				'master'  => array(
+					'themes.enabled',
+				),
 			);
 		}
 
@@ -1311,6 +1320,9 @@ class Assets extends Settings_Component {
 			'title'   => __( 'WordPress Includes', 'cloudinary' ),
 			'url'     => includes_url(),
 			'version' => $version,
+			'master'  => array(
+				'wordpress.enabled',
+			),
 		);
 
 		return $rows;
@@ -1378,6 +1390,9 @@ class Assets extends Settings_Component {
 			'title'   => __( 'Uploads', 'cloudinary' ),
 			'url'     => $uploads['baseurl'],
 			'version' => 0,
+			'master'  => array(
+				'content.enabled',
+			),
 		);
 
 		return $rows;

@@ -130,7 +130,7 @@ class Line_Stat extends Component {
 	 */
 	protected function title( $struct ) {
 		$struct                          = parent::title( $struct );
-		$struct['content']               .= ': ' . $this->limit_formatted;
+		$struct['content']              .= ': ' . $this->limit_formatted;
 		$struct['attributes']['class'][] = 'cld-progress-header';
 
 		return $struct;

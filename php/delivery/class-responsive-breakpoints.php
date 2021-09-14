@@ -136,7 +136,7 @@ class Responsive_Breakpoints extends Delivery_Feature {
 	 */
 	public function register_settings( $pages ) {
 
-		$pages['responsive']['settings'][0][1][0] = array(
+		$pages['responsive']['settings'][0][2][0] = array(
 			'type'         => 'number',
 			'slug'         => 'pixel_step',
 			'priority'     => 9,
@@ -145,7 +145,7 @@ class Responsive_Breakpoints extends Delivery_Feature {
 			'suffix'       => __( 'px', 'cloudinary' ),
 			'default'      => 100,
 		);
-		$pages['responsive']['settings'][0][1][1] = array(
+		$pages['responsive']['settings'][0][2][1] = array(
 			'type'         => 'select',
 			'slug'         => 'dpr',
 			'priority'     => 8,

@@ -60,31 +60,59 @@ class Plan_Details extends Component {
 	 * @return array
 	 */
 	protected function plan( $struct ) {
-		$data = $this->plugin_settings->get_value('last_usage' );
+		$struct['element']               = 'div';
+		$struct['attributes']['class'][] = 'cld-plan';
 
-		return $this->make_item( __( 'Plan', 'cloudinary' ), $data['plan'], $this->dir_url . 'css/images/cloud.svg', $struct );
+		$data       = $this->plugin_settings->get_value( 'last_usage' );
+		$connection = get_plugin_instance()->get_component( 'connect' );
+		$units      = $connection->get_usage_stat( 'credits', 'limit' );
+		$units_used = $connection->get_usage_stat( 'credits', 'usage' );
+		$extra      = $connection->get_usage_stat( 'credits', 'extra' );
+
+		$struct['children']['plan'] = $this->make_item( __( 'Plan', 'cloudinary' ), $data['plan'], $this->dir_url . 'css/images/star.svg' );
+
+		$usage                             = $units . ' per month / ' . $units_used . ' used';
+		$struct['children']['units']       = $this->make_item( __( 'Plan Units', 'cloudinary' ), $usage, $this->dir_url . 'css/images/units.svg' );
+		$struct['children']['extra_units'] = $this->make_item( __( 'Extra Units', 'cloudinary' ), $extra, $this->dir_url . 'css/images/units-plus.svg' );
+		$struct['children']['requests']    = $this->make_item( __( 'Total Requests', 'cloudinary' ), number_format_i18n( $data['requests'] ), $this->dir_url . 'css/images/requests.svg' );
+		$struct['children']['assets']      = $this->make_item( __( 'Total Assets', 'cloudinary' ), $data['resources'], $this->dir_url . 'css/images/image.svg' );
+
+		return $struct;
 	}
 
-	protected function make_item( $title, $description, $icon, $struct ) {
-		$struct['element'] = 'div';
-
+	/**
+	 * Make an icon item.
+	 *
+	 * @param string $title       The title.
+	 * @param string $description The description.
+	 * @param string $icon        The icon url.
+	 *
+	 * @return array
+	 */
+	protected function make_item( $title, $description, $icon ) {
+		$struct                          = $this->get_part( 'div' );
+		$struct['attributes']['class'][] = 'cld-plan-item';
 		// Icon.
 		$icon_part                      = $this->get_part( 'img' );
 		$icon_part['render']            = true;
 		$icon_part['attributes']['src'] = $icon;
 		$struct['children']['icon']     = $icon_part;
 
+		$content                          = $this->get_part( 'div' );
+		$content['attributes']['class'][] = 'cld-plan-item-content';
 		// Title.
 		$title_part                          = $this->get_part( 'div' );
 		$title_part['attributes']['class'][] = 'description';
 		$title_part['content']               = $title;
-		$struct['children']['title']         = $title_part;
+		$content['children']['title']        = $title_part;
 
-		//Description.
+		// Description.
 		$description_part                          = $this->get_part( 'div' );
 		$description_part['attributes']['class'][] = 'cld-title';
 		$description_part['content']               = $description;
-		$struct['children']['description']         = $description_part;
+		$content['children']['description']        = $description_part;
+
+		$struct['children']['content'] = $content;
 
 		return $struct;
 	}

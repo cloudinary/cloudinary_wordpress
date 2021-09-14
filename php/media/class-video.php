@@ -177,7 +177,7 @@ class Video {
 	public function admin_enqueue_scripts() {
 		$current_screen    = get_current_screen();
 		$requiring_screens = array(
-			'cloudinary_page_media',
+			'cloudinary_page_cloudinary_video_settings',
 			'edit-tags',
 			'term',
 		);

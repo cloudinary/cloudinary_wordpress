@@ -85,10 +85,10 @@ class Opt_Level extends Line_Stat {
 		$link                          = $this->get_part( 'a' );
 		$link['attributes']['class'][] = 'cld-optimisation-item';
 		$link['attributes']['href']    = $this->get_url( $slug );
-		$link['content']               = $setting->get_param( 'title', $setting->get_param( 'description' ) );
+		$link['content']               = $setting->get_param( 'optimisation_title', $setting->get_param( 'title' ) );
 		$row['children']['link']       = $link;
 
-		// Get the status
+		// Get the status.
 		if ( 'on' === $setting->get_value() ) {
 			$row['children']['active'] = $this->get_active_badge();
 		}
@@ -133,11 +133,11 @@ class Opt_Level extends Line_Stat {
 	 */
 	protected function set_texts() {
 
-		$used_percent = $this->used / $this->limit * 100;
+		$used_percent = round( $this->used / $this->limit * 100 );
 		/* translators: %s is the percentage optimised. */
 		$this->used_text = sprintf( '%s optimised', $used_percent . '%' );
 
-		$unused_percent = 100 - $used_percent;
+		$unused_percent = round( 100 - $used_percent );
 		/* translators: %s is the amount available. */
 		$this->avail_text = sprintf( '%s unoptimised', $unused_percent . '%' );
 	}
@@ -146,15 +146,7 @@ class Opt_Level extends Line_Stat {
 	 * Set the usage stats.
 	 */
 	protected function set_stats() {
-
-		$this->limit = count( $this->settings_slugs );
-		$enabled     = 0;
-		foreach ( $this->settings_slugs as $slug ) {
-			if ( 'on' === $this->plugin_settings->get_value( $slug ) ) {
-				$enabled ++;
-			}
-		}
-		$this->used_percent = $enabled / $this->limit * 100;
+		$this->used_percent = $this->calculate_percentage();
 	}
 
 	/**
@@ -169,5 +161,23 @@ class Opt_Level extends Line_Stat {
 		$struct['attributes']['class'][] = 'cld-progress-header';
 
 		return $struct;
+	}
+
+	/**
+	 * Calculate the used percentage.
+	 *
+	 * @return float|int
+	 */
+	public function calculate_percentage() {
+
+		$this->limit = count( $this->settings_slugs );
+		$enabled     = 0;
+		foreach ( $this->settings_slugs as $slug ) {
+			if ( 'on' === $this->plugin_settings->get_value( $slug ) ) {
+				$enabled ++;
+			}
+		}
+
+		return $enabled / $this->limit * 100;
 	}
 }
