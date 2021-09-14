@@ -111,6 +111,11 @@ class Sync implements Setup, Assets {
 	);
 
 	/**
+	 * Holds the Sync Media option key.
+	 */
+	const SYNC_MEDIA = 'cloudinary_sync_media';
+
+	/**
 	 * Push_Sync constructor.
 	 *
 	 * @param Plugin $plugin Global instance of the main plugin.

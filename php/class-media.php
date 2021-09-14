@@ -136,6 +136,13 @@ class Media extends Settings_Component implements Setup {
 	const MEDIA_SETTINGS_SLUG = 'media_display';
 
 	/**
+	 * Holds the Global Video Transformations option key.
+	 *
+	 * @var string
+	 */
+	const GLOBAL_VIDEO_TRANSFORMATIONS = 'cloudinary_global_video_transformations';
+
+	/**
 	 * Media constructor.
 	 *
 	 * @param Plugin $plugin The global plugin instance.
@@ -2440,12 +2447,12 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function upgrade_media_settings() {
 		// Check that transformations is in default (hasn't been saved before).
-		if ( empty( get_option( 'cloudinary_global_video_transformations', null ) ) ) {
+		if ( empty( get_option( self::GLOBAL_VIDEO_TRANSFORMATIONS, null ) ) ) {
 			// Setup default to CLD, since default changed from WP to CLD after 2.0.3.
 			$video = array(
 				'video_player' => 'cld',
 			);
-			update_option( 'cloudinary_global_video_transformations', $video );
+			update_option( self::GLOBAL_VIDEO_TRANSFORMATIONS, $video );
 		}
 	}
 
@@ -2639,7 +2646,7 @@ class Media extends Settings_Component implements Setup {
 		if ( 2.4 === $previous_version ) {
 			// Setup new data from old.
 			$images    = get_option( 'cloudinary_global_transformations', array() );
-			$video     = get_option( 'cloudinary_global_video_transformations', array() );
+			$video     = get_option( self::GLOBAL_VIDEO_TRANSFORMATIONS, array() );
 			$old_media = array_merge( $images, $video );
 			$setting   = $this->settings->get_setting( 'media_display' );
 			// Get the current defaults.

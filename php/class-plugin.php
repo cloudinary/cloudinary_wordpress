@@ -119,6 +119,7 @@ final class Plugin {
 		$this->dir_path      = $location['dir_path'];
 		$this->template_path = $this->dir_path . 'php/templates/';
 		$this->dir_url       = $location['dir_url'];
+		$this->plugin_file   = pathinfo( dirname( CLDN_CORE ), PATHINFO_BASENAME ) . '/' . basename( CLDN_CORE );
 		$this->setup_endpoints();
 		spl_autoload_register( array( $this, 'autoload' ) );
 		$this->register_hooks();

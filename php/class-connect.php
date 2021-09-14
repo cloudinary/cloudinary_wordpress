@@ -729,7 +729,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 				'cloudinary_url' => $cld_url,
 			);
 			// Set auto sync off.
-			$sync = get_option( 'cloudinary_sync_media' );
+			$sync = get_option( Sync::SYNC_MEDIA );
 			if ( empty( $sync ) ) {
 				$sync = array(
 					'auto_sync'         => '',
@@ -737,7 +737,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 				);
 			}
 			$sync['auto_sync'] = 'off';
-			update_option( 'cloudinary_sync_media', $sync );
+			update_option( Sync::SYNC_MEDIA, $sync );
 			delete_option( 'cloudinary_settings_cache' ); // remove the cache.
 		}
 

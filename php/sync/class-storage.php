@@ -492,8 +492,7 @@ class Storage implements Notice {
 			$this->sync->register_sync_type( 'size', $structure );
 
 			// Tag the deactivate button.
-			$plugin_file = pathinfo( dirname( CLDN_CORE ), PATHINFO_BASENAME ) . '/' . basename( CLDN_CORE );
-			add_filter( 'plugin_action_links_' . $plugin_file, array( $this, 'tag_deactivate_link' ) );
+			add_filter( 'plugin_action_links_' . $this->plugin->plugin_file, array( $this, 'tag_deactivate_link' ) );
 			add_filter( 'cloudinary_can_sync_asset', array( $this, 'delay_cld_only' ), 10, 3 );
 		}
 	}
