@@ -70,8 +70,6 @@ class Deactivation {
 		$current_screen = get_current_screen();
 
 		if ( ! empty( $current_screen->base ) && 'plugins' === $current_screen->base ) {
-			add_thickbox();
-
 			add_action( 'admin_head-plugins.php', array( $this, 'markup' ) );
 			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		}
@@ -85,7 +83,7 @@ class Deactivation {
 	protected function get_reasons() {
 		return array(
 			array(
-				'id'   => 'setup_difficult',
+				'id'   => 'difficult_setup',
 				'text' => __( 'Set up is too difficult', 'cloudinary' ),
 			),
 			array(
@@ -93,23 +91,20 @@ class Deactivation {
 				'text' => __( 'Lack of documentation', 'cloudinary' ),
 			),
 			array(
-				'id'   => 'features',
+				'id'   => 'missing_features',
 				'text' => __( 'Not the features I wanted', 'cloudinary' ),
 			),
 			array(
-				'id'   => 'found_better',
+				'id'   => 'different_plugin',
 				'text' => __( 'Found a better plugin', 'cloudinary' ),
-				'more' => true,
 			),
 			array(
-				'id'   => 'incompatible',
+				'id'   => 'compatibility_reason',
 				'text' => __( 'Incompatible with theme or plugin', 'cloudinary' ),
-				'more' => true,
 			),
 			array(
 				'id'   => 'other_reason',
 				'text' => __( 'Other', 'cloudinary' ),
-				'more' => true,
 			),
 		);
 	}
@@ -139,6 +134,17 @@ class Deactivation {
 	 * @return void
 	 */
 	public function markup() {
+		if ( $this->plugin->get_component( 'connect' )->is_connected() ) {
+			$this->render_connected();
+		} else {
+			$this->render_not_connected();
+		}
+	}
+
+	/**
+	 * Renders connected accounts deactivation modal.
+	 */
+	public function render_connected() {
 		$report_label = sprintf(
 		// translators: The System Report link tag.
 			__( 'Share a %s with Cloudinary to help improve the plugin.', 'cloudinary' ),
@@ -157,26 +163,24 @@ class Deactivation {
 					<p>
 						<?php esc_html_e( 'Before you deactivate the plugin, would you quickly give us your reason for doing so?', 'cloudinary' ); ?>
 					</p>
-					<ul>
+					<ul class="reasons">
 						<?php foreach ( $this->get_reasons() as $reason ) : ?>
 							<li>
 								<input type="radio" name="reason" value="<?php echo esc_attr( $reason['id'] ); ?>" id="reason-<?php echo esc_attr( $reason['id'] ); ?>"/>
 								<label for="reason-<?php echo esc_attr( $reason['id'] ); ?>">
 									<?php echo esc_html( $reason['text'] ); ?>
 								</label>
-								<?php if ( ! empty( $reason['more'] ) ) : ?>
-									<label for="more-<?php echo esc_attr( $reason['id'] ); ?>" class="more">
-										<?php esc_html_e( 'Additional details:', 'cloudinary' ); ?><br>
-										<textarea name="reason-more" id="more-<?php echo esc_attr( $reason['id'] ); ?>" rows="5"></textarea>
-									</label>
-								<?php endif; ?>
+								<label for="more-<?php echo esc_attr( $reason['id'] ); ?>" class="more">
+									<?php esc_html_e( 'Additional details:', 'cloudinary' ); ?><br>
+									<textarea name="reason-more" id="more-<?php echo esc_attr( $reason['id'] ); ?>" rows="5"></textarea>
+								</label>
 							</li>
 						<?php endforeach; ?>
 					</ul>
 					<p>
 						<?php esc_html_e( 'Please, choose one option what we should do with the plugin’s settings', 'cloudinary' ); ?>
 					</p>
-					<ul>
+					<ul class="data">
 						<?php foreach ( $this->get_options() as $option ) : ?>
 							<?php
 							$checked = '';
@@ -184,13 +188,26 @@ class Deactivation {
 								$checked = 'checked';
 							}
 							?>
-							<li><input type="radio" name="option" <?php echo esc_html( $checked ); ?> value="<?php echo esc_attr( $option['id'] ); ?>" id="option-<?php echo esc_attr( $option['id'] ); ?>"/>
+							<li>
+								<input type="radio" name="option" <?php echo esc_attr( $checked ); ?> value="<?php echo esc_attr( $option['id'] ); ?>" id="option-<?php echo esc_attr( $option['id'] ); ?>"/>
 								<label for="option-<?php echo esc_attr( $option['id'] ); ?>">
 									<?php echo esc_html( $option['text'] ); ?>
 								</label>
 							</li>
 						<?php endforeach; ?>
 					</ul>
+					<p>
+						<input type="checkbox" id="cld-report" name="report">
+						<label for="cld-report">
+							<?php echo wp_kses_post( $report_label ); ?>
+						</label>
+					</p>
+					<p style="display:none">
+						<input type="checkbox" id="cld-contact" name="contact">
+						<label for="cld-contact">
+							<?php esc_html_e( 'Allow Cloudinary to contact me regarding deactivation of the plugin.', 'cloudinary' ); ?>
+						</label>
+					</p>
 				</div>
 				<div class="modal-footer" id="modal-footer">
 					<button class="button cancel-close">
@@ -198,6 +215,52 @@ class Deactivation {
 					</button>
 					<button class="button button-primary">
 						<?php esc_html_e( 'Deactivate', 'cloudinary' ); ?>
+					</button>
+					<span class="modal-processing hidden">
+						<?php esc_html_e( 'Sending…', 'cloudinary' ); ?>
+					</span>
+					<div class="clear"></div>
+				</div>
+				<div id="modal-uninstall" class="modal-uninstall">
+					<p><?php esc_html_e( 'Uninstall has been started and the plugin will automatically be deactivated once complete.', 'cloudinary' ); ?></p>
+					<div class="modal-footer">
+						<button class="button button-primary cancel-close">
+							<?php esc_html_e( 'Close', 'cloudinary' ); ?>
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Renders not connected accounts deactivation modal.
+	 */
+	public function render_not_connected() {
+		$user = wp_get_current_user();
+		?>
+		<div id="cloudinary-deactivation" class="cld-modal">
+			<div class="cloudinary-deactivation cld-modal-box">
+				<div class="modal-body" id="modal-body">
+					<p>
+						<?php esc_html_e( "We noticed you didn't connect your account. Maybe we can help?", 'cloudinary' ); ?><br>
+						<?php esc_html_e( 'Place your email below and our support will get back to you as soon as possible.', 'cloudinary' ); ?>
+					</p>
+					<p>
+						<label for="email"><?php esc_html_e( 'Your email address', 'cloudinary' ); ?></label><br>
+						<input type="email" id="email" placeholder="<?php esc_attr_e( 'Your email address', 'cloudinary' ); ?>" value="<?php echo esc_attr( $user->user_email ); ?>">
+					</p>
+				</div>
+				<div class="modal-footer" id="modal-footer">
+					<button class="button cancel-close" >
+						<?php esc_html_e( 'Cancel', 'cloudinary' ); ?>
+					</button>
+					<button class="button button-secondary">
+						<?php esc_html_e( 'Deactivate', 'cloudinary' ); ?>
+					</button>
+					<button class="button button-primary">
+						<?php esc_html_e( 'Contact me', 'cloudinary' ); ?>
 					</button>
 					<span class="modal-processing hidden">
 						<?php esc_html_e( 'Sending…', 'cloudinary' ); ?>
@@ -290,6 +353,7 @@ class Deactivation {
 		$more    = $request->get_param( 'more' );
 		$report  = filter_var( $request->get_param( 'report' ), FILTER_VALIDATE_BOOLEAN );
 		$contact = filter_var( $request->get_param( 'contact' ), FILTER_VALIDATE_BOOLEAN );
+		$data    = $request->get_param( 'dataHandling' );
 
 		if ( empty( $reason ) ) {
 			return rest_ensure_response( 200 );
