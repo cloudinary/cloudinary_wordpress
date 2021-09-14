@@ -81,6 +81,10 @@
 			margin-left: .25em;
 		}
 
+		input[type="email"] {
+			width: 100%;
+		}
+
 		textarea {
 			resize: none;
 			width: 100%;
@@ -92,7 +96,6 @@
 		}
 
 		p {
-			display: flex;
 			margin: 0 0 12px;
 			font-size: 10.5px;
 		}
