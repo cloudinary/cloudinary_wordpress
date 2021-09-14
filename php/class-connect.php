@@ -87,6 +87,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		'url'        => 'cloudinary_url',
 		'connection' => 'cloudinary_connect',
 		'status'     => 'cloudinary_status',
+		'history'    => '_cloudinary_history',
 	);
 
 	/**
@@ -360,7 +361,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 */
 	public function history( $days = 1 ) {
 		$return  = array();
-		$history = get_option( '_cld_history', array() );
+		$history = get_option( self::META_KEYS['history'], array() );
 		for ( $i = 1; $i <= $days; $i ++ ) {
 			$date = date_i18n( 'd-m-Y', strtotime( '- ' . $i . ' days' ) );
 			if ( ! isset( $history[ $date ] ) ) {
@@ -368,7 +369,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			}
 			$return[ $date ] = $history[ $date ];
 		}
-		update_option( '_cld_history', $history );
+		update_option( self::META_KEYS['history'], $history, false );
 
 		return $return;
 	}

@@ -15,11 +15,11 @@ namespace Cloudinary\Settings\Storage;
 abstract class Storage {
 
 	/**
-	 * Holds the storage slug.
+	 * Holds the storage prefix.
 	 *
 	 * @var string
 	 */
-	protected $slug;
+	protected $prefix;
 
 	/**
 	 * Holds the current data.
@@ -31,10 +31,10 @@ abstract class Storage {
 	/**
 	 * Storage constructor.
 	 *
-	 * @param string $slug The default slug.
+	 * @param string $prefix The prefix to add to storage parts.
 	 */
-	public function __construct( $slug ) {
-		$this->slug = $slug;
+	public function __construct( $prefix ) {
+		$this->prefix = $prefix;
 	}
 
 	/**
@@ -63,8 +63,8 @@ abstract class Storage {
 	 */
 	protected function prefix( $slug ) {
 		$prefix = null;
-		if ( '_' !== $slug[0] && 0 !== strpos( $slug, $this->slug ) ) {
-			$prefix = $this->slug . '_';
+		if ( '_' !== $slug[0] && 0 !== strpos( $slug, $this->prefix ) ) {
+			$prefix = $this->prefix . '_';
 		}
 
 		return $prefix . $slug;

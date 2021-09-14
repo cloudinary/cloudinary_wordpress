@@ -290,7 +290,7 @@ class Settings {
 	 * @param mixed  $default The default value.
 	 * @param array  $params  The params.
 	 *
-	 * @return mixed|Setting|\WP_Error
+	 * @return mixed|Setting
 	 */
 	protected function register( $slug, $default, $params ) {
 
