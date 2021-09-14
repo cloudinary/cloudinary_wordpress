@@ -31,67 +31,6 @@ class Dashboard {
 		add_filter( 'cloudinary_admin_pages', array( $this, 'register_settings' ) );
 	}
 
-	protected function plan_details() {
-
-		$connect = $this->plugin->get_component( 'connect' );
-
-		$details = array(
-			'type'  => 'panel',
-			'title' => __( 'Plan details', 'cloudinary' ),
-			array(
-				'type' => 'row',
-				array(
-					'type' => 'column',
-					array(
-						'type'    => 'html',
-						'content' => __( 'Icon', 'cloudinary' ),
-					),
-				),
-				array(
-					'type' => 'column',
-					array(
-						'type'    => 'html',
-						'content' => __( 'Icon', 'cloudinary' ),
-					),
-				),
-				array(
-					'type' => 'column',
-					array(
-						'type'    => 'html',
-						'content' => __( 'Icon', 'cloudinary' ),
-					),
-				),
-			),
-			array(
-				'type' => 'row',
-				array(
-					'type' => 'column',
-					array(
-						'type'    => 'html',
-						'content' => __( 'Icon', 'cloudinary' ),
-					),
-				),
-				array(
-					'type' => 'column',
-					array(
-						'type'    => 'html',
-						'content' => __( 'Icon', 'cloudinary' ),
-					),
-				),
-				array(
-					'type' => 'column',
-					array(
-						'type'    => 'html',
-						'content' => __( 'Icon', 'cloudinary' ),
-					),
-				),
-			),
-		);
-
-		return $details;
-
-	}
-
 	/**
 	 * Add the settings.
 	 *
@@ -100,7 +39,6 @@ class Dashboard {
 	 * @return array
 	 */
 	public function register_settings( $pages ) {
-		$details            = $this->plan_details();
 		$pages['dashboard'] = array(
 			'page_title'          => __( 'Cloudinary Dashboard', 'cloudinary' ),
 			'menu_title'          => __( 'Dashboard', 'cloudinary' ),
@@ -129,6 +67,16 @@ class Dashboard {
 									'type'       => 'tag',
 									'element'    => 'div',
 									'content'    => __( '13 Assets unoptimized by your selection', 'cloudinary' ),
+									'attributes' => array(
+										'class' => array(
+											'description',
+										),
+									),
+								),
+								array(
+									'type'       => 'tag',
+									'element'    => 'div',
+									'content'    => __( '40/200 Assets being optimized now', 'cloudinary' ),
 									'attributes' => array(
 										'class' => array(
 											'description',

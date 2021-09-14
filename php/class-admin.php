@@ -49,6 +49,13 @@ class Admin {
 	protected $pages;
 
 	/**
+	 * Holds the page section.
+	 *
+	 * @var string
+	 */
+	protected $section = 'page';
+
+	/**
 	 * Holds the current page component.
 	 *
 	 * @var Component
@@ -210,6 +217,10 @@ class Admin {
 		if ( $this->has_param( $name ) ) {
 			$page = $this->get_param( $name );
 			$this->settings->set_param( 'active_setting', $page['slug'] );
+			$section = filter_input( INPUT_GET, 'section', FILTER_SANITIZE_STRING );
+			if ( $section && file_exists( $this->plugin->dir_path . 'ui-definitions/components/' . $section . '.php' ) ) {
+				$this->section = $section;
+			}
 		}
 	}
 
@@ -224,7 +235,7 @@ class Admin {
 		$this->set_param( 'active_slug', $page['slug'] );
 		$setting         = $this->init_components( $page, $screen->id );
 		$this->component = $setting->get_component();
-		include $this->plugin->dir_path . 'ui-definitions/components/page.php';
+		include $this->plugin->dir_path . 'ui-definitions/components/' . $this->section . '.php';
 	}
 
 	/**
