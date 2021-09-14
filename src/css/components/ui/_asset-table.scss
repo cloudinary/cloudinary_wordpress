@@ -1,0 +1,34 @@
+// Non-media library assets.
+
+&-pagenav {
+	margin-top: 5px;
+	line-height: 2.4em;
+	color: #555;
+
+	&-text {
+		margin: 0 2em;
+	}
+}
+
+&-delete {
+	color: $color-red;
+	cursor: pointer;
+	float: right;
+}
+
+&-apply {
+	&-action {
+		float: right;
+	}
+}
+
+&-table {
+	thead {
+		tr {
+			th.cld-table-th {
+				line-height: 1.8em;
+			}
+		}
+	}
+
+}

@@ -1,0 +1,140 @@
+
+ul {
+	padding: 0 3em;
+	list-style: initial;
+}
+
+
+.stat-boxes {
+	border: 1px solid $color-light-grey;
+	font-size: 1.2em;
+
+	.box {
+		border-bottom: 1px solid $color-light-grey;
+		padding: 2rem;
+		text-align: center;
+
+		&:last-of-type {
+			border-bottom: none;
+		}
+
+		.cld-ui-icon {
+			width: 35px;
+			height: 35px;
+		}
+	}
+
+	.icon {
+		height: 50px;
+		margin-right: 0.5em;
+		width: 50px;
+	}
+
+	h3 {
+		margin-bottom: 1.5rem;
+		margin-top: 2.4rem;
+	}
+
+	.limit {
+		font-size: 2em;
+		font-weight: 700;
+		margin-right: 0.5em;
+		white-space: nowrap;
+	}
+
+	.usage {
+		color: $color-wp-blue;
+		font-size: 1.5em;
+		font-weight: 400;
+	}
+
+	@media only screen and (min-width: $size-small) {
+		display: flex;
+		flex-wrap: nowrap;
+		font-size: 1em;
+
+		.box {
+			border-bottom: none;
+			border-right: 1px solid $color-light-grey;
+			flex-grow: 1;
+
+			&:last-of-type {
+				border-right: none;
+			}
+		}
+	}
+
+	@media only screen and (min-width: $size-large) {
+		font-size: 1.2em;
+	}
+}
+
+.img-connection-string {
+	max-width: 607px;
+	width: 100%;
+}
+
+.connection-string {
+	max-width: 40em;
+	width: 100%;
+}
+
+.stat-boxes,
+.media-status-box {
+	border: 1px solid $color-light-grey;
+}
+
+.media-status-box {
+	padding: 2rem;
+	text-align: center;
+
+	.status {
+		font-size: 2rem;
+		font-weight: 700;
+		margin-right: 0.5em;
+	}
+
+	.cld-ui-icon {
+		width: 35px;
+		height: 35px;
+	}
+}
+
+.notification {
+	display: inline-flex;
+	font-weight: 700;
+	padding: 1.5rem;
+
+	&-success {
+		background-color: transparentize($color-notification-success, 0.8);
+		border: 2px solid $color-notification-success;
+
+		&::before {
+			color: $color-notification-success;
+		}
+	}
+
+	&-syncing {
+		background-color: transparentize($color-wp-blue, 0.8);
+		border: 2px solid $color-wp-blue;
+		text-decoration: none;
+		color: #444;
+
+		&::before {
+			color: $color-wp-blue;
+			-webkit-animation: spin 1s running infinite;
+			-moz-animation: spin 1s linear infinite;
+			animation: spin 1s linear infinite;
+			@keyframes spin {
+				100% {
+					-webkit-transform: rotate(360deg);
+					transform: rotate(360deg);
+				}
+			}
+		}
+	}
+
+	&::before {
+		margin-right: 0.5em;
+	}
+}

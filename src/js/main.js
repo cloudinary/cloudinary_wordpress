@@ -18,11 +18,15 @@ import '../css/main.scss';
 
 // include images.
 import '../css/images/bandwidth.svg';
-import '../css/images/circle.svg';
+import '../css/images/star.svg';
 import '../css/images/cloud.svg';
 import '../css/images/crop.svg';
 import '../css/images/gallery.svg';
 import '../css/images/image.svg';
+import '../css/images/units.svg';
+import '../css/images/units-plus.svg';
+import '../css/images/requests.svg';
+import '../css/images/responsive.svg';
 import '../css/images/learn.svg';
 import '../css/images/logo-icon.svg';
 import '../css/images/transformation.svg';

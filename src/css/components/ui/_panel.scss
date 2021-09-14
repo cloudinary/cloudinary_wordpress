@@ -1,0 +1,60 @@
+// Add panels
+&-panel {
+	background-color: #fff;
+	border: 1px solid $color-cld-grey-blue;
+
+	&.full-width {
+		max-width: 100%;
+	}
+
+	margin-top: 13px;
+	padding: $size-padding-panel;
+	&.has-heading {
+		margin-top: 0;
+		border-top: 0;
+	}
+
+	&-heading {
+		display: flex;
+		padding: $size-padding-panel-title;
+		position: relative;
+		justify-content: space-between;
+
+		&.full-width {
+			max-width: 100%;
+		}
+
+		img {
+			margin-right: 0.6rem;
+		}
+
+		&.collapsible {
+			cursor: pointer;
+			padding-right: 1rem;
+		}
+	}
+
+	&-inner {
+		padding: 1.3rem;
+		margin: 1em 0;
+		background-color: rgba(220, 220, 220, 0.2);
+		border: 1px solid $color-light-grey;
+
+		h2 {
+			color: $color-wp-blue;
+		}
+	}
+
+	hr {
+		border-top: 1px solid $color-light-grey;
+		margin: 19px 0 20px;
+		clear: both;
+	}
+	// Include the legacy styles that might not be needed anymore.
+	@import "panels/legacy";
+
+}
+// Include other types of panels.
+@import "panels/panel-short";
+@import "panels/infobox";
+@import "panels/submit-switch-cloud";
