@@ -43,6 +43,7 @@ class Responsive_Breakpoints extends Delivery_Feature {
 	 */
 	protected function setup_hooks() {
 		add_action( 'cloudinary_init_delivery', array( $this, 'remove_srcset_filter' ) );
+		add_filter( 'cloudinary_apply_breakpoints', '__return_false' );
 	}
 
 	/**
@@ -53,15 +54,7 @@ class Responsive_Breakpoints extends Delivery_Feature {
 	 * @return array
 	 */
 	public function add_features( $tag_element ) {
-
 		$tag_element['atts']['data-responsive'] = true;
-		$tag_element['breakpoints']             = false;
-		$tag_element['delivery']                = 'cld';
-		$tag_element['atts']['data-size']       = array(
-			$tag_element['atts']['width'],
-			$tag_element['atts']['height'],
-		);
-		unset( $tag_element['atts']['width'], $tag_element['atts']['height'] );
 
 		return $tag_element;
 	}

@@ -11,7 +11,6 @@ use Cloudinary\Delivery_Feature;
 use Cloudinary\Connect\Api;
 use Cloudinary\Plugin;
 use Cloudinary\UI\Component\HTML;
-use Cloudinary\Utils;
 
 /**
  * Class Responsive_Breakpoints
@@ -19,30 +18,6 @@ use Cloudinary\Utils;
  * @package Cloudinary
  */
 class Lazy_Load extends Delivery_Feature {
-
-	public function __construct( Plugin $plugin ) {
-		parent::__construct( $plugin );
-		add_filter( 'cloudinary_image_tag', array( $this, 'js_noscript' ), 10, 2 );
-	}
-
-	public function js_noscript( $tag, $tag_element ) {
-
-		$options = $tag_element['atts'];
-		$options['class'] = implode(' ', $options['class'] );
-		unset(
-			$options['srcset'],
-			$options['sizes'],
-			$options['loading'],
-			$options['src'],
-			$options['class'],
-		);
-		$atts = array(
-			'data-image' => wp_json_encode( $options ),
-		);
-
-		return HTML::build_tag( 'noscript', $atts ) . $tag . HTML::build_tag( 'noscript', null, 'close' );
-
-	}
 
 	/**
 	 * Holds the settings slug.
@@ -57,6 +32,44 @@ class Lazy_Load extends Delivery_Feature {
 	 * @var string
 	 */
 	protected $enable_slug = 'use_lazy_load';
+
+	/**
+	 * Lazy_Load constructor.
+	 *
+	 * @param \Cloudinary\Plugin $plugin The main instance of the plugin.
+	 */
+	public function __construct( Plugin $plugin ) {
+		parent::__construct( $plugin );
+		add_filter( 'cloudinary_image_tag-disabled', array( $this, 'js_noscript' ), 10, 2 );
+	}
+
+	/**
+	 * Wrap image tags in noscript to allow no-javascript browsers to get images.
+	 *
+	 * @param string $tag         The original html tag.
+	 * @param array  $tag_element The original tag_element.
+	 *
+	 * @return string
+	 */
+	public function js_noscript( $tag, $tag_element ) {
+
+		$options          = $tag_element['atts'];
+		$options['class'] = implode( ' ', $options['class'] );
+
+		unset(
+			$options['srcset'],
+			$options['sizes'],
+			$options['loading'],
+			$options['src'],
+			$options['class'],
+		);
+		$atts = array(
+			'data-image' => wp_json_encode( $options ),
+		);
+
+		return HTML::build_tag( 'noscript', $atts ) . $tag . HTML::build_tag( 'noscript', null, 'close' );
+
+	}
 
 	/**
 	 * Get the placeholder generation transformations.
@@ -129,17 +142,21 @@ class Lazy_Load extends Delivery_Feature {
 	 */
 	public function add_features( $tag_element ) {
 
-		$cloudinary_url                              = $this->media->cloudinary_url( $tag_element['id'], 'raw', $tag_element['transformations'], null, $tag_element['overwrite_transformations'] );
-		$transformations                             = $this->media->get_transformations_from_string( $cloudinary_url );
-
+		$transformations = $this->media->get_transformations_from_string( $tag_element['atts']['src'] );
+		array_shift( $transformations ); // We always get a sized url, the first will be the size, which we don't need.
 		$tag_element['atts']['data-transformations'] = API::generate_transformation_string( $transformations, $tag_element['type'] );
+		$tag_element['atts']['data-src']             = $tag_element['atts']['src'];
+		$tag_element['atts']['data-size']            = array(
+			$tag_element['atts']['width'],
+			$tag_element['atts']['height'],
+		);
+		unset( $tag_element['atts']['src'] );
+		if ( isset( $tag_element['atts']['srcset'] ) ) {
+			$tag_element['atts']['data-srcset'] = $tag_element['atts']['srcset'];
+			$tag_element['atts']['data-sizes']  = $tag_element['atts']['sizes'];
+			unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
+		}
 
-		//$svg                   = '<svg xmlns="http://www.w3.org/2000/svg" width="'.$tag_element['atts']['data-size'][0].'" height="'.$tag_element['atts']['data-size'][1].'"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $this->config['lazy_custom_color'] . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
-
-		//$tag_element['atts']['data-src'] = $tag_element['atts']['src'];
-		//$tag_element['atts']['src'] = 'data:image/svg+xml;utf8,' . $svg;
-		//unset( $tag_element['atts']['srcset'],  $tag_element['atts']['size'] );
-		//$tag_element['atts']['onLoad'] = "! this.dataset.loaded ? ( this.src = this.dataset.src.replace('images/',`images/w_\${this.width},h_\${this.height}/`) ) : ''; this.dataset.loaded = true;";
 		return $tag_element;
 
 	}
@@ -158,12 +175,12 @@ class Lazy_Load extends Delivery_Feature {
 		wp_enqueue_script( 'cld-lazy-load' );
 		$config = $this->config; // Get top most config.
 
-		$svg                   = '<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $config['lazy_custom_color'] . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
-		$config['svg_loader']  = 'data:image/svg+xml;utf8,' . $svg;
-		if( 'off' !== $config['lazy_placeholder'] ) {
+		$svg                  = '<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $config['lazy_custom_color'] . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
+		$config['svg_loader'] = 'data:image/svg+xml;utf8,' . $svg;
+		if ( 'off' !== $config['lazy_placeholder'] ) {
 			$config['placeholder'] = API::generate_transformation_string( $this->get_placeholder_transformations( $config['lazy_placeholder'] ) );
 		}
-		$config['base_url']    = $this->media->base_url;
+		$config['base_url'] = $this->media->base_url;
 		wp_add_inline_script( 'cld-lazy-load', 'var CLDLB = ' . wp_json_encode( $config ), 'before' );
 	}
 
