@@ -7,10 +7,10 @@ const LazyLoad = {
 	_init() {
 		this._calcThreshold();
 
-		const lazys = document.querySelectorAll( 'noscript[data-image]' );
+		const lazysNoScripts = document.querySelectorAll(
+			'noscript[data-image]' );
 
-		[ ...lazys ].forEach( ( noscript ) => {
-
+		[ ...lazysNoScripts ].forEach( ( noscript ) => {
 			const attributes = JSON.parse( noscript.dataset.image );
 			const image = document.createElement( 'img' );
 			for ( let att in attributes ) {
@@ -18,13 +18,25 @@ const LazyLoad = {
 			}
 			image.originalWidth = attributes[ 'data-size' ][ 0 ];
 			image.originalHeight = attributes[ 'data-size' ][ 1 ];
-			image.src = CLDLB.svg_loader.replace(
+			image.src = this.config.svg_loader.replace(
 				'${width}', image.originalWidth )
 				.replace( '${height}', image.originalHeight );
 			this.images.push( image );
 			noscript.parentNode.replaceChild( image, noscript );
 		} );
+		[ ...document.images ].forEach( ( image ) => {
+			if ( ! image.dataset.src ) {
+				return;
+			}
 
+			const size = image.dataset.size.split( ' ' );
+			image.originalWidth = size[ 0 ];
+			image.originalHeight = size[ 1 ];
+			image.src = this.config.svg_loader.replace(
+				'${width}', image.originalWidth )
+				.replace( '${height}', image.originalHeight );
+			this.images.push( image );
+		} );
 		// Resize handler.
 		window.addEventListener( 'resize', ( ev ) => {
 			this._debounceBuild();
@@ -70,7 +82,8 @@ const LazyLoad = {
 		}, 100 );
 	},
 	_getDensity() {
-		const maxDensity = CLDLB.dpr ? CLDLB.dpr.replace( 'X', '' ) : 'off';
+		const maxDensity = this.config.dpr ? this.config.dpr.replace(
+			'X', '' ) : 'off';
 		if ( 'off' === maxDensity ) {
 			return 1;
 		}
@@ -160,8 +173,11 @@ const LazyLoad = {
 		if ( scaledSize > original ) {
 			scaledSize = original;
 		} else if ( this.config.max_width < scaledSize ) {
-			scaledSize = original;
+			scaledSize = this.config.max_width;
+		} else if ( this.config.min_width > scaledSize ) {
+			scaledSize = this.config.min_width;
 		}
+
 		return scaledSize;
 	},
 	buildSize( image ) {
@@ -187,36 +203,36 @@ const LazyLoad = {
 			image.width,
 			this.config.pixel_step
 		);
-		const height = this.scaleSize(
-			image.originalHeight,
-			image.height,
-			this.config.pixel_step
-		);
+		const ratio = image.originalWidth / image.originalHeight;
+		const height = Math.round( width / ratio );
 		const density = this._getDensity();
-		let newSize = '';
+		let name = image.dataset.publicId.split( '/' ).pop();
+		let newSize = [];
+
 		if ( width ) {
-			image.width = width;
-			newSize += 'w_' + width;
-			if ( 1 !== density ) {
-				newSize += ',dpr_' + density;
+			newSize.push( 'w_' + width );
+
+			if ( height ) {
+				newSize.push( 'h_' + height );
+				name += `-${ width }x${ height }`;
 			}
-		}
-		if ( height ) {
-			image.height = height;
+			if ( 1 !== density ) {
+				newSize.push( 'dpr_' + density );
+			}
 		}
 		const transform = image.dataset.transformations.replace(
 			/q_auto(?!:)/gi, this.getQuality() );
 
 		const parts = [
-			CLDLB.base_url,
+			this.config.base_url,
 			'images',
-			newSize,
+			newSize.join( ',' ),
 			transform,
 			image.dataset.publicId,
-			'responsive'
+			name
 		];
 
-		const url = parts.join( '/' );
+		const url = parts.filter( this.empty ).join( '/' );
 
 		return url;
 	},
@@ -228,25 +244,25 @@ const LazyLoad = {
 			this.config.pixel_step
 		);
 		const density = this._getDensity();
-		let newSize = '';
+		let newSize = [];
 		if ( width ) {
-			newSize += 'w_' + width;
-			if ( 1 !== density ) {
-				newSize += ',dpr_' + density;
-			}
+			newSize.push( 'w_' + width );
 		}
 
 		const parts = [
-			CLDLB.base_url,
+			this.config.base_url,
 			'images',
-			newSize,
-			CLDLB.placeholder,
+			newSize.join( ',' ),
+			this.config.placeholder,
 			image.dataset.publicId,
 			'responsive'
 		];
 
-		return parts.join( '/' );
+		return parts.filter( this.empty ).join( '/' );
 	},
+	empty( thing ) {
+		return 0 !== thing.length;
+	}
 };
 // Init.
 window.addEventListener( 'load', () => {
