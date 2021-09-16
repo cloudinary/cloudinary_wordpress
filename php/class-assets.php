@@ -157,6 +157,8 @@ class Assets extends Settings_Component {
 		add_filter( 'delete_post_metadata', array( $this, 'delete_meta' ), 10, 4 );
 		add_filter( 'intermediate_image_sizes_advanced', array( $this, 'no_sizes' ), PHP_INT_MAX, 3 );
 		add_filter( 'cloudinary_can_sync_asset', array( $this, 'can_sync' ), 10, 2 );
+		add_filter( 'cloudinary_admin_pages', array( $this, 'register_settings' ) );
+		add_filter( 'cloudinary_local_url', array( $this, 'local_url' ), 10, 2 );
 		// Actions.
 		add_action( 'cloudinary_init_settings', array( $this, 'setup' ) );
 		add_action( 'cloudinary_thread_queue_details_query', array( $this, 'connect_post_type' ) );
@@ -736,6 +738,24 @@ class Assets extends Settings_Component {
 		$type = pathinfo( $filename, PATHINFO_EXTENSION );
 
 		return in_array( $type, $allowed_kinds, true );
+	}
+
+	/**
+	 * Get the local url for an asset.
+	 *
+	 * @hook cloudinary_local_url
+	 *
+	 * @param string|false $url      The url to filter.
+	 * @param int          $asset_id The asset ID.
+	 *
+	 * @return string|false
+	 */
+	public function local_url( $url, $asset_id ) {
+		if ( self::is_asset_type( $asset_id ) ) {
+			$url = get_the_title( $asset_id );
+		}
+
+		return $url;
 	}
 
 	/**

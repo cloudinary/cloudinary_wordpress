@@ -366,6 +366,30 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Get the local URL for an attachment.
+	 *
+	 * @param int $attachment_id The attachment ID to get.
+	 *
+	 * @return string|false
+	 */
+	public function local_url( $attachment_id ) {
+		$url = wp_get_attachment_url( $attachment_id );
+
+		/**
+		 * Filter local URL.
+		 *
+		 * @hook    cloudinary_local_url
+		 * @since   3.0.0
+		 *
+		 * @param $url           {string|false} The local URL
+		 * @param $attachment_id {int}  The attachment ID.
+		 *
+		 * @return  {string|false}
+		 */
+		return apply_filters( 'cloudinary_local_url', $url, $attachment_id );
+	}
+
+	/**
 	 * Get the Cloudinary delivery type.
 	 *
 	 * @param int $attachment_id The attachment ID.
