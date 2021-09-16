@@ -157,7 +157,6 @@ class Assets extends Settings_Component {
 		add_filter( 'delete_post_metadata', array( $this, 'delete_meta' ), 10, 4 );
 		add_filter( 'intermediate_image_sizes_advanced', array( $this, 'no_sizes' ), PHP_INT_MAX, 3 );
 		add_filter( 'cloudinary_can_sync_asset', array( $this, 'can_sync' ), 10, 2 );
-		add_filter( 'cloudinary_admin_pages', array( $this, 'register_settings' ) );
 		add_filter( 'cloudinary_local_url', array( $this, 'local_url' ), 10, 2 );
 		// Actions.
 		add_action( 'cloudinary_init_settings', array( $this, 'setup' ) );
