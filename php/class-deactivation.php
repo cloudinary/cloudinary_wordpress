@@ -85,31 +85,50 @@ class Deactivation {
 	protected function get_reasons() {
 		return array(
 			array(
-				'id'   => 'dont_understand_value',
-				'text' => __( 'I don’t get any value from the plugin.', 'cloudinary' ),
+				'id'   => 'setup_difficult',
+				'text' => __( 'Set up is too difficult', 'cloudinary' ),
 			),
 			array(
-				'id'   => 'dont_know_how',
-				'text' => __( 'I don’t know how to use the plugin.', 'cloudinary' ),
+				'id'   => 'documentation',
+				'text' => __( 'Lack of documentation', 'cloudinary' ),
 			),
 			array(
-				'id'   => 'temporary',
-				'text' => __( 'This is temporary. I’ll use the plugin again soon.', 'cloudinary' ),
+				'id'   => 'features',
+				'text' => __( 'Not the features I wanted', 'cloudinary' ),
 			),
 			array(
-				'id'   => 'technical_problems',
-				'text' => __( 'I encountered technical issues with the plugin.', 'cloudinary' ),
+				'id'   => 'found_better',
+				'text' => __( 'Found a better plugin', 'cloudinary' ),
 				'more' => true,
 			),
 			array(
-				'id'   => 'other_plugins',
-				'text' => __( 'I use another plugin that works better for me.', 'cloudinary' ),
+				'id'   => 'incompatible',
+				'text' => __( 'Incompatible with theme or plugin', 'cloudinary' ),
 				'more' => true,
 			),
 			array(
 				'id'   => 'other_reason',
-				'text' => __( 'Other.', 'cloudinary' ),
+				'text' => __( 'Other', 'cloudinary' ),
 				'more' => true,
+			),
+		);
+	}
+
+	/**
+	 * Get the action option for deactivation.
+	 *
+	 * @return array
+	 */
+	protected function get_options() {
+		return array(
+			array(
+				'id'      => 'keep_data',
+				'text'    => __( 'Keep plugin data as it is', 'cloudinary' ),
+				'default' => true,
+			),
+			array(
+				'id'   => 'uninstall',
+				'text' => __( 'Remove all plugin data and settings', 'cloudinary' ),
 			),
 		);
 	}
@@ -121,10 +140,10 @@ class Deactivation {
 	 */
 	public function markup() {
 		$report_label = sprintf(
-			// translators: The System Report link tag.
+		// translators: The System Report link tag.
 			__( 'Share a %s with Cloudinary to help improve the plugin.', 'cloudinary' ),
 			sprintf(
-				// translators: The System Report link and label.
+			// translators: The System Report link and label.
 				'<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
 				'https://cloudinary.com/documentation/wordpress_integration#system_report',
 				'System Report'
@@ -132,56 +151,70 @@ class Deactivation {
 		);
 
 		?>
-<a href="#TB_inline?&width=520&height=390&inlineId=cloudinary-deactivation" class="thickbox" id="cld-deactivation-link" title="<?php esc_attr_e( 'Tell us how to improve!', 'cloudinary' ); ?>" style="display: none;"><?php esc_html_e( 'Deactivation feedback', 'cloudinary' ); ?>></a>
-<div id="cloudinary-deactivation" style="display: none;">
-	<div class="cloudinary-deactivation">
-		<div class="modal-body">
-			<p>
-				<?php esc_html_e( 'Please select a reason for deactivating so we can make our plugin better:', 'cloudinary' ); ?>
-			</p>
-			<ul>
-			<?php foreach ( $this->get_reasons() as $reason ) : ?>
-				<li>
-					<input type="radio" name="reason" value="<?php echo esc_attr( $reason['id'] ); ?>" id="reason-<?php echo esc_attr( $reason['id'] ); ?>"/>
-					<label for="reason-<?php echo esc_attr( $reason['id'] ); ?>">
-						<?php echo esc_html( $reason['text'] ); ?>
-					</label>
-					<?php if ( ! empty( $reason['more'] ) ) : ?>
-						<label for="more-<?php echo esc_attr( $reason['id'] ); ?>" class="more">
-							<?php esc_html_e( 'Additional details:', 'cloudinary' ); ?><br>
-							<textarea name="reason-more" id="more-<?php echo esc_attr( $reason['id'] ); ?>" cols="50" rows="5"></textarea>
-						</label>
-					<?php endif; ?>
-				</li>
-			<?php endforeach; ?>
-			</ul>
+		<div id="cloudinary-deactivation" class="cld-modal">
+			<div class="cloudinary-deactivation cld-modal-box">
+				<div class="modal-body" id="modal-body">
+					<p>
+						<?php esc_html_e( 'Before you deactivate the plugin, would you quickly give us your reason for doing so?', 'cloudinary' ); ?>
+					</p>
+					<ul>
+						<?php foreach ( $this->get_reasons() as $reason ) : ?>
+							<li>
+								<input type="radio" name="reason" value="<?php echo esc_attr( $reason['id'] ); ?>" id="reason-<?php echo esc_attr( $reason['id'] ); ?>"/>
+								<label for="reason-<?php echo esc_attr( $reason['id'] ); ?>">
+									<?php echo esc_html( $reason['text'] ); ?>
+								</label>
+								<?php if ( ! empty( $reason['more'] ) ) : ?>
+									<label for="more-<?php echo esc_attr( $reason['id'] ); ?>" class="more">
+										<?php esc_html_e( 'Additional details:', 'cloudinary' ); ?><br>
+										<textarea name="reason-more" id="more-<?php echo esc_attr( $reason['id'] ); ?>" rows="5"></textarea>
+									</label>
+								<?php endif; ?>
+							</li>
+						<?php endforeach; ?>
+					</ul>
+					<p>
+						<?php esc_html_e( 'Please, choose one option what we should do with the plugin’s settings', 'cloudinary' ); ?>
+					</p>
+					<ul>
+						<?php foreach ( $this->get_options() as $option ) : ?>
+							<?php
+							$checked = '';
+							if ( ! empty( $option['default'] ) ) {
+								$checked = 'checked';
+							}
+							?>
+							<li>
+								<input type="radio" name="option" <?php echo esc_html( $checked ); ?> value="<?php echo esc_attr( $option['id'] ); ?>" id="option-<?php echo esc_attr( $option['id'] ); ?>"/>
+								<label for="option-<?php echo esc_attr( $option['id'] ); ?>">
+									<?php echo esc_html( $option['text'] ); ?>
+								</label>
+							</li>
+						<?php endforeach; ?>
+					</ul>
+				</div>
+				<div class="modal-footer" id="modal-footer">
+					<button class="button cancel-close">
+						<?php esc_html_e( 'Cancel', 'cloudinary' ); ?>
+					</button>
+					<button class="button button-primary">
+						<?php esc_html_e( 'Deactivate', 'cloudinary' ); ?>
+					</button>
+					<span class="modal-processing hidden">
+						<?php esc_html_e( 'Sending…', 'cloudinary' ); ?>
+					</span>
+					<div class="clear"></div>
+				</div>
+				<div id="modal-uninstall" class="modal-uninstall">
+					<p><?php esc_html_e( 'Uninstall has been started and the plugin will automatically be deactivated once complete.', 'cloudinary' ); ?></p>
+					<div class="modal-footer">
+						<button class="button button-primary cancel-close">
+							<?php esc_html_e( 'Close', 'cloudinary' ); ?>
+						</button>
+					</div>
+				</div>
+			</div>
 		</div>
-		<div class="modal-footer">
-			<p>
-				<input type="checkbox" id="cld-report" name="report">
-				<label for="cld-report">
-					<?php echo wp_kses_post( $report_label ); ?>
-				</label>
-			</p>
-			<p style="display:none">
-				<input type="checkbox" id="cld-contact" name="contact">
-				<label for="cld-contact">
-					<?php esc_html_e( 'Allow Cloudinary to contact me regarding deactivation of the plugin.', 'cloudinary' ); ?>
-				</label>
-			</p>
-			<button class="button button-primary" disabled="disabled">
-				<?php esc_html_e( 'Submit and deactivate', 'cloudinary' ); ?>
-			</button>
-			<button class="button button-link">
-				<?php esc_html_e( 'Skip and deactivate', 'cloudinary' ); ?>
-			</button>
-			<span class="modal-processing hidden">
-				<?php esc_html_e( 'Sending…', 'cloudinary' ); ?>
-			</span>
-			<div class="clear"></div>
-		</div>
-	</div>
-</div>
 		<?php
 	}
 
@@ -214,7 +247,7 @@ class Deactivation {
 			'method'              => WP_REST_Server::CREATABLE,
 			'callback'            => array( $this, 'rest_callback' ),
 			'args'                => array(),
-			'permission_callback' => function() {
+			'permission_callback' => function () {
 				return current_user_can( 'activate_plugins' );
 			},
 		);
@@ -232,7 +265,10 @@ class Deactivation {
 
 		$report = $this->plugin->get_component( 'report' )->get_report_data();
 		$temp   = get_temp_dir() . $report['filename'];
-		file_put_contents( $temp, wp_json_encode( $report['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_file_put_contents
+		file_put_contents( // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_file_put_contents
+			$temp,
+			wp_json_encode( $report['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES )
+		);
 		$args = array(
 			'file'          => $temp,
 			'public_id'     => $report['filename'],
@@ -261,11 +297,11 @@ class Deactivation {
 		}
 
 		if (
-			! in_array(
-				$reason,
-				array_column( $this->get_reasons(), 'id' ),
-				true
-			)
+		! in_array(
+			$reason,
+			array_column( $this->get_reasons(), 'id' ),
+			true
+		)
 		) {
 			return rest_ensure_response( 418 );
 		}

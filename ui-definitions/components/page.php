@@ -7,11 +7,12 @@
 
 namespace Cloudinary;
 
+$cloudinary = get_plugin_instance();
 ?>
-<div class="cld-ui-wrap cld-page" id="cloudinary-settings-page">
+<div class="cld-ui-wrap cld-page cld-settings" id="cloudinary-settings-page">
 	<header class="cld-ui-wrap cld-page-header">
-		<img src="https://xwpdev.local/wp-content/plugins/cloudinary/css/images/logo.svg" alt="<?php esc_html_e( "Cloudinary's logo", 'cloudinary' ); ?>" width=" 150px">
-		<p style="margin-left: 1rem; font-size: 0.75rem;">
+		<img src="<?php echo esc_url( $cloudinary->dir_url . 'css/images/logo.svg' ); ?>" alt="<?php esc_html_e( "Cloudinary's logo", 'cloudinary' ); ?>"/>
+		<p>
 			<a href="https://cloudinary.com/documentation/wordpress_integration" target="_blank" rel="noreferrer" class="cld-page-header-button">
 				<?php esc_html_e( 'Need help?', 'cloudinary' ); ?>
 			</a>

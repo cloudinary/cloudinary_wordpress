@@ -92,10 +92,17 @@ class Setting {
 	/**
 	 * Get the parent.
 	 *
+	 * @param int $depth The depth to go down.
+	 *
 	 * @return Settings|Setting
 	 */
-	public function get_parent() {
-		return $this->root->get_setting( $this->parent );
+	public function get_parent( $depth = 1 ) {
+		$slug = $this->slug;
+		while ( 0 < $depth ) {
+			$slug = substr( $slug, 0, strrpos( $slug, $this->separator ) );
+			$depth--;
+		}
+		return $this->root->get_setting( $slug );
 	}
 
 	/**
@@ -383,6 +390,7 @@ class Setting {
 	 * @return bool
 	 */
 	public function delete() {
+		$this->root->remove_pending( $this->slug );
 		return $this->root->delete( $this->get_param( Settings::META_KEYS['storage'] ) );
 	}
 }

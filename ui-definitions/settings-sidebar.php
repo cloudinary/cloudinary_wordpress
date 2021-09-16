@@ -7,6 +7,8 @@
 
 namespace Cloudinary;
 
+use Cloudinary\UI\Component\Opt_Level;
+
 /**
  * Defines the settings structure for the main header.
  *
@@ -17,7 +19,11 @@ $settings = array(
 	array(
 		'type'        => 'panel',
 		'title'       => __( 'Account status', 'cloudinary' ),
-		'description' => __( 'Subscription plan name', 'cloudinary' ),
+		'description' => function () {
+			$data = get_plugin_instance()->settings->get_value( 'last_usage' );
+
+			return $data['plan'];
+		},
 		'collapsible' => 'open',
 		array(
 			'type'        => 'line_stat',
@@ -53,11 +59,18 @@ $settings = array(
 	array(
 		'type'        => 'panel',
 		'title'       => __( 'Optimization level', 'cloudinary' ),
-		'description' => __( '40% Optimized', 'cloudinary' ),
+		'description' => function () {
+			$instance = get_plugin_instance()->settings->get_setting( 'sidebar.panel_1.opt_level_0' );
+
+			/* translators: %s is the percentage optimized. */
+
+			return sprintf( '%s Optimized', $instance->get_component()->calculate_percentage() . '%' );
+
+		},
 		'collapsible' => 'closed',
 		array(
-			'type'    => 'html',
-			'content' => __( 'Some stuff', 'cloudinary' ),
+			'type'  => 'opt_level',
+			'title' => __( 'Optimized Images', 'cloudinary' ),
 		),
 	),
 	array(
@@ -66,8 +79,15 @@ $settings = array(
 		'description' => __( '1 Active extension', 'cloudinary' ),
 		'collapsible' => 'closed',
 		array(
-			'type'    => 'html',
-			'content' => __( 'Some stuff', 'cloudinary' ),
+			'type'      => 'info_box',
+			'icon'      => $this->dir_url . 'css/images/logo-icon.svg',
+			'title'     => __( 'Cloudinary', 'cloudinary' ),
+			'text'      => __(
+				'Cloudinary\'s digital asset management solution bridges the gap between asset management and delivery, enabling creative.',
+				'cloudinary'
+			),
+			'link_text' => 'Active',
+			'disabled'  => true,
 		),
 	),
 );

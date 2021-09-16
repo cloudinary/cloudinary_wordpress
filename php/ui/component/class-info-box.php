@@ -34,7 +34,10 @@ class Info_Box extends Panel {
 		$struct['content']             = $this->setting->get_param( 'link_text' );
 		$struct['attributes']['href']  = esc_url( $this->setting->get_param( 'url' ) );
 		$struct['attributes']['class'] = array( 'button' );
-
+		if ( $this->setting->get_param( 'disabled' ) ) {
+			$struct['element'] = 'span';
+			unset( $struct['attributes']['href'] );
+		}
 		if ( true === $this->setting->get_param( 'blank', true ) ) {
 			$struct['attributes']['target'] = '_blank';
 			$struct['attributes']['rel']    = 'noreferrer';
@@ -80,7 +83,7 @@ class Info_Box extends Panel {
 	protected function text( $struct ) {
 
 		$struct['element']             = 'div';
-		$struct['attributes']['class'] = array( 'description' );
+		$struct['attributes']['class'] = array( 'cld-info-box-text' );
 		$struct['content']             = $this->setting->get_param( 'text' );
 
 		return $struct;

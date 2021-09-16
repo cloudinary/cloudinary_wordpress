@@ -72,6 +72,7 @@ class Chart_Stat extends Component {
 		$stat                               = $this->setting->get_param( 'stat' );
 		$struct['render']                   = true;
 		$struct['attributes']['data-chart'] = 'line';
+		$struct['attributes']['data-color'] = $this->setting->get_param( 'color', '#304ec4' );
 		$data                               = array();
 		$dates                              = array();
 		foreach ( $this->history as $date => $stats ) {

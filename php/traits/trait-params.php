@@ -116,10 +116,10 @@ trait Params_Trait {
 		$parts = explode( $this->separator, $param );
 		$param = array_pop( $parts );
 		if ( ! empty( $parts ) ) {
-			$master = implode( $this->separator, $parts );
-			$parent = $this->get_param( $master );
+			$main   = implode( $this->separator, $parts );
+			$parent = $this->get_param( $main );
 			unset( $parent[ $param ] );
-			$this->set_param( $master, $parent );
+			$this->set_param( $main, $parent );
 		} else {
 			unset( $this->params[ $param ] );
 		}

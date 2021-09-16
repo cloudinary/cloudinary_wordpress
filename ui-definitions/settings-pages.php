@@ -101,15 +101,25 @@ $settings = array(
 				'title'       => __( 'Image breakpoints', 'cloudinary' ),
 				'option_name' => 'media_display',
 				array(
-					'type'         => 'on_off',
-					'slug'         => 'enable_breakpoints',
-					'title'        => __( 'Breakpoints', 'cloudinary' ),
-					'tooltip_text' => __(
+					'type'               => 'on_off',
+					'slug'               => 'enable_breakpoints',
+					'title'              => __( 'Breakpoints', 'cloudinary' ),
+					'optimisation_title' => __( 'Responsive breakpoints', 'cloudinary' ),
+					'tooltip_text'       => __(
 						'Automatically generate multiple sizes based on the configured breakpoints to enable your images to responsively adjust to different screen sizes. Note that your Cloudinary usage will increase when enabling responsive images.',
 						'cloudinary'
 					),
-					'description'  => __( 'Enable responsive images.', 'cloudinary' ),
-					'default'      => 'off',
+					'description'        => __( 'Enable responsive images.', 'cloudinary' ),
+					'default'            => 'off',
+				),
+				array(
+					'type'  => 'info_box',
+					'icon'  => $this->dir_url . 'css/images/responsive.svg',
+					'title' => __( 'What are Image breakpoints', 'cloudinary' ),
+					'text'  => __(
+						'Cloudinary allows you to easily transform your images on-the-fly to any required format, style and dimension, and also optimizes images for minimal file size.',
+						'cloudinary'
+					),
 				),
 				array(
 					'type'      => 'group',
@@ -166,6 +176,12 @@ $settings = array(
 		'page_title' => __( 'Need help?', 'cloudinary' ),
 		'menu_title' => __( 'Need help?', 'cloudinary' ),
 		'priority'   => 50,
+		'sidebar'    => true,
+		array(
+			'type'    => 'panel',
+			'title'   => __( 'Help Centre', 'cloudinary' ),
+			'content' => __( 'How can we help', 'cloudinary' ),
+		),
 	),
 );
 

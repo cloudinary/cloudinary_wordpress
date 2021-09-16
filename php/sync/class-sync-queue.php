@@ -300,7 +300,7 @@ class Sync_Queue {
 			GROUP BY `meta_key`;
 			";
 
-		return $wpdb->get_results( $wpdb->prepare( $sql, Sync::META_KEYS['remote_size'], Sync::META_KEYS['local_size'], Sync::META_KEYS['unsynced'], Sync::META_KEYS['cloudinary'], Sync::META_KEYS['queued'] ), ARRAY_A ); // phpcs:ignore
+		return $wpdb->get_results( $wpdb->prepare( $sql, Sync::META_KEYS['remote_size'], Sync::META_KEYS['local_size'], Sync::META_KEYS['unsynced'], Sync::META_KEYS['cloudinary'], Sync::META_KEYS['queued'] ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
 	}
 
 	/**
@@ -354,7 +354,7 @@ class Sync_Queue {
 				$return['total_synced']      = $return['total_assets'] - $return['total_queued'];
 				$return['percentage_synced'] = $return['total_synced'] / $return['total_assets'];
 				if ( 1 === $return['percentage_synced'] ) {
-					$return['total_assets'] .= ' assets';
+					$return['total_assets'] = __( 'Total assets', 'cloudinary' );
 				} elseif ( ! empty( $return['percentage_synced'] ) ) {
 					$return['total_assets'] = $return['total_synced'] . ' / ' . $return['total_assets'];
 				}

@@ -19,7 +19,7 @@ class On_Off extends Text {
 	 *
 	 * @var string
 	 */
-	protected $blueprint = 'span|label|title|/title|prefix/|/label|wrap|description_left/|control|false_value/|input/|slider/|/control|description/|/wrap|/span|tooltip/';
+	protected $blueprint = 'wrap|span|label|title|/title|prefix/|/label|description_left/|control|false_value/|input/|slider/|/control|description/|/span|tooltip/|/wrap';
 
 	/**
 	 * Filter the false_value parts structure.
@@ -81,18 +81,18 @@ class On_Off extends Text {
 		$struct['attributes']['class'][] = 'cld-ui-input';
 
 		$struct['render'] = true;
-		if ( $this->setting->has_param( 'master' ) ) {
-			$slave       = $this->setting->get_param( 'master' );
+		if ( $this->setting->has_param( 'main' ) ) {
+			$child       = $this->setting->get_param( 'main' );
 			$controllers = array();
-			foreach ( $slave as $slave_slug ) {
-				$slave_setting = $this->setting->get_setting( $slave_slug );
-				$controllers[] = $slave_setting->get_slug();
+			foreach ( $child as $child_slug ) {
+				$child_setting = $this->setting->get_setting( $child_slug );
+				$controllers[] = $child_setting->get_slug();
 			}
 
-			$struct['attributes']['data-master'] = wp_json_encode( $controllers );
+			$struct['attributes']['data-main'] = wp_json_encode( $controllers );
 		}
 
-		if ( true === $this->setting->get_param( 'disabled', false ) || true === $this->setting->has_param( 'master_required', false ) && empty( $struct['attributes']['data-master'] ) ) {
+		if ( true === $this->setting->get_param( 'disabled', false ) || true === $this->setting->has_param( 'main_required', false ) && empty( $struct['attributes']['data-main'] ) ) {
 			$struct['attributes']['disabled'] = 'disabled';
 		}
 
@@ -117,10 +117,10 @@ class On_Off extends Text {
 		}
 		if (
 			true === $this->setting->get_param( 'disabled', false )
-			|| true === $this->setting->get_param( 'master_required', false )
+			|| true === $this->setting->get_param( 'main_required', false )
 			&& empty(
 				$this->setting->get_param(
-					'master',
+					'main',
 					array()
 				)
 			)

@@ -36,6 +36,7 @@ class Progress_Ring extends Component {
 		$struct['render']                      = true;
 		$struct['attributes']['data-value']    = $this->setting->get_param( 'value', 100 );
 		$struct['attributes']['data-text']     = $this->setting->get_param( 'text' );
+		$struct['attributes']['data-color']    = $this->setting->get_param( 'color', '#304ec4' );
 		$struct['attributes']['data-progress'] = 'circle';
 
 		return $struct;

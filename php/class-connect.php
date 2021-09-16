@@ -87,6 +87,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		'url'        => 'cloudinary_url',
 		'connection' => 'cloudinary_connect',
 		'status'     => 'cloudinary_status',
+		'history'    => '_cloudinary_history',
 	);
 
 	/**
@@ -189,6 +190,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 				true
 			);
 			$this->plugin->settings->set_param( 'connected', false );
+
 			return $data;
 		}
 
@@ -207,17 +209,19 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 				__( 'The environment variable URL must be in this format: cloudinary://API_KEY:API_SECRET@CLOUD_NAME', 'cloudinary' ),
 				'error'
 			);
+
 			return $current;
 		}
 
 		$result = $this->test_connection( $data['cloudinary_url'] );
 
 		if ( ! empty( $result['message'] ) ) {
-			return new \WP_Error(
+			$admin->add_admin_notice(
 				$result['type'],
 				$result['message'],
 				'error'
 			);
+			return $current;
 		}
 
 		$admin->add_admin_notice(
@@ -228,6 +232,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 
 		$this->settings->get_setting( 'signature' )->save_value( md5( $data['cloudinary_url'] ) );
 		$this->plugin->settings->set_param( 'connected', true );
+
 		return $data;
 	}
 
@@ -360,7 +365,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 */
 	public function history( $days = 1 ) {
 		$return  = array();
-		$history = get_option( '_cld_history', array() );
+		$history = get_option( self::META_KEYS['history'], array() );
 		for ( $i = 1; $i <= $days; $i ++ ) {
 			$date = date_i18n( 'd-m-Y', strtotime( '- ' . $i . ' days' ) );
 			if ( ! isset( $history[ $date ] ) ) {
@@ -368,7 +373,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			}
 			$return[ $date ] = $history[ $date ];
 		}
-		update_option( '_cld_history', $history );
+		update_option( self::META_KEYS['history'], $history, false );
 
 		return $return;
 	}
@@ -377,19 +382,21 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 * After updating the cloudinary_connect option, remove flag.
 	 */
 	public function updated_option() {
-		$page = 'cloudinary';
-		if ( $this->is_connected() ) {
-			$page .= '_connect';
+		if ( ! defined( 'REST_REQUEST' ) || true !== REST_REQUEST ) {
+			$page = 'cloudinary';
+			if ( $this->is_connected() ) {
+				$page .= '_connect';
+			}
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'page' => $page,
+					),
+					admin_url( 'admin.php' )
+				)
+			);
+			exit;
 		}
-		wp_safe_redirect(
-			add_query_arg(
-				array(
-					'page' => $page,
-				),
-				admin_url( 'admin.php' )
-			)
-		);
-		exit;
 	}
 
 	/**
@@ -716,21 +723,6 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 */
 	public function get_notices() {
 		$this->usage_notices();
-		$screen             = get_current_screen();
-		$connection_setting = $this->settings->find_setting( self::META_KEYS['url'] );
-		$cloudinary_url     = $connection_setting->get_value();
-		if ( empty( $cloudinary_url ) ) {
-			$page_base = $this->settings->get_root_setting()->get_slug();
-			if ( is_object( $screen ) && $page_base === $screen->parent_base ) {
-				$url             = $connection_setting->get_option_parent()->get_component()->get_url();
-				$link            = '<a href="' . esc_url( $url ) . '">' . __( 'Connect', 'cloudinary' ) . '</a> ';
-				$this->notices[] = array(
-					'message'     => $link . __( 'your Cloudinary account with WordPress to get started.', 'cloudinary' ),
-					'type'        => 'error',
-					'dismissible' => true,
-				);
-			}
-		}
 
 		return $this->notices;
 	}

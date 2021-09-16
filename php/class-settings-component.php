@@ -7,17 +7,17 @@
 
 namespace Cloudinary;
 
-use \Cloudinary\Component\Settings;
+use Cloudinary\Component\Settings;
 
 /**
- * Plugin Exception class.
+ * Plugin Settings Component class.
  */
 abstract class Settings_Component implements Settings {
 
 	/**
 	 * Holds the settings object for this Class.
 	 *
-	 * @var \Cloudinary\Settings
+	 * @var Settings
 	 */
 	protected $settings;
 
@@ -66,7 +66,7 @@ abstract class Settings_Component implements Settings {
 	/**
 	 * Get the setting object.
 	 *
-	 * @return \Cloudinary\Settings
+	 * @return Settings
 	 */
 	public function get_settings() {
 		return $this->settings;
@@ -91,5 +91,4 @@ abstract class Settings_Component implements Settings {
 	public function is_enabled( $enabled ) {
 		return $enabled;
 	}
-
 }

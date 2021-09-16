@@ -199,10 +199,11 @@ class Lazy_Load extends Delivery_Feature {
 					'priority'    => 9,
 					'option_name' => 'media_display',
 					array(
-						'type'        => 'on_off',
-						'description' => __( 'Enable lazy loading', 'cloudinary' ),
-						'slug'        => 'use_lazy_load',
-						'default'     => 'on',
+						'type'               => 'on_off',
+						'description'        => __( 'Enable lazy loading', 'cloudinary' ),
+						'optimisation_title' => __( 'Lazy loading', 'cloudinary' ),
+						'slug'               => 'use_lazy_load',
+						'default'            => 'on',
 					),
 					array(
 						'type'      => 'group',

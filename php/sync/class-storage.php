@@ -403,12 +403,21 @@ class Storage implements Notice {
 	 * @param int $attachment_id The attachment ID.
 	 */
 	public function size_sync( $attachment_id ) {
+		$args        = array(
+			/** This filter is documented in wp-includes/class-wp-http-streams.php */
+			'sslverify' => apply_filters( 'https_local_ssl_verify', false ),
+			'headers'   => array(
+				'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+			),
+		);
 		$url         = $this->media->cloudinary_url( $attachment_id );
-		$re          = wp_remote_head( $url );
-		$remote_size = wp_remote_retrieve_header( $re, 'Content-Length' );
+		$request     = wp_remote_head( $url, $args );
+		$remote_size = wp_remote_retrieve_header( $request, 'Content-Length' );
 		$local_size  = get_post_meta( $attachment_id, Sync::META_KEYS['local_size'], true );
 		if ( empty( $local_size ) ) {
-			$local_size = filesize( get_attached_file( $attachment_id ) );
+			$url        = wp_get_attachment_url( $attachment_id );
+			$request    = wp_remote_head( $url, $args );
+			$local_size = wp_remote_retrieve_header( $request, 'Content-Length' );
 			update_post_meta( $attachment_id, Sync::META_KEYS['local_size'], $local_size );
 		}
 		update_post_meta( $attachment_id, Sync::META_KEYS['remote_size'], $remote_size );

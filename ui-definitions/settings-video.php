@@ -15,89 +15,61 @@ $settings = array(
 			'type' => 'row',
 			array(
 				'type' => 'column',
+
 				array(
-					'type' => 'group',
-					array(
-						'type'         => 'select',
-						'slug'         => 'video_player',
-						'title'        => __( 'Video player', 'cloudinary' ),
-						'tooltip_text' => __( 'Which video player to use on all videos.', 'cloudinary' ),
-						'default'      => 'wp',
-						'options'      => array(
-							'wp'  => __( 'WordPress player', 'cloudinary' ),
-							'cld' => __( 'Cloudinary player', 'cloudinary' ),
-						),
-					),
-					array(
-						'type'      => 'group',
-						'condition' => array(
-							'video_player' => 'cld',
-						),
-						array(
-							'slug'        => 'video_controls',
-							'description' => __( 'Show controls', 'cloudinary' ),
-							'type'        => 'on_off',
-							'default'     => 'on',
-						),
-						array(
-							'slug'        => 'video_loop',
-							'description' => __( ' Repeat video', 'cloudinary' ),
-							'type'        => 'on_off',
-							'default'     => 'off',
-						),
-						array(
-							'slug'        => 'video_autoplay_mode',
-							'title'       => __( 'Autoplay', 'cloudinary' ),
-							'type'        => 'radio',
-							'default'     => 'off',
-							'options'     => array(
-								'off'       => __( 'Off', 'cloudinary' ),
-								'always'    => __( 'Always', 'cloudinary' ),
-								'on-scroll' => __( 'On-scroll (autoplay when in view)', 'cloudinary' ),
-							),
-							'description' => sprintf(
-							// translators: Placeholders are <a> tags.
-								__(
-									'Please note that when choosing "always", the video will autoplay without sound (muted). This is a built-in browser feature and applies to all major browsers.%1$sRead more about muted autoplay%2$s',
-									'cloudinary'
-								),
-								'<br><a href="https://developers.google.com/web/updates/2016/07/autoplay" target="_blank">',
-								'</a>'
-							),
-						),
-					),
-					array(
-						'type'         => 'on_off',
-						'slug'         => 'video_limit_bitrate',
-						'title'        => __( 'Bitrate', 'cloudinary' ),
-						'description'  => __( 'Enable bitrate limiter', 'cloudinary' ),
-						'tooltip_text' => __( 'If set, all videos will be delivered in the defined bitrate.', 'cloudinary' ),
-						'default'      => 'off',
-						'attributes'   => array(
-							'data-context' => 'video',
-						),
-					),
-					array(
-						'type'        => 'number',
-						'slug'        => 'video_bitrate',
-						'prefix'      => __( 'Bitrate limit', 'cloudinary' ),
-						'description' => __( 'Maximum number of bits per second in Kilobytes.', 'cloudinary' ),
-						'default'     => '500',
-						'suffix'      => 'k',
-						'condition'   => array(
-							'video_limit_bitrate' => true,
-						),
-						'attributes'  => array(
-							'data-context' => 'video',
-							'data-meta'    => 'br',
-							'data-suffix'  => 'k',
-						),
-					),
-					array(
-						'type'    => 'tag',
-						'element' => 'hr',
+					'type'         => 'select',
+					'slug'         => 'video_player',
+					'title'        => __( 'Video player', 'cloudinary' ),
+					'tooltip_text' => __( 'Which video player to use on all videos.', 'cloudinary' ),
+					'default'      => 'wp',
+					'options'      => array(
+						'wp'  => __( 'WordPress player', 'cloudinary' ),
+						'cld' => __( 'Cloudinary player', 'cloudinary' ),
 					),
 				),
+				array(
+					'type'      => 'group',
+					'condition' => array(
+						'video_player' => 'cld',
+					),
+					array(
+						'slug'        => 'video_controls',
+						'description' => __( 'Show controls', 'cloudinary' ),
+						'type'        => 'on_off',
+						'default'     => 'on',
+					),
+					array(
+						'slug'        => 'video_loop',
+						'description' => __( 'Repeat video', 'cloudinary' ),
+						'type'        => 'on_off',
+						'default'     => 'off',
+					),
+					array(
+						'slug'         => 'video_autoplay_mode',
+						'title'        => __( 'Autoplay', 'cloudinary' ),
+						'type'         => 'radio',
+						'default'      => 'off',
+						'options'      => array(
+							'off'       => __( 'Off', 'cloudinary' ),
+							'always'    => __( 'Always', 'cloudinary' ),
+							'on-scroll' => __( 'On-scroll (autoplay when in view)', 'cloudinary' ),
+						),
+						'tooltip_text' => sprintf(
+						// translators: Placeholders are <a> tags.
+							__(
+								'Please note that when choosing "always", the video will autoplay without sound (muted). This is a built-in browser feature and applies to all major browsers.%1$sRead more about muted autoplay%2$s',
+								'cloudinary'
+							),
+							'<br><a href="https://developers.google.com/web/updates/2016/07/autoplay" target="_blank">',
+							'</a>'
+						),
+					),
+				),
+				array(
+					'type'    => 'tag',
+					'element' => 'hr',
+				),
+
 				array(
 					'type' => 'group',
 					array(
@@ -175,7 +147,10 @@ $settings = array(
 					'type'           => 'text',
 					'slug'           => 'video_freeform',
 					'title'          => __( 'Custom transformation', 'cloudinary' ),
-					'tooltip_text'   => __( 'The set of transformations to apply to all video assets, as a URL transformation string.', 'cloudinary' ),
+					'link'           => array(
+						'text' => __( 'See Examples', 'cloudinary' ),
+						'href' => '#',
+					),
 					'attributes'     => array(
 						'data-context' => 'video',
 						'placeholder'  => 'fps_15-25,ac_none',
@@ -196,10 +171,7 @@ $settings = array(
 				),
 			),
 			array(
-				'type'  => 'column',
-				'class' => array(
-					'column-55',
-				),
+				'type' => 'column',
 				array(
 					'type'           => 'video_preview',
 					'title'          => __( 'Video preview', 'cloudinary' ),

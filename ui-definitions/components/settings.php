@@ -12,7 +12,6 @@ $admin       = $cloudinary->get_component( 'admin' );
 $component   = $admin->get_component();
 $connected   = $cloudinary->settings->get_param( 'connected' );
 $active_slug = $admin->get_param( 'active_slug' );
-$admin->render_notices();
 ?>
 <form method="post" novalidate="novalidate">
 	<div class="cld-ui-wrap cld-row">
@@ -24,7 +23,7 @@ $admin->render_notices();
 			?>
 		</div>
 		<?php if ( ! empty( $connected ) && ! empty( $page['sidebar'] ) ) : ?>
-			<div class="cld-column cld-ui-accordion">
+			<div class="cld-column cld-ui-sidebar">
 				<?php
 				$def     = $cloudinary->settings->get_param( 'sidebar' );
 				$sidebar = $this->init_components( $def, 'sidebar' );

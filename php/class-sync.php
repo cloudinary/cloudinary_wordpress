@@ -1062,13 +1062,6 @@ class Sync implements Setup, Assets {
 						),
 					),
 					array(
-						'type'        => 'sync',
-						'title'       => __( 'Bulk sync all your WordPress assets to Cloudinary', 'cloudinary' ),
-						'tooltip_off' => __( 'Manual sync is enabled. Individual assets must be synced manually using the WordPress Media Library.', 'cloudinary' ),
-						'tooltip_on'  => __( 'An optional one-time operation to manually synchronize all WordPress Media to Cloudinary.', 'cloudinary' ),
-						'queue'       => $this->managers['queue'],
-					),
-					array(
 						'type'              => 'text',
 						'slug'              => 'cloudinary_folder',
 						'title'             => __( 'Cloudinary folder path', 'cloudinary' ),
