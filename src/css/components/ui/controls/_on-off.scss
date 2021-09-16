@@ -7,6 +7,7 @@
 		font-size: $size-setting-field;
 		color: inherit;
 		font-weight: 600;
+
 		&.left {
 			margin-left: 0;
 			margin-right: 0.4rem;
@@ -17,6 +18,7 @@
 	$mini-control-height: 10px;
 	$mini-slider-pad: 1px;
 	$mini-slider-size: $mini-control-height - $mini-slider-pad - $mini-slider-pad;
+
 
 	&-control {
 		$control-width: 30px;
@@ -29,11 +31,8 @@
 		height: $control-height;
 		margin-right: 0.4rem;
 
-		&.disabled {
-			opacity: 0.4;
-		}
 
-		input {
+		input, input:disabled {
 			opacity: 0;
 			width: 0;
 			height: 0;
@@ -50,6 +49,10 @@
 			background-color: $color-disabled-grey;
 			transition: background-color 0.3s;
 			border-radius: 10px;
+
+			input:disabled + & {
+				opacity: 0.4;
+			}
 
 			input:checked + & {
 				background-color: $color-cld-blue !important;

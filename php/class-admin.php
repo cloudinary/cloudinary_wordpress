@@ -12,6 +12,7 @@ use Cloudinary\UI\Component;
 use Cloudinary\Settings\Setting;
 use WP_REST_Server;
 use WP_REST_Request;
+use WP_REST_Response;
 
 /**
  * Admin Class.
@@ -92,7 +93,9 @@ class Admin {
 		);
 		$notices       = new Settings( self::NOTICE_SLUG, $notice_params );
 		$this->notices = $notices->add( 'cld_general', array() );
-		add_action( 'shutdown', array( $notices, 'save' ) );
+		if ( ! defined( 'REST_REQUEST' ) || true !== REST_REQUEST ) {
+			add_action( 'shutdown', array( $notices, 'save' ) );
+		}
 	}
 
 	/**
@@ -110,6 +113,15 @@ class Admin {
 			'args'     => array(),
 		);
 
+		$endpoints['save_settings'] = array(
+			'method'              => WP_REST_Server::CREATABLE,
+			'callback'            => array( $this, 'rest_save_settings' ),
+			'args'                => array(),
+			'permission_callback' => function () {
+				return current_user_can( 'manage_options' );
+			},
+		);
+
 		return $endpoints;
 	}
 
@@ -123,6 +135,25 @@ class Admin {
 		$duration = $request->get_param( 'duration' );
 
 		set_transient( $token, true, $duration );
+	}
+
+	/**
+	 * Set a transient with the duration using a token as an identifier.
+	 *
+	 * @param WP_REST_Request $request The request object.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function rest_save_settings( WP_REST_Request $request ) {
+		$data = $request->get_params();
+		unset( $data['_locale'] );
+		foreach ( $data as $submission => $package ) {
+			$this->save_settings( $submission, $package );
+		}
+		$results = $this->notices->get_value();
+		$this->notices->delete();
+
+		return rest_ensure_response( $results );
 	}
 
 	/**
@@ -214,12 +245,23 @@ class Admin {
 	 * @param array  $arguments Arguments passed to call.
 	 */
 	public function __call( $name, $arguments ) {
+
 		if ( $this->has_param( $name ) ) {
+
 			$page = $this->get_param( $name );
 			$this->settings->set_param( 'active_setting', $page['slug'] );
 			$section = filter_input( INPUT_GET, 'section', FILTER_SANITIZE_STRING );
 			if ( $section && file_exists( $this->plugin->dir_path . 'ui-definitions/components/' . $section . '.php' ) ) {
 				$this->section = $section;
+			}
+			if ( 'page' === $this->section && ! $this->settings->get_param( 'connected' ) ) {
+				$args = array(
+					'page'    => $this->plugin->slug,
+					'section' => 'wizard',
+				);
+				$url  = add_query_arg( $args, 'admin.php' );
+				wp_safe_redirect( $url );
+				exit;
 			}
 		}
 	}
@@ -235,6 +277,7 @@ class Admin {
 		$this->set_param( 'active_slug', $page['slug'] );
 		$setting         = $this->init_components( $page, $screen->id );
 		$this->component = $setting->get_component();
+
 		include $this->plugin->dir_path . 'ui-definitions/components/' . $this->section . '.php';
 	}
 
@@ -324,38 +367,49 @@ class Admin {
 			),
 		);
 
-		$page   = $this->settings->get_setting( $submission );
 		$saving = filter_input_array( INPUT_POST, $args, false );
 		if ( ! empty( $saving ) && ! empty( $saving[ $submission ] ) && wp_verify_nonce( $saving['_cld_nonce'], 'cloudinary-settings' ) ) {
 			$referer = $saving['_wp_http_referer'];
 			wp_parse_str( wp_parse_url( $referer, PHP_URL_QUERY ), $query );
 
-			$errors  = array();
-			$pending = false;
-			foreach ( $saving[ $submission ] as $key => $value ) {
-				$slug    = $submission . $page->separator . $key;
-				$current = $this->settings->get_value( $slug );
-				if ( $current === $value ) {
-					continue;
-				}
-				$capture_setting = $this->settings->get_setting( $key );
-				$value           = $capture_setting->get_component()->sanitize_value( $value );
-				$result          = $this->settings->set_pending( $key, $value, $current );
-				if ( is_wp_error( $result ) ) {
-					$this->add_admin_notice( $result->get_error_code(), $result->get_error_message(), $result->get_error_data() );
-					break;
-				}
-				$pending = true;
-			}
-
-			if ( empty( $errors ) && true === $pending ) {
-				$results = $this->settings->save();
-				if ( ! empty( $results ) ) {
-					$this->add_admin_notice( 'error_notice', __( 'Settings updated successfully', 'cloudinary' ), 'success' );
-				}
-			}
+			$data = $saving[ $submission ];
+			$this->save_settings( $submission, $data );
 			wp_safe_redirect( $referer );
 			exit;
+		}
+	}
+
+	/**
+	 * Save a settings set.
+	 *
+	 * @param string $submission The settings slug to save.
+	 * @param array  $data       The data to save.
+	 */
+	protected function save_settings( $submission, $data ) {
+		$page    = $this->settings->get_setting( $submission );
+		$errors  = array();
+		$pending = false;
+		foreach ( $data as $key => $value ) {
+			$slug    = $submission . $page->separator . $key;
+			$current = $this->settings->get_value( $slug );
+			if ( $current === $value ) {
+				continue;
+			}
+			$capture_setting = $this->settings->get_setting( $key );
+			$value           = $capture_setting->get_component()->sanitize_value( $value );
+			$result          = $this->settings->set_pending( $key, $value, $current );
+			if ( is_wp_error( $result ) ) {
+				$this->add_admin_notice( $result->get_error_code(), $result->get_error_message(), $result->get_error_data() );
+				break;
+			}
+			$pending = true;
+		}
+
+		if ( empty( $errors ) && true === $pending ) {
+			$results = $this->settings->save();
+			if ( ! empty( $results ) ) {
+				$this->add_admin_notice( 'error_notice', __( 'Settings updated successfully', 'cloudinary' ), 'success' );
+			}
 		}
 	}
 
