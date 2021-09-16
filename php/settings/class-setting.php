@@ -390,6 +390,7 @@ class Setting {
 	 * @return bool
 	 */
 	public function delete() {
+		$this->root->remove_pending( $this->slug );
 		return $this->root->delete( $this->get_param( Settings::META_KEYS['storage'] ) );
 	}
 }
