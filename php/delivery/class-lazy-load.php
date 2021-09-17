@@ -146,7 +146,6 @@ class Lazy_Load extends Delivery_Feature {
 		array_shift( $transformations ); // We always get a sized url, the first will be the size, which we don't need.
 
 		$tag_element['atts']['data-transformations'] = API::generate_transformation_string( $transformations, $tag_element['type'] );
-		$tag_element['atts']['data-src']             = $tag_element['atts']['src'];
 
 		// Capture the size.
 		$tag_element['atts']['data-size'] = array(
@@ -155,7 +154,7 @@ class Lazy_Load extends Delivery_Feature {
 		);
 
 		// Add svg placeholder.
-		$svg                        = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $tag_element['atts']['width'] . '" height="' . $tag_element['atts']['width'] . '"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $this->config['lazy_custom_color'] . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
+		$svg                        = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $tag_element['atts']['width'] . '"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $this->config['lazy_custom_color'] . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
 		$tag_element['atts']['src'] = 'data:image/svg+xml;utf8,' . $svg;
 		if ( isset( $tag_element['atts']['srcset'] ) ) {
 			$tag_element['atts']['data-srcset'] = $tag_element['atts']['srcset'];

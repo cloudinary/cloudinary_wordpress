@@ -55,6 +55,7 @@ class Responsive_Breakpoints extends Delivery_Feature {
 	 */
 	public function add_features( $tag_element ) {
 		$tag_element['atts']['data-responsive'] = true;
+		unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 
 		return $tag_element;
 	}

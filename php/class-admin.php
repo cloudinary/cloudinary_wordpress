@@ -411,6 +411,8 @@ class Admin {
 				$this->add_admin_notice( 'error_notice', __( 'Settings updated successfully', 'cloudinary' ), 'success' );
 			}
 		}
+		// Flush cache.
+		do_action( 'cloudinary_flush_cache' );
 	}
 
 	/**
