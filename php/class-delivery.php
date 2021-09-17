@@ -416,7 +416,7 @@ class Delivery implements Setup {
 		 * Filter to allow stopping default srcset generation.
 		 *
 		 * @hook   cloudinary_apply_breakpoints
-		 * @since  2.7.5
+		 * @since  3.0.0
 		 * @default {true}
 		 *
 		 * @param $apply {bool}  True to apply, false to skip.
@@ -445,7 +445,7 @@ class Delivery implements Setup {
 		 * @hook   cloudinary_pre_image_tag
 		 * @since  2.7.5
 		 *
-		 * @param $tag_element {array}  The tag_element ( tag + attributes array).
+		 * @param $tag_element {array}  The tag_element (tag + attributes array).
 		 *
 		 * @return {array}
 		 */
@@ -458,10 +458,10 @@ class Delivery implements Setup {
 		 * Filter the new built tag element.
 		 *
 		 * @hook   cloudinary_image_tag
-		 * @since  2.7.8
+		 * @since  3.0.0
 		 *
-		 * @param $replace     {string}  The new HTML tag.
-		 * @param $tag_element {array}  The tag_element ( tag + attributes array).
+		 * @param $replace     {string} The new HTML tag.
+		 * @param $tag_element {array}  The tag_element (tag + attributes array).
 		 *
 		 * @return {array}
 		 */

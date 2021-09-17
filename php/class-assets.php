@@ -745,7 +745,7 @@ class Assets extends Settings_Component {
 	 * @return bool
 	 */
 	public function check_asset( $is_local, $url ) {
-		if ( ! in_array( $url, $this->known_files, true ) ) {
+		if ( ! isset( $this->known_files[ $url ] ) ) {
 			$clean_url = $this->clean_path( $url );
 			foreach ( $this->active_parents as $asset_parent ) {
 				if ( substr( $clean_url, 0, strlen( $asset_parent->post_title ) ) === $asset_parent->post_title ) {
