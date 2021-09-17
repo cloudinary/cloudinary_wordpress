@@ -569,7 +569,7 @@ class Delivery implements Setup {
 			$base = $dirs['baseurl'];
 		}
 
-		$is_local = substr( $url, 0, strlen( $base ) ) === $base;
+		$is_local = substr( $url, 0, strlen( $base ) ) === $base && $this->sync->is_auto_sync_enabled();
 
 		/**
 		 * Filter if the url is a local asset.

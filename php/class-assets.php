@@ -713,23 +713,25 @@ class Assets extends Settings_Component {
 	 * @return bool
 	 */
 	public function check_asset( $is_local, $url ) {
-		$clean_url = $this->clean_path( $url );
-		foreach ( $this->active_parents as $asset_parent ) {
-			if ( substr( $clean_url, 0, strlen( $asset_parent->post_title ) ) === $asset_parent->post_title ) {
-				$excludes = $this->media->get_post_meta( $asset_parent->ID, self::META_KEYS['excludes'], true );
-				if ( empty( $excludes ) ) {
-					$excludes = array();
-				}
-				if ( ! in_array( $url, $excludes, true ) ) {
-					if ( ! $this->syncable_asset( $url ) ) {
-						$excludes[] = $url;
-						$this->media->update_post_meta( $asset_parent->ID, self::META_KEYS['excludes'], $excludes );
-						break;
+		if ( true !== $is_local ) {
+			$clean_url = $this->clean_path( $url );
+			foreach ( $this->active_parents as $asset_parent ) {
+				if ( substr( $clean_url, 0, strlen( $asset_parent->post_title ) ) === $asset_parent->post_title ) {
+					$excludes = $this->media->get_post_meta( $asset_parent->ID, self::META_KEYS['excludes'], true );
+					if ( empty( $excludes ) ) {
+						$excludes = array();
 					}
-					$is_local                                = true;
-					$this->found_urls[ $asset_parent->ID ][] = $url;
+					if ( ! in_array( $url, $excludes, true ) ) {
+						if ( ! $this->syncable_asset( $url ) ) {
+							$excludes[] = $url;
+							$this->media->update_post_meta( $asset_parent->ID, self::META_KEYS['excludes'], $excludes );
+							break;
+						}
+						$is_local                                = true;
+						$this->found_urls[ $asset_parent->ID ][] = $url;
+					}
+					break;
 				}
-				break;
 			}
 		}
 
