@@ -18,9 +18,7 @@ const LazyLoad = {
 			}
 			image.originalWidth = attributes[ 'data-size' ][ 0 ];
 			image.originalHeight = attributes[ 'data-size' ][ 1 ];
-			image.src = this.config.svg_loader.replace(
-				'${width}', image.originalWidth )
-				.replace( '${height}', image.originalHeight );
+
 			this.images.push( image );
 			noscript.parentNode.replaceChild( image, noscript );
 		} );
@@ -32,9 +30,7 @@ const LazyLoad = {
 			const size = image.dataset.size.split( ' ' );
 			image.originalWidth = size[ 0 ];
 			image.originalHeight = size[ 1 ];
-			image.src = this.config.svg_loader.replace(
-				'${width}', image.originalWidth )
-				.replace( '${height}', image.originalHeight );
+
 			this.images.push( image );
 		} );
 		// Resize handler.

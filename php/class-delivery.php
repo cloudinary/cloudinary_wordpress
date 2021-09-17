@@ -338,12 +338,11 @@ class Delivery implements Setup {
 			 * @since  2.7.6
 			 *
 			 * @param $attachment_id {int}    The attachment ID.
-			 * @param $html_tag      {string} The html tag.
-			 * @param $type          {string} The asset type.
+			 * @param $tag_element   {array}  The tag element.
 			 *
 			 * @return {int|false}
 			 */
-			$set['id'] = apply_filters( 'cloudinary_delivery_get_id', $set['id'], $set['original'], $set['type'] );
+			$set['id'] = apply_filters( 'cloudinary_delivery_get_id', $set['id'], $set );
 			if ( empty( $set['id'] ) || ! $this->media->cloudinary_id( $set['id'] ) ) {
 				continue;
 			}

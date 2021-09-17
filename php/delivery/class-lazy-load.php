@@ -144,13 +144,19 @@ class Lazy_Load extends Delivery_Feature {
 
 		$transformations = $this->media->get_transformations_from_string( $tag_element['atts']['src'] );
 		array_shift( $transformations ); // We always get a sized url, the first will be the size, which we don't need.
+
 		$tag_element['atts']['data-transformations'] = API::generate_transformation_string( $transformations, $tag_element['type'] );
 		$tag_element['atts']['data-src']             = $tag_element['atts']['src'];
-		$tag_element['atts']['data-size']            = array(
+
+		// Capture the size.
+		$tag_element['atts']['data-size'] = array(
 			$tag_element['atts']['width'],
 			$tag_element['atts']['height'],
 		);
-		unset( $tag_element['atts']['src'] );
+
+		// Add svg placeholder.
+		$svg                        = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $tag_element['atts']['width'] . '" height="' . $tag_element['atts']['width'] . '"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $this->config['lazy_custom_color'] . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
+		$tag_element['atts']['src'] = 'data:image/svg+xml;utf8,' . $svg;
 		if ( isset( $tag_element['atts']['srcset'] ) ) {
 			$tag_element['atts']['data-srcset'] = $tag_element['atts']['srcset'];
 			$tag_element['atts']['data-sizes']  = $tag_element['atts']['sizes'];
@@ -175,8 +181,6 @@ class Lazy_Load extends Delivery_Feature {
 		wp_enqueue_script( 'cld-lazy-load' );
 		$config = $this->config; // Get top most config.
 
-		$svg                  = '<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $config['lazy_custom_color'] . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
-		$config['svg_loader'] = 'data:image/svg+xml;utf8,' . $svg;
 		if ( 'off' !== $config['lazy_placeholder'] ) {
 			$config['placeholder'] = API::generate_transformation_string( $this->get_placeholder_transformations( $config['lazy_placeholder'] ) );
 		}

@@ -111,6 +111,13 @@ class Assets extends Settings_Component {
 	);
 
 	/**
+	 * Keep a list of media library items that are already synced.
+	 *
+	 * @var array
+	 */
+	protected $known_files = array();
+
+	/**
 	 * Static instance of this class.
 	 *
 	 * @var self
@@ -145,7 +152,9 @@ class Assets extends Settings_Component {
 	 * Register the hooks.
 	 */
 	protected function register_hooks() {
+
 		// Filters.
+		add_filter( 'wp_get_attachment_metadata', array( $this, 'capture_synced_library_items' ), 10, 2 );
 		add_filter( 'cloudinary_is_local_asset_url', array( $this, 'check_asset' ), 10, 2 );
 		add_filter( 'cloudinary_delivery_get_id', array( $this, 'get_asset_id_from_tag' ), 10, 2 );
 		add_filter( 'cloudinary_is_media', array( $this, 'is_media' ), 10, 2 );
@@ -165,6 +174,29 @@ class Assets extends Settings_Component {
 		add_action( 'cloudinary_string_replace', array( $this, 'add_url_replacements' ), 20 );
 		add_action( 'shutdown', array( $this, 'meta_updates' ) );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_cache' ), 100 );
+	}
+
+	/**
+	 * Capture urls that are already synced to avoid excessive processing.
+	 *
+	 * @param array $meta          Meta array.
+	 * @param int   $attachment_id The attachment ID.
+	 *
+	 * @return array
+	 */
+	public function capture_synced_library_items( $meta, $attachment_id ) {
+		if ( ! self::is_asset_type( $attachment_id ) && ! in_array( $attachment_id, $this->known_files, true ) && $this->media->sync->is_synced( $attachment_id ) ) {
+			$url                       = wp_get_attachment_url( $attachment_id );
+			$this->known_files[ $url ] = $attachment_id;
+			if ( ! empty( $meta['sizes'] ) ) {
+				foreach ( $meta['sizes'] as $size ) {
+					$size_url                       = dirname( $url ) . '/' . $size['file'];
+					$this->known_files[ $size_url ] = $attachment_id;
+				}
+			}
+		}
+
+		return $meta;
 	}
 
 	/**
@@ -713,7 +745,7 @@ class Assets extends Settings_Component {
 	 * @return bool
 	 */
 	public function check_asset( $is_local, $url ) {
-		if ( true !== $is_local ) {
+		if ( ! in_array( $url, $this->known_files, true ) ) {
 			$clean_url = $this->clean_path( $url );
 			foreach ( $this->active_parents as $asset_parent ) {
 				if ( substr( $clean_url, 0, strlen( $asset_parent->post_title ) ) === $asset_parent->post_title ) {
@@ -942,19 +974,19 @@ class Assets extends Settings_Component {
 	 *
 	 * @hook cloudinary_delivery_get_id
 	 *
-	 * @param int    $id    The ID from the filter.
-	 * @param string $asset The asset HTML tag.
+	 * @param int   $id          The ID from the filter.
+	 * @param array $tag_element The asset tag element.
 	 *
 	 * @return false|int
 	 */
-	public function get_asset_id_from_tag( $id, $asset ) {
+	public function get_asset_id_from_tag( $id, $tag_element ) {
 
-		if ( ! empty( $this->found_urls ) && $this->contains_found_url( $asset ) ) {
+		if ( ! empty( $this->found_urls ) && $this->contains_found_url( $tag_element['original'] ) ) {
 			if ( ! empty( $id ) && ( $this->media->sync->been_synced( $id ) || $this->media->sync->can_sync( $id ) ) ) {
 				// Theres an ID and it can be synced or has been synced, we need to remove the urls from the to create list.
 				$this->clear_attachment_syncables( $id );
 			} else {
-				$atts = Utils::get_tag_attributes( $asset );
+				$atts = $tag_element['atts'];
 				if ( ! empty( $atts['src'] ) ) {
 					$url = Delivery::clean_url( $atts['src'] );
 
