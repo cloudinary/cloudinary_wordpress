@@ -218,7 +218,7 @@ class Settings {
 	 * @return string
 	 */
 	public function get_storage_key( $slug, $type = null ) {
-		if ( null == $type ) {
+		if ( null === $type ) {
 			$type = $this->get_setting( $slug )->get_param( 'type' );
 		}
 		$prefix = null;

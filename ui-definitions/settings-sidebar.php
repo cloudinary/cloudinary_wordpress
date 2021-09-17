@@ -60,11 +60,12 @@ $settings = array(
 		'type'        => 'panel',
 		'title'       => __( 'Optimization level', 'cloudinary' ),
 		'description' => function () {
-			$instance = get_plugin_instance()->settings->get_setting( 'sidebar.panel_1.opt_level_0' );
+			$instance   = get_plugin_instance()->settings->get_setting( 'sidebar.panel_1.opt_level_0' );
+			$percentage = $instance->get_component()->calculate_percentage() . '%';
 
 			/* translators: %s is the percentage optimized. */
 
-			return sprintf( '%s Optimized', $instance->get_component()->calculate_percentage() . '%' );
+			return sprintf( __( '%s Optimized', 'cloudinary' ), $percentage );
 
 		},
 		'collapsible' => 'closed',
