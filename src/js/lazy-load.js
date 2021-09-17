@@ -6,14 +6,33 @@ const LazyLoad = {
 	lazyThreshold: 0,
 	_init() {
 		this._calcThreshold();
+
+		const lazysNoScripts = document.querySelectorAll(
+			'noscript[data-image]' );
+
+		[ ...lazysNoScripts ].forEach( ( noscript ) => {
+			const attributes = JSON.parse( noscript.dataset.image );
+			const image = document.createElement( 'img' );
+			for ( let att in attributes ) {
+				image.setAttribute( att, attributes[ att ] );
+			}
+			image.originalWidth = attributes[ 'data-size' ][ 0 ];
+			image.originalHeight = attributes[ 'data-size' ][ 1 ];
+
+			this.images.push( image );
+			noscript.parentNode.replaceChild( image, noscript );
+		} );
 		[ ...document.images ].forEach( ( image ) => {
 			if ( ! image.dataset.src ) {
 				return;
 			}
-			image.originalWidth = image.dataset.width;
+
+			const size = image.dataset.size.split( ' ' );
+			image.originalWidth = size[ 0 ];
+			image.originalHeight = size[ 1 ];
+
 			this.images.push( image );
 		} );
-
 		// Resize handler.
 		window.addEventListener( 'resize', ( ev ) => {
 			this._debounceBuild();
@@ -22,7 +41,7 @@ const LazyLoad = {
 			this._debounceBuild();
 		} );
 		// Build images.
-		this._build();
+		setTimeout( () => this._build(), 0 );
 	},
 	_calcThreshold() {
 		const number = this.config.lazy_threshold.replace( /[^0-9]/g, '' );
@@ -59,13 +78,13 @@ const LazyLoad = {
 		}, 100 );
 	},
 	_getDensity() {
-		const maxDensity = CLDLB.dpr ? CLDLB.dpr.replace( 'X', '' ) : 'off';
+		const maxDensity = this.config.dpr ? this.config.dpr.replace(
+			'X', '' ) : 'off';
 		if ( 'off' === maxDensity ) {
 			return 1;
 		}
 		let deviceDensity = this.density;
 		if (
-			! CLDLB.dpr_precise &&
 			'auto' !== maxDensity &&
 			'auto' !== deviceDensity
 		) {
@@ -73,8 +92,6 @@ const LazyLoad = {
 				deviceDensity > Math.ceil( maxDensity )
 					? maxDensity
 					: deviceDensity;
-		} else if ( 'auto' === CLDLB.dpr && 'auto' !== deviceDensity ) {
-			deviceDensity = 'auto';
 		}
 
 		return deviceDensity;
@@ -106,11 +123,12 @@ const LazyLoad = {
 		const rect = image.getBoundingClientRect();
 		const density = 'auto' !== this.density ? this._getDensity() : 1;
 		return (
-			image.dataset.placeholder &&
+			this.config.placeholder &&
 			! image.cld_loaded &&
 			rect.top < this.lazyThreshold * 2 &&
 			( width > image.naturalWidth / density || ! image.cld_placehold )
 		);
+
 	},
 	getResponsiveSteps( image ) {
 		const steps = Math.ceil(
@@ -126,7 +144,7 @@ const LazyLoad = {
 			navigator && navigator.connection
 				? navigator.connection.effectiveType
 				: 'none'
-		) {
+			) {
 			case 'none':
 				break;
 			case '4g':
@@ -151,8 +169,11 @@ const LazyLoad = {
 		if ( scaledSize > original ) {
 			scaledSize = original;
 		} else if ( this.config.max_width < scaledSize ) {
-			scaledSize = original;
+			scaledSize = this.config.max_width;
+		} else if ( this.config.min_width > scaledSize ) {
+			scaledSize = this.config.min_width;
 		}
+
 		return scaledSize;
 	},
 	buildSize( image ) {
@@ -178,17 +199,38 @@ const LazyLoad = {
 			image.width,
 			this.config.pixel_step
 		);
+		const ratio = image.originalWidth / image.originalHeight;
+		const height = Math.round( width / ratio );
 		const density = this._getDensity();
-		let newSize = '';
+		let name = image.dataset.publicId.split( '/' ).pop();
+		let newSize = [];
+
 		if ( width ) {
-			newSize += 'w_' + width;
+			newSize.push( 'w_' + width );
+
+			if ( height ) {
+				newSize.push( 'h_' + height );
+				name += `-${ width }x${ height }`;
+			}
 			if ( 1 !== density ) {
-				newSize += ',dpr_' + density;
+				newSize.push( 'dpr_' + density );
 			}
 		}
-		return image.dataset.src
-			.replace( '--size--', newSize )
-			.replace( /q_auto(?!:)/gi, this.getQuality() );
+		const transform = image.dataset.transformations.replace(
+			/q_auto(?!:)/gi, this.getQuality() );
+
+		const parts = [
+			this.config.base_url,
+			'images',
+			newSize.join( ',' ),
+			transform,
+			image.dataset.publicId,
+			name
+		];
+
+		const url = parts.filter( this.empty ).join( '/' );
+
+		return url;
 	},
 	getPlaceholderURL( image ) {
 		image.cld_placehold = true;
@@ -198,15 +240,25 @@ const LazyLoad = {
 			this.config.pixel_step
 		);
 		const density = this._getDensity();
-		let newSize = '';
+		let newSize = [];
 		if ( width ) {
-			newSize += 'w_' + width;
-			if ( 1 !== density ) {
-				newSize += ',dpr_' + density;
-			}
+			newSize.push( 'w_' + width );
 		}
-		return image.dataset.placeholder.replace( '--size--', newSize );
+
+		const parts = [
+			this.config.base_url,
+			'images',
+			newSize.join( ',' ),
+			this.config.placeholder,
+			image.dataset.publicId,
+			'responsive'
+		];
+
+		return parts.filter( this.empty ).join( '/' );
 	},
+	empty( thing ) {
+		return 0 !== thing.length;
+	}
 };
 // Init.
 window.addEventListener( 'load', () => {
