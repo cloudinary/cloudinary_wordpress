@@ -34,30 +34,7 @@ class Beta {
 	public function __construct( Plugin $plugin ) {
 		$this->plugin = $plugin;
 
-		$this->components = array(
-			'delivery'               => array(
-				'class'   => 'Cloudinary\Delivery',
-				'name'    => __( 'New Delivery method', 'cloudinary' ),
-				'options' => array(),
-			),
-			'responsive_breakpoints' => array(
-				'class'   => array( 'Cloudinary\Delivery\Lazy_Load', 'Cloudinary\Delivery\Responsive_Breakpoints' ),
-				'name'    => __( 'New Lazy Load and Responsive Breakpoints', 'cloudinary' ),
-				'options' => array(),
-				'deps'    => array( 'delivery' ),
-			),
-			'assets'                 => array(
-				'class'   => array( 'Cloudinary\Assets' ),
-				'name'    => __( 'Non-media library assets', 'cloudinary' ),
-				'options' => array(),
-				'deps'    => array( 'delivery' ),
-			),
-			'dashboard'              => array(
-				'class'   => array( 'Cloudinary\Dashboard' ),
-				'name'    => __( 'New UI', 'cloudinary' ),
-				'options' => array(),
-			),
-		);
+		$this->components = array();
 
 		foreach ( $this->components as $key => $data ) {
 

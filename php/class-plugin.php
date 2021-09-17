@@ -11,6 +11,8 @@ use Cloudinary\Component\Assets;
 use Cloudinary\Component\Config;
 use Cloudinary\Component\Notice;
 use Cloudinary\Component\Setup;
+use Cloudinary\Delivery\Lazy_Load;
+use Cloudinary\Delivery\Responsive_Breakpoints;
 use Cloudinary\Media\Gallery;
 use Cloudinary\Sync\Storage;
 use Cloudinary\UI\State;
@@ -129,17 +131,22 @@ final class Plugin {
 	 * that extend the Customizer to ensure resources are available in time.
 	 */
 	public function init() {
-		$this->components['admin']        = new Admin( $this );
-		$this->components['state']        = new State( $this );
-		$this->components['connect']      = new Connect( $this );
-		$this->components['deactivation'] = new Deactivation( $this );
-		$this->components['sync']         = new Sync( $this );
-		$this->components['gallery']      = new Gallery( $this );
-		$this->components['media']        = new Media( $this );
-		$this->components['api']          = new REST_API( $this );
-		$this->components['storage']      = new Storage( $this );
-		$this->components['report']       = new Report( $this );
-		$this->components['beta']         = new Beta( $this );
+		$this->components['admin']                  = new Admin( $this );
+		$this->components['state']                  = new State( $this );
+		$this->components['connect']                = new Connect( $this );
+		$this->components['deactivation']           = new Deactivation( $this );
+		$this->components['sync']                   = new Sync( $this );
+		$this->components['gallery']                = new Gallery( $this );
+		$this->components['media']                  = new Media( $this );
+		$this->components['api']                    = new REST_API( $this );
+		$this->components['storage']                = new Storage( $this );
+		$this->components['dashboard']              = new Dashboard( $this );
+		$this->components['delivery']               = new Delivery( $this );
+		$this->components['lazy_load']              = new Lazy_Load( $this );
+		$this->components['responsive_breakpoints'] = new Responsive_Breakpoints( $this );
+		$this->components['assets']                 = new \Cloudinary\Assets( $this );
+		$this->components['report']                 = new Report( $this );
+		$this->components['beta']                   = new Beta( $this );
 	}
 
 	/**
@@ -147,7 +154,7 @@ final class Plugin {
 	 *
 	 * @param mixed $component The component.
 	 *
-	 * @return Report|Connect|Media|REST_API|Admin|Sync|Cache|null
+	 * @return Report|Connect|Media|REST_API|Admin|Sync|Cache|Lazy_Load|null
 	 */
 	public function get_component( $component ) {
 		$return = null;
