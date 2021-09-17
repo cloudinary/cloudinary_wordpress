@@ -412,7 +412,17 @@ class Delivery implements Setup {
 		$tag_element['meta'] = wp_get_attachment_metadata( $tag_element['id'] );
 		$tag_element         = $this->standardize_tag( $tag_element );
 
-		// Set breakpoints.
+		/**
+		 * Filter to allow stopping default srcset generation.
+		 *
+		 * @hook   cloudinary_apply_breakpoints
+		 * @since  2.7.5
+		 * @default {true}
+		 *
+		 * @param $apply {bool}  True to apply, false to skip.
+		 *
+		 * @return {bool}
+		 */
 		if ( apply_filters( 'cloudinary_apply_breakpoints', true ) ) {
 			// Check overwrite.
 			$tag_element['meta']['overwrite_transformations'] = $tag_element['overwrite_transformations'];
