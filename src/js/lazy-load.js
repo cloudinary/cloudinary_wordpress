@@ -23,7 +23,7 @@ const LazyLoad = {
 			noscript.parentNode.replaceChild( image, noscript );
 		} );
 		[ ...document.images ].forEach( ( image ) => {
-			if ( ! image.dataset.src ) {
+			if ( ! image.dataset.publicId ) {
 				return;
 			}
 

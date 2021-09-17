@@ -76,6 +76,7 @@ const cldCore = {
 		cloudinary: './src/js/main.js',
 		video: './src/css/video.scss',
 		'wp-color-picker-alpha': './src/js/wp-color-picker-alpha.js',
+		'front-overlay': './src/js/front-overlay.js',
 	},
 	module: {
 		rules: [

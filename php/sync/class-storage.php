@@ -392,9 +392,10 @@ class Storage implements Notice {
 	 * @return false|string
 	 */
 	public function size_signature( $attachment_id ) {
-		$local = get_post_meta( $attachment_id, Sync::META_KEYS['local_size'], true );
+		$local  = get_post_meta( $attachment_id, Sync::META_KEYS['local_size'], true );
+		$local .= get_post_meta( $attachment_id, Sync::META_KEYS['remote_format'], true );
 
-		return empty( $local ) ? false : wp_json_encode( $this->media->apply_default_transformations( array(), $attachment_id ) );
+		return empty( $local ) ? false : $local . wp_json_encode( $this->media->apply_default_transformations( array(), $attachment_id ) );
 	}
 
 	/**
@@ -403,24 +404,27 @@ class Storage implements Notice {
 	 * @param int $attachment_id The attachment ID.
 	 */
 	public function size_sync( $attachment_id ) {
-		$args        = array(
+		$args          = array(
 			/** This filter is documented in wp-includes/class-wp-http-streams.php */
 			'sslverify' => apply_filters( 'https_local_ssl_verify', false ),
 			'headers'   => array(
 				'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
 			),
 		);
-		$url         = $this->media->cloudinary_url( $attachment_id );
-		$request     = wp_remote_head( $url, $args );
-		$remote_size = wp_remote_retrieve_header( $request, 'Content-Length' );
-		$local_size  = get_post_meta( $attachment_id, Sync::META_KEYS['local_size'], true );
+		$url           = $this->media->cloudinary_url( $attachment_id );
+		$request       = wp_remote_head( $url, $args );
+		$remote_size   = wp_remote_retrieve_header( $request, 'Content-Length' );
+		$remote_format = wp_remote_retrieve_header( $request, 'Content-Type' );
+		$local_size    = get_post_meta( $attachment_id, Sync::META_KEYS['local_size'], true );
 		if ( empty( $local_size ) ) {
-			$url        = wp_get_attachment_url( $attachment_id );
+			$url        = $this->media->local_url( $attachment_id );
 			$request    = wp_remote_head( $url, $args );
 			$local_size = wp_remote_retrieve_header( $request, 'Content-Length' );
+
 			update_post_meta( $attachment_id, Sync::META_KEYS['local_size'], $local_size );
 		}
 		update_post_meta( $attachment_id, Sync::META_KEYS['remote_size'], $remote_size );
+		update_post_meta( $attachment_id, Sync::META_KEYS['remote_format'], $remote_format );
 		$this->sync->set_signature_item( $attachment_id, 'size' );
 	}
 
