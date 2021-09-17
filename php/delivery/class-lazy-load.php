@@ -61,7 +61,7 @@ class Lazy_Load extends Delivery_Feature {
 			$options['sizes'],
 			$options['loading'],
 			$options['src'],
-			$options['class'],
+			$options['class']
 		);
 		$atts = array(
 			'data-image' => wp_json_encode( $options ),

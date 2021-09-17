@@ -21,7 +21,7 @@ const Front_Overlay = {
 				content: 'auto',
 				expanded: 'auto',
 			},
-			content(reference) {
+			content( reference ) {
 				return reference.template.innerHTML;
 			},
 			allowHTML: true,
@@ -53,36 +53,49 @@ const Front_Overlay = {
 		tag.innerText = __( 'WordPress', 'cloudinary' );
 		tag.classList.add( 'wp-tag' );
 	},
-	createTemplate( image ){
-		const box = document.createElement('div');
-		box.classList.add('cld-tag-info');
-		box.appendChild( this.makeLine( __('Local size', 'cloudinary'), image.dataset.filesize ) );
-		box.appendChild( this.makeLine( __('Optimized size', 'cloudinary'), image.dataset.optsize ) );
-		box.appendChild( this.makeLine( __('Optimized format', 'cloudinary'), image.dataset.optformat ) );
-		box.appendChild( this.makeLine( __('Reduction', 'cloudinary'), image.dataset.percent + '%' ) );
+	createTemplate( image ) {
+		const box = document.createElement( 'div' );
+		box.classList.add( 'cld-tag-info' );
+		box.appendChild( this.makeLine( __( 'Local size', 'cloudinary' ),
+			image.dataset.filesize
+		) );
+		box.appendChild( this.makeLine( __( 'Optimized size', 'cloudinary' ),
+			image.dataset.optsize
+		) );
+		box.appendChild( this.makeLine( __( 'Optimized format', 'cloudinary' ),
+			image.dataset.optformat
+		) );
+		if ( image.dataset.percent ) {
+			box.appendChild( this.makeLine(
+				__( 'Reduction', 'cloudinary' ),
+				image.dataset.percent + '%'
+			) );
+		}
 
-		box.appendChild( this.makeLine( __('Transformations', 'cloudinary'), image.dataset.transformations ) );
-		const link = document.createElement('a');
-		link.classList.add( 'edit-link');
+		box.appendChild( this.makeLine( __( 'Transformations', 'cloudinary' ),
+			image.dataset.transformations
+		) );
+		const link = document.createElement( 'a' );
+		link.classList.add( 'edit-link' );
 		link.href = image.dataset.permalink;
-		link.innerText = __('Edit asset', 'cloudinary');
+		link.innerText = __( 'Edit asset', 'cloudinary' );
 		box.appendChild( this.makeLine( '', '', link ) );
 
 		return box;
 	},
-	makeLine( name, value, link ){
-		const line = document.createElement('div');
-		const title = document.createElement('span');
-		const detail = document.createElement('span');
+	makeLine( name, value, link ) {
+		const line = document.createElement( 'div' );
+		const title = document.createElement( 'span' );
+		const detail = document.createElement( 'span' );
 		title.innerText = name;
-		title.classList.add('title');
+		title.classList.add( 'title' );
 
 		detail.innerText = value;
-		if( link ){
+		if ( link ) {
 			detail.appendChild( link );
 		}
 		line.appendChild( title );
-		line.appendChild( detail )
+		line.appendChild( detail );
 		return line;
 	}
 };

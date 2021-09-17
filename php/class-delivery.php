@@ -398,12 +398,17 @@ class Delivery implements Setup {
 		$tag_element['atts']['src'] = $this->media->cloudinary_url( $tag_element['id'], $size, $tag_element['transformations'], null, $tag_element['overwrite_transformations'] );
 
 		if ( 'on' === $this->plugin->settings->image_settings->_overlay ) {
-			$local_size                            = get_post_meta( $tag_element['id'], Sync::META_KEYS['local_size'], true );
+			$local_size = get_post_meta( $tag_element['id'], Sync::META_KEYS['local_size'], true );
+			if ( empty( $local_size ) && file_exists( get_attached_file( $tag_element['id'] ) ) ) {
+				$local_size = filesize( get_attached_file( $tag_element['id'] ) );
+			}
 			$remote_size                           = get_post_meta( $tag_element['id'], Sync::META_KEYS['remote_size'], true );
 			$tag_element['atts']['data-filesize']  = size_format( $local_size );
 			$tag_element['atts']['data-optsize']   = size_format( $remote_size );
 			$tag_element['atts']['data-optformat'] = get_post_meta( $tag_element['id'], Sync::META_KEYS['remote_format'], true );
-			$tag_element['atts']['data-percent']   = round( $remote_size / $local_size * 100, 1 );
+			if ( ! empty( $local_size ) && ! empty( $remote_size ) ) {
+				$tag_element['atts']['data-percent'] = round( $remote_size / $local_size * 100, 1 );
+			}
 			$tag_element['atts']['data-permalink'] = get_edit_post_link( $tag_element['id'] );
 		}
 
