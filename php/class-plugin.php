@@ -134,8 +134,8 @@ final class Plugin {
 		$this->components['connect']      = new Connect( $this );
 		$this->components['deactivation'] = new Deactivation( $this );
 		$this->components['sync']         = new Sync( $this );
-		$this->components['gallery']      = new Gallery( $this );
 		$this->components['media']        = new Media( $this );
+		$this->components['gallery']      = new Gallery( $this );
 		$this->components['api']          = new REST_API( $this );
 		$this->components['storage']      = new Storage( $this );
 		$this->components['report']       = new Report( $this );
