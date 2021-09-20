@@ -302,6 +302,27 @@ class Sync implements Setup, Assets {
 	}
 
 	/**
+	 * Filter syncable items based on external deny rules.
+	 *
+	 * @hook cloudinary_can_sync_asset
+	 *
+	 * @param bool $can           Flag if can sync.
+	 * @param int  $attachment_id The attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function filter_deny_types( $can, $attachment_id ) {
+		$list = $this->plugin->settings->sync_media->_excluded_types;
+		$file = get_attached_file( $attachment_id );
+		$ext  = pathinfo( strstr( $file, '?', true ), PATHINFO_EXTENSION );
+		if ( ! empty( $list ) && in_array( $ext, $list ) ) {
+			$can = false;
+		}
+
+		return $can;
+	}
+
+	/**
 	 * Get the last version this asset was synced with.
 	 *
 	 * @param int $attachment_id The attachment ID.
@@ -1027,6 +1048,7 @@ class Sync implements Setup, Assets {
 
 			add_filter( 'cloudinary_setting_get_value', array( $this, 'filter_get_cloudinary_folder' ), 10, 2 );
 			add_filter( 'cloudinary_get_signature', array( $this, 'get_signature_syncable_type' ), 10, 2 );
+			add_filter( 'cloudinary_can_sync_asset', array( $this, 'filter_deny_types' ), PHP_INT_MAX, 2 );
 		}
 	}
 
@@ -1091,6 +1113,21 @@ class Sync implements Setup, Assets {
 							'dual_full' => __( 'Cloudinary and WordPress', 'cloudinary' ),
 							'dual_low'  => __( 'Cloudinary and WordPress (low resolution)', 'cloudinary' ),
 							'cld'       => __( 'Cloudinary only', 'cloudinary' ),
+						),
+					),
+				),
+				array(
+					'type'        => 'panel',
+					'title'       => __( 'Supported file extensions', 'cloudinary' ),
+					'option_name' => 'sync_media',
+					array(
+						'type'        => 'excluded_types',
+						'slug'        => 'excluded_types',
+						'title'       => __( 'Restricted types', 'cloudinary' ),
+						'description' => __( 'The following file types will not be delivered by Cloudinary', 'cloudinary' ),
+						'default'     => array(
+							'pdf',
+							'zip',
 						),
 					),
 				),
