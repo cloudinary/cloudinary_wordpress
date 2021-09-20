@@ -8,6 +8,7 @@
 	border-radius: 4px;
 	align-items: stretch;
 	max-width: 500px;
+
 	@media only screen and (min-width: $size-small) {
 		flex-direction: row;
 	}
@@ -27,6 +28,7 @@
 		vertical-align: center;
 		justify-content: center;
 		border-radius: 4px 0 0 4px;
+
 		img{
 			width: 24px;
 		}

@@ -379,10 +379,13 @@ class Api {
 	 */
 	public function upload( $attachment_id, $args, $headers = array(), $try_remote = true ) {
 
+		$media               = get_plugin_instance()->get_component( 'media' );
 		$resource            = ! empty( $args['resource_type'] ) ? $args['resource_type'] : 'image';
 		$url                 = $this->url( $resource, 'upload', true );
 		$args                = $this->clean_args( $args );
 		$disable_https_fetch = get_transient( '_cld_disable_http_upload' );
+		add_filter( 'wp_get_attachment_url', array( $media, 'attachment_url' ), 10, 2 );
+		add_filter( 'wp_get_original_image_url', array( $media, 'attachment_url' ), 10, 2 );
 		if (
 			function_exists( 'wp_get_original_image_url' )
 			&& wp_attachment_is_image( $attachment_id )
@@ -395,8 +398,7 @@ class Api {
 			$disable_https_fetch = true;
 		}
 
-		$media = get_plugin_instance()->get_component( 'media' );
-		if ( empty( $args['file'] ) && ! $media->is_local_media( $attachment_id ) ) {
+		if ( ! $media->is_uploadable_media( $attachment_id ) ) {
 			$disable_https_fetch = false; // Remote can upload via url.
 			// translators: variable is thread name and queue size.
 			$action_message = sprintf( __( 'Uploading remote url:  %1$s.', 'cloudinary' ), $file_url );
@@ -408,7 +410,9 @@ class Api {
 			$disable_https_fetch = false;
 		}
 		// Check if we can try http file upload.
-		if ( empty( $headers ) && empty( $disable_https_fetch ) && true === $try_remote ) {
+		if ( ( empty( $headers ) && empty( $disable_https_fetch ) && true === $try_remote ) || ! $media->is_uploadable_media( $attachment_id ) ) {
+			$args['file'] = $file_url;
+		} elseif ( ! $media->is_local_media( $attachment_id ) ) {
 			$args['file'] = $file_url;
 		} else {
 			// We should have the file in args at this point, but if the transient was set, it will be defaulting here.
@@ -421,7 +425,7 @@ class Api {
 				}
 			}
 			// Headers indicate chunked upload.
-			if ( empty( $headers ) ) {
+			if ( empty( $headers ) && file_exists( $args['file'] ) ) {
 				$size = filesize( $args['file'] );
 				if ( 'video' === $resource || $size > 100000000 ) {
 					return $this->upload_large( $attachment_id, $args );

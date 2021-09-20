@@ -200,7 +200,7 @@ trait CLI_Trait {
 			$bar->tick( 1, 'Syncing (' . ( $done ) . ' of ' . $total . ') : ' . $filename );
 			if (
 				! $this->plugin->get_component( 'sync' )->is_synced( $asset, true )
-				&& $this->plugin->get_component( 'media' )->is_local_media( $asset )
+				&& $this->plugin->get_component( 'media' )->is_uploadable_media( $asset )
 				&& $this->plugin->get_component( 'sync' )->is_syncable( $asset )
 			) {
 				$this->plugin->get_component( 'sync' )->managers['push']->process_assets( $asset, $bar );
@@ -243,7 +243,7 @@ trait CLI_Trait {
 			$done ++;
 			$key = '_cld_unsupported';
 			if (
-				$this->plugin->get_component( 'media' )->is_local_media( $asset )
+				$this->plugin->get_component( 'media' )->is_uploadable_media( $asset )
 				&& $this->plugin->get_component( 'sync' )->is_syncable( $asset )
 			) {
 				// Add a key.

@@ -11,11 +11,11 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Use Cloudinary's plugin to efficiently create, manage and deliver images, videos, and other media, personalized and optimized for every device and channel.
 
 == Description ==
-Cloudinary's [award-winning plugin](https://www.businesswire.com/news/home/20200923005566/en/Cloudinary-Wins-2020-MarTech-Breakthrough-Award-for-Best-WordPress-Plugin) makes automating your image, video, and rich media workflow easy, offering a variety of features. From media upload to image optimization, video transcoding and manipulation through delivery via global CDNs, everything is offered from within the plugin.
+Cloudinary's [award-winning plugin](https://www.businesswire.com/news/home/20200923005566/en/Cloudinary-Wins-2020-MarTech-Breakthrough-Award-for-Best-WordPress-Plugin) makes automating your image, video, and rich media workflow easy, offering a variety of features. From media upload to image optimization, video transcoding and transformations through delivery via global CDNs, everything is offered from within the plugin.
 
 https://youtu.be/B1Jx5hB1Ijk
 
-Optimize your site performance and user experience with faster page load times, advanced auto-responsive delivery, and better visual experience. Automate image quality and video encoding settings, scale and crop images using AI to focus on the most important region, apply comprehensive video and image manipulations and effects, display assets via an interactive media gallery, and deliver optimized media experiences to any device in any resolution or pixel density.
+Optimize your site performance and user experience with faster page load times, advanced auto-responsive delivery, and better visual experience. Automate image quality and video encoding settings, scale and crop images using AI to focus on the most important region, apply comprehensive video and image transformations and effects, display assets via an interactive media gallery, and deliver optimized media experiences to any device in any resolution or pixel density.
 
 And with advanced digital asset management capabilities available in the plugin, you won’t need to leave your WordPress environment. Take full advantage of advanced search, AI-based tagging, rich media editing, collections, structured metadata, and an intuitive UI as well as our Video and Image APIs for headless DAM functionality, making it much easier to manage all of your media in WordPress.
 
@@ -34,7 +34,7 @@ If you’re interested in gaining early access to our v3.0 plugin features - ple
 * Automatic responsive images for delivery on various devices in different resolutions.
 * Taxonomy level transformations allow users to set transformations by “category” or “tag” and apply these in real time.
 * Transcode, AI crop, apply filters, generate thumbnails, and more with our video transformation capabilities.
-* The most comprehensive array of image and video manipulation capabilities, powered by AI.
+* The most comprehensive array of image and video transformation capabilities, powered by AI.
 * Ability to display videos using Cloudinary’s video player giving additional features such as bitrate limit, analytics, monetization, and more.
 * Display images and videos via a customizable interactive media gallery (beta).
 

@@ -19,7 +19,6 @@
 	$mini-slider-pad: 1px;
 	$mini-slider-size: $mini-control-height - $mini-slider-pad - $mini-slider-pad;
 
-
 	&-control {
 		$control-width: 30px;
 		$control-height: 16px;
@@ -30,7 +29,6 @@
 		width: $control-width;
 		height: $control-height;
 		margin-right: 0.4rem;
-
 
 		input, input:disabled {
 			opacity: 0;
