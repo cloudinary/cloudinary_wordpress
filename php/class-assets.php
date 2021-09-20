@@ -230,7 +230,7 @@ class Assets extends Settings_Component {
 	}
 
 	/**
-	 * Add Cloudinary Beta menu to admin bar.
+	 * Add Cloudinary menu to admin bar.
 	 *
 	 * @param \WP_Admin_Bar $admin_bar The admin bar object.
 	 */
