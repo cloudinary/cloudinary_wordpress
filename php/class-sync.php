@@ -97,6 +97,7 @@ class Sync implements Setup, Assets {
 		'delay'          => '_cloudinary_sync_delay',
 		'local_size'     => '_cld_local_size',
 		'remote_size'    => '_cld_remote_size',
+		'remote_format'  => '_cld_remote_format',
 		'unsynced'       => '_cld_unsynced',
 		'synced'         => '_cld_synced',
 		'unsupported'    => '_cld_unsupported',
@@ -1060,13 +1061,6 @@ class Sync implements Setup, Assets {
 							'on'  => __( 'Auto sync', 'cloudinary' ),
 							'off' => __( 'Manual sync', 'cloudinary' ),
 						),
-					),
-					array(
-						'type'        => 'sync',
-						'title'       => __( 'Bulk sync all your WordPress assets to Cloudinary', 'cloudinary' ),
-						'tooltip_off' => __( 'Manual sync is enabled. Individual assets must be synced manually using the WordPress Media Library.', 'cloudinary' ),
-						'tooltip_on'  => __( 'An optional one-time operation to manually synchronize all WordPress Media to Cloudinary.', 'cloudinary' ),
-						'queue'       => $this->managers['queue'],
 					),
 					array(
 						'type'              => 'text',

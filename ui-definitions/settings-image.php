@@ -30,20 +30,18 @@ $settings = array(
 			array(
 				'type' => 'column',
 				array(
-					'type' => 'group',
-					array(
-						'type'         => 'on_off',
-						'slug'         => 'image_optimization',
-						'title'        => __( 'Image optimization', 'cloudinary' ),
-						'tooltip_text' => __(
-							'Images will be delivered using Cloudinary’s automatic format and quality algorithms for the best tradeoff between visual quality and file size. Use Advanced Optimization options to manually tune format and quality.',
-							'cloudinary'
-						),
-						'description'  => __( 'Optimize images on my site.', 'cloudinary' ),
-						'default'      => 'on',
-						'attributes'   => array(
-							'data-context' => 'image',
-						),
+					'type'               => 'on_off',
+					'slug'               => 'image_optimization',
+					'title'              => __( 'Image optimization', 'cloudinary' ),
+					'optimisation_title' => __( 'Media library image optimisation', 'cloudinary' ),
+					'tooltip_text'       => __(
+						'Images will be delivered using Cloudinary’s automatic format and quality algorithms for the best tradeoff between visual quality and file size. Use Advanced Optimization options to manually tune format and quality.',
+						'cloudinary'
+					),
+					'description'        => __( 'Optimize images on my site.', 'cloudinary' ),
+					'default'            => 'on',
+					'attributes'         => array(
+						'data-context' => 'image',
 					),
 				),
 				array(
@@ -111,7 +109,10 @@ $settings = array(
 					'type'           => 'text',
 					'slug'           => 'image_freeform',
 					'title'          => __( 'Image transformation', 'cloudinary' ),
-					'tooltip_text'   => __( 'The set of transformations to apply to all image assets, as a URL transformation string', 'cloudinary' ),
+					'link'           => array(
+						'text' => __( 'See Examples', 'cloudinary' ),
+						'href' => '#',
+					),
 					'attributes'     => array(
 						'data-context' => 'image',
 						'placeholder'  => 'w_90,r_max',
@@ -124,9 +125,9 @@ $settings = array(
 				array(
 					'type'  => 'info_box',
 					'icon'  => $this->dir_url . 'css/images/crop.svg',
-					'title' => __( 'What are transformation', 'cloudinary' ),
+					'title' => __( 'What are transformations', 'cloudinary' ),
 					'text'  => __(
-						'Configure how your images are shown on your site. You can apply transformations to adjust the quality, format or visual appearance and define other settings such as responsive images.',
+						'Cloudinary allows you to easily transform your images on-the-fly to any required format, style and dimension, and also optimizes images for minimal file size.',
 						'cloudinary'
 					),
 				),

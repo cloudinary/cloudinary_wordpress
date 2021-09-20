@@ -35,8 +35,8 @@ const Progress = {
 				labels: JSON.parse( item.dataset.dates ),
 				datasets: [
 					{
-						backgroundColor: '#304ec4',
-						borderColor: '#304ec4',
+						backgroundColor: item.dataset.color,
+						borderColor: item.dataset.color,
 						data: JSON.parse( item.dataset.data ),
 						cubicInterpolationMode: 'monotone',
 					},
@@ -91,7 +91,7 @@ const Progress = {
 			strokeWidth: 2,
 			easing: 'easeInOut',
 			duration: 1400,
-			color: '#304ec4',
+			color: item.dataset.color,
 			trailColor: '#d3dce3',
 			trailWidth: 2,
 			svgStyle: { width: '100%', height: '100%', display: 'block' },
@@ -108,7 +108,7 @@ const Progress = {
 			strokeWidth: 3,
 			easing: 'easeInOut',
 			duration: 1400,
-			color: '#304ec4',
+			color: item.dataset.color,
 			trailColor: '#d3dce3',
 			trailWidth: 3,
 			svgStyle: null,

@@ -67,11 +67,9 @@ class Asset extends Panel {
 	 * @return array
 	 */
 	protected function header( $struct ) {
-		$struct['element']                       = 'thead';
-		$struct['children']['item']              = $this->get_part( 'th' );
-		$struct['children']['item']['content']   = $this->setting->get_param( 'title' );
-		$struct['children']['action']            = $this->get_part( 'th' );
-		$struct['children']['action']['content'] = $this->setting->get_param( 'title' );
+		$struct['element']                     = 'thead';
+		$struct['children']['item']            = $this->get_part( 'th' );
+		$struct['children']['item']['content'] = $this->setting->get_param( 'title' );
 
 		return $struct;
 	}
@@ -84,7 +82,7 @@ class Asset extends Panel {
 	 * @return array
 	 */
 	protected function rows( $struct ) {
-
+		$struct['element'] = null;
 		foreach ( $this->setting->get_settings() as $child ) {
 			$struct['children'][ $child->get_slug() ] = $this->get_item_row( $child );
 		}
@@ -100,13 +98,116 @@ class Asset extends Panel {
 	 * @return array
 	 */
 	protected function get_item_row( $item ) {
-		$row                                  = $this->get_part( 'tr' );
-		$row['children']['item']              = $this->get_part( 'td' );
-		$row['children']['item']['content']   = $item->get_param( 'title' );
-		$row['children']['action']            = $this->get_part( 'td' );
-		$row['children']['action']['content'] = $item->get_slug();
 
-		return $row;
+		$item->set_param( 'description', $item->get_param( 'title' ) );
+		$item->remove_param( 'title' );
+		$control = new On_Off( $item );
+
+		$item_container = $this->get_part( '' );
+
+		// Control Row.
+		$row                                = $this->get_part( 'tr' );
+		$row['children']['item']            = $this->get_part( 'td' );
+		$row['children']['item']['content'] = $control->render();
+
+		$item_container['children']['row'] = $row;
+
+		// Content Row.
+		$row                                               = $this->get_part( 'tr' );
+		$row['children']['assets']                         = $this->get_part( 'td' );
+		$row['children']['assets']['attributes']['class']  = array(
+			'tree',
+			'cld-ui-conditional',
+		);
+		$row['children']['assets']['children']['contents'] = $this->get_manager( $item );
+		$item_container['children']['manager']             = $row;
+
+		return $item_container;
+	}
+
+	/**
+	 * Get the manager part.
+	 *
+	 * @param array $item The item to get the manager for.
+	 *
+	 * @return array
+	 */
+	protected function get_manager( $item ) {
+		$slug                           = $item->get_param( 'slug' );
+		$manager                        = $this->get_part( 'table' );
+		$manager['attributes']['class'] = array(
+			'striped',
+			'widefat',
+		);
+
+		// Header.
+		$header                                 = $this->get_part( 'thead' );
+		$header_row                             = $this->get_part( 'tr' );
+		$header_search                          = $this->get_part( 'th' );
+		$delete_checkbox                        = $this->get_part( 'input' );
+		$delete_checkbox['attributes']['id']    = $slug . '_deleter'; // @todo: get the ID.
+		$delete_checkbox['attributes']['type']  = 'checkbox';
+		$delete_checkbox['attributes']['style'] = array(
+			'margin:0 4px 0 0;',
+		);
+		$search_box                             = $this->get_part( 'input' );
+		$search_box['attributes']['id']         = $slug . '_search'; // @todo: get the ID.
+		$search_box['attributes']['type']       = 'search';
+		$search_box['attributes']['class']      = array(
+			'cld-search',
+		);
+
+		$search_button                        = $this->get_part( 'button' );
+		$search_button['attributes']['id']    = $slug . '_reload'; // @todo: get the ID.
+		$search_button['content']             = __( 'Search', 'cloudinary' );
+		$search_button['attributes']['type']  = 'button';
+		$search_button['attributes']['class'] = array(
+			'cld-reload',
+			'button',
+			'button-small',
+		);
+
+		$body               = $this->get_part( 'tbody' );
+		$body['render']     = true;
+		$url                = $item->get_param( 'url' );
+		$body['attributes'] = array(
+			'class'            => array(
+				'tree-branch',
+				'striped',
+			),
+			'data-cache-point' => $url,
+			'data-browser'     => $item->get_slug(),
+			'data-slug'        => $slug,
+			'data-apply'       => 'apply_' . $slug,
+		);
+
+		// Combine header parts.
+		$header_search['children']['checkbox']      = $delete_checkbox;
+		$header_search['children']['search_input']  = $search_box;
+		$header_search['children']['search_button'] = $search_button;
+
+		$header_row['children']['search']                      = $header_search;
+		$header_row['children']['action']                      = $this->get_part( 'th' );
+		$apply                                                 = $this->get_part( 'button' );
+		$apply['content']                                      = __( 'Apply Changes', 'cloudinary' );
+		$apply['attributes']                                   = array(
+			'id'           => 'apply_' . $slug,
+			'data-changes' => array(),
+			'class'        => array(
+				'button-primary',
+				'closed',
+			),
+			'style'        => array(
+				'float: right; margin-left: 6px;',
+			),
+		);
+		$apply['render']                                       = true;
+		$header_row['children']['action']['children']['apply'] = $apply;
+		$header['children']['row']                             = $header_row;
+		$manager['children']['header']                         = $header;
+		$manager['children']['body']                           = $body;
+
+		return $manager;
 	}
 
 	/**
@@ -119,101 +220,17 @@ class Asset extends Panel {
 	}
 
 	/**
-	 * Setup action before rendering.
+	 * Export scripts on pre-render.
 	 */
-	public function srender() {
-		ob_start();
-		?>
-		<table class="widefat striped cld-table">
-			<thead>
-			<tr>
-				<th class="cld-table-th">
-			<span class="cld-on-off">
-				<div class="cld-input cld-input-on-off">
-					<label class="cld-input-on-off-control">
-						<input type="hidden" name="cloudinary_main_cache_page[plugin_files_title]" value="off">
-						<input type="checkbox" class="cld-ui-input cld-ui-input" name="cloudinary_main_cache_page[plugin_files_title]" id="plugin_files_title" value="on" data-controller="plugin_files_title" checked="checked" data-main="[&quot;cache_all_plugins&quot;]" data-disabled="false">
-						<span class="cld-input-on-off-control-slider" style="">
-							<i class="icon-on dashicons ">
-
-							</i>
-							<i class="icon-off dashicons ">
-
-							</i>
-						</span>
-					</label>
-					<label class="cld-ui-description description" for="plugin_files_title">Plugin</label>
-				</div>
-			</span>
-				</th>
-				<th style="text-align:right;">
-
-				</th>
-			</tr>
-			</thead>
-			<tbody>
-			<tr>
-				<td colspan="1">
-			<span class="cld-on-off">
-				<div class="cld-input cld-input-on-off">
-					<label class="cld-input-on-off-control">
-						<input type="hidden" name="cloudinary_main_cache_page[query-monitorquery-monitor.php]" value="off">
-						<input type="checkbox" class="cld-ui-input cld-ui-input" data-bind-trigger="query-monitorquery-monitor.php" name="cloudinary_main_cache_page[query-monitorquery-monitor.php]" id="query-monitorquery-monitor.php" value="on" data-controller="query-monitorquery-monitor.php" checked="checked" data-main="[&quot;plugin_files_title&quot;]" data-disabled="false">
-						<span class="cld-input-on-off-control-slider" style="">
-							<i class="icon-on dashicons ">
-
-							</i>
-							<i class="icon-off dashicons ">
-
-							</i>
-						</span>
-					</label>
-				</div>
-			</span>
-					<span class="cld-icon-toggle cld-ui-conditional open" data-condition="{&quot;query-monitorquery-monitor.php&quot;:true}">
-				<div class="cld-input cld-input-icon-toggle">
-					<label class="description left" for="toggle_query-monitorquery-monitor.php">Query Monitor</label>
-					<label class="cld-input-icon-toggle-control">
-						<input type="hidden" name="cloudinary_main_cache_page[toggle_query-monitorquery-monitor.php]" value="off">
-						<input type="checkbox" class="cld-ui-input cld-ui-input" name="cloudinary_main_cache_page[toggle_query-monitorquery-monitor.php]" id="toggle_query-monitorquery-monitor.php" value="on" data-controller="toggle_query-monitorquery-monitor.php" data-disabled="false">
-						<i class="cld-input-icon-toggle-control-slider" style="">
-							<i class="icon-on dashicons dashicons-arrow-up">
-
-							</i>
-							<i class="icon-off dashicons dashicons-arrow-down">
-
-							</i>
-						</i>
-					</label>
-				</div>
-			</span>
-					<span class="cld-icon-toggle cld-ui-conditional closed" data-condition="{&quot;query-monitorquery-monitor.php&quot;:false}">
-				<div class="cld-input cld-input-icon-toggle">
-					<label class="description left" for="off_query-monitorquery-monitor.php">Query Monitor</label>
-					<label class="cld-input-icon-toggle-control">
-						<input type="hidden" name="cloudinary_main_cache_page[off_query-monitorquery-monitor.php]" value="off">
-						<input type="checkbox" class="cld-ui-input cld-ui-input" name="cloudinary_main_cache_page[off_query-monitorquery-monitor.php]" id="off_query-monitorquery-monitor.php" value="on" data-controller="off_query-monitorquery-monitor.php" data-disabled="false">
-						<i class="cld-input-icon-toggle-control-slider" style="">
-							<i class="icon-on dashicons  "></i>
-							<i class="icon-off dashicons  "></i>
-						</i>
-					</label>
-				</div>
-			</span>
-					<span id="name_query-monitorquery-monitor.php_size_wrapper" class="file-size small">
-
-			</span>
-				</td>
-				<td style="text-align:right;height:26px;" colspan="1">
-					<div class="cld-ui-wrap cld-button">
-						<button type="button" id="apply_query-monitorquery-monitor.php" class="button button-primary closed" style="float: right; margin-left: 6px;">Apply changes</button>
-					</div>
-				</td>
-			</tr>
-			</tbody>
-		</table>
-
-		<?php
-		return ob_get_clean();
+	protected function pre_render() {
+		$export = array(
+			'update_url' => rest_url( REST_API::BASE . '/disable_cache_items' ),
+			'fetch_url'  => rest_url( REST_API::BASE . '/show_cache' ),
+			'purge_url'  => rest_url( REST_API::BASE . '/purge_cache' ),
+			'purge_all'  => rest_url( REST_API::BASE . '/purge_all' ),
+			'nonce'      => wp_create_nonce( 'wp_rest' ),
+		);
+		wp_add_inline_script( 'cloudinary', 'var CLDCACHE = ' . wp_json_encode( $export ), 'before' );
+		parent::pre_render();
 	}
 }

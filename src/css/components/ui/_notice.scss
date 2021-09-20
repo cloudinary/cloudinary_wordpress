@@ -1,0 +1,82 @@
+// Notices and alerts.
+&-notice-box {
+	box-shadow: 0 0 2px rgba(0, 0, 0, 0.1);
+	position: relative;
+	margin-right: 20px;
+	margin-bottom: 12px;
+
+	.cld-notice {
+		padding: 1rem 2.2rem 0.75rem 1.2rem;
+
+		img.cld-ui-icon {
+			height: 100%;
+		}
+	}
+
+	&.is-dismissible {
+		padding-right: 38px;
+	}
+
+	&.has-icon {
+		padding-left: 38px;
+	}
+
+	&.is-success,
+	&.is-updated,
+	&.is-created {
+		background-color: #ebf5ec;
+		border-left: 4px solid #42ad4f;
+
+		.dashicons {
+			color: $color-success;
+		}
+	}
+
+	&.is-error {
+		background-color: #f8e8e7;
+		border-left: 4px solid #cb3435;
+
+		.dashicons {
+			color: $color-red;
+		}
+	}
+
+	&.is-warning {
+		background-color: #fff7e5;
+		border-left: 4px solid #f2ad4c;
+
+		.dashicons {
+			color: $color-orange;
+		}
+	}
+
+	&.is-info {
+		background-color: #e4f4f8;
+		border-left: 4px solid #2a95c3;
+
+		.dashicons {
+			color: $color-wp-blue;
+		}
+	}
+
+	&.is-neutral {
+		background-color: $color-white;
+		border-left: 4px solid #ccd0d4;
+
+		.dashicons {
+			color: $color-disabled-grey;
+		}
+	}
+
+	&.dismissed {
+		overflow: hidden;
+		transition: height 0.3s ease-out;
+	}
+
+	.dashicons,
+	.cld-ui-icon {
+		position: absolute;
+		top: 14px;
+		left: 19px;
+	}
+}

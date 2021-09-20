@@ -195,8 +195,9 @@ class Settings {
 	 */
 	protected function register_storage( $slug ) {
 		// Get the root key.
-		$slug = explode( $this->separator, $slug, 2 )[0];
-		if ( ! isset( $this->storage_keys[ $slug ] ) ) {
+		if ( ! $this->has_param( self::META_KEYS['data'] . $this->separator . $slug ) ) {
+			$slug = explode( $this->separator, $slug, 2 )[0];
+
 			$data     = $this->storage->get( $slug );
 			$defaults = $this->get_param( self::META_KEYS['data'] . $this->separator . $slug, null );
 			if ( ! empty( $data ) ) {
@@ -217,7 +218,7 @@ class Settings {
 	 *
 	 * @return string
 	 */
-	protected function get_storage_key( $slug, $type = null ) {
+	public function get_storage_key( $slug, $type = null ) {
 		if ( null === $type ) {
 			$type = $this->get_setting( $slug )->get_param( 'type' );
 		}

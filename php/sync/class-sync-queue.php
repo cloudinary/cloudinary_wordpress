@@ -354,7 +354,7 @@ class Sync_Queue {
 				$return['total_synced']      = $return['total_assets'] - $return['total_queued'];
 				$return['percentage_synced'] = $return['total_synced'] / $return['total_assets'];
 				if ( 1 === $return['percentage_synced'] ) {
-					$return['total_assets'] .= ' assets';
+					$return['total_assets'] = __( 'Total assets', 'cloudinary' );
 				} elseif ( ! empty( $return['percentage_synced'] ) ) {
 					$return['total_assets'] = $return['total_synced'] . ' / ' . $return['total_assets'];
 				}

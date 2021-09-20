@@ -92,10 +92,18 @@ class Setting {
 	/**
 	 * Get the parent.
 	 *
+	 * @param int $depth The depth to go down.
+	 *
 	 * @return Settings|Setting
 	 */
-	public function get_parent() {
-		return $this->root->get_setting( $this->parent );
+	public function get_parent( $depth = 1 ) {
+		$slug = $this->slug;
+		while ( 0 < $depth ) {
+			$slug = substr( $slug, 0, strrpos( $slug, $this->separator ) );
+			$depth --;
+		}
+
+		return $this->root->get_setting( $slug );
 	}
 
 	/**
@@ -182,7 +190,10 @@ class Setting {
 			$name  = ltrim( $name, '_' );
 		}
 		if ( ! isset( $this->children[ $name ] ) ) {
-			$this->children[ $name ] = $this->root->add( $this->slug . $this->separator . $name );
+			$params                  = array(
+				Settings::META_KEYS['storage'] => $this->get_param( Settings::META_KEYS['storage'] ) . $this->separator . $name,
+			);
+			$this->children[ $name ] = $this->root->add( $this->slug . $this->separator . $name, array(), $params );
 		}
 		$return = $this->children[ $name ];
 		if ( $value ) {
@@ -374,7 +385,7 @@ class Setting {
 	 */
 	public function save_value( $value ) {
 		$this->root->set_pending( $this->slug, $value );
-		$this->root->save_setting( $this->get_param( Settings::META_KEYS['storage'] ) );
+		$this->root->save_setting( $this->get_option_name() );
 	}
 
 	/**
@@ -383,6 +394,9 @@ class Setting {
 	 * @return bool
 	 */
 	public function delete() {
+		$this->root->set_pending( $this->slug, '--delete' );
+		$this->root->remove_pending( $this->slug );
+
 		return $this->root->delete( $this->get_param( Settings::META_KEYS['storage'] ) );
 	}
 }

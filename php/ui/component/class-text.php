@@ -21,7 +21,7 @@ class Text extends Component {
 	 *
 	 * @var string
 	 */
-	protected $blueprint = 'wrap|icon/|div|label|title|/title|/label|/div|prefix/|input/|suffix/|description/|tooltip/|/wrap';
+	protected $blueprint = 'wrap|icon/|div|label|title|link/|/title|/label|/div|prefix/|input/|suffix/|description/|tooltip/|/wrap';
 
 	/**
 	 * Flag if component is a capture type.
@@ -58,6 +58,26 @@ class Text extends Component {
 
 		$struct['attributes']['class'][] = 'cld-input-label';
 		$struct['attributes']['for']     = $this->setting->get_slug();
+
+		return $struct;
+	}
+
+	/**
+	 * Filter the link parts structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function link( $struct ) {
+		$link = $this->setting->get_param( 'link', array() );
+		if ( ! empty( $link ) ) {
+			$struct['element']               = 'a';
+			$struct['attributes']['class'][] = 'cld-input-label-link';
+			$struct['attributes']['href']    = $link['href'];
+			$struct['attributes']['target']  = '_blank';
+			$struct['content']               = $link['text'];
+		}
 
 		return $struct;
 	}

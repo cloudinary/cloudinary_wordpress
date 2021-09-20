@@ -111,6 +111,13 @@ class Assets extends Settings_Component {
 	);
 
 	/**
+	 * Keep a list of media library items that are already synced.
+	 *
+	 * @var array
+	 */
+	protected $known_files = array();
+
+	/**
 	 * Static instance of this class.
 	 *
 	 * @var self
@@ -145,7 +152,9 @@ class Assets extends Settings_Component {
 	 * Register the hooks.
 	 */
 	protected function register_hooks() {
+
 		// Filters.
+		add_filter( 'wp_get_attachment_metadata', array( $this, 'capture_synced_library_items' ), 10, 2 );
 		add_filter( 'cloudinary_is_local_asset_url', array( $this, 'check_asset' ), 10, 2 );
 		add_filter( 'cloudinary_delivery_get_id', array( $this, 'get_asset_id_from_tag' ), 10, 2 );
 		add_filter( 'cloudinary_is_media', array( $this, 'is_media' ), 10, 2 );
@@ -158,6 +167,7 @@ class Assets extends Settings_Component {
 		add_filter( 'intermediate_image_sizes_advanced', array( $this, 'no_sizes' ), PHP_INT_MAX, 3 );
 		add_filter( 'cloudinary_can_sync_asset', array( $this, 'can_sync' ), 10, 2 );
 		add_filter( 'cloudinary_admin_pages', array( $this, 'register_settings' ) );
+		add_filter( 'cloudinary_local_url', array( $this, 'local_url' ), 10, 2 );
 		// Actions.
 		add_action( 'cloudinary_init_settings', array( $this, 'setup' ) );
 		add_action( 'cloudinary_thread_queue_details_query', array( $this, 'connect_post_type' ) );
@@ -165,6 +175,58 @@ class Assets extends Settings_Component {
 		add_action( 'cloudinary_string_replace', array( $this, 'add_url_replacements' ), 20 );
 		add_action( 'shutdown', array( $this, 'meta_updates' ) );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_cache' ), 100 );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+	}
+
+	/**
+	 * Enqueue assets.
+	 */
+	public function enqueue_assets() {
+		if ( 'on' === $this->plugin->settings->image_settings->_overlay ) {
+			wp_enqueue_script( 'front-overlay', $this->plugin->dir_url . 'js/front-overlay.js', array(), $this->plugin->version, true );
+			wp_enqueue_style( 'front-overlay', $this->plugin->dir_url . 'css/front-overlay.css', array(), $this->plugin->version );
+		}
+	}
+
+	/**
+	 * Get the local url for an asset.
+	 *
+	 * @hook cloudinary_local_url
+	 *
+	 * @param string|false $url      The url to filter.
+	 * @param int          $asset_id The asset ID.
+	 *
+	 * @return string|false
+	 */
+	public function local_url( $url, $asset_id ) {
+		if ( self::is_asset_type( $asset_id ) ) {
+			$url = get_the_title( $asset_id );
+		}
+
+		return $url;
+	}
+
+	/**
+	 * Capture urls that are already synced to avoid excessive processing.
+	 *
+	 * @param array $meta          Meta array.
+	 * @param int   $attachment_id The attachment ID.
+	 *
+	 * @return array
+	 */
+	public function capture_synced_library_items( $meta, $attachment_id ) {
+		if ( ! self::is_asset_type( $attachment_id ) && ! in_array( $attachment_id, $this->known_files, true ) && $this->media->sync->been_synced( $attachment_id ) ) {
+			$url                       = wp_get_attachment_url( $attachment_id );
+			$this->known_files[ $url ] = $attachment_id;
+			if ( ! empty( $meta['sizes'] ) ) {
+				foreach ( $meta['sizes'] as $size ) {
+					$size_url                       = dirname( $url ) . '/' . $size['file'];
+					$this->known_files[ $size_url ] = $attachment_id;
+				}
+			}
+		}
+
+		return $meta;
 	}
 
 	/**
@@ -198,6 +260,19 @@ class Assets extends Settings_Component {
 			),
 		);
 		$admin_bar->add_menu( $clear );
+
+		$nonce   = wp_create_nonce( 'cloudinary-cache-overlay' );
+		$overlay = array(
+			'id'     => 'cloudinary-overlay',
+			'parent' => 'cloudinary-cache',
+			'title'  => __( 'Show overlay', 'cloudinary' ),
+			'href'   => '?cloudinary-cache-overlay=' . $nonce,
+			'meta'   => array(
+				'title' => __( 'Show overlay', 'cloudinary' ),
+				'class' => 'cloudinary-{cld-overlay-status}',
+			),
+		);
+		$admin_bar->add_menu( $overlay );
 	}
 
 	/**
@@ -416,13 +491,27 @@ class Assets extends Settings_Component {
 	 * @hook cloudinary_string_replace
 	 */
 	public function add_url_replacements() {
-		$clear = filter_input( INPUT_GET, 'cloudinary-cache-clear', FILTER_SANITIZE_STRING );
+		$clear   = filter_input( INPUT_GET, 'cloudinary-cache-clear', FILTER_SANITIZE_STRING );
+		$overlay = filter_input( INPUT_GET, 'cloudinary-cache-overlay', FILTER_SANITIZE_STRING );
+		$setting = $this->plugin->settings->image_settings->overlay;
+
 		if ( $clear && wp_verify_nonce( $clear, 'cloudinary-cache-clear' ) ) {
 			$referrer = filter_input( INPUT_SERVER, 'HTTP_REFERER', FILTER_SANITIZE_URL );
 			if ( $this->asset_ids ) {
 				foreach ( $this->asset_ids as $asset_id ) {
 					wp_delete_post( $asset_id );
 				}
+			}
+			wp_safe_redirect( $referrer );
+			exit;
+		}
+
+		if ( $overlay && wp_verify_nonce( $overlay, 'cloudinary-cache-overlay' ) ) {
+			$referrer = filter_input( INPUT_SERVER, 'HTTP_REFERER', FILTER_SANITIZE_URL );
+			if ( $setting->get_value() === 'on' ) {
+				$setting->save_value( 'off' );
+			} else {
+				$setting->save_value( 'on' );
 			}
 			wp_safe_redirect( $referrer );
 			exit;
@@ -443,6 +532,8 @@ class Assets extends Settings_Component {
 		// translators: Placeholders are the number of items.
 		$message = sprintf( _n( '%s cached item', '%s cached items', $total, 'cloudinary' ), number_format_i18n( $total ) );
 		String_Replace::replace( '{cld-cache-counter}', $message );
+		String_Replace::replace( '{cld-overlay-status}', ! empty( $setting->get_value() ) ? $setting->get_value() : 'off' );
+
 	}
 
 	/**
@@ -713,23 +804,25 @@ class Assets extends Settings_Component {
 	 * @return bool
 	 */
 	public function check_asset( $is_local, $url ) {
-		$clean_url = $this->clean_path( $url );
-		foreach ( $this->active_parents as $asset_parent ) {
-			if ( substr( $clean_url, 0, strlen( $asset_parent->post_title ) ) === $asset_parent->post_title ) {
-				$excludes = $this->media->get_post_meta( $asset_parent->ID, self::META_KEYS['excludes'], true );
-				if ( empty( $excludes ) ) {
-					$excludes = array();
-				}
-				if ( ! in_array( $url, $excludes, true ) ) {
-					if ( ! $this->syncable_asset( $url ) ) {
-						$excludes[] = $url;
-						$this->media->update_post_meta( $asset_parent->ID, self::META_KEYS['excludes'], $excludes );
-						break;
+		if ( ! isset( $this->known_files[ $url ] ) ) {
+			$clean_url = $this->clean_path( $url );
+			foreach ( $this->active_parents as $asset_parent ) {
+				if ( substr( $clean_url, 0, strlen( $asset_parent->post_title ) ) === $asset_parent->post_title ) {
+					$excludes = $this->media->get_post_meta( $asset_parent->ID, self::META_KEYS['excludes'], true );
+					if ( empty( $excludes ) ) {
+						$excludes = array();
 					}
-					$is_local                                = true;
-					$this->found_urls[ $asset_parent->ID ][] = $url;
+					if ( ! in_array( $url, $excludes, true ) ) {
+						if ( ! $this->syncable_asset( $url ) ) {
+							$excludes[] = $url;
+							$this->media->update_post_meta( $asset_parent->ID, self::META_KEYS['excludes'], $excludes );
+							break;
+						}
+						$is_local                                = true;
+						$this->found_urls[ $asset_parent->ID ][] = $url;
+					}
+					break;
 				}
-				break;
 			}
 		}
 
@@ -940,19 +1033,19 @@ class Assets extends Settings_Component {
 	 *
 	 * @hook cloudinary_delivery_get_id
 	 *
-	 * @param int    $id    The ID from the filter.
-	 * @param string $asset The asset HTML tag.
+	 * @param int   $id          The ID from the filter.
+	 * @param array $tag_element The asset tag element.
 	 *
 	 * @return false|int
 	 */
-	public function get_asset_id_from_tag( $id, $asset ) {
+	public function get_asset_id_from_tag( $id, $tag_element ) {
 
-		if ( ! empty( $this->found_urls ) && $this->contains_found_url( $asset ) ) {
+		if ( ! empty( $this->found_urls ) && $this->contains_found_url( $tag_element['original'] ) ) {
 			if ( ! empty( $id ) && ( $this->media->sync->been_synced( $id ) || $this->media->sync->can_sync( $id ) ) ) {
 				// Theres an ID and it can be synced or has been synced, we need to remove the urls from the to create list.
 				$this->clear_attachment_syncables( $id );
 			} else {
-				$atts = Utils::get_tag_attributes( $asset );
+				$atts = $tag_element['atts'];
 				if ( ! empty( $atts['src'] ) ) {
 					$url = Delivery::clean_url( $atts['src'] );
 
@@ -962,6 +1055,8 @@ class Assets extends Settings_Component {
 					}
 				}
 			}
+		} elseif ( empty( $id ) && isset( $this->known_files[ $tag_element['atts']['src'] ] ) ) {
+			$id = $this->known_files[ $tag_element['atts']['src'] ];
 		}
 
 		return $id;
@@ -1043,8 +1138,10 @@ class Assets extends Settings_Component {
 			if ( 'on' === $asset->get_value( 'enabled' ) ) {
 				$paths = $asset->get_setting( 'paths' );
 				foreach ( $paths->get_settings() as $path ) {
-					$conf = $path->get_params();
-					self::register_asset_path( trailingslashit( $conf['url'] ), $conf['version'] );
+					if ( 'on' === $path->get_parent( 2 )->_enabled ) {
+						$conf = $path->get_params();
+						self::register_asset_path( trailingslashit( $conf['url'] ), $conf['version'] );
+					}
 				}
 			}
 		}
@@ -1077,15 +1174,16 @@ class Assets extends Settings_Component {
 				),
 			),
 			array(
-				'type'         => 'on_off',
-				'slug'         => 'enable',
-				'title'        => __( 'Full CDN', 'cloudinary' ),
-				'tooltip_text' => __(
+				'type'               => 'on_off',
+				'slug'               => 'enable',
+				'title'              => __( 'Full CDN', 'cloudinary' ),
+				'optimisation_title' => __( 'Non-media library files optimisation', 'cloudinary' ),
+				'tooltip_text'       => __(
 					'Deliver all assets from Cloudinary.',
 					'cloudinary'
 				),
-				'description'  => __( 'Enable caching site assets.', 'cloudinary' ),
-				'default'      => 'off',
+				'description'        => __( 'Enable caching site assets.', 'cloudinary' ),
+				'default'            => 'off',
 			),
 			array(
 				'type'       => 'button',
@@ -1155,6 +1253,9 @@ class Assets extends Settings_Component {
 				'title'   => $details['Name'],
 				'url'     => dirname( $plugin_url ),
 				'version' => $details['Version'],
+				'master'  => array(
+					'plugins.enabled',
+				),
 			);
 		}
 
@@ -1235,6 +1336,9 @@ class Assets extends Settings_Component {
 				'title'   => $theme->get( 'Name' ),
 				'url'     => $theme->get_stylesheet_directory_uri(),
 				'version' => $theme->get( 'Version' ),
+				'master'  => array(
+					'themes.enabled',
+				),
 			);
 		}
 
@@ -1311,6 +1415,9 @@ class Assets extends Settings_Component {
 			'title'   => __( 'WordPress Includes', 'cloudinary' ),
 			'url'     => includes_url(),
 			'version' => $version,
+			'master'  => array(
+				'wordpress.enabled',
+			),
 		);
 
 		return $rows;
@@ -1378,6 +1485,9 @@ class Assets extends Settings_Component {
 			'title'   => __( 'Uploads', 'cloudinary' ),
 			'url'     => $uploads['baseurl'],
 			'version' => 0,
+			'master'  => array(
+				'content.enabled',
+			),
 		);
 
 		return $rows;

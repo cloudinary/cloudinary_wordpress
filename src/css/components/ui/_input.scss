@@ -1,0 +1,47 @@
+// Inputs for forms etc.
+@mixin input {
+	margin: 0 0 23px;
+	display: block;
+	max-width: 500px;
+	&-label {
+		.cld-ui-title {
+			font-size: $size-setting-label;
+			font-weight: 700;
+		}
+
+		display: block;
+		margin-bottom: 8px;
+
+		&-link {
+			font-size: $size-panel-description;
+			margin-left: 8px;
+			color: $color-cld-blue;
+
+			&:hover {
+				color: $color-cld-dark-blue;
+			}
+		}
+	}
+	&-radio-label{
+		display: block;
+	}
+}
+
+&-input {
+	@include input;
+
+	@import "controls/text";
+	@import "controls/select";
+	@import "controls/on-off";
+	@import "controls/icon-toggle";
+
+	.prefixed {
+		width: 40%;
+		margin-left: 6px;
+	}
+
+	.suffixed {
+		width: 40%;
+		margin-right: 6px;
+	}
+}
