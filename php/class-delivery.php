@@ -293,7 +293,7 @@ class Delivery implements Setup {
 			if ( $results ) {
 				foreach ( $results as $result ) {
 					if ( $this->sync->is_synced( $result->post_id ) ) {
-						$found = array_merge( $found, $this->get_attachment_size_urls( $result->post_id ) );
+						$found = array_merge( $found, $this->get_attachment_size_urls( (int) $result->post_id ) );
 					}
 				}
 			}
