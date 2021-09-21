@@ -15,19 +15,20 @@
   },
   "scripts": {
     "build": "wp-scripts build && npm run build:docs",
-    "dev": "wp-scripts start",
-    "lint:php": "composer lint",
-    "lint:php:fix": "composer fix",
-    "lint:js": "wp-scripts lint-js",
-    "lint:js:fix": "wp-scripts lint-js --fix",
-    "lint:style": "wp-scripts lint-style",
-    "lint": "npm-run-all lint:php lint:js lint:style",
-    "package": "npm run build && grunt package",
     "deploy": "npm run build && grunt deploy && npm run release",
     "deploy-assets": "grunt deploy-assets",
+    "dev": "wp-scripts start",
+    "i18n": "grunt i18n",
+    "lint": "npm-run-all lint:php lint:js lint:style",
+    "lint:js": "wp-scripts lint-js",
+    "lint:js:fix": "wp-scripts lint-js --fix",
+    "lint:php": "composer lint",
+    "lint:php:fix": "composer fix",
+    "lint:style": "wp-scripts lint-style",
+    "package": "npm run build && grunt package",
     "postinstall": "composer install",
     "readme": "composer readme",
-    "release": "release-it",
+    "release": "release-it --no-increment",
     "release:ci": "release-it --ci",
     "release:dry": "release-it --dry-run",
     "build:docs": "rm -rf docs && jsdoc -c hookdoc-conf.json php ui-definitions cloudinary.php"
@@ -107,6 +108,7 @@
     "grunt-shell": "^3.0.1",
     "grunt-text-replace": "^0.4.0",
     "grunt-wp-deploy": "^2.1.2",
+    "grunt-wp-i18n": "^1.0.3",
     "husky": "^4.3.8",
     "istanbul-lib-coverage": "^3.0.0",
     "istanbul-lib-report": "^3.0.0",
@@ -146,5 +148,5 @@
     "webpackbar": "^4.0.0",
     "wp-hookdoc": "^0.2.0"
   },
-  "version": "2.7.5"
+  "version": "2.7.6"
 }

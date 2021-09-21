@@ -264,8 +264,6 @@ class Cache extends Settings_Component implements Setup {
 		 * @param $bypass {bool} True to bypass, false to not.
 		 *
 		 * @return {bool}
-		 *
-		 * @since 2.8.0
 		 */
 		return apply_filters( 'cloudinary_bypass_cache', ! is_null( $bypass ) );
 	}
@@ -458,7 +456,7 @@ class Cache extends Settings_Component implements Setup {
 	protected function get_upload_method() {
 		$method = get_transient( self::META_KEYS['upload_method'] );
 		if ( empty( $method ) ) {
-			$test_url = $this->media->base_url . '/image/fetch/' . $this->plugin->dir_url . 'css/logo.svg';
+			$test_url = $this->media->base_url . '/image/fetch/' . $this->plugin->dir_url . 'css/images/logo.svg';
 			$request  = wp_remote_head( $test_url );
 			$method   = 'direct';
 			if ( 200 === wp_remote_retrieve_response_code( $request ) ) {
@@ -489,8 +487,6 @@ class Cache extends Settings_Component implements Setup {
 		 * @param $inline_types {array} The types of files to be encoded inline.
 		 *
 		 * @return {array}
-		 *
-		 * @since 2.8.0
 		 */
 		return apply_filters( 'cloudinary_plugin_asset_cache_inline_types', $inline_types );
 	}
@@ -582,8 +578,6 @@ class Cache extends Settings_Component implements Setup {
 		 * @param $default_filters {array} The types of files to be filtered.
 		 *
 		 * @return {array}
-		 *
-		 * @since 2.8.0
 		 */
 		return apply_filters( 'cloudinary_plugin_asset_cache_filters', $default_filters );
 	}

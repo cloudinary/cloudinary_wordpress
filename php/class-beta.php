@@ -46,6 +46,12 @@ class Beta {
 				'options' => array(),
 				'deps'    => array( 'delivery' ),
 			),
+			'assets'                 => array(
+				'class'   => array( 'Cloudinary\Assets' ),
+				'name'    => __( 'Non-media library assets', 'cloudinary' ),
+				'options' => array(),
+				'deps'    => array( 'delivery' ),
+			),
 		);
 
 		foreach ( $this->components as $key => $data ) {
@@ -64,7 +70,7 @@ class Beta {
 			 * @param $feature {string} Optional feature type.
 			 * @param $data    {array}  The beta feature data.
 			 *
-			 * @return  {bool}
+			 * @return {bool}
 			 */
 			if ( apply_filters( 'cloudinary_beta', false, $key, $data ) ) {
 				foreach ( (array) $data['class'] as $class ) {

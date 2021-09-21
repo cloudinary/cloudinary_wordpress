@@ -38,9 +38,7 @@ const UI = {
 				expanded: 'auto',
 			},
 			content: ( reference ) =>
-				context.getElementById(
-					reference.getAttribute( 'data-tooltip' )
-				).innerHTML,
+				document.getElementById( reference.dataset.tooltip ).innerHTML,
 		} );
 		[ ...triggers ].forEach( ( input ) => {
 			input.dispatchEvent( new Event( 'input' ) );
@@ -130,8 +128,11 @@ const UI = {
 		} );
 		input.addEventListener( 'input', function () {
 			self.bindings[ trigger ].value = input.value;
-			if ( 'checkbox' === input.type || 'radio' === input.type ) {
+			if ( 'checkbox' === input.type ) {
 				self.bindings[ trigger ].checked = input.checked;
+			}
+			if ( 'radio' === input.type && false === input.checked ) {
+				return; // Ignore an unchecked radio.
 			}
 			for ( const bound in self.bindings[ trigger ].elements ) {
 				self.toggle(
@@ -198,7 +199,12 @@ const UI = {
 		}
 	},
 };
-// Init.
-window.addEventListener( 'load', UI._init( document ) );
+
+const context = document.getElementById( 'cloudinary-settings-page' );
+
+if ( context ) {
+	// Init.
+	window.addEventListener( 'load', UI._init( context ) );
+}
 
 export default UI;

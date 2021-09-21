@@ -1,4 +1,5 @@
 import apiFetch from '@wordpress/api-fetch';
+import { __ } from '@wordpress/i18n';
 import OnOff from './onoff';
 
 const CacheManage = {
@@ -11,6 +12,30 @@ const CacheManage = {
 				'[data-cache-point]'
 			);
 			cachePoints.forEach( ( cachePoint ) => this._bind( cachePoint ) );
+			const purgeAll = document.getElementById( 'cld_purge_all' );
+			if ( purgeAll ) {
+				purgeAll.disabled = 'disabled';
+				purgeAll.style.width = '100px';
+				purgeAll.style.transition = 'width 0.5s';
+				purgeAll.addEventListener( 'click', () => {
+					if ( ! purgeAll.dataset.purging ) {
+						if (
+							confirm(
+								wp.i18n.__(
+									'Purge entire cache?',
+									'cloudinary'
+								)
+							)
+						) {
+							this._purgeAll( purgeAll, false );
+						}
+					}
+				} );
+				this._watchPurge( purgeAll );
+				setInterval( () => {
+					this._watchPurge( purgeAll );
+				}, 5000 );
+			}
 		}
 	},
 	getCachePoint( ID ) {
@@ -36,6 +61,9 @@ const CacheManage = {
 			cachePoint.dataset.browser
 		);
 		const apply = document.getElementById( cachePoint.dataset.apply );
+		apply.style.float = 'right';
+		apply.style.marginLeft = '6px';
+
 		controller.addEventListener( 'change', ( ev ) => {
 			this._handleManager( ID );
 		} );
@@ -114,9 +142,14 @@ const CacheManage = {
 	},
 	_load( ID ) {
 		const cachePoint = this.getCachePoint( ID );
+		let height = '100px';
+		if ( cachePoint.clientHeight ) {
+			height = cachePoint.clientHeight - 16 + 'px'; // Subtract padding.
+		}
 		this._clearChildren( cachePoint );
 		cachePoint.appendChild( cachePoint.loader );
 		this.open( cachePoint.loader );
+		cachePoint.loader.firstChild.style.height = height;
 		apiFetch( {
 			path: CLDCACHE.fetch_url,
 			data: {
@@ -143,7 +176,7 @@ const CacheManage = {
 		this._evaluateApply( cachePoint );
 	},
 	_evaluateApply( cachePoint ) {
-		this.close( cachePoint.apply );
+		cachePoint.apply.disabled = 'disabled';
 		const lists = cachePoint.apply.cacheChanges;
 		let show = false;
 		for ( const state in lists ) {
@@ -152,7 +185,7 @@ const CacheManage = {
 			}
 		}
 		if ( show ) {
-			this.open( cachePoint.apply );
+			cachePoint.apply.disabled = '';
 		}
 	},
 	_applyChanges( cachePoint ) {
@@ -163,6 +196,90 @@ const CacheManage = {
 				this._set_state( cachePoint, state, lists[ state ] );
 			}
 		}
+	},
+	_watchPurge( button ) {
+		if ( ! button.dataset.purging && ! button.dataset.updating ) {
+			button.dataset.updating = true;
+			apiFetch( {
+				path: CLDCACHE.purge_all,
+				data: {
+					count: true,
+				},
+				method: 'POST',
+			} ).then( ( result ) => {
+				button.dataset.updating = '';
+				if ( 0 < result.percent && 100 > result.percent ) {
+					button.disabled = '';
+					this._purgeAll( button, true );
+				} else if ( 0 < result.pending ) {
+					button.disabled = '';
+				} else {
+					button.disabled = 'disabled';
+				}
+			} );
+		}
+	},
+	_purgeAll( button, count, callback ) {
+		button.blur();
+		const percent = 0;
+		button.dataset.purging = true;
+		button.style.width = '200px';
+		button.style.border = '0';
+		button.dataset.title = button.innerText;
+		button.innerText = __( 'Purging cache 0%', 'cloudinary' );
+		button.style.backgroundImage =
+			'linear-gradient(90deg,' +
+			' #2a0 ' +
+			percent +
+			'%,' +
+			' #787878 ' +
+			percent +
+			'%)';
+		this._purgeAction( button, count, callback );
+	},
+	_purgeAction( button, count, callback ) {
+		const parent = button.dataset.parent;
+		apiFetch( {
+			path: CLDCACHE.purge_all,
+			data: {
+				count,
+				parent,
+			},
+			method: 'POST',
+		} ).then( ( result ) => {
+			button.innerText =
+				__( 'Purging cache', 'cloudinary' ) +
+				' ' +
+				Math.round( result.percent, 2 ) +
+				'%';
+			button.style.backgroundImage =
+				'linear-gradient(90deg,' +
+				' #2a0 ' +
+				result.percent +
+				'%,' +
+				' #787878 ' +
+				result.percent +
+				'%)';
+			if ( 100 > result.percent ) {
+				this._purgeAction( button, true, callback );
+			} else if ( callback ) {
+				callback();
+			} else {
+				button.innerText = wp.i18n.__(
+					'Purge complete.',
+					'cloudinary'
+				);
+				setTimeout( () => {
+					button.dataset.purging = '';
+					button.style.backgroundImage = '';
+					button.style.minHeight = '';
+					button.style.border = '';
+					button.style.width = '100px';
+					button.disabled = 'disabled';
+					button.innerText = button.dataset.title;
+				}, 2000 );
+			}
+		} );
 	},
 	_set_state( cachePoint, state, ids ) {
 		this._showSpinners( ids );
@@ -176,25 +293,13 @@ const CacheManage = {
 		} ).then( ( result ) => {
 			this._hideSpinners( result );
 			result.forEach( ( id ) => {
-				this.close( cachePoint.apply );
 				this._removeFromList( cachePoint, id, state );
 				this._evaluateApply( cachePoint );
-				cachePoint.apply.disabled = '';
+				cachePoint.apply.disabled = 'disabled';
 			} );
 			if ( 'delete' === state ) {
 				this._load( cachePoint.dataset.cachePoint );
 			}
-		} );
-	},
-	_purgeCache( cachePoint ) {
-		apiFetch( {
-			path: CLDCACHE.purge_url,
-			data: {
-				cachePoint: cachePoint.dataset.cachePoint,
-			},
-			method: 'POST',
-		} ).then( () => {
-			this._load( cachePoint.dataset.cachePoint );
 		} );
 	},
 	_showSpinners( ids ) {
@@ -264,25 +369,6 @@ const CacheManage = {
 		const left = document.createElement( 'button' );
 		const right = document.createElement( 'button' );
 
-		if ( result.items.length ) {
-			const purge = document.createElement( 'button' );
-			purge.type = 'button';
-			purge.className = 'button';
-			purge.innerText = wp.i18n.__( 'Purge cache point', 'cloudinary' );
-			purge.style.float = 'left';
-			cachePoint.paginate.appendChild( purge );
-
-			purge.addEventListener( 'click', ( ev ) => {
-				if (
-					confirm(
-						wp.i18n.__( 'Purge entire cache point?', 'cloudinary' )
-					)
-				) {
-					this._purgeCache( cachePoint );
-				}
-			} );
-		}
-
 		left.type = 'button';
 		left.innerHTML = '&lsaquo;';
 		left.className = 'button cld-pagenav-prev';
@@ -316,6 +402,33 @@ const CacheManage = {
 		cachePoint.paginate.appendChild( left );
 		cachePoint.paginate.appendChild( text );
 		cachePoint.paginate.appendChild( right );
+		cachePoint.paginate.appendChild( cachePoint.apply );
+		cachePoint.apply.classList.remove( 'closed' );
+		cachePoint.apply.disabled = 'disabled';
+		// Add purge
+		if ( result.items.length ) {
+			const purge = document.createElement( 'button' );
+			purge.type = 'button';
+			purge.className = 'button';
+			purge.innerText = wp.i18n.__( 'Purge cache point', 'cloudinary' );
+			purge.style.float = 'right';
+			cachePoint.paginate.appendChild( purge );
+
+			purge.addEventListener( 'click', ( ev ) => {
+				if (
+					confirm(
+						wp.i18n.__( 'Purge entire cache point?', 'cloudinary' )
+					)
+				) {
+					purge.dataset.parent = cachePoint.dataset.cachePoint;
+					const self = this;
+					purge.classList.add( 'button-primary' );
+					this._purgeAll( purge, false, function () {
+						self._load( cachePoint.dataset.cachePoint );
+					} );
+				}
+			} );
+		}
 	},
 	_getNote( message ) {
 		const row = this._getRow();
@@ -397,7 +510,6 @@ const CacheManage = {
 		checkbox.type = 'checkbox';
 		checkbox.value = item.ID;
 		checkbox.checked = -1 < index ? false : item.active;
-		checkbox.dataset.master = JSON.stringify( masters );
 		slider.className = 'cld-input-on-off-control-slider';
 
 		wrap.appendChild( checkbox );
