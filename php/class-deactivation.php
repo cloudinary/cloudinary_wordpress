@@ -184,8 +184,7 @@ class Deactivation {
 								$checked = 'checked';
 							}
 							?>
-							<li>
-								<input type="radio" name="option" <?php echo esc_html( $checked ); ?> value="<?php echo esc_attr( $option['id'] ); ?>" id="option-<?php echo esc_attr( $option['id'] ); ?>"/>
+							<li><input type="radio" name="option" <?php echo esc_html( $checked ); ?> value="<?php echo esc_attr( $option['id'] ); ?>" id="option-<?php echo esc_attr( $option['id'] ); ?>"/>
 								<label for="option-<?php echo esc_attr( $option['id'] ); ?>">
 									<?php echo esc_html( $option['text'] ); ?>
 								</label>

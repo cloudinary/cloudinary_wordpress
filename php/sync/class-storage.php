@@ -166,25 +166,7 @@ class Storage implements Notice {
 	 * @return string
 	 */
 	public function generate_signature( $attachment_id ) {
-		$extension       = true;
-		$attachment_file = get_attached_file( $attachment_id );
-
-		if ( 'cld' !== $this->settings['offload'] ) {
-			if ( ! file_exists( $attachment_file ) ) {
-				$extension = $attachment_file;
-			}
-		} else {
-			// A fully synced signature for cld, will have the extension as true.
-			// If coming from cld_dual, the extension in that signature will have the path.
-			// This means the new signature will not match.
-			if ( file_exists( $attachment_file ) ) {
-				// The validate method will return false the first time it's run in cld mode.
-				// After the delay, it will return true. Making the signature different again.
-				$extension = $this->validate( $attachment_id );
-			}
-		}
-
-		return $this->settings['offload'] . $this->media->get_public_id( $attachment_id ) . $extension;
+		return $this->settings['offload'] . $this->media->get_public_id( $attachment_id );
 	}
 
 	/**
@@ -202,6 +184,10 @@ class Storage implements Notice {
 
 		switch ( $this->settings['offload'] ) {
 			case 'cld':
+				$delayed = get_post_meta( $attachment_id, Sync::META_KEYS['delay'], true );
+				if ( self::DELETE_DELAY > time() - $delayed ) {
+					return;
+				}
 				$this->remove_local_assets( $attachment_id );
 				$cloudinary_url = $this->media->cloudinary_url( $attachment_id, false );
 				$cloudinary_url = remove_query_arg( '_i', $cloudinary_url );
@@ -225,6 +211,9 @@ class Storage implements Notice {
 				}
 				break;
 		}
+
+		// Remove the delay meta.
+		delete_post_meta( $attachment_id, Sync::META_KEYS['delay'] );
 
 		// start applying default transformations again.
 		remove_filter( 'cloudinary_apply_default_transformations', '__return_false' );
@@ -273,22 +262,29 @@ class Storage implements Notice {
 			$meta['file'] = get_the_guid( $attachment_id );
 		}
 
-		// Remove the delay meta.
-		delete_post_meta( $attachment_id, Sync::META_KEYS['delay'] );
-
 		return wp_delete_attachment_files( $attachment_id, $meta, $backup_sizes, get_attached_file( $attachment_id ) );
 	}
 
 	/**
 	 * Get the current status of the sync.
 	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
 	 * @return string
 	 */
-	public function status() {
+	public function status( $attachment_id ) {
 		$note = __( 'Syncing', 'cloudinary' );
 		switch ( $this->settings['offload'] ) {
 			case 'cld':
-				$note = __( 'Removing asset copy from local storage', 'cloudinary' );
+				$note         = __( 'Removing asset copy from local storage', 'cloudinary' );
+				$delayed      = get_post_meta( $attachment_id, Sync::META_KEYS['delay'], true );
+				$diff         = time() - $delayed;
+				$remaining    = self::DELETE_DELAY - $diff;
+				$hr_remaining = human_time_diff( time() - $remaining, time() );
+				if ( self::DELETE_DELAY > $diff ) {
+					// translators: %s is time remaining.
+					$note = sprintf( __( 'Local asset removal in %s', 'cloudinary' ), $hr_remaining );
+				}
 				break;
 			case 'dual_low':
 				$note = __( 'Syncing low resolution asset to local storage', 'cloudinary' );
@@ -368,17 +364,15 @@ class Storage implements Notice {
 		$valid = true;
 		if ( 'cld' === $this->settings['offload'] ) {
 			// In cld mode, we want to delay the deletion.
-			$now       = time();
-			$timestamp = get_post_meta( $attachment_id, Sync::META_KEYS['delay'], true );
-			if ( empty( $timestamp ) ) {
+			$delayed = get_post_meta( $attachment_id, Sync::META_KEYS['delay'], true );
+			$now     = time();
+			if ( empty( $delayed ) ) {
 				update_post_meta( $attachment_id, Sync::META_KEYS['delay'], $now );
-				$timestamp = $now;
 			}
-			$diff = $now - $timestamp;
-			// If this is false, it will set the signature without running the sync method.
-			// When the sync expected sync signature changes, due to using this method as part of the signature,
-			// it will be forced to revalidate the sync method, with will be true and allow the sync to run.
-			$valid = self::DELETE_DELAY <= $diff;
+			$valid = file_exists( get_attached_file( $attachment_id ) );
+		} else {
+			// Remove the delay meta.
+			delete_post_meta( $attachment_id, Sync::META_KEYS['delay'] );
 		}
 
 		return $valid;

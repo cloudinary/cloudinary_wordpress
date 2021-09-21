@@ -288,9 +288,81 @@ class Media extends Settings_Component implements Setup {
 	public function is_local_media( $attachment_id ) {
 		$local_host = wp_parse_url( get_site_url(), PHP_URL_HOST );
 		$guid       = get_the_guid( $attachment_id );
+
+		// Maybe GUID is a path.
+		if ( ! filter_var( $guid, FILTER_VALIDATE_URL ) ) {
+			$url = home_url( $guid );
+			if ( $this->maybe_file_exist_in_url( $url ) ) {
+				$guid = home_url( $guid );
+			}
+		}
+
 		$media_host = wp_parse_url( $guid, PHP_URL_HOST );
 
 		return $local_host === $media_host || $this->is_cloudinary_url( $guid );
+	}
+
+	/**
+	 * Checks if asset URL is valid.
+	 *
+	 * @param string $url The URL to test.
+	 *
+	 * @return bool
+	 */
+	public function maybe_file_exist_in_url( $url ) {
+		if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
+			return false;
+		}
+		$ch = curl_init( $url );
+		curl_setopt( $ch, CURLOPT_NOBODY, true );
+		curl_exec( $ch );
+		$code = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
+
+		if ( 200 === $code ) {
+			$status = true;
+		} else {
+			$status = false;
+		}
+
+		curl_close( $ch );
+
+		return $status;
+	}
+
+	/**
+	 * Check if the attachment is uploadable.
+	 *
+	 * @param int $attachment_id The attachment ID to check.
+	 *
+	 * @return bool
+	 */
+	public function is_uploadable_media( $attachment_id ) {
+		$is_uploadable = $this->is_local_media( $attachment_id );
+		$guid          = get_the_guid( $attachment_id );
+		$media_host    = wp_parse_url( $guid, PHP_URL_HOST );
+
+		if ( ! $is_uploadable ) {
+			$additional_urls = $this->plugin->settings->find_setting( 'uploadable_domains' )->get_value();
+
+			if ( ! empty( $additional_urls ) ) {
+				$additional_urls = explode( ' ', $additional_urls );
+
+				$is_uploadable = in_array( $media_host, $additional_urls, true );
+			}
+		}
+
+		/**
+		 * Filter local media.
+		 *
+		 * @hook   cloudinary_is_uploadable_media
+		 * @since  2.7.7
+		 *
+		 * @param $is_local   {bool}   The attachment ID.
+		 * @param $media_host {string} The html tag.
+		 *
+		 * @return {bool}
+		 */
+		return apply_filters( 'cloudinary_is_uploadable_media', $is_uploadable, $media_host );
 	}
 
 	/**
@@ -825,10 +897,12 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function attachment_url( $url, $attachment_id ) {
 		// Previous v1 and Cloudinary only storage.
-		$previous_url = strpos( $url, untrailingslashit( $this->base_url ) );
-		if ( false !== $previous_url ) {
-			return substr( $url, $previous_url );
+		if ( false !== strpos( $url, 'https://', 5 ) ) {
+			$dirs = wp_get_upload_dir();
+
+			return str_replace( trailingslashit( $dirs['baseurl'] ), '', $url );
 		}
+
 		if (
 			! doing_action( 'wp_insert_post_data' )
 			&& false === $this->in_downsize
@@ -842,7 +916,7 @@ class Media extends Settings_Component implements Setup {
 			 */
 			&& ! apply_filters( 'cloudinary_doing_upload', false )
 		) {
-			if ( $this->cloudinary_id( $attachment_id ) ) {
+			if ( $this->has_public_id( $attachment_id ) ) {
 				$url = $this->cloudinary_url( $attachment_id );
 			}
 		}
@@ -948,7 +1022,7 @@ class Media extends Settings_Component implements Setup {
 		$config = $this->settings->get_value( 'image_settings' );
 
 		if ( 'on' === $config['image_optimization'] ) {
-			if ( 'none' !== $config['image_format'] ) {
+			if ( ! empty( $config['image_format'] ) && 'none' !== $config['image_format'] ) {
 				$default['fetch_format'] = $config['image_format'];
 			}
 			if ( isset( $config['image_quality'] ) ) {
@@ -1806,7 +1880,7 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function media_column_value( $column_name, $attachment_id ) {
 		if ( 'cld_status' === $column_name ) {
-			if ( $this->sync->is_syncable( $attachment_id ) ) :
+			if ( $this->sync->is_syncable( $attachment_id ) && $this->is_uploadable_media( $attachment_id ) ) :
 				$status = array(
 					'state' => 'inactive',
 					'note'  => esc_html__( 'Not Synced', 'cloudinary' ),
@@ -1832,7 +1906,7 @@ class Media extends Settings_Component implements Setup {
 				?>
 				<span class="dashicons-cloudinary <?php echo esc_attr( $status['state'] ); ?>" title="<?php echo esc_attr( $status['note'] ); ?>"></span>
 				<?php
-			elseif ( ! $this->is_local_media( $attachment_id ) ) :
+			elseif ( ! $this->is_uploadable_media( $attachment_id ) ) :
 				?>
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'Not syncable. This is an external media.', 'cloudinary' ); ?>"></span>
 				<?php
@@ -2387,6 +2461,8 @@ class Media extends Settings_Component implements Setup {
 			if ( $this->can_filter_out_local() || is_admin() ) {
 				add_filter( 'wp_calculate_image_srcset', array( $this, 'image_srcset' ), 10, 5 );
 				add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
+				add_filter( 'wp_get_original_image_url', array( $this, 'attachment_url' ), 10, 2 );
+
 				add_filter( 'image_downsize', array( $this, 'filter_downsize' ), 10, 3 );
 				// Hook into Featured Image cycle.
 				add_action( 'begin_fetch_post_thumbnail_html', array( $this, 'set_doing_featured' ), 10, 2 );

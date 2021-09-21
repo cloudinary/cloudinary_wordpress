@@ -9,6 +9,7 @@
 
 	margin-top: 13px;
 	padding: $size-padding-panel;
+
 	&.has-heading {
 		margin-top: 0;
 		border-top: 0;
@@ -52,7 +53,6 @@
 	}
 	// Include the legacy styles that might not be needed anymore.
 	@import "panels/legacy";
-
 }
 // Include other types of panels.
 @import "panels/panel-short";
