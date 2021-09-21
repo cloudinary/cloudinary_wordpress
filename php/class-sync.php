@@ -313,9 +313,9 @@ class Sync implements Setup, Assets {
 	 */
 	public function filter_deny_types( $can, $attachment_id ) {
 		$list = $this->plugin->settings->sync_media->_excluded_types;
-		$file = get_attached_file( $attachment_id );
+		$file = strtolower( get_attached_file( $attachment_id ) );
 		$ext  = pathinfo( strstr( $file, '?', true ), PATHINFO_EXTENSION );
-		if ( ! empty( $list ) && in_array( $ext, $list ) ) {
+		if ( ! empty( $list ) && in_array( $ext, $list, true ) ) {
 			$can = false;
 		}
 
