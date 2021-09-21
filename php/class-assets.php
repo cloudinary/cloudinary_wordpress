@@ -1221,7 +1221,7 @@ class Assets extends Settings_Component {
 
 		$pages['connect']['settings'][] = array(
 			'type'        => 'panel',
-			'title'       => __( 'Supported file extensions', 'cloudinary' ),
+			'title'       => __( 'External media', 'cloudinary' ),
 			'option_name' => 'additional_domains',
 			array(
 				'slug' => 'cache_external',
