@@ -407,7 +407,8 @@ class Delivery implements Setup {
 			$tag_element['atts']['data-optsize']   = size_format( $remote_size );
 			$tag_element['atts']['data-optformat'] = get_post_meta( $tag_element['id'], Sync::META_KEYS['remote_format'], true );
 			if ( ! empty( $local_size ) && ! empty( $remote_size ) ) {
-				$tag_element['atts']['data-percent'] = round( $remote_size / $local_size * 100, 1 );
+				$diff = $local_size - $remote_size;
+				$tag_element['atts']['data-percent'] = round( $diff / $local_size * 100, 1 );
 			}
 			$tag_element['atts']['data-permalink'] = get_edit_post_link( $tag_element['id'] );
 		}

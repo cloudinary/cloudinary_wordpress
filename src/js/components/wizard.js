@@ -16,8 +16,10 @@ const Wizard = {
 		working: document.getElementById( 'connection-working' ),
 	},
 	init() {
+		if ( ! cldData.saveNonce ) {
+			return;
+		}
 		apiFetch.use( apiFetch.createNonceMiddleware( cldData.saveNonce ) );
-
 		const navs = document.querySelectorAll( '[data-navigate]' );
 		const connectionInput = document.getElementById(
 			'connect.cloudinary_url'

@@ -859,7 +859,7 @@ class Assets extends Settings_Component {
 	 * @return string
 	 */
 	public function get_attached_file( $file, $asset_id ) {
-		if ( self::is_asset_type( $asset_id ) ) {
+		if ( self::is_asset_type( $asset_id ) && ! file_exists( $file ) ) {
 			$dirs = wp_get_upload_dir();
 			$file = str_replace( trailingslashit( $dirs['basedir'] ), ABSPATH, $file );
 		}
@@ -1264,7 +1264,7 @@ class Assets extends Settings_Component {
 				'title'   => $details['Name'],
 				'url'     => dirname( $plugin_url ),
 				'version' => $details['Version'],
-				'master'  => array(
+				'main'  => array(
 					'plugins.enabled',
 				),
 			);
@@ -1347,7 +1347,7 @@ class Assets extends Settings_Component {
 				'title'   => $theme->get( 'Name' ),
 				'url'     => $theme->get_stylesheet_directory_uri(),
 				'version' => $theme->get( 'Version' ),
-				'master'  => array(
+				'main'  => array(
 					'themes.enabled',
 				),
 			);
@@ -1426,7 +1426,7 @@ class Assets extends Settings_Component {
 			'title'   => __( 'WordPress Includes', 'cloudinary' ),
 			'url'     => includes_url(),
 			'version' => $version,
-			'master'  => array(
+			'main'  => array(
 				'wordpress.enabled',
 			),
 		);
@@ -1496,7 +1496,7 @@ class Assets extends Settings_Component {
 			'title'   => __( 'Uploads', 'cloudinary' ),
 			'url'     => $uploads['baseurl'],
 			'version' => 0,
-			'master'  => array(
+			'main'  => array(
 				'content.enabled',
 			),
 		);

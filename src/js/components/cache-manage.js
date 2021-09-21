@@ -44,13 +44,17 @@ const CacheManage = {
 			: null;
 	},
 	setCachePoint( ID, cachePoint ) {
+		const main = document.getElementById( cachePoint.dataset.slug );
+		if ( ! main ) {
+			return;
+		}
 		const paginate = document.createElement( 'div' );
 		const loader = this._getRow();
 		const loaderTd = document.createElement( 'td' );
 		loaderTd.colSpan = 2;
 		loaderTd.className = 'cld-loading';
 		loader.appendChild( loaderTd );
-		const main = document.getElementById( cachePoint.dataset.slug );
+
 		const search = document.getElementById(
 			cachePoint.dataset.slug + '_search'
 		);

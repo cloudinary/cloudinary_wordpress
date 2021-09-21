@@ -398,15 +398,31 @@ class Storage implements Notice {
 	 * @param int $attachment_id The attachment ID.
 	 */
 	public function size_sync( $attachment_id ) {
-		$args          = array(
+		$args      = array(
 			/** This filter is documented in wp-includes/class-wp-http-streams.php */
 			'sslverify' => apply_filters( 'https_local_ssl_verify', false ),
 			'headers'   => array(
 				'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
 			),
 		);
-		$url           = $this->media->cloudinary_url( $attachment_id );
-		$request       = wp_remote_head( $url, $args );
+		$url       = $this->media->cloudinary_url( $attachment_id );
+		$request   = wp_remote_head( $url, $args );
+		$has_error = wp_remote_retrieve_header( $request, 'X-Cld-Error' );
+		if ( ! empty( $has_error ) && false !== strpos( $has_error, 'deny' ) ) {
+			// Deny failure. Log and exit.
+			$list = $this->plugin->settings->sync_media->_excluded_types;
+			if ( empty( $list ) ) {
+				$list = array();
+			}
+			$ext = pathinfo( strstr( $url, '?', true ), PATHINFO_EXTENSION );
+			if ( ! in_array( $ext, $list ) ) {
+				$list[] = $ext;
+				$this->plugin->settings->sync_media->excluded_types->save_value( $list );
+			}
+			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['sync_error'], __( 'Restricted file type', 'cloudinary' ) );
+
+			return;
+		}
 		$remote_size   = wp_remote_retrieve_header( $request, 'Content-Length' );
 		$remote_format = wp_remote_retrieve_header( $request, 'Content-Type' );
 		$local_size    = get_post_meta( $attachment_id, Sync::META_KEYS['local_size'], true );

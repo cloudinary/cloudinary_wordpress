@@ -6,6 +6,7 @@ import OnOff from './onoff';
 import CacheManage from './cache-manage';
 import Progress from './progress';
 import States from './states';
+import RestrictedTypes from './restricted-types';
 
 const UI = {
 	bindings: {},
@@ -51,6 +52,7 @@ const UI = {
 		// Start cache manager.
 		CacheManage.init( context );
 		Progress.init( context );
+		RestrictedTypes.init( context );
 	},
 	_autoSuffix( input ) {
 		const suffixes = input.dataset.autoSuffix;
