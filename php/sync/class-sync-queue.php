@@ -140,6 +140,12 @@ class Sync_Queue {
 			wp_safe_redirect( $this->sync->settings->get_component()->get_url() );
 			exit;
 		}
+
+		// Periodically restart auto-sync.
+		if ( 'on' === $this->plugin->settings->get_value( 'auto_sync' ) && empty( get_transient( '_autosync_check' ) ) ) {
+			$this->start_queue( 'autosync' );
+			set_transient( '_autosync_check', true, $this->cron_frequency );
+		}
 	}
 
 	/**
