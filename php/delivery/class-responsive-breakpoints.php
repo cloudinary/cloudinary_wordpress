@@ -106,41 +106,4 @@ class Responsive_Breakpoints extends Delivery_Feature {
 	protected function create_settings() {
 		$this->settings = $this->media->get_settings()->get_setting( 'image_display' );
 	}
-
-	/**
-	 * Add the settings.
-	 *
-	 * @param array $pages The pages to add to.
-	 *
-	 * @return array
-	 */
-	public function register_settings( $pages ) {
-
-		$pages['responsive']['settings'][0][2][0] = array(
-			'type'         => 'number',
-			'slug'         => 'pixel_step',
-			'priority'     => 9,
-			'title'        => __( 'Breakpoints distance', 'cloudinary' ),
-			'tooltip_text' => __( 'The distance from the original image for responsive breakpoints generation.', 'cloudinary' ),
-			'suffix'       => __( 'px', 'cloudinary' ),
-			'default'      => 100,
-		);
-		$pages['responsive']['settings'][0][2][1] = array(
-			'type'         => 'select',
-			'slug'         => 'dpr',
-			'priority'     => 8,
-			'title'        => __( 'DPR settings', 'cloudinary' ),
-			'tooltip_text' => __( 'The distance from the original image for responsive breakpoints generation.', 'cloudinary' ),
-			'default'      => 'auto',
-			'options'      => array(
-				'off'  => __( 'None', 'cloudinary' ),
-				'auto' => __( 'Auto', 'cloudinary' ),
-				'2'    => __( '2X', 'cloudinary' ),
-				'3'    => __( '3X', 'cloudinary' ),
-				'4'    => __( '4X', 'cloudinary' ),
-			),
-		);
-
-		return $pages;
-	}
 }

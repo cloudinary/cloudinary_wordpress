@@ -36,14 +36,14 @@ const BreakpointsPreview = {
 		let maxSize = parseInt( this.max.value );
 		let minSize = parseInt( this.min.value );
 		let steps = parseInt( this.stepper.value );
-		if( 1 > steps ){
+		if ( 1 > steps ) {
 			this.stepper.value = steps = 50;
 		}
-		if( ! maxSize ){
+		if ( ! maxSize ) {
 			maxSize = parseInt( this.max.dataset.default );
 			this.max.value = maxSize;
 		}
-		if( ! minSize ){
+		if ( ! minSize ) {
 			minSize = 100;
 			this.min.value = minSize;
 		}
@@ -66,10 +66,7 @@ const BreakpointsPreview = {
 			this.preview.appendChild( this.makeSize( size, percent ) );
 			count++;
 		}
-		this.details.innerText = __(
-			`With a max width of ${ maxSize }px and a minimum of ${ minSize }px, you get a potential of ${ count } images.`,
-			'cloudinary'
-		);
+		this.details.innerText = __( `With a max width of ${ maxSize }px and a minimum of ${ minSize }px, you get a potential of ${ count } images.`, 'cloudinary' );
 		return count;
 	},
 	makeSize( size, percent ) {
