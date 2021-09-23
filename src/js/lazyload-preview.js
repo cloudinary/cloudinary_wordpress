@@ -56,7 +56,7 @@ const LazyLoadPreview = {
 			this.progress.style.width = '100%';
 			this.preloader.parentNode.style.visibility = 'hidden';
 			this.running = setTimeout( () => {
-				this.progress.style.display = 'none';
+				this.progress.style.visibility = 'hidden';
 				this.progress.style.width = '0%';
 				this.preloader.parentNode.style.visibility = '';
 
@@ -69,8 +69,8 @@ const LazyLoadPreview = {
 							this.image.parentNode.parentNode.scrollTo( { top: threshold, behavior: 'smooth' } );
 							this.showPlaceholder();
 						}, this.cycleTime / 3 );
-					}, this.cycleTime );
-				}, this.cycleTime );
+					}, this.cycleTime / 2 );
+				}, this.cycleTime / 2 );
 			}, this.cycleTime / 2 );
 
 		} else {
@@ -91,7 +91,7 @@ const LazyLoadPreview = {
 		}
 		setTimeout( () => {
 			this.showImage();
-		}, this.cycleTime );
+		}, this.cycleTime/2 );
 	},
 	showImage() {
 		const threshold = this.getThreshold();
@@ -112,7 +112,7 @@ const LazyLoadPreview = {
 		this.image.parentNode.style.boxShadow = '';
 		this.preloader.parentNode.style.bottom = '0';
 		this.image.parentNode.parentNode.style.overflowY = '';
-		this.progress.style.display = '';
+		this.progress.style.visibility = '';
 	},
 	getSVG() {
 		let colors = this.color.value;
