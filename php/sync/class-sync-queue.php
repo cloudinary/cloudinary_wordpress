@@ -140,12 +140,6 @@ class Sync_Queue {
 			wp_safe_redirect( $this->sync->settings->get_component()->get_url() );
 			exit;
 		}
-
-		// Periodically restart auto-sync.
-		if ( 'on' === $this->plugin->settings->get_value( 'auto_sync' ) && empty( get_transient( '_autosync_check' ) ) ) {
-			set_transient( '_autosync_check', true, $this->cron_frequency );
-			$this->start_threads( 'autosync' );
-		}
 	}
 
 	/**
@@ -343,7 +337,7 @@ class Sync_Queue {
 						$return['remote_total'] = (int) $item['totals'];
 						break;
 					case '_cld_unsynced':
-						$return['total_queued'] = (int) $item['count'];
+						$return['total_queued'] += (int) $item['count'];
 						break;
 					case '_cloudinary_v2':
 						$return['total_assets'] = (int) $item['count'];

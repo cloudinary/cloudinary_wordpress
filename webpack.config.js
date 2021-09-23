@@ -78,6 +78,7 @@ const cldCore = {
 		'wp-color-picker-alpha': './src/js/wp-color-picker-alpha.js',
 		'front-overlay': './src/js/front-overlay.js',
 		'breakpoints-preview': './src/js/breakpoints-preview.js',
+		'lazyload-preview': './src/js/lazyload-preview.js',
 	},
 	module: {
 		rules: [

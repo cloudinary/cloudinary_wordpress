@@ -88,7 +88,9 @@ class Breakpoints_Preview extends Image_Preview {
 	 */
 	protected function make_sized_image_box( $size, $image ) {
 		$image_box                        = $this->get_part( 'div' );
-		$image_box['attributes']['style'] = 'width:' . $size / $this->config['max_width'] * 100 . '%;';
+		$image_box['attributes']['style'] = array(
+			'width:' . $size / $this->config['max_width'] * 100 . '%;',
+		);
 		$image_box['children']['image']   = $image;
 		$image_box['attributes']['class'] = array( 'preview-image' );
 
@@ -116,14 +118,15 @@ class Breakpoints_Preview extends Image_Preview {
 		);
 
 		// Details path.
-		$details_path                        = $this->get_part( 'span' );
-		$details_path['content']             = sprintf(
+		$details_path            = $this->get_part( 'span' );
+		$details_path['content'] = sprintf(
 			// translators: variables are sizes and number of images.
 			__( 'With a max width of %1$spx and a minimum of %2$spx, you get a potential of %3$s images.', 'cloudinary' ),
 			$this->config['max_width'],
 			$this->config['min_width'],
 			$this->config['total_images']
 		);
+
 		$details_path['attributes']['class'] = array(
 			'global-transformations-url-resource',
 		);
