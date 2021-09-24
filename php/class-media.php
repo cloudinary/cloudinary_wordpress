@@ -375,8 +375,16 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function is_oversize_media( $attachment_id ) {
 		$is_oversize = false;
+		$callback    = 'get_attached_file';
 
-		$file     = get_attached_file( $attachment_id );
+		if (
+			function_exists( 'wp_get_original_image_path' )
+			&& wp_attachment_is_image( $attachment_id )
+		) {
+			$callback = 'wp_get_original_image_path';
+		}
+
+		$file     = $callback( $attachment_id );
 		$max_size = ( wp_attachment_is_image( $attachment_id ) ? 'image_max_size_bytes' : 'video_max_size_bytes' );
 		if ( file_exists( $file ) && filesize( $file ) > $this->plugin->components['connect']->usage['media_limits'][ $max_size ] ) {
 			$is_oversize = true;
