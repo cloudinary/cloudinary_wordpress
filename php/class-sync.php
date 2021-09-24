@@ -388,6 +388,10 @@ class Sync implements Setup, Assets {
 			$syncable = true;
 		}
 
+		if ( $this->managers['media']->is_oversize_media( $attachment_id ) ) {
+			$syncable = false;
+		}
+
 		return $syncable;
 	}
 

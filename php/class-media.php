@@ -366,6 +366,26 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Is the media item size allowed to be uploaded.
+	 * Checks against the account limits.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function is_oversize_media( $attachment_id ) {
+		$is_oversize = false;
+
+		$file     = get_attached_file( $attachment_id );
+		$max_size = ( wp_attachment_is_image( $attachment_id ) ? 'image_max_size_bytes' : 'video_max_size_bytes' );
+		if ( file_exists( $file ) && filesize( $file ) > $this->plugin->components['connect']->usage['media_limits'][ $max_size ] ) {
+			$is_oversize = true;
+		}
+
+		return $is_oversize;
+	}
+
+	/**
 	 * Get the Cloudinary delivery type.
 	 *
 	 * @param int $attachment_id The attachment ID.
@@ -1856,17 +1876,7 @@ class Media extends Settings_Component implements Setup {
 					'state' => 'inactive',
 					'note'  => esc_html__( 'Not Synced', 'cloudinary' ),
 				);
-				if ( ! $this->cloudinary_id( $attachment_id ) ) {
-					// If false, lets check why by seeing if the file size is too large.
-					$file     = get_attached_file( $attachment_id ); // Get the file size to make sure it can exist in cloudinary.
-					$max_size = ( wp_attachment_is_image( $attachment_id ) ? 'image_max_size_bytes' : 'video_max_size_bytes' );
-					if ( file_exists( $file ) && filesize( $file ) > $this->plugin->components['connect']->usage['media_limits'][ $max_size ] ) {
-						$max_size_hr = size_format( $this->plugin->components['connect']->usage['media_limits'][ $max_size ] );
-						// translators: variable is file size.
-						$status['note']  = sprintf( __( 'File size exceeds the maximum of %s. This media asset will be served from WordPress.', 'cloudinary' ), $max_size_hr );
-						$status['state'] = 'error';
-					}
-				} else {
+				if ( $this->cloudinary_id( $attachment_id ) ) {
 					$status = array(
 						'state' => 'success',
 						'note'  => esc_html__( 'Synced', 'cloudinary' ),
@@ -1888,6 +1898,14 @@ class Media extends Settings_Component implements Setup {
 			elseif ( 'sprite' === $this->get_media_delivery( $attachment_id ) ) :
 				?>
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'This media is Sprite type.', 'cloudinary' ); ?>"></span>
+				<?php
+			elseif ( $this->is_oversize_media( $attachment_id ) ) :
+				$max_size = ( wp_attachment_is_image( $attachment_id ) ? 'image_max_size_bytes' : 'video_max_size_bytes' );
+				$max_size_hr = size_format( $this->plugin->components['connect']->usage['media_limits'][ $max_size ] );
+				// translators: variable is file size.
+				$title = sprintf( __( 'File size exceeds the maximum of %s. This media asset will be served from WordPress.', 'cloudinary' ), $max_size_hr );
+				?>
+				<span class="dashicons-cloudinary error" title="<?php echo esc_attr( $title ); ?>"></span>
 				<?php
 			endif;
 		}
