@@ -92,6 +92,7 @@ class Sync implements Setup, Assets {
 		'syncing'        => '_cloudinary_syncing',
 		'downloading'    => '_cloudinary_downloading',
 		'process_log'    => '_process_log',
+		'process_log_v3' => '_cloudinary_process_log',
 		'storage'        => '_cloudinary_storage',
 		'queued'         => '_cloudinary_sync_queued',
 		'delay'          => '_cloudinary_sync_delay',
@@ -198,18 +199,21 @@ class Sync implements Setup, Assets {
 	 * @param mixed  $result        The result.
 	 */
 	public function log_sync_result( $attachment_id, $type, $result ) {
-		$log  = $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['process_log'], true );
+		$log  = $this->managers['media']->get_process_logs( $attachment_id );
 		$keys = array_keys( $this->sync_base_struct );
 		if ( empty( $log ) || count( $log ) !== count( $keys ) ) {
 			$log = array_fill_keys( $keys, array() );
 		}
 		if ( isset( $log[ $type ] ) ) {
+			if ( is_wp_error( $result ) ) {
+				$result = $result->get_error_message();
+			}
 
 			$log[ $type ][ '_' . time() ] = $result;
 			if ( 5 < count( $log[ $type ] ) ) {
 				array_shift( $log[ $type ] );
 			}
-			$this->managers['media']->update_post_meta( $attachment_id, self::META_KEYS['process_log'], $log );
+			update_post_meta( $attachment_id, self::META_KEYS['process_log_v3'], $log );
 		}
 	}
 
@@ -810,7 +814,7 @@ class Sync implements Setup, Assets {
 			$sync_type = $this->get_sync_type( $attachment_id );
 			if ( ! empty( $sync_type ) && isset( $this->sync_base_struct[ $sync_type ] ) ) {
 				// check process log in case theres an error.
-				$log = $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['process_log'] );
+				$log = $this->managers['media']->get_process_logs( $attachment_id );
 				if ( ! empty( $log[ $sync_type ] ) && is_wp_error( $log[ $sync_type ] ) ) {
 					// Use error instead of sync note.
 					$status['state'] = 'error';

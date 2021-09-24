@@ -2033,6 +2033,26 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Gets the process logs for the attachment.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return array|mixed|null
+	 */
+	public function get_process_logs( $attachment_id ) {
+		$logs = get_post_meta( $attachment_id, Sync::META_KEYS['process_log_v3'] );
+
+		if ( empty( $logs ) ) {
+			$logs = $this->get_post_meta( $attachment_id, Sync::META_KEYS['process_log'], true );
+			add_post_meta( $attachment_id, Sync::META_KEYS['process_log_v3'], $logs, true );
+
+			$this->delete_post_meta( $attachment_id, Sync::META_KEYS['process_log'] );
+		}
+
+		return $logs;
+	}
+
+	/**
 	 * Build and return a cached cloudinary meta value.
 	 *
 	 * @param int    $post_id The attachment ID.

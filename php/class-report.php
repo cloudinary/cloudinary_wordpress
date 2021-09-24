@@ -163,8 +163,10 @@ class Report extends Settings_Component implements Setup {
 	 */
 	public function render( $post ) {
 		if ( 'attachment' === $post->post_type ) {
-			$sync = $this->plugin->get_component( 'sync' );
-			$meta = get_post_meta( $post->ID, $sync::META_KEYS['cloudinary'], true );
+			$sync  = $this->plugin->get_component( 'sync' );
+			$media = $this->plugin->get_component( 'media' );
+			$meta  = get_post_meta( $post->ID, $sync::META_KEYS['cloudinary'], true );
+			$logs  = array( Sync::META_KEYS['process_log'] => $media->get_process_logs( $post->ID ) );
 
 			$args = array(
 				'type'       => 'tag',
@@ -172,7 +174,7 @@ class Report extends Settings_Component implements Setup {
 				'attributes' => array(
 					'style' => 'overflow:auto;',
 				),
-				'content'    => wp_json_encode( $meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ),
+				'content'    => wp_json_encode( array_merge( $meta, $logs ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ),
 			);
 			$this->settings->create_setting( 'meta_viewer', $args )->get_component()->render( true );
 		}
