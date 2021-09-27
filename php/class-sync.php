@@ -208,7 +208,10 @@ class Sync implements Setup, Assets {
 		}
 		if ( isset( $log[ $type ] ) ) {
 			if ( is_wp_error( $result ) ) {
-				$result = $result->get_error_message();
+				$result = array(
+					'code'    => $result->get_error_code(),
+					'message' => $result->get_error_message(),
+				);
 			}
 
 			$log[ $type ][ '_' . time() ] = $result;

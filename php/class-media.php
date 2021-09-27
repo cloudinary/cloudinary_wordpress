@@ -2072,18 +2072,31 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Gets the process logs for the attachment.
 	 *
-	 * @param int $attachment_id The attachment ID.
+	 * @param int  $attachment_id The attachment ID.
+	 * @param bool $raw           The errors expanded.
 	 *
 	 * @return array|mixed|null
 	 */
-	public function get_process_logs( $attachment_id ) {
-		$logs = get_post_meta( $attachment_id, Sync::META_KEYS['process_log_v3'] );
+	public function get_process_logs( $attachment_id, $raw = false ) {
+		$logs = get_post_meta( $attachment_id, Sync::META_KEYS['process_log'], true );
 
 		if ( empty( $logs ) ) {
-			$logs = $this->get_post_meta( $attachment_id, Sync::META_KEYS['process_log'], true );
-			add_post_meta( $attachment_id, Sync::META_KEYS['process_log_v3'], $logs, true );
+			$logs = $this->get_post_meta( $attachment_id, Sync::META_KEYS['process_log_legacy'], true );
+			add_post_meta( $attachment_id, Sync::META_KEYS['process_log'], $logs, true );
 
-			$this->delete_post_meta( $attachment_id, Sync::META_KEYS['process_log'] );
+			$this->delete_post_meta( $attachment_id, Sync::META_KEYS['process_log_legacy'] );
+		}
+
+		foreach ( $logs as $signature => $log ) {
+			foreach ( $log as $time => $entry ) {
+				if (
+					is_array( $entry )
+					&& ! empty( $entry['code'] )
+					&& ! empty( $entry['message'] )
+				) {
+					$logs[ $signature ][ $time ] = $raw ? $entry['message'] : new WP_Error( $entry['code'], $entry['message'] );
+				}
+			}
 		}
 
 		return $logs;
