@@ -77,26 +77,28 @@ class Sync implements Setup, Assets {
 	 * Holds the meta keys for sync meta to maintain consistency.
 	 */
 	const META_KEYS = array(
-		'pending'        => '_cloudinary_pending',
-		'signature'      => '_sync_signature',
-		'version'        => '_cloudinary_version',
-		'plugin_version' => '_plugin_version',
-		'breakpoints'    => '_cloudinary_breakpoints',
-		'delivery'       => '_cloudinary_delivery',
-		'public_id'      => '_public_id',
-		'transformation' => '_transformations',
-		'sync_error'     => '_sync_error',
-		'cloudinary'     => '_cloudinary_v2',
-		'folder_sync'    => '_folder_sync',
-		'suffix'         => '_suffix',
-		'syncing'        => '_cloudinary_syncing',
-		'downloading'    => '_cloudinary_downloading',
-		'process_log'    => '_process_log',
-		'process_log_v3' => '_cloudinary_process_log',
-		'storage'        => '_cloudinary_storage',
-		'queued'         => '_cloudinary_sync_queued',
-		'delay'          => '_cloudinary_sync_delay',
-		'upgrading'      => '_cloudinary_upgrading',
+		'pending'             => '_cloudinary_pending',
+		'signature'           => '_sync_signature',
+		'version'             => '_cloudinary_version',
+		'plugin_version'      => '_plugin_version',
+		'breakpoints'         => '_cloudinary_breakpoints',
+		'delivery'            => '_cloudinary_delivery',
+		'public_id'           => '_public_id',
+		'transformation'      => '_transformations',
+		'sync_error'          => '_sync_error',
+		'cloudinary'          => '_cloudinary_v2',
+		'folder_sync'         => '_folder_sync',
+		'suffix'              => '_suffix',
+		'last_oversize_check' => '_last_oversize_check',
+		'file_size'           => '_file_size',
+		'syncing'             => '_cloudinary_syncing',
+		'downloading'         => '_cloudinary_downloading',
+		'process_log'         => '_process_log',
+		'process_log_v3'      => '_cloudinary_process_log',
+		'storage'             => '_cloudinary_storage',
+		'queued'              => '_cloudinary_sync_queued',
+		'delay'               => '_cloudinary_sync_delay',
+		'upgrading'           => '_cloudinary_upgrading',
 	);
 
 	/**
@@ -392,7 +394,7 @@ class Sync implements Setup, Assets {
 			$syncable = true;
 		}
 
-		if ( $this->managers['media']->is_oversize_media( $attachment_id ) ) {
+		if ( true === $syncable && $this->managers['media']->is_oversize_media( $attachment_id ) ) {
 			$syncable = false;
 		}
 
@@ -430,12 +432,13 @@ class Sync implements Setup, Assets {
 
 		// Apply a default to ensure parts exist.
 		$default = array(
-			'generate' => '__return_null',
-			'validate' => null,
-			'priority' => 50,
-			'sync'     => '__return_null',
-			'state'    => 'sync',
-			'note'     => __( 'Synchronizing asset with Cloudinary', 'cloudinary' ),
+			'generate'    => '__return_null',
+			'validate'    => null,
+			'priority'    => 50,
+			'sync'        => '__return_null',
+			'state'       => 'sync',
+			'note'        => __( 'Synchronizing asset with Cloudinary', 'cloudinary' ),
+			'asset_state' => 1,
 		);
 
 		$this->sync_base_struct[ $type ] = wp_parse_args( $structure, $default );
@@ -468,15 +471,16 @@ class Sync implements Setup, Assets {
 				'note'     => __( 'Downloading from Cloudinary', 'cloudinary' ),
 			),
 			'file'         => array(
-				'generate' => array( $this, 'generate_file_signature' ),
-				'priority' => 5.1,
-				'sync'     => array( $this->managers['upload'], 'upload_asset' ),
-				'validate' => function ( $attachment_id ) {
-					return ! $this->managers['media']->has_public_id( $attachment_id );
+				'asset_state' => 0,
+				'generate'    => array( $this, 'generate_file_signature' ),
+				'priority'    => 5.1,
+				'sync'        => array( $this->managers['upload'], 'upload_asset' ),
+				'validate'    => function ( $attachment_id ) {
+					return ! $this->managers['media']->has_public_id( $attachment_id ) && ! $this->managers['media']->is_oversize_media( $attachment_id );
 				},
-				'state'    => 'uploading',
-				'note'     => __( 'Uploading to Cloudinary', 'cloudinary' ),
-				'required' => true, // Required to complete URL render flag.
+				'state'       => 'uploading',
+				'note'        => __( 'Uploading to Cloudinary', 'cloudinary' ),
+				'required'    => true, // Required to complete URL render flag.
 			),
 			'folder'       => array(
 				'generate' => array( $this->managers['media'], 'get_cloudinary_folder' ),
@@ -681,6 +685,30 @@ class Sync implements Setup, Assets {
 	}
 
 	/**
+	 * Get the asset state ( sync level ) of an attachment.
+	 *
+	 * @param int $attachment_id The attachment ID to get.
+	 *
+	 * @return int
+	 */
+	public function get_asset_state( $attachment_id ) {
+
+		$state = $this->been_synced( $attachment_id ) ? 1 : 0;
+
+		/**
+		 * Filter the state of the asset.
+		 *
+		 * @hook   cloudinary_asset_state
+		 *
+		 * @param $state         {int} The attachment state.
+		 * @param $attachment_id {int}   The attachment ID.
+		 *
+		 * @return {array}
+		 */
+		return apply_filters( 'cloudinary_asset_state', $state, $attachment_id );
+	}
+
+	/**
 	 * Prepares and asset for sync comparison by getting all sync types
 	 * and running the generate methods for each type.
 	 *
@@ -689,14 +717,17 @@ class Sync implements Setup, Assets {
 	 * @return array|\WP_Error
 	 */
 	public function sync_base( $post ) {
-
-		if ( ! $this->managers['media']->is_media( $post ) ) {
+		$attachment_id = is_int( $post ) ? $post : $post->ID;
+		if ( ! $this->managers['media']->is_media( $attachment_id ) ) {
 			return new \WP_Error( 'attachment_post_expected', __( 'An attachment post was expected.', 'cloudinary' ) );
 		}
 
-		$return = array();
+		$return      = array();
+		$asset_state = $this->get_asset_state( $attachment_id );
 		foreach ( array_keys( $this->sync_types ) as $type ) {
-			$return[ $type ] = $this->generate_type_signature( $type, $post );
+			if ( $asset_state >= $this->sync_base_struct[ $type ]['asset_state'] ) {
+				$return[ $type ] = $this->generate_type_signature( $type, $attachment_id );
+			}
 		}
 
 		/**
@@ -752,6 +783,7 @@ class Sync implements Setup, Assets {
 		$return               = null;
 		$required_signature   = $this->generate_signature( $attachment_id, $cached );
 		$attachment_signature = $this->get_signature( $attachment_id, $cached );
+		$attachment_signature = array_intersect_key( $attachment_signature, $required_signature );
 		if ( is_array( $required_signature ) ) {
 			$sync_items = array_filter(
 				$attachment_signature,
@@ -1132,7 +1164,7 @@ class Sync implements Setup, Assets {
 	public function generate_file_signature( $attachment_id ) {
 		$path = get_attached_file( $attachment_id );
 
-		return basename( $path );
+		return ! $this->managers['media']->is_oversize_media( $attachment_id ) ? basename( $path ) : $attachment_id;
 	}
 
 	/**

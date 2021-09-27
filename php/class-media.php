@@ -375,8 +375,27 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function is_oversize_media( $attachment_id ) {
 		$is_oversize = false;
-		$callback    = 'get_attached_file';
 
+		$file_size = $this->get_attachment_file_size( $attachment_id );
+		$max_size = ( wp_attachment_is_image( $attachment_id ) ? 'image_max_size_bytes' : 'video_max_size_bytes' );
+		$limit    = $this->plugin->components['connect']->usage['media_limits'][ $max_size ];
+		if ( $file_size > $limit ) {
+			$is_oversize = true;
+		}
+
+		return $is_oversize;
+	}
+
+	/**
+	 * Get the filesize of an attachment.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return int
+	 */
+	public function get_attachment_file_size( $attachment_id ) {
+
+		$callback = 'get_attached_file';
 		if (
 			function_exists( 'wp_get_original_image_path' )
 			&& wp_attachment_is_image( $attachment_id )
@@ -384,13 +403,17 @@ class Media extends Settings_Component implements Setup {
 			$callback = 'wp_get_original_image_path';
 		}
 
-		$file     = $callback( $attachment_id );
-		$max_size = ( wp_attachment_is_image( $attachment_id ) ? 'image_max_size_bytes' : 'video_max_size_bytes' );
-		if ( file_exists( $file ) && filesize( $file ) > $this->plugin->components['connect']->usage['media_limits'][ $max_size ] ) {
-			$is_oversize = true;
+		$file = $callback( $attachment_id );
+		if ( ! file_exists( $file ) ) {
+			return 0;
+		}
+		$file_size = $this->get_post_meta( $attachment_id, Sync::META_KEYS['file_size'], true );
+		if ( empty( $file_size ) ) {
+			$file_size = filesize( $file );
+			$this->update_post_meta( $attachment_id, Sync::META_KEYS['file_size'], $file_size );
 		}
 
-		return $is_oversize;
+		return $file_size;
 	}
 
 	/**
