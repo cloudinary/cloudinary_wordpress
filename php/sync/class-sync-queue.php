@@ -102,12 +102,15 @@ class Sync_Queue {
 	 */
 	public function setup( $sync ) {
 		$this->sync = $sync;
+
 		/**
-		 * Filter the amount of threads to process background syncing.
+		 * Filter the amount of background threads to process for manual syncing.
 		 *
-		 * @param int $threads The number of threads.
+		 * @hook   cloudinary_queue_threads
 		 *
-		 * @return int
+		 * @param $count {int} The number of manual sync threads to use.
+		 *
+		 * @return {int}
 		 */
 		$queue_threads_count = apply_filters( 'cloudinary_queue_threads', 2 );
 		for ( $i = 0; $i < $queue_threads_count; $i ++ ) {
@@ -117,11 +120,13 @@ class Sync_Queue {
 		/**
 		 * Filter the amount of background threads to process for auto syncing.
 		 *
-		 * @param int $threads The number of threads.
+		 * @hook   cloudinary_autosync_threads
 		 *
-		 * @return int
+		 * @param $count {int} The number of autosync threads to use.
+		 *
+		 * @return {int}
 		 */
-		$autosync_thread_count = apply_filters( 'cloudinary_autosync_threads', 1 );
+		$autosync_thread_count = apply_filters( 'cloudinary_autosync_threads', 2 );
 		for ( $i = 0; $i < $autosync_thread_count; $i ++ ) {
 			$this->autosync_threads[] = 'auto_sync_thread_' . $i;
 		}
@@ -256,7 +261,7 @@ class Sync_Queue {
 			$thread_queue = $this->get_thread_queue( $thread );
 			// translators: variable is thread name and queue size.
 			$action_message = sprintf( __( '%1$s : Queue size :  %2$s.', 'cloudinary' ), $thread, $thread_queue['count'] );
-			do_action( '_cloudinary_queue_action', $action_message );
+			do_action( '_cloudinary_queue_action', $action_message, $thread );
 			if ( empty( $thread_queue['next'] ) ) {
 				// Nothing left to sync.
 				return $return;
@@ -486,7 +491,7 @@ class Sync_Queue {
 		if ( 3 === $sync_state ) {
 			// translators: variable is thread name.
 			$action_message = sprintf( __( 'Starting thread %s.', 'cloudinary' ), $thread );
-			do_action( '_cloudinary_queue_action', $action_message );
+			do_action( '_cloudinary_queue_action', $action_message, $thread );
 			$this->plugin->components['api']->background_request( 'queue', array( 'thread' => $thread ) );
 			$sync_state = 2; // Set as started.
 		}
@@ -572,8 +577,8 @@ class Sync_Queue {
 		/**
 		 * Filter the params for the query used to get thread queue details.
 		 *
-		 * @hook  cloudinary_thread_queue_details_query
-		 * @since 2.7.6
+		 * @hook   cloudinary_thread_queue_details_query
+		 * @since  2.7.6
 		 *
 		 * @param $args   {array}  The arguments for the query.
 		 * @param $thread {string} The thread name.
@@ -657,7 +662,16 @@ class Sync_Queue {
 	 */
 	public function add_to_queue( array $attachment_ids, $type = 'queue' ) {
 
-		$threads        = $this->get_threads( $type );
+		$been_synced = array_filter( $attachment_ids, array( $this->sync, 'been_synced' ) );
+		$new_items   = array_diff( $attachment_ids, $been_synced );
+		$threads     = $this->get_threads( $type );
+		$new_thread  = array_shift( $threads );
+		if ( ! empty( $new_items ) ) {
+			$this->add_to_thread_queue( $new_thread, $new_items );
+			$active_threads[ $new_thread ] = count( $new_items );
+		}
+
+		$attachment_ids = $been_synced;
 		$active_threads = array();
 		if ( ! empty( $attachment_ids ) ) {
 			$chunk_size = ceil( count( $attachment_ids ) / count( $threads ) );
@@ -732,7 +746,7 @@ class Sync_Queue {
 					$stopped[] = $thread;
 					// translators: variable is thread name.
 					$action_message = sprintf( __( 'Thread %s Stopped.', 'cloudinary' ), $thread );
-					do_action( '_cloudinary_queue_action', $action_message );
+					do_action( '_cloudinary_queue_action', $action_message, $thread );
 				}
 			}
 

@@ -191,7 +191,8 @@ class Push_Sync {
 
 		$stat = array();
 		// If a single specified ID, push and return response.
-		$ids = array_map( 'intval', (array) $attachments );
+		$ids    = array_map( 'intval', (array) $attachments );
+		$thread = $this->plugin->settings->get_param( 'current_sync_thread' );
 		// Handle based on Sync Type.
 		foreach ( $ids as $attachment_id ) {
 
@@ -209,7 +210,7 @@ class Push_Sync {
 			while ( $type = $this->sync->get_sync_type( $attachment_id, false ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition
 				// translators: variable is sync type.
 				$action_message = sprintf( __( 'Sync type: %s', 'cloudinary' ), $type );
-				do_action( '_cloudinary_queue_action', $action_message );
+				do_action( '_cloudinary_queue_action', $action_message, $thread );
 				if ( isset( $stat[ $attachment_id ][ $type ] ) ) {
 					// Loop prevention.
 					break;
@@ -276,7 +277,7 @@ class Push_Sync {
 
 				// translators: variable is thread name and asset ID.
 				$action_message = sprintf( __( '%1$s - cycle %3$s: Syncing asset %2$d', 'cloudinary' ), $thread, $attachment_id, $runs );
-				do_action( '_cloudinary_queue_action', $action_message );
+				do_action( '_cloudinary_queue_action', $action_message, $thread );
 				$this->process_assets( $attachment_id );
 				$runs ++;
 				$last_id = $attachment_id;
@@ -286,6 +287,6 @@ class Push_Sync {
 
 		// translators: variable is thread name.
 		$action_message = sprintf( __( 'Ending thread %s', 'cloudinary' ), $thread );
-		do_action( '_cloudinary_queue_action', $action_message );
+		do_action( '_cloudinary_queue_action', $action_message, $thread );
 	}
 }
