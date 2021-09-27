@@ -15,6 +15,7 @@ use Cloudinary\Media\Global_Transformations;
 use Cloudinary\Media\Upgrade;
 use Cloudinary\Media\Video;
 use Cloudinary\Media\WooCommerceGallery;
+use WP_Error;
 
 /**
  * Class Media
@@ -1663,7 +1664,7 @@ class Media extends Settings_Component implements Setup {
 	 * @param array  $asset     The asset array data.
 	 * @param string $public_id The cloudinary public id.
 	 *
-	 * @return int|\WP_Error
+	 * @return int|WP_Error
 	 */
 	private function create_attachment( $asset, $public_id ) {
 
