@@ -93,8 +93,8 @@ class Sync implements Setup, Assets {
 		'file_size'           => '_file_size',
 		'syncing'             => '_cloudinary_syncing',
 		'downloading'         => '_cloudinary_downloading',
-		'process_log'         => '_process_log',
-		'process_log_v3'      => '_cloudinary_process_log',
+		'process_log_legacy'  => '_process_log',
+		'process_log'         => '_cloudinary_process_log',
 		'storage'             => '_cloudinary_storage',
 		'queued'              => '_cloudinary_sync_queued',
 		'delay'               => '_cloudinary_sync_delay',
@@ -218,7 +218,7 @@ class Sync implements Setup, Assets {
 			if ( 5 < count( $log[ $type ] ) ) {
 				array_shift( $log[ $type ] );
 			}
-			update_post_meta( $attachment_id, self::META_KEYS['process_log_v3'], $log );
+			update_post_meta( $attachment_id, self::META_KEYS['process_log'], $log );
 		}
 	}
 
