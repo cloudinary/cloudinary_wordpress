@@ -15,6 +15,7 @@ use Cloudinary\Media\Global_Transformations;
 use Cloudinary\Media\Upgrade;
 use Cloudinary\Media\Video;
 use Cloudinary\Media\WooCommerceGallery;
+use WP_Error;
 
 /**
  * Class Media
@@ -363,6 +364,60 @@ class Media extends Settings_Component implements Setup {
 		 * @return {bool}
 		 */
 		return apply_filters( 'cloudinary_is_uploadable_media', $is_uploadable, $media_host );
+	}
+
+	/**
+	 * Is the media item size allowed to be uploaded.
+	 * Checks against the account limits.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function is_oversize_media( $attachment_id ) {
+		static $is_oversize = array();
+
+		if ( isset( $is_oversize[ $attachment_id ] ) ) {
+			return $is_oversize[ $attachment_id ];
+		}
+
+		$file_size = $this->get_attachment_file_size( $attachment_id );
+		$max_size  = ( wp_attachment_is_image( $attachment_id ) ? 'image_max_size_bytes' : 'video_max_size_bytes' );
+		$limit     = $this->plugin->components['connect']->usage['media_limits'][ $max_size ];
+
+		$is_oversize[ $attachment_id ] = $file_size > $limit;
+
+		return $is_oversize[ $attachment_id ];
+	}
+
+	/**
+	 * Get the filesize of an attachment.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return int
+	 */
+	public function get_attachment_file_size( $attachment_id ) {
+
+		$callback = 'get_attached_file';
+		if (
+			function_exists( 'wp_get_original_image_path' )
+			&& wp_attachment_is_image( $attachment_id )
+		) {
+			$callback = 'wp_get_original_image_path';
+		}
+
+		$file = $callback( $attachment_id );
+		if ( ! file_exists( $file ) ) {
+			return 0;
+		}
+		$file_size = $this->get_post_meta( $attachment_id, Sync::META_KEYS['file_size'], true );
+		if ( empty( $file_size ) ) {
+			$file_size = filesize( $file );
+			$this->update_post_meta( $attachment_id, Sync::META_KEYS['file_size'], $file_size );
+		}
+
+		return $file_size;
 	}
 
 	/**
@@ -1606,7 +1661,7 @@ class Media extends Settings_Component implements Setup {
 	 * @param array  $asset     The asset array data.
 	 * @param string $public_id The cloudinary public id.
 	 *
-	 * @return int|\WP_Error
+	 * @return int|WP_Error
 	 */
 	private function create_attachment( $asset, $public_id ) {
 
@@ -1856,17 +1911,7 @@ class Media extends Settings_Component implements Setup {
 					'state' => 'inactive',
 					'note'  => esc_html__( 'Not Synced', 'cloudinary' ),
 				);
-				if ( ! $this->cloudinary_id( $attachment_id ) ) {
-					// If false, lets check why by seeing if the file size is too large.
-					$file     = get_attached_file( $attachment_id ); // Get the file size to make sure it can exist in cloudinary.
-					$max_size = ( wp_attachment_is_image( $attachment_id ) ? 'image_max_size_bytes' : 'video_max_size_bytes' );
-					if ( file_exists( $file ) && filesize( $file ) > $this->plugin->components['connect']->usage['media_limits'][ $max_size ] ) {
-						$max_size_hr = size_format( $this->plugin->components['connect']->usage['media_limits'][ $max_size ] );
-						// translators: variable is file size.
-						$status['note']  = sprintf( __( 'File size exceeds the maximum of %s. This media asset will be served from WordPress.', 'cloudinary' ), $max_size_hr );
-						$status['state'] = 'error';
-					}
-				} else {
+				if ( $this->cloudinary_id( $attachment_id ) ) {
 					$status = array(
 						'state' => 'success',
 						'note'  => esc_html__( 'Synced', 'cloudinary' ),
@@ -1888,6 +1933,14 @@ class Media extends Settings_Component implements Setup {
 			elseif ( 'sprite' === $this->get_media_delivery( $attachment_id ) ) :
 				?>
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'This media is Sprite type.', 'cloudinary' ); ?>"></span>
+				<?php
+			elseif ( $this->is_oversize_media( $attachment_id ) ) :
+				$max_size = ( wp_attachment_is_image( $attachment_id ) ? 'image_max_size_bytes' : 'video_max_size_bytes' );
+				$max_size_hr = size_format( $this->plugin->components['connect']->usage['media_limits'][ $max_size ] );
+				// translators: variable is file size.
+				$title = sprintf( __( 'File size exceeds the maximum of %s. This media asset will be served from WordPress.', 'cloudinary' ), $max_size_hr );
+				?>
+				<span class="dashicons-cloudinary error" title="<?php echo esc_attr( $title ); ?>"></span>
 				<?php
 			endif;
 		}
@@ -2012,6 +2065,39 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		return $single ? $meta : (array) $meta;
+	}
+
+	/**
+	 * Gets the process logs for the attachment.
+	 *
+	 * @param int  $attachment_id The attachment ID.
+	 * @param bool $raw           The errors expanded.
+	 *
+	 * @return array|mixed|null
+	 */
+	public function get_process_logs( $attachment_id, $raw = false ) {
+		$logs = get_post_meta( $attachment_id, Sync::META_KEYS['process_log'], true );
+
+		if ( empty( $logs ) ) {
+			$logs = $this->get_post_meta( $attachment_id, Sync::META_KEYS['process_log_legacy'], true );
+			add_post_meta( $attachment_id, Sync::META_KEYS['process_log'], $logs, true );
+
+			$this->delete_post_meta( $attachment_id, Sync::META_KEYS['process_log_legacy'] );
+		}
+
+		foreach ( $logs as $signature => $log ) {
+			foreach ( $log as $time => $entry ) {
+				if (
+					is_array( $entry )
+					&& ! empty( $entry['code'] )
+					&& ! empty( $entry['message'] )
+				) {
+					$logs[ $signature ][ $time ] = $raw ? $entry['message'] : new WP_Error( $entry['code'], $entry['message'] );
+				}
+			}
+		}
+
+		return $logs;
 	}
 
 	/**
