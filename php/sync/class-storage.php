@@ -166,7 +166,7 @@ class Storage implements Notice {
 	 * @return string
 	 */
 	public function generate_signature( $attachment_id ) {
-		return $this->settings['offload'] . $this->media->get_public_id( $attachment_id );
+		return $this->settings['offload'] . $this->media->get_public_id( $attachment_id ) . $this->is_ready();
 	}
 
 	/**
