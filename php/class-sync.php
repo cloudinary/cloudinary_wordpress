@@ -225,14 +225,14 @@ class Sync implements Setup, Assets {
 	/**
 	 * Check if sync type is required for rendering a Cloudinary URL.
 	 *
-	 * @param string $type          The type to check.
-	 * @param int    $attachment_id The attachment ID.
+	 * @param string|null $type          The type to check.
+	 * @param int         $attachment_id The attachment ID.
 	 *
 	 * @return bool
 	 */
 	public function is_required( $type, $attachment_id ) {
 		$return = false;
-		if ( isset( $this->sync_base_struct[ $type ]['required'] ) ) {
+		if ( ! empty( $type ) && isset( $this->sync_base_struct[ $type ]['required'] ) ) {
 			if ( is_callable( $this->sync_base_struct[ $type ]['required'] ) ) {
 				$return = call_user_func( $this->sync_base_struct[ $type ]['required'], $attachment_id );
 			} else {
@@ -535,6 +535,7 @@ class Sync implements Setup, Assets {
 			'cloud_name'   => array(
 				'generate' => array( $this->managers['connect'], 'get_cloud_name' ),
 				'validate' => function ( $attachment_id ) {
+
 					$valid       = true;
 					$credentials = $this->managers['connect']->get_credentials();
 					if ( isset( $credentials['cname'] ) ) {
@@ -755,17 +756,10 @@ class Sync implements Setup, Assets {
 	 * @return string | null
 	 */
 	public function maybe_prepare_sync( $attachment_id ) {
-		$type = null;
-		if ( $this->can_sync( $attachment_id, $type ) ) {
-			$type = $this->get_sync_type( $attachment_id );
-			if ( $type ) {
-				$this->add_to_sync( $attachment_id );
-			} else {
-				// if null, and can sync but has no type, realtime syncs may have been applied. so recheck.
-				if ( $this->is_synced( $attachment_id, true ) ) {
-					$type = true;
-				}
-			}
+		$type = $this->get_sync_type( $attachment_id );
+		$can  = $this->can_sync( $attachment_id, $type );
+		if ( $type && true === $can ) {
+			$this->add_to_sync( $attachment_id );
 		}
 
 		return $type;

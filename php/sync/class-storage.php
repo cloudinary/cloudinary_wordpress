@@ -166,7 +166,9 @@ class Storage implements Notice {
 	 * @return string
 	 */
 	public function generate_signature( $attachment_id ) {
-		return $this->settings['offload'] . $this->media->get_public_id( $attachment_id ) . true;
+		// Remove the delay meta.
+		delete_post_meta( $attachment_id, Sync::META_KEYS['delay'] );
+		return $this->settings['offload'] . $this->media->get_public_id( $attachment_id );
 	}
 
 	/**
@@ -184,10 +186,6 @@ class Storage implements Notice {
 
 		switch ( $this->settings['offload'] ) {
 			case 'cld':
-				$delayed = get_post_meta( $attachment_id, Sync::META_KEYS['delay'], true );
-				if ( self::DELETE_DELAY > time() - $delayed ) {
-					return;
-				}
 				$this->remove_local_assets( $attachment_id );
 				$cloudinary_url = $this->media->cloudinary_url( $attachment_id, false );
 				$cloudinary_url = remove_query_arg( '_i', $cloudinary_url );
@@ -211,9 +209,6 @@ class Storage implements Notice {
 				}
 				break;
 		}
-
-		// Remove the delay meta.
-		delete_post_meta( $attachment_id, Sync::META_KEYS['delay'] );
 
 		// start applying default transformations again.
 		remove_filter( 'cloudinary_apply_default_transformations', '__return_false' );
@@ -379,6 +374,24 @@ class Storage implements Notice {
 	}
 
 	/**
+	 * Filter the ability to sync based on the delay.
+	 *
+	 * @param bool   $can           Flag if can sync.
+	 * @param int    $attachment_id The attachment ID.
+	 * @param string $type          The sync type.
+	 *
+	 * @return bool|mixed
+	 */
+	public function delay_cld_only( $can, $attachment_id, $type ) {
+		if ( 'storage' === $type && 'cld' === $this->settings['offload'] ) {
+			$delayed = get_post_meta( $attachment_id, Sync::META_KEYS['delay'], true );
+			$can     = self::DELETE_DELAY < time() - $delayed;
+		}
+
+		return $can;
+	}
+
+	/**
 	 * Setup hooks for the filters.
 	 */
 	public function setup() {
@@ -407,6 +420,7 @@ class Storage implements Notice {
 			// Tag the deactivate button.
 			$plugin_file = pathinfo( dirname( CLDN_CORE ), PATHINFO_BASENAME ) . '/' . basename( CLDN_CORE );
 			add_filter( 'plugin_action_links_' . $plugin_file, array( $this, 'tag_deactivate_link' ) );
+			add_filter( 'cloudinary_can_sync_asset', array( $this, 'delay_cld_only' ), 10, 3 );
 		}
 	}
 }
