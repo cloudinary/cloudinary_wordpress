@@ -969,7 +969,7 @@ class Media extends Settings_Component implements Setup {
 			 */
 			&& ! apply_filters( 'cloudinary_doing_upload', false )
 		) {
-			if ( $this->has_public_id( $attachment_id ) ) {
+			if ( $this->cloudinary_id( $attachment_id ) ) {
 				$url = $this->cloudinary_url( $attachment_id );
 			}
 		}
@@ -1377,7 +1377,7 @@ class Media extends Settings_Component implements Setup {
 			$sync_type = $this->sync->maybe_prepare_sync( $attachment_id );
 			// Check sync type allows for continued rendering. i.e meta update, breakpoints etc, will still allow the URL to work,
 			// Where is type "file" will not since it's still being uploaded.
-			if ( is_null( $sync_type ) || $this->sync->is_required( $sync_type, $attachment_id ) ) {
+			if ( $this->sync->is_required( $sync_type, $attachment_id ) ) {
 				// Cache ID to prevent multiple lookups.
 				$cloudinary_ids[ $attachment_id ] = false;
 
@@ -2041,10 +2041,11 @@ class Media extends Settings_Component implements Setup {
 	 * @param int    $post_id The attachment ID.
 	 * @param string $key     The meta key to get.
 	 * @param bool   $single  If single or not.
+	 * @param mixed  $default The default value if empty.
 	 *
 	 * @return mixed
 	 */
-	public function get_post_meta( $post_id, $key = '', $single = false ) {
+	public function get_post_meta( $post_id, $key = '', $single = false, $default = null ) {
 
 		$meta = get_post_meta( $post_id, Sync::META_KEYS['cloudinary'], true );
 		if ( empty( $meta ) ) {
@@ -2061,7 +2062,7 @@ class Media extends Settings_Component implements Setup {
 			$meta = apply_filters( 'cloudinary_migrate_legacy_meta', $post_id );
 		}
 		if ( '' !== $key ) {
-			$meta = isset( $meta[ $key ] ) ? $meta[ $key ] : null;
+			$meta = isset( $meta[ $key ] ) ? $meta[ $key ] : $default;
 		}
 
 		return $single ? $meta : (array) $meta;
@@ -2079,7 +2080,7 @@ class Media extends Settings_Component implements Setup {
 		$logs = get_post_meta( $attachment_id, Sync::META_KEYS['process_log'], true );
 
 		if ( empty( $logs ) ) {
-			$logs = $this->get_post_meta( $attachment_id, Sync::META_KEYS['process_log_legacy'], true );
+			$logs = $this->get_post_meta( $attachment_id, Sync::META_KEYS['process_log_legacy'], true, array() );
 			add_post_meta( $attachment_id, Sync::META_KEYS['process_log'], $logs, true );
 
 			$this->delete_post_meta( $attachment_id, Sync::META_KEYS['process_log_legacy'] );
