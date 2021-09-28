@@ -421,9 +421,7 @@ class Filter {
 				$attachment['transformations'] = $this->media->get_transformation_from_meta( $attachment['id'] );
 			}
 
-			if ( ! $this->media->is_cloudinary_url( $attachment['url'] ) ) {
-				$attachment['url'] = $this->media->cloudinary_url( $attachment['id'], false, $transformations );
-			}
+			$attachment['url']       = $this->media->cloudinary_url( $attachment['id'], false, $transformations );
 			$attachment['public_id'] = $attachment['type'] . '/upload/' . $this->media->get_public_id( $attachment['id'] );
 
 			if ( empty( $attachment['transformations'] ) ) {
@@ -437,9 +435,7 @@ class Filter {
 			// Ensure the sizes has the transformations and are converted URLS.
 			if ( ! empty( $attachment['sizes'] ) ) {
 				foreach ( $attachment['sizes'] as &$size ) {
-					if ( ! $this->media->is_cloudinary_url( $size['url'] ) ) {
-						$size['url'] = $this->media->convert_url( basename( $size['url'] ), $attachment['id'], $transformations );
-					}
+					$size['url'] = $this->media->convert_url( $size['url'], $attachment['id'], $transformations );
 				}
 			}
 		}
