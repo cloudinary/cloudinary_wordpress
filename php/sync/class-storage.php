@@ -166,8 +166,6 @@ class Storage implements Notice {
 	 * @return string
 	 */
 	public function generate_signature( $attachment_id ) {
-		// Remove the delay meta.
-		delete_post_meta( $attachment_id, Sync::META_KEYS['delay'] );
 		return $this->settings['offload'] . $this->media->get_public_id( $attachment_id );
 	}
 
@@ -186,6 +184,9 @@ class Storage implements Notice {
 
 		switch ( $this->settings['offload'] ) {
 			case 'cld':
+				if ( ! $this->sync->can_sync( $attachment_id, 'storage' ) ) {
+					return;
+				}
 				$this->remove_local_assets( $attachment_id );
 				$cloudinary_url = $this->media->cloudinary_url( $attachment_id, false );
 				$cloudinary_url = remove_query_arg( '_i', $cloudinary_url );
@@ -212,6 +213,9 @@ class Storage implements Notice {
 
 		// start applying default transformations again.
 		remove_filter( 'cloudinary_apply_default_transformations', '__return_false' );
+
+		// Remove the delay meta.
+		delete_post_meta( $attachment_id, Sync::META_KEYS['delay'] );
 
 		// If we have a URL, it means we have a new source to pull from.
 		if ( ! empty( $url ) ) {
