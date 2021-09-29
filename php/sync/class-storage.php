@@ -244,7 +244,7 @@ class Storage implements Notice {
 	 *
 	 * @return bool
 	 */
-	protected function remove_local_assets( $attachment_id ) {
+	public function remove_local_assets( $attachment_id ) {
 		// Delete local versions of images.
 		$meta         = wp_get_attachment_metadata( $attachment_id );
 		$backup_sizes = '';
