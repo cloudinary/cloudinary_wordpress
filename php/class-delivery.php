@@ -99,7 +99,6 @@ class Delivery implements Setup {
 
 		add_filter( 'cloudinary_current_post_id', array( $this, 'get_current_post_id' ) );
 		add_filter( 'the_content', array( $this, 'add_post_id' ) );
-		add_filter( 'wp_img_tag_add_srcset_and_sizes_attr', '__return_false' );
 		add_action( 'wp_resource_hints', array( $this, 'dns_prefetch' ), 10, 2 );
 
 		// Clear cache on taxonomy update.
@@ -419,6 +418,9 @@ class Delivery implements Setup {
 
 		// Get size.
 		$size = $this->get_size_from_atts( $tag_element['atts'] );
+
+		// Unset srcset and sizes.
+		unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 
 		// Get cloudinary URL.
 		$tag_element['atts']['src'] = $this->media->cloudinary_url( $tag_element['id'], $size, $tag_element['transformations'], null, $tag_element['overwrite_transformations'] );
