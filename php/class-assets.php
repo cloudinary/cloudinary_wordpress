@@ -215,9 +215,14 @@ class Assets extends Settings_Component {
 	 * @return array
 	 */
 	public function capture_synced_library_items( $meta, $attachment_id ) {
+		static $hooked_ids = array();
+		if ( isset( $hooked_ids[ $attachment_id ] ) ) {
+			return $meta;
+		}
 		if ( ! self::is_asset_type( $attachment_id ) && ! in_array( $attachment_id, $this->known_files, true ) && $this->media->sync->been_synced( $attachment_id ) ) {
-			$url                       = wp_get_attachment_url( $attachment_id );
-			$this->known_files[ $url ] = $attachment_id;
+			$hooked_ids[ $attachment_id ] = true;
+			$url                          = wp_get_attachment_url( $attachment_id );
+			$this->known_files[ $url ]    = $attachment_id;
 			if ( ! empty( $meta['sizes'] ) ) {
 				foreach ( $meta['sizes'] as $size ) {
 					$size_url                       = dirname( $url ) . '/' . $size['file'];
