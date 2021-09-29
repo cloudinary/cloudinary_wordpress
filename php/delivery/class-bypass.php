@@ -149,28 +149,27 @@ class Bypass {
 	 * @return array
 	 */
 	public function add_inline_action( $actions, $post ) {
-		if ( $this->media->sync->been_synced( $post->ID ) ) {
-			$bypassed = $this->is_bypassed( $post->ID );
-			$action   = $bypassed ? self::BYPASS_KEYS['cld'] : self::BYPASS_KEYS['wp'];
-			$messages = $this->get_actions();
 
-			// Set url for action handling.
-			$action_url = add_query_arg(
-				array(
-					'action'   => $action,
-					'media[]'  => $post->ID,
-					'_wpnonce' => wp_create_nonce( 'bulk-media' ),
-				),
-				'upload.php'
-			);
+		$bypassed = $this->is_bypassed( $post->ID );
+		$action   = $bypassed ? self::BYPASS_KEYS['cld'] : self::BYPASS_KEYS['wp'];
+		$messages = $this->get_actions();
 
-			// Add link th actions.
-			$actions[ $action ] = sprintf(
-				'<a href="%1$s" aria-label="%2$s">%2$s</a>',
-				$action_url,
-				$messages[ $action ]
-			);
-		}
+		// Set url for action handling.
+		$action_url = add_query_arg(
+			array(
+				'action'   => $action,
+				'media[]'  => $post->ID,
+				'_wpnonce' => wp_create_nonce( 'bulk-media' ),
+			),
+			'upload.php'
+		);
+
+		// Add link th actions.
+		$actions[ $action ] = sprintf(
+			'<a href="%1$s" aria-label="%2$s">%2$s</a>',
+			$action_url,
+			$messages[ $action ]
+		);
 
 		return $actions;
 	}
