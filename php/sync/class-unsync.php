@@ -69,12 +69,11 @@ class Unsync {
 	 * Register any hooks that this component needs.
 	 */
 	public function setup() {
+		$this->media   = $this->plugin->get_component( 'media' );
+		$this->sync    = $this->plugin->get_component( 'sync' );
+		$this->storage = $this->plugin->get_component( 'storage' );
 
 		if ( 'off' === $this->plugin->settings->get_value( 'auto_sync' ) ) {
-			$this->media   = $this->plugin->get_component( 'media' );
-			$this->sync    = $this->plugin->get_component( 'sync' );
-			$this->storage = $this->plugin->get_component( 'storage' );
-
 			add_action( 'attachment_submitbox_misc_actions', array( $this, 'single_action' ), 11 );
 			add_filter( 'handle_bulk_actions-upload', array( $this, 'handle_bulk_actions' ), 11, 3 );
 			add_filter( 'media_row_actions', array( $this, 'add_inline_action' ), 10, 2 );
