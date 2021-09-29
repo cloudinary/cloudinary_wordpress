@@ -40,6 +40,13 @@ class Bypass {
 	protected $settings;
 
 	/**
+	 * Flag to determine if bypassing is allowed.
+	 *
+	 * @var bool
+	 */
+	protected $enabled;
+
+	/**
 	 * Holds the bypass action keys.
 	 */
 	const BYPASS_KEYS = array(
@@ -56,21 +63,24 @@ class Bypass {
 		$this->plugin = $plugin;
 		$this->media  = $plugin->get_component( 'media' );
 
-		$this->setup_hooks();
+		// Hook into settings init, to get settings ans start hooks.
+		add_action( 'cloudinary_init_settings', array( $this, 'init_settings' ) );
 	}
 
 	/**
 	 * Setup the filters and actions.
 	 */
 	protected function setup_hooks() {
-		add_action( 'cloudinary_init_settings', array( $this, 'init_settings' ) );
-		add_filter( 'handle_bulk_actions-upload', array( $this, 'handle_bulk_actions' ), 10, 3 );
-		add_filter( 'media_row_actions', array( $this, 'add_inline_action' ), 10, 2 );
-		add_filter( 'bulk_actions-upload', array( $this, 'add_bulk_actions' ) );
-		add_action( 'attachment_submitbox_misc_actions', array( $this, 'delivery_actions' ), 11 );
-		add_action( 'wp_insert_attachment_data', array( $this, 'handle_save_attachment_delivery' ), 10, 2 );
-		add_filter( 'validate_cloudinary_id', array( $this, 'validate_delivery' ), 10, 2 );
-		add_filter( 'cloudinary_media_status', array( $this, 'filter_status' ), 11, 2 );
+		// Start delivery bypasses if enabled.
+		if ( $this->enabled ) {
+			add_filter( 'handle_bulk_actions-upload', array( $this, 'handle_bulk_actions' ), 10, 3 );
+			add_filter( 'media_row_actions', array( $this, 'add_inline_action' ), 10, 2 );
+			add_filter( 'bulk_actions-upload', array( $this, 'add_bulk_actions' ) );
+			add_action( 'attachment_submitbox_misc_actions', array( $this, 'delivery_actions' ), 11 );
+			add_action( 'wp_insert_attachment_data', array( $this, 'handle_save_attachment_delivery' ), 10, 2 );
+			add_filter( 'validate_cloudinary_id', array( $this, 'validate_delivery' ), 10, 2 );
+			add_filter( 'cloudinary_media_status', array( $this, 'filter_status' ), 11, 2 );
+		}
 	}
 
 	/**
@@ -80,6 +90,8 @@ class Bypass {
 	 */
 	public function init_settings( $plugin ) {
 		$this->settings = $plugin->settings;
+		$this->enabled  = 'on' === $this->settings->get_value( 'auto_sync' ) && 'cld' !== $this->settings->get_value( 'offload' );
+		$this->setup_hooks();
 	}
 
 	/**
@@ -221,16 +233,14 @@ class Bypass {
 	 * @param WP_Post $attachment The attachment post object.
 	 */
 	public function delivery_actions( $attachment ) {
-		if ( 'on' === $this->settings->get_value( 'auto_sync' ) && 'cld' !== $this->settings->get_value( 'offload' ) ) {
-			$actions = $this->get_actions();
-			?>
-			<div class="misc-pub-section misc-pub-delivery">
-				<label><input type="checkbox" name="attachment_delivery" value="true" <?php checked( true, $this->is_bypassed( $attachment->ID ) ); ?> />
-					<?php echo esc_html( $actions[ self::BYPASS_KEYS['wp'] ] ); ?>
-				</label>
-			</div>
-			<?php
-		}
+		$actions = $this->get_actions();
+		?>
+		<div class="misc-pub-section misc-pub-delivery">
+			<label><input type="checkbox" name="attachment_delivery" value="true" <?php checked( true, $this->is_bypassed( $attachment->ID ) ); ?> />
+				<?php echo esc_html( $actions[ self::BYPASS_KEYS['wp'] ] ); ?>
+			</label>
+		</div>
+		<?php
 	}
 
 	/**
