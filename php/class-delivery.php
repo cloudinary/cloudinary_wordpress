@@ -318,7 +318,7 @@ class Delivery implements Setup {
 			$results = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared
 			if ( $results ) {
 				foreach ( $results as $result ) {
-					if ( $this->sync->is_synced( $result->post_id ) ) {
+					if ( $this->media->cloudinary_id( $result->post_id ) ) {
 						$found = array_merge( $found, $this->get_attachment_size_urls( (int) $result->post_id ) );
 					}
 				}
