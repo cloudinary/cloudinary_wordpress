@@ -116,6 +116,9 @@ class Bypass {
 
 		if ( ! is_null( $delivery ) ) {
 			foreach ( $post_ids as $id ) {
+				if ( true === $delivery ) {
+					$this->media->sync->managers['unsync']->unsync_attachment( $id );
+				}
 				$this->set_attachment_delivery( $id, $delivery );
 			}
 			// This action is documented in `class-delivery.php`.
