@@ -759,7 +759,7 @@ class Sync implements Setup, Assets {
 	 * @return array|\WP_Error
 	 */
 	public function sync_base( $post ) {
-		$attachment_id = is_int( $post ) ? $post : $post->ID;
+		$attachment_id = is_numeric( $post ) ? $post : $post->ID;
 		if ( ! $this->managers['media']->is_media( $attachment_id ) ) {
 			return new \WP_Error( 'attachment_post_expected', __( 'An attachment post was expected.', 'cloudinary' ) );
 		}
