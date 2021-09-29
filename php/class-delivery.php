@@ -13,6 +13,7 @@ use Cloudinary\Media\Global_Transformations;
 use Cloudinary\Sync;
 use Cloudinary\String_Replace;
 use Cloudinary\UI\Component\HTML;
+use Cloudinary\Delivery\Bypass;
 use WP_Post;
 
 /**
@@ -56,6 +57,13 @@ class Delivery implements Setup {
 	protected $current_post_id = null;
 
 	/**
+	 * Holds the Bypass instance.
+	 *
+	 * @var Bypass
+	 */
+	protected $bypass;
+
+	/**
 	 * The meta data cache key to store URLS.
 	 *
 	 * @var string
@@ -75,6 +83,9 @@ class Delivery implements Setup {
 		add_filter( 'cloudinary_filter_out_local', '__return_false' );
 		add_action( 'update_option_cloudinary_media_display', array( $this, 'clear_cache' ) );
 		add_action( 'cloudinary_flush_cache', array( $this, 'clear_cache' ) );
+
+		// Add Bypass options.
+		$this->bypass = new Bypass( $this->plugin );
 	}
 
 	/**
