@@ -1264,7 +1264,7 @@ class Assets extends Settings_Component {
 				'title'   => $details['Name'],
 				'url'     => dirname( $plugin_url ),
 				'version' => $details['Version'],
-				'main'  => array(
+				'main'    => array(
 					'plugins.enabled',
 				),
 			);
@@ -1347,7 +1347,7 @@ class Assets extends Settings_Component {
 				'title'   => $theme->get( 'Name' ),
 				'url'     => $theme->get_stylesheet_directory_uri(),
 				'version' => $theme->get( 'Version' ),
-				'main'  => array(
+				'main'    => array(
 					'themes.enabled',
 				),
 			);
@@ -1426,7 +1426,7 @@ class Assets extends Settings_Component {
 			'title'   => __( 'WordPress Includes', 'cloudinary' ),
 			'url'     => includes_url(),
 			'version' => $version,
-			'main'  => array(
+			'main'    => array(
 				'wordpress.enabled',
 			),
 		);
@@ -1496,7 +1496,7 @@ class Assets extends Settings_Component {
 			'title'   => __( 'Uploads', 'cloudinary' ),
 			'url'     => $uploads['baseurl'],
 			'version' => 0,
-			'main'  => array(
+			'main'    => array(
 				'content.enabled',
 			),
 		);
