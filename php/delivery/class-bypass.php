@@ -78,6 +78,7 @@ class Bypass {
 			add_action( 'attachment_submitbox_misc_actions', array( $this, 'delivery_actions' ), 11 );
 			add_action( 'wp_insert_attachment_data', array( $this, 'handle_save_attachment_delivery' ), 10, 2 );
 			add_filter( 'cloudinary_can_sync_asset', array( $this, 'can_sync' ), 10, 2 );
+			add_filter( 'cloudinary_cache_media_asset', array( $this, 'can_sync' ), 10, 2 );
 			add_filter( 'cloudinary_media_status', array( $this, 'filter_status' ), 11, 2 );
 		}
 	}
