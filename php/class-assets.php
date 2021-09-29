@@ -1046,7 +1046,23 @@ class Assets extends Settings_Component {
 	public function get_asset_id_from_tag( $id, $tag_element ) {
 
 		if ( ! empty( $this->found_urls ) && $this->contains_found_url( $tag_element['original'] ) ) {
-			if ( ! empty( $id ) && ( $this->media->sync->been_synced( $id ) || $this->media->sync->can_sync( $id ) ) ) {
+			$sync_media_asset = false;
+			if ( ! empty( $id ) ) {
+				$sync_media_asset = $this->media->sync->been_synced( $id ) || $this->media->sync->can_sync( $id );
+			}
+
+			/**
+			 * Filter if we can create and deliver a media library asset as a cached item.
+			 *
+			 * @hook   cloudinary_cache_media_asset
+			 * @since  3.0.0
+			 *
+			 * @param $can_cache     {bool}  Flag if can sync.
+			 * @param $attachment_id {int}    The attachment ID.
+			 *
+			 * @return {bool}
+			 */
+			if ( ! apply_filters( 'cloudinary_cache_media_asset', $sync_media_asset, $id ) ) {
 				// Theres an ID and it can be synced or has been synced, we need to remove the urls from the to create list.
 				$this->clear_attachment_syncables( $id );
 			} else {
