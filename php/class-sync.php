@@ -15,6 +15,7 @@ use Cloudinary\Sync\Download_Sync;
 use Cloudinary\Sync\Push_Sync;
 use Cloudinary\Sync\Sync_Queue;
 use Cloudinary\Sync\Upload_Sync;
+use Cloudinary\Sync\Unsync;
 use WP_Error;
 
 /**
@@ -34,7 +35,7 @@ class Sync implements Setup, Assets {
 	/**
 	 * Contains all the different sync components.
 	 *
-	 * @var Delete_Sync[]|Push_Sync[]|Upload_Sync[]|Media[]
+	 * @var Delete_Sync[]|Push_Sync[]|Upload_Sync[]|Media[]|Unsync[]|Download_Sync[]
 	 */
 	public $managers;
 
@@ -122,6 +123,7 @@ class Sync implements Setup, Assets {
 		$this->managers['download'] = new Download_Sync( $this->plugin );
 		$this->managers['delete']   = new Delete_Sync( $this->plugin );
 		$this->managers['queue']    = new Sync_Queue( $this->plugin );
+		$this->managers['unsync']   = new Unsync( $this->plugin );
 
 		// Register Settings.
 		add_filter( 'cloudinary_admin_pages', array( $this, 'settings' ) );
@@ -1097,6 +1099,7 @@ class Sync implements Setup, Assets {
 			$this->managers['delete']->setup();
 			$this->managers['download']->setup();
 			$this->managers['push']->setup();
+			$this->managers['unsync']->setup();
 			// Setup additional components.
 			$this->managers['media']   = $this->plugin->components['media'];
 			$this->managers['connect'] = $this->plugin->components['connect'];
