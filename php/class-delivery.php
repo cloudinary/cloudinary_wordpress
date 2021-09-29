@@ -82,7 +82,7 @@ class Delivery implements Setup {
 		$this->media                         = $this->plugin->get_component( 'media' );
 		add_filter( 'cloudinary_filter_out_local', '__return_false' );
 		add_action( 'update_option_cloudinary_media_display', array( $this, 'clear_cache' ) );
-		add_action( 'cloudinary_flush_cache', array( $this, 'clear_cache' ) );
+		add_action( 'cloudinary_flush_cache', array( $this, 'do_clear_cache' ) );
 
 		// Add Bypass options.
 		$this->bypass = new Bypass( $this->plugin );
@@ -131,6 +131,21 @@ class Delivery implements Setup {
 	 */
 	public function clear_cache() {
 
+		/**
+		 * Action to flush delivery caches.
+		 *
+		 * @hook   cloudinary_flush_cache
+		 * @since  3.0.0
+		 */
+		do_action( 'cloudinary_flush_cache' );
+	}
+
+	/**
+	 * Delete cached metadata.
+	 *
+	 * @hook cloudinary_flush_cache
+	 */
+	public function do_clear_cache() {
 		delete_post_meta_by_key( self::META_CACHE_KEY );
 	}
 
