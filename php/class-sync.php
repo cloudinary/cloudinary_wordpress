@@ -83,6 +83,7 @@ class Sync implements Setup, Assets {
 		'plugin_version' => '_plugin_version',
 		'breakpoints'    => '_cloudinary_breakpoints',
 		'delivery'       => '_cloudinary_delivery',
+		'bypass'         => '_bypass_delivery',
 		'public_id'      => '_public_id',
 		'transformation' => '_transformations',
 		'sync_error'     => '_sync_error',
