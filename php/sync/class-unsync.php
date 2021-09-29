@@ -216,6 +216,7 @@ class Unsync {
 	 * @param int $attachment_id The attachment to unsync.
 	 */
 	public function unsync_attachment( $attachment_id ) {
+
 		$this->sync->set_pending( $attachment_id );
 		$cloudinary_id = $this->media->get_cloudinary_id( $attachment_id );
 		$url           = $this->media->cloudinary_url( $attachment_id, 'raw', array(), $cloudinary_id, true );

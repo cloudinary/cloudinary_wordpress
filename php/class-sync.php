@@ -945,6 +945,15 @@ class Sync implements Setup, Assets {
 	}
 
 	/**
+	 * Set an attachment as pending.
+	 *
+	 * @param int $attachment_id The attachment ID to set as pending.
+	 */
+	public function set_pending( $attachment_id ) {
+		update_post_meta( $attachment_id, self::META_KEYS['pending'], time() );
+	}
+
+	/**
 	 * Add an attachment ID to the to_sync array.
 	 *
 	 * @param int $attachment_id The attachment ID to add.
@@ -952,7 +961,7 @@ class Sync implements Setup, Assets {
 	public function add_to_sync( $attachment_id ) {
 		if ( ! in_array( $attachment_id, $this->to_sync, true ) ) {
 			// Flag image as pending to prevent duplicate upload.
-			update_post_meta( $attachment_id, self::META_KEYS['pending'], time() );
+			$this->set_pending( $attachment_id );
 			$this->to_sync[] = $attachment_id;
 		}
 	}
