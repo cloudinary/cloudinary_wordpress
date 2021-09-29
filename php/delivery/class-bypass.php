@@ -61,7 +61,6 @@ class Bypass {
 	 */
 	public function __construct( Plugin $plugin ) {
 		$this->plugin = $plugin;
-		$this->media  = $plugin->get_component( 'media' );
 
 		// Hook into settings init, to get settings ans start hooks.
 		add_action( 'cloudinary_init_settings', array( $this, 'init_settings' ) );
@@ -89,6 +88,7 @@ class Bypass {
 	 * @param Plugin $plugin The plugin instance.
 	 */
 	public function init_settings( $plugin ) {
+		$this->media    = $plugin->get_component( 'media' );
 		$this->settings = $plugin->settings;
 		$this->enabled  = 'on' === $this->settings->get_value( 'auto_sync' ) && 'cld' !== $this->settings->get_value( 'offload' );
 		$this->setup_hooks();
