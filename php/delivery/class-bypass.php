@@ -77,7 +77,7 @@ class Bypass {
 			add_filter( 'bulk_actions-upload', array( $this, 'add_bulk_actions' ) );
 			add_action( 'attachment_submitbox_misc_actions', array( $this, 'delivery_actions' ), 11 );
 			add_action( 'wp_insert_attachment_data', array( $this, 'handle_save_attachment_delivery' ), 10, 2 );
-			add_filter( 'validate_cloudinary_id', array( $this, 'validate_delivery' ), 10, 2 );
+			add_filter( 'cloudinary_can_sync_asset', array( $this, 'can_sync' ), 10, 2 );
 			add_filter( 'cloudinary_media_status', array( $this, 'filter_status' ), 11, 2 );
 		}
 	}
@@ -247,19 +247,19 @@ class Bypass {
 	}
 
 	/**
-	 * Validate the Cloudinary ID based on Delivery bypass status.
+	 * Filter if the asset can be synced if it's bypassed.
 	 *
-	 * @param string $cloudinary_id The current Cloudinary ID.
-	 * @param int    $attachment_id The attachment ID.
+	 * @param bool $can           The current flag to sync.
+	 * @param int  $attachment_id The attachment ID.
 	 *
-	 * @return string
+	 * @return bool
 	 */
-	public function validate_delivery( $cloudinary_id, $attachment_id ) {
-		if ( ! empty( $cloudinary_id ) && $this->is_bypassed( $attachment_id ) ) {
-			$cloudinary_id = false;
+	public function can_sync( $can, $attachment_id ) {
+		if ( $this->is_bypassed( $attachment_id ) ) {
+			$can = false;
 		}
 
-		return $cloudinary_id;
+		return $can;
 	}
 
 	/**
