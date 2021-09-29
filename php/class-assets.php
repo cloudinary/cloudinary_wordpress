@@ -1068,10 +1068,18 @@ class Assets extends Settings_Component {
 	 * @param int $attachment_id The attachment ID.
 	 */
 	protected function clear_attachment_syncables( $attachment_id ) {
-		$sizes = array_keys( $this->delivery->get_attachment_size_urls( $attachment_id ) );
-		foreach ( $sizes as $size_url ) {
-			if ( isset( $this->to_create[ $size_url ] ) ) {
-				unset( $this->to_create[ $size_url ] );
+		$meta = wp_get_attachment_metadata( $attachment_id );
+		if ( ! empty( $meta['sizes'] ) ) {
+			$sizes = array(
+				wp_get_attachment_url( $attachment_id ),
+			);
+			foreach ( array_keys( $meta['sizes'] ) as $size ) {
+				$sizes[] = wp_get_attachment_image_url( $attachment_id, $size );
+			}
+			foreach ( $sizes as $size_url ) {
+				if ( isset( $this->to_create[ $size_url ] ) ) {
+					unset( $this->to_create[ $size_url ] );
+				}
 			}
 		}
 	}
