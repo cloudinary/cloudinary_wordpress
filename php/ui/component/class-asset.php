@@ -98,10 +98,24 @@ class Asset extends Panel {
 	 * @return array
 	 */
 	protected function get_item_row( $item ) {
+		$state        = $this->state->get_state( $item->get_slug() . '.viewer', 'close' );
+		$control      = new On_Off( $item );
+		$panel_toggle = $item->get_setting( 'toggle_' . $item->get_param( 'slug' ) );
+		$panel_toggle->set_param( 'title', $item->get_param( 'title' ) );
+		$panel_toggle->set_param( 'on', 'dashicons-arrow-down' );
+		$panel_toggle->set_param( 'off', 'dashicons-arrow-up' );
+		$panel_toggle->set_param( 'condition', array( $item->get_slug() => true ) );
+		$panel_toggle->set_value( 'open' === $state ? 'on' : 'off' );
+		$title_toggle = new Icon_Toggle( $panel_toggle );
+		$title_toggle->setup();
 
-		$item->set_param( 'description', $item->get_param( 'title' ) );
+		$panel_title = $item->get_setting( 'title_' . $item->get_param( 'slug' ) );
+		$panel_title->set_param( 'title', $item->get_param( 'title' ) );
+		$panel_title->set_param( 'condition', array( $item->get_slug() => false ) );
+		$title_holder = new Icon_Toggle( $panel_title );
+		$title_holder->setup();
+
 		$item->remove_param( 'title' );
-		$control = new On_Off( $item );
 
 		$item_container = $this->get_part( '' );
 
@@ -110,15 +124,28 @@ class Asset extends Panel {
 		$row['children']['item']            = $this->get_part( 'td' );
 		$row['children']['item']['content'] = $control->render();
 
+		// Open Toggle.
+		$row['children']['item']['children']['title'] = $this->get_part( 'span' );
+
+		// Add title toggle to content.
+		$row['children']['item']['children']['title']['content'] = $title_toggle->render();
+
+		// Append title holder after toggle.
+		$row['children']['item']['children']['title']['content'] .= $title_holder->render();
+
 		$item_container['children']['row'] = $row;
 
 		// Content Row.
-		$row                                               = $this->get_part( 'tr' );
-		$row['children']['assets']                         = $this->get_part( 'td' );
-		$row['children']['assets']['attributes']['class']  = array(
+		$row                                                   = $this->get_part( 'tr' );
+		$row['children']['assets']                             = $this->get_part( 'td' );
+		$row['children']['assets']['attributes']['id']         = $item->get_slug() . '.viewer';
+		$row['children']['assets']['attributes']['data-state'] = $state;
+		$row['children']['assets']['attributes']['class']      = array(
 			'tree',
 			'cld-ui-conditional',
+			'open' === $state ? 'open' : 'closed',
 		);
+
 		$row['children']['assets']['children']['contents'] = $this->get_manager( $item );
 		$item_container['children']['manager']             = $row;
 
