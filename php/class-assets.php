@@ -1065,7 +1065,7 @@ class Assets extends Settings_Component {
 		if ( ! empty( $this->found_urls ) && $this->contains_found_url( $tag_element['original'] ) ) {
 			$sync_media_asset = false;
 			if ( ! empty( $id ) ) {
-				$sync_media_asset = $this->media->sync->been_synced( $id ) || $this->media->sync->can_sync( $id );
+				$sync_media_asset = ! $this->media->sync->been_synced( $id ) && ! $this->media->sync->can_sync( $id );
 			}
 
 			/**
