@@ -160,7 +160,7 @@ class Asset extends Panel {
 	 * @return array
 	 */
 	protected function get_manager( $item ) {
-		$slug                           = $item->get_param( 'slug' );
+		$slug                           = $item->get_slug();
 		$manager                        = $this->get_part( 'table' );
 		$manager['attributes']['class'] = array(
 			'striped',
@@ -203,7 +203,7 @@ class Asset extends Panel {
 				'striped',
 			),
 			'data-cache-point' => $url,
-			'data-browser'     => $item->get_slug(),
+			'data-browser'     => $item->get_setting( 'toggle_' . $item->get_param( 'slug' ) )->get_slug(),
 			'data-slug'        => $slug,
 			'data-apply'       => 'apply_' . $slug,
 		);
