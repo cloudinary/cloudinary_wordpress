@@ -5,14 +5,20 @@ import OnOff from './onoff';
 const CacheManage = {
 	cachePoints: {},
 	spinners: {},
-	init( context ) {
+	states: null,
+	init( context, States ) {
+		this.states = States;
 		if ( typeof CLDCACHE !== 'undefined' ) {
 			apiFetch.use( apiFetch.createNonceMiddleware( CLDCACHE.nonce ) );
 			const cachePoints = context.querySelectorAll(
 				'[data-cache-point]'
 			);
+
 			cachePoints.forEach( ( cachePoint ) => this._bind( cachePoint ) );
-			const purgeAll = document.getElementById( 'cld_purge_all' );
+			const purgeAll = document.getElementById(
+				'connect.cache.cld_purge_all'
+			);
+
 			if ( purgeAll ) {
 				purgeAll.disabled = 'disabled';
 				purgeAll.style.width = '100px';
@@ -45,9 +51,7 @@ const CacheManage = {
 	},
 	setCachePoint( ID, cachePoint ) {
 		const main = document.getElementById( cachePoint.dataset.slug );
-		if ( ! main ) {
-			return;
-		}
+
 		const paginate = document.createElement( 'div' );
 		const loader = this._getRow();
 		const loaderTd = document.createElement( 'td' );
@@ -69,6 +73,9 @@ const CacheManage = {
 		apply.style.marginLeft = '6px';
 
 		controller.addEventListener( 'change', ( ev ) => {
+			this._handleManager( ID );
+		} );
+		main.addEventListener( 'change', ( ev ) => {
 			this._handleManager( ID );
 		} );
 		window.addEventListener( 'CacheToggle', ( ev ) => {
@@ -136,12 +143,14 @@ const CacheManage = {
 		}
 		if ( this.isOpen( ID ) ) {
 			this.open( cachePoint.viewer );
+			this.states.set( cachePoint.viewer.id, 'open' );
 			if ( ! cachePoint.loaded ) {
 				this._load( ID );
 			}
 		} else {
 			this.close( cachePoint.viewer );
 			cachePoint.controller.checked = false;
+			this.states.set( cachePoint.viewer.id, 'close' );
 		}
 	},
 	_load( ID ) {

@@ -50,7 +50,7 @@ const UI = {
 		} );
 
 		// Start cache manager.
-		CacheManage.init( context );
+		CacheManage.init( context, States );
 		Progress.init( context );
 		RestrictedTypes.init( context );
 	},
