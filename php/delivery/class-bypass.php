@@ -76,7 +76,7 @@ class Bypass {
 			add_filter( 'media_row_actions', array( $this, 'add_inline_action' ), 10, 2 );
 			add_filter( 'bulk_actions-upload', array( $this, 'add_bulk_actions' ) );
 			add_action( 'attachment_submitbox_misc_actions', array( $this, 'delivery_actions' ), 11 );
-			add_action( 'wp_insert_attachment_data', array( $this, 'handle_save_attachment_delivery' ), 10, 2 );
+			add_filter( 'wp_insert_attachment_data', array( $this, 'handle_save_attachment_delivery' ), 10, 2 );
 			add_filter( 'cloudinary_can_sync_asset', array( $this, 'can_sync' ), 10, 2 );
 			add_filter( 'cloudinary_cache_media_asset', array( $this, 'can_sync' ), 10, 2 );
 			add_filter( 'cloudinary_media_status', array( $this, 'filter_status' ), 11, 2 );
@@ -182,9 +182,13 @@ class Bypass {
 	 *
 	 * @param array $post_data The post array (unused).
 	 * @param array $data      The submitted data to save.
+	 *
+	 * @return array
 	 */
 	public function handle_save_attachment_delivery( $post_data, $data ) {
 		$this->set_attachment_delivery( $data['ID'], isset( $data['attachment_delivery'] ) );
+
+		return $post_data;
 	}
 
 	/**
