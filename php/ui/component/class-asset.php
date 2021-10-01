@@ -100,7 +100,7 @@ class Asset extends Panel {
 	protected function get_item_row( $item ) {
 		$state        = $this->state->get_state( $item->get_slug() . '.viewer', 'close' );
 		$control      = new On_Off( $item );
-		$panel_toggle = $item->get_setting( 'toggle_' . $item->get_param( 'slug' ) );
+		$panel_toggle = $item->find_setting( 'toggle_' . $item->get_param( 'slug' ) );
 		$panel_toggle->set_param( 'title', $item->get_param( 'title' ) );
 		$panel_toggle->set_param( 'on', 'dashicons-arrow-down' );
 		$panel_toggle->set_param( 'off', 'dashicons-arrow-up' );
@@ -109,7 +109,7 @@ class Asset extends Panel {
 		$title_toggle = new Icon_Toggle( $panel_toggle );
 		$title_toggle->setup();
 
-		$panel_title = $item->get_setting( 'title_' . $item->get_param( 'slug' ) );
+		$panel_title = $item->find_setting( 'title_' . $item->get_param( 'slug' ) );
 		$panel_title->set_param( 'title', $item->get_param( 'title' ) );
 		$panel_title->set_param( 'condition', array( $item->get_slug() => false ) );
 		$title_holder = new Icon_Toggle( $panel_title );
@@ -203,7 +203,7 @@ class Asset extends Panel {
 				'striped',
 			),
 			'data-cache-point' => $url,
-			'data-browser'     => $item->get_setting( 'toggle_' . $item->get_param( 'slug' ) )->get_slug(),
+			'data-browser'     => $item->find_setting( 'toggle_' . $item->get_param( 'slug' ) )->get_slug(),
 			'data-slug'        => $slug,
 			'data-apply'       => 'apply_' . $slug,
 		);
