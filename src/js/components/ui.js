@@ -21,6 +21,7 @@ const UI = {
 		const mains = context.querySelectorAll( '[data-main]' );
 		const files = context.querySelectorAll( '[data-file]' );
 		const autoSuffix = context.querySelectorAll( '[data-auto-suffix]' );
+		const confirms = context.querySelectorAll( '[data-confirm]' );
 		const self = this;
 		const compilerDebounce = {};
 		// Init states.
@@ -49,6 +50,14 @@ const UI = {
 			input.dispatchEvent( new Event( 'input' ) );
 		} );
 
+		confirms.forEach( ( item ) => {
+			item.addEventListener( 'click', ( ev ) => {
+				if ( ! confirm( item.dataset.confirm ) ) {
+					ev.preventDefault();
+					ev.stopPropagation();
+				}
+			} );
+		} );
 		// Start cache manager.
 		CacheManage.init( context, States );
 		Progress.init( context );
