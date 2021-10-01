@@ -99,6 +99,7 @@ class Sync implements Setup, Assets {
 		'queued'              => '_cloudinary_sync_queued',
 		'delay'               => '_cloudinary_sync_delay',
 		'upgrading'           => '_cloudinary_upgrading',
+		'cloudinary_v3'       => '_cloudinary',
 	);
 
 	/**
