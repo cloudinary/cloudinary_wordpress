@@ -194,7 +194,7 @@ class Upgrade {
 			$meta[ Sync::META_KEYS['public_id'] ] = $public_id;
 			update_post_meta( $attachment_id, Sync::META_KEYS['cloudinary'], $meta );
 			delete_post_meta( $attachment_id, Sync::META_KEYS['public_id'] );
-		} elseif ( empty( $v2_meta ) && $v3_meta ) {
+		} elseif ( empty( $v2_meta ) && ! empty( $v3_meta ) ) {
 			// Rollback from v3.
 			update_post_meta( $attachment_id, Sync::META_KEYS['cloudinary'], $v3_meta );
 			delete_post_meta( $attachment_id, Sync::META_KEYS['cloudinary_v3'] );
