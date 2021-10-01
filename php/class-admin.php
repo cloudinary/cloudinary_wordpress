@@ -145,9 +145,18 @@ class Admin {
 	 * @return WP_REST_Response
 	 */
 	public function rest_save_settings( WP_REST_Request $request ) {
-		$data = $request->get_params();
-		unset( $data['_locale'] );
+		$data     = $request->get_params();
+		$settings = $this->settings;
+		$data     = array_filter(
+			$data,
+			function ( $key ) use ( $settings ) {
+				return $settings->get_setting( $key, false );
+			},
+			ARRAY_FILTER_USE_KEY
+		);
+
 		foreach ( $data as $submission => $package ) {
+			$this->settings->delete( $submission );
 			$this->save_settings( $submission, $package );
 		}
 		$results = $this->notices->get_value();
