@@ -1597,21 +1597,6 @@ class Assets extends Settings_Component {
 	protected function add_external_settings() {
 
 		$params = array(
-			'type'        => 'panel',
-			'title'       => __( 'External', 'cloudinary' ),
-			'collapsible' => 'closed',
-			'attributes'  => array(
-				'header' => array(
-					'class' => array(
-						'full-width',
-					),
-				),
-				'wrap'   => array(
-					'class' => array(
-						'full-width',
-					),
-				),
-			),
 			array(
 				'type'        => 'on_off',
 				'slug'        => 'external_assets',
