@@ -1140,9 +1140,10 @@ class Sync implements Setup, Assets {
 					array(
 						'type'         => 'radio',
 						'title'        => __( 'Sync method', 'cloudinary' ),
-						'tooltip_text' => __(
-							'Auto sync: Ensures that all of your WordPress assets are automatically synced with Cloudinary when they are added to the WordPress Media Library. Manual sync: Assets must be synced manually using the WordPress Media Library',
-							'cloudinary'
+						'tooltip_text' => sprintf(
+							// translators: The HTML break line.
+							__( 'Auto sync: Ensures that all of your WordPress assets are automatically synced with Cloudinary when they are added to the WordPress Media Library.%sManual sync: All assets must be synced manually using the WordPress Media Library', 'cloudinary' ),
+							'<br>'
 						),
 						'slug'         => 'auto_sync',
 						'no_cached'    => true,
@@ -1172,9 +1173,15 @@ class Sync implements Setup, Assets {
 						'type'         => 'select',
 						'slug'         => 'offload',
 						'title'        => __( 'Storage', 'cloudinary' ),
-						'tooltip_text' => __(
-							'Choose where to store your assets. Assets stored in both Cloudinary and WordPress will enable local WordPress delivery if the Cloudinary plugin is disabled or uninstalled. Storing assets with WordPress in lower resolution will save on local WordPress storage and enable low resolution local WordPress delivery if the plugin is disabled. Storing assets with Cloudinary only will require additional steps to enable backwards compatibility.',
-							'cloudinary'
+						'tooltip_text' => sprintf(
+							// translators: the HTML for opening and closing list and its items.
+							__(
+								'Choose where your assets are stored.%1$sCloudinary and WordPress: Stores assets in both locations. Enables local WordPress delivery if the Cloudinary plugin is disabled or uninstalled.%2$sCloudinary and WordPress (low resolution):  Stores original assets in Cloudinary and low resolution versions in WordPress. Enables low resolution local WordPress delivery if the plugin is disabled or uninstalled.%2$sCloudinary only: Stores assets in Cloudinary only.  Requires additional steps to enable backwards compatibility.%3$s',
+								'cloudinary'
+							),
+							'<ul><li>',
+							'</li><li>',
+							'</li></ul>'
 						),
 						'default'      => 'dual_full',
 						'options'      => array(

@@ -78,8 +78,8 @@ $settings = array(
 	'gallery'        => array(),
 	'lazy_loading'   => array(),
 	'responsive'     => array(
-		'page_title'          => __( 'Responsive', 'cloudinary' ),
-		'menu_title'          => __( 'Responsive', 'cloudinary' ),
+		'page_title'          => __( 'Responsive images', 'cloudinary' ),
+		'menu_title'          => __( 'Responsive images', 'cloudinary' ),
 		'priority'            => 5,
 		'requires_connection' => true,
 		'sidebar'             => true,
@@ -101,7 +101,7 @@ $settings = array(
 								'Automatically generate multiple sizes based on the configured breakpoints to enable your images to responsively adjust to different screen sizes. Note that your Cloudinary usage will increase when enabling responsive images.',
 								'cloudinary'
 							),
-							'description'        => __( 'Enable responsive images.', 'cloudinary' ),
+							'description'        => __( 'Enable responsive images', 'cloudinary' ),
 							'default'            => 'off',
 						),
 						array(

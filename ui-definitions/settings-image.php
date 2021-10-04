@@ -111,7 +111,7 @@ $settings = array(
 					'title'          => __( 'Image transformation', 'cloudinary' ),
 					'link'           => array(
 						'text' => __( 'See Examples', 'cloudinary' ),
-						'href' => '#',
+						'href' => 'https://cloudinary.com/documentation/transformation_reference',
 					),
 					'attributes'     => array(
 						'data-context' => 'image',
@@ -127,7 +127,7 @@ $settings = array(
 					'icon'  => $this->dir_url . 'css/images/crop.svg',
 					'title' => __( 'What are transformations', 'cloudinary' ),
 					'text'  => __(
-						'Cloudinary allows you to easily transform your images on-the-fly to any required format, style and dimension, and also optimizes images for minimal file size.',
+						'A set of parameters included in a Cloudinary URL to programmatically modify the original and generate a newly derived media file.',
 						'cloudinary'
 					),
 				),

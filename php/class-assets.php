@@ -1220,6 +1220,12 @@ class Assets extends Settings_Component {
 				),
 			),
 			array(
+				'type'  => 'info_box',
+				'icon'  => $this->plugin->dir_url . 'css/images/requests.svg',
+				'title' => __( 'Cache assets', 'cloudinary' ),
+				'text'  => 'Enabling caching for site assets will sync those assets with Cloudinary to make use of the advanced optimization and CDN delivery functionality.',
+			),
+			array(
 				'type'               => 'on_off',
 				'slug'               => 'enable',
 				'title'              => __( 'Full CDN', 'cloudinary' ),
