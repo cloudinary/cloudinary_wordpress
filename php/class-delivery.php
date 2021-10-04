@@ -13,6 +13,7 @@ use Cloudinary\Media\Global_Transformations;
 use Cloudinary\Sync;
 use Cloudinary\String_Replace;
 use Cloudinary\UI\Component\HTML;
+use Cloudinary\Delivery\Bypass;
 use WP_Post;
 
 /**
@@ -56,6 +57,13 @@ class Delivery implements Setup {
 	protected $current_post_id = null;
 
 	/**
+	 * Holds the Bypass instance.
+	 *
+	 * @var Bypass
+	 */
+	protected $bypass;
+
+	/**
 	 * The meta data cache key to store URLS.
 	 *
 	 * @var string
@@ -74,7 +82,10 @@ class Delivery implements Setup {
 		$this->media                         = $this->plugin->get_component( 'media' );
 		add_filter( 'cloudinary_filter_out_local', '__return_false' );
 		add_action( 'update_option_cloudinary_media_display', array( $this, 'clear_cache' ) );
-		add_action( 'cloudinary_flush_cache', array( $this, 'clear_cache' ) );
+		add_action( 'cloudinary_flush_cache', array( $this, 'do_clear_cache' ) );
+
+		// Add Bypass options.
+		$this->bypass = new Bypass( $this->plugin );
 	}
 
 	/**
@@ -88,7 +99,6 @@ class Delivery implements Setup {
 
 		add_filter( 'cloudinary_current_post_id', array( $this, 'get_current_post_id' ) );
 		add_filter( 'the_content', array( $this, 'add_post_id' ) );
-		add_filter( 'wp_img_tag_add_srcset_and_sizes_attr', '__return_false' );
 		add_action( 'wp_resource_hints', array( $this, 'dns_prefetch' ), 10, 2 );
 
 		// Clear cache on taxonomy update.
@@ -120,6 +130,21 @@ class Delivery implements Setup {
 	 */
 	public function clear_cache() {
 
+		/**
+		 * Action to flush delivery caches.
+		 *
+		 * @hook   cloudinary_flush_cache
+		 * @since  3.0.0
+		 */
+		do_action( 'cloudinary_flush_cache' );
+	}
+
+	/**
+	 * Delete cached metadata.
+	 *
+	 * @hook cloudinary_flush_cache
+	 */
+	public function do_clear_cache() {
 		delete_post_meta_by_key( self::META_CACHE_KEY );
 	}
 
@@ -292,7 +317,7 @@ class Delivery implements Setup {
 			$results = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared
 			if ( $results ) {
 				foreach ( $results as $result ) {
-					if ( $this->sync->is_synced( $result->post_id ) ) {
+					if ( $this->media->cloudinary_id( $result->post_id ) ) {
 						$found = array_merge( $found, $this->get_attachment_size_urls( (int) $result->post_id ) );
 					}
 				}
@@ -394,6 +419,9 @@ class Delivery implements Setup {
 		// Get size.
 		$size = $this->get_size_from_atts( $tag_element['atts'] );
 
+		// Unset srcset and sizes.
+		unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
+
 		// Get cloudinary URL.
 		$tag_element['atts']['src'] = $this->media->cloudinary_url( $tag_element['id'], $size, $tag_element['transformations'], null, $tag_element['overwrite_transformations'] );
 
@@ -407,7 +435,7 @@ class Delivery implements Setup {
 			$tag_element['atts']['data-optsize']   = size_format( $remote_size );
 			$tag_element['atts']['data-optformat'] = get_post_meta( $tag_element['id'], Sync::META_KEYS['remote_format'], true );
 			if ( ! empty( $local_size ) && ! empty( $remote_size ) ) {
-				$diff = $local_size - $remote_size;
+				$diff                                = $local_size - $remote_size;
 				$tag_element['atts']['data-percent'] = round( $diff / $local_size * 100, 1 );
 			}
 			$tag_element['atts']['data-permalink'] = get_edit_post_link( $tag_element['id'] );

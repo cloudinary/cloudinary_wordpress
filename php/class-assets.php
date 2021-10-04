@@ -215,9 +215,14 @@ class Assets extends Settings_Component {
 	 * @return array
 	 */
 	public function capture_synced_library_items( $meta, $attachment_id ) {
+		static $hooked_ids = array();
+		if ( isset( $hooked_ids[ $attachment_id ] ) ) {
+			return $meta;
+		}
 		if ( ! self::is_asset_type( $attachment_id ) && ! in_array( $attachment_id, $this->known_files, true ) && $this->media->sync->been_synced( $attachment_id ) ) {
-			$url                       = wp_get_attachment_url( $attachment_id );
-			$this->known_files[ $url ] = $attachment_id;
+			$hooked_ids[ $attachment_id ] = true;
+			$url                          = wp_get_attachment_url( $attachment_id );
+			$this->known_files[ $url ]    = $attachment_id;
 			if ( ! empty( $meta['sizes'] ) ) {
 				foreach ( $meta['sizes'] as $size ) {
 					$size_url                       = dirname( $url ) . '/' . $size['file'];
@@ -1041,7 +1046,23 @@ class Assets extends Settings_Component {
 	public function get_asset_id_from_tag( $id, $tag_element ) {
 
 		if ( ! empty( $this->found_urls ) && $this->contains_found_url( $tag_element['original'] ) ) {
-			if ( ! empty( $id ) && ( $this->media->sync->been_synced( $id ) || $this->media->sync->can_sync( $id ) ) ) {
+			$sync_media_asset = false;
+			if ( ! empty( $id ) ) {
+				$sync_media_asset = $this->media->sync->been_synced( $id ) || $this->media->sync->can_sync( $id );
+			}
+
+			/**
+			 * Filter if we can create and deliver a media library asset as a cached item.
+			 *
+			 * @hook   cloudinary_cache_media_asset
+			 * @since  3.0.0
+			 *
+			 * @param $can_cache     {bool}  Flag if can sync.
+			 * @param $attachment_id {int}    The attachment ID.
+			 *
+			 * @return {bool}
+			 */
+			if ( ! apply_filters( 'cloudinary_cache_media_asset', $sync_media_asset, $id ) ) {
 				// Theres an ID and it can be synced or has been synced, we need to remove the urls from the to create list.
 				$this->clear_attachment_syncables( $id );
 			} else {
@@ -1068,10 +1089,18 @@ class Assets extends Settings_Component {
 	 * @param int $attachment_id The attachment ID.
 	 */
 	protected function clear_attachment_syncables( $attachment_id ) {
-		$sizes = array_keys( $this->delivery->get_attachment_size_urls( $attachment_id ) );
-		foreach ( $sizes as $size_url ) {
-			if ( isset( $this->to_create[ $size_url ] ) ) {
-				unset( $this->to_create[ $size_url ] );
+		$meta = wp_get_attachment_metadata( $attachment_id );
+		if ( ! empty( $meta['sizes'] ) ) {
+			$sizes = array(
+				wp_get_attachment_url( $attachment_id ),
+			);
+			foreach ( array_keys( $meta['sizes'] ) as $size ) {
+				$sizes[] = wp_get_attachment_image_url( $attachment_id, $size );
+			}
+			foreach ( $sizes as $size_url ) {
+				if ( isset( $this->to_create[ $size_url ] ) ) {
+					unset( $this->to_create[ $size_url ] );
+				}
 			}
 		}
 	}
@@ -1264,7 +1293,7 @@ class Assets extends Settings_Component {
 				'title'   => $details['Name'],
 				'url'     => dirname( $plugin_url ),
 				'version' => $details['Version'],
-				'main'  => array(
+				'main'    => array(
 					'plugins.enabled',
 				),
 			);
@@ -1347,7 +1376,7 @@ class Assets extends Settings_Component {
 				'title'   => $theme->get( 'Name' ),
 				'url'     => $theme->get_stylesheet_directory_uri(),
 				'version' => $theme->get( 'Version' ),
-				'main'  => array(
+				'main'    => array(
 					'themes.enabled',
 				),
 			);
@@ -1426,7 +1455,7 @@ class Assets extends Settings_Component {
 			'title'   => __( 'WordPress Includes', 'cloudinary' ),
 			'url'     => includes_url(),
 			'version' => $version,
-			'main'  => array(
+			'main'    => array(
 				'wordpress.enabled',
 			),
 		);
@@ -1496,7 +1525,7 @@ class Assets extends Settings_Component {
 			'title'   => __( 'Uploads', 'cloudinary' ),
 			'url'     => $uploads['baseurl'],
 			'version' => 0,
-			'main'  => array(
+			'main'    => array(
 				'content.enabled',
 			),
 		);

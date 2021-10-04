@@ -15,6 +15,7 @@ use Cloudinary\Sync\Download_Sync;
 use Cloudinary\Sync\Push_Sync;
 use Cloudinary\Sync\Sync_Queue;
 use Cloudinary\Sync\Upload_Sync;
+use Cloudinary\Sync\Unsync;
 use WP_Error;
 
 /**
@@ -34,7 +35,7 @@ class Sync implements Setup, Assets {
 	/**
 	 * Contains all the different sync components.
 	 *
-	 * @var Delete_Sync[]|Push_Sync[]|Upload_Sync[]|Media[]
+	 * @var Delete_Sync[]|Push_Sync[]|Upload_Sync[]|Media[]|Unsync[]|Download_Sync[]
 	 */
 	public $managers;
 
@@ -77,34 +78,35 @@ class Sync implements Setup, Assets {
 	 * Holds the meta keys for sync meta to maintain consistency.
 	 */
 	const META_KEYS = array(
-		'pending'             => '_cloudinary_pending',
-		'signature'           => '_sync_signature',
-		'version'             => '_cloudinary_version',
-		'plugin_version'      => '_plugin_version',
 		'breakpoints'         => '_cloudinary_breakpoints',
-		'delivery'            => '_cloudinary_delivery',
-		'public_id'           => '_public_id',
-		'transformation'      => '_transformations',
-		'sync_error'          => '_sync_error',
+		'bypass'              => '_bypass_delivery',
 		'cloudinary'          => '_cloudinary_v2',
-		'folder_sync'         => '_folder_sync',
-		'suffix'              => '_suffix',
-		'last_oversize_check' => '_last_oversize_check',
-		'file_size'           => '_file_size',
-		'syncing'             => '_cloudinary_syncing',
-		'downloading'         => '_cloudinary_downloading',
-		'process_log_legacy'  => '_process_log',
-		'process_log'         => '_cloudinary_process_log',
-		'storage'             => '_cloudinary_storage',
-		'queued'              => '_cloudinary_sync_queued',
 		'delay'               => '_cloudinary_sync_delay',
+		'delivery'            => '_cloudinary_delivery',
+		'downloading'         => '_cloudinary_downloading',
+		'file_size'           => '_file_size',
+		'folder_sync'         => '_folder_sync',
+		'last_oversize_check' => '_last_oversize_check',
 		'local_size'          => '_cld_local_size',
-		'remote_size'         => '_cld_remote_size',
+		'pending'             => '_cloudinary_pending',
+		'plugin_version'      => '_plugin_version',
+		'process_log'         => '_cloudinary_process_log',
+		'process_log_legacy'  => '_process_log',
+		'public_id'           => '_public_id',
+		'queued'              => '_cloudinary_sync_queued',
 		'remote_format'       => '_cld_remote_format',
-		'unsynced'            => '_cld_unsynced',
+		'remote_size'         => '_cld_remote_size',
+		'signature'           => '_sync_signature',
+		'storage'             => '_cloudinary_storage',
+		'suffix'              => '_suffix',
+		'sync_error'          => '_sync_error',
 		'synced'              => '_cld_synced',
+		'syncing'             => '_cloudinary_syncing',
+		'transformation'      => '_transformations',
 		'unsupported'         => '_cld_unsupported',
+		'unsynced'            => '_cld_unsynced',
 		'upgrading'           => '_cloudinary_upgrading',
+		'version'             => '_cloudinary_version',
 		'cloudinary_v3'       => '_cloudinary',
 	);
 
@@ -120,6 +122,7 @@ class Sync implements Setup, Assets {
 		$this->managers['download'] = new Download_Sync( $this->plugin );
 		$this->managers['delete']   = new Delete_Sync( $this->plugin );
 		$this->managers['queue']    = new Sync_Queue( $this->plugin );
+		$this->managers['unsync']   = new Unsync( $this->plugin );
 
 		// Register Settings.
 		add_filter( 'cloudinary_admin_pages', array( $this, 'settings' ) );
@@ -941,6 +944,15 @@ class Sync implements Setup, Assets {
 	}
 
 	/**
+	 * Set an attachment as pending.
+	 *
+	 * @param int $attachment_id The attachment ID to set as pending.
+	 */
+	public function set_pending( $attachment_id ) {
+		update_post_meta( $attachment_id, self::META_KEYS['pending'], time() );
+	}
+
+	/**
 	 * Add an attachment ID to the to_sync array.
 	 *
 	 * @param int $attachment_id The attachment ID to add.
@@ -948,7 +960,7 @@ class Sync implements Setup, Assets {
 	public function add_to_sync( $attachment_id ) {
 		if ( ! in_array( $attachment_id, $this->to_sync, true ) ) {
 			// Flag image as pending to prevent duplicate upload.
-			update_post_meta( $attachment_id, self::META_KEYS['pending'], time() );
+			$this->set_pending( $attachment_id );
 			$this->to_sync[] = $attachment_id;
 		}
 	}
@@ -1093,6 +1105,7 @@ class Sync implements Setup, Assets {
 			$this->managers['delete']->setup();
 			$this->managers['download']->setup();
 			$this->managers['push']->setup();
+			$this->managers['unsync']->setup();
 			// Setup additional components.
 			$this->managers['media']   = $this->plugin->components['media'];
 			$this->managers['connect'] = $this->plugin->components['connect'];

@@ -89,7 +89,7 @@ class Upload_Sync {
 			'bulk_actions-upload',
 			function ( $actions ) {
 				$cloudinary_actions = array(
-					'cloudinary-push' => __( 'Push to Cloudinary', 'cloudinary' ),
+					'cloudinary-push' => __( 'Sync with Cloudinary', 'cloudinary' ),
 				);
 
 				return array_merge( $cloudinary_actions, $actions );
@@ -106,7 +106,7 @@ class Upload_Sync {
 	 * @return array
 	 */
 	public function add_inline_action( $actions, $post ) {
-		if ( $this->media->is_media( $post->ID ) && current_user_can( 'delete_post', $post->ID ) ) {
+		if ( $this->sync->can_sync( $post->ID ) && $this->media->is_media( $post->ID ) && current_user_can( 'delete_post', $post->ID ) ) {
 			$action_url = add_query_arg(
 				array(
 					'action'   => 'cloudinary-push',
@@ -125,8 +125,8 @@ class Upload_Sync {
 				$actions['cloudinary-push'] = sprintf(
 					'<a href="%s" aria-label="%s">%s</a>',
 					$action_url,
-					esc_attr__( 'Push to Cloudinary', 'cloudinary' ),
-					esc_html__( 'Push to Cloudinary', 'cloudinary' )
+					esc_attr__( 'Sync with Cloudinary', 'cloudinary' ),
+					esc_html__( 'Sync with Cloudinary', 'cloudinary' )
 				);
 			} else {
 				if ( file_exists( get_attached_file( $post->ID ) ) ) {
