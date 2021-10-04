@@ -1,0 +1,22 @@
+// Plan.
+&-plan {
+	display: flex;
+	flex-wrap: wrap;
+	&-item{
+		display: flex;
+		width: 33%;
+		margin-bottom: 25px;
+		img{
+			width: 24px;
+			margin-right: 12px;
+		}
+
+		.description{
+			font-size: $size-panel-description;
+		}
+		.cld-title{
+			font-size: $size-sidebar-title;
+			font-weight: bold;
+		}
+	}
+}

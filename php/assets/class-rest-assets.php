@@ -235,8 +235,15 @@ class Rest_Assets {
 	 */
 	public function get_assets( $id, $search = null, $page = 1 ) {
 		$cache_point = get_post( $id );
+		$default     = array(
+			'items'        => array(),
+			'total'        => 0,
+			'total_pages'  => 1,
+			'current_page' => 1,
+			'nav_text'     => __( 'No items cached.', 'cloudinary' ),
+		);
 		if ( is_null( $cache_point ) ) {
-			return array();
+			return $default;
 		}
 		$args = array(
 			'post_type'              => Assets::POST_TYPE_SLUG,
@@ -253,11 +260,12 @@ class Rest_Assets {
 		$posts = new \WP_Query( $args );
 		$items = array();
 		foreach ( $posts->get_posts() as $post ) {
+			$url     = substr( $post->post_title, strpos( $post->post_title, ':' ) + 1 );
 			$items[] = array(
 				'ID'        => $post->ID,
 				'key'       => $post->post_name,
-				'local_url' => $post->post_title,
-				'short_url' => str_replace( $cache_point->post_title, '', $post->post_title ),
+				'local_url' => $url,
+				'short_url' => str_replace( $cache_point->post_title, './', $url ),
 				'active'    => 'inherit' === $post->post_status,
 			);
 		}

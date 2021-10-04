@@ -10,7 +10,8 @@
     "CLDLB": "readonly",
     "CLD_GLOBAL_TRANSFORMATIONS": "readonly",
     "samplePlayer": "readonly",
-    "CLDCACHE": "readonly"
+    "CLDCACHE": "readonly",
+    "cldData": "readonly"
   },
   "extends": [
     "plugin:@wordpress/eslint-plugin/recommended"

@@ -1,0 +1,66 @@
+&-tabs {
+	width: 50%;
+	display: flex;
+	flex-direction: row;
+	font-size: $size-panel-title;
+	font-weight: 600;
+
+	&-tab {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		position: relative;
+		width: 33%;
+
+		&-count {
+			width: 32px;
+			height: 32px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background-color: $color-cld-blue-faded;
+			border-radius: 50%;
+			border: 2px solid transparent;
+
+			.active & {
+				border: 2px solid $color-cld-blue;
+			}
+
+			.complete & {
+				background-color: $color-success;
+				color: $color-success;
+
+				&:before {
+					content: "\f147";
+					font-family: dashicons;
+					font-size: 30px;
+					color: $color-white;
+					width: 25px;
+				}
+			}
+		}
+
+		&.active {
+			color: $color-cld-blue;
+		}
+
+		&:after {
+			position: absolute;
+			content: "";
+			border: 1px solid $color-cld-blue-faded;
+			top: 16px;
+			left: 75%;
+			width: 50%;
+		}
+
+		&.complete {
+			&:after {
+				border-color: $color-success;
+			}
+		}
+
+		&:last-child:after {
+			display: none;
+		}
+	}
+}

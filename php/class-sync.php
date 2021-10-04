@@ -98,6 +98,12 @@ class Sync implements Setup, Assets {
 		'storage'             => '_cloudinary_storage',
 		'queued'              => '_cloudinary_sync_queued',
 		'delay'               => '_cloudinary_sync_delay',
+		'local_size'          => '_cld_local_size',
+		'remote_size'         => '_cld_remote_size',
+		'remote_format'       => '_cld_remote_format',
+		'unsynced'            => '_cld_unsynced',
+		'synced'              => '_cld_synced',
+		'unsupported'         => '_cld_unsupported',
 		'upgrading'           => '_cloudinary_upgrading',
 		'cloudinary_v3'       => '_cloudinary',
 	);
@@ -114,6 +120,9 @@ class Sync implements Setup, Assets {
 		$this->managers['download'] = new Download_Sync( $this->plugin );
 		$this->managers['delete']   = new Delete_Sync( $this->plugin );
 		$this->managers['queue']    = new Sync_Queue( $this->plugin );
+
+		// Register Settings.
+		add_filter( 'cloudinary_admin_pages', array( $this, 'settings' ) );
 	}
 
 	/**
@@ -304,6 +313,27 @@ class Sync implements Setup, Assets {
 	}
 
 	/**
+	 * Filter syncable items based on external deny rules.
+	 *
+	 * @hook cloudinary_can_sync_asset
+	 *
+	 * @param bool $can           Flag if can sync.
+	 * @param int  $attachment_id The attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function filter_deny_types( $can, $attachment_id ) {
+		$list = $this->plugin->settings->sync_media->_excluded_types;
+		$file = strtolower( get_attached_file( $attachment_id ) );
+		$ext  = pathinfo( strstr( $file, '?', true ), PATHINFO_EXTENSION );
+		if ( ! empty( $list ) && in_array( $ext, $list, true ) ) {
+			$can = false;
+		}
+
+		return $can;
+	}
+
+	/**
 	 * Get the last version this asset was synced with.
 	 *
 	 * @param int $attachment_id The attachment ID.
@@ -345,7 +375,7 @@ class Sync implements Setup, Assets {
 		/**
 		 * Filter the get signature of the asset.
 		 *
-		 * @hook cloudinary_get_signature
+		 * @hook   cloudinary_get_signature
 		 *
 		 * @param $return        {array} The attachment signature.
 		 * @param $attachment_id {int}   The attachment ID.
@@ -408,26 +438,26 @@ class Sync implements Setup, Assets {
 	/**
 	 * Register a new sync type.
 	 *
-	 * @param string $type        Sync type key. Must not exceed 20 characters and may
-	 *                            only contain lowercase alphanumeric characters, dashes,
-	 *                            and underscores. See sanitize_key().
-	 * @param array  $structure   {
-	 *                            Array of arguments for registering a sync type.
+	 * @param string $type      Sync type key. Must not exceed 20 characters and may
+	 *                          only contain lowercase alphanumeric characters, dashes,
+	 *                          and underscores. See sanitize_key().
+	 * @param array  $structure {
+	 *                          Array of arguments for registering a sync type.
 	 *
-	 * @type   callable      $generate    Callback method that generates the values to be used to sign a state.
+	 * @type   callable      $generate  Callback method that generates the values to be used to sign a state.
 	 *                                    Returns a string or array.
 	 *
-	 * @type   callable      $validate    Optional Callback method that validates the need to have the sync type applied.
+	 * @type   callable      $validate  Optional Callback method that validates the need to have the sync type applied.
 	 *                                    returns Bool.
 	 *
-	 * @type   int           $priority    Priority in which the type takes place. Lower is higher priority.
+	 * @type   int           $priority  Priority in which the type takes place. Lower is higher priority.
 	 *                                    i.e a download should happen before an upload so download is lower in the chain.
 	 *
-	 * @type   callable      $sync        Callback method that handles the sync. i.e uploads the file, adds meta data, etc..
+	 * @type   callable      $sync      Callback method that handles the sync. i.e uploads the file, adds meta data, etc..
 	 *
-	 * @type   string        $state       State class to be added to the status icon in media library.
+	 * @type   string        $state     State class to be added to the status icon in media library.
 	 *
-	 * @type string|callback $note        The status text displayed next to a syncing asset in the media library.
+	 * @type string|callback $note      The status text displayed next to a syncing asset in the media library.
 	 *                                    Can be a callback if the note needs to be dynamic. see type folder.
 	 *
 	 * }
@@ -527,7 +557,12 @@ class Sync implements Setup, Assets {
 				'note'     => __( 'Updating breakpoints', 'cloudinary' ),
 			),
 			'options'      => array(
-				'generate' => array( $this->managers['media'], 'get_upload_options' ),
+				'generate' => function ( $attachment_id ) {
+					$options = $this->managers['media']->get_upload_options( $attachment_id );
+					unset( $options['eager'], $options['eager_async'] );
+
+					return $options;
+				},
 				'priority' => 30,
 				'sync'     => array( $this->managers['upload'], 'context_update' ),
 				'state'    => 'info syncing',
@@ -536,7 +571,6 @@ class Sync implements Setup, Assets {
 			'cloud_name'   => array(
 				'generate' => array( $this->managers['connect'], 'get_cloud_name' ),
 				'validate' => function ( $attachment_id ) {
-
 					$valid       = true;
 					$credentials = $this->managers['connect']->get_credentials();
 					if ( isset( $credentials['cname'] ) ) {
@@ -1063,91 +1097,98 @@ class Sync implements Setup, Assets {
 			$this->managers['connect'] = $this->plugin->components['connect'];
 			$this->managers['api']     = $this->plugin->components['api'];
 
-			// Register Settings.
-			$this->register_settings();
 			// Setup sync queue.
 			$this->managers['queue']->setup( $this );
 
 			add_filter( 'cloudinary_setting_get_value', array( $this, 'filter_get_cloudinary_folder' ), 10, 2 );
 			add_filter( 'cloudinary_get_signature', array( $this, 'get_signature_syncable_type' ), 10, 2 );
+			add_filter( 'cloudinary_can_sync_asset', array( $this, 'filter_deny_types' ), PHP_INT_MAX, 2 );
 		}
 	}
 
 	/**
-	 * Define the settings.
+	 * Define the settings on the general settings page.
+	 *
+	 * @param array $pages The pages to add to.
 	 *
 	 * @return array
 	 */
-	public function settings() {
+	public function settings( $pages ) {
 
-		$args = array(
-			'type'        => 'page',
-			'menu_title'  => __( 'Sync', 'cloudinary' ),
-			'option_name' => 'cloudinary_sync_media',
-			'priority'    => 9,
+		$pages['connect']['settings'][] = array(
 			array(
-				'type'  => 'panel',
-				'title' => __( 'Sync Settings', 'cloudinary' ),
+				'type'                => 'frame',
+				'requires_connection' => true,
 				array(
-					'type'         => 'radio',
-					'title'        => __( 'Sync method', 'cloudinary' ),
-					'tooltip_text' => __(
-						'Auto sync: Ensures that all of your WordPress assets are automatically synced with Cloudinary when they are added to the WordPress Media Library. Manual sync: Assets must be synced manually using the WordPress Media Library',
-						'cloudinary'
-					),
-					'slug'         => 'auto_sync',
-					'no_cached'    => true,
-					'default'      => 'on',
-					'options'      => array(
-						'on'  => __( 'Auto sync', 'cloudinary' ),
-						'off' => __( 'Manual sync', 'cloudinary' ),
-					),
-				),
-				array(
-					'type'        => 'sync',
-					'title'       => __( 'Bulk sync all your WordPress assets to Cloudinary', 'cloudinary' ),
-					'tooltip_off' => __( 'Manual sync is enabled. Individual assets must be synced manually using the WordPress Media Library.', 'cloudinary' ),
-					'tooltip_on'  => __( 'An optional one-time operation to manually synchronize all WordPress Media to Cloudinary.', 'cloudinary' ),
-					'queue'       => $this->managers['queue'],
-				),
-				array(
-					'type'              => 'text',
-					'slug'              => 'cloudinary_folder',
-					'title'             => __( 'Cloudinary folder path', 'cloudinary' ),
-					'default'           => '.',
-					'attributes'        => array(
-						'input' => array(
-							'placeholder' => __( 'e.g.: wordpress_assets/', 'cloudinary' ),
+					'type'        => 'panel',
+					'title'       => __( 'Sync Settings', 'cloudinary' ),
+					'option_name' => 'sync_media',
+					array(
+						'type'         => 'radio',
+						'title'        => __( 'Sync method', 'cloudinary' ),
+						'tooltip_text' => __(
+							'Auto sync: Ensures that all of your WordPress assets are automatically synced with Cloudinary when they are added to the WordPress Media Library. Manual sync: Assets must be synced manually using the WordPress Media Library',
+							'cloudinary'
+						),
+						'slug'         => 'auto_sync',
+						'no_cached'    => true,
+						'default'      => 'on',
+						'options'      => array(
+							'on'  => __( 'Auto sync', 'cloudinary' ),
+							'off' => __( 'Manual sync', 'cloudinary' ),
 						),
 					),
-					'tooltip_text'      => __(
-						'Specify the folder in your Cloudinary account where WordPress assets are uploaded to. All assets uploaded to WordPress from this point on will be synced to the specified folder in Cloudinary. Leave blank to use the root of your Cloudinary library.',
-						'cloudinary'
+					array(
+						'type'              => 'text',
+						'slug'              => 'cloudinary_folder',
+						'title'             => __( 'Cloudinary folder path', 'cloudinary' ),
+						'default'           => '.',
+						'attributes'        => array(
+							'input' => array(
+								'placeholder' => __( 'e.g.: wordpress_assets/', 'cloudinary' ),
+							),
+						),
+						'tooltip_text'      => __(
+							'Specify the folder in your Cloudinary account where WordPress assets are uploaded to. All assets uploaded to WordPress from this point on will be synced to the specified folder in Cloudinary. Leave blank to use the root of your Cloudinary library.',
+							'cloudinary'
+						),
+						'sanitize_callback' => array( '\Cloudinary\Media', 'sanitize_cloudinary_folder' ),
 					),
-					'sanitize_callback' => array( '\Cloudinary\Media', 'sanitize_cloudinary_folder' ),
+					array(
+						'type'         => 'select',
+						'slug'         => 'offload',
+						'title'        => __( 'Storage', 'cloudinary' ),
+						'tooltip_text' => __(
+							'Choose where to store your assets. Assets stored in both Cloudinary and WordPress will enable local WordPress delivery if the Cloudinary plugin is disabled or uninstalled. Storing assets with WordPress in lower resolution will save on local WordPress storage and enable low resolution local WordPress delivery if the plugin is disabled. Storing assets with Cloudinary only will require additional steps to enable backwards compatibility.',
+							'cloudinary'
+						),
+						'default'      => 'dual_full',
+						'options'      => array(
+							'dual_full' => __( 'Cloudinary and WordPress', 'cloudinary' ),
+							'dual_low'  => __( 'Cloudinary and WordPress (low resolution)', 'cloudinary' ),
+							'cld'       => __( 'Cloudinary only', 'cloudinary' ),
+						),
+					),
 				),
 				array(
-					'type'         => 'select',
-					'slug'         => 'offload',
-					'title'        => __( 'Storage', 'cloudinary' ),
-					'tooltip_text' => __(
-						'Choose where to store your assets. Assets stored in both Cloudinary and WordPress will enable local WordPress delivery if the Cloudinary plugin is disabled or uninstalled. Storing assets with WordPress in lower resolution will save on local WordPress storage and enable low resolution local WordPress delivery if the plugin is disabled. Storing assets with Cloudinary only will require additional steps to enable backwards compatibility.',
-						'cloudinary'
-					),
-					'default'      => 'dual_full',
-					'options'      => array(
-						'dual_full' => __( 'Cloudinary and WordPress', 'cloudinary' ),
-						'dual_low'  => __( 'Cloudinary and WordPress (low resolution)', 'cloudinary' ),
-						'cld'       => __( 'Cloudinary only', 'cloudinary' ),
+					'type'        => 'panel',
+					'title'       => __( 'Supported file extensions', 'cloudinary' ),
+					'option_name' => 'sync_media',
+					array(
+						'type'        => 'excluded_types',
+						'slug'        => 'excluded_types',
+						'title'       => __( 'Restricted types', 'cloudinary' ),
+						'description' => __( 'The following file types will not be delivered by Cloudinary', 'cloudinary' ),
+						'default'     => array(
+							'pdf',
+							'zip',
+						),
 					),
 				),
-			),
-			array(
-				'type' => 'submit',
 			),
 		);
 
-		return $args;
+		return $pages;
 	}
 
 	/**
@@ -1161,18 +1202,5 @@ class Sync implements Setup, Assets {
 		$path = get_attached_file( $attachment_id );
 
 		return ! $this->managers['media']->is_oversize_media( $attachment_id ) ? basename( $path ) : $attachment_id;
-	}
-
-	/**
-	 * Register the setting under media.
-	 */
-	protected function register_settings() {
-
-		$settings_params = $this->settings();
-		$this->settings  = $this->plugin->settings->create_setting( $this->settings_slug, $settings_params );
-
-		// Move setting to media.
-		$media_settings = $this->managers['media']->get_settings();
-		$media_settings->add_setting( $this->settings );
 	}
 }

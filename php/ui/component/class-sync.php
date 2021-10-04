@@ -19,7 +19,7 @@ class Sync extends Text {
 	 *
 	 * @var string
 	 */
-	protected $blueprint = 'wrap|icon/|div|label|title|tooltip/|/title|/label|/div|status/|action/|/wrap';
+	protected $blueprint = 'wrap|icon/|div|label|title|/title|/label|/div|status/|action/|tooltip/|/wrap';
 
 	/**
 	 * Filter the input parts structure.

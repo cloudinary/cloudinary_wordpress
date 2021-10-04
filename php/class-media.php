@@ -755,8 +755,8 @@ class Media extends Settings_Component implements Setup {
 			foreach ( $meta['sizes'] as $size_name => $size ) {
 				if ( $file === $size['file'] ) {
 					$cropped = ! wp_image_matches_ratio(
-						// PDFs do not always have width and height, but they do have full sizes.
-						// This is important for the thumbnail crops on the media library.
+					// PDFs do not always have width and height, but they do have full sizes.
+					// This is important for the thumbnail crops on the media library.
 						! empty( $meta['width'] ) ? $meta['width'] : $meta['sizes']['full']['width'],
 						! empty( $meta['height'] ) ? $meta['height'] : $meta['sizes']['full']['height'],
 						$size['width'],
@@ -952,10 +952,12 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function attachment_url( $url, $attachment_id ) {
 		// Previous v1 and Cloudinary only storage.
-		$previous_url = strpos( $url, untrailingslashit( $this->base_url ) );
-		if ( false !== $previous_url ) {
-			return substr( $url, $previous_url );
+		if ( false !== strpos( $url, 'https://', 5 ) ) {
+			$dirs = wp_get_upload_dir();
+
+			return str_replace( trailingslashit( $dirs['baseurl'] ), '', $url );
 		}
+
 		if (
 			! doing_action( 'wp_insert_post_data' )
 			&& false === $this->in_downsize
@@ -1191,6 +1193,30 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Get the local URL for an attachment.
+	 *
+	 * @param int $attachment_id The attachment ID to get.
+	 *
+	 * @return string|false
+	 */
+	public function local_url( $attachment_id ) {
+		$url = wp_get_attachment_url( $attachment_id );
+
+		/**
+		 * Filter local URL.
+		 *
+		 * @hook    cloudinary_local_url
+		 * @since   3.0.0
+		 *
+		 * @param $url           {string|false} The local URL
+		 * @param $attachment_id {int}  The attachment ID.
+		 *
+		 * @return  {string|false}
+		 */
+		return apply_filters( 'cloudinary_local_url', $url, $attachment_id );
+	}
+
+	/**
 	 * Prepare the Size array for the Cloudinary URL API.
 	 *
 	 * @param int          $attachment_id The attachment ID.
@@ -1199,6 +1225,9 @@ class Media extends Settings_Component implements Setup {
 	 * @return array|string
 	 */
 	public function prepare_size( $attachment_id, $size ) {
+		if ( 'raw' === $size ) {
+			return array();
+		}
 		// Check size and correct if string or size.
 		if ( empty( $size ) || 'full' === $size ) {
 			// Maybe get full size if scaled.
@@ -2170,7 +2199,7 @@ class Media extends Settings_Component implements Setup {
 	public function get_breakpoint_options( $attachment_id ) {
 		// Add breakpoints if we have an image.
 		$breakpoints = array();
-		$settings    = $this->settings->get_setting( self::MEDIA_SETTINGS_SLUG )->get_value();
+		$settings    = $this->settings->get_value( 'responsive' );
 
 		if ( 'on' === $settings['enable_breakpoints'] && wp_attachment_is_image( $attachment_id ) ) {
 			$meta = wp_get_attachment_metadata( $attachment_id, true );
@@ -2299,6 +2328,10 @@ class Media extends Settings_Component implements Setup {
 			'context'         => $this->get_context_options( $attachment_id ),
 		);
 
+		if ( 'image' === $options['resource_type'] || 'video' === $options['resource_type'] ) {
+			$options['eager']       = Api::generate_transformation_string( $this->apply_default_transformations( array(), $attachment_id ) );
+			$options['eager_async'] = 'video' === $options['resource_type'];
+		}
 		/**
 		 * Filter the options to allow other plugins to add requested options for uploading.
 		 *
@@ -2316,6 +2349,7 @@ class Media extends Settings_Component implements Setup {
 			// add in folder if not empty (not in root).
 			$options['public_id'] = trailingslashit( $folder ) . basename( $options['public_id'] );
 		}
+		$options['public_id'] = trim( $options['public_id'], '/.' );
 
 		return $options;
 	}
@@ -2493,7 +2527,7 @@ class Media extends Settings_Component implements Setup {
 
 			// Internal components.
 			$this->global_transformations = new Global_Transformations( $this );
-			$this->gallery                = new Gallery( $this );
+			$this->gallery                = $this->plugin->get_component( 'gallery' );
 			$this->woocommerce_gallery    = new WooCommerceGallery( $this->gallery );
 			$this->filter                 = new Filter( $this );
 			$this->upgrade                = new Upgrade( $this );
@@ -2514,6 +2548,8 @@ class Media extends Settings_Component implements Setup {
 			if ( $this->can_filter_out_local() || is_admin() ) {
 				add_filter( 'wp_calculate_image_srcset', array( $this, 'image_srcset' ), 10, 5 );
 				add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
+				add_filter( 'wp_get_original_image_url', array( $this, 'attachment_url' ), 10, 2 );
+
 				add_filter( 'image_downsize', array( $this, 'filter_downsize' ), 10, 3 );
 				// Hook into Featured Image cycle.
 				add_action( 'begin_fetch_post_thumbnail_html', array( $this, 'set_doing_featured' ), 10, 2 );

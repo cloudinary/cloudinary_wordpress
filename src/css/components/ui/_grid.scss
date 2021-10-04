@@ -1,0 +1,76 @@
+// Grid : rows and columns.
+&-row {
+	margin: 0;
+	clear: both;
+	display: flex;
+
+	&.align {
+		&-center {
+			align-items: center;
+		}
+	}
+
+	&::after {
+		content: "";
+		clear: both;
+		display: table;
+	}
+
+	@media only screen and (max-width: $size-medium) {
+		flex-direction: column;
+	}
+	@media only screen and (max-width: $size-small) {
+		flex-direction: column-reverse;
+	}
+}
+
+&-column {
+
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0 0 0 $size-padding-column;
+	&:last-child{
+		padding-right: $size-padding-column;
+	}
+	@media only screen and (min-width: $size-small) {
+
+		&.column-45 {
+			width: 45%;
+		}
+
+		&.column-55 {
+			width: 55%;
+		}
+	}
+	@media only screen and (max-width: $size-small) {
+		min-width: 100%;
+		.cld-info-text {
+			text-align: center;
+		}
+	}
+	@media only screen and (max-width: $size-medium) {
+		&.cld-ui-preview {
+			display: none;
+		}
+	}
+	& &{
+		padding: 0;
+		margin-right: 16px;
+		&:last-child{
+			margin-right: 0;
+		}
+	}
+}
+
+&-center {
+	&-column {
+		&.cld-info-text {
+			padding-left: 2em;
+			font-weight: bolder;
+
+			.description {
+				font-size: 0.6em;
+			}
+		}
+	}
+}

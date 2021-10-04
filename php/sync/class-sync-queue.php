@@ -256,6 +256,7 @@ class Sync_Queue {
 	 * @return int|false
 	 */
 	public function get_post( $thread ) {
+
 		$return = false;
 		if ( ( $this->is_running( $this->get_thread_type( $thread ) ) ) ) {
 			$thread_queue = $this->get_thread_queue( $thread );
@@ -292,6 +293,98 @@ class Sync_Queue {
 	}
 
 	/**
+	 * Get the data from the query.
+	 *
+	 * @return array
+	 */
+	protected function query_unsynced_data() {
+		global $wpdb;
+
+		$sql = "
+			SELECT
+			       `meta_key` as `type`,
+			       SUM(`meta_value`) as `totals`,
+			       COUNT(`meta_id`) as `count`
+			FROM {$wpdb->postmeta}
+			WHERE `meta_key`
+			          IN ( %s,%s, %s, %s, %s)
+			GROUP BY `meta_key`;
+			";
+
+		return $wpdb->get_results( $wpdb->prepare( $sql, Sync::META_KEYS['remote_size'], Sync::META_KEYS['local_size'], Sync::META_KEYS['unsynced'], Sync::META_KEYS['cloudinary'], Sync::META_KEYS['queued'] ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
+	}
+
+	/**
+	 * Get the sync status.
+	 *
+	 * @return array
+	 */
+	public function get_total_synced_media() {
+
+		$data   = $this->query_unsynced_data();
+		$return = array(
+			'total_queued'      => 0,
+			'total_synced'      => 0,
+			'total_assets'      => '',
+			'percentage_synced' => '',
+			'size_difference'   => '',
+			'size_percent'      => 0,
+			'total_sized'       => '',
+			'size_remote'       => '',
+			'size_local'        => '',
+			'local_total'       => 0,
+			'remote_total'      => 0,
+			'local_remote'      => '',
+		);
+		if ( ! empty( $data ) ) {
+			foreach ( $data as $item ) {
+				switch ( $item['type'] ) {
+					case '_cld_local_size':
+						$return['local_total'] = (int) $item['totals'];
+						// Add to the totals.
+						$return['total_sized'] = (int) $item['count'];
+						break;
+					case '_cld_remote_size':
+						$return['remote_total'] = (int) $item['totals'];
+						break;
+					case '_cld_unsynced':
+						$return['total_queued'] += (int) $item['count'];
+						break;
+					case '_cloudinary_v2':
+						$return['total_assets'] = (int) $item['count'];
+						break;
+					case '_cloudinary_sync_queued':
+						$return['total_queued'] += (int) $item['count'];
+						break;
+					default:
+						break;
+				}
+			}
+
+			if ( ! empty( $return['total_assets'] ) ) {
+				$return['total_synced']      = $return['total_assets'] - $return['total_queued'];
+				$return['percentage_synced'] = $return['total_synced'] / $return['total_assets'];
+				if ( 1 === $return['percentage_synced'] ) {
+					$return['total_assets'] = __( 'Total assets', 'cloudinary' );
+				} elseif ( ! empty( $return['percentage_synced'] ) ) {
+					$return['total_assets'] = $return['total_synced'] . ' / ' . $return['total_assets'];
+				}
+			}
+
+			if ( ! empty( $return['local_total'] ) && ! empty( $return['remote_total'] ) ) {
+				$return['size_difference'] = $return['local_total'] - $return['remote_total'];
+				$return['size_percent']    = $return['size_difference'] / $return['local_total'];
+				$return['size_remote']     = size_format( $return['remote_total'], 1 );
+				$return['size_local']      = size_format( $return['local_total'], 1 );
+				$return['size_difference'] = size_format( $return['size_difference'] );
+				$return['local_remote']    = $return['size_local'] . ' / ' . $return['size_remote'];
+			}
+		}
+
+		return $return;
+	}
+
+	/**
 	 * Build the upload sync queue.
 	 */
 	public function build_queue() {
@@ -300,6 +393,7 @@ class Sync_Queue {
 			'post_type'           => 'attachment',
 			'post_mime_type'      => array( 'image', 'video' ),
 			'post_status'         => 'inherit',
+			'paged'               => 1,
 			'posts_per_page'      => 100,
 			'fields'              => 'ids',
 			// phpcs:ignore WordPress.DB.SlowDBQuery
@@ -325,8 +419,8 @@ class Sync_Queue {
 		/**
 		 * Filter the params for the query used to build a queue.
 		 *
-		 * @hook  cloudinary_build_queue_query
-		 * @since 2.7.6
+		 * @hook   cloudinary_build_queue_query
+		 * @since  2.7.6
 		 *
 		 * @param $args {array} The arguments for the query.
 		 *
@@ -346,7 +440,13 @@ class Sync_Queue {
 
 			return;
 		}
-		$ids = $query->get_posts();
+		$ids = array();
+		do {
+			$ids  = array_merge( $ids, $query->get_posts() );
+			$args = $query->query_vars;
+			$args['paged'] ++;
+			$query = new \WP_Query( $args );
+		} while ( $query->have_posts() );
 
 		$threads          = $this->add_to_queue( $ids );
 		$queue['total']   = array_sum( $threads );

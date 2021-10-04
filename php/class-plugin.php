@@ -11,8 +11,12 @@ use Cloudinary\Component\Assets;
 use Cloudinary\Component\Config;
 use Cloudinary\Component\Notice;
 use Cloudinary\Component\Setup;
-use Cloudinary\Settings\Setting;
+use Cloudinary\Delivery\Lazy_Load;
+use Cloudinary\Delivery\Responsive_Breakpoints;
+use Cloudinary\Assets as CLD_Assets;
+use Cloudinary\Media\Gallery;
 use Cloudinary\Sync\Storage;
+use Cloudinary\UI\State;
 use WP_REST_Request;
 use WP_REST_Server;
 use const E_USER_WARNING;
@@ -28,7 +32,7 @@ final class Plugin {
 	 *
 	 * @since   0.1
 	 *
-	 * @var     Media[]|Sync[]|Settings_Page[]|REST_API[]|Connect[]
+	 * @var     Media[]|Sync[]|Admin[]|REST_API[]|Connect[]
 	 */
 	public $components;
 	/**
@@ -41,7 +45,7 @@ final class Plugin {
 	/**
 	 * The core Settings object.
 	 *
-	 * @var Setting
+	 * @var Settings
 	 */
 	public $settings;
 
@@ -128,14 +132,21 @@ final class Plugin {
 	 * that extend the Customizer to ensure resources are available in time.
 	 */
 	public function init() {
-		$this->components['connect']      = new Connect( $this );
-		$this->components['deactivation'] = new Deactivation( $this );
-		$this->components['sync']         = new Sync( $this );
-		$this->components['media']        = new Media( $this );
-		$this->components['api']          = new REST_API( $this );
-		$this->components['storage']      = new Storage( $this );
-		$this->components['report']       = new Report( $this );
-		$this->components['beta']         = new Beta( $this );
+		$this->components['admin']                  = new Admin( $this );
+		$this->components['state']                  = new State( $this );
+		$this->components['connect']                = new Connect( $this );
+		$this->components['deactivation']           = new Deactivation( $this );
+		$this->components['sync']                   = new Sync( $this );
+		$this->components['media']                  = new Media( $this );
+		$this->components['gallery']                = new Gallery( $this );
+		$this->components['api']                    = new REST_API( $this );
+		$this->components['storage']                = new Storage( $this );
+		$this->components['report']                 = new Report( $this );
+		$this->components['delivery']               = new Delivery( $this );
+		$this->components['lazy_load']              = new Lazy_Load( $this );
+		$this->components['responsive_breakpoints'] = new Responsive_Breakpoints( $this );
+		$this->components['assets']                 = new CLD_Assets( $this );
+		$this->components['dashboard']              = new Dashboard( $this );
 	}
 
 	/**
@@ -143,7 +154,7 @@ final class Plugin {
 	 *
 	 * @param mixed $component The component.
 	 *
-	 * @return Report|Connect|Media|REST_API|Settings_Page|Sync|Cache|null
+	 * @return Report|Connect|Media|REST_API|Admin|Sync|Cache|null
 	 */
 	public function get_component( $component ) {
 		$return = null;
@@ -162,9 +173,7 @@ final class Plugin {
 	private function get_settings_page_structure() {
 
 		$parts = array(
-			'header' => array(),
-			'pages'  => array(),
-			'footer' => array(),
+			'pages' => array(),
 		);
 
 		foreach ( $parts as $slug => $part ) {
@@ -174,15 +183,14 @@ final class Plugin {
 		}
 
 		$structure = array(
-			'version'     => $this->version,
-			'page_title'  => __( 'Cloudinary', 'cloudinary' ),
-			'menu_title'  => __( 'Cloudinary', 'cloudinary' ),
-			'capability'  => 'manage_options',
-			'icon'        => 'dashicons-cloudinary',
-			'option_name' => $this->slug,
-			'page_header' => $parts['header'],
-			'page_footer' => $parts['footer'],
-			'pages'       => $parts['pages'],
+			'version'    => $this->version,
+			'page_title' => __( 'Cloudinary', 'cloudinary' ),
+			'menu_title' => __( 'Cloudinary', 'cloudinary' ),
+			'capability' => 'manage_options',
+			'icon'       => 'dashicons-cloudinary',
+			'slug'       => $this->slug,
+			'settings'   => $parts['pages'],
+			'sidebar'    => include CLDN_PATH . 'ui-definitions/settings-sidebar.php',
 		);
 
 		return $structure;
@@ -193,13 +201,19 @@ final class Plugin {
 	 */
 	public function setup_settings() {
 		$params         = $this->get_settings_page_structure();
-		$this->settings = \Cloudinary\Settings::create_setting( $this->slug, $params );
+		$this->settings = new Settings( $this->slug, $params );
 		$components     = array_filter( $this->components, array( $this, 'is_setting_component' ) );
 		$this->init_component_settings( $components );
-		$this->register_component_settings( $components );
 
-		// Init settings.
-		\Cloudinary\Settings::init_setting( $this->slug );
+		/**
+		 * Action indicating that the Settings are initialised.
+		 *
+		 * @hook  cloudinary_init_settings
+		 * @since 2.7.5
+		 *
+		 * @param $plugin {Plugin} The core plugin object.
+		 */
+		do_action( 'cloudinary_init_settings', $this );
 
 		// Add count notice if not connected.
 		$this->settings->set_param( 'connected', $this->get_component( 'connect' )->is_connected() );
@@ -208,18 +222,16 @@ final class Plugin {
 			$main_title = $this->settings->get_param( 'menu_title' ) . $count;
 			$this->settings->set_param( 'menu_title', $main_title );
 			$this->settings->set_param( 'connect_count', $count );
-
-			// Set the Getting Started title.
-			$connect       = $this->settings->find_setting( 'dashboard' );
-			$connect_title = $connect->get_param( 'menu_title' ) . $count;
-			$connect->set_param( 'menu_title', $connect_title );
 		}
+
+		// Register with admin.
+		$this->components['admin']->register_page( $this->slug, $this->settings->get_params() );
 
 		/**
 		 * Action indicating that the Settings are initialised.
 		 *
 		 * @hook  cloudinary_init_settings
-		 * @since 2.7.5
+		 * @since 3.0.0
 		 *
 		 * @param $plugin {Plugin} The core plugin object.
 		 */
@@ -239,22 +251,6 @@ final class Plugin {
 			 * @var  Component\Settings $component
 			 */
 			$component->init_settings( $this->settings );
-		}
-	}
-
-	/**
-	 * Register settings.
-	 *
-	 * @param Settings_Component[] $components Array of components to register settings for.
-	 */
-	private function register_component_settings( $components ) {
-		foreach ( $components as $slug => $component ) {
-			/**
-			 * Component that implements Settings.
-			 *
-			 * @var  Component\Settings $component
-			 */
-			$component->register_settings( $this->settings );
 		}
 	}
 
@@ -280,26 +276,9 @@ final class Plugin {
 		add_action( 'init', array( $this, 'register_assets' ), 10 );
 		add_action( 'admin_notices', array( $this, 'admin_notices' ) );
 		add_filter( 'plugin_row_meta', array( $this, 'force_visit_plugin_site_link' ), 10, 4 );
-		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
 		add_action( 'wp_enqueue_editor', array( $this, 'enqueue_assets' ) );
-	}
-
-	/**
-	 * Add endpoints to the \Cloudinary\REST_API::$endpoints array.
-	 *
-	 * @param array $endpoints Endpoints from the filter.
-	 *
-	 * @return array
-	 */
-	public function rest_endpoints( $endpoints ) {
-
-		$endpoints['dismiss_notice'] = array(
-			'method'   => WP_REST_Server::CREATABLE,
-			'callback' => array( $this, 'rest_dismiss_notice' ),
-			'args'     => array(),
-		);
-
-		return $endpoints;
+		add_action( 'admin_print_footer_scripts', array( $this, 'print_script_data' ), 1 );
+		add_action( 'wp_print_footer_scripts', array( $this, 'print_script_data' ), 1 );
 	}
 
 	/**
@@ -457,18 +436,6 @@ final class Plugin {
 	}
 
 	/**
-	 * Set a transient with the duration using a token as an identifier.
-	 *
-	 * @param WP_REST_Request $request The request object.
-	 */
-	public function rest_dismiss_notice( WP_REST_Request $request ) {
-		$token    = $request->get_param( 'token' );
-		$duration = $request->get_param( 'duration' );
-
-		set_transient( $token, true, $duration );
-	}
-
-	/**
 	 * Load admin notices where needed.
 	 *
 	 * @since  0.1
@@ -494,7 +461,7 @@ final class Plugin {
 			$notices = $component->get_notices();
 			foreach ( $notices as $notice ) {
 				$notice = wp_parse_args( $notice, $default );
-				$setting->add_admin_notice( 'cld_general', $notice['message'], $notice['type'], $notice['dismissible'], $notice['duration'], $notice['icon'] );
+				$this->components['admin']->add_admin_notice( 'cld_general', $notice['message'], $notice['type'], $notice['dismissible'], $notice['duration'], $notice['icon'] );
 			}
 		}
 	}
@@ -699,6 +666,27 @@ final class Plugin {
 			// @phpcs:disable
 			trigger_error( esc_html( get_class( $this ) . ': ' . $message ), $code );
 			// @phpcs:enable
+		}
+	}
+
+	/**
+	 * Add Script data.
+	 *
+	 * @param string $slug  The slug to add.
+	 * @param mixed  $value The value to set.
+	 */
+	public function add_script_data( $slug, $value ) {
+		$this->settings->set_param( '@script' . $this->settings->separator . $slug, $value );
+	}
+
+	/**
+	 * Output script data if set.
+	 */
+	public function print_script_data() {
+		$data = $this->settings->get_param( '@script' );
+		if ( ! empty( $data ) ) {
+			$json = wp_json_encode( $data );
+			wp_add_inline_script( $this->slug, 'var cldData = ' . $json, 'before' );
 		}
 	}
 

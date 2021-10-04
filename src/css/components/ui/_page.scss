@@ -1,0 +1,40 @@
+// Main page. Headers/Footers.
+&-settings{
+	margin-left: -20px;
+}
+&-page {
+	@import "tabs";
+
+	&-header {
+		background-color: $color-cld-blue;
+		display: flex;
+		padding: 16px;
+		align-items: center;
+		margin-bottom: 0;
+		justify-content: space-between;
+		min-width: 450px;
+		img{
+			width: 150px;
+		}
+		&-button {
+			background-color: $color-cld-dark-blue;
+			color: #fff;
+			text-decoration: none;
+			padding: 5px 14px;
+			border-radius: 4px;
+			font-weight: bold;
+			margin: 0 0 0 9px;
+			display: inline-block;
+
+			&:hover, &:focus {
+				color: #fff;
+				text-decoration: none;
+			}
+		}
+
+		p{
+			font-size: $size-button;
+			margin: 0;
+		}
+	}
+}

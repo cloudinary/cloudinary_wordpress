@@ -7,10 +7,40 @@ $color-blue: #0071ba;
 $color-orange: #fd9d2c;
 $color-wp-blue: #3273ab;
 $color-disabled-grey: #90a0b3;
+$color-blue-grey: #e9ecf9;
 $color-notification-success: #20b832;
+$color-cld-blue: #3448c5;
+$color-cld-blue-faded: rgba(52, 72, 197, 0.15);
+$color-cld-dark-blue: #1e337f;
+$color-cld-grey-blue: #c6d1db;
+$color-cld-light-grey: #eaecfa;
+$color-cld-description: rgba(0, 0, 1, 0.5);
+$color-grey-background: #f1f1f1;
 
 /** Sizes */
 $content-width: 870px;
 $size-small: 783px;
 $size-medium: 960px;
 $size-large: 1200px;
+
+/** Font Sizes */
+$size-panel-title: 14px;
+$size-panel-subtitle: 11px;
+$size-sidebar-title: 12px;
+$size-sidebar-subtitle: 10px;
+$size-line-chart-title: 10px;
+$size-line-chart-value: 9px;
+$size-panel-content: 10px;
+$size-panel-description: 9px;
+$size-panel-small: 8px;
+$size-button: 10px;
+$size-setting-label: 12px;
+$size-setting-field: 12px;
+
+/** Padding and margins */
+$size-padding-column: 13px;
+$size-padding-panel-title: 19px 23px;
+$size-padding-sidebar-title: 6px 14px;
+$size-padding-panel: 23px 24px;
+$size-padding-sidebar: 14px 18px;
+

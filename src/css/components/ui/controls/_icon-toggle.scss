@@ -1,0 +1,50 @@
+// Icon toggle.
+&-icon-toggle {
+	display: inline-flex;
+	align-items: center;
+
+	.description {
+		margin: 0;
+		margin-left: 0.4rem;
+
+		&.left {
+			margin-left: 0;
+			margin-right: 0.4rem;
+		}
+	}
+
+	&-control {
+		position: relative;
+		display: inline-block;
+
+		input {
+			position: absolute;
+			opacity: 0;
+			width: 0;
+			height: 0;
+		}
+
+		&-slider {
+			.icon-on {
+				display: none;
+				visibility: hidden;
+
+				input:checked + & {
+					display: inline-block;
+					visibility: visible;
+				}
+			}
+
+			.icon-off {
+
+				display: inline-block;
+				visibility: visible;
+
+				input:checked + & {
+					display: none;
+					visibility: hidden;
+				}
+			}
+		}
+	}
+}

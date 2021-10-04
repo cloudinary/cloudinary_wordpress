@@ -2,7 +2,11 @@
 
 const Deactivate = {
 	// The link that triggers the ThickBox
-	tbLink: document.getElementById( 'cld-deactivation-link' ),
+	modal: document.getElementById( 'cloudinary-deactivation' ),
+	modalBody: document.getElementById( 'modal-body' ),
+	modalFooter: document.getElementById( 'modal-footer' ),
+	modalUninstall: document.getElementById( 'modal-uninstall' ),
+	modalClose: document.getElementsByClassName( 'cancel-close' ),
 	// The different links to deactivate the plugin.
 	pluginListLinks: document.querySelectorAll(
 		'.cld-deactivate-link, .cld-deactivate'
@@ -11,18 +15,18 @@ const Deactivate = {
 	triggers: document.getElementsByClassName( 'cld-deactivate' ),
 	// The reasons.
 	options: document.querySelectorAll(
-		'.cloudinary-deactivation input[type="radio"]'
+		'.cloudinary-deactivation input[type="radio"]:checked'
 	),
-	report: document.getElementById( 'cld-report' ),
-	contact: document.getElementById( 'cld-contact' ).parentNode,
+	//report: document.getElementById( 'cld-report' ),
+	//contact: document.getElementById( 'cld-contact' ).parentNode,
 	// The feedback submit button.
 	submitButton: document.querySelector(
 		'.cloudinary-deactivation .button-primary'
 	),
 	// The skip button.
-	skipButton: document.querySelector(
-		'.cloudinary-deactivation .button-link'
-	),
+	//skipButton: document.querySelector(
+	//	'.cloudinary-deactivation .button-link'
+	//),
 	// Selected reason.
 	reason: '',
 	// The more details .
@@ -33,31 +37,38 @@ const Deactivate = {
 	addEvents() {
 		const context = this;
 
+		[...context.modalClose].forEach( ( button ) => {
+			button.addEventListener( 'click', ( ev ) => {
+				context.closeModal();
+			} );
+		} );
+
+		window.addEventListener( 'keyup', ( ev ) => {
+			if ( 'visible' === context.modal.style.visibility && 'Escape' === ev.key ) {
+				context.modal.style.visibility = 'hidden';
+				context.modal.style.opacity = '0';
+			}
+		} );
+
+		context.modal.addEventListener( 'click', ( ev ) => {
+			ev.stopPropagation();
+			if ( ev.target === context.modal ) {
+				context.closeModal();
+			}
+		} );
+
 		// Add event listener to deactivation links to add the pop up.
 		[ ...context.pluginListLinks ].forEach( ( link ) => {
-			link.addEventListener( 'click', function ( ev ) {
+			link.addEventListener( 'click', function( ev ) {
 				ev.preventDefault();
 				context.deactivationUrl = ev.target.getAttribute( 'href' );
-				context.tbLink.click();
-				document
-					.getElementById( 'TB_window' )
-					.setAttribute(
-						'style',
-						'bottom: 0;' +
-							'height: 600px;' +
-							'left: 0;' +
-							'margin: auto;' +
-							'right: 0;' +
-							'top: 0;' +
-							'visibility: visible;' +
-							'width: 550px;'
-					);
+				context.openModal();
 			} );
 		} );
 
 		// Add it a trigger watch to stop deactivation.
 		[ ...context.triggers ].forEach( ( trigger ) => {
-			trigger.addEventListener( 'click', function ( ev ) {
+			trigger.addEventListener( 'click', function( ev ) {
 				if (
 					! confirm(
 						wp.i18n.__(
@@ -74,13 +85,13 @@ const Deactivate = {
 		} );
 
 		// Add event listener to skip feedback.
-		context.skipButton.addEventListener( 'click', function () {
-			window.location.href = context.deactivationUrl;
-		} );
+		//context.skipButton.addEventListener( 'click', function () {
+		//	window.location.href = context.deactivationUrl;
+		//} );
 
 		// Add event listener to update reason and more container.
 		[ ...context.options ].forEach( ( option ) => {
-			option.addEventListener( 'change', function ( ev ) {
+			option.addEventListener( 'change', function( ev ) {
 				context.submitButton.removeAttribute( 'disabled' );
 				context.reason = ev.target.value;
 				context.more = ev.target.parentNode.querySelector( 'textarea' );
@@ -88,38 +99,62 @@ const Deactivate = {
 		} );
 
 		// Allowing Cloudinary contact should include the System Report.
-		context.report.addEventListener( 'change', function () {
-			if ( context.report.checked ) {
-				context.contact.removeAttribute( 'style' );
-			} else {
-				context.contact.style.display = 'none';
-			}
-		} );
+		/*context.report.addEventListener( 'change', function () {
+		 if ( context.report.checked ) {
+		 context.contact.removeAttribute( 'style' );
+		 } else {
+		 context.contact.style.display = 'none';
+		 }
+		 } );*/
 
 		// Add event listener to submit the feedback.
-		context.submitButton.addEventListener( 'click', function () {
-			wp.ajax
-				.send( {
-					url: CLD_Deactivate.endpoint,
-					data: {
-						reason: context.reason,
-						more: context.more?.value,
-						report: context.report.checked,
-						contact: context.contact.checked,
-					},
-					beforeSend( request ) {
-						request.setRequestHeader(
-							'X-WP-Nonce',
-							CLD_Deactivate.nonce
-						);
-					},
-				} )
-				.always( function () {
-					window.location.href = context.deactivationUrl;
-				} );
+		context.submitButton.addEventListener( 'click', function() {
+			const option = document.querySelector(
+				'.cloudinary-deactivation input[name="option"]:checked' );
+
+			if ( 'uninstall' === option.value ) {
+				context.modalBody.style.display = 'none';
+				context.modalFooter.style.display = 'none';
+				context.modalUninstall.style.display = 'block';
+
+				context.uninstall();
+			} else{
+				window.location.href = context.deactivationUrl;
+			}
 		} );
 	},
+	closeModal() {
+		this.modal.style.visibility = 'hidden';
+		this.modal.style.opacity = '0';
+	},
+	openModal() {
+		this.modal.style.visibility = 'visible';
+		this.modal.style.opacity = '1';
+	},
+	uninstall() {
 
+	},
+	submit() {
+		wp.ajax
+			.send( {
+				url: CLD_Deactivate.endpoint,
+				data: {
+					reason: context.reason,
+					more: context.more?.value,
+					//report: context.report.checked,
+					//contact: context.contact.checked,
+				},
+				beforeSend( request ) {
+					request.setRequestHeader(
+						'X-WP-Nonce',
+						CLD_Deactivate.nonce
+					);
+				},
+			} )
+			.always( function() {
+				window.location.href = context.deactivationUrl;
+			} );
+	},
 	/**
 	 * Init method.
 	 */

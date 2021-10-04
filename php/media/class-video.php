@@ -177,7 +177,7 @@ class Video {
 	public function admin_enqueue_scripts() {
 		$current_screen    = get_current_screen();
 		$requiring_screens = array(
-			'cloudinary_page_media',
+			'cloudinary_page_cloudinary_video_settings',
 			'edit-tags',
 			'term',
 		);
@@ -355,8 +355,7 @@ class Video {
 			),
 		);
 
-		$new_tag = $this->media->get_settings()->create_setting( $public_id, $tag_args );
-
+		$new_tag = $this->media->plugin->get_component( 'admin' )->init_components( $tag_args, $public_id );
 		return $new_tag->get_component()->render();
 	}
 
