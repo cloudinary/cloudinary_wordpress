@@ -182,7 +182,7 @@ class Bypass {
 	 *
 	 * @param array $post_data The post array (unused).
 	 * @param array $data      The submitted data to save.
-	 * 
+	 *
 	 * @return array
 	 */
 	public function handle_save_attachment_delivery( $post_data, $data ) {

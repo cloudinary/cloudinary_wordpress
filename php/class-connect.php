@@ -550,29 +550,6 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			$this->usage_stats();
 			$this->setup_status_cron();
 			$this->plugin->settings->set_param( 'connected', $this->is_connected() );
-
-			// Add cancel button.
-			if ( $this->switch_account() ) {
-				$link = array(
-					'type'       => 'link',
-					'content'    => 'Cancel',
-					'url'        => $this->settings->find_setting( 'connect' )->get_component()->get_url(),
-					'target'     => '_self',
-					'attributes' => array(
-						'class'    => array(
-							'button',
-							'button-secondary',
-						),
-						'link_tag' => array(
-							'style' => array(
-								'margin-left:12px;',
-							),
-						),
-					),
-				);
-
-				$this->settings->create_setting( 'cancel_switch', $link, $this->settings->find_setting( 'connect_button' ) );
-			}
 		}
 	}
 

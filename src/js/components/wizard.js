@@ -15,6 +15,7 @@ const Wizard = {
 		success: document.getElementById( 'connection-success' ),
 		working: document.getElementById( 'connection-working' ),
 	},
+	debounceConnect: null,
 	init() {
 		if ( ! cldData.saveNonce ) {
 			return;
@@ -37,18 +38,27 @@ const Wizard = {
 			} );
 		} );
 		connectionInput.addEventListener( 'input', () => {
-			const value = connectionInput.value;
+			const value = connectionInput.value.replace(
+				'CLOUDINARY_URL=',
+				''
+			);
 			this.connection.error.classList.remove( 'active' );
 			this.connection.success.classList.remove( 'active' );
 			this.connection.working.classList.remove( 'active' );
 			if ( value.length ) {
-				const valid = this.evaluateConnectionString( value );
-				if ( valid ) {
-					this.connection.working.classList.add( 'active' );
-					this.testConnection( value );
-				} else {
-					this.connection.error.classList.add( 'active' );
+				if ( this.debounceConnect ) {
+					clearTimeout( this.debounceConnect );
 				}
+
+				this.debounceConnect = setTimeout( () => {
+					const valid = this.evaluateConnectionString( value );
+					if ( valid ) {
+						this.connection.working.classList.add( 'active' );
+						this.testConnection( value );
+					} else {
+						this.connection.error.classList.add( 'active' );
+					}
+				}, 500 );
 			}
 		} );
 	},
@@ -82,7 +92,6 @@ const Wizard = {
 				this.hide( this.tabs );
 				this.hide( this.next );
 				this.hide( this.back );
-				this.show( this.tracking );
 				break;
 		}
 		return indicator;

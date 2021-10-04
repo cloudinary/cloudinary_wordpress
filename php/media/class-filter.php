@@ -756,8 +756,8 @@ class Filter {
 	 */
 	public function setup_hooks() {
 		// Filter URLS within content.
-		add_action( 'wp_insert_post_data', array( $this, 'filter_out_cloudinary' ) );
-		add_action( 'wp_insert_post_data', array( $this, 'prepare_amp_posts' ), 11 );
+		add_filter( 'wp_insert_post_data', array( $this, 'filter_out_cloudinary' ) );
+		add_filter( 'wp_insert_post_data', array( $this, 'prepare_amp_posts' ), 11 );
 		add_filter( 'wp_prepare_attachment_for_js', array( $this, 'filter_attachment_for_js' ), 11 );
 
 		// Add support for custom header.

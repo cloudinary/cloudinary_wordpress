@@ -449,16 +449,17 @@ class Settings {
 	public function set_value( $slug, $value ) {
 		$set = false;
 		if ( isset( $this->settings[ $slug ] ) ) {
-			$key     = $this->settings[ $slug ]->get_param( self::META_KEYS['storage'] );
-			$current = $this->get_param( self::META_KEYS['data'] . $this->separator . $key );
+			$storage_path = $this->settings[ $slug ]->get_param( self::META_KEYS['storage'] );
+			$current      = $this->get_param( self::META_KEYS['data'] . $this->separator . $storage_path );
 			if ( $current !== $value ) {
-				$this->set_param( self::META_KEYS['data'] . $this->separator . $key, $value );
+				$this->set_param( self::META_KEYS['data'] . $this->separator . $storage_path, $value );
 				$set = true;
 			}
 		} else {
 			$found = $this->find_setting( $slug );
 			if ( $found ) {
-				$set = $this->set_value( $found->get_slug(), $value );
+				$storage_path = $found->get_param( self::META_KEYS['storage'], $found->get_slug() );
+				$set          = $this->set_value( $storage_path, $value );
 			}
 		}
 

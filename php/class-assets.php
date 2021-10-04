@@ -168,6 +168,7 @@ class Assets extends Settings_Component {
 		add_filter( 'cloudinary_can_sync_asset', array( $this, 'can_sync' ), 10, 2 );
 		add_filter( 'cloudinary_admin_pages', array( $this, 'register_settings' ) );
 		add_filter( 'cloudinary_local_url', array( $this, 'local_url' ), 10, 2 );
+		add_filter( 'cloudinary_is_folder_synced', array( $this, 'filter_folder_sync' ), 10, 2 );
 		// Actions.
 		add_action( 'cloudinary_init_settings', array( $this, 'setup' ) );
 		add_action( 'cloudinary_thread_queue_details_query', array( $this, 'connect_post_type' ) );
@@ -176,6 +177,22 @@ class Assets extends Settings_Component {
 		add_action( 'shutdown', array( $this, 'meta_updates' ) );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_cache' ), 100 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+	}
+
+	/**
+	 * Filter to ensure an asset type is never identified as folder synced.
+	 *
+	 * @param bool $is            Flag to indicate is folder synced.
+	 * @param int  $attachment_id The attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function filter_folder_sync( $is, $attachment_id ) {
+		if ( self::is_asset_type( $attachment_id ) ) {
+			$is = false;
+		}
+
+		return $is;
 	}
 
 	/**
@@ -1048,7 +1065,7 @@ class Assets extends Settings_Component {
 		if ( ! empty( $this->found_urls ) && $this->contains_found_url( $tag_element['original'] ) ) {
 			$sync_media_asset = false;
 			if ( ! empty( $id ) ) {
-				$sync_media_asset = $this->media->sync->been_synced( $id ) || $this->media->sync->can_sync( $id );
+				$sync_media_asset = ! $this->media->sync->been_synced( $id ) && ! $this->media->sync->can_sync( $id );
 			}
 
 			/**
@@ -1580,21 +1597,6 @@ class Assets extends Settings_Component {
 	protected function add_external_settings() {
 
 		$params = array(
-			'type'        => 'panel',
-			'title'       => __( 'External', 'cloudinary' ),
-			'collapsible' => 'closed',
-			'attributes'  => array(
-				'header' => array(
-					'class' => array(
-						'full-width',
-					),
-				),
-				'wrap'   => array(
-					'class' => array(
-						'full-width',
-					),
-				),
-			),
 			array(
 				'type'        => 'on_off',
 				'slug'        => 'external_assets',

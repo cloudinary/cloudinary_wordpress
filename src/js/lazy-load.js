@@ -178,7 +178,9 @@ const LazyLoad = {
 	},
 	buildSize( image ) {
 		if ( this._shouldRebuild( image ) ) {
+
 			if ( image.dataset.srcset ) {
+				image.cld_loaded = true;
 				image.srcset = image.dataset.srcset;
 			} else {
 				image.src = this.getSizeURL( image );

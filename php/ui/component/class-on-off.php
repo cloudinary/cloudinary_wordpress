@@ -85,7 +85,7 @@ class On_Off extends Text {
 			$child       = $this->setting->get_param( 'main' );
 			$controllers = array();
 			foreach ( $child as $child_slug ) {
-				$child_setting = $this->setting->get_setting( $child_slug );
+				$child_setting = $this->setting->find_setting( $child_slug );
 				$controllers[] = $child_setting->get_slug();
 			}
 
