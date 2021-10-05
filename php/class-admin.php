@@ -156,7 +156,6 @@ class Admin {
 		);
 
 		foreach ( $data as $submission => $package ) {
-			$this->settings->delete( $submission );
 			$this->save_settings( $submission, $package );
 		}
 		$results = $this->notices->get_value();
@@ -419,6 +418,8 @@ class Admin {
 			if ( ! empty( $results ) ) {
 				$this->add_admin_notice( 'error_notice', __( 'Settings updated successfully', 'cloudinary' ), 'success' );
 			}
+		} else {
+			$this->add_admin_notice( 'error_notice', __( 'No changes to save', 'cloudinary' ), 'success' );
 		}
 		// Flush cache.
 		do_action( 'cloudinary_flush_cache' );
