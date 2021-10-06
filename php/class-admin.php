@@ -156,7 +156,6 @@ class Admin {
 		);
 
 		foreach ( $data as $submission => $package ) {
-			$this->settings->delete( $submission );
 			$this->save_settings( $submission, $package );
 		}
 		$results = $this->notices->get_value();
@@ -227,10 +226,14 @@ class Admin {
 			if ( ! apply_filters( "cloudinary_settings_enabled_{$slug}", true ) ) {
 				continue;
 			}
-			$capability       = ! empty( $sub_page['capability'] ) ? $sub_page['capability'] : $page['capability'];
-			$page_title       = ! empty( $sub_page['page_title'] ) ? $sub_page['page_title'] : $page['page_title'];
-			$menu_title       = ! empty( $sub_page['menu_title'] ) ? $sub_page['menu_title'] : $page_title;
-			$position         = ! empty( $sub_page['position'] ) ? $sub_page['position'] : 50;
+			$capability = ! empty( $sub_page['capability'] ) ? $sub_page['capability'] : $page['capability'];
+			$page_title = ! empty( $sub_page['page_title'] ) ? $sub_page['page_title'] : $page['page_title'];
+			$menu_title = ! empty( $sub_page['menu_title'] ) ? $sub_page['menu_title'] : $page_title;
+			$position   = ! empty( $sub_page['position'] ) ? $sub_page['position'] : 50;
+			if ( isset( $sub_page['disconnected_title'] ) && ! $this->settings->get_param( 'connected' ) ) {
+				$page_title = $sub_page['disconnected_title'];
+				$menu_title = $sub_page['disconnected_title'];
+			}
 			$page_handle      = add_submenu_page(
 				$page['slug'],
 				$page_title,
@@ -263,7 +266,7 @@ class Admin {
 			if ( $section && file_exists( $this->plugin->dir_path . 'ui-definitions/components/' . $section . '.php' ) ) {
 				$this->section = $section;
 			}
-			if ( 'page' === $this->section && ! $this->settings->get_param( 'connected' ) ) {
+			if ( 'page' === $this->section && ! $this->settings->get_param( 'connected' ) && 'help' !== $page['slug'] ) {
 				$args = array(
 					'page'    => $this->plugin->slug,
 					'section' => 'wizard',
@@ -419,6 +422,8 @@ class Admin {
 			if ( ! empty( $results ) ) {
 				$this->add_admin_notice( 'error_notice', __( 'Settings updated successfully', 'cloudinary' ), 'success' );
 			}
+		} else {
+			$this->add_admin_notice( 'error_notice', __( 'No changes to save', 'cloudinary' ), 'success' );
 		}
 		// Flush cache.
 		do_action( 'cloudinary_flush_cache' );

@@ -205,6 +205,25 @@ final class Plugin {
 		$components     = array_filter( $this->components, array( $this, 'is_setting_component' ) );
 		$this->init_component_settings( $components );
 
+		// Setup connection.
+		$connection = $this->get_component( 'connect' )->is_connected();
+		if ( false === $connection ) {
+			$count      = sprintf( ' <span class="update-plugins count-%d"><span class="update-count">%d</span></span>', 1, number_format_i18n( 1 ) );
+			$main_title = $this->settings->get_param( 'menu_title' ) . $count;
+			$this->settings->set_param( 'menu_title', $main_title );
+			$this->settings->set_param( 'connect_count', $count );
+		} else {
+			$this->settings->set_param( 'connected', true );
+			/**
+			 * Action indicating that the cloudinary is connected.
+			 *
+			 * @hook  cloudinary_connected
+			 * @since 3.0.0
+			 *
+			 * @param $plugin {Plugin} The core plugin object.
+			 */
+			do_action( 'cloudinary_connected', $this );
+		}
 		/**
 		 * Action indicating that the Settings are initialised.
 		 *
@@ -215,27 +234,8 @@ final class Plugin {
 		 */
 		do_action( 'cloudinary_init_settings', $this );
 
-		// Add count notice if not connected.
-		$this->settings->set_param( 'connected', $this->get_component( 'connect' )->is_connected() );
-		if ( ! $this->settings->get_param( 'connected' ) ) {
-			$count      = sprintf( ' <span class="update-plugins count-%d"><span class="update-count">%d</span></span>', 1, number_format_i18n( 1 ) );
-			$main_title = $this->settings->get_param( 'menu_title' ) . $count;
-			$this->settings->set_param( 'menu_title', $main_title );
-			$this->settings->set_param( 'connect_count', $count );
-		}
-
 		// Register with admin.
 		$this->components['admin']->register_page( $this->slug, $this->settings->get_params() );
-
-		/**
-		 * Action indicating that the Settings are initialised.
-		 *
-		 * @hook  cloudinary_init_settings
-		 * @since 3.0.0
-		 *
-		 * @param $plugin {Plugin} The core plugin object.
-		 */
-		do_action( 'cloudinary_init_settings', $this );
 	}
 
 	/**
