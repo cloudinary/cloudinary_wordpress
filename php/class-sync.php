@@ -107,6 +107,7 @@ class Sync implements Setup, Assets {
 		'unsynced'            => '_cld_unsynced',
 		'upgrading'           => '_cloudinary_upgrading',
 		'version'             => '_cloudinary_version',
+		'cloudinary_v3'       => '_cloudinary',
 	);
 
 	/**
@@ -754,15 +755,11 @@ class Sync implements Setup, Assets {
 	 * Prepares and asset for sync comparison by getting all sync types
 	 * and running the generate methods for each type.
 	 *
-	 * @param int|\WP_Post $post The attachment to prepare.
+	 * @param int $attachment_id Attachment ID to prepare.
 	 *
-	 * @return array|\WP_Error
+	 * @return array
 	 */
-	public function sync_base( $post ) {
-		$attachment_id = is_numeric( $post ) ? $post : $post->ID;
-		if ( ! $this->managers['media']->is_media( $attachment_id ) ) {
-			return new \WP_Error( 'attachment_post_expected', __( 'An attachment post was expected.', 'cloudinary' ) );
-		}
+	public function sync_base( $attachment_id ) {
 
 		$return      = array();
 		$asset_state = $this->get_asset_state( $attachment_id );
@@ -775,13 +772,15 @@ class Sync implements Setup, Assets {
 		/**
 		 * Filter the sync base to allow other plugins to add requested sync components for the sync signature.
 		 *
-		 * @param array    $options The options array.
-		 * @param \WP_Post $post    The attachment post.
-		 * @param \Cloudinary\Sync The sync object instance.
+		 * @hook   cloudinary_sync_base
 		 *
-		 * @return array
+		 * @param $signatures {array}   The attachments required signatures.
+		 * @param $post       {WP_Post} The attachment post.
+		 * @param $sync       {Sync}    The sync object instance.
+		 *
+		 * @return {array}
 		 */
-		$return = apply_filters( 'cloudinary_sync_base', $return, $post );
+		$return = apply_filters( 'cloudinary_sync_base', $return, get_post( $attachment_id ), $this );
 
 		return $return;
 	}

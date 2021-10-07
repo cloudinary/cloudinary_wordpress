@@ -41,11 +41,12 @@ $settings = array(
 		),
 	),
 	'connect'        => array(
-		'page_title' => __( 'General settings', 'cloudinary' ),
-		'menu_title' => __( 'General settings', 'cloudinary' ),
-		'priority'   => 5,
-		'sidebar'    => true,
-		'settings'   => array(
+		'page_title'         => __( 'General settings', 'cloudinary' ),
+		'menu_title'         => __( 'General settings', 'cloudinary' ),
+		'disconnected_title' => __( 'Setup', 'cloudinary' ),
+		'priority'           => 5,
+		'sidebar'            => true,
+		'settings'           => array(
 			array(
 				'title' => __( 'Account Status', 'cloudinary' ),
 				'type'  => 'panel',
