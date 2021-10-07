@@ -435,7 +435,7 @@ class Filter {
 			// Ensure the sizes has the transformations and are converted URLS.
 			if ( ! empty( $attachment['sizes'] ) ) {
 				foreach ( $attachment['sizes'] as &$size ) {
-					$size['url'] = $this->media->convert_url( basename( $size['url'] ), $attachment['id'], $transformations );
+					$size['url'] = $this->media->convert_url( $size['url'], $attachment['id'], $transformations );
 				}
 			}
 		}
@@ -756,8 +756,8 @@ class Filter {
 	 */
 	public function setup_hooks() {
 		// Filter URLS within content.
-		add_action( 'wp_insert_post_data', array( $this, 'filter_out_cloudinary' ) );
-		add_action( 'wp_insert_post_data', array( $this, 'prepare_amp_posts' ), 11 );
+		add_filter( 'wp_insert_post_data', array( $this, 'filter_out_cloudinary' ) );
+		add_filter( 'wp_insert_post_data', array( $this, 'prepare_amp_posts' ), 11 );
 		add_filter( 'wp_prepare_attachment_for_js', array( $this, 'filter_attachment_for_js' ), 11 );
 
 		// Add support for custom header.
