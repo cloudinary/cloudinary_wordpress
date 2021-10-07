@@ -185,9 +185,6 @@ $advanced->set_value( 'on' );
 			<div> <?php esc_html_e( 'Click the lock to make changes', 'cloudinary' ); ?></div>
 		</div>
 		<span></span>
-		<div id="tracking" class="hidden">
-			<label><input type="checkbox" checked/><?php esc_html_e( 'Help us improve by allowing Cloudinary to track how you use the plugin.', 'cloudinary' ); ?></label>
-		</div>
 		<div class="cld-wizard-buttons">
 			<button class="button button-primary hidden" data-navigate="back" type="button"><?php esc_html_e( 'Back', 'cloudinary' ); ?></button>
 			<button class="button button-primary" data-navigate="next" type="button"><?php esc_html_e( 'Next', 'cloudinary' ); ?></button>

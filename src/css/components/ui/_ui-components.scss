@@ -71,5 +71,11 @@
 			margin: 0;
 			display: inline-block;
 		}
+		.button.button-small:hover{
+			min-height: 26px;
+			line-height: 2.18181818;
+			padding: 0 8px;
+			font-size: 11px;
+		}
 	}
 }

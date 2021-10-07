@@ -47,27 +47,15 @@ $settings = array(
 		'sidebar'    => true,
 		'settings'   => array(
 			array(
-				'title'       => __( 'Connect to Cloudinary!', 'cloudinary' ),
-				'type'        => 'panel',
-				'option_name' => 'connect',
+				'title' => __( 'Account Status', 'cloudinary' ),
+				'type'  => 'panel',
 				array(
-					'content' => __( 'You need to connect your Cloudinary account to WordPress by adding your unique connection string. See below for where to find this.', 'cloudinary' ),
+					'slug' => \Cloudinary\Connect::META_KEYS['url'],
+					'type' => 'connect',
 				),
-				array(
-					'placeholder'  => 'cloudinary://API_KEY:API_SECRET@CLOUD_NAME',
-					'slug'         => \Cloudinary\Connect::META_KEYS['url'],
-					'title'        => __( 'Connection string', 'cloudinary' ),
-					'tooltip_text' => __(
-						'The connection string is made up of your Cloudinary Cloud name, API Key and API Secret and known as the API Environment Variable. This authenticates the Cloudinary WordPress plugin with your Cloudinary account.',
-						'cloudinary'
-					),
-					'type'         => 'text',
-					'attributes'   => array(
-						'class' => array(
-							'connection-string',
-						),
-					),
-				),
+			),
+			array(
+				'type' => 'switch_cloud',
 			),
 		),
 	),

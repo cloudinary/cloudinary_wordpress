@@ -32,3 +32,14 @@
 	}
 
 }
+
+&-asset {
+	.cld-input-on-off {
+		display: inline-block;
+	}
+
+	.cld-input-label{
+		display: inline-block;
+		margin-bottom: 0;
+	}
+}
