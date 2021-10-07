@@ -80,3 +80,34 @@
 		left: 19px;
 	}
 }
+
+&-connection {
+	&-box {
+		display: flex;
+		max-width: 500px;
+		background-color: #303a47;
+		color: $color-white;
+		padding: 20px 17px;
+		border-radius: 4px;
+		align-items: center;
+		justify-content: space-around;
+
+		h3 {
+			color: $color-white;
+			margin: 0 0 5px;
+		}
+
+		span {
+			padding: 0 12px 0 0;
+			display: inline-block;
+		}
+
+		.dashicons{
+			width: 30px;
+			height: 30px;
+			font-size: 30px;
+			margin: 0;
+			padding: 0;
+		}
+	}
+}
