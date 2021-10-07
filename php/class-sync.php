@@ -404,8 +404,8 @@ class Sync implements Setup, Assets {
 		} else {
 			$file = get_attached_file( $attachment_id );
 		}
-		$file_info = pathinfo( $file );
-		$public_id = $cld_folder . $file_info['filename'];
+		$filename  = pathinfo( $file, PATHINFO_FILENAME );
+		$public_id = $cld_folder . str_replace( '.', '-', $filename );
 
 		return ltrim( $public_id, '/' );
 	}
@@ -1157,7 +1157,7 @@ class Sync implements Setup, Assets {
 						'type'              => 'text',
 						'slug'              => 'cloudinary_folder',
 						'title'             => __( 'Cloudinary folder path', 'cloudinary' ),
-						'default'           => '.',
+						'default'           => '',
 						'attributes'        => array(
 							'input' => array(
 								'placeholder' => __( 'e.g.: wordpress_assets/', 'cloudinary' ),

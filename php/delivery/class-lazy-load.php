@@ -153,8 +153,22 @@ class Lazy_Load extends Delivery_Feature {
 			$tag_element['atts']['height'],
 		);
 
+		$colors    = $this->config['lazy_custom_color'];
+		$animation = array(
+			$colors,
+		);
+		if ( 'on' === $this->config['lazy_animate'] ) {
+			preg_match_all( '/(\d\.*)+/', $colors, $matched );
+			$fade        = $matched[0];
+			$fade[3]     = 0.1;
+			$fade        = 'rgba(' . implode( ',', $fade ) . ')';
+			$animation[] = $fade;
+			$animation[] = $colors;
+		}
+		$colors = implode( ';', $animation );
+		
 		// Add svg placeholder.
-		$svg                        = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $tag_element['atts']['width'] . '"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $this->config['lazy_custom_color'] . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
+		$svg                        = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $tag_element['atts']['width'] . '" height="' . $tag_element['atts']['height'] . '"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $colors . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
 		$tag_element['atts']['src'] = 'data:image/svg+xml;utf8,' . $svg;
 		if ( isset( $tag_element['atts']['srcset'] ) ) {
 			$tag_element['atts']['data-srcset'] = $tag_element['atts']['srcset'];
@@ -219,58 +233,77 @@ class Lazy_Load extends Delivery_Feature {
 					'priority'    => 9,
 					'option_name' => 'media_display',
 					array(
-						'type'               => 'on_off',
-						'description'        => __( 'Enable lazy loading', 'cloudinary' ),
-						'optimisation_title' => __( 'Lazy loading', 'cloudinary' ),
-						'slug'               => 'use_lazy_load',
-						'default'            => 'on',
-					),
-					array(
-						'type'      => 'group',
-						'condition' => array(
-							'use_lazy_load' => true,
-						),
+						'type' => 'row',
 						array(
-							'type'       => 'text',
-							'title'      => __( 'Lazy loading threshold', 'cloudinary' ),
-							'slug'       => 'lazy_threshold',
-							'attributes' => array(
-								'style'            => array(
-									'width:100px;display:block;',
+							'type' => 'column',
+							array(
+								'type'               => 'on_off',
+								'description'        => __( 'Enable lazy loading', 'cloudinary' ),
+								'optimisation_title' => __( 'Lazy loading', 'cloudinary' ),
+								'slug'               => 'use_lazy_load',
+								'default'            => 'on',
+							),
+							array(
+								'type'      => 'group',
+								'condition' => array(
+									'use_lazy_load' => true,
 								),
-								'data-auto-suffix' => '*px;em;rem;vh',
+								array(
+									'type'       => 'text',
+									'title'      => __( 'Lazy loading threshold', 'cloudinary' ),
+									'slug'       => 'lazy_threshold',
+									'attributes' => array(
+										'style'            => array(
+											'width:100px;display:block;',
+										),
+										'data-auto-suffix' => '*px;em;rem;vh',
+									),
+									'default'    => '1000px',
+								),
+								array(
+									'type'      => 'radio',
+									'title'     => __( 'Placeholder generation', 'cloudinary' ),
+									'slug'      => 'lazy_placeholder',
+									'default'   => 'blur',
+									'condition' => array(
+										'use_lazy_load' => true,
+									),
+									'options'   => array(
+										'blur'        => __( 'Blur', 'cloudinary' ),
+										'pixelate'    => __( 'Pixelate', 'cloudinary' ),
+										'vectorize'   => __( 'Vectorize', 'cloudinary' ),
+										'predominant' => __( 'Dominant Color', 'cloudinary' ),
+										'off'         => __( 'Off', 'cloudinary' ),
+									),
+								),
+								array(
+									'type'    => 'color',
+									'title'   => __( 'Use custom color', 'cloudinary' ),
+									'slug'    => 'lazy_custom_color',
+									'default' => 'rgba(153,153,153,0.5)',
+								),
+								array(
+									'type'    => 'on_off',
+									'title'   => __( 'Animate', 'cloudinary' ),
+									'slug'    => 'lazy_animate',
+									'default' => 'on',
+								),
 							),
-							'default'    => '1000px',
 						),
 						array(
-							'type'      => 'radio',
-							'title'     => __( 'Placeholder generation', 'cloudinary' ),
-							'slug'      => 'lazy_placeholder',
-							'default'   => 'blur',
-							'condition' => array(
-								'use_lazy_load' => true,
+							'type'  => 'column',
+							'class' => array(
+								'cld-ui-preview',
 							),
-							'options'   => array(
-								'blur'        => __( 'Blur', 'cloudinary' ),
-								'pixelate'    => __( 'Pixelate', 'cloudinary' ),
-								'vectorize'   => __( 'Vectorize', 'cloudinary' ),
-								'predominant' => __( 'Dominant Color', 'cloudinary' ),
-								'off'         => __( 'Off', 'cloudinary' ),
+							array(
+								'type'    => 'lazyload_preview',
+								'title'   => __( 'Preview', 'cloudinary' ),
+								'slug'    => 'lazyload_preview',
+								'default' => CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE . 'w_600/sample.jpg',
 							),
-						),
-						array(
-							'type'    => 'color',
-							'title'   => __( 'Use custom color', 'cloudinary' ),
-							'slug'    => 'lazy_custom_color',
-							'default' => 'rgba(153,153,153,0.5)',
-						),
-						array(
-							'type'    => 'on_off',
-							'title'   => __( 'Animate', 'cloudinary' ),
-							'slug'    => 'lazy_animate',
-							'default' => 'on',
 						),
 					),
+
 				),
 			),
 		);

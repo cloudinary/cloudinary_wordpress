@@ -386,9 +386,11 @@ class Settings {
 	 */
 	public function find_setting( $slug, $create = true ) {
 		$setting = null;
+		$try     = str_pad( $slug, strlen( $slug ) + 2, $this->separator, STR_PAD_BOTH );
 		foreach ( array_keys( $this->settings ) as $key ) {
-			if ( false !== strpos( $key, $slug ) ) {
-				$maybe = strstr( $key, $slug, true ) . $slug;
+			$try_key = str_pad( $key, strlen( $key ) + 2, $this->separator, STR_PAD_BOTH );
+			if ( false !== strpos( $try_key, $try ) ) {
+				$maybe = trim( strstr( $try_key, $try, true ) . $this->separator . $slug, $this->separator );
 				if ( isset( $this->settings[ $maybe ] ) ) {
 					$setting = $this->settings[ $maybe ];
 					break;
