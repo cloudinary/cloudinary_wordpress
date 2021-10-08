@@ -438,6 +438,17 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Check if an attachment has a delivery type.
+	 *
+	 * @param int $attachment_id The attachment to check.
+	 *
+	 * @return bool
+	 */
+	public function has_delivery_type( $attachment_id ) {
+		return ! empty( $this->get_post_meta( $attachment_id, Sync::META_KEYS['delivery'], true ) );
+	}
+
+	/**
 	 * Convert media extension.
 	 *
 	 * @param string $filename The file to convert.
@@ -951,6 +962,12 @@ class Media extends Settings_Component implements Setup {
 	 * @return string Cloudinary URL.
 	 */
 	public function attachment_url( $url, $attachment_id ) {
+		static $urls = array();
+		if ( isset( $urls[ $url ] ) ) {
+			// prevent infinite loops.
+			return $url; // Return the actual url, since it would already be converted.
+		}
+		$urls[ $url ] = true;
 		// Previous v1 and Cloudinary only storage.
 		if ( false !== strpos( $url, 'https://', 5 ) ) {
 			$dirs = wp_get_upload_dir();
@@ -1200,7 +1217,9 @@ class Media extends Settings_Component implements Setup {
 	 * @return string|false
 	 */
 	public function local_url( $attachment_id ) {
-		$url = wp_get_attachment_url( $attachment_id );
+		$this->in_downsize = true;
+		$url               = wp_get_attachment_url( $attachment_id );
+		$this->in_downsize = false;
 
 		/**
 		 * Filter local URL.
@@ -1940,7 +1959,7 @@ class Media extends Settings_Component implements Setup {
 					'state' => 'inactive',
 					'note'  => esc_html__( 'Not Synced', 'cloudinary' ),
 				);
-				if ( $this->cloudinary_id( $attachment_id ) ) {
+				if ( $this->cloudinary_id( $attachment_id ) && $this->has_delivery_type( $attachment_id ) ) {
 					$status = array(
 						'state' => 'success',
 						'note'  => esc_html__( 'Synced', 'cloudinary' ),
@@ -1970,7 +1989,7 @@ class Media extends Settings_Component implements Setup {
 				$title = sprintf( __( 'File size exceeds the maximum of %s. This media asset will be served from WordPress.', 'cloudinary' ), $max_size_hr );
 				?>
 				<span class="dashicons-cloudinary error" title="<?php echo esc_attr( $title ); ?>"></span>
-				<?php
+			<?php
 			endif;
 		}
 	}
@@ -2545,7 +2564,7 @@ class Media extends Settings_Component implements Setup {
 			add_filter( 'upload_dir', array( $this, 'upload_dir' ) );
 
 			// Filter live URLS. (functions that return a URL).
-			if ( $this->can_filter_out_local() || is_admin() ) {
+			if ( is_admin() ) {
 				add_filter( 'wp_calculate_image_srcset', array( $this, 'image_srcset' ), 10, 5 );
 				add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
 				add_filter( 'wp_get_original_image_url', array( $this, 'attachment_url' ), 10, 2 );

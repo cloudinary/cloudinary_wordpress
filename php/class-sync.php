@@ -108,6 +108,7 @@ class Sync implements Setup, Assets {
 		'upgrading'           => '_cloudinary_upgrading',
 		'version'             => '_cloudinary_version',
 		'cloudinary_v3'       => '_cloudinary',
+		'relationship'        => '_cld_relationship',
 	);
 
 	/**
@@ -176,6 +177,17 @@ class Sync implements Setup, Assets {
 	}
 
 	/**
+	 * Determine if an attachment is fully synced or partly synced.
+	 *
+	 * @param $attachment_id
+	 *
+	 * @return bool
+	 */
+	public function full_sync( $attachment_id ) {
+		return $this->been_synced( $attachment_id ) && $this->managers['media']->has_delivery_type( $attachment_id );
+	}
+
+	/**
 	 * Checks if an asset is synced and up to date.
 	 *
 	 * @param int  $post_id  The post id to check.
@@ -189,7 +201,7 @@ class Sync implements Setup, Assets {
 			return $synced[ $post_id ];
 		}
 		$return = false;
-		if ( $this->managers['media']->has_public_id( $post_id ) ) {
+		if ( $this->managers['media']->has_public_id( $post_id ) && $this->full_sync( $post_id ) ) {
 			$expecting = $this->generate_signature( $post_id );
 			if ( ! is_wp_error( $expecting ) ) {
 				$signature = $this->get_signature( $post_id );

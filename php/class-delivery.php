@@ -63,6 +63,8 @@ class Delivery implements Setup {
 	 */
 	protected $bypass;
 
+	public $known = array();
+
 	/**
 	 * The meta data cache key to store URLS.
 	 *
@@ -83,9 +85,196 @@ class Delivery implements Setup {
 		add_filter( 'cloudinary_filter_out_local', '__return_false' );
 		add_action( 'update_option_cloudinary_media_display', array( $this, 'clear_cache' ) );
 		add_action( 'cloudinary_flush_cache', array( $this, 'do_clear_cache' ) );
-
+		add_action( 'cloudinary_id', array( $this, 'set_deliverable_relation' ), 10, 2 );
+		add_action( 'cloudinary_unsync_asset', array( $this, 'unsync_attachment' ) );
+		add_action( 'delete_post', array( $this, 'unsync_attachment' ) );
+		add_action( 'delete_attachment', array( $this, 'unsync_attachment' ) );
 		// Add Bypass options.
 		$this->bypass = new Bypass( $this->plugin );
+	}
+
+	/**
+	 * Remove a delivery relationship on unsync or delete of post.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 */
+	public function unsync_attachment( $attachment_id ) {
+		global $wpdb;
+		if ( $this->media->is_media( $attachment_id ) ) {
+			$wpdb->delete( Utils::get_relationship_table(), array( 'post_id' => $attachment_id ) ); // phpcs:ignore WordPress.DB
+			$wpdb->delete( Utils::get_relationship_table(), array( 'parent_id' => $attachment_id ) );// phpcs:ignore WordPress.DB
+		}
+	}
+
+	/**
+	 * Set deliverable relationship.
+	 *
+	 * @param string $cloudinary_id The cloudinary ID.
+	 * @param int    $attachment_id The attachment ID.
+	 */
+	public function set_deliverable_relation( $cloudinary_id, $attachment_id ) {
+		if ( ! empty( $cloudinary_id ) ) {
+			$this->check_relationships( $attachment_id );
+		}
+	}
+
+	/**
+	 * Check the relationship of an asset.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 */
+	public function check_relationships( $attachment_id ) {
+
+		$meta      = wp_get_attachment_metadata( $attachment_id, true );
+		$local_url = self::clean_url( $this->media->local_url( $attachment_id ), true );
+		$urls      = array(
+			'primary_url' => $local_url,
+			'sized_url'   => $local_url,
+		);
+		$sizes     = array(
+			$meta['width'] . 'x' . $meta['height'] => $urls,
+		);
+
+		if ( ! empty( $meta['sizes'] ) ) {
+			foreach ( $meta['sizes'] as $size ) {
+				$size_key               = $size['width'] . 'x' . $size['height'];
+				$sized_url              = $urls;
+				$sized_url['sized_url'] = dirname( $local_url ) . '/' . $size['file'];
+				$sizes[ $size_key ]     = $sized_url;
+			}
+		}
+		$this->evaluate_size_relation( $attachment_id, $sizes );
+	}
+
+	/**
+	 * Evaluate changes needed to the relationship.
+	 *
+	 * @param int   $attachment_id The attachment ID.
+	 * @param array $sizes         The size array.
+	 */
+	protected function evaluate_size_relation( $attachment_id, $sizes ) {
+		static $relationships = array();
+		if ( ! isset( $relationships[ $attachment_id ] ) ) {
+			$current = get_post_meta( $attachment_id, Sync::META_KEYS['relationship'], true );
+			if ( empty( $current ) ) {
+				$current = array(
+					'signature' => null,
+					'items'     => array(),
+				);
+			}
+			$relationships[ $attachment_id ] = array(
+				'sizes'     => $current,
+				'public_id' => $this->media->get_public_id( $attachment_id ),
+			);
+		}
+
+		$current_sizes = $relationships[ $attachment_id ]['sizes'];
+		$public_id     = $relationships[ $attachment_id ]['public_id'];
+		$signature     = md5( wp_json_encode( $sizes ) . $public_id );
+		if ( $signature === $current_sizes['signature'] ) {
+			return; // Nothing changed.
+		}
+
+		$new_sizes = array(
+			'signature' => $signature,
+			'items'     => array(),
+		);
+
+		$update_public_ids = false;
+		foreach ( $sizes as $size => $urls ) {
+			if ( ! isset( $current_sizes['items'][ $size ] ) ) {
+				$type                        = $this->sync->full_sync( $attachment_id ) ? 'media' : 'asset';
+				$new_sizes['items'][ $size ] = array(
+					'id'        => $this->create_size_relation( $attachment_id, $public_id, $urls['primary_url'], $urls['sized_url'], $size, $type ),
+					'public_id' => $public_id,
+				);
+				continue;
+			} elseif ( isset( $current_sizes['items'][ $size ] ) && $public_id !== $current_sizes['items'][ $size ]['public_id'] ) {
+				$update_public_ids = true; // Exists but does not match public_id.
+			}
+			// No changes on this one.
+			$new_sizes['items'][ $size ] = $current_sizes['items'][ $size ];
+			unset( $current_sizes['items'][ $size ] );
+		}
+
+		// If we still have items here, the sizes have been removed, so lets destroy them.
+		if ( ! empty( $current_sizes['items'] ) ) {
+			$ids = array();
+			foreach ( $current_sizes['items'] as $old_size ) {
+				$ids[] = $old_size['id'];
+			}
+			self::delete_size_relations( $ids );
+		}
+
+		// Update public_ids.
+		if ( false !== $update_public_ids ) {
+			self::update_size_relations_public_id( $attachment_id, $public_id );
+		}
+		update_post_meta( $attachment_id, Sync::META_KEYS['relationship'], $new_sizes );
+	}
+
+	/**
+	 * Update relationship pugblic ID.
+	 *
+	 * @param int    $attachment_id The attachment ID.
+	 * @param string $public_id     The public ID.
+	 */
+	static public function update_size_relations_public_id( $attachment_id, $public_id ) {
+		global $wpdb;
+		$wpdb->update( Utils::get_relationship_table(), array( 'public_id' => $public_id ), array( 'post_id' => $attachment_id ) );// phpcs:ignore WordPress.DB
+	}
+
+	/**
+	 * Delete unneeded sizes.
+	 *
+	 * @param array $ids The IDs to delete.
+	 */
+	public static function delete_size_relations( $ids ) {
+		global $wpdb;
+		$ids       = (array) $ids;
+		$list      = implode( ', ', array_fill( 0, count( $ids ), '%d' ) );
+		$tablename = Utils::get_relationship_table();
+		$sql       = "DELETE from {$tablename} WHERE id IN( {$list} )";
+		$prepared  = $wpdb->prepare( $sql, $ids ); // phpcs:ignore WordPress.DB
+
+		$wpdb->query( $prepared );// phpcs:ignore WordPress.DB
+
+	}
+
+	/**
+	 * Create a size relationship.
+	 *
+	 * @param int    $attachment_id The attachment ID.
+	 * @param string $public_id     The public ID.
+	 * @param string $primary_url   The primary (full) URL.
+	 * @param string $sized_url     The sized url.
+	 * @param string $size          The size in (width)x(height) format.
+	 * @param string $type          The type of sync.
+	 *
+	 * @return false|int
+	 */
+	public static function create_size_relation( $attachment_id, $public_id, $primary_url, $sized_url, $size, $type ) {
+		global $wpdb;
+		$parent_id    = has_post_parent( $attachment_id ) ? get_post_parent( $attachment_id )->ID : $attachment_id;
+		$width_height = explode( 'x', $size );
+		$data         = array(
+			'post_id'     => $attachment_id,
+			'parent_id'   => $parent_id,
+			'public_id'   => $public_id,
+			'primary_url' => $primary_url,
+			'sized_url'   => $sized_url,
+			'width'       => $width_height[0] ? $width_height[0] : 0,
+			'height'      => $width_height[1] ? $width_height[1] : 0,
+			'format'      => pathinfo( $primary_url, PATHINFO_EXTENSION ),
+			'sync_type'   => $type,
+		);
+
+		$insert_id = false;
+		if ( 0 < $wpdb->insert( Utils::get_relationship_table(), $data ) ) { // phpcs:ignore WordPress.DB
+			$insert_id = $wpdb->insert_id;
+		}
+
+		return $insert_id;
 	}
 
 	/**
@@ -201,7 +390,7 @@ class Delivery implements Setup {
 		/**
 		 * Action indicating that the delivery is starting.
 		 *
-		 * @hook  cloudinary_pre_image_tag
+		 * @hook  cloudinary_init_delivery
 		 * @since 2.7.5
 		 *
 		 * @param $delivery {Delivery} The delivery object.
@@ -245,42 +434,6 @@ class Delivery implements Setup {
 	}
 
 	/**
-	 * Get all sizes URLS for an attachment.
-	 *
-	 * @param int $attachment_id Get the image size URLS from an attachment ID.
-	 *
-	 * @return array
-	 */
-	public function get_attachment_size_urls( $attachment_id ) {
-
-		$urls    = array();
-		$meta    = wp_get_attachment_metadata( $attachment_id );
-		$baseurl = wp_get_attachment_url( $attachment_id );
-		if ( false === $baseurl ) {
-			return $urls;
-		}
-		$base             = trailingslashit( dirname( $baseurl ) );
-		$urls[ $baseurl ] = $this->media->cloudinary_url( $attachment_id );
-		// Ignore getting 'original_image' since this isn't used in the front end.
-		if ( ! empty( $meta['sizes'] ) ) {
-			foreach ( $meta['sizes'] as $data ) {
-				if ( isset( $urls[ $base . $data['file'] ] ) ) {
-					continue;
-				}
-				$urls[ $base . $data['file'] ] = $this->media->cloudinary_url(
-					$attachment_id,
-					array(
-						$data['width'],
-						$data['height'],
-					)
-				);
-			}
-		}
-
-		return $urls;
-	}
-
-	/**
 	 * Find the attachment sizes from a list of URLS.
 	 *
 	 * @param array $urls URLS to find attachments for.
@@ -290,11 +443,11 @@ class Delivery implements Setup {
 	public function find_attachment_size_urls( $urls ) {
 
 		global $wpdb;
-		$dirs   = wp_get_upload_dir();
-		$search = array();
-		$found  = array();
+		$dirs    = wp_get_upload_dir();
+		$search  = array();
+		$baseurl = self::clean_url( $dirs['baseurl'] );
 		foreach ( $urls as $url ) {
-			$url = ltrim( str_replace( $dirs['baseurl'], '', $url ), '/' );
+			$url = ltrim( str_replace( $baseurl, '', $url ), '/' );
 			if ( ! preg_match( '/(-(\d+)x(\d+))\./i', $url, $match ) ) {
 				$search[] = $url;
 				continue;
@@ -307,26 +460,36 @@ class Delivery implements Setup {
 
 		// Prepare a query to find all in a single request.
 		$sql = $wpdb->prepare(
-			"SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = '_wp_attached_file' AND meta_value IN ({$in})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+			"SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = '_wp_attached_file' AND meta_value IN ({$in})",
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 			$search
 		);
-		
+
 		$key    = md5( $sql );
 		$cached = wp_cache_get( $key );
 		if ( false === $cached ) {
+			$cached  = array();
 			$results = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared
 			if ( $results ) {
 				foreach ( $results as $result ) {
-					if ( $this->media->cloudinary_id( $result->post_id ) ) {
-						$found = array_merge( $found, $this->get_attachment_size_urls( (int) $result->post_id ) );
+					if ( $this->sync->is_auto_sync_enabled() ) {
+						$this->sync->add_to_sync( $result->post_id );
+					}
+					$url            = self::clean_url( $this->media->local_url( $result->post_id ) );
+					$cached[ $url ] = (int) $result->post_id;
+					$meta           = wp_get_attachment_metadata( $result->post_id, true );
+					if ( ! empty( $meta['sizes'] ) ) {
+						foreach ( $meta['sizes'] as $size ) {
+							$size_url            = dirname( $url ) . '/' . $size['file'];
+							$cached[ $size_url ] = (int) $result->post_id;
+						}
 					}
 				}
 			}
-			$cached = $found;
-			wp_cache_set( $key, $found );
+			wp_cache_add( $key, $cached );
 		}
 
-		return $cached;
+		$this->known = array_merge( $this->known, $cached );
 	}
 
 	/**
@@ -347,8 +510,9 @@ class Delivery implements Setup {
 			}
 		}
 
-		$tags         = $this->filter->get_media_tags( $content );
-		$tags         = array_map( array( $this, 'parse_element' ), array_unique( $tags ) );
+		$tags = $this->filter->get_media_tags( $content );
+		$tags = array_map( array( $this, 'parse_element' ), array_unique( $tags ) );
+
 		$replacements = array();
 		foreach ( $tags as $set ) {
 
@@ -368,7 +532,7 @@ class Delivery implements Setup {
 			 * @return {int|false}
 			 */
 			$set['id'] = apply_filters( 'cloudinary_delivery_get_id', $set['id'], $set );
-			if ( empty( $set['id'] ) || ! $this->media->cloudinary_id( $set['id'] ) ) {
+			if ( empty( $set['id'] ) ) {
 				continue;
 			}
 			$this->current_post_id = $set['context'];
@@ -404,9 +568,8 @@ class Delivery implements Setup {
 	protected function standardize_tag( $tag_element ) {
 
 		$default = array(
-			'width'          => $tag_element['meta']['width'],
-			'height'         => $tag_element['meta']['height'],
-			'data-public-id' => $this->media->get_public_id( $tag_element['id'] ),
+			'width'  => $tag_element['width'],
+			'height' => $tag_element['height'],
 		);
 		// Add default.
 		$tag_element['atts'] = wp_parse_args( $tag_element['atts'], $default );
@@ -423,7 +586,13 @@ class Delivery implements Setup {
 		unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 
 		// Get cloudinary URL.
-		$tag_element['atts']['src'] = $this->media->cloudinary_url( $tag_element['id'], $size, $tag_element['transformations'], null, $tag_element['overwrite_transformations'] );
+		$tag_element['atts']['src'] = $this->media->cloudinary_url(
+			$tag_element['id'],
+			$size,
+			$tag_element['transformations'],
+			$tag_element['atts']['data-public-id'],
+			$tag_element['overwrite_transformations']
+		);
 
 		if ( 'on' === $this->plugin->settings->image_settings->_overlay ) {
 			$local_size = get_post_meta( $tag_element['id'], Sync::META_KEYS['local_size'], true );
@@ -453,8 +622,7 @@ class Delivery implements Setup {
 	 */
 	public function rebuild_tag( $tag_element ) {
 
-		$tag_element['meta'] = wp_get_attachment_metadata( $tag_element['id'] );
-		$tag_element         = $this->standardize_tag( $tag_element );
+		$tag_element = $this->standardize_tag( $tag_element );
 
 		/**
 		 * Filter to allow stopping default srcset generation.
@@ -468,11 +636,12 @@ class Delivery implements Setup {
 		 * @return {bool}
 		 */
 		if ( apply_filters( 'cloudinary_apply_breakpoints', true ) ) {
+			$meta = wp_get_attachment_metadata( $tag_element['id'] );
 			// Check overwrite.
-			$tag_element['meta']['overwrite_transformations'] = $tag_element['overwrite_transformations'];
+			$meta['overwrite_transformations'] = $tag_element['overwrite_transformations'];
 
 			// Add new srcset.
-			$element = wp_image_add_srcset_and_sizes( $tag_element['original'], $tag_element['meta'], $tag_element['id'] );
+			$element = wp_image_add_srcset_and_sizes( $tag_element['original'], $meta, $tag_element['id'] );
 
 			$atts = Utils::get_tag_attributes( $element );
 			if ( ! empty( $atts['srcset'] ) ) {
@@ -537,23 +706,18 @@ class Delivery implements Setup {
 		$element = trim( $element, '</>' );
 
 		// Break element up.
-		$attributes          = array();
 		$attributes          = shortcode_parse_atts( $element );
 		$tag_element['tag']  = array_shift( $attributes );
 		$tag_element['type'] = 'img' === $tag_element['tag'] ? 'image' : $tag_element['tag'];
+		$url                 = isset( $attributes['src'] ) ? self::clean_url( $attributes['src'] ) : '';
+		if ( ! empty( $this->known[ $url ] ) && ! empty( $this->known[ $url ]->public_id ) ) {
+			$tag_element['id']            = $this->known[ $url ]->post_id;
+			$tag_element['width']         = $this->known[ $url ]->width;
+			$tag_element['height']        = $this->known[ $url ]->height;
+			$attributes['data-public-id'] = $this->known[ $url ]->public_id;
+		}
 		if ( ! empty( $attributes['class'] ) ) {
 			$attributes['class'] = explode( ' ', $attributes['class'] );
-			foreach ( $attributes['class'] as $class ) {
-				if ( 0 === strpos( $class, 'wp-video-' ) ) {
-					$tag_element['id'] = intval( substr( $class, 9 ) );
-				}
-				if ( 0 === strpos( $class, 'wp-image-' ) ) {
-					$tag_element['id'] = intval( substr( $class, 9 ) );
-				}
-				if ( 0 === strpos( $class, 'wp-post-' ) ) {
-					$tag_element['context'] = intval( substr( $class, 8 ) );
-				}
-			}
 			if ( in_array( 'cld-overwrite', $attributes['class'], true ) ) {
 				$tag_element['overwrite_transformations'] = true;
 			}
@@ -641,19 +805,24 @@ class Delivery implements Setup {
 	/**
 	 * Clean a url: adds scheme if missing, removes query and fragments.
 	 *
-	 * @param string $url The URL to clean.
+	 * @param string $url         The URL to clean.
+	 * @param bool   $scheme_less Flag to clean out scheme.
 	 *
 	 * @return string
 	 */
-	public static function clean_url( $url ) {
+	public static function clean_url( $url, $scheme_less = true ) {
 		$default = array(
 			'scheme' => '',
 			'host'   => '',
 			'path'   => '',
 		);
 		$parts   = wp_parse_args( wp_parse_url( $url ), $default );
+		$url     = '//' . $parts['host'] . $parts['path'];
+		if ( false === $scheme_less ) {
+			$url = $parts['scheme'] . ':' . $url;
+		}
 
-		return $parts['scheme'] . '://' . $parts['host'] . $parts['path'];
+		return $url;
 	}
 
 	/**
@@ -691,9 +860,34 @@ class Delivery implements Setup {
 	 * @return array
 	 */
 	protected function get_urls( $content ) {
+		global $wpdb;
 		$base_urls = array_map( array( $this, 'clean_url' ), wp_extract_urls( $content ) );
 		$urls      = array_filter( array_unique( $base_urls ), array( $this, 'validate_url' ) ); // clean out empty urls.
-		$urls      = array_filter( $urls, array( $this, 'is_local_asset_url' ) );
+
+		$list      = implode( ', ', array_fill( 0, count( $urls ), '%s' ) );
+		$tablename = Utils::get_relationship_table();
+		$sql       = "SELECT * from {$tablename} WHERE sized_url IN( {$list} )";
+		$prepared  = $wpdb->prepare( $sql, $urls ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$cache_key = md5( $prepared );
+		$results   = wp_cache_get( $cache_key, 'cld_delivery' );
+		if ( empty( $results ) ) {
+			$results = $wpdb->get_results( $prepared );// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
+			wp_cache_add( $cache_key, $results, 'cld_delivery' );
+		}
+
+		$usable = array();
+		foreach ( $results as $result ) {
+			$this->known[ $result->sized_url ] = $result;
+			if ( ! empty( $result->public_id ) ) {
+				$usable[] = $result->sized_url;
+			}
+			if ( 'asset' === $result->sync_type && $this->sync->is_auto_sync_enabled() ) {
+				// Perform an auto sync.
+				$this->sync->add_to_sync( $result->post_id );
+			}
+		}
+		$urls = array_diff( $urls, $usable );
+		$urls = array_filter( $urls, array( $this, 'is_local_asset_url' ) );
 
 		return $urls;
 	}
@@ -704,13 +898,13 @@ class Delivery implements Setup {
 	 * @param string $content The HTML to catch URLS from.
 	 */
 	public function catch_urls( $content ) {
+
 		$this->init_delivery();
-		$urls    = $this->get_urls( $content );
-		$known   = $this->convert_tags( $content );
-		$urls    = array_filter( $urls, array( 'Cloudinary\String_Replace', 'string_not_set' ) );
-		$unknown = array_diff( $urls, array_keys( $known ) );
-		if ( ! empty( $unknown ) ) {
-			$known = array_merge( $known, $this->find_attachment_size_urls( $unknown ) );
+		$urls  = $this->get_urls( $content );
+		$known = $this->convert_tags( $content );
+		$urls  = array_filter( $urls, array( 'Cloudinary\String_Replace', 'string_not_set' ) );
+		if ( ! empty( $urls ) ) {
+			$this->find_attachment_size_urls( $urls );
 		}
 		foreach ( $known as $src => $replace ) {
 			String_Replace::replace( $src, $replace );
