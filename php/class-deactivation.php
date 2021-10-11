@@ -9,11 +9,13 @@ namespace Cloudinary;
 
 use Cloudinary\Media\Gallery;
 use Cloudinary\Media\Global_Transformations;
+use Cloudinary\Sync\Sync_Queue;
 use WP_REST_Server;
 use WP_REST_Request;
 use WP_Error;
 use WP_HTTP_Response;
 use WP_REST_Response;
+use WP_Screen;
 
 /**
  * Class Deactivation.
@@ -88,7 +90,7 @@ class Deactivation {
 	public function maybe_load_hooks() {
 		$current_screen = get_current_screen();
 
-		if ( ! empty( $current_screen->base ) && 'plugins' === $current_screen->base ) {
+		if ( $current_screen instanceof WP_Screen && 'plugins' === $current_screen->base ) {
 			add_action( 'admin_head-plugins.php', array( $this, 'markup' ) );
 			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		}
