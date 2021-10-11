@@ -1,7 +1,7 @@
 &-modal {
 	visibility: hidden;
 	background-color: rgba(0, 0, 0, 0.8);
-	position: absolute;
+	position: fixed;
 	left: 0;
 	right: 0;
 	bottom: 0;
@@ -20,7 +20,6 @@
 	}
 	&-box {
 		background-color: #fff;
-		width: 263px;
 		position: relative;
 		margin: 0 auto;
 		display: flex;
