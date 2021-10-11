@@ -727,7 +727,7 @@ class Filter {
 		foreach ( $types as $type ) {
 			$post_type = get_post_type_object( $type );
 			// Check if this is a rest supported type.
-			if ( true === $post_type->show_in_rest ) {
+			if ( property_exists( $post_type, 'show_in_rest' ) && true === $post_type->show_in_rest ) {
 				// Add filter only to rest supported types.
 				add_filter( 'rest_prepare_' . $type, array( $this, 'pre_filter_rest_content' ), 10, 3 );
 			}
