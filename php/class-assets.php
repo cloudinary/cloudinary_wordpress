@@ -65,13 +65,6 @@ class Assets extends Settings_Component {
 	protected $active_parents = array();
 
 	/**
-	 * Holds a list of found urls of asset parents.
-	 *
-	 * @var array
-	 */
-	protected $found_urls;
-
-	/**
 	 * Holds a list of found urls that need to be created.
 	 *
 	 * @var array
@@ -84,12 +77,6 @@ class Assets extends Settings_Component {
 	 * @var array
 	 */
 	protected $asset_ids;
-	/**
-	 * Holds the list of cache points requiring meta updates.
-	 *
-	 * @var array
-	 */
-	public $meta_updates = array();
 
 	/**
 	 * Holds the Assets REST instance.
@@ -112,13 +99,6 @@ class Assets extends Settings_Component {
 		'excludes' => '_excluded_urls',
 		'lock'     => '_asset_lock',
 	);
-
-	/**
-	 * Keep a list of media library items that are already synced.
-	 *
-	 * @var array
-	 */
-	protected $known_files = array();
 
 	/**
 	 * Static instance of this class.
@@ -166,10 +146,6 @@ class Assets extends Settings_Component {
 		add_filter( 'cloudinary_is_media', array( $this, 'is_media' ), 10, 2 );
 		add_filter( 'get_attached_file', array( $this, 'get_attached_file' ), 10, 2 );
 		add_filter( 'cloudinary_sync_base_struct', array( $this, 'add_sync_type' ) );
-		add_filter( 'update_post_metadata', array( $this, 'update_meta' ), 10, 4 );
-		add_filter( 'add_post_metadata', array( $this, 'update_meta' ), 10, 4 );
-		add_filter( 'get_post_metadata', array( $this, 'get_meta' ), 10, 3 );
-		add_filter( 'delete_post_metadata', array( $this, 'delete_meta' ), 10, 4 );
 		add_filter( 'intermediate_image_sizes_advanced', array( $this, 'no_sizes' ), PHP_INT_MAX, 3 );
 		add_filter( 'cloudinary_can_sync_asset', array( $this, 'can_sync' ), 10, 2 );
 		add_filter( 'cloudinary_local_url', array( $this, 'local_url' ), 10, 2 );
@@ -188,7 +164,7 @@ class Assets extends Settings_Component {
 	/**
 	 * Filter the asset state to allow syncing in manual.
 	 *
-	 * @param int $state         The current state
+	 * @param int $state         The current state.
 	 * @param int $attachment_id The attachment ID.
 	 *
 	 * @return int
@@ -345,135 +321,6 @@ class Assets extends Settings_Component {
 	}
 
 	/**
-	 * Update our cache point meta data.
-	 *
-	 * @hook update_post_metadata, add_post_metadata
-	 *
-	 * @param null|bool $check      The check to allow short circuit of get_metadata.
-	 * @param int       $object_id  The object ID.
-	 * @param string    $meta_key   The meta key.
-	 * @param mixed     $meta_value The meta value.
-	 *
-	 * @return bool|null
-	 */
-	public function update_meta( $check, $object_id, $meta_key, $meta_value ) {
-
-		if ( self::is_asset_type( $object_id ) && $this->can_cache_meta( $meta_key, $object_id ) ) {
-			$meta = $this->get_meta_cache( $object_id );
-			if ( ! isset( $meta[ $meta_key ] ) || $meta_value !== $meta[ $meta_key ] ) {
-				$meta[ $meta_key ] = $meta_value;
-				$this->set_meta_cache( $object_id, $meta );
-			}
-		}
-
-		return $check;
-	}
-
-	/**
-	 * Delete our cache point meta data.
-	 *
-	 * @hook delete_post_metadata
-	 *
-	 * @param null|bool $check      The check to allow short circuit of get_metadata.
-	 * @param int       $object_id  The object ID.
-	 * @param string    $meta_key   The meta key.
-	 * @param mixed     $meta_value The meta value.
-	 *
-	 * @return bool
-	 */
-	public function delete_meta( $check, $object_id, $meta_key, $meta_value ) {
-
-		if ( self::is_asset_type( $object_id ) && $this->can_cache_meta( $meta_key, $object_id ) ) {
-			$meta = $this->get_meta_cache( $object_id );
-			if ( isset( $meta[ $meta_key ] ) && ( $meta[ $meta_key ] === $meta_value || empty( $meta_value ) ) ) {
-				unset( $meta[ $meta_key ] );
-				$this->set_meta_cache( $object_id, $meta );
-			}
-		}
-
-		return $check;
-	}
-
-	/**
-	 * Get our cache point meta data.
-	 *
-	 * @hook get_post_metadata
-	 *
-	 * @param null|bool $check     The check to allow short circuit of get_metadata.
-	 * @param int       $object_id The object ID.
-	 * @param string    $meta_key  The meta key.
-	 *
-	 * @return mixed
-	 */
-	public function get_meta( $check, $object_id, $meta_key ) {
-
-		if ( self::is_asset_type( $object_id ) && $this->can_cache_meta( $meta_key, $object_id ) ) {
-			$meta  = $this->get_meta_cache( $object_id );
-			$value = null;
-			if ( empty( $meta_key ) ) {
-				$value = $meta;
-			} elseif ( isset( $meta[ $meta_key ] ) ) {
-				$value[] = $meta[ $meta_key ];
-			}
-
-			if ( ! is_null( $value ) ) {
-				// Only return if we found meta, else allow to go into core meta.
-				return $value;
-			}
-		}
-
-		return $check;
-	}
-
-	/**
-	 * Check if the current meta can be cached.
-	 *
-	 * @param string $meta_key The meta key to be cached.
-	 * @param int    $post_id  The post ID to check.
-	 *
-	 * @return bool
-	 */
-	protected function can_cache_meta( $meta_key, $post_id ) {
-		$post = get_post( $post_id );
-
-		return ( in_array( $meta_key, Sync::META_KEYS, true ) && empty( $post->post_parent ) ) || ! in_array( $meta_key, Sync::META_KEYS, true );
-	}
-
-	/**
-	 * Get meta data for a cache point.
-	 *
-	 * @param int $object_id The post ID.
-	 *
-	 * @return mixed
-	 */
-	protected function get_meta_cache( $object_id ) {
-		$meta = wp_cache_get( $object_id, 'cloudinary_asset' );
-		if ( ! $meta ) {
-			$post = get_post( $object_id );
-			$meta = json_decode( $post->post_content, true );
-			wp_cache_add( $object_id, $meta, 'cloudinary_asset' );
-		}
-
-		return $meta;
-	}
-
-	/**
-	 * Set meta data for a cache point.
-	 *
-	 * @param int   $object_id The post ID.
-	 * @param mixed $meta      The meta to set.
-	 *
-	 * @return bool
-	 */
-	protected function set_meta_cache( $object_id, $meta ) {
-		if ( ! in_array( $object_id, $this->meta_updates, true ) ) {
-			$this->meta_updates[] = $object_id;
-		}
-
-		return wp_cache_replace( $object_id, $meta, 'cloudinary_asset' );
-	}
-
-	/**
 	 * Compiles all metadata and preps upload at shutdown.
 	 *
 	 * @hook shutdown
@@ -483,10 +330,20 @@ class Assets extends Settings_Component {
 			return;
 		}
 
-		// Create missing assets.
+		// Do sync push for assets missing public_ids that are on.
+		if ( ! empty( $this->delivery->unusable ) ) {
+			$assets = array();
+			foreach ( $this->delivery->unusable as $unusable ) {
+				if ( isset( $this->active_parents[ $unusable->parent_path ] ) && ! in_array( $unusable->post_id, $assets, true ) ) {
+					$asset_id = (int) $unusable->post_id;
+					$this->media->sync->set_signature_item( $asset_id, 'cld_asset', 'reset' );
+					$this->media->sync->add_to_sync( $asset_id );
+					$assets[] = $unusable->post_id;
+				}
+			}
+		}
 		if ( ! empty( $this->to_create ) ) {
 			foreach ( $this->to_create as $url => $parent ) {
-
 				// If it got here, it was not known initially, but then found it.
 				if ( isset( $this->delivery->known[ $url ] ) ) {
 					if ( $this->media->sync->is_auto_sync_enabled() || ! is_int( $this->delivery->known[ $url ] ) ) {
@@ -499,17 +356,6 @@ class Assets extends Settings_Component {
 				// Only create an asset that's not media library.
 				$this->create_asset( $url, $parent );
 			}
-		}
-
-		foreach ( $this->meta_updates as $id ) {
-
-			$meta = $this->get_meta_cache( $id );
-
-			$params = array(
-				'ID'           => $id,
-				'post_content' => wp_json_encode( $meta ),
-			);
-			wp_update_post( $params );
 		}
 	}
 
@@ -528,13 +374,12 @@ class Assets extends Settings_Component {
 			if ( ! empty( $this->delivery->known ) ) {
 				$delete = array();
 				foreach ( $this->delivery->known as $set ) {
-					if ( is_int( $set ) || empty( $set->public_id ) || 'asset' !== $set->sync_type ) {
+					if ( is_int( $set ) || empty( $set->public_id ) || 'asset' !== $set->sync_type || in_array( $set->post_id, $delete, true ) ) {
 						continue;
 					}
-					$delete[] = $set->id;
-					delete_post_meta( $set->post_id, Sync::META_KEYS['relationship'] );
+					Delivery::update_size_relations_public_id( $set->post_id, null, 'asset' );
+					$delete[] = $set->post_id;
 				}
-				Delivery::delete_size_relations( $delete );
 			}
 			wp_safe_redirect( $referrer );
 			exit;
@@ -622,6 +467,7 @@ class Assets extends Settings_Component {
 	public function activate_parent( $url ) {
 		$url = $this->clean_path( $url );
 		if ( isset( $this->asset_parents[ $url ] ) ) {
+			$this->active_parents[ $url ] = $this->asset_parents[ $url ];
 			$this->set_param( trim( $url, $this->separator ), $this->asset_parents[ $url ] );
 		}
 	}
@@ -672,7 +518,7 @@ class Assets extends Settings_Component {
 	/**
 	 * Purge a single asset parent.
 	 *
-	 * @param int $parent_id The Asset parnet to purge.
+	 * @param int $parent_id The Asset parent to purge.
 	 */
 	public function purge_parent( $parent_id ) {
 		$query_args     = array(
@@ -735,10 +581,14 @@ class Assets extends Settings_Component {
 	 * @return string
 	 */
 	public function generate_file_signature( $asset_id ) {
-		$asset = get_post( $asset_id );
+		$path   = $this->clean_path( $this->media->local_url( $asset_id ) );
+		$parent = $this->get_param( $path );
+		$str    = $asset_id;
+		if ( $parent ) {
+			$str .= $parent->post_date;
+		}
 
-		// The signature is the URL + the parents version. As the version  changes, the signature is invalid, and re-synced.
-		return $asset->post_title . $this->media->get_post_meta( $asset->post_parent, Sync::META_KEYS['version'], true );
+		return $str;
 	}
 
 	/**
@@ -755,32 +605,48 @@ class Assets extends Settings_Component {
 			$asset = get_post( $asset_id );
 			$url   = $asset->post_title;
 		} else {
-			$url = wp_get_attachment_url( $asset_id );
+			$url = $this->media->local_url( $asset_id );
 		}
-		$path              = trim( wp_normalize_path( str_replace( home_url(), '', $url ) ), '/' );
-		$info              = pathinfo( $path );
-		$cloudinary_folder = wp_parse_url( home_url(), PHP_URL_HOST );
-		$public_id         = $cloudinary_folder . '/' . $info['dirname'] . '/' . $info['filename'];
-		$options           = array(
+		$path      = trim( wp_normalize_path( str_replace( home_url(), '', $url ) ), '/' );
+		$info      = pathinfo( $path );
+		$public_id = $info['dirname'] . '/' . $info['filename'];
+		$options   = array(
 			'unique_filename' => false,
 			'overwrite'       => true,
 			'resource_type'   => $this->media->get_resource_type( $asset_id ),
 			'public_id'       => $public_id,
 		);
-		$result            = $connect->api->upload( $asset_id, $options, array() );
+		$result    = $connect->api->upload( $asset_id, $options, array() );
 		if ( ! is_wp_error( $result ) && isset( $result['public_id'] ) ) {
-			$this->media->update_post_meta( $asset_id, Sync::META_KEYS['public_id'], $result['public_id'] );
-			$this->media->update_post_meta( $asset_id, Sync::META_KEYS['version'], $result['version'] );
+			Delivery::update_size_relations_public_id( $asset_id, $public_id, 'asset' );
 			$this->media->sync->set_signature_item( $asset_id, 'file' );
 			$this->media->sync->set_signature_item( $asset_id, 'cld_asset' );
-			$this->media->sync->set_signature_item( $asset_id, 'cloud_name' );
-			$this->media->sync->set_signature_item( $asset_id, 'storage' );
-			$this->media->sync->set_signature_item( $asset_id, 'download' );
-			$this->media->sync->set_signature_item( $asset_id, 'options' );
-			$this->media->cloudinary_id( $asset_id ); // Init relations.
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Validate if sync type is valid.
+	 *
+	 * @param int $attachment_id The attachment id to validate.
+	 *
+	 * @return bool
+	 */
+	public function validate_asset_sync( $attachment_id ) {
+
+		// Default is either a asset type or auto sync off, if it's a media library item.
+		$valid = self::is_asset_type( $attachment_id ) || ! $this->media->sync->is_auto_sync_enabled();
+
+		// Check to see if there is a parent. If there is, then the asset is enabled to be synced.
+		if ( true === $valid ) {
+			$parent = $this->find_parent( $attachment_id );
+			if ( ! $parent ) {
+				$valid = false;
+			}
+		}
+
+		return $valid;
 	}
 
 	/**
@@ -793,14 +659,11 @@ class Assets extends Settings_Component {
 	 * @return array
 	 */
 	public function add_sync_type( $structs ) {
-		$settings             = $this->settings;
 		$structs['cld_asset'] = array(
 			'generate'    => array( $this, 'generate_file_signature' ),
 			'priority'    => 2,
 			'sync'        => array( $this, 'upload' ),
-			'validate'    => function ( $attachment_id ) use ( $settings ) {
-				return self::is_asset_type( $attachment_id ) || 'off' === $settings->get_value( 'auto_sync' ) && 'on' === $settings->get_value( 'content.enabled' );
-			},
+			'validate'    => array( $this, 'validate_asset_sync' ),
 			'state'       => 'disabled',
 			'note'        => __( 'Caching', 'cloudinary' ),
 			'required'    => true,
@@ -941,51 +804,6 @@ class Assets extends Settings_Component {
 	}
 
 	/**
-	 * Build asset ID's from found urls, and create missing items.
-	 */
-	public function build_asset_ids() {
-
-		$names           = array();
-		$to_create       = array();
-		$this->asset_ids = array();
-
-		foreach ( $this->found_urls as $parent => $urls ) {
-			foreach ( $urls as $url ) {
-				$names[]           = md5( $url );
-				$to_create[ $url ] = $parent;
-			}
-		}
-
-		$args = array(
-			'post_type'              => self::POST_TYPE_SLUG,
-			'posts_per_page'         => 100,
-			'paged'                  => 1,
-			'post_status'            => 'inherit',
-			'post_name__in'          => $names,
-			'no_found_rows'          => true,
-			'update_post_meta_cache' => false,
-			'update_post_term_cache' => false,
-		);
-
-		$query = new \WP_Query( $args );
-
-		do {
-			foreach ( $query->get_posts() as $post ) {
-				$this->asset_ids[ $post->post_title ] = $post->ID;
-				unset( $to_create[ $post->post_title ] );
-			}
-			$args = $query->query_vars;
-			$args['paged'] ++;
-			$query = new \WP_Query( $args );
-		} while ( $query->have_posts() );
-
-		// Add to the create queue.
-		if ( ! empty( $to_create ) ) {
-			$this->to_create = $to_create;
-		}
-	}
-
-	/**
 	 * Get all asset parents.
 	 *
 	 * @return \WP_Post[]
@@ -1014,6 +832,20 @@ class Assets extends Settings_Component {
 	}
 
 	/**
+	 * Find a parent for an asset.
+	 *
+	 * @param int $asset_id The asset id.
+	 *
+	 * @return \WP_Post|null;
+	 */
+	public function find_parent( $asset_id ) {
+		$path   = $this->clean_path( $this->media->local_url( $asset_id ) );
+		$parent = $this->get_param( $path );
+
+		return $parent instanceof \WP_Post ? $parent : null;
+	}
+
+	/**
 	 * Get an asset parent.
 	 *
 	 * @param string $url The URL of the parent.
@@ -1031,17 +863,6 @@ class Assets extends Settings_Component {
 	}
 
 	/**
-	 * Get an asset item.
-	 *
-	 * @param string $url The asset url.
-	 *
-	 * @return null|\WP_Post
-	 */
-	public function get_asset_id( $url ) {
-		return isset( $this->asset_ids[ $url ] ) ? $this->asset_ids[ $url ] : null;
-	}
-
-	/**
 	 * Create a new asset item.
 	 *
 	 * @param string $url       The assets url.
@@ -1053,20 +874,19 @@ class Assets extends Settings_Component {
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 		$scheme    = is_ssl() ? 'https:' : 'http:';
-		$url       = $scheme . $url;
-		$file_path = str_replace( home_url(), untrailingslashit( ABSPATH ), $url );
+		$full_url  = $scheme . $url;
+		$file_path = str_replace( home_url(), untrailingslashit( ABSPATH ), $full_url );
 		if ( ! file_exists( $file_path ) ) {
 			return false;
 		}
+		$base        = get_post( $parent_id )->post_title;
+		$size        = getimagesize( $file_path );
+		$size        = $size[0] . 'x' . $size[1];
 		$hash_name   = md5( $url );
 		$wp_filetype = wp_check_filetype( basename( $url ), wp_get_mime_types() );
-		$file_string = str_replace( ABSPATH, '', $file_path );
-		$data        = array(
-			'_wp_attached_file' => $file_string,
-		);
 		$args        = array(
 			'post_title'     => $url,
-			'post_content'   => wp_json_encode( $data ),
+			'post_content'   => '',
 			'post_name'      => $hash_name,
 			'post_mime_type' => $wp_filetype['type'],
 			'post_type'      => self::POST_TYPE_SLUG,
@@ -1080,7 +900,10 @@ class Assets extends Settings_Component {
 		wp_generate_attachment_metadata( $id, $file_path );
 
 		// Init the auto sync.
-		$this->media->cloudinary_id( $id );
+		Delivery::create_size_relation( $id, $url, $url, $size, $base, 'asset' );
+		$this->media->sync->set_signature_item( $id, 'delivery' );
+		$this->media->sync->get_sync_type( $id );
+		$this->media->sync->add_to_sync( $id );
 
 		return $id;
 	}
@@ -1119,15 +942,23 @@ class Assets extends Settings_Component {
 
 		$assets = $this->settings->get_setting( 'assets' )->get_settings();
 		foreach ( $assets as $asset ) {
-			if ( 'on' === $asset->get_value( 'enabled' ) ) {
-				$paths = $asset->get_setting( 'paths' );
-				foreach ( $paths->get_settings() as $path ) {
-					if ( 'on' === $path->get_parent( 2 )->_enabled ) {
-						$conf = $path->get_params();
-						self::register_asset_path( trailingslashit( $conf['url'] ), $conf['version'] );
-					}
+
+			$paths = $asset->get_setting( 'paths' );
+
+			foreach ( $paths->get_settings() as $path ) {
+				if ( 'on' === $path->get_value() ) {
+					$conf = $path->get_params();
+					self::register_asset_path( trailingslashit( $conf['url'] ), $conf['version'] );
 				}
 			}
+		}
+
+		// Get the disabled items.
+		foreach ( $this->asset_parents as $url => $parent ) {
+			if ( isset( $this->active_parents[ $url ] ) ) {
+				continue;
+			}
+			$this->purge_parent( $parent->ID );
 		}
 	}
 
@@ -1500,6 +1331,9 @@ class Assets extends Settings_Component {
 			'title'       => __( 'Content', 'cloudinary' ),
 			'slug'        => 'content',
 			'collapsible' => 'closed',
+			'enabled'     => function () {
+				return 'off' === get_plugin_instance()->settings->get_value( 'auto_sync' );
+			},
 			'attributes'  => array(
 				'header' => array(
 					'class' => array(
