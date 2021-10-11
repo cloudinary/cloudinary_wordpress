@@ -415,6 +415,12 @@ class Deactivation {
 	 * @return array
 	 */
 	public function tag_deactivate( $actions ) {
+		if ( 'cld' === $this->settings['offload'] ) {
+			$actions['deactivate'] = str_replace( '<a ', '<a class="cld-deactivate" ', $actions['deactivate'] );
+		} else {
+			$actions['deactivate'] = str_replace( '<a ', '<a class="cld-deactivate-link" ', $actions['deactivate'] );
+		}
+
 		if ( get_option( self::CLEANING_KEY ) ) {
 			$actions['deactivate'] = __( 'Data clean up. The plugin will self deactivate once complete. ', 'cloudinary' );
 		}
