@@ -508,11 +508,10 @@ class Deactivation {
 		);
 
 		foreach ( $post_types as $type ) {
-			$wpdb->delete(
+			$wpdb->delete( //phpcs:ignore WordPress.DB.DirectDatabaseQuery
 				$wpdb->posts,
-				array(
-					'post_type' => $type,
-				)
+				array( 'post_type' => $type ),
+				array( '%s' )
 			);
 		}
 	}
@@ -533,9 +532,8 @@ class Deactivation {
 				'cloudinary_setup',
 				'cloudinary_' . Media::MEDIA_SETTINGS_SLUG,
 				'cloudinary_main_cache_page',
-				Gallery::GALLERY_KEY,
-				'cloudinary_' . Settings::SETTINGS_DATA,
 				'_cld_disable_http_upload',
+				Media::GLOBAL_VIDEO_TRANSFORMATIONS,
 				self::CLEANING_KEY,
 			)
 		);
