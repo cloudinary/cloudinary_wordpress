@@ -179,7 +179,7 @@ class Sync implements Setup, Assets {
 	/**
 	 * Determine if an attachment is fully synced or partly synced.
 	 *
-	 * @param $attachment_id
+	 * @param int $attachment_id The attachment ID.
 	 *
 	 * @return bool
 	 */
@@ -503,7 +503,7 @@ class Sync implements Setup, Assets {
 			'upgrade'      => array(
 				'generate' => array( $this, 'get_sync_version' ), // Method to generate a signature.
 				'validate' => array( $this, 'been_synced' ),
-				'priority' => 0,
+				'priority' => 0.2,
 				'sync'     => array( $this->managers['media']->upgrade, 'convert_cloudinary_version' ),
 				'state'    => 'info syncing',
 				'note'     => __( 'Upgrading from previous version', 'cloudinary' ),
@@ -1098,6 +1098,9 @@ class Sync implements Setup, Assets {
 		foreach ( $signatures as $signature ) {
 			delete_post_meta( $attachment_id, "_{$signature}" );
 		}
+
+		// Delete main meta.
+		delete_post_meta( $attachment_id, self::META_KEYS['cloudinary'] );
 	}
 
 	/**
