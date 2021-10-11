@@ -373,10 +373,6 @@ class Deactivation {
 		$contact = filter_var( $request->get_param( 'contact' ), FILTER_VALIDATE_BOOLEAN );
 		$data    = $request->get_param( 'dataHandling' );
 
-		if ( empty( $reason ) ) {
-			return rest_ensure_response( 200 );
-		}
-
 		if (
 			! in_array(
 				$reason,
@@ -384,7 +380,7 @@ class Deactivation {
 				true
 			)
 		) {
-			return rest_ensure_response( 418 );
+			$reason = 'no_reason_provided';
 		}
 
 		$args = array(
@@ -402,15 +398,20 @@ class Deactivation {
 			$args['contact'] = $contact;
 		}
 
-		$url = add_query_arg( $args, CLOUDINARY_ENDPOINTS_DEACTIVATION );
+		if ( filter_var( $request->get_param( 'email' ), FILTER_VALIDATE_EMAIL ) ) {
+			$args['reason'] = 'not_connected';
+			$args['email']  = filter_var( $request->get_param( 'email' ), FILTER_SANITIZE_EMAIL );
+		}
 
-		// $response = wp_safe_remote_get( $url );
-		$response['response']['code'] = 200;
+		$url = add_query_arg( array_filter( $args ), CLOUDINARY_ENDPOINTS_DEACTIVATION );
+
+		$response = wp_safe_remote_get( $url );
 
 		if ( 'uninstall' === $data ) {
 			$this->cleanup();
-			deactivate_plugins( $this->plugin->plugin_file );
 		}
+
+		deactivate_plugins( $this->plugin->plugin_file );
 
 		return rest_ensure_response(
 			wp_remote_retrieve_response_code( $response )
