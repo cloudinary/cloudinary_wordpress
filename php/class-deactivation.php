@@ -7,9 +7,7 @@
 
 namespace Cloudinary;
 
-use Cloudinary\Media\Gallery;
 use Cloudinary\Media\Global_Transformations;
-use Cloudinary\Sync\Sync_Queue;
 use WP_REST_Server;
 use WP_REST_Request;
 use WP_Error;
