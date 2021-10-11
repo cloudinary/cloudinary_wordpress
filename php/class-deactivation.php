@@ -39,6 +39,13 @@ class Deactivation {
 	protected $plugin;
 
 	/**
+	 * Holds the plugin settings.
+	 *
+	 * @var Settings
+	 */
+	protected $settings;
+
+	/**
 	 * Cleaning data key.
 	 *
 	 * @var string
@@ -51,7 +58,8 @@ class Deactivation {
 	 * @param Plugin $plugin Instance of the plugin.
 	 */
 	public function __construct( Plugin $plugin ) {
-		$this->plugin = $plugin;
+		$this->plugin   = $plugin;
+		$this->settings = $plugin->settings;
 
 		add_action( 'init', array( $this, 'load_hooks' ) );
 		add_action( 'current_screen', array( $this, 'maybe_load_hooks' ) );
@@ -510,6 +518,11 @@ class Deactivation {
 	 * Cleanup Cloudinary's options related.
 	 */
 	protected function cleanup_options() {
+		$all = $this->settings->get_param( 'settings' );
+		foreach ( $all as $slug => $setting ) {
+			$this->settings->delete( $slug );
+		}
+
 		$option_keys = array_merge(
 			Connect::META_KEYS,
 			array(
