@@ -6,7 +6,7 @@ const Deactivate = {
 	modalBody: document.getElementById( 'modal-body' ),
 	modalFooter: document.getElementById( 'modal-footer' ),
 	modalUninstall: document.getElementById( 'modal-uninstall' ),
-	modalClose: document.getElementsByClassName( 'cancel-close' ),
+	modalClose: document.querySelectorAll( 'button[data-action="cancel"], button[data-action="close"]' ),
 	// The different links to deactivate the plugin.
 	pluginListLinks: document.querySelectorAll(
 		'.cld-deactivate-link, .cld-deactivate'
@@ -20,13 +20,19 @@ const Deactivate = {
 	report: document.getElementById( 'cld-report' ),
 	contact: document.getElementById( 'cld-contact' ),
 	// The feedback submit button.
-	submitButton: document.querySelector(
-		'.cloudinary-deactivation .button-primary'
+	submitButton: document.querySelectorAll(
+		'.cloudinary-deactivation button[data-action="submit"]'
 	),
-	// The skip button.
-	//skipButton: document.querySelector(
-	//	'.cloudinary-deactivation .button-link'
-	//),
+	// The contact me button.
+	contactButton: document.querySelectorAll(
+		'.cloudinary-deactivation button[data-action="contact"]'
+	),
+	// The deactivate button.
+	deactivateButton: document.querySelectorAll(
+		'.cloudinary-deactivation button[data-action="deactivate"]'
+	),
+	// The email field.
+	emailField: document.getElementById( 'email' ),
 	// Selected reason.
 	reason: '',
 	// The more details .

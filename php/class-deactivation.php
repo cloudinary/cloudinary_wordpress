@@ -231,10 +231,10 @@ class Deactivation {
 					</p>
 				</div>
 				<div class="modal-footer" id="modal-footer">
-					<button class="button cancel-close">
+					<button class="button cancel-close" data-action="cancel">
 						<?php esc_html_e( 'Cancel', 'cloudinary' ); ?>
 					</button>
-					<button class="button button-primary">
+					<button class="button button-primary" data-action="submit">
 						<?php esc_html_e( 'Deactivate', 'cloudinary' ); ?>
 					</button>
 					<span class="modal-processing hidden">
@@ -245,7 +245,7 @@ class Deactivation {
 				<div id="modal-uninstall" class="modal-uninstall">
 					<p><?php esc_html_e( 'Uninstall has been started and the plugin will automatically be deactivated once complete.', 'cloudinary' ); ?></p>
 					<div class="modal-footer">
-						<button class="button button-primary cancel-close">
+						<button class="button button-primary cancel-close" data-action="close">
 							<?php esc_html_e( 'Close', 'cloudinary' ); ?>
 						</button>
 					</div>
@@ -274,13 +274,13 @@ class Deactivation {
 					</p>
 				</div>
 				<div class="modal-footer" id="modal-footer">
-					<button class="button cancel-close" >
+					<button class="button cancel-close" data-action="cancel">
 						<?php esc_html_e( 'Cancel', 'cloudinary' ); ?>
 					</button>
-					<button class="button button-secondary">
+					<button class="button button-secondary" data-action="deactivate">
 						<?php esc_html_e( 'Deactivate', 'cloudinary' ); ?>
 					</button>
-					<button class="button button-primary">
+					<button class="button button-primary" data-action="contact">
 						<?php esc_html_e( 'Contact me', 'cloudinary' ); ?>
 					</button>
 					<span class="modal-processing hidden">
