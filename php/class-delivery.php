@@ -63,7 +63,26 @@ class Delivery implements Setup {
 	 */
 	protected $bypass;
 
+	/**
+	 * Holds a list of known urls.
+	 *
+	 * @var array
+	 */
 	public $known = array();
+
+	/**
+	 * Holds a list of known urls with public_ids.
+	 *
+	 * @var array
+	 */
+	public $usable = array();
+
+	/**
+	 * Holds a list of known urls without public_ids.
+	 *
+	 * @var array
+	 */
+	public $unusable = array();
 
 	/**
 	 * The meta data cache key to store URLS.
@@ -85,12 +104,73 @@ class Delivery implements Setup {
 		add_filter( 'cloudinary_filter_out_local', '__return_false' );
 		add_action( 'update_option_cloudinary_media_display', array( $this, 'clear_cache' ) );
 		add_action( 'cloudinary_flush_cache', array( $this, 'do_clear_cache' ) );
-		add_action( 'cloudinary_id', array( $this, 'set_deliverable_relation' ), 10, 2 );
-		add_action( 'cloudinary_unsync_asset', array( $this, 'unsync_attachment' ) );
-		add_action( 'delete_post', array( $this, 'unsync_attachment' ) );
-		add_action( 'delete_attachment', array( $this, 'unsync_attachment' ) );
+		add_action( 'cloudinary_unsync_asset', array( $this, 'delete_size_relationship' ) );
+		add_action( 'before_delete_post', array( $this, 'delete_size_relationship' ) );
+		add_action( 'delete_attachment', array( $this, 'delete_size_relationship' ) );
+		add_action( 'cloudinary_register_sync_types', array( $this, 'register_sync_type' ), 30 );
+
 		// Add Bypass options.
 		$this->bypass = new Bypass( $this->plugin );
+	}
+
+	/**
+	 * Generate the delivery signature.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function generate_signature( $attachment_id ) {
+		$sizes     = $this->get_sizes( $attachment_id );
+		$public_id = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
+
+		return wp_json_encode( $sizes ) . $public_id;
+	}
+
+	/**
+	 * Create delivery entries.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 */
+	public function create_delivery( $attachment_id ) {
+		$sizes     = $this->get_sizes( $attachment_id );
+		$public_id = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
+		$type      = $this->sync->full_sync( $attachment_id ) ? 'media' : 'asset';
+		$base      = $this->get_content_path();
+		foreach ( $sizes as $size => $urls ) {
+			self::create_size_relation( $attachment_id, $urls['primary_url'], $urls['sized_url'], $size, $base );
+		}
+		// Update public ID and type.
+		self::update_size_relations_public_id( $attachment_id, $public_id, $type );
+
+		$this->sync->set_signature_item( $attachment_id, 'delivery' );
+	}
+
+	/**
+	 * Add our delivery sync type.
+	 */
+	public function register_sync_type() {
+		$structure = array(
+			'asset_state' => 0,
+			'generate'    => array( $this, 'generate_signature' ), // Method to generate a signature.
+			'priority'    => 0.1,
+			'sync'        => array( $this, 'create_delivery' ),
+			'state'       => '',
+			'note'        => '',
+			'realtime'    => true,
+		);
+		$this->sync->register_sync_type( 'delivery', $structure );
+	}
+
+	/**
+	 * Get the base content path.
+	 *
+	 * @return string
+	 */
+	protected function get_content_path() {
+		$dirs = wp_get_upload_dir();
+
+		return ltrim( wp_parse_url( trailingslashit( $dirs['baseurl'] ), PHP_URL_PATH ), '/' );
 	}
 
 	/**
@@ -98,138 +178,67 @@ class Delivery implements Setup {
 	 *
 	 * @param int $attachment_id The attachment ID.
 	 */
-	public function unsync_attachment( $attachment_id ) {
+	public function delete_size_relationship( $attachment_id ) {
 		global $wpdb;
-		if ( $this->media->is_media( $attachment_id ) ) {
-			$wpdb->delete( Utils::get_relationship_table(), array( 'post_id' => $attachment_id ) ); // phpcs:ignore WordPress.DB
-			$wpdb->delete( Utils::get_relationship_table(), array( 'parent_id' => $attachment_id ) );// phpcs:ignore WordPress.DB
-		}
+
+		$wpdb->delete( Utils::get_relationship_table(), array( 'post_id' => $attachment_id ) ); // phpcs:ignore WordPress.DB
 	}
 
 	/**
-	 * Set deliverable relationship.
-	 *
-	 * @param string $cloudinary_id The cloudinary ID.
-	 * @param int    $attachment_id The attachment ID.
-	 */
-	public function set_deliverable_relation( $cloudinary_id, $attachment_id ) {
-		if ( ! empty( $cloudinary_id ) ) {
-			$this->check_relationships( $attachment_id );
-		}
-	}
-
-	/**
-	 * Check the relationship of an asset.
+	 * Get the different sizes for an attachment.
 	 *
 	 * @param int $attachment_id The attachment ID.
-	 */
-	public function check_relationships( $attachment_id ) {
-
-		$meta      = wp_get_attachment_metadata( $attachment_id, true );
-		$local_url = self::clean_url( $this->media->local_url( $attachment_id ), true );
-		$urls      = array(
-			'primary_url' => $local_url,
-			'sized_url'   => $local_url,
-		);
-		$sizes     = array(
-			$meta['width'] . 'x' . $meta['height'] => $urls,
-		);
-
-		if ( ! empty( $meta['sizes'] ) ) {
-			foreach ( $meta['sizes'] as $size ) {
-				$size_key               = $size['width'] . 'x' . $size['height'];
-				$sized_url              = $urls;
-				$sized_url['sized_url'] = dirname( $local_url ) . '/' . $size['file'];
-				$sizes[ $size_key ]     = $sized_url;
-			}
-		}
-		$this->evaluate_size_relation( $attachment_id, $sizes );
-	}
-
-	/**
-	 * Evaluate changes needed to the relationship.
 	 *
-	 * @param int   $attachment_id The attachment ID.
-	 * @param array $sizes         The size array.
+	 * @return array
 	 */
-	protected function evaluate_size_relation( $attachment_id, $sizes ) {
-		static $relationships = array();
-		if ( ! isset( $relationships[ $attachment_id ] ) ) {
-			$current = get_post_meta( $attachment_id, Sync::META_KEYS['relationship'], true );
-			if ( empty( $current ) ) {
-				$current = array(
-					'signature' => null,
-					'items'     => array(),
-				);
-			}
-			$relationships[ $attachment_id ] = array(
-				'sizes'     => $current,
-				'public_id' => $this->media->get_public_id( $attachment_id ),
+	public function get_sizes( $attachment_id ) {
+		static $sizes = array();
+		if ( empty( $sizes[ $attachment_id ] ) ) {
+			$meta                    = wp_get_attachment_metadata( $attachment_id, true );
+			$local_url               = self::clean_url( $this->media->local_url( $attachment_id ), true );
+			$urls                    = array(
+				'primary_url' => $local_url,
+				'sized_url'   => $local_url,
 			);
-		}
+			$sizes[ $attachment_id ] = array(
+				$meta['width'] . 'x' . $meta['height'] => $urls,
+			);
 
-		$current_sizes = $relationships[ $attachment_id ]['sizes'];
-		$public_id     = $relationships[ $attachment_id ]['public_id'];
-		$signature     = md5( wp_json_encode( $sizes ) . $public_id );
-		if ( $signature === $current_sizes['signature'] ) {
-			return; // Nothing changed.
-		}
-
-		$new_sizes = array(
-			'signature' => $signature,
-			'items'     => array(),
-		);
-
-		$update_public_ids = false;
-		foreach ( $sizes as $size => $urls ) {
-			if ( ! isset( $current_sizes['items'][ $size ] ) ) {
-				$type                        = $this->sync->full_sync( $attachment_id ) ? 'media' : 'asset';
-				$new_sizes['items'][ $size ] = array(
-					'id'        => $this->create_size_relation( $attachment_id, $public_id, $urls['primary_url'], $urls['sized_url'], $size, $type ),
-					'public_id' => $public_id,
-				);
-				continue;
-			} elseif ( isset( $current_sizes['items'][ $size ] ) && $public_id !== $current_sizes['items'][ $size ]['public_id'] ) {
-				$update_public_ids = true; // Exists but does not match public_id.
+			if ( ! empty( $meta['sizes'] ) ) {
+				foreach ( $meta['sizes'] as $size ) {
+					$size_key                             = $size['width'] . 'x' . $size['height'];
+					$sized_url                            = $urls;
+					$sized_url['sized_url']               = dirname( $local_url ) . '/' . $size['file'];
+					$sizes[ $attachment_id ][ $size_key ] = $sized_url;
+				}
 			}
-			// No changes on this one.
-			$new_sizes['items'][ $size ] = $current_sizes['items'][ $size ];
-			unset( $current_sizes['items'][ $size ] );
 		}
 
-		// If we still have items here, the sizes have been removed, so lets destroy them.
-		if ( ! empty( $current_sizes['items'] ) ) {
-			$ids = array();
-			foreach ( $current_sizes['items'] as $old_size ) {
-				$ids[] = $old_size['id'];
-			}
-			self::delete_size_relations( $ids );
-		}
-
-		// Update public_ids.
-		if ( false !== $update_public_ids ) {
-			self::update_size_relations_public_id( $attachment_id, $public_id );
-		}
-		update_post_meta( $attachment_id, Sync::META_KEYS['relationship'], $new_sizes );
+		return $sizes[ $attachment_id ];
 	}
 
 	/**
-	 * Update relationship pugblic ID.
+	 * Update relationship public ID.
 	 *
 	 * @param int    $attachment_id The attachment ID.
 	 * @param string $public_id     The public ID.
+	 * @param string $type          $the type of public ID.
 	 */
-	static public function update_size_relations_public_id( $attachment_id, $public_id ) {
+	public static function update_size_relations_public_id( $attachment_id, $public_id, $type ) {
 		global $wpdb;
-		$wpdb->update( Utils::get_relationship_table(), array( 'public_id' => $public_id ), array( 'post_id' => $attachment_id ) );// phpcs:ignore WordPress.DB
+		$data = array(
+			'public_id' => $public_id,
+			'sync_type' => $type,
+		);
+		$wpdb->update( Utils::get_relationship_table(), $data, array( 'post_id' => $attachment_id ) );// phpcs:ignore WordPress.DB
 	}
 
 	/**
-	 * Delete unneeded sizes.
+	 * Delete unneeded sizes in bulk by ID.
 	 *
 	 * @param array $ids The IDs to delete.
 	 */
-	public static function delete_size_relations( $ids ) {
+	public static function delete_bulk_size_relations( $ids ) {
 		global $wpdb;
 		$ids       = (array) $ids;
 		$list      = implode( ', ', array_fill( 0, count( $ids ), '%d' ) );
@@ -245,32 +254,33 @@ class Delivery implements Setup {
 	 * Create a size relationship.
 	 *
 	 * @param int    $attachment_id The attachment ID.
-	 * @param string $public_id     The public ID.
 	 * @param string $primary_url   The primary (full) URL.
 	 * @param string $sized_url     The sized url.
 	 * @param string $size          The size in (width)x(height) format.
+	 * @param string $parent_path   The path of the parent if external.
 	 * @param string $type          The type of sync.
 	 *
 	 * @return false|int
 	 */
-	public static function create_size_relation( $attachment_id, $public_id, $primary_url, $sized_url, $size, $type ) {
+	public static function create_size_relation( $attachment_id, $primary_url, $sized_url, $size = '0x0', $parent_path = '', $type = 'media' ) {
 		global $wpdb;
-		$parent_id    = has_post_parent( $attachment_id ) ? get_post_parent( $attachment_id )->ID : $attachment_id;
+
 		$width_height = explode( 'x', $size );
 		$data         = array(
 			'post_id'     => $attachment_id,
-			'parent_id'   => $parent_id,
-			'public_id'   => $public_id,
+			'parent_path' => $parent_path,
 			'primary_url' => $primary_url,
 			'sized_url'   => $sized_url,
 			'width'       => $width_height[0] ? $width_height[0] : 0,
 			'height'      => $width_height[1] ? $width_height[1] : 0,
 			'format'      => pathinfo( $primary_url, PATHINFO_EXTENSION ),
 			'sync_type'   => $type,
+			'post_state'  => 'enable',
 		);
 
 		$insert_id = false;
-		if ( 0 < $wpdb->insert( Utils::get_relationship_table(), $data ) ) { // phpcs:ignore WordPress.DB
+		$created   = $wpdb->insert( Utils::get_relationship_table(), $data ); // phpcs:ignore WordPress.DB
+		if ( 0 < $created ) {
 			$insert_id = $wpdb->insert_id;
 		}
 
@@ -437,8 +447,6 @@ class Delivery implements Setup {
 	 * Find the attachment sizes from a list of URLS.
 	 *
 	 * @param array $urls URLS to find attachments for.
-	 *
-	 * @return array
 	 */
 	public function find_attachment_size_urls( $urls ) {
 
@@ -460,8 +468,7 @@ class Delivery implements Setup {
 
 		// Prepare a query to find all in a single request.
 		$sql = $wpdb->prepare(
-			"SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = '_wp_attached_file' AND meta_value IN ({$in})",
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+			"SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = '_wp_attached_file' AND meta_value IN ({$in})", // phpcs:ignore WordPress.DB
 			$search
 		);
 
@@ -472,17 +479,13 @@ class Delivery implements Setup {
 			$results = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared
 			if ( $results ) {
 				foreach ( $results as $result ) {
-					if ( $this->sync->is_auto_sync_enabled() ) {
-						$this->sync->add_to_sync( $result->post_id );
-					}
-					$url            = self::clean_url( $this->media->local_url( $result->post_id ) );
-					$cached[ $url ] = (int) $result->post_id;
-					$meta           = wp_get_attachment_metadata( $result->post_id, true );
-					if ( ! empty( $meta['sizes'] ) ) {
-						foreach ( $meta['sizes'] as $size ) {
-							$size_url            = dirname( $url ) . '/' . $size['file'];
-							$cached[ $size_url ] = (int) $result->post_id;
-						}
+					// If we are here, it means that an attachment in the media library doesn't have a delivery for the url.
+					// Reset the signature for delivery and add to sync, to update it.
+					$this->sync->set_signature_item( $result->post_id, 'delivery', 'reset' );
+					$this->sync->get_sync_type( $result->post_id );
+					$sizes = $this->get_sizes( $result->post_id );
+					foreach ( $sizes as $urls ) {
+						$cached[ $urls['sized_url'] ] = (int) $result->post_id;
 					}
 				}
 			}
@@ -639,7 +642,7 @@ class Delivery implements Setup {
 			$meta = wp_get_attachment_metadata( $tag_element['id'] );
 			// Check overwrite.
 			$meta['overwrite_transformations'] = $tag_element['overwrite_transformations'];
-
+			$meta['cloudinary_id']             = $tag_element['atts']['data-public-id'];
 			// Add new srcset.
 			$element = wp_image_add_srcset_and_sizes( $tag_element['original'], $meta, $tag_element['id'] );
 
@@ -783,10 +786,10 @@ class Delivery implements Setup {
 		static $base = '';
 		if ( empty( $base ) ) {
 			$dirs = wp_upload_dir();
-			$base = $dirs['baseurl'];
+			$base = self::clean_url( $dirs['baseurl'] );
 		}
 
-		$is_local = substr( $url, 0, strlen( $base ) ) === $base && $this->sync->is_auto_sync_enabled();
+		$is_local = substr( $url, 0, strlen( $base ) ) === $base;
 
 		/**
 		 * Filter if the url is a local asset.
@@ -863,7 +866,6 @@ class Delivery implements Setup {
 		global $wpdb;
 		$base_urls = array_map( array( $this, 'clean_url' ), wp_extract_urls( $content ) );
 		$urls      = array_filter( array_unique( $base_urls ), array( $this, 'validate_url' ) ); // clean out empty urls.
-
 		$list      = implode( ', ', array_fill( 0, count( $urls ), '%s' ) );
 		$tablename = Utils::get_relationship_table();
 		$sql       = "SELECT * from {$tablename} WHERE sized_url IN( {$list} )";
@@ -875,18 +877,21 @@ class Delivery implements Setup {
 			wp_cache_add( $cache_key, $results, 'cld_delivery' );
 		}
 
-		$usable = array();
+		$base = $this->get_content_path();
 		foreach ( $results as $result ) {
 			$this->known[ $result->sized_url ] = $result;
-			if ( ! empty( $result->public_id ) ) {
-				$usable[] = $result->sized_url;
+			if ( ! empty( $result->public_id ) && 'enable' === $result->post_state ) {
+				$this->usable[ $result->sized_url ] = $result->sized_url;
+			} elseif ( empty( $result->public_id ) && 'enable' === $result->post_state ) {
+				$this->unusable[ $result->sized_url ] = $result;
 			}
-			if ( 'asset' === $result->sync_type && $this->sync->is_auto_sync_enabled() ) {
-				// Perform an auto sync.
+			// Take back control, if autosync is on.
+			if ( 'asset' === $result->sync_type && $base === $result->parent_path && true === $this->sync->is_auto_sync_enabled() ) {
+				$this->sync->delete_cloudinary_meta( $result->post_id );
 				$this->sync->add_to_sync( $result->post_id );
 			}
 		}
-		$urls = array_diff( $urls, $usable );
+		$urls = array_diff( $urls, array_keys( $this->known ) );
 		$urls = array_filter( $urls, array( $this, 'is_local_asset_url' ) );
 
 		return $urls;
@@ -902,7 +907,8 @@ class Delivery implements Setup {
 		$this->init_delivery();
 		$urls  = $this->get_urls( $content );
 		$known = $this->convert_tags( $content );
-		$urls  = array_filter( $urls, array( 'Cloudinary\String_Replace', 'string_not_set' ) );
+
+		$urls = array_filter( $urls, array( 'Cloudinary\String_Replace', 'string_not_set' ) );
 		if ( ! empty( $urls ) ) {
 			$this->find_attachment_size_urls( $urls );
 		}

@@ -214,18 +214,19 @@ class Utils {
 		$sql = "CREATE TABLE $table_name (
 	  id int(11) unsigned NOT NULL AUTO_INCREMENT,
 	  post_id int(11) DEFAULT NULL,
-	  parent_id int(11) DEFAULT NULL,
 	  public_id varchar(255) DEFAULT NULL,
+	  parent_path varchar(255) DEFAULT NULL,
 	  primary_url varchar(255) DEFAULT NULL,
 	  sized_url varchar(255) DEFAULT NULL,
 	  width int(11) DEFAULT NULL,
 	  height int(11) DEFAULT NULL,
 	  format varchar(12) DEFAULT NULL,
 	  sync_type varchar(45) DEFAULT NULL,
+	  post_state varchar(12) DEFAULT NULL,	  
 	  PRIMARY KEY (id),
 	  UNIQUE KEY sized_url (sized_url),
 	  KEY post_id (post_id),
-	  KEY parent_id (parent_id),
+	  KEY parent_path (parent_path),
 	  KEY sync_type (sync_type)
 	) $charset_collate";
 
