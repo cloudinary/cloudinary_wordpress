@@ -1507,21 +1507,22 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Convert an attachment URL to a Cloudinary one.
 	 *
-	 * @param string $url                       Url to convert.
-	 * @param int    $attachment_id             Attachment ID.
-	 * @param array  $transformations           Optional transformations.
-	 * @param bool   $overwrite_transformations Flag url as having an overwrite transformation.
+	 * @param string      $url                       Url to convert.
+	 * @param int         $attachment_id             Attachment ID.
+	 * @param array       $transformations           Optional transformations.
+	 * @param bool        $overwrite_transformations Flag url as having an overwrite transformation.
+	 * @param string|null $cloudinary_id             The cloudinary ID if have one.
 	 *
 	 * @return string Converted URL.
 	 */
-	public function convert_url( $url, $attachment_id, $transformations = array(), $overwrite_transformations = true ) {
+	public function convert_url( $url, $attachment_id, $transformations = array(), $overwrite_transformations = true, $cloudinary_id = null ) {
 
 		if ( $this->is_cloudinary_url( $url ) ) {
 			return $url; // Already is a cloudinary URL, just return.
 		}
 		$size = $this->get_crop( $url, $attachment_id );
 
-		return $this->cloudinary_url( $attachment_id, $size, $transformations, null, $overwrite_transformations );
+		return $this->cloudinary_url( $attachment_id, $size, $transformations, $cloudinary_id, $overwrite_transformations );
 	}
 
 	/**
@@ -1536,7 +1537,8 @@ class Media extends Settings_Component implements Setup {
 	 * @return array Altered or same sources array.
 	 */
 	public function image_srcset( $sources, $size_array, $image_src, $image_meta, $attachment_id ) {
-		$cloudinary_id = $this->cloudinary_id( $attachment_id );
+
+		$cloudinary_id = isset( $image_meta['cloudinary_id'] ) ? $image_meta['cloudinary_id'] : $this->cloudinary_id( $attachment_id );
 		if ( ! $cloudinary_id ) {
 			return $sources; // Return WordPress default sources.
 		}
@@ -1601,12 +1603,8 @@ class Media extends Settings_Component implements Setup {
 		// Use current sources, but convert the URLS.
 		foreach ( $sources as &$source ) {
 			if ( ! $this->is_cloudinary_url( $source['url'] ) ) {
-				$source['url'] = $this->convert_url(
-					$source['url'],
-					$attachment_id,
-					$transformations,
-					$image_meta['overwrite_transformations']
-				); // Overwrite transformations applied, since the $transformations includes globals from the primary URL.
+				$size          = $this->get_size_from_url( $source['url'] );
+				$source['url'] = $this->cloudinary_url( $attachment_id, $size, $transformations, $cloudinary_id, $image_meta['overwrite_transformations'] );
 			}
 		}
 
@@ -1989,7 +1987,7 @@ class Media extends Settings_Component implements Setup {
 				$title = sprintf( __( 'File size exceeds the maximum of %s. This media asset will be served from WordPress.', 'cloudinary' ), $max_size_hr );
 				?>
 				<span class="dashicons-cloudinary error" title="<?php echo esc_attr( $title ); ?>"></span>
-			<?php
+				<?php
 			endif;
 		}
 	}
