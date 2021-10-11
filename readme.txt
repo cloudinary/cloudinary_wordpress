@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: image, video, DAM, optimization, CDN
 Requires at least: 4.7
-Tested up to: 5.8
+Tested up to: 5.8.1
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -131,6 +131,17 @@ The following plugins/themes/page-builders might not be fully compatible with th
 9. Use Interactive Media Gallery 
 
 == Changelog ==
+
+= 2.7.7 (11 October 2021) =
+
+Fixes and Improvements:
+
+* General improvement of the Cloudinary only storage
+* Improved the compatibility with future Gutenberg versions
+* Introduced filter support for external domains assets upload
+* Moved Cloudinary logs to it's own meta key
+* Fixed the explicit delivery image file format
+* Fixed the grid view thumbnail sizes on WordPress media library
 
 = 2.7.6 (16 August 2021) =
 
