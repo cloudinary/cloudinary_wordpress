@@ -92,6 +92,13 @@ class Delivery implements Setup {
 	const META_CACHE_KEY = '_cld_replacements';
 
 	/**
+	 * Holds the captured post contexts
+	 *
+	 * @var array
+	 */
+	protected $post_contexts = array();
+
+	/**
 	 * Component constructor.
 	 *
 	 * @param Plugin $plugin Global instance of the main plugin.
@@ -508,6 +515,28 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Get all the caches from found contexts.
+	 *
+	 * @return array
+	 */
+	protected function get_context_cache() {
+		$cached = array();
+		foreach ( $this->post_contexts as $id ) {
+			$has_cache = get_post_meta( $id, self::META_CACHE_KEY, true );
+			if ( ! empty( $has_cache ) ) {
+				foreach ( $has_cache as $type => $cache ) {
+					if ( ! isset( $cached[ $type ] ) ) {
+						$cached[ $type ] = array();
+					}
+					$cached[ $type ] = array_merge( $cached[ $type ], $cache );
+				}
+			}
+		}
+
+		return $cached;
+	}
+
+	/**
 	 * Convert media tags from Local to Cloudinary, and register with String_Replace.
 	 *
 	 * @param string $content The HTML to find tags and prep replacement in.
@@ -515,14 +544,10 @@ class Delivery implements Setup {
 	 * @return array
 	 */
 	public function convert_tags( $content ) {
-		$cached = array();
-		if ( is_singular() ) {
-			$cache_key = self::META_CACHE_KEY;
-			$has_cache = get_post_meta( get_the_ID(), $cache_key, true );
-			$type      = is_ssl() ? 'https' : 'http';
-			if ( ! empty( $has_cache ) && ! empty( $has_cache[ $type ] ) ) {
-				$cached = $has_cache[ $type ];
-			}
+		$has_cache = $this->get_context_cache();
+		$type      = is_ssl() ? 'https' : 'http';
+		if ( ! empty( $has_cache[ $type ] ) ) {
+			$cached = $has_cache[ $type ];
 		}
 
 		$tags = $this->filter->get_media_tags( $content );
@@ -562,12 +587,10 @@ class Delivery implements Setup {
 		}
 
 		// Update the post meta cache.
-		if ( isset( $cache_key ) && isset( $type ) ) {
-			if ( empty( $has_cache ) ) {
-				$has_cache = array();
-			}
+		if ( is_singular() ) {
+			$has_cache          = array();
 			$has_cache[ $type ] = $replacements;
-			update_post_meta( get_the_ID(), $cache_key, $has_cache );
+			update_post_meta( get_the_ID(), self::META_CACHE_KEY, $has_cache );
 		}
 
 		return $replacements;
