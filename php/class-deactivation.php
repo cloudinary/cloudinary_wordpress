@@ -76,6 +76,7 @@ class Deactivation {
 	 */
 	public function load_hooks() {
 		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoint' ) );
+		add_action( 'cloudinary_cleanup_event', array( $this, 'cleanup' ) );
 	}
 
 	/**
@@ -448,11 +449,15 @@ class Deactivation {
 	 * Cleanup Cloudinary data.
 	 */
 	protected function cleanup() {
+		wp_schedule_single_event( time() + 5 * MINUTE_IN_SECONDS, 'cloudinary_cleanup_event' );
 		add_option( self::CLEANING_KEY, true, '', false );
 		$this->cleanup_post_meta();
 		$this->cleanup_term_meta();
 		$this->cleanup_post_type();
 		$this->cleanup_options();
+
+		// If we got this far, let's remove the cron event.
+		wp_clear_scheduled_hook( 'cloudinary_cleanup_event' );
 	}
 
 	/**
