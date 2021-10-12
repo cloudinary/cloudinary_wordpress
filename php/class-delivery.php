@@ -891,6 +891,31 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Set url usability.
+	 *
+	 * @param object    $item      The item object result.
+	 * @param null|bool $auto_sync If auto_sync is on.
+	 */
+	protected function set_usability( $item, $auto_sync = null ) {
+		$this->known[ $item->sized_url ] = $item;
+		$is_media                        = 'media' === $item->sync_type;
+		$is_asset                        = 'inherit' !== $item->post_state;
+
+		if ( true === $auto_sync && true === $is_media && true === $is_asset ) {
+			// Auto sync on - synced as asset - take over.
+			$this->sync->delete_cloudinary_meta( $item->post_id );
+			$this->sync->add_to_sync( $item->post_id );
+		} elseif ( true === $auto_sync && true === $is_media && empty( $item->public_id ) ) {
+			// Unsynced media item with auto sync on. Add to sync.
+			$this->sync->add_to_sync( $item->post_id );
+		} elseif ( ! empty( $item->public_id ) && 'disable' !== $item->post_state ) {
+			$this->usable[ $item->sized_url ] = $item->sized_url;
+		} else {
+			$this->unusable[ $item->sized_url ] = $item;
+		}
+	}
+
+	/**
 	 * Get urls from HTML.
 	 *
 	 * @param string $content The content html.
@@ -912,19 +937,9 @@ class Delivery implements Setup {
 			wp_cache_add( $cache_key, $results, 'cld_delivery' );
 		}
 
-		$base = $this->get_content_path();
+		$auto_sync = $this->sync->is_auto_sync_enabled();
 		foreach ( $results as $result ) {
-			$this->known[ $result->sized_url ] = $result;
-			if ( ! empty( $result->public_id ) && 'enable' === $result->post_state ) {
-				$this->usable[ $result->sized_url ] = $result->sized_url;
-			} elseif ( empty( $result->public_id ) && 'enable' === $result->post_state ) {
-				$this->unusable[ $result->sized_url ] = $result;
-			}
-			// Take back control, if autosync is on.
-			if ( 'asset' === $result->sync_type && $base === $result->parent_path && true === $this->sync->is_auto_sync_enabled() ) {
-				$this->sync->delete_cloudinary_meta( $result->post_id );
-				$this->sync->add_to_sync( $result->post_id );
-			}
+			$this->set_usability( $result, $auto_sync );
 		}
 		$urls = array_diff( $urls, array_keys( $this->known ) );
 		$urls = array_filter( $urls, array( $this, 'is_local_asset_url' ) );
