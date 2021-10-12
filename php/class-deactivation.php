@@ -535,6 +535,15 @@ class Deactivation {
 			$this->settings->delete( $slug );
 		}
 
+		$queue       = $this->plugin->get_component( 'sync' )->managers['queue'];
+		$all_threads = $queue->get_threads( 'all' );
+		foreach ( $all_threads as $threads ) {
+			foreach ( $threads as $thread ) {
+				$queue->reset_thread_queue( $thread );
+				delete_post_meta_by_key( $thread );
+			}
+		}
+
 		$option_keys = array_merge(
 			$this->settings->get_storage_keys(),
 			array(
