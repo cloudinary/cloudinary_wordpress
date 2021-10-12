@@ -149,7 +149,7 @@ $settings = array(
 					'title'          => __( 'Custom transformation', 'cloudinary' ),
 					'link'           => array(
 						'text' => __( 'See Examples', 'cloudinary' ),
-						'href' => '#',
+						'href' => 'https://cloudinary.com/documentation/transformation_reference',
 					),
 					'attributes'     => array(
 						'data-context' => 'video',
