@@ -1229,7 +1229,8 @@ class Sync implements Setup, Assets {
 	 */
 	public function generate_file_signature( $attachment_id ) {
 		$path = get_attached_file( $attachment_id );
+		$str  = ! $this->managers['media']->is_oversize_media( $attachment_id ) ? basename( $path ) : $attachment_id;
 
-		return ! $this->managers['media']->is_oversize_media( $attachment_id ) ? basename( $path ) : $attachment_id;
+		return $str . $this->is_auto_sync_enabled();
 	}
 }
