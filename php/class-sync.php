@@ -1178,11 +1178,12 @@ class Sync implements Setup, Assets {
 						'tooltip_text' => sprintf(
 							// translators: the HTML for opening and closing list and its items.
 							__(
-								'Choose where your assets are stored.%1$sCloudinary and WordPress: Stores assets in both locations. Enables local WordPress delivery if the Cloudinary plugin is disabled or uninstalled.%2$sCloudinary and WordPress (low resolution):  Stores original assets in Cloudinary and low resolution versions in WordPress. Enables low resolution local WordPress delivery if the plugin is disabled or uninstalled.%2$sCloudinary only: Stores assets in Cloudinary only.  Requires additional steps to enable backwards compatibility.%3$s',
+								'Choose where your assets are stored.%1$sCloudinary and WordPress: Stores assets in both locations. Enables local WordPress delivery if the Cloudinary plugin is disabled or uninstalled.%2$sCloudinary and WordPress (low resolution):  Stores original assets in Cloudinary and low resolution versions in WordPress. Enables low resolution local WordPress delivery if the plugin is disabled or uninstalled.%3$sCloudinary only: Stores assets in Cloudinary only.  Requires additional steps to enable backwards compatibility.%4$s',
 								'cloudinary'
 							),
-							'<ul><li>',
-							'</li><li>',
+							'<ul><li class="dual_full">',
+							'</li><li class="dual_low">',
+							'</li><li class="cld">',
 							'</li></ul>'
 						),
 						'default'      => 'dual_full',
