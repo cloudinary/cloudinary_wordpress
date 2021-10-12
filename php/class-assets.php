@@ -8,9 +8,6 @@
 namespace Cloudinary;
 
 use Cloudinary\Assets\Rest_Assets;
-use Cloudinary\Connect\Api;
-use Cloudinary\Sync;
-use Cloudinary\Utils;
 
 /**
  * Class Assets

@@ -106,15 +106,6 @@ $settings = array(
 							'default'            => 'off',
 						),
 						array(
-							'type'  => 'info_box',
-							'icon'  => $this->dir_url . 'css/images/responsive.svg',
-							'title' => __( 'What are Image breakpoints', 'cloudinary' ),
-							'text'  => __(
-								'Cloudinary allows you to easily transform your images on-the-fly to any required format, style and dimension, and also optimizes images for minimal file size.',
-								'cloudinary'
-							),
-						),
-						array(
 							'type'      => 'group',
 							'condition' => array(
 								'enable_breakpoints' => true,

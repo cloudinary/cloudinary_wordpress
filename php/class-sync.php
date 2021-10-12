@@ -1193,21 +1193,6 @@ class Sync implements Setup, Assets {
 						),
 					),
 				),
-				array(
-					'type'        => 'panel',
-					'title'       => __( 'Supported file extensions', 'cloudinary' ),
-					'option_name' => 'sync_media',
-					array(
-						'type'        => 'excluded_types',
-						'slug'        => 'excluded_types',
-						'title'       => __( 'Restricted types', 'cloudinary' ),
-						'description' => __( 'The following file types will not be delivered by Cloudinary', 'cloudinary' ),
-						'default'     => array(
-							'pdf',
-							'zip',
-						),
-					),
-				),
 			),
 		);
 
