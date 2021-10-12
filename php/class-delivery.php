@@ -105,7 +105,14 @@ class Delivery implements Setup {
 	 */
 	public function __construct( Plugin $plugin ) {
 
-		$this->plugin                        = $plugin;
+		$this->plugin = $plugin;
+		add_action( 'cloudinary_connected', array( $this, 'init' ) );
+	}
+
+	/**
+	 * Init the class when cloudinary is connected.
+	 */
+	public function init() {
 		$this->plugin->components['replace'] = new String_Replace( $this->plugin );
 		$this->media                         = $this->plugin->get_component( 'media' );
 		add_filter( 'cloudinary_filter_out_local', '__return_false' );
@@ -964,6 +971,16 @@ class Delivery implements Setup {
 		}
 		foreach ( $known as $src => $replace ) {
 			String_Replace::replace( $src, $replace );
+		}
+
+		// End of run, if admin, throw a sync check.
+		if ( is_user_logged_in() && current_user_can( 'manage_options' ) ) {
+			$ids = array();
+			foreach ( $this->known as $known ) {
+				$ids[] = $known->post_id;
+			}
+			$ids = array_unique( $ids );
+			array_map( array( $this->media, 'cloudinary_id' ), $ids );
 		}
 	}
 }
