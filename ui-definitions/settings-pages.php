@@ -124,7 +124,7 @@ $settings = array(
 								'slug'         => 'pixel_step',
 								'priority'     => 9,
 								'title'        => __( 'Breakpoints distance', 'cloudinary' ),
-								'tooltip_text' => __( 'The distance from the original image for responsive breakpoints generation.', 'cloudinary' ),
+								'tooltip_text' => __( 'The distance between each generated image. Adjusting this will adjust the number of images generated.', 'cloudinary' ),
 								'suffix'       => __( 'px', 'cloudinary' ),
 								'attributes'   => array(
 									'step' => 50,
@@ -135,9 +135,9 @@ $settings = array(
 							array(
 								'type'         => 'number',
 								'slug'         => 'breakpoints',
-								'title'        => __( 'Max breakpoints', 'cloudinary' ),
+								'title'        => __( 'Max Images', 'cloudinary' ),
 								'tooltip_text' => __(
-									'The maximum number of images to be generated when delivering responsive images. For some images, the responsive algorithm may determine that the ideal number of breakpoints is smaller than the value you specify.',
+									'The maximum number of images to be generated. Note that generating large numbers of images will deliver a more optimal version for a wider range of screen sizes but will result in an increase in your usage.  For smaller images, the responsive algorithm may determine that the ideal number is less than the value you specify.',
 									'cloudinary'
 								),
 								'suffix'       => __( 'Valid values: 3-200', 'cloudinary' ),
@@ -152,7 +152,7 @@ $settings = array(
 								'slug'         => 'dpr',
 								'priority'     => 8,
 								'title'        => __( 'DPR settings', 'cloudinary' ),
-								'tooltip_text' => __( 'The distance from the original image for responsive breakpoints generation.', 'cloudinary' ),
+								'tooltip_text' => __( 'The device pixel ratio to use for your generated images.', 'cloudinary' ),
 								'default'      => 'auto',
 								'options'      => array(
 									'off'  => __( 'None', 'cloudinary' ),
@@ -166,8 +166,8 @@ $settings = array(
 								'type'         => 'number',
 								'slug'         => 'max_width',
 								'title'        => __( 'Image width limit', 'cloudinary' ),
-								'tooltip_text' => __(
-									'The minimum and maximum width of an image created as a breakpoint. Leave max as empty to auto detect based on largest registered size in WordPress.',
+								'extra_title' => __(
+									'The minimum and maximum width of an image created as a breakpoint. Leave “max” as empty to automatically detect based on the largest registered size in WordPress.',
 									'cloudinary'
 								),
 								'prefix'       => __( 'Max', 'cloudinary' ),

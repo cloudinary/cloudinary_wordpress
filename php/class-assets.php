@@ -1204,7 +1204,7 @@ class Assets extends Settings_Component {
 	public function register_settings( $pages ) {
 		$pages['connect']['settings'][] = array(
 			'type'                => 'panel',
-			'title'               => __( 'Cache Settings', 'cloudinary' ),
+			'title'               => __( 'Site Asset Sync Settings', 'cloudinary' ),
 			'slug'                => 'cache',
 			'option_name'         => 'site_cache',
 			'requires_connection' => true,
@@ -1229,13 +1229,9 @@ class Assets extends Settings_Component {
 			array(
 				'type'               => 'on_off',
 				'slug'               => 'enable',
-				'title'              => __( 'Full CDN', 'cloudinary' ),
 				'optimisation_title' => __( 'Non-media library files optimisation', 'cloudinary' ),
-				'tooltip_text'       => __(
-					'Deliver all assets from Cloudinary.',
-					'cloudinary'
-				),
-				'description'        => __( 'Enable caching site assets.', 'cloudinary' ),
+				'tooltip_text'       => __( 'Enabling site asset syncing will sync the toggled assets with Cloudinary to make use of advanced optimization and CDN delivery functionality.', 'cloudinary' ),
+				'description'        => __( 'Enable site asset syncing', 'cloudinary' ),
 				'default'            => 'off',
 			),
 			array(
@@ -1274,7 +1270,7 @@ class Assets extends Settings_Component {
 
 		$pages['connect']['settings'][] = array(
 			'type'        => 'panel',
-			'title'       => __( 'External media', 'cloudinary' ),
+			'title'       => __( 'External Asset Sync Settings', 'cloudinary' ),
 			'option_name' => 'additional_domains',
 			array(
 				'slug' => 'cache_external',
@@ -1605,11 +1601,11 @@ class Assets extends Settings_Component {
 
 		$params = array(
 			array(
-				'type'        => 'on_off',
-				'slug'        => 'external_assets',
-				'description' => __( 'Support external media.', 'cloudinary' ),
-				'default'     => 'off',
-
+				'type'         => 'on_off',
+				'slug'         => 'external_assets',
+				'description'  => __( 'Enable external assets', 'cloudinary' ),
+				'tooltip_text' => __( 'Enabling external assets allows you to sync assets from specific external sources with Cloudinary.', 'cloudinary' ),
+				'default'      => 'off',
 			),
 			array(
 				'type'      => 'group',
@@ -1617,10 +1613,9 @@ class Assets extends Settings_Component {
 					'external_assets' => true,
 				),
 				array(
-					'type'        => 'textarea',
-					'title'       => __( 'Only from the following domains', 'cloudinary' ),
-					'description' => __( 'One domain per line.', 'cloudinary' ),
-					'slug'        => 'uploadable_domains',
+					'type'  => 'textarea',
+					'title' => __( 'List the domains for each external source (one domain per line)', 'cloudinary' ),
+					'slug'  => 'uploadable_domains',
 				),
 			),
 		);

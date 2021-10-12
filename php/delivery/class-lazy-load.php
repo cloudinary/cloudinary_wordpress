@@ -7,8 +7,8 @@
 
 namespace Cloudinary\Delivery;
 
-use Cloudinary\Delivery_Feature;
 use Cloudinary\Connect\Api;
+use Cloudinary\Delivery_Feature;
 use Cloudinary\Plugin;
 use Cloudinary\UI\Component\HTML;
 
@@ -166,7 +166,7 @@ class Lazy_Load extends Delivery_Feature {
 			$animation[] = $colors;
 		}
 		$colors = implode( ';', $animation );
-		
+
 		// Add svg placeholder.
 		$svg                        = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $tag_element['atts']['width'] . '" height="' . $tag_element['atts']['height'] . '"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $colors . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
 		$tag_element['atts']['src'] = 'data:image/svg+xml;utf8,' . $svg;
@@ -239,6 +239,7 @@ class Lazy_Load extends Delivery_Feature {
 							array(
 								'type'               => 'on_off',
 								'description'        => __( 'Enable lazy loading', 'cloudinary' ),
+								'tooltip_text'       => __( 'Lazy loading delays the initialization of your web assets to improve page load times.', 'cloudinary' ),
 								'optimisation_title' => __( 'Lazy loading', 'cloudinary' ),
 								'slug'               => 'use_lazy_load',
 								'default'            => 'on',
@@ -249,10 +250,11 @@ class Lazy_Load extends Delivery_Feature {
 									'use_lazy_load' => true,
 								),
 								array(
-									'type'       => 'text',
-									'title'      => __( 'Lazy loading threshold', 'cloudinary' ),
-									'slug'       => 'lazy_threshold',
-									'attributes' => array(
+									'type'         => 'text',
+									'title'        => __( 'Lazy loading threshold', 'cloudinary' ),
+									'tooltip_text' => __( 'How far down the page to start lazy loading assets.', 'cloudinary' ),
+									'slug'         => 'lazy_threshold',
+									'attributes'   => array(
 										'style'            => array(
 											'width:100px;display:block;',
 										),
@@ -262,7 +264,7 @@ class Lazy_Load extends Delivery_Feature {
 								),
 								array(
 									'type'      => 'radio',
-									'title'     => __( 'Placeholder generation', 'cloudinary' ),
+									'title'     => __( 'Placeholder generation type', 'cloudinary' ),
 									'slug'      => 'lazy_placeholder',
 									'default'   => 'blur',
 									'condition' => array(
@@ -278,15 +280,15 @@ class Lazy_Load extends Delivery_Feature {
 								),
 								array(
 									'type'    => 'color',
-									'title'   => __( 'Use custom color', 'cloudinary' ),
+									'title'   => __( 'Custom color', 'cloudinary' ),
 									'slug'    => 'lazy_custom_color',
 									'default' => 'rgba(153,153,153,0.5)',
 								),
 								array(
-									'type'    => 'on_off',
-									'title'   => __( 'Animate', 'cloudinary' ),
-									'slug'    => 'lazy_animate',
-									'default' => 'on',
+									'type'        => 'on_off',
+									'description' => __( 'Animate', 'cloudinary' ),
+									'slug'        => 'lazy_animate',
+									'default'     => 'on',
 								),
 							),
 						),

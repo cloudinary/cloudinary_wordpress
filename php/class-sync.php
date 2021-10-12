@@ -1135,15 +1135,17 @@ class Sync implements Setup, Assets {
 				'requires_connection' => true,
 				array(
 					'type'        => 'panel',
-					'title'       => __( 'Sync Settings', 'cloudinary' ),
+					'title'       => __( 'Media Library Sync Settings', 'cloudinary' ),
 					'option_name' => 'sync_media',
 					array(
 						'type'         => 'radio',
 						'title'        => __( 'Sync method', 'cloudinary' ),
 						'tooltip_text' => sprintf(
-							// translators: The HTML break line.
-							__( 'Auto sync: Ensures that all of your WordPress assets are automatically synced with Cloudinary when they are added to the WordPress Media Library.%sManual sync: All assets must be synced manually using the WordPress Media Library', 'cloudinary' ),
-							'<br>'
+							// translators: The HTML break line, the link to Cloudinary documentation and closing tag.
+							__( 'Defines how your WordPress assets sync with Cloudinary.%1$s“Auto” will sync assets automatically.%1$s“Manual” requires triggering via the WordPress Media Library. %2$sLearn more%3$s', 'cloudinary' ),
+							'<br>',
+							'<a href="https://cloudinary.com/documentation/wordpress_integration#sync" target="_blank" rel="noopener noreferrer">',
+							'</a>'
 						),
 						'slug'         => 'auto_sync',
 						'no_cached'    => true,
@@ -1164,7 +1166,7 @@ class Sync implements Setup, Assets {
 							),
 						),
 						'tooltip_text'      => __(
-							'Specify the folder in your Cloudinary account where WordPress assets are uploaded to. All assets uploaded to WordPress from this point on will be synced to the specified folder in Cloudinary. Leave blank to use the root of your Cloudinary library.',
+							'The folder in your Cloudinary account that WordPress assets are uploaded to. Leave blank to use the root of your Cloudinary library.',
 							'cloudinary'
 						),
 						'sanitize_callback' => array( '\Cloudinary\Media', 'sanitize_cloudinary_folder' ),

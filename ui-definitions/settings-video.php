@@ -165,7 +165,7 @@ $settings = array(
 					'icon'  => $this->dir_url . 'css/images/video.svg',
 					'title' => __( 'What are transformation', 'cloudinary' ),
 					'text'  => __(
-						'Configure how your images are shown on your site. You can apply transformations to adjust the quality, format or visual appearance and define other settings such as responsive images.',
+						'A set of parameters included in a Cloudinary URL to programmatically modify the original and generate a newly derived media file.',
 						'cloudinary'
 					),
 				),
