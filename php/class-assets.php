@@ -624,7 +624,8 @@ class Assets extends Settings_Component {
 		);
 		$result    = $connect->api->upload( $asset_id, $options, array() );
 		if ( ! is_wp_error( $result ) && isset( $result['public_id'] ) ) {
-			Delivery::update_size_relations_public_id( $asset_id, $public_id, 'asset' );
+			Delivery::update_size_relations_public_id( $asset_id, $public_id );
+			Delivery::update_size_relations_state( $asset_id, 'enable' );
 			$this->media->sync->set_signature_item( $asset_id, 'file' );
 			$this->media->sync->set_signature_item( $asset_id, 'cld_asset' );
 		}
@@ -906,7 +907,8 @@ class Assets extends Settings_Component {
 		wp_generate_attachment_metadata( $id, $file_path );
 
 		// Init the auto sync.
-		Delivery::create_size_relation( $id, $url, $url, $size, $base, 'asset' );
+		Delivery::create_size_relation( $id, $url, $url, $size, $base );
+		Delivery::update_size_relations_state( $id, 'enable' );
 		$this->media->sync->set_signature_item( $id, 'delivery' );
 		$this->media->sync->get_sync_type( $id );
 		$this->media->sync->add_to_sync( $id );

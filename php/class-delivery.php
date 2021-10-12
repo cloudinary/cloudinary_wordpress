@@ -141,8 +141,8 @@ class Delivery implements Setup {
 			self::create_size_relation( $attachment_id, $urls['primary_url'], $urls['sized_url'], $size, $base );
 		}
 		// Update public ID and type.
-		self::update_size_relations_public_id( $attachment_id, $public_id, $type );
-
+		self::update_size_relations_public_id( $attachment_id, $public_id );
+		self::update_size_relations_state( $attachment_id, 'inherit' );
 		$this->sync->set_signature_item( $attachment_id, 'delivery' );
 	}
 
@@ -222,13 +222,25 @@ class Delivery implements Setup {
 	 *
 	 * @param int    $attachment_id The attachment ID.
 	 * @param string $public_id     The public ID.
-	 * @param string $type          $the type of public ID.
 	 */
-	public static function update_size_relations_public_id( $attachment_id, $public_id, $type ) {
+	public static function update_size_relations_public_id( $attachment_id, $public_id ) {
 		global $wpdb;
 		$data = array(
 			'public_id' => $public_id,
-			'sync_type' => $type,
+		);
+		$wpdb->update( Utils::get_relationship_table(), $data, array( 'post_id' => $attachment_id ) );// phpcs:ignore WordPress.DB
+	}
+
+	/**
+	 * Update relationship status.
+	 *
+	 * @param int    $attachment_id The attachment ID.
+	 * @param string $state         The state to set.
+	 */
+	public static function update_size_relations_state( $attachment_id, $state ) {
+		global $wpdb;
+		$data = array(
+			'post_state' => $state,
 		);
 		$wpdb->update( Utils::get_relationship_table(), $data, array( 'post_id' => $attachment_id ) );// phpcs:ignore WordPress.DB
 	}
@@ -258,13 +270,13 @@ class Delivery implements Setup {
 	 * @param string $sized_url     The sized url.
 	 * @param string $size          The size in (width)x(height) format.
 	 * @param string $parent_path   The path of the parent if external.
-	 * @param string $type          The type of sync.
 	 *
 	 * @return false|int
 	 */
-	public static function create_size_relation( $attachment_id, $primary_url, $sized_url, $size = '0x0', $parent_path = '', $type = 'media' ) {
+	public static function create_size_relation( $attachment_id, $primary_url, $sized_url, $size = '0x0', $parent_path = '' ) {
 		global $wpdb;
 
+		$type         = 'attachment' === get_post_type( $attachment_id ) ? 'media' : 'asset';
 		$width_height = explode( 'x', $size );
 		$data         = array(
 			'post_id'     => $attachment_id,
@@ -275,7 +287,7 @@ class Delivery implements Setup {
 			'height'      => $width_height[1] ? $width_height[1] : 0,
 			'format'      => pathinfo( $primary_url, PATHINFO_EXTENSION ),
 			'sync_type'   => $type,
-			'post_state'  => 'enable',
+			'post_state'  => 'inherit',
 		);
 
 		$insert_id = false;
