@@ -61,11 +61,11 @@ class Sync implements Setup, Assets {
 	private $to_sync = array();
 
 	/**
-	 * Holds the settings stlug.
+	 * Holds the settings slug.
 	 *
 	 * @var string
 	 */
-	protected $settings_slug = 'sync_media';
+	public $settings_slug = 'sync_media';
 
 	/**
 	 * Holds the sync settings object.

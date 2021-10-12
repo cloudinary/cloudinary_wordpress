@@ -58,11 +58,11 @@ class Deactivation {
 	 * @param Plugin $plugin Instance of the plugin.
 	 */
 	public function __construct( Plugin $plugin ) {
-		$this->plugin   = $plugin;
-		$this->settings = $plugin->settings;
+		$this->plugin = $plugin;
 
 		add_action( 'init', array( $this, 'load_hooks' ) );
 		add_action( 'current_screen', array( $this, 'maybe_load_hooks' ) );
+		add_action( 'cloudinary_init_settings', array( $this, 'settings_init' ) );
 
 		add_filter( 'plugin_action_links_' . $this->plugin->plugin_file, array( $this, 'tag_deactivate' ) );
 	}
@@ -92,6 +92,13 @@ class Deactivation {
 			add_action( 'admin_head-plugins.php', array( $this, 'markup' ) );
 			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		}
+	}
+
+	/**
+	 * Init Settings.
+	 */
+	public function settings_init() {
+		$this->settings = $this->plugin->settings;
 	}
 
 	/**
@@ -424,7 +431,7 @@ class Deactivation {
 	 * @return array
 	 */
 	public function tag_deactivate( $actions ) {
-		if ( 'cld' === $this->settings['offload'] ) {
+		if ( 'cld' === $this->settings->get_value( 'offload' ) ) {
 			$actions['deactivate'] = str_replace( '<a ', '<a class="cld-deactivate" ', $actions['deactivate'] );
 		} else {
 			$actions['deactivate'] = str_replace( '<a ', '<a class="cld-deactivate-link" ', $actions['deactivate'] );
@@ -524,11 +531,9 @@ class Deactivation {
 		}
 
 		$option_keys = array_merge(
-			Connect::META_KEYS,
+			$this->settings->get_storage_keys(),
 			array(
-				Sync::SYNC_MEDIA,
 				'cloudinary_setup',
-				'cloudinary_' . Media::MEDIA_SETTINGS_SLUG,
 				'cloudinary_main_cache_page',
 				'_cld_disable_http_upload',
 				Media::GLOBAL_VIDEO_TRANSFORMATIONS,

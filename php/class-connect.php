@@ -728,8 +728,9 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			$data = array(
 				'cloudinary_url' => $cld_url,
 			);
+			$key = $this->settings->get_storage_key( $this->plugin->get_component( 'sync' )->settings_slug );
 			// Set auto sync off.
-			$sync = get_option( Sync::SYNC_MEDIA );
+			$sync = get_option( $key );
 			if ( empty( $sync ) ) {
 				$sync = array(
 					'auto_sync'         => '',
@@ -737,7 +738,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 				);
 			}
 			$sync['auto_sync'] = 'off';
-			update_option( Sync::SYNC_MEDIA, $sync );
+			update_option( $key, $sync );
 			delete_option( 'cloudinary_settings_cache' ); // remove the cache.
 		}
 
