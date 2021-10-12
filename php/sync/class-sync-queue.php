@@ -122,13 +122,14 @@ class Sync_Queue {
 	 */
 	public function setup( $sync ) {
 		$this->sync = $sync;
+
 		/**
-		 * Filter the amount of threads to process background syncing.
+		 * Filter the amount of background threads to process for manual syncing.
 		 *
 		 * @hook    cloudinary_queue_threads
 		 * @default 2
 		 *
-		 * @param $threads {int} The number of threads.
+		 * @param $count {int} The number of manual sync threads to use.
 		 *
 		 * @return {int}
 		 */
@@ -141,13 +142,13 @@ class Sync_Queue {
 		 * Filter the amount of background threads to process for auto syncing.
 		 *
 		 * @hook    cloudinary_autosync_threads
-		 * @default 1
+		 * @default 2
 		 *
-		 * @param $threads {int} The number of threads.
+		 * @param $count {int} The number of autosync threads to use.
 		 *
 		 * @return {int}
 		 */
-		$autosync_thread_count = apply_filters( 'cloudinary_autosync_threads', 1 );
+		$autosync_thread_count = apply_filters( 'cloudinary_autosync_threads', 2 );
 		for ( $i = 0; $i < $autosync_thread_count; $i ++ ) {
 			$this->autosync_threads[] = 'auto_sync_thread_' . $i;
 		}
@@ -165,6 +166,12 @@ class Sync_Queue {
 			$this->bulk_sync( false );
 			wp_safe_redirect( $this->sync->settings->get_component()->get_url() );
 			exit;
+		}
+
+		// Periodically restart auto-sync.
+		if ( 'on' === $this->plugin->settings->get_value( 'auto_sync' ) && empty( get_transient( '_autosync_check' ) ) ) {
+			set_transient( '_autosync_check', true, $this->cron_frequency );
+			$this->start_threads( 'autosync' );
 		}
 	}
 
@@ -282,8 +289,9 @@ class Sync_Queue {
 			 * @hook cloudinary_queue_action
 			 *
 			 * @param $action_message {string} The message.
+			 * @param $thread         {string} The thread.
 			 */
-			do_action( 'cloudinary_queue_action', $action_message );
+			do_action( 'cloudinary_queue_action', $action_message, $thread );
 			if ( empty( $thread_queue['next'] ) ) {
 				// Nothing left to sync.
 				return $return;
@@ -541,14 +549,16 @@ class Sync_Queue {
 		if ( 3 === $sync_state ) {
 			// translators: variable is thread name.
 			$action_message = sprintf( __( 'Starting thread %s.', 'cloudinary' ), $thread );
+			do_action( '_cloudinary_queue_action', $action_message, $thread );
 			/**
 			 * Do action on queue action.
 			 *
 			 * @hook cloudinary_queue_action
 			 *
 			 * @param $action_message {string} The message.
+			 * @param $thread         {string} The thread.
 			 */
-			do_action( 'cloudinary_queue_action', $action_message );
+			do_action( 'cloudinary_queue_action', $action_message, $thread );
 			$this->plugin->components['api']->background_request( 'queue', array( 'thread' => $thread ) );
 			$sync_state = 2; // Set as started.
 		}
@@ -634,8 +644,8 @@ class Sync_Queue {
 		/**
 		 * Filter the params for the query used to get thread queue details.
 		 *
-		 * @hook  cloudinary_thread_queue_details_query
-		 * @since 2.7.6
+		 * @hook   cloudinary_thread_queue_details_query
+		 * @since  2.7.6
 		 *
 		 * @param $args   {array}  The arguments for the query.
 		 * @param $thread {string} The thread name.
@@ -719,7 +729,16 @@ class Sync_Queue {
 	 */
 	public function add_to_queue( array $attachment_ids, $type = 'queue' ) {
 
-		$threads        = $this->get_threads( $type );
+		$been_synced = array_filter( $attachment_ids, array( $this->sync, 'been_synced' ) );
+		$new_items   = array_diff( $attachment_ids, $been_synced );
+		$threads     = $this->get_threads( $type );
+		$new_thread  = array_shift( $threads );
+		if ( ! empty( $new_items ) ) {
+			$this->add_to_thread_queue( $new_thread, $new_items );
+			$active_threads[ $new_thread ] = count( $new_items );
+		}
+
+		$attachment_ids = $been_synced;
 		$active_threads = array();
 		if ( ! empty( $attachment_ids ) ) {
 			$chunk_size = ceil( count( $attachment_ids ) / count( $threads ) );
@@ -805,8 +824,9 @@ class Sync_Queue {
 					 * @hook cloudinary_queue_action
 					 *
 					 * @param $action_message {string} The message.
+					 * @param $thread         {string} The thread.
 					 */
-					do_action( 'cloudinary_queue_action', $action_message );
+					do_action( 'cloudinary_queue_action', $action_message, $thread );
 				}
 			}
 

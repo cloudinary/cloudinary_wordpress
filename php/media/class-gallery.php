@@ -143,7 +143,11 @@ class Gallery {
 		 *
 		 * @return {array}
 		 */
-		return apply_filters( 'cloudinary_gallery_config', $config );
+		$config = apply_filters( 'cloudinary_gallery_config', $config );
+
+		$config['queryParam'] = 'AA';
+
+		return $config;
 	}
 
 	/**
@@ -441,6 +445,8 @@ class Gallery {
 		}
 		unset( $attributes['selectedImages'], $attributes['customSettings'] );
 
+		$attributes['queryParam'] = 'AA';
+
 		ob_start();
 		?>
 		<script>
@@ -483,8 +489,9 @@ class Gallery {
 
 		// Can if front end and have the block.
 		if (
-			! is_admin() &&
-			has_block( 'cloudinary/gallery' )
+			function_exists( 'has_block' ) &&
+			has_block( 'cloudinary/gallery' ) &&
+			! is_admin()
 		) {
 			$can = true;
 		}

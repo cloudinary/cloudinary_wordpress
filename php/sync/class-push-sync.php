@@ -191,12 +191,13 @@ class Push_Sync {
 
 		$stat = array();
 		// If a single specified ID, push and return response.
-		$ids = array_map( 'intval', (array) $attachments );
+		$ids    = array_map( 'intval', (array) $attachments );
+		$thread = $this->plugin->settings->get_param( 'current_sync_thread' );
 		// Handle based on Sync Type.
 		foreach ( $ids as $attachment_id ) {
 
-			// Skip external media.
-			if ( ! $this->media->is_local_media( $attachment_id ) ) {
+			// Skip non uploadable media.
+			if ( ! $this->media->is_uploadable_media( $attachment_id ) ) {
 				continue;
 			}
 			// Skip unsyncable delivery types.
@@ -209,7 +210,7 @@ class Push_Sync {
 			while ( $type = $this->sync->get_sync_type( $attachment_id, false ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition
 				// translators: variable is sync type.
 				$action_message = sprintf( __( 'Sync type: %s', 'cloudinary' ), $type );
-				do_action( '_cloudinary_queue_action', $action_message );
+				do_action( '_cloudinary_queue_action', $action_message, $thread );
 				if ( isset( $stat[ $attachment_id ][ $type ] ) ) {
 					// Loop prevention.
 					break;
@@ -238,18 +239,44 @@ class Push_Sync {
 	}
 
 	/**
+	 * Attempts to restart an auto-sync thread if needed.
+	 */
+	public function init_autosync_restart() {
+		$thread = $this->plugin->settings->get_param( 'current_sync_thread' );
+		if ( 1 !== $this->queue->get_thread_state( $thread ) && $this->queue->get_post( $thread ) ) {
+			do_action( '_cloudinary_queue_action', __( 'Starting new thread.', 'cloudinary' ) );
+			$this->plugin->components['api']->background_request( 'queue', array( 'thread' => $thread ) );
+		}
+	}
+
+	/**
 	 * Resume the bulk sync.
 	 *
 	 * @param \WP_REST_Request $request The request.
 	 */
 	public function process_queue( \WP_REST_Request $request ) {
-		$thread      = $request->get_param( 'thread' );
+
+		$thread = $request->get_param( 'thread' );
+
+		// A second thread would technically overwrite this, however, the manual queue is out in v3.
+		$this->plugin->settings->set_param( 'current_sync_thread', $thread );
 		$thread_type = $this->queue->get_thread_type( $thread );
-		$queue       = $this->queue->get_thread_queue( $thread );
-		if ( ! empty( $queue['next'] ) && ( $this->queue->is_running( $thread_type ) ) ) {
-			while ( $attachment_id = $this->queue->get_post( $thread ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition
+		if ( 'autosync' === $thread_type ) {
+			add_action( 'shutdown', array( $this, 'init_autosync_restart' ) );
+		}
+		$queue   = $this->queue->get_thread_queue( $thread );
+		$runs    = 0;
+		$last_id = 0;
+		if ( ! empty( $queue['next'] ) && $this->queue->is_running( $thread_type ) ) {
+			while ( ( $attachment_id = $this->queue->get_post( $thread ) ) && $runs < 10 ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition
+				if ( $last_id === $attachment_id ) {
+					$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['sync_error'], __( 'Asset in sync loop.', 'cloudinary' ) );
+					delete_post_meta( $attachment_id, $thread );
+					continue;
+				}
+
 				// translators: variable is thread name and asset ID.
-				$action_message = sprintf( __( '%1$s: Syncing asset %2$d', 'cloudinary' ), $thread, $attachment_id );
+				$action_message = sprintf( __( '%1$s - cycle %3$s: Syncing asset %2$d', 'cloudinary' ), $thread, $attachment_id, $runs );
 				/**
 				 * Do action on queue action.
 				 *
@@ -259,9 +286,12 @@ class Push_Sync {
 				 */
 				do_action( 'cloudinary_queue_action', $action_message );
 				$this->process_assets( $attachment_id );
+				$runs ++;
+				$last_id = $attachment_id;
 			}
 			$this->queue->stop_maybe( $thread_type );
 		}
+
 		// translators: variable is thread name.
 		$action_message = sprintf( __( 'Ending thread %s', 'cloudinary' ), $thread );
 		/**
@@ -270,7 +300,8 @@ class Push_Sync {
 		 * @hook cloudinary_queue_action
 		 *
 		 * @param $action_message {string} The message.
-		 */
-		do_action( 'cloudinary_queue_action', $action_message );
+		 * @param $thread         {string} The thread.
+ 		 */
+		do_action( 'cloudinary_queue_action', $action_message, $thread );
 	}
 }

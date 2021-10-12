@@ -435,7 +435,7 @@ class Filter {
 			// Ensure the sizes has the transformations and are converted URLS.
 			if ( ! empty( $attachment['sizes'] ) ) {
 				foreach ( $attachment['sizes'] as &$size ) {
-					$size['url'] = $this->media->convert_url( basename( $size['url'] ), $attachment['id'], $transformations );
+					$size['url'] = $this->media->convert_url( $size['url'], $attachment['id'], $transformations );
 				}
 			}
 		}
