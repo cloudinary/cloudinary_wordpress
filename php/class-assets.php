@@ -401,9 +401,15 @@ class Assets extends Settings_Component {
 				if ( is_int( $set ) || empty( $set->public_id ) || 'asset' !== $set->sync_type ) {
 					continue;
 				}
-				$cloudinary_url = $this->media->cloudinary_url( $set->post_id, array( $set->width, $set->height ), null, $set->public_id );
+				$public_id = $set->public_id;
+				if ( ! empty( $set->format ) ) {
+					$public_id .= '.' . $set->format;
+				}
+				$cloudinary_url = $this->media->cloudinary_url( $set->post_id, array( $set->width, $set->height ), null, $public_id );
 				if ( $cloudinary_url ) {
-					String_Replace::replace( $url, $cloudinary_url );
+					// Late replace on unmatched urls (links, inline styles etc..), both http and https.
+					String_Replace::replace( 'http:' . $url, $cloudinary_url );
+					String_Replace::replace( 'https:' . $url, $cloudinary_url );
 				}
 				$total ++;
 			}
