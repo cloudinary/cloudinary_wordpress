@@ -611,7 +611,7 @@ class Assets extends Settings_Component {
 			$asset = get_post( $asset_id );
 			$url   = $asset->post_title;
 		} else {
-			$url = $this->media->local_url( $asset_id );
+			$url = Delivery::clean_url( $this->media->local_url( $asset_id ) );
 		}
 		$path      = trim( wp_normalize_path( str_replace( home_url(), '', $url ) ), '/' );
 		$info      = pathinfo( $path );
