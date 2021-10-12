@@ -223,11 +223,6 @@ class Rest_Assets {
 				continue;
 			}
 
-			$args = array(
-				'ID'          => $id,
-				'post_status' => 'disable' === $state ? 'draft' : 'inherit',
-			);
-			wp_update_post( $args );
 			$data = array(
 				'post_state' => strtolower( $state ),
 			);
