@@ -313,7 +313,8 @@ class Settings {
 		// Register storage.
 		$this->register_storage( $params[ self::META_KEYS['storage'] ] );
 
-		if ( ! empty( $default ) && ! $this->has_param( self::META_KEYS['data'] . $this->separator . $params[ self::META_KEYS['storage'] ] ) ) {
+		// Set default.
+		if ( ! $this->has_param( self::META_KEYS['data'] . $this->separator . $params[ self::META_KEYS['storage'] ] ) ) {
 			$this->set_param( self::META_KEYS['data'] . $this->separator . $params[ self::META_KEYS['storage'] ], $default );
 		}
 

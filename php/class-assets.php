@@ -134,7 +134,9 @@ class Assets extends Settings_Component {
 
 		$this->media    = $plugin->get_component( 'media' );
 		$this->delivery = $plugin->get_component( 'delivery' );
-		$this->init();
+		// Add activation hooks.
+		add_action( 'cloudinary_connected', array( $this, 'init' ) );
+		add_filter( 'cloudinary_admin_pages', array( $this, 'register_settings' ) );
 		self::$instance = $this;
 	}
 
@@ -166,7 +168,6 @@ class Assets extends Settings_Component {
 		add_filter( 'delete_post_metadata', array( $this, 'delete_meta' ), 10, 4 );
 		add_filter( 'intermediate_image_sizes_advanced', array( $this, 'no_sizes' ), PHP_INT_MAX, 3 );
 		add_filter( 'cloudinary_can_sync_asset', array( $this, 'can_sync' ), 10, 2 );
-		add_filter( 'cloudinary_admin_pages', array( $this, 'register_settings' ) );
 		add_filter( 'cloudinary_local_url', array( $this, 'local_url' ), 10, 2 );
 		add_filter( 'cloudinary_is_folder_synced', array( $this, 'filter_folder_sync' ), 10, 2 );
 		// Actions.
