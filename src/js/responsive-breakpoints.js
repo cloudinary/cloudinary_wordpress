@@ -73,31 +73,6 @@ const ResponsiveBreakpoints = {
 		);
 		return steps;
 	},
-	getQuality() {
-		let quality = 'q_auto';
-		switch (
-			navigator && navigator.connection
-				? navigator.connection.effectiveType
-				: 'none'
-		) {
-			case 'none':
-				break;
-			case '4g':
-				quality = 'q_auto:good';
-				break;
-			case '3g':
-				quality = 'q_auto:eco';
-				break;
-			case '2g':
-			case 'slow-2g':
-				quality = 'q_auto:low';
-				break;
-			default:
-				quality = 'q_auto:best';
-				break;
-		}
-		return quality;
-	},
 	scaleSize( original, newSize, responsiveStep ) {
 		const diff = Math.floor( ( original - newSize ) / responsiveStep );
 		let scaledSize = original - responsiveStep * diff;
@@ -130,8 +105,7 @@ const ResponsiveBreakpoints = {
 		const newSize = 'w_' + width + ',dpr_' + this.density;
 		return image.dataset.src
 			.replace( '--size--', newSize )
-			.replace( '/--placehold--', '' )
-			.replace( 'q_auto', this.getQuality() );
+			.replace( '/--placehold--', '' );
 	},
 	getPlaceholderURL( image ) {
 		image.cld_placehold = true;
