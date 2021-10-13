@@ -82,7 +82,10 @@ class Global_Transformations {
 		foreach ( $field_slugs as $slug ) {
 			$setting = $this->media_settings->get_setting( $slug );
 			if ( $setting->has_param( 'taxonomy_field' ) ) {
-				$context  = $setting->get_param( 'taxonomy_field.context', 'global' );
+				$context = $setting->get_param( 'taxonomy_field.context', 'global' );
+				if ( isset( $this->taxonomy_fields[ $context ] ) && in_array( $setting, $this->taxonomy_fields[ $context ], true ) ) {
+					continue;
+				}
 				$priority = intval( $setting->get_param( 'taxonomy_field.priority', 10 ) ) * 1000;
 				while ( isset( $this->taxonomy_fields[ $context ][ $priority ] ) ) {
 					$priority ++;
