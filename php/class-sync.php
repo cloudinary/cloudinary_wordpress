@@ -316,27 +316,6 @@ class Sync implements Setup, Assets {
 	}
 
 	/**
-	 * Filter syncable items based on external deny rules.
-	 *
-	 * @hook cloudinary_can_sync_asset
-	 *
-	 * @param bool $can           Flag if can sync.
-	 * @param int  $attachment_id The attachment ID.
-	 *
-	 * @return bool
-	 */
-	public function filter_deny_types( $can, $attachment_id ) {
-		$list = $this->plugin->settings->sync_media->_excluded_types;
-		$file = strtolower( get_attached_file( $attachment_id ) );
-		$ext  = pathinfo( strstr( $file, '?', true ), PATHINFO_EXTENSION );
-		if ( ! empty( $list ) && in_array( $ext, $list, true ) ) {
-			$can = false;
-		}
-
-		return $can;
-	}
-
-	/**
 	 * Get the last version this asset was synced with.
 	 *
 	 * @param int $attachment_id The attachment ID.
@@ -1116,7 +1095,6 @@ class Sync implements Setup, Assets {
 
 			add_filter( 'cloudinary_setting_get_value', array( $this, 'filter_get_cloudinary_folder' ), 10, 2 );
 			add_filter( 'cloudinary_get_signature', array( $this, 'get_signature_syncable_type' ), 10, 2 );
-			add_filter( 'cloudinary_can_sync_asset', array( $this, 'filter_deny_types' ), PHP_INT_MAX, 2 );
 		}
 	}
 
