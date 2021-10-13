@@ -221,8 +221,8 @@ class Lazy_Load extends Delivery_Feature {
 	public function register_settings( $pages ) {
 
 		$pages['lazy_loading'] = array(
-			'page_title'          => __( 'Lazy Loading', 'cloudinary' ),
-			'menu_title'          => __( 'Lazy Loading', 'cloudinary' ),
+			'page_title'          => __( 'Lazy loading', 'cloudinary' ),
+			'menu_title'          => __( 'Lazy loading', 'cloudinary' ),
 			'priority'            => 5,
 			'requires_connection' => true,
 			'sidebar'             => true,
