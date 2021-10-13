@@ -138,7 +138,7 @@ class Global_Transformations {
 
 			foreach ( $set as $setting ) {
 
-				$meta_key = self::META_ORDER_KEY . '_' . $setting->get_slug();
+				$meta_key = self::META_ORDER_KEY . '_' . $setting->get_param( 'slug' );
 				$value    = $setting->get_submitted_value();
 
 				// Check if it's option based.
@@ -170,7 +170,7 @@ class Global_Transformations {
 	private function get_term_transformations( $term_id, $type ) {
 		$meta_data = array();
 		foreach ( $this->taxonomy_fields[ $type ] as $setting ) {
-			$slug               = $setting->get_slug();
+			$slug               = $setting->get_param( 'slug' );
 			$meta_key           = self::META_ORDER_KEY . '_' . $slug;
 			$value              = get_term_meta( $term_id, $meta_key, true );
 			$meta_data[ $slug ] = $value;
