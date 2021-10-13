@@ -166,7 +166,7 @@ class Lazy_Load extends Delivery_Feature {
 			$animation[] = $colors;
 		}
 		$colors = implode( ';', $animation );
-		
+
 		// Add svg placeholder.
 		$svg                        = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $tag_element['atts']['width'] . '" height="' . $tag_element['atts']['height'] . '"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $colors . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
 		$tag_element['atts']['src'] = 'data:image/svg+xml;utf8,' . $svg;
@@ -221,8 +221,8 @@ class Lazy_Load extends Delivery_Feature {
 	public function register_settings( $pages ) {
 
 		$pages['lazy_loading'] = array(
-			'page_title'          => __( 'Lazy Loading', 'cloudinary' ),
-			'menu_title'          => __( 'Lazy Loading', 'cloudinary' ),
+			'page_title'          => __( 'Lazy loading', 'cloudinary' ),
+			'menu_title'          => __( 'Lazy loading', 'cloudinary' ),
 			'priority'            => 5,
 			'requires_connection' => true,
 			'sidebar'             => true,

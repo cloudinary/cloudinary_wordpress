@@ -76,11 +76,10 @@ $settings = array(
 		'sidebar'             => true,
 		'settings'            => include $this->dir_path . 'ui-definitions/settings-video.php',
 	),
-	'gallery'        => array(),
 	'lazy_loading'   => array(),
 	'responsive'     => array(
 		'page_title'          => __( 'Responsive', 'cloudinary' ),
-		'menu_title'          => __( 'Responsive', 'cloudinary' ),
+		'menu_title'          => __( 'Responsive images', 'cloudinary' ),
 		'priority'            => 5,
 		'requires_connection' => true,
 		'sidebar'             => true,
@@ -206,15 +205,149 @@ $settings = array(
 			),
 		),
 	),
+	'gallery'        => array(),
 	'help'           => array(
 		'page_title' => __( 'Need help?', 'cloudinary' ),
 		'menu_title' => __( 'Need help?', 'cloudinary' ),
 		'priority'   => 50,
 		'sidebar'    => true,
 		array(
-			'type'    => 'panel',
-			'title'   => __( 'Help Centre', 'cloudinary' ),
-			'content' => __( 'How can we help', 'cloudinary' ),
+			'type'  => 'panel',
+			'title' => __( 'Help Centre', 'cloudinary' ),
+			array(
+				'type'    => 'tag',
+				'element' => 'h4',
+				'content' => __( 'How can we help', 'cloudinary' ),
+			),
+			array(
+				'type'    => 'span',
+				'content' => 'This help center is divided into segments, to make sure you will get the right answer and information as fast as possible. Know that we are here for you!',
+			),
+			array(
+				'type' => 'row',
+				'attributes' => array(
+					'wrap' => array(
+						'class' => array(
+							'help-wrap',
+						),
+					),
+				),
+				array(
+					'type'       => 'column',
+					'attributes' => array(
+						'wrap' => array(
+							'class' => array(
+								'help-box',
+							),
+						),
+					),
+					array(
+						'type'       => 'tag',
+						'element'    => 'img',
+						'attributes' => array(
+							'src' => CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE . 'w_600/sample.jpg',
+						),
+					),
+					array(
+						'type'    => 'tag',
+						'element' => 'h4',
+						'content' => __( 'Documentation', 'cloudinary' ),
+					),
+					array(
+						'type'    => 'span',
+						'content' => 'Knowledge-base contains guides that are a base in order to use a particular product, Features.',
+					),
+				),
+				array(
+					'type'       => 'column',
+					'attributes' => array(
+						'wrap' => array(
+							'class' => array(
+								'help-box',
+							),
+						),
+					),
+					array(
+						'type'       => 'tag',
+						'element'    => 'img',
+						'attributes' => array(
+							'src' => CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE . 'w_600/sample.jpg',
+						),
+					),
+					array(
+						'type'    => 'tag',
+						'element' => 'h4',
+						'content' => __( 'Open support ticket', 'cloudinary' ),
+					),
+					array(
+						'type'    => 'span',
+						'content' => 'When you have a problem, all you need to do is open support tickets and we will reply ASAP.',
+					),
+				),
+				array(
+					'type'       => 'column',
+					'attributes' => array(
+						'wrap' => array(
+							'class' => array(
+								'help-box',
+							),
+						),
+					),
+					array(
+						'type'       => 'tag',
+						'element'    => 'img',
+						'attributes' => array(
+							'src' => CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE . 'w_600/sample.jpg',
+						),
+					),
+					array(
+						'type'    => 'tag',
+						'element' => 'h4',
+						'content' => __( 'System Report', 'cloudinary' ),
+					),
+					array(
+						'type'    => 'a',
+						'content' => 'When you have a problem, all you need to do is open support tickets and we will reply.',
+						'attributes' => array(
+							'href' => '#',
+						),
+					),
+				),
+			),
+		),
+		array(
+			'type'  => 'panel',
+			'title' => __( 'FAQ', 'cloudinary' ),
+			array(
+				'type'        => 'panel',
+				'title'       => __( 'What does Cloudinary do?', 'cloudinary' ),
+				'collapsible' => 'closed',
+				'content'     => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut luctus vitae nunc et interdum. Integer vulputate eros semper, maximus lectus nec, venenatis enim. Vivamus in velit elementum, viverra magna et, tristique erat. Etiam ut vehicula turpis. Curabitur varius purus quam, a blandit dui eleifend ut. Nulla dictum, nibh in iaculis feugiat, nisl lacus eleifend elit, vel sagittis elit lacus mollis velit. Nam pulvinar massa nec metus placerat, ut sollicitudin lectus dignissim. Curabitur ullamcorper massa orci, sit amet varius diam ultrices sed. Phasellus rhoncus sed justo et commodo. Sed eu scelerisque justo.',
+			),
+			array(
+				'type'        => 'panel',
+				'title'       => __( 'Can I try out Cloudinary before I purchase it?', 'cloudinary' ),
+				'collapsible' => 'closed',
+				'content'     => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut luctus vitae nunc et interdum. Integer vulputate eros semper, maximus lectus nec, venenatis enim. Vivamus in velit elementum, viverra magna et, tristique erat. Etiam ut vehicula turpis. Curabitur varius purus quam, a blandit dui eleifend ut. Nulla dictum, nibh in iaculis feugiat, nisl lacus eleifend elit, vel sagittis elit lacus mollis velit. Nam pulvinar massa nec metus placerat, ut sollicitudin lectus dignissim. Curabitur ullamcorper massa orci, sit amet varius diam ultrices sed. Phasellus rhoncus sed justo et commodo. Sed eu scelerisque justo.',
+			),
+			array(
+				'type'        => 'panel',
+				'title'       => __( 'Does the free plan expire?', 'cloudinary' ),
+				'collapsible' => 'closed',
+				'content'     => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut luctus vitae nunc et interdum. Integer vulputate eros semper, maximus lectus nec, venenatis enim. Vivamus in velit elementum, viverra magna et, tristique erat. Etiam ut vehicula turpis. Curabitur varius purus quam, a blandit dui eleifend ut. Nulla dictum, nibh in iaculis feugiat, nisl lacus eleifend elit, vel sagittis elit lacus mollis velit. Nam pulvinar massa nec metus placerat, ut sollicitudin lectus dignissim. Curabitur ullamcorper massa orci, sit amet varius diam ultrices sed. Phasellus rhoncus sed justo et commodo. Sed eu scelerisque justo.',
+			),
+			array(
+				'type'        => 'panel',
+				'title'       => __( 'What does the price include?', 'cloudinary' ),
+				'collapsible' => 'closed',
+				'content'     => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut luctus vitae nunc et interdum. Integer vulputate eros semper, maximus lectus nec, venenatis enim. Vivamus in velit elementum, viverra magna et, tristique erat. Etiam ut vehicula turpis. Curabitur varius purus quam, a blandit dui eleifend ut. Nulla dictum, nibh in iaculis feugiat, nisl lacus eleifend elit, vel sagittis elit lacus mollis velit. Nam pulvinar massa nec metus placerat, ut sollicitudin lectus dignissim. Curabitur ullamcorper massa orci, sit amet varius diam ultrices sed. Phasellus rhoncus sed justo et commodo. Sed eu scelerisque justo.',
+			),
+			array(
+				'type'        => 'panel',
+				'title'       => __( 'My website serves many terabytes of data. Can Cloudinary handle that?', 'cloudinary' ),
+				'collapsible' => 'closed',
+				'content'     => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut luctus vitae nunc et interdum. Integer vulputate eros semper, maximus lectus nec, venenatis enim. Vivamus in velit elementum, viverra magna et, tristique erat. Etiam ut vehicula turpis. Curabitur varius purus quam, a blandit dui eleifend ut. Nulla dictum, nibh in iaculis feugiat, nisl lacus eleifend elit, vel sagittis elit lacus mollis velit. Nam pulvinar massa nec metus placerat, ut sollicitudin lectus dignissim. Curabitur ullamcorper massa orci, sit amet varius diam ultrices sed. Phasellus rhoncus sed justo et commodo. Sed eu scelerisque justo.',
+			),
 		),
 	),
 );

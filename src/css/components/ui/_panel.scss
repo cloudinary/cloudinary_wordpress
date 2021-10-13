@@ -53,6 +53,27 @@
 	}
 	// Include the legacy styles that might not be needed anymore.
 	@import "panels/legacy";
+
+	.help-wrap{
+		display: flex;
+		flex-direction: row;
+		justify-content: flex-start;
+		align-items: stretch;
+		.help-box{
+			background: rgb(255, 255, 255);
+			border-radius: 4px;
+			box-shadow: 0px 1px 8px 0px rgba(0, 0, 0, 0.3);
+			width: 33%;
+			img{
+				max-width: 100%;
+				border-radius: 4px 4px 0 0;
+			}
+			h4, div{
+				padding: 0 12px;
+			}
+		}
+	}
+
 }
 // Include other types of panels.
 @import "panels/panel-short";
