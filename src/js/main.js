@@ -39,6 +39,11 @@ import '../css/images/sample.webp';
 import '../css/images/wizard-welcome.png';
 import '../css/images/document.svg';
 import '../css/images/arrow.svg';
+import '../css/images/documentation.jpg';
+import '../css/images/request.jpg';
+import '../css/images/report.jpg';
+import '../css/images/confetti.png';
+
 
 // jQuery, because reasons.
 window.$ = window.jQuery;
