@@ -5,6 +5,9 @@
  * @package Cloudinary
  */
 
+use Cloudinary\Utils;
+use function Cloudinary\get_plugin_instance;
+
 $media    = $this->get_component( 'media' );
 $settings = array(
 	'dashboard'      => array(
@@ -234,19 +237,31 @@ $settings = array(
 					),
 					array(
 						'type'       => 'tag',
-						'element'    => 'img',
+						'element'    => 'a',
 						'attributes' => array(
-							'src' => $this->dir_url . 'css/images/documentation.jpg',
+							'href'   => 'https://cloudinary.com/documentation/wordpress_integration',
+							'target' => '_blank',
+							'rel'    => 'noopener noreferrer',
+							'class'  => array(
+								'large-button',
+							),
 						),
-					),
-					array(
-						'type'    => 'tag',
-						'element' => 'h4',
-						'content' => __( 'Documentation', 'cloudinary' ),
-					),
-					array(
-						'type'    => 'span',
-						'content' => __( 'Learn more about how to use the Cloudinary plugin and get the most out of the functionality.', 'cloudinary' ),
+						array(
+							'type'       => 'tag',
+							'element'    => 'img',
+							'attributes' => array(
+								'src' => $this->dir_url . 'css/images/documentation.jpg',
+							),
+						),
+						array(
+							'type'    => 'tag',
+							'element' => 'h4',
+							'content' => __( 'Documentation', 'cloudinary' ),
+						),
+						array(
+							'type'    => 'span',
+							'content' => __( 'Learn more about how to use the Cloudinary plugin and get the most out of the functionality.', 'cloudinary' ),
+						),
 					),
 				),
 				array(
@@ -260,19 +275,31 @@ $settings = array(
 					),
 					array(
 						'type'       => 'tag',
-						'element'    => 'img',
+						'element'    => 'a',
 						'attributes' => array(
-							'src' => $this->dir_url . 'css/images/request.jpg',
+							'href'   => Utils::get_support_link( '-' ),
+							'target' => '_blank',
+							'rel'    => 'noopener noreferrer',
+							'class'  => array(
+								'large-button',
+							),
 						),
-					),
-					array(
-						'type'    => 'tag',
-						'element' => 'h4',
-						'content' => __( 'Submit a request', 'cloudinary' ),
-					),
-					array(
-						'type'    => 'span',
-						'content' => __( 'If you’re encountering an issue or struggling to get the plugin work, open a ticket to contact our support team. To help us debug your queries, we recommend generating a system report.', 'cloudinary' ),
+						array(
+							'type'       => 'tag',
+							'element'    => 'img',
+							'attributes' => array(
+								'src' => $this->dir_url . 'css/images/request.jpg',
+							),
+						),
+						array(
+							'type'    => 'tag',
+							'element' => 'h4',
+							'content' => __( 'Submit a request', 'cloudinary' ),
+						),
+						array(
+							'type'    => 'span',
+							'content' => __( 'If you’re encountering an issue or struggling to get the plugin work, open a ticket to contact our support team. To help us debug your queries, we recommend generating a system report.', 'cloudinary' ),
+						),
 					),
 				),
 				array(
@@ -286,113 +313,116 @@ $settings = array(
 					),
 					array(
 						'type'       => 'tag',
-						'element'    => 'img',
+						'element'    => 'a',
 						'attributes' => array(
-							'src' => $this->dir_url . 'css/images/report.jpg',
+							'href'  => 'https://cloudinary.com/documentation/wordpress_integration',
+							'class' => array(
+								'large-button',
+							),
 						),
-					),
-					array(
-						'type'    => 'tag',
-						'element' => 'h4',
-						'content' => __( 'System Report', 'cloudinary' ),
-					),
-					array(
-						'type'       => 'a',
-						'content'    => __( "Generate a system report to help debug any specific issues you're having with your Cloudinary media, our support team will usually ask for this when submitting a support request.", 'cloudinary' ),
-						'attributes' => array(
-							'href' => '#',
+						array(
+							'type'       => 'tag',
+							'element'    => 'img',
+							'attributes' => array(
+								'src' => $this->dir_url . 'css/images/report.jpg',
+							),
+						),
+						array(
+							'type'    => 'tag',
+							'element' => 'h4',
+							'content' => __( 'System Report', 'cloudinary' ),
+						),
+						array(
+							'type'       => 'a',
+							'content'    => __( "Generate a system report to help debug any specific issues you're having with your Cloudinary media, our support team will usually ask for this when submitting a support request.", 'cloudinary' ),
+							'attributes' => array(
+								'href' => '#',
+							),
 						),
 					),
 				),
 			),
 		),
-
-	),
-);
-
-$faqs = array(
-	'type'  => 'panel',
-	'title' => __( 'FAQ', 'cloudinary' ),
-);
-
-if ( true ) {
-	$faqs[] = array(
-		'type'        => 'panel',
-		'title'       => __( 'Do I need a Cloudinary account to use the plugin and can I try it out for free?', 'cloudinary' ),
-		'collapsible' => 'closed',
-		'content'     => sprintf(
-			// translators: The HTML markup.
-			__( 'To use the Cloudinary Plugin and all the functionality that comes with it, you will need to have a Cloudinary Account. If you don’t have an account yet, %1$ssign up%2$s now for a free plan. You’ll start with generous usage limits and when your requirements grow, you can easily upgrade to a plan that best fits your needs.', 'cloudinary' ),
-			'<a href="https://cloudinary.com/signup" target="_blank" rel="noopener noreferrer">',
-			'</a>'
+		array(
+			'type'  => 'panel',
+			'title' => __( 'FAQ', 'cloudinary' ),
+			array(
+				array(
+					'type'        => 'panel',
+					'title'       => __( 'Do I need a Cloudinary account to use the plugin and can I try it out for free?', 'cloudinary' ),
+					'enabled'     => static function () {
+						return ! get_plugin_instance()->get_component( 'connect' )->is_connected();
+					},
+					'collapsible' => 'closed',
+					'content'     => sprintf(
+						// translators: The HTML markup.
+						__( 'To use the Cloudinary Plugin and all the functionality that comes with it, you will need to have a Cloudinary Account. If you don’t have an account yet, %1$ssign up%2$s now for a free plan. You’ll start with generous usage limits and when your requirements grow, you can easily upgrade to a plan that best fits your needs.', 'cloudinary' ),
+						'<a href="https://cloudinary.com/signup" target="_blank" rel="noopener noreferrer">',
+						'</a>'
+					),
+				),
+				array(
+					'type'        => 'panel',
+					'title'       => __( 'I’ve installed the plugin, what happens now?', 'cloudinary' ),
+					'collapsible' => 'closed',
+					'content'     => __( 'If you left all the settings as default, all your current media will begin syncing to Cloudinary and will start to be optimized and delivered by fast CDN on your website. Once the syncing is complete, you should start seeing improvements in performance across your site.', 'cloudinary' ),
+				),
+				array(
+					'type'        => 'panel',
+					'title'       => __( 'Which file types are supported?', 'cloudinary' ),
+					'collapsible' => 'closed',
+					'content'     => sprintf(
+						// translators: The HTML markup.
+						__( 'Most common media files are supported for optimization and delivery by Cloudinary. For free accounts, you will not be able to deliver PDF or ZIP files by default for security reasons. If this is a requirement, please contact our support team who can help activate this for you.%1$sTo deliver additional file types via Cloudinary, you can extend the functionality of the plugin using the %2$sactions and filters%3$s the plugin exposes for developers.', 'cloudinary' ),
+						'<br><br>',
+						'<a href="https://cloudinary.com/documentation/wordpress_integration#actions_and_filters" target="_blank" rel="noopener noreferrer">',
+						'</a>'
+					),
+				),
+				array(
+					'type'        => 'panel',
+					'title'       => sprintf(
+						// translators: The HTML markup.
+						__( 'I have various other plugins installed, will the Cloudinary Plugin still work?%sI’m having an incompatibility issue with a theme, plugin, or hosting environment, what can I do?', 'cloudinary' ),
+						'<br>'
+					),
+					'collapsible' => 'closed',
+					'content'     => sprintf(
+						// translators: The HTML markup.
+						__( 'We’re compatible with most other plugins so we expect it to work absolutely fine. If you do have any issues, please %1$scontact our support team%2$s who will help resolve your issue.', 'cloudinary' ),
+						'<a href="' . Utils::get_support_link() . '" target="_blank" rel="noopener noreferrer">',
+						'</a>'
+					),
+				),
+				array(
+					'type'        => 'panel',
+					'title'       => __( 'Can I use the Cloudinary plugin for my eCommerce websites?', 'cloudinary' ),
+					'collapsible' => 'closed',
+					'content'     => sprintf(
+						// translators: The HTML markup.
+						__( 'Yes, the plugin has full support for WooCommerce. We also have additional functionality that allows you to add a fully optimized %1$sProduct Gallery%2$s.', 'cloudinary' ),
+						'<a href="">',
+						'</a>'
+					),
+				),
+				array(
+					'type'        => 'panel',
+					'title'       => __( 'Why are my images loading locally and not from Cloudinary?', 'cloudinary' ),
+					'collapsible' => 'closed',
+					'content'     => sprintf(
+						// translators: The HTML markup.
+						__( 'Your images may be loading locally for a number of reasons:%1$sThe asset has been selected to be delivered from WordPress. You can update this for each asset via the WordPress Media Library.%2$sYour asset is %3$sstored outside%4$s of your WordPress %5$sstorage%4$s.%2$sThe asset is not properly synced with Cloudinary. You can find the sync status of your assets in the WordPress Media Library.%6$s', 'cloudinary' ),
+						'<ul><li>',
+						'</li><li>',
+						'<a href="' . add_query_arg( array( 'page' => 'cloudinary_connect#connect.cache_external.external_assets' ), admin_url( 'admin.php' ) ) . '">',
+						'</a>',
+						'<a href="#">',
+						'</li></ul>'
+					),
+				),
+			),
 		),
-	);
-}
-
-$faqs[] = array(
-	'type'        => 'panel',
-	'title'       => __( 'I’ve installed the plugin, what happens now?', 'cloudinary' ),
-	'collapsible' => 'closed',
-	'content'     => __( 'If you left all the settings as default, all your current media will begin syncing to Cloudinary and will start to be optimized and delivered by fast CDN on your website. Once the syncing is complete, you should start seeing improvements in performance across your site.', 'cloudinary' ),
-);
-
-$faqs[] = array(
-	'type'        => 'panel',
-	'title'       => __( 'Which file types are supported?', 'cloudinary' ),
-	'collapsible' => 'closed',
-	'content'     => sprintf(
-		// translators: The HTML markup.
-		__( 'Most common media files are supported for optimization and delivery by Cloudinary. For free accounts, you will not be able to deliver PDF or ZIP files by default for security reasons. If this is a requirement, please contact our support team who can help activate this for you.%1$sTo deliver additional file types via Cloudinary, you can extend the functionality of the plugin using the %2$sactions and filters%3$s the plugin exposes for developers.', 'cloudinary' ),
-		'<br><br>',
-		'<a href="https://cloudinary.com/documentation/wordpress_integration#actions_and_filters" target="_blank" rel="noopener noreferrer">',
-		'</a>'
 	),
 );
-
-$faqs[] = array(
-	'type'        => 'panel',
-	'title'       => sprintf(
-		// translators: The HTML markup.
-		__( 'I have various other plugins installed, will the Cloudinary Plugin still work?%sI’m having an incompatibility issue with a theme, plugin, or hosting environment, what can I do?', 'cloudinary' ),
-		'<br>'
-	),
-	'collapsible' => 'closed',
-	'content'     => sprintf(
-		// translators: The HTML markup.
-		__( 'We’re compatible with most other plugins so we expect it to work absolutely fine. If you do have any issues, please %1$scontact our support team%2$s who will help resolve your issue.', 'cloudinary' ),
-		'<a href="">',
-		'</a>'
-	),
-);
-
-$faqs[] = array(
-	'type'        => 'panel',
-	'title'       => __( 'Can I use the Cloudinary plugin for my eCommerce websites?', 'cloudinary' ),
-	'collapsible' => 'closed',
-	'content'     => sprintf(
-		// translators: The HTML markup.
-		__( 'Yes, the plugin has full support for WooCommerce. We also have additional functionality that allows you to add a fully optimized %1$sProduct Gallery%2$s.', 'cloudinary' ),
-		'<a href="">',
-		'</a>'
-	),
-);
-
-$faqs[] = array(
-	'type'        => 'panel',
-	'title'       => __( 'Why are my images loading locally and not from Cloudinary?', 'cloudinary' ),
-	'collapsible' => 'closed',
-	'content'     => sprintf(
-		// translators: The HTML markup.
-		__( 'Your images may be loading locally for a number of reasons:%1$sThe asset has been selected to be delivered from WordPress. You can update this for each asset via the WordPress Media Library.%2$sYour asset is %3$sstored outside%4$s of your WordPress %5$sstorage%4$s.%2$sThe asset is not properly synced with Cloudinary. You can find the sync status of your assets in the WordPress Media Library.%6$s', 'cloudinary' ),
-		'<ul><li>',
-		'</li><li>',
-		'<a href="' . add_query_arg( array( 'page' => 'cloudinary_connect#connect.cache_external.external_assets' ), admin_url( 'admin.php' ) ) . '">',
-		'</a>',
-		'<a href="#">',
-		'</li></ul>'
-	),
-);
-
-$settings['help'][] = $faqs;
 
 return apply_filters( 'cloudinary_admin_pages', $settings );
