@@ -64,11 +64,25 @@ class Delivery implements Setup {
 	protected $bypass;
 
 	/**
+	 * Holds a list of found and valid urls.
+	 *
+	 * @var array
+	 */
+	public $found_urls = array();
+
+	/**
 	 * Holds a list of known urls.
 	 *
 	 * @var array
 	 */
 	public $known = array();
+
+	/**
+	 * Holds the list of unknown URLS.
+	 *
+	 * @var array
+	 */
+	public $unknown = array();
 
 	/**
 	 * Holds a list of known urls with public_ids.
@@ -122,6 +136,12 @@ class Delivery implements Setup {
 		add_action( 'before_delete_post', array( $this, 'delete_size_relationship' ) );
 		add_action( 'delete_attachment', array( $this, 'delete_size_relationship' ) );
 		add_action( 'cloudinary_register_sync_types', array( $this, 'register_sync_type' ), 30 );
+		add_action(
+			'the_post',
+			function ( $post ) {
+				$this->post_contexts[] = $post->ID;
+			}
+		);
 
 		// Add Bypass options.
 		$this->bypass = new Bypass( $this->plugin );
@@ -149,7 +169,6 @@ class Delivery implements Setup {
 	public function create_delivery( $attachment_id ) {
 		$sizes     = $this->get_sizes( $attachment_id );
 		$public_id = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
-		$type      = $this->sync->full_sync( $attachment_id ) ? 'media' : 'asset';
 		$base      = $this->get_content_path();
 		foreach ( $sizes as $size => $urls ) {
 			self::create_size_relation( $attachment_id, $urls['primary_url'], $urls['sized_url'], $size, $base );
@@ -195,7 +214,7 @@ class Delivery implements Setup {
 	public function delete_size_relationship( $attachment_id ) {
 		global $wpdb;
 
-		$wpdb->delete( Utils::get_relationship_table(), array( 'post_id' => $attachment_id ) ); // phpcs:ignore WordPress.DB
+		$wpdb->delete( Utils::get_relationship_table(), array( 'post_id' => $attachment_id ), array( '%d' ) ); // phpcs:ignore WordPress.DB
 	}
 
 	/**
@@ -242,7 +261,7 @@ class Delivery implements Setup {
 		$data = array(
 			'public_id' => $public_id,
 		);
-		$wpdb->update( Utils::get_relationship_table(), $data, array( 'post_id' => $attachment_id ) );// phpcs:ignore WordPress.DB
+		$wpdb->update( Utils::get_relationship_table(), $data, array( 'post_id' => $attachment_id ), array( '%s' ), array( '%d' ) );// phpcs:ignore WordPress.DB
 	}
 
 	/**
@@ -256,7 +275,7 @@ class Delivery implements Setup {
 		$data = array(
 			'post_state' => $state,
 		);
-		$wpdb->update( Utils::get_relationship_table(), $data, array( 'post_id' => $attachment_id ) );// phpcs:ignore WordPress.DB
+		$wpdb->update( Utils::get_relationship_table(), $data, array( 'post_id' => $attachment_id ), array( '%s' ), array( '%d' ) );// phpcs:ignore WordPress.DB
 	}
 
 	/**
@@ -289,19 +308,25 @@ class Delivery implements Setup {
 	 */
 	public static function create_size_relation( $attachment_id, $primary_url, $sized_url, $size = '0x0', $parent_path = '' ) {
 		global $wpdb;
-
-		$type         = 'attachment' === get_post_type( $attachment_id ) ? 'media' : 'asset';
-		$width_height = explode( 'x', $size );
-		$data         = array(
-			'post_id'     => $attachment_id,
-			'parent_path' => $parent_path,
-			'primary_url' => $primary_url,
-			'sized_url'   => $sized_url,
-			'width'       => $width_height[0] ? $width_height[0] : 0,
-			'height'      => $width_height[1] ? $width_height[1] : 0,
-			'format'      => pathinfo( $primary_url, PATHINFO_EXTENSION ),
-			'sync_type'   => $type,
-			'post_state'  => 'inherit',
+		static $media;
+		if ( ! $media ) {
+			$media = get_plugin_instance()->get_component( 'media' );
+		}
+		$type            = 'attachment' === get_post_type( $attachment_id ) ? 'media' : 'asset';
+		$resource        = $media->get_resource_type( $attachment_id );
+		$width_height    = explode( 'x', $size );
+		$transformations = $media->get_transformation_from_meta( $attachment_id );
+		$data            = array(
+			'post_id'         => $attachment_id,
+			'parent_path'     => $parent_path,
+			'primary_url'     => $primary_url,
+			'sized_url'       => $sized_url,
+			'width'           => $width_height[0] ? $width_height[0] : 0,
+			'height'          => $width_height[1] ? $width_height[1] : 0,
+			'format'          => pathinfo( $primary_url, PATHINFO_EXTENSION ),
+			'sync_type'       => $type,
+			'post_state'      => 'inherit',
+			'transformations' => ! empty( $transformations ) ? Api::generate_transformation_string( $transformations, $resource ) : null,
 		);
 
 		$insert_id = false;
@@ -471,16 +496,14 @@ class Delivery implements Setup {
 
 	/**
 	 * Find the attachment sizes from a list of URLS.
-	 *
-	 * @param array $urls URLS to find attachments for.
 	 */
-	public function find_attachment_size_urls( $urls ) {
+	public function find_attachment_size_urls() {
 
 		global $wpdb;
 		$dirs    = wp_get_upload_dir();
 		$search  = array();
 		$baseurl = self::clean_url( $dirs['baseurl'] );
-		foreach ( $urls as $url ) {
+		foreach ( $this->unknown as $url ) {
 			$url = ltrim( str_replace( $baseurl, '', $url ), '/' );
 			if ( ! preg_match( '/(-(\d+)x(\d+))\./i', $url, $match ) ) {
 				$search[] = $url;
@@ -518,7 +541,8 @@ class Delivery implements Setup {
 			wp_cache_add( $key, $cached );
 		}
 
-		$this->known = array_merge( $this->known, $cached );
+		$this->known   = array_merge( $this->known, $cached );
+		$this->unknown = array_diff_key( $this->unknown, $this->known );
 	}
 
 	/**
@@ -544,6 +568,27 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Get all image and video tags that match our found urls.
+	 *
+	 * @param string $content HTML content.
+	 * @param string $tags    List of tags to get.
+	 *
+	 * @return array The media tags found.
+	 */
+	public function get_media_tags( $content, $tags = 'img|video' ) {
+		$images = array();
+		$urls   = '';
+		if ( preg_match_all( '#(?P<tags><(' . $tags . ')[^>]*\>){1}#is', $content, $found ) ) {
+			$count = count( $found[0] );
+			for ( $i = 0; $i < $count; $i ++ ) {
+				$images[ $i ] = $found['tags'][ $i ];
+			}
+		}
+
+		return $images;
+	}
+
+	/**
 	 * Convert media tags from Local to Cloudinary, and register with String_Replace.
 	 *
 	 * @param string $content The HTML to find tags and prep replacement in.
@@ -557,8 +602,9 @@ class Delivery implements Setup {
 			$cached = $has_cache[ $type ];
 		}
 
-		$tags = $this->filter->get_media_tags( $content );
+		$tags = $this->get_media_tags( $content );
 		$tags = array_map( array( $this, 'parse_element' ), array_unique( $tags ) );
+		$tags = array_filter( $tags );
 
 		$replacements = array();
 		foreach ( $tags as $set ) {
@@ -755,20 +801,32 @@ class Delivery implements Setup {
 		$tag_element['tag']  = array_shift( $attributes );
 		$tag_element['type'] = 'img' === $tag_element['tag'] ? 'image' : $tag_element['tag'];
 		$url                 = isset( $attributes['src'] ) ? self::clean_url( $attributes['src'] ) : '';
-		if ( ! empty( $this->known[ $url ] ) && ! empty( $this->known[ $url ]->public_id ) ) {
-			$tag_element['id']            = $this->known[ $url ]->post_id;
-			$tag_element['width']         = $this->known[ $url ]->width;
-			$tag_element['height']        = $this->known[ $url ]->height;
-			$attributes['data-public-id'] = $this->known[ $url ]->public_id;
+		if ( ! in_array( $url, $this->found_urls, true ) ) {
+			return null; // Dont continue if it's not a url we found.
+		}
+		if ( ! empty( $this->known[ $url ] ) && ! empty( $this->known[ $url ]['public_id'] ) ) {
+			if ( ! empty( $this->known[ $url ]['transformations'] ) ) {
+				$tag_element['transformations'] = $this->media->get_transformations_from_string( $this->known[ $url ]['transformations'], $tag_element['type'] );
+			}
+			$tag_element['id']            = (int) $this->known[ $url ]['post_id'];
+			$tag_element['width']         = $this->known[ $url ]['width'];
+			$tag_element['height']        = $this->known[ $url ]['height'];
+			$attributes['data-public-id'] = $this->known[ $url ]['public_id'];
 		}
 		if ( ! empty( $attributes['class'] ) ) {
+			if ( preg_match( '/wp-post-(\d*)/', $attributes['class'], $match ) ) {
+				$tag_element['context'] = (int) $match[1];
+			}
 			$attributes['class'] = explode( ' ', $attributes['class'] );
 			if ( in_array( 'cld-overwrite', $attributes['class'], true ) ) {
 				$tag_element['overwrite_transformations'] = true;
 			}
 		}
 
-		$tag_element['transformations'] = $this->get_transformations_maybe( $attributes['src'] );
+		$inline_transformations = $this->get_transformations_maybe( $attributes['src'] );
+		if ( $inline_transformations ) {
+			$tag_element['transformations'] = array_merge( $tag_element['transformations'], $inline_transformations );
+		}
 
 		// Set atts.
 		$tag_element['atts'] = wp_parse_args( $attributes, $tag_element['atts'] );
@@ -818,20 +876,20 @@ class Delivery implements Setup {
 	}
 
 	/**
-	 * Checks if a url is for a local asset.
+	 * Checks if a url path is for a local content directory.
 	 *
 	 * @param string $url The url to check.
 	 *
 	 * @return bool
 	 */
-	protected function is_local_asset_url( $url ) {
+	protected function is_content_dir( $url ) {
 		static $base = '';
 		if ( empty( $base ) ) {
 			$dirs = wp_upload_dir();
-			$base = self::clean_url( $dirs['baseurl'] );
+			$base = wp_parse_url( $dirs['baseurl'], PHP_URL_PATH );
 		}
-
-		$is_local = substr( $url, 0, strlen( $base ) ) === $base;
+		$path     = wp_parse_url( $url, PHP_URL_PATH );
+		$is_local = substr( $path, 0, strlen( $base ) ) === $base;
 
 		/**
 		 * Filter if the url is a local asset.
@@ -844,7 +902,7 @@ class Delivery implements Setup {
 		 *
 		 * @return {bool}
 		 */
-		return apply_filters( 'cloudinary_is_local_asset_url', $is_local, $url );
+		return apply_filters( 'cloudinary_is_content_dir', $is_local, $url );
 	}
 
 	/**
@@ -871,6 +929,40 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Check if the file type is allowed to be uploaded.
+	 *
+	 * @param string $ext The filetype extension.
+	 *
+	 * @return bool
+	 */
+	protected function is_allowed_type( $ext ) {
+		static $allowed_types = array();
+		if ( empty( $allowed_types ) ) {
+			$compatible_types = $this->media->get_compatible_media_types();
+			// Check with paths.
+			$types = wp_get_ext_types();
+			foreach ( $compatible_types as $type ) {
+				if ( isset( $types[ $type ] ) ) {
+					$allowed_types = array_merge( $allowed_types, $types[ $type ] );
+				}
+			}
+			/**
+			 * Filter the allowed file extensions to be delivered.
+			 *
+			 * @hook   cloudinary_allowed_extensions
+			 * @since  3.0.0
+			 *
+			 * @param $allowed_types {array}  Array of allowed file extensions.
+			 *
+			 * @return {array}
+			 */
+			$allowed_types = apply_filters( 'cloudinary_allowed_extensions', $allowed_types );
+		}
+
+		return in_array( $ext, $allowed_types, true );
+	}
+
+	/**
 	 * Filter out excluded urls.
 	 *
 	 * @param string $url The url to filter out.
@@ -890,11 +982,11 @@ class Delivery implements Setup {
 			return false; // exclude base domains.
 		}
 		$ext = pathinfo( $parts['path'], PATHINFO_EXTENSION );
-		if ( $parts['host'] === $home['host'] && empty( $ext ) || 'php' === $ext ) {
-			return false; // Local urls without an extension or ending in PHP will not be media.
+		if ( empty( $ext ) || ! $this->is_allowed_type( $ext ) ) {
+			return false;
 		}
 
-		return true;
+		return $parts['host'] === $home['host'] ? $this->is_content_dir( $url ) : $this->media->can_upload_from_host( $parts['host'] );
 	}
 
 	/**
@@ -904,21 +996,21 @@ class Delivery implements Setup {
 	 * @param null|bool $auto_sync If auto_sync is on.
 	 */
 	protected function set_usability( $item, $auto_sync = null ) {
-		$this->known[ $item->sized_url ] = $item;
-		$is_media                        = 'media' === $item->sync_type;
-		$is_asset                        = 'inherit' !== $item->post_state;
+		$this->known[ $item['sized_url'] ] = $item;
+		$is_media                          = 'media' === $item['sync_type'];
+		$is_asset                          = 'inherit' !== $item['post_state'];
 
 		if ( true === $auto_sync && true === $is_media && true === $is_asset ) {
 			// Auto sync on - synced as asset - take over.
-			$this->sync->delete_cloudinary_meta( $item->post_id );
-			$this->sync->add_to_sync( $item->post_id );
-		} elseif ( true === $auto_sync && true === $is_media && empty( $item->public_id ) ) {
+			$this->sync->delete_cloudinary_meta( $item['post_id'] );
+			$this->sync->add_to_sync( $item['post_id'] );
+		} elseif ( true === $auto_sync && true === $is_media && empty( $item['public_id'] ) ) {
 			// Unsynced media item with auto sync on. Add to sync.
-			$this->sync->add_to_sync( $item->post_id );
-		} elseif ( ! empty( $item->public_id ) && 'disable' !== $item->post_state ) {
-			$this->usable[ $item->sized_url ] = $item->sized_url;
+			$this->sync->add_to_sync( $item['post_id'] );
+		} elseif ( ! empty( $item['public_id'] ) && 'disable' !== $item['post_state'] ) {
+			$this->usable[ $item['sized_url'] ] = $item['sized_url'];
 		} else {
-			$this->unusable[ $item->sized_url ] = $item;
+			$this->unusable[ $item['sized_url'] ] = $item;
 		}
 	}
 
@@ -926,32 +1018,33 @@ class Delivery implements Setup {
 	 * Get urls from HTML.
 	 *
 	 * @param string $content The content html.
-	 *
-	 * @return array
 	 */
 	protected function get_urls( $content ) {
 		global $wpdb;
 		$base_urls = array_map( array( $this, 'clean_url' ), wp_extract_urls( $content ) );
 		$urls      = array_filter( array_unique( $base_urls ), array( $this, 'validate_url' ) ); // clean out empty urls.
+		if ( empty( $urls ) ) {
+			return; // Bail since theres nothing.
+		}
 		$list      = implode( ', ', array_fill( 0, count( $urls ), '%s' ) );
 		$tablename = Utils::get_relationship_table();
 		$sql       = "SELECT * from {$tablename} WHERE sized_url IN( {$list} )";
 		$prepared  = $wpdb->prepare( $sql, $urls ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$cache_key = md5( $prepared );
 		$results   = wp_cache_get( $cache_key, 'cld_delivery' );
+
 		if ( empty( $results ) ) {
-			$results = $wpdb->get_results( $prepared );// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$results = $wpdb->get_results( $prepared, ARRAY_A );// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
 			wp_cache_add( $cache_key, $results, 'cld_delivery' );
 		}
 
-		$auto_sync = $this->sync->is_auto_sync_enabled();
+		$auto_sync        = $this->sync->is_auto_sync_enabled();
+		$this->found_urls = $urls;
+
 		foreach ( $results as $result ) {
 			$this->set_usability( $result, $auto_sync );
 		}
-		$urls = array_diff( $urls, array_keys( $this->known ) );
-		$urls = array_filter( $urls, array( $this, 'is_local_asset_url' ) );
-
-		return $urls;
+		$this->unknown = array_diff( $urls, array_keys( $this->known ) );
 	}
 
 	/**
@@ -962,25 +1055,19 @@ class Delivery implements Setup {
 	public function catch_urls( $content ) {
 
 		$this->init_delivery();
-		$urls  = $this->get_urls( $content );
+		$this->get_urls( $content );
 		$known = $this->convert_tags( $content );
 
-		$urls = array_filter( $urls, array( 'Cloudinary\String_Replace', 'string_not_set' ) );
-		if ( ! empty( $urls ) ) {
-			$this->find_attachment_size_urls( $urls );
+		// Attempt to get the unknowns.
+		if ( ! empty( $this->unknown ) ) {
+			$this->find_attachment_size_urls();
 		}
+
+		// Replace the knowns.
 		foreach ( $known as $src => $replace ) {
 			String_Replace::replace( $src, $replace );
 		}
 
-		// End of run, if admin, throw a sync check.
-		if ( is_user_logged_in() && current_user_can( 'manage_options' ) ) {
-			$ids = array();
-			foreach ( $this->known as $known ) {
-				$ids[] = $known->post_id;
-			}
-			$ids = array_unique( $ids );
-			array_map( array( $this->media, 'cloudinary_id' ), $ids );
-		}
+		// @todo: throw $this->known to background action to confirm sync.
 	}
 }

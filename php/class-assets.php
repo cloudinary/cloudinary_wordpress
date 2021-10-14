@@ -142,7 +142,7 @@ class Assets extends Settings_Component {
 	protected function register_hooks() {
 
 		// Filters.
-		add_filter( 'cloudinary_is_local_asset_url', array( $this, 'check_asset' ), 10, 2 );
+		add_filter( 'cloudinary_is_content_dir', array( $this, 'check_asset' ), 10, 2 );
 		add_filter( 'cloudinary_is_media', array( $this, 'is_media' ), 10, 2 );
 		add_filter( 'get_attached_file', array( $this, 'get_attached_file' ), 10, 2 );
 		add_filter( 'cloudinary_sync_base_struct', array( $this, 'add_sync_type' ) );
@@ -330,31 +330,24 @@ class Assets extends Settings_Component {
 			return;
 		}
 
-		// Do sync push for assets missing public_ids that are on.
 		if ( ! empty( $this->delivery->unusable ) ) {
 			$assets = array();
 			foreach ( $this->delivery->unusable as $unusable ) {
-				if ( isset( $this->active_parents[ $unusable->parent_path ] ) && ! in_array( $unusable->post_id, $assets, true ) ) {
-					$asset_id = (int) $unusable->post_id;
+				if ( isset( $this->active_parents[ $unusable['parent_path'] ] ) && ! in_array( $unusable['post_id'], $assets, true ) ) {
+					$asset_id = (int) $unusable['post_id'];
 					$this->media->sync->set_signature_item( $asset_id, 'cld_asset', 'reset' );
 					$this->media->sync->add_to_sync( $asset_id );
-					$assets[] = $unusable->post_id;
+					$assets[] = $unusable['post_id'];
 				}
 			}
 		}
-		if ( ! empty( $this->to_create ) ) {
-			foreach ( $this->to_create as $url => $parent ) {
-				// If it got here, it was not known initially, but then found it.
-				if ( isset( $this->delivery->known[ $url ] ) ) {
-					if ( $this->media->sync->is_auto_sync_enabled() || ! is_int( $this->delivery->known[ $url ] ) ) {
-						// Not int, indicated something was missed earlier, so rather bail.
-						continue; // Dont sync as delivery will handle auto sync on previously unknown items.
-					}
-					$this->media->sync->add_to_sync( $this->delivery->known[ $url ] );
-					continue;
+
+		// Create found asset that's not media library.
+		if ( ! empty( $this->to_create ) && ! empty( $this->delivery->unknown ) ) {
+			foreach ( $this->delivery->unknown as $url ) {
+				if ( isset( $this->to_create[ $url ] ) ) {
+					$this->create_asset( $url, $this->to_create[ $url ] );
 				}
-				// Only create an asset that's not media library.
-				$this->create_asset( $url, $parent );
 			}
 		}
 	}
@@ -374,11 +367,11 @@ class Assets extends Settings_Component {
 			if ( ! empty( $this->delivery->known ) ) {
 				$delete = array();
 				foreach ( $this->delivery->known as $set ) {
-					if ( is_int( $set ) || empty( $set->public_id ) || 'asset' !== $set->sync_type || in_array( $set->post_id, $delete, true ) ) {
+					if ( is_int( $set ) || empty( $set['public_id'] ) || 'asset' !== $set['sync_type'] || in_array( $set['post_id'], $delete, true ) ) {
 						continue;
 					}
-					Delivery::update_size_relations_public_id( $set->post_id, null, 'asset' );
-					$delete[] = $set->post_id;
+					Delivery::update_size_relations_public_id( $set['post_id'], null );
+					$delete[] = $set['post_id'];
 				}
 			}
 			wp_safe_redirect( $referrer );
@@ -397,15 +390,16 @@ class Assets extends Settings_Component {
 		}
 		$total = 0;
 		if ( ! empty( $this->delivery->known ) ) {
+
 			foreach ( $this->delivery->known as $url => $set ) {
-				if ( is_int( $set ) || empty( $set->public_id ) || 'asset' !== $set->sync_type ) {
+				if ( is_int( $set ) || empty( $set['public_id'] ) ) {
 					continue;
 				}
-				$public_id = $set->public_id;
-				if ( ! empty( $set->format ) ) {
-					$public_id .= '.' . $set->format;
+				$public_id = $set['public_id'];
+				if ( ! empty( $set['format'] ) ) {
+					$public_id .= '.' . $set['format'];
 				}
-				$cloudinary_url = $this->media->cloudinary_url( $set->post_id, array( $set->width, $set->height ), null, $public_id );
+				$cloudinary_url = $this->media->cloudinary_url( $set['post_id'], array( $set['width'], $set['height'] ), null, $public_id );
 				if ( $cloudinary_url ) {
 					// Late replace on unmatched urls (links, inline styles etc..), both http and https.
 					String_Replace::replace( 'http:' . $url, $cloudinary_url );
@@ -712,7 +706,7 @@ class Assets extends Settings_Component {
 	/**
 	 * Check if the non-local URL should be added as an asset.
 	 *
-	 * @hook cloudinary_is_local_asset_url
+	 * @hook cloudinary_is_content_dir
 	 *
 	 * @param bool   $is_local The is_local flag.
 	 * @param string $url      The URL to check.
@@ -720,7 +714,7 @@ class Assets extends Settings_Component {
 	 * @return bool
 	 */
 	public function check_asset( $is_local, $url ) {
-		if ( ! $this->syncable_asset( $url ) ) {
+		if ( $is_local || ! $this->syncable_asset( $url ) ) {
 			return $is_local;
 		}
 
@@ -734,21 +728,8 @@ class Assets extends Settings_Component {
 			}
 		}
 		if ( $found instanceof \WP_Post ) {
-			$excludes = $this->media->get_post_meta( $found->ID, self::META_KEYS['excludes'], true );
-			if ( empty( $excludes ) ) {
-				$excludes = array();
-			}
-			if ( ! in_array( $url, $excludes, true ) ) {
-				if ( ! $this->syncable_asset( $url ) ) {
-					$excludes[] = $url;
-					$this->media->update_post_meta( $found->ID, self::META_KEYS['excludes'], $excludes );
-
-					return $is_local;
-				}
-
-				$is_local                = true;
-				$this->to_create[ $url ] = $found->ID;
-			}
+			$is_local                = true;
+			$this->to_create[ $url ] = $found->ID;
 		}
 
 		return $is_local;
@@ -880,8 +861,8 @@ class Assets extends Settings_Component {
 	protected function create_asset( $url, $parent_id ) {
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 		require_once ABSPATH . 'wp-admin/includes/media.php';
-		$scheme    = is_ssl() ? 'https:' : 'http:';
-		$full_url  = $scheme . $url;
+
+		$full_url  = home_url() . wp_parse_url( $url, PHP_URL_PATH );
 		$file_path = str_replace( home_url(), untrailingslashit( ABSPATH ), $full_url );
 		if ( ! file_exists( $file_path ) ) {
 			return false;

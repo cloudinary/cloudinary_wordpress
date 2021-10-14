@@ -331,6 +331,31 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Check if the URL can use used to upload to Cloudinary.
+	 *
+	 * @param string $url_host The url host to check.
+	 *
+	 * @return bool
+	 */
+	public function can_upload_from_host( $url_host ) {
+		static $additional_urls;
+
+		$is_uploadable = false;
+
+		if ( ! $additional_urls ) {
+			$additional_urls = $this->settings->get_value( 'uploadable_domains' );
+		}
+
+		if ( ! empty( $additional_urls ) ) {
+			$additional_urls = explode( ' ', $additional_urls );
+
+			$is_uploadable = in_array( $url_host, $additional_urls, true );
+		}
+
+		return $is_uploadable;
+	}
+
+	/**
 	 * Check if the attachment is uploadable.
 	 *
 	 * @param int $attachment_id The attachment ID to check.
@@ -343,13 +368,7 @@ class Media extends Settings_Component implements Setup {
 		$media_host    = wp_parse_url( $guid, PHP_URL_HOST );
 
 		if ( ! $is_uploadable ) {
-			$additional_urls = $this->plugin->settings->find_setting( 'uploadable_domains' )->get_value();
-
-			if ( ! empty( $additional_urls ) ) {
-				$additional_urls = explode( ' ', $additional_urls );
-
-				$is_uploadable = in_array( $media_host, $additional_urls, true );
-			}
+			$is_uploadable = $this->can_upload_from_host( $media_host );
 		}
 
 		/**

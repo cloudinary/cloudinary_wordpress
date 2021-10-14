@@ -137,27 +137,35 @@ class Rest_Assets {
 			'percent' => 0,
 		);
 		if ( $parent instanceof \WP_Post ) {
-			$data  = array(
+			$data   = array(
 				'public_id'  => null,
 				'post_state' => 'enable',
 			);
-			$where = array(
+			$where  = array(
 				'parent_path' => $clean,
 				'sync_type'   => 'asset',
 			);
-			$wpdb->update( Utils::get_relationship_table(), $data, $where ); // phpcs:ignore WordPress.DB
+			$format = array(
+				'%s',
+				'%s',
+			);
+			$wpdb->update( Utils::get_relationship_table(), $data, $where, $format, $format ); // phpcs:ignore WordPress.DB
 			$result['total']   = 0;
 			$result['pending'] = 0;
 			$result['percent'] = 100;
 		} elseif ( false === $count ) {
-			$data  = array(
+			$data   = array(
 				'public_id'  => null,
 				'post_state' => 'enable',
 			);
-			$where = array(
+			$where  = array(
 				'sync_type' => 'asset',
 			);
-			$wpdb->update( Utils::get_relationship_table(), $data, $where ); // phpcs:ignore WordPress.DB
+			$format = array(
+				'%s',
+				'%s',
+			);
+			$wpdb->update( Utils::get_relationship_table(), $data, $where, $format, array( '%s' ) ); // phpcs:ignore WordPress.DB
 			$result['total']   = 0;
 			$result['pending'] = 0;
 			$result['percent'] = 100;
@@ -253,10 +261,13 @@ class Rest_Assets {
 			$start = $limit * $page - 1;
 		}
 		if ( empty( $cache ) ) {
-			$prepare        = $wpdb->prepare( "SELECT COUNT( id ) as total FROM $wpdb->cld_table WHERE parent_path = %s && primary_url = sized_url && sync_type = 'asset';", $cache_point->post_title );
+			$prepare        = $wpdb->prepare(
+				"SELECT COUNT( id ) as total FROM $wpdb->cld_table WHERE parent_path = %s AND primary_url = sized_url AND sync_type = 'asset';",
+				$cache_point->post_title
+			);
 			$cache['total'] = (int) $wpdb->get_var( $prepare ); // phpcs:ignore WordPress.DB
 			$prepare        = $wpdb->prepare(
-				"SELECT * FROM $wpdb->cld_table WHERE public_id IS NOT NULL && parent_path = %s && primary_url = sized_url && sync_type = 'asset' limit %d,%d;",
+				"SELECT * FROM $wpdb->cld_table WHERE public_id IS NOT NULL && parent_path = %s AND primary_url = sized_url AND sync_type = 'asset' limit %d,%d;",
 				$cache_point->post_title,
 				$start,
 				$limit
