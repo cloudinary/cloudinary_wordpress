@@ -785,24 +785,10 @@ class Filter {
 		add_filter( 'wp_update_attachment_metadata', array( $this, 'record_meta_update' ), 10, 2 );
 
 		// Filter out locals and responsive images setup.
-		if ( $this->media->can_filter_out_local() || is_admin() ) {
+		if ( is_admin() ) {
 			// Filtering out locals.
 			add_filter( 'the_editor_content', array( $this, 'filter_out_local' ) );
 			add_filter( 'the_content', array( $this, 'filter_out_local' ), 100 );
-			// Cancel out breakpoints till later.
-			add_filter(
-				'wp_img_tag_add_srcset_and_sizes_attr',
-				function ( $add, $image, $context, $attachment_id ) {
-					$use = true;
-					if ( $this->media->has_public_id( $attachment_id ) && apply_filters( 'cloudinary_filter_out_local', true ) ) {
-						$use = false;
-					}
-
-					return $use;
-				},
-				10,
-				4
-			);
 		}
 	}
 }
