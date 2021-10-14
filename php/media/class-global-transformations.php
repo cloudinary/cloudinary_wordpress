@@ -82,7 +82,10 @@ class Global_Transformations {
 		foreach ( $field_slugs as $slug ) {
 			$setting = $this->media_settings->get_setting( $slug );
 			if ( $setting->has_param( 'taxonomy_field' ) ) {
-				$context  = $setting->get_param( 'taxonomy_field.context', 'global' );
+				$context = $setting->get_param( 'taxonomy_field.context', 'global' );
+				if ( isset( $this->taxonomy_fields[ $context ] ) && in_array( $setting, $this->taxonomy_fields[ $context ], true ) ) {
+					continue;
+				}
 				$priority = intval( $setting->get_param( 'taxonomy_field.priority', 10 ) ) * 1000;
 				while ( isset( $this->taxonomy_fields[ $context ][ $priority ] ) ) {
 					$priority ++;
@@ -135,7 +138,7 @@ class Global_Transformations {
 
 			foreach ( $set as $setting ) {
 
-				$meta_key = self::META_ORDER_KEY . '_' . $setting->get_slug();
+				$meta_key = self::META_ORDER_KEY . '_' . $setting->get_param( 'slug' );
 				$value    = $setting->get_submitted_value();
 
 				// Check if it's option based.
@@ -167,7 +170,7 @@ class Global_Transformations {
 	private function get_term_transformations( $term_id, $type ) {
 		$meta_data = array();
 		foreach ( $this->taxonomy_fields[ $type ] as $setting ) {
-			$slug               = $setting->get_slug();
+			$slug               = $setting->get_param( 'slug' );
 			$meta_key           = self::META_ORDER_KEY . '_' . $slug;
 			$value              = get_term_meta( $term_id, $meta_key, true );
 			$meta_data[ $slug ] = $value;

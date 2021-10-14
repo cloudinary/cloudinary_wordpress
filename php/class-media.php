@@ -338,6 +338,31 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Check if the URL can use used to upload to Cloudinary.
+	 *
+	 * @param string $url_host The url host to check.
+	 *
+	 * @return bool
+	 */
+	public function can_upload_from_host( $url_host ) {
+		static $additional_urls;
+
+		$is_uploadable = false;
+
+		if ( ! $additional_urls ) {
+			$additional_urls = $this->settings->get_value( 'uploadable_domains' );
+		}
+
+		if ( ! empty( $additional_urls ) ) {
+			$additional_urls = explode( ' ', $additional_urls );
+
+			$is_uploadable = in_array( $url_host, $additional_urls, true );
+		}
+
+		return $is_uploadable;
+	}
+
+	/**
 	 * Check if the attachment is uploadable.
 	 *
 	 * @param int $attachment_id The attachment ID to check.
@@ -350,13 +375,7 @@ class Media extends Settings_Component implements Setup {
 		$media_host    = wp_parse_url( $guid, PHP_URL_HOST );
 
 		if ( ! $is_uploadable ) {
-			$additional_urls = $this->plugin->settings->find_setting( 'uploadable_domains' )->get_value();
-
-			if ( ! empty( $additional_urls ) ) {
-				$additional_urls = explode( ' ', $additional_urls );
-
-				$is_uploadable = in_array( $media_host, $additional_urls, true );
-			}
+			$is_uploadable = $this->can_upload_from_host( $media_host );
 		}
 
 		/**
@@ -442,6 +461,17 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		return 'upload';
+	}
+
+	/**
+	 * Check if an attachment has a delivery type.
+	 *
+	 * @param int $attachment_id The attachment to check.
+	 *
+	 * @return bool
+	 */
+	public function has_delivery_type( $attachment_id ) {
+		return ! empty( $this->get_post_meta( $attachment_id, Sync::META_KEYS['delivery'], true ) );
 	}
 
 	/**
@@ -958,6 +988,12 @@ class Media extends Settings_Component implements Setup {
 	 * @return string Cloudinary URL.
 	 */
 	public function attachment_url( $url, $attachment_id ) {
+		static $urls = array();
+		if ( isset( $urls[ $url ] ) ) {
+			// prevent infinite loops.
+			return $url; // Return the actual url, since it would already be converted.
+		}
+		$urls[ $url ] = true;
 		// Previous v1 and Cloudinary only storage.
 		if ( false !== strpos( $url, 'https://', 5 ) ) {
 			$dirs = wp_get_upload_dir();
@@ -1207,7 +1243,9 @@ class Media extends Settings_Component implements Setup {
 	 * @return string|false
 	 */
 	public function local_url( $attachment_id ) {
-		$url = wp_get_attachment_url( $attachment_id );
+		$this->in_downsize = true;
+		$url               = wp_get_attachment_url( $attachment_id );
+		$this->in_downsize = false;
 
 		/**
 		 * Filter local URL.
@@ -1495,21 +1533,22 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Convert an attachment URL to a Cloudinary one.
 	 *
-	 * @param string $url                       Url to convert.
-	 * @param int    $attachment_id             Attachment ID.
-	 * @param array  $transformations           Optional transformations.
-	 * @param bool   $overwrite_transformations Flag url as having an overwrite transformation.
+	 * @param string      $url                       Url to convert.
+	 * @param int         $attachment_id             Attachment ID.
+	 * @param array       $transformations           Optional transformations.
+	 * @param bool        $overwrite_transformations Flag url as having an overwrite transformation.
+	 * @param string|null $cloudinary_id             The cloudinary ID if have one.
 	 *
 	 * @return string Converted URL.
 	 */
-	public function convert_url( $url, $attachment_id, $transformations = array(), $overwrite_transformations = true ) {
+	public function convert_url( $url, $attachment_id, $transformations = array(), $overwrite_transformations = true, $cloudinary_id = null ) {
 
 		if ( $this->is_cloudinary_url( $url ) ) {
 			return $url; // Already is a cloudinary URL, just return.
 		}
 		$size = $this->get_crop( $url, $attachment_id );
 
-		return $this->cloudinary_url( $attachment_id, $size, $transformations, null, $overwrite_transformations );
+		return $this->cloudinary_url( $attachment_id, $size, $transformations, $cloudinary_id, $overwrite_transformations );
 	}
 
 	/**
@@ -1524,7 +1563,8 @@ class Media extends Settings_Component implements Setup {
 	 * @return array Altered or same sources array.
 	 */
 	public function image_srcset( $sources, $size_array, $image_src, $image_meta, $attachment_id ) {
-		$cloudinary_id = $this->cloudinary_id( $attachment_id );
+
+		$cloudinary_id = isset( $image_meta['cloudinary_id'] ) ? $image_meta['cloudinary_id'] : $this->cloudinary_id( $attachment_id );
 		if ( ! $cloudinary_id ) {
 			return $sources; // Return WordPress default sources.
 		}
@@ -1589,12 +1629,8 @@ class Media extends Settings_Component implements Setup {
 		// Use current sources, but convert the URLS.
 		foreach ( $sources as &$source ) {
 			if ( ! $this->is_cloudinary_url( $source['url'] ) ) {
-				$source['url'] = $this->convert_url(
-					$source['url'],
-					$attachment_id,
-					$transformations,
-					$image_meta['overwrite_transformations']
-				); // Overwrite transformations applied, since the $transformations includes globals from the primary URL.
+				$size          = $this->get_size_from_url( $source['url'] );
+				$source['url'] = $this->cloudinary_url( $attachment_id, $size, $transformations, $cloudinary_id, $image_meta['overwrite_transformations'] );
 			}
 		}
 
@@ -1947,7 +1983,7 @@ class Media extends Settings_Component implements Setup {
 					'state' => 'inactive',
 					'note'  => esc_html__( 'Not Synced', 'cloudinary' ),
 				);
-				if ( $this->cloudinary_id( $attachment_id ) ) {
+				if ( $this->cloudinary_id( $attachment_id ) && $this->has_delivery_type( $attachment_id ) ) {
 					$status = array(
 						'state' => 'success',
 						'note'  => esc_html__( 'Synced', 'cloudinary' ),
@@ -2552,7 +2588,7 @@ class Media extends Settings_Component implements Setup {
 			add_filter( 'upload_dir', array( $this, 'upload_dir' ) );
 
 			// Filter live URLS. (functions that return a URL).
-			if ( $this->can_filter_out_local() || is_admin() ) {
+			if ( is_admin() ) {
 				add_filter( 'wp_calculate_image_srcset', array( $this, 'image_srcset' ), 10, 5 );
 				add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
 				add_filter( 'wp_get_original_image_url', array( $this, 'attachment_url' ), 10, 2 );

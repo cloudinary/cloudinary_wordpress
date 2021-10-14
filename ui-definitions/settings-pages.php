@@ -48,8 +48,9 @@ $settings = array(
 		'sidebar'            => true,
 		'settings'           => array(
 			array(
-				'title' => __( 'Account Status', 'cloudinary' ),
-				'type'  => 'panel',
+				'title'       => __( 'Account Status', 'cloudinary' ),
+				'type'        => 'panel',
+				'collapsible' => 'open',
 				array(
 					'slug' => \Cloudinary\Connect::META_KEYS['url'],
 					'type' => 'connect',

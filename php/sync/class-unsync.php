@@ -96,7 +96,7 @@ class Unsync {
 			),
 			'upload.php'
 		);
-		$link_text  = $this->sync->been_synced( $attachment->ID ) ? $this->get_action_text() : __( 'Sync with Cloudinary', 'cloudinary' );
+		$link_text  = $this->sync->full_sync( $attachment->ID ) ? $this->get_action_text() : __( 'Sync with Cloudinary', 'cloudinary' );
 		$status     = $this->sync->filter_media_states( array(), $attachment );
 		?>
 		<div class="misc-pub-section misc-pub-sync-unsync">
@@ -161,7 +161,7 @@ class Unsync {
 	 * @return array
 	 */
 	public function add_inline_action( $actions, $post ) {
-		if ( $this->media->sync->been_synced( $post->ID ) ) {
+		if ( $this->sync->full_sync( $post->ID ) ) {
 
 			// Set url for action handling.
 			$action_url = add_query_arg(
@@ -245,5 +245,14 @@ class Unsync {
 		foreach ( Sync::META_KEYS as $key ) {
 			delete_post_meta( $attachment_id, $key );
 		}
+		/**
+		 * Action unsyncing an attachment.
+		 *
+		 * @hook   cloudinary_unsync_asset
+		 * @since  3.0.0
+		 *
+		 * @param $attachment_id {int}    The attachment ID.
+		 */
+		do_action( 'cloudinary_unsync_asset', $attachment_id );
 	}
 }

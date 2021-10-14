@@ -54,9 +54,10 @@ class Settings {
 	 * @var array
 	 */
 	const META_KEYS = array(
-		'pending' => '@pending',
-		'data'    => '@data',
-		'storage' => 'storage_path',
+		'submission' => '@submission',
+		'pending'    => '@pending',
+		'data'       => '@data',
+		'storage'    => 'storage_path',
 	);
 
 	/**
@@ -431,6 +432,22 @@ class Settings {
 	}
 
 	/**
+	 * Get settings.
+	 *
+	 * @return Setting[]
+	 */
+	public function get_settings() {
+		$settings = array();
+		foreach ( $this->settings as $slug => $setting ) {
+			if ( false === strpos( $slug, $this->separator ) ) {
+				$settings[ $slug ] = $setting;
+			}
+		}
+
+		return $settings;
+	}
+
+	/**
 	 * Get the root setting.
 	 *
 	 * @return self
@@ -576,6 +593,64 @@ class Settings {
 		}
 
 		return $saved;
+	}
+
+	/**
+	 * Capture a submission if there is one.
+	 */
+	protected function capture_raw_submission() {
+		$args = array();
+		foreach ( array_keys( $this->get_settings() ) as $slug ) {
+			$args[ $slug ] = array(
+				'filter'  => FILTER_CALLBACK,
+				'options' => function ( $value ) {
+					return $value;
+				},
+			);
+		}
+		$raw_submission = filter_input_array( INPUT_POST, $args );
+		if ( $raw_submission ) {
+			$submission = array_filter( $raw_submission );
+			if ( ! empty( $submission ) ) {
+				foreach ( $submission as $key => $value ) {
+					$this->set_param( self::META_KEYS['submission'] . $this->separator . $key, $value );
+				}
+			}
+		}
+
+		return $this->has_param( self::META_KEYS['submission'] );
+	}
+
+	/**
+	 * Get a raw (un-sanitised) submission for all settings, or by a setting slug.
+	 *
+	 * @param string|null $slug The slug of the submitted value to get.
+	 *
+	 * @return mixed
+	 */
+	public function get_submitted_value( $slug = null ) {
+		$key = self::META_KEYS['submission'];
+		if ( ! $this->has_param( $key ) && ! $this->capture_raw_submission() ) {
+			return null;
+		}
+		if ( ! empty( $slug ) ) {
+			$setting = isset( $this->settings[ $slug ] ) ? $this->settings[ $slug ] : $this->find_setting( $slug );
+			$key     = $key . $this->separator . $setting->get_slug();
+
+			return $this->get_param( $key );
+		}
+		$value = array();
+		foreach ( $this->get_settings() as $slug => $setting ) {
+			if ( ! $this->has_param( $key . $this->separator . $slug ) ) {
+				continue; // Ignore bases that don't exist.
+			}
+			$submission = $setting->get_submitted_value();
+			if ( null !== $submission ) {
+				$value[ $slug ] = $submission;
+			}
+		}
+
+		return $value;
 	}
 
 	/**
