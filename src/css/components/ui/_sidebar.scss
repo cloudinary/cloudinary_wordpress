@@ -4,10 +4,12 @@
 		margin-top: 7px;
 	}
 	font-size: $size-panel-description;
-	line-height: 14px;
+	line-height: 2;
+	display: flex;
+	justify-content: space-between;
 	&-item {
 		color: $color-cld-blue;
-		font-weight: bold;
+		font-weight: 600;
 
 		&:hover {
 			color: $color-cld-dark-blue;
@@ -19,7 +21,7 @@
 			font-weight: bold;
 
 			.dashicons {
-				line-height: 14px;
+				line-height: 2;
 				font-size: $size-panel-content;
 			}
 		}

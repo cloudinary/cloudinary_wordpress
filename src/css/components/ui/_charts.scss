@@ -48,7 +48,6 @@
 
 	&-header {
 		font-weight: bolder;
-		font-size: $size-line-chart-title;
 
 		&-titles {
 			display: flex;
@@ -61,6 +60,7 @@
 
 			&-right {
 				color: $color-cld-grey-blue;
+				font-weight: normal;
 			}
 		}
 	}
