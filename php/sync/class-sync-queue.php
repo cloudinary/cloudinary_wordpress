@@ -9,6 +9,7 @@ namespace Cloudinary\Sync;
 
 use Cloudinary\Sync;
 use Cloudinary\Settings\Setting;
+use Cloudinary\Utils;
 
 /**
  * Class Sync_Queue.
@@ -293,25 +294,55 @@ class Sync_Queue {
 	}
 
 	/**
-	 * Get the data from the query.
+	 * Get the data from _cloudinary_relationships. We need to get a count of all assets, which have public_id's, group by type etc.
 	 *
 	 * @return array
 	 */
 	protected function query_unsynced_data() {
 		global $wpdb;
 
-		$sql = "
-			SELECT
-			       `meta_key` as `type`,
-			       SUM(`meta_value`) as `totals`,
-			       COUNT(`meta_id`) as `count`
-			FROM {$wpdb->postmeta}
-			WHERE `meta_key`
-			          IN ( %s,%s, %s, %s, %s)
-			GROUP BY `meta_key`;
-			";
+		$cached = get_transient( Sync::META_KEYS['dashboard_cache'] );
+		if ( empty( $cached ) ) {
+			$wpdb->cld_table              = Utils::get_relationship_table();
+			$return['total_assets']       = (int) $wpdb->get_var( "SELECT COUNT( id ) as total FROM {$wpdb->cld_table} WHERE primary_url = sized_url;" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$return['unoptimized_assets'] = (int) $wpdb->get_var( "SELECT COUNT( id ) as total FROM {$wpdb->cld_table} WHERE public_id IS NULL AND primary_url = sized_url;" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
-		return $wpdb->get_results( $wpdb->prepare( $sql, Sync::META_KEYS['remote_size'], Sync::META_KEYS['local_size'], Sync::META_KEYS['unsynced'], Sync::META_KEYS['cloudinary'], Sync::META_KEYS['queued'] ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
+			$asset_sizes           = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				$wpdb->prepare(
+					"SELECT 
+			SUM(meta_value) as total, meta_key as type
+		FROM
+		{$wpdb->cld_table} AS cld
+		RIGHT JOIN {$wpdb->postmeta} AS wp ON (cld.post_id = wp.post_id ) 
+		WHERE 
+			meta_key IN (%s,%s )
+		AND
+			primary_url = sized_url
+		GROUP BY meta_key",
+					Sync::META_KEYS['local_size'],
+					Sync::META_KEYS['remote_size']
+				),
+				ARRAY_A
+			);
+			$return['asset_sizes'] = array(
+				'local'  => 0,
+				'remote' => 0,
+			);
+			foreach ( $asset_sizes as $set ) {
+				$type                           = Sync::META_KEYS['local_size'] === $set['type'] ? 'local' : 'remote';
+				$return['asset_sizes'][ $type ] = (int) $set['total'];
+			}
+
+			$threads                = $this->autosync_threads;
+			$primary_queue          = array_shift( $threads );
+			$return['total_queued'] = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s;", $primary_queue ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$return['errors']       = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s;", Sync::META_KEYS['sync_error'] ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+
+			set_transient( Sync::META_KEYS['dashboard_cache'], $return, 15 );
+			$cached = $return;
+		}
+
+		return $cached;
 	}
 
 	/**
@@ -321,65 +352,52 @@ class Sync_Queue {
 	 */
 	public function get_total_synced_media() {
 
-		$data   = $this->query_unsynced_data();
+		$data = $this->query_unsynced_data();
+
+		// Lets calculate byte sizes.
+		$total_local_size  = $data['asset_sizes']['local'];
+		$total_remote_size = $data['asset_sizes']['remote'];
+		$total_assets      = $data['total_assets'];
+		$total_unoptimized = $data['unoptimized_assets'];
+		$total_optimized   = $data['total_assets'] - $data['unoptimized_assets'];
+		$total_queued      = $data['total_queued'];
+		$errors_count      = $data['errors'];
+
+		// Prepare the package.
 		$return = array(
-			'total_queued'      => 0,
-			'total_synced'      => 0,
-			'total_assets'      => '',
-			'percentage_synced' => '',
-			'size_difference'   => '',
-			'size_percent'      => 0,
-			'total_sized'       => '',
-			'size_remote'       => '',
-			'size_local'        => '',
-			'local_total'       => 0,
-			'remote_total'      => 0,
-			'local_remote'      => '',
+			// Original sizes.
+			'original_size'           => $total_local_size,
+			'original_size_percent'   => '100%', // The original will always be 100%, as it's the comparison to optimized.
+			'original_size_hr'        => size_format( $total_local_size ),
+
+			// Optimized size. We use the `original_size` to determine the percentage between for the progress bar.
+			'optimized_size'          => $total_remote_size,
+			'optimized_size_percent'  => round( $total_remote_size / $total_local_size * 100 ) . '%', // This is the percentage difference.
+			'optimized_size_hr'       => size_format( $total_remote_size ), // We use this for the "Size saved.." status text.
+
+			// Optimized is the % optimized vs unoptimized.
+			'optimized_percent'       => round( $total_optimized / $total_assets, 4 ),
+			'optimized_percent_hr'    => round( $total_optimized / $total_assets * 100, 1 ) . '%',
+			'optimized_info'          => 'Total Assets',
+
+			// Error size: No mockups on what to display here.
+			'error_count'             => $errors_count,
+			// translators: placeholders are the number of errors.
+			'error_count_hr'          => sprintf( _n( '%s sync error detected.', '%s errors detected', $errors_count, 'cloudinary' ), number_format_i18n( $errors_count ) ),
+
+			// Number of assets.
+			'total_assets'            => $total_assets, // This is a count of the assets in _cloudinary_relationships.
+			'total_unoptimized'       => $total_optimized, // This is the number of assets that dont have a public_id in _cloudinary_relationships.
+
+			// Status text.
+			// translators: placeholders are the number of assets unoptimized.
+			'unoptimized_status_text' => sprintf( _n( '%s Asset unoptimized by your selection.', '%s Assets Unoptimized by your selection.', $total_unoptimized, 'cloudinary' ), number_format_i18n( $total_unoptimized ) ),
+			// translators: placeholders are the number of assets unoptimized.
+			'optimized_status_text'   => sprintf( __( '%1$s / %2$s Assets being optimized now.', 'cloudinary' ), number_format_i18n( $total_queued ), number_format_i18n( $total_assets ) ), // This will be shown when items are pending (check queue).
+
+			// Debug.
+			'data'                    => $data,
 		);
-		if ( ! empty( $data ) ) {
-			foreach ( $data as $item ) {
-				switch ( $item['type'] ) {
-					case '_cld_local_size':
-						$return['local_total'] = (int) $item['totals'];
-						// Add to the totals.
-						$return['total_sized'] = (int) $item['count'];
-						break;
-					case '_cld_remote_size':
-						$return['remote_total'] = (int) $item['totals'];
-						break;
-					case '_cld_unsynced':
-						$return['total_queued'] += (int) $item['count'];
-						break;
-					case '_cloudinary_v2':
-						$return['total_assets'] = (int) $item['count'];
-						break;
-					case '_cloudinary_sync_queued':
-						$return['total_queued'] += (int) $item['count'];
-						break;
-					default:
-						break;
-				}
-			}
-
-			if ( ! empty( $return['total_assets'] ) ) {
-				$return['total_synced']      = $return['total_assets'] - $return['total_queued'];
-				$return['percentage_synced'] = $return['total_synced'] / $return['total_assets'];
-				if ( 1 === $return['percentage_synced'] ) {
-					$return['total_assets'] = __( 'Total assets', 'cloudinary' );
-				} elseif ( ! empty( $return['percentage_synced'] ) ) {
-					$return['total_assets'] = $return['total_synced'] . ' / ' . $return['total_assets'];
-				}
-			}
-
-			if ( ! empty( $return['local_total'] ) && ! empty( $return['remote_total'] ) ) {
-				$return['size_difference'] = $return['local_total'] - $return['remote_total'];
-				$return['size_percent']    = $return['size_difference'] / $return['local_total'];
-				$return['size_remote']     = size_format( $return['remote_total'], 1 );
-				$return['size_local']      = size_format( $return['local_total'], 1 );
-				$return['size_difference'] = size_format( $return['size_difference'] );
-				$return['local_remote']    = $return['size_local'] . ' / ' . $return['size_remote'];
-			}
-		}
 
 		return $return;
 	}
