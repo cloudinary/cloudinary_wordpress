@@ -73,9 +73,9 @@ trait Params_Trait {
 	 */
 	public function set_param( $param, $value = null ) {
 
-		$parts = explode( $this->separator, $param );
-		$parts = array_map( array( $this, 'sanitize_slug' ), $parts );
-		$param = array_shift( $parts );
+		$sanitized_param = $this->sanitize_slug( $param );
+		$parts           = explode( $this->separator, $sanitized_param );
+		$param           = array_shift( $parts );
 		if ( ! empty( $parts ) ) {
 			if ( ! isset( $this->params[ $param ] ) ) {
 				$this->params[ $param ] = array();
@@ -136,7 +136,9 @@ trait Params_Trait {
 	 */
 	protected function sanitize_slug( $slug ) {
 
-		return sanitize_file_name( $slug );
+		$sanitized = array_map( 'sanitize_file_name', explode( $this->separator, $slug ) );
+
+		return implode( $this->separator, $sanitized );
 	}
 
 	/**
@@ -149,11 +151,13 @@ trait Params_Trait {
 	protected function get_array_param( $param_slug ) {
 
 		$parts = explode( $this->separator, ltrim( $param_slug, $this->separator ) );
-		$parts = array_map( array( $this, 'sanitize_slug' ), $parts );
 		$param = $this->params;
 		while ( ! empty( $parts ) ) {
 			if ( ! is_array( $param ) ) {
-				$param = null; // Set to null to indicate invalid.
+				// Objects cannot be mapped, so we return the object, for requester to verify.
+				if ( ! is_object( $param ) ) {
+					$param = null; // Set to null to indicate invalid.
+				}
 				break;
 			}
 			// Lets break here, if theres a _type and it's not an array.
@@ -181,7 +185,7 @@ trait Params_Trait {
 	 */
 	public function has_param( $param_slug ) {
 
-		$param = $this->get_array_param( $param_slug );
+		$param = $this->get_param( $param_slug );
 
 		return ! is_null( $param );
 	}
@@ -205,6 +209,7 @@ trait Params_Trait {
 	 * @return mixed|self
 	 */
 	public function get_param( $param, $default = null ) {
+		$param = $this->sanitize_slug( $param );
 
 		$value = $this->get_array_param( $param );
 		if ( is_array( $value ) && isset( $value['_value'] ) ) {

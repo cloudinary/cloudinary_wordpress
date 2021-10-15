@@ -173,6 +173,7 @@ class Upload_Sync {
 					if ( ! $this->media->is_cloudinary_url( get_post_meta( $post_id, '_wp_attached_file', true ) ) ) {
 						$this->sync->delete_cloudinary_meta( $post_id );
 						$this->sync->set_signature_item( $post_id, 'file', '' );
+						$this->sync->set_signature_item( $post_id, 'cld_asset' );
 						$this->media->delete_post_meta( $post_id, Sync::META_KEYS['public_id'] );
 						$this->sync->add_to_sync( $post_id );
 					}
