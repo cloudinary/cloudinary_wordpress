@@ -428,15 +428,6 @@ class Storage implements Notice {
 		$has_error = wp_remote_retrieve_header( $request, 'X-Cld-Error' );
 		if ( ! empty( $has_error ) && false !== strpos( $has_error, 'deny' ) ) {
 			// Deny failure. Log and exit.
-			$list = $this->plugin->settings->sync_media->_excluded_types;
-			if ( empty( $list ) ) {
-				$list = array();
-			}
-			$ext = pathinfo( strstr( $url, '?', true ), PATHINFO_EXTENSION );
-			if ( ! in_array( $ext, $list ) ) {
-				$list[] = $ext;
-				$this->plugin->settings->sync_media->excluded_types->save_value( $list );
-			}
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['sync_error'], __( 'Restricted file type', 'cloudinary' ) );
 
 			return;

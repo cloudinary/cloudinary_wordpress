@@ -109,6 +109,7 @@ class Sync implements Setup, Assets {
 		'version'             => '_cloudinary_version',
 		'cloudinary_v3'       => '_cloudinary',
 		'dashboard_cache'     => '_cloudinary_dashboard_stats',
+		'relationship'        => '_cld_relationship',
 	);
 
 	/**
@@ -177,6 +178,17 @@ class Sync implements Setup, Assets {
 	}
 
 	/**
+	 * Determine if an attachment is fully synced or partly synced.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function full_sync( $attachment_id ) {
+		return $this->been_synced( $attachment_id ) && $this->managers['media']->has_delivery_type( $attachment_id );
+	}
+
+	/**
 	 * Checks if an asset is synced and up to date.
 	 *
 	 * @param int  $post_id  The post id to check.
@@ -190,7 +202,7 @@ class Sync implements Setup, Assets {
 			return $synced[ $post_id ];
 		}
 		$return = false;
-		if ( $this->managers['media']->has_public_id( $post_id ) ) {
+		if ( $this->managers['media']->has_public_id( $post_id ) && $this->full_sync( $post_id ) ) {
 			$expecting = $this->generate_signature( $post_id );
 			if ( ! is_wp_error( $expecting ) ) {
 				$signature = $this->get_signature( $post_id );
@@ -314,27 +326,6 @@ class Sync implements Setup, Assets {
 		 * @return bool|\WP_Error
 		 */
 		return apply_filters( 'cloudinary_can_sync_asset', $can, $attachment_id, $type );
-	}
-
-	/**
-	 * Filter syncable items based on external deny rules.
-	 *
-	 * @hook cloudinary_can_sync_asset
-	 *
-	 * @param bool $can           Flag if can sync.
-	 * @param int  $attachment_id The attachment ID.
-	 *
-	 * @return bool
-	 */
-	public function filter_deny_types( $can, $attachment_id ) {
-		$list = $this->plugin->settings->sync_media->_excluded_types;
-		$file = strtolower( get_attached_file( $attachment_id ) );
-		$ext  = pathinfo( strstr( $file, '?', true ), PATHINFO_EXTENSION );
-		if ( ! empty( $list ) && in_array( $ext, $list, true ) ) {
-			$can = false;
-		}
-
-		return $can;
 	}
 
 	/**
@@ -492,7 +483,7 @@ class Sync implements Setup, Assets {
 			'upgrade'      => array(
 				'generate' => array( $this, 'get_sync_version' ), // Method to generate a signature.
 				'validate' => array( $this, 'been_synced' ),
-				'priority' => 0,
+				'priority' => 0.2,
 				'sync'     => array( $this->managers['media']->upgrade, 'convert_cloudinary_version' ),
 				'state'    => 'info syncing',
 				'note'     => __( 'Upgrading from previous version', 'cloudinary' ),
@@ -1087,6 +1078,9 @@ class Sync implements Setup, Assets {
 		foreach ( $signatures as $signature ) {
 			delete_post_meta( $attachment_id, "_{$signature}" );
 		}
+
+		// Delete main meta.
+		delete_post_meta( $attachment_id, self::META_KEYS['cloudinary'] );
 	}
 
 	/**
@@ -1117,7 +1111,6 @@ class Sync implements Setup, Assets {
 
 			add_filter( 'cloudinary_setting_get_value', array( $this, 'filter_get_cloudinary_folder' ), 10, 2 );
 			add_filter( 'cloudinary_get_signature', array( $this, 'get_signature_syncable_type' ), 10, 2 );
-			add_filter( 'cloudinary_can_sync_asset', array( $this, 'filter_deny_types' ), PHP_INT_MAX, 2 );
 		}
 	}
 
@@ -1211,7 +1204,8 @@ class Sync implements Setup, Assets {
 	 */
 	public function generate_file_signature( $attachment_id ) {
 		$path = get_attached_file( $attachment_id );
+		$str  = ! $this->managers['media']->is_oversize_media( $attachment_id ) ? basename( $path ) : $attachment_id;
 
-		return ! $this->managers['media']->is_oversize_media( $attachment_id ) ? basename( $path ) : $attachment_id;
+		return $str . $this->is_auto_sync_enabled();
 	}
 }

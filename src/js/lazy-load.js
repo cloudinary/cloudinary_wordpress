@@ -138,31 +138,6 @@ const LazyLoad = {
 		);
 		return steps;
 	},
-	getQuality() {
-		let quality = 'q_auto';
-		switch (
-			navigator && navigator.connection
-				? navigator.connection.effectiveType
-				: 'none'
-			) {
-			case 'none':
-				break;
-			case '4g':
-				quality = 'q_auto:good';
-				break;
-			case '3g':
-				quality = 'q_auto:eco';
-				break;
-			case '2g':
-			case 'slow-2g':
-				quality = 'q_auto:low';
-				break;
-			default:
-				quality = 'q_auto:best';
-				break;
-		}
-		return quality;
-	},
 	scaleSize( original, newSize, responsiveStep ) {
 		const diff = Math.floor( ( original - newSize ) / responsiveStep );
 		let scaledSize = original - responsiveStep * diff;
@@ -218,14 +193,12 @@ const LazyLoad = {
 				newSize.push( 'dpr_' + density );
 			}
 		}
-		const transform = image.dataset.transformations.replace(
-			/q_auto(?!:)/gi, this.getQuality() );
 
 		const parts = [
 			this.config.base_url,
 			'images',
 			newSize.join( ',' ),
-			transform,
+			image.dataset.transformations,
 			image.dataset.publicId,
 			name
 		];
