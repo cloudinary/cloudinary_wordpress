@@ -412,9 +412,10 @@ class Storage implements Notice {
 	/**
 	 * Sync the file size differences.
 	 *
-	 * @param int $attachment_id The attachment ID.
+	 * @param int    $attachment_id The attachment ID.
+	 * @param string $public_id     Optional public ID.
 	 */
-	public function size_sync( $attachment_id ) {
+	public function size_sync( $attachment_id, $public_id = null ) {
 		$args      = array(
 			/** This filter is documented in wp-includes/class-wp-http-streams.php */
 			'sslverify' => apply_filters( 'https_local_ssl_verify', false ),
@@ -422,7 +423,7 @@ class Storage implements Notice {
 				'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
 			),
 		);
-		$url       = $this->media->cloudinary_url( $attachment_id );
+		$url       = $this->media->cloudinary_url( $attachment_id, null, null, $public_id );
 		$request   = wp_remote_head( $url, $args );
 		$has_error = wp_remote_retrieve_header( $request, 'X-Cld-Error' );
 		if ( ! empty( $has_error ) && false !== strpos( $has_error, 'deny' ) ) {
