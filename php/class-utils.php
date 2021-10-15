@@ -216,7 +216,7 @@ class Utils {
 			);
 		}
 
-		$args   = array(
+		$args = array(
 			'request_anonymous_requester_email'  => $user->display_name,
 			'request_custom_fields_22246877'     => $user->user_email,
 			'request_custom_fields_360007219560' => $plugin->components['connect']->get_cloud_name(),
@@ -226,5 +226,50 @@ class Utils {
 		);
 
 		return add_query_arg( array_filter( $args ), $url );
+	}
+
+	/**
+	 * Get the Cloudinary relationships table name.
+	 *
+	 * @return string
+	 */
+	public static function get_relationship_table() {
+		global $wpdb;
+
+		return $wpdb->prefix . 'cloudinary_relationships';
+	}
+
+	/**
+	 * Install our custom table.
+	 */
+	public static function install() {
+		global $wpdb;
+
+		$table_name      = self::get_relationship_table();
+		$charset_collate = $wpdb->get_charset_collate();
+		// Setup the sql.
+		$sql = "CREATE TABLE $table_name (
+			id int(11) unsigned NOT NULL AUTO_INCREMENT,
+	  		post_id int(11) DEFAULT NULL,
+	  		public_id varchar(255) DEFAULT NULL,
+	  		parent_path varchar(255) DEFAULT NULL,
+	  		primary_url varchar(255) DEFAULT NULL,
+	  		sized_url varchar(255) DEFAULT NULL,
+	  		width int(11) DEFAULT NULL,
+			height int(11) DEFAULT NULL,
+			format varchar(12) DEFAULT NULL,
+			sync_type varchar(45) DEFAULT NULL,
+			post_state varchar(12) DEFAULT NULL,
+			transformations text DEFAULT NULL,	  
+			PRIMARY KEY (id),
+			UNIQUE KEY sized_url (sized_url),
+			KEY post_id (post_id),
+			KEY parent_path (parent_path),
+			KEY sync_type (sync_type)
+		) $charset_collate";
+
+		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+		// @todo: get VIP approval.
+		dbDelta( $sql ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.dbDelta_dbdelta
 	}
 }

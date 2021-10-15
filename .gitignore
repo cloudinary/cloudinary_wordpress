@@ -42,6 +42,9 @@ coverage/html/
 
 # IDE
 .vscode
+
+# Testing packages
 cloudinary-image-management-and-manipulation-in-the-cloud-cdn
 cloudinary-image-management-and-manipulation-in-the-cloud-cdn.zip
 cloudinary-wordpress-v2.zip
+cloudinary-wordpress-v3.zip

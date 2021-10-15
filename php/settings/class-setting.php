@@ -150,6 +150,33 @@ class Setting {
 	}
 
 	/**
+	 * Get the submitted value, if exists.
+	 *
+	 * @return mixed
+	 */
+	public function get_submitted_value() {
+		if ( ! empty( $this->children ) ) {
+			$value = array();
+			foreach ( $this->children as $slug => $child ) {
+				$child_value = $child->get_submitted_value();
+				if ( null !== $child_value ) {
+					$value[ $slug ] = $child_value;
+				}
+			}
+
+			return $value;
+		}
+
+		$raw_value = $this->root->get_submitted_value( $this->get_slug() );
+		$value     = null;
+		if ( $raw_value ) {
+			$value = $this->get_component()->sanitize_value( $raw_value );
+		}
+
+		return $value;
+	}
+
+	/**
 	 * Get a setting.
 	 *
 	 * @param string $slug The slug of the setting to get.

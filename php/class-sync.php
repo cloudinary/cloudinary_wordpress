@@ -1137,6 +1137,7 @@ class Sync implements Setup, Assets {
 					'type'        => 'panel',
 					'title'       => __( 'Media Library Sync Settings', 'cloudinary' ),
 					'option_name' => 'sync_media',
+					'collapsible' => 'open',
 					array(
 						'type'         => 'radio',
 						'title'        => __( 'Sync method', 'cloudinary' ),
