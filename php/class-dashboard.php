@@ -50,81 +50,191 @@ class Dashboard {
 					'type'  => 'panel',
 					'title' => __( 'How much you optimize', 'cloudinary' ),
 					array(
-						'type'  => 'row',
-						'align' => 'center',
-						array(
-							'type' => 'column',
-							array(
-								'type'       => 'tag',
-								'attributes' => array(
-									'class' => array(
-										'cld-center-column',
-										'cld-info-text',
-									),
-								),
-								'content'    => __( 'Average percentage of compression', 'cloudinary' ),
-								array(
-									'type'       => 'tag',
-									'element'    => 'div',
-									'content'    => __( 'The level of compression applied by Cloudinary compared to the original media.', 'cloudinary' ),
-									'attributes' => array(
-										'class' => array(
-											'description',
-										),
-									),
+						'type'       => 'row',
+						'align'      => 'center',
+						'attributes' => array(
+							'wrap' => array(
+								'class' => array(
+									'cld-optimize-panel',
 								),
 							),
 						),
 						array(
-							'type' => 'column',
+							'type'  => 'column',
+							'width' => 'auto',
 							array(
 								'type'  => 'progress_sync',
-								'value' => 'size_percent',
-								'text'  => 'size_difference',
-								'poll'  => true,
-							),
-						),
-						array(
-							'type' => 'column',
-							array(
-								'type'       => 'tag',
-								'attributes' => array(
-									'class' => array(
-										'cld-center-column',
-										'cld-info-text',
-									),
-								),
-								'content'    => __( 'Percentage of optimized precessing images', 'cloudinary' ),
-								array(
-									'type'       => 'tag',
-									'element'    => 'div',
-									'content'    => __( 'The percentage of your assets that are being optimized by the Cloudinary Plugin.', 'cloudinary' ),
-									'attributes' => array(
-										'class' => array(
-											'description',
-										),
-									),
-								),
-							),
-						),
-						array(
-							'type' => 'column',
-							array(
-								'type'  => 'progress_sync',
-								'value' => 'percentage_synced',
-								'text'  => 'total_assets',
+								'value' => 'optimized_percent',
+								'text'  => 'optimized_info',
 								'color' => '#58c4d8',
 								'poll'  => true,
 							),
 						),
-					),
-					array(
-						'type'  => 'info_box',
-						'icon'  => $this->plugin->dir_url . 'css/images/crop.svg',
-						'title' => __( 'Understanding Compression', 'cloudinary' ),
-						'text'  => __(
-							"Cloudinary's optimizations techniques will provide a good level of compression (around 20-50%) out-of-the-box without affecting visual quality. Compression levels above 50% may cause your media to appear lower in quality",
-							'cloudinary'
+						array(
+							'type'  => 'column',
+							'width' => 'auto',
+							array(
+								'type'       => 'tag',
+								'attributes' => array(
+									'class' => array(
+										'cld-center-column',
+										'cld-info-text',
+									),
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'h3',
+									'content' => __( 'Percentage of optimized processing images', 'cloudinary' ),
+								),
+								array(
+									'type'       => 'tag',
+									'element'    => 'h5',
+									'content'    => '&nbsp;',
+									'attributes' => array(
+										'data-text' => 'unoptimized_status_text',
+									),
+								),
+								array(
+									'type'       => 'tag',
+									'element'    => 'h5',
+									'content'    => '&nbsp;',
+									'attributes' => array(
+										'data-text' => 'optimized_status_text',
+									),
+								),
+							),
+						),
+						array(
+							'type'  => 'column',
+							'width' => '50%',
+							array(
+								'type'        => 'progress_bar',
+								'title'       => __( 'Original size', 'cloudinary' ),
+								'percent_key' => 'original_size_percent',
+								'value_key'   => 'original_size_hr',
+								'color'       => '#304ec4',
+							),
+							array(
+								'type'        => 'progress_bar',
+								'title'       => __( 'Optimized size', 'cloudinary' ),
+								'percent_key' => 'optimized_size_percent',
+								'value_key'   => 'optimized_size_hr',
+								'color'       => '#58c4d8',
+							),
+							array(
+								'type'       => 'tag',
+								'element'    => 'div',
+								'attributes' => array(
+									'class' => array(
+										'cld-stat-percent',
+									),
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'span',
+									array(
+										'type'       => 'tag',
+										'element'    => 'h2',
+										'content'    => '0%',
+										'attributes' => array(
+											'data-text' => 'optimized_size_percent',
+										),
+									),
+								),
+								array(
+									'type'       => 'tag',
+									'element'    => 'span',
+									'content'    => __( "That's the size you've saved using by the image optimizer.", 'cloudinary' ),
+									'attributes' => array(
+										'class' => array(
+											'cld-stat-percent-text',
+										),
+									),
+								),
+							),
+						),
+						array(
+							'type'  => 'column',
+							'width' => 'auto',
+							array(
+								'type'       => 'tag',
+								'element'    => 'div',
+								'attributes' => array(
+									'class' => array(
+										'cld-stat-legend',
+									),
+								),
+								array(
+									'type'       => 'tag',
+									'element'    => 'span',
+									'attributes' => array(
+										'class' => array(
+											'cld-stat-legend-dot',
+											'blue-dot',
+										),
+									),
+									'content'    => '&nbsp;',
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'span',
+									'content' => __( 'Unoptimized', 'cloudinary' ),
+								),
+							),
+							array(
+								'type'       => 'tag',
+								'element'    => 'div',
+								'attributes' => array(
+									'class' => array(
+										'cld-stat-legend',
+									),
+								),
+								array(
+									'type'       => 'tag',
+									'element'    => 'span',
+									'attributes' => array(
+										'class' => array(
+											'cld-stat-legend-dot',
+											'aqua-dot',
+										),
+									),
+									'content'    => '&nbsp;',
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'span',
+									'content' => __( 'Optimized', 'cloudinary' ),
+								),
+							),
+							array(
+								'type'       => 'tag',
+								'element'    => 'div',
+								'attributes' => array(
+									'class' => array(
+										'cld-stat-legend',
+									),
+								),
+								array(
+									'type'       => 'tag',
+									'element'    => 'span',
+									'attributes' => array(
+										'class' => array(
+											'cld-stat-legend-dot',
+											'red-dot',
+										),
+									),
+									'content'    => '&nbsp;',
+								),
+								array(
+									'type'       => 'tag',
+									'element'    => 'a',
+									'content'    => '&nbsp;',
+									'attributes' => array(
+										'href'      => '#', // @todo: link to filtered media.
+										'data-text' => 'error_count_hr',
+									),
+								),
+							),
 						),
 					),
 				),

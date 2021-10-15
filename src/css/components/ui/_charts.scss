@@ -16,7 +16,7 @@
 		display: block;
 		width: 120px;
 		height: 120px;
-		margin: 2em auto;
+		margin: 2em;
 		position: relative;
 
 		.progressbar-text {
@@ -30,10 +30,38 @@
 			text-align: center;
 			color: #222222;
 			font-weight: bolder;
-
+			text-transform: capitalize;
+			font-size: 1em;
 			h2 {
-				margin: 0 0 0.2em;
+				margin: 0 0 0.5em;
 				font-size: 2em;
+			}
+		}
+	}
+
+	&-box {
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		margin: 0 0 16px;
+		width: 100%;
+
+		&-title {
+			font-size: 15px;
+			margin: 12px 0 6px 0;
+		}
+
+		&-line {
+			display: block;
+			width: 0%;
+			min-width: 1px;
+			height: 5px;
+			transition: width 2s;
+
+			&-value {
+				padding: 0 0 0 8px;
+				font-weight: bold;
+				width: 100px;
 			}
 		}
 	}
@@ -54,6 +82,7 @@
 			justify-content: space-between;
 			font-size: $size-line-chart-value;
 			margin-top: 5px;
+
 			&-left {
 				color: $color-cld-blue;
 			}

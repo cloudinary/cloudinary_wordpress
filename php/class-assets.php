@@ -622,6 +622,7 @@ class Assets extends Settings_Component {
 			Delivery::update_size_relations_state( $asset_id, 'enable' );
 			$this->media->sync->set_signature_item( $asset_id, 'file' );
 			$this->media->sync->set_signature_item( $asset_id, 'cld_asset' );
+			$this->plugin->get_component( 'storage' )->size_sync( $asset_id, $public_id );
 		}
 
 		return $result;

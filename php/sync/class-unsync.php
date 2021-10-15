@@ -96,7 +96,7 @@ class Unsync {
 			),
 			'upload.php'
 		);
-		$link_text  = $this->sync->full_sync( $attachment->ID ) ? $this->get_action_text() : __( 'Sync with Cloudinary', 'cloudinary' );
+		$link_text  = $this->sync->been_synced( $attachment->ID ) ? $this->get_action_text() : __( 'Sync with Cloudinary', 'cloudinary' );
 		$status     = $this->sync->filter_media_states( array(), $attachment );
 		?>
 		<div class="misc-pub-section misc-pub-sync-unsync">
@@ -161,7 +161,7 @@ class Unsync {
 	 * @return array
 	 */
 	public function add_inline_action( $actions, $post ) {
-		if ( $this->sync->full_sync( $post->ID ) ) {
+		if ( $this->sync->been_synced( $post->ID ) ) {
 
 			// Set url for action handling.
 			$action_url = add_query_arg(

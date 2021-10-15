@@ -108,6 +108,7 @@ class Sync implements Setup, Assets {
 		'upgrading'           => '_cloudinary_upgrading',
 		'version'             => '_cloudinary_version',
 		'cloudinary_v3'       => '_cloudinary',
+		'dashboard_cache'     => '_cloudinary_dashboard_stats',
 		'relationship'        => '_cld_relationship',
 	);
 
