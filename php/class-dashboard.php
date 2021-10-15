@@ -66,17 +66,7 @@ class Dashboard {
 								array(
 									'type'       => 'tag',
 									'element'    => 'div',
-									'content'    => __( '13 Assets unoptimized by your selection', 'cloudinary' ),
-									'attributes' => array(
-										'class' => array(
-											'description',
-										),
-									),
-								),
-								array(
-									'type'       => 'tag',
-									'element'    => 'div',
-									'content'    => __( '40/200 Assets being optimized now', 'cloudinary' ),
+									'content'    => __( 'The level of compression applied by Cloudinary compared to the original media.', 'cloudinary' ),
 									'attributes' => array(
 										'class' => array(
 											'description',
@@ -84,7 +74,6 @@ class Dashboard {
 									),
 								),
 							),
-
 						),
 						array(
 							'type' => 'column',
@@ -109,17 +98,7 @@ class Dashboard {
 								array(
 									'type'       => 'tag',
 									'element'    => 'div',
-									'content'    => __( '13 Assets unoptimized by your selection', 'cloudinary' ),
-									'attributes' => array(
-										'class' => array(
-											'description',
-										),
-									),
-								),
-								array(
-									'type'       => 'tag',
-									'element'    => 'div',
-									'content'    => __( '40/200 Assets being optimized now', 'cloudinary' ),
+									'content'    => __( 'The percentage of your assets that are being optimized by the Cloudinary Plugin.', 'cloudinary' ),
 									'attributes' => array(
 										'class' => array(
 											'description',
@@ -137,6 +116,15 @@ class Dashboard {
 								'color' => '#58c4d8',
 								'poll'  => true,
 							),
+						),
+					),
+					array(
+						'type'  => 'info_box',
+						'icon'  => $this->plugin->dir_url . 'css/images/crop.svg',
+						'title' => __( 'Understanding Compression', 'cloudinary' ),
+						'text'  => __(
+							"Cloudinary's optimizations techniques will provide a good level of compression (around 20-50%) out-of-the-box without affecting visual quality. Compression levels above 50% may cause your media to appear lower in quality",
+							'cloudinary'
 						),
 					),
 				),

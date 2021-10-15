@@ -21,7 +21,7 @@ class Text extends Component {
 	 *
 	 * @var string
 	 */
-	protected $blueprint = 'wrap|icon/|div|label|title|link/|/title|/label|/div|prefix/|input/|suffix/|description/|tooltip/|/wrap';
+	protected $blueprint = 'wrap|icon/|div|label|title|link/|/title|extra_title/|/label|/div|prefix/|input/|suffix/|description/|tooltip/|/wrap';
 
 	/**
 	 * Flag if component is a capture type.
@@ -77,6 +77,26 @@ class Text extends Component {
 			$struct['attributes']['href']    = $link['href'];
 			$struct['attributes']['target']  = '_blank';
 			$struct['content']               = $link['text'];
+		}
+
+		return $struct;
+	}
+
+	/**
+	 * Filter the extra_title parts structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function extra_title( $struct ) {
+		$struct['content'] = null;
+		if ( $this->setting->has_param( 'extra_title' ) ) {
+			$struct['render']              = true;
+			$struct['attributes']['class'] = array(
+				'cld-tooltip',
+			);
+			$struct['content']             = $this->setting->get_param( 'extra_title' );
 		}
 
 		return $struct;

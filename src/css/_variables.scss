@@ -15,6 +15,7 @@ $color-cld-dark-blue: #1e337f;
 $color-cld-grey-blue: #c6d1db;
 $color-cld-light-grey: #eaecfa;
 $color-cld-description: rgba(0, 0, 1, 0.5);
+$color-cld-dark-description: rgba(0, 0, 1, 0.75);
 $color-grey-background: #f1f1f1;
 
 /** Sizes */
@@ -24,18 +25,16 @@ $size-medium: 960px;
 $size-large: 1200px;
 
 /** Font Sizes */
-$size-panel-title: 14px;
-$size-panel-subtitle: 11px;
-$size-sidebar-title: 12px;
-$size-sidebar-subtitle: 10px;
-$size-line-chart-title: 10px;
-$size-line-chart-value: 9px;
-$size-panel-content: 10px;
-$size-panel-description: 9px;
-$size-panel-small: 8px;
-$size-button: 10px;
-$size-setting-label: 12px;
-$size-setting-field: 12px;
+$size-panel-title: 15px;
+$size-panel-subtitle: 12px;
+$size-sidebar-title: 14px;
+$size-line-chart-value: 14px;
+$size-panel-content: 12px;
+$size-panel-description: 12px;
+$size-panel-small: 10px;
+$size-button: 11px;
+$size-setting-label: 14px;
+$size-setting-field: 13px;
 
 /** Padding and margins */
 $size-padding-column: 13px;
@@ -44,3 +43,4 @@ $size-padding-sidebar-title: 6px 14px;
 $size-padding-panel: 23px 24px;
 $size-padding-sidebar: 14px 18px;
 
+$size-settings-max-width: 800px;

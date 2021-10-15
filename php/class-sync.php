@@ -1145,73 +1145,69 @@ class Sync implements Setup, Assets {
 	public function settings( $pages ) {
 
 		$pages['connect']['settings'][] = array(
-			'type'                => 'frame',
-			'requires_connection' => true,
 			array(
-				'type'        => 'panel',
-				'title'       => __( 'Sync Settings', 'cloudinary' ),
-				'option_name' => 'sync_media',
-				'collapsible' => 'open',
+				'type'                => 'frame',
+				'requires_connection' => true,
 				array(
-					'type'         => 'radio',
-					'title'        => __( 'Sync method', 'cloudinary' ),
-					'tooltip_text' => __(
-						'Auto sync: Ensures that all of your WordPress assets are automatically synced with Cloudinary when they are added to the WordPress Media Library. Manual sync: Assets must be synced manually using the WordPress Media Library',
-						'cloudinary'
-					),
-					'slug'         => 'auto_sync',
-					'no_cached'    => true,
-					'default'      => 'on',
-					'options'      => array(
-						'on'  => __( 'Auto sync', 'cloudinary' ),
-						'off' => __( 'Manual sync', 'cloudinary' ),
-					),
-				),
-				array(
-					'type'              => 'text',
-					'slug'              => 'cloudinary_folder',
-					'title'             => __( 'Cloudinary folder path', 'cloudinary' ),
-					'default'           => '',
-					'attributes'        => array(
-						'input' => array(
-							'placeholder' => __( 'e.g.: wordpress_assets/', 'cloudinary' ),
+					'type'        => 'panel',
+					'title'       => __( 'Media Library Sync Settings', 'cloudinary' ),
+					'option_name' => 'sync_media',
+					'collapsible' => 'open',
+					array(
+						'type'         => 'radio',
+						'title'        => __( 'Sync method', 'cloudinary' ),
+						'tooltip_text' => sprintf(
+							// translators: The HTML break line, the link to Cloudinary documentation and closing tag.
+							__( 'Defines how your WordPress assets sync with Cloudinary.%1$s“Auto” will sync assets automatically.%1$s“Manual” requires triggering via the WordPress Media Library. %2$sLearn more%3$s', 'cloudinary' ),
+							'<br>',
+							'<a href="https://cloudinary.com/documentation/wordpress_integration#sync" target="_blank" rel="noopener noreferrer">',
+							'</a>'
+						),
+						'slug'         => 'auto_sync',
+						'no_cached'    => true,
+						'default'      => 'on',
+						'options'      => array(
+							'on'  => __( 'Auto sync', 'cloudinary' ),
+							'off' => __( 'Manual sync', 'cloudinary' ),
 						),
 					),
-					'tooltip_text'      => __(
-						'Specify the folder in your Cloudinary account where WordPress assets are uploaded to. All assets uploaded to WordPress from this point on will be synced to the specified folder in Cloudinary. Leave blank to use the root of your Cloudinary library.',
-						'cloudinary'
+					array(
+						'type'              => 'text',
+						'slug'              => 'cloudinary_folder',
+						'title'             => __( 'Cloudinary folder path', 'cloudinary' ),
+						'default'           => '',
+						'attributes'        => array(
+							'input' => array(
+								'placeholder' => __( 'e.g.: wordpress_assets/', 'cloudinary' ),
+							),
+						),
+						'tooltip_text'      => __(
+							'The folder in your Cloudinary account that WordPress assets are uploaded to. Leave blank to use the root of your Cloudinary library.',
+							'cloudinary'
+						),
+						'sanitize_callback' => array( '\Cloudinary\Media', 'sanitize_cloudinary_folder' ),
 					),
-					'sanitize_callback' => array( '\Cloudinary\Media', 'sanitize_cloudinary_folder' ),
-				),
-				array(
-					'type'         => 'select',
-					'slug'         => 'offload',
-					'title'        => __( 'Storage', 'cloudinary' ),
-					'tooltip_text' => __(
-						'Choose where to store your assets. Assets stored in both Cloudinary and WordPress will enable local WordPress delivery if the Cloudinary plugin is disabled or uninstalled. Storing assets with WordPress in lower resolution will save on local WordPress storage and enable low resolution local WordPress delivery if the plugin is disabled. Storing assets with Cloudinary only will require additional steps to enable backwards compatibility.',
-						'cloudinary'
-					),
-					'default'      => 'dual_full',
-					'options'      => array(
-						'dual_full' => __( 'Cloudinary and WordPress', 'cloudinary' ),
-						'dual_low'  => __( 'Cloudinary and WordPress (low resolution)', 'cloudinary' ),
-						'cld'       => __( 'Cloudinary only', 'cloudinary' ),
-					),
-				),
-			),
-			array(
-				'type'        => 'panel',
-				'title'       => __( 'Supported file extensions', 'cloudinary' ),
-				'option_name' => 'sync_media',
-				'collapsible' => 'open',
-				array(
-					'type'        => 'excluded_types',
-					'slug'        => 'excluded_types',
-					'title'       => __( 'Restricted types', 'cloudinary' ),
-					'description' => __( 'The following file types will not be delivered by Cloudinary', 'cloudinary' ),
-					'default'     => array(
-						'pdf',
-						'zip',
+					array(
+						'type'         => 'select',
+						'slug'         => 'offload',
+						'title'        => __( 'Storage', 'cloudinary' ),
+						'tooltip_text' => sprintf(
+							// translators: the HTML for opening and closing list and its items.
+							__(
+								'Choose where your assets are stored.%1$sCloudinary and WordPress: Stores assets in both locations. Enables local WordPress delivery if the Cloudinary plugin is disabled or uninstalled.%2$sCloudinary and WordPress (low resolution):  Stores original assets in Cloudinary and low resolution versions in WordPress. Enables low resolution local WordPress delivery if the plugin is disabled or uninstalled.%3$sCloudinary only: Stores assets in Cloudinary only.  Requires additional steps to enable backwards compatibility.%4$s',
+								'cloudinary'
+							),
+							'<ul><li class="dual_full">',
+							'</li><li class="dual_low">',
+							'</li><li class="cld">',
+							'</li></ul>'
+						),
+						'default'      => 'dual_full',
+						'options'      => array(
+							'dual_full' => __( 'Cloudinary and WordPress', 'cloudinary' ),
+							'dual_low'  => __( 'Cloudinary and WordPress (low resolution)', 'cloudinary' ),
+							'cld'       => __( 'Cloudinary only', 'cloudinary' ),
+						),
 					),
 				),
 			),

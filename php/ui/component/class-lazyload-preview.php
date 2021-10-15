@@ -174,7 +174,7 @@ class Lazyload_Preview extends Breakpoints_Preview {
 		$button                               = $this->get_part( 'button' );
 		$button['attributes']['id']           = 'preview-cycle';
 		$button['attributes']['type']         = 'button';
-		$button['content']                    = __( 'Run load simulation', 'cloudinary' );
+		$button['content']                    = __( 'Run loading simulation', 'cloudinary' );
 		$button['attributes']['class']        = array(
 			'button',
 			'button-primary',
