@@ -400,7 +400,7 @@ $settings = array(
 					'content'     => sprintf(
 						// translators: The HTML markup.
 						__( 'Yes, the plugin has full support for WooCommerce. We also have additional functionality that allows you to add a fully optimized %1$sProduct Gallery%2$s.', 'cloudinary' ),
-						'<a href="">',
+						'<a href="' . esc_url( add_query_arg( 'page', 'cloudinary_gallery' ) ) . '">',
 						'</a>'
 					),
 				),
