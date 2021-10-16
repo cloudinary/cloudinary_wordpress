@@ -142,6 +142,7 @@ class Report extends Settings_Component implements Setup {
 	public function setup() {
 		if ( 'on' === $this->settings->get_value( 'enable_report' ) ) {
 			add_action( 'add_meta_boxes', array( $this, 'image_meta_viewer' ) );
+			$this->maybe_generate_report();
 		}
 	}
 
@@ -418,5 +419,25 @@ class Report extends Settings_Component implements Setup {
 			$config['gallery'] = $this->plugin->get_component( 'media' )->gallery->get_config();
 		}
 		$this->add_report_block( 'config_report', $config );
+	}
+
+	/**
+	 * Maybe generate the report.
+	 */
+	public function maybe_generate_report() {
+		$download = filter_input( INPUT_GET, self::REPORT_DOWNLOAD_KEY, FILTER_VALIDATE_BOOLEAN );
+		if ( $download ) {
+			$report = $this->get_report_data();
+			header( 'Content-Description: File Transfer' );
+			header( 'Content-Type: application/octet-stream' );
+			header( "Content-Disposition: attachment; filename={$report['filename']}" );
+			header( 'Content-Transfer-Encoding: text' );
+			header( 'Connection: Keep-Alive' );
+			header( 'Expires: 0' );
+			header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
+			header( 'Pragma: public' );
+			echo wp_json_encode( $report['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
+			exit;
+		}
 	}
 }
