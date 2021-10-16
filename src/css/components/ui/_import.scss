@@ -1,0 +1,40 @@
+&-import {
+	width: 200px;
+	height: 100%;
+	position: absolute;
+	display: none;
+	right: 0;
+	padding: 0 10px;
+
+	&-item {
+		margin-top: 10px;
+		opacity: 0;
+		transition: opacity 0.5s;
+		white-space: nowrap;
+
+		.spinner {
+			visibility: visible;
+		}
+
+		&-id {
+			text-overflow: ellipsis;
+			overflow: hidden;
+			display: block;
+		}
+	}
+
+	&-process {
+		visibility: visible;
+		background-color: #fff;
+		padding: 5px;
+		float: none;
+		opacity: 1;
+		background-position: center;
+		border-radius: 40px;
+	}
+}
+
+@at-root .media-library {
+	transition: margin-right 0.2s;
+	margin-right: 0px;
+}
