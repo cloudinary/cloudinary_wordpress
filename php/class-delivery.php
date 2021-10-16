@@ -8,6 +8,7 @@
 namespace Cloudinary;
 
 use Cloudinary\Component\Setup;
+use Cloudinary\Connect\Api;
 use Cloudinary\Media\Filter;
 use Cloudinary\Media\Global_Transformations;
 use Cloudinary\Sync;

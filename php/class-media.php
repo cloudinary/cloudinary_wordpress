@@ -1696,11 +1696,12 @@ class Media extends Settings_Component implements Setup {
 		$params = array(
 			'nonce'     => wp_create_nonce( 'wp_rest' ),
 			'mloptions' => array(
-				'cloud_name'    => $this->credentials['cloud_name'],
-				'api_key'       => $this->credentials['api_key'],
-				'cms_type'      => 'wordpress',
-				'remove_header' => true,
-				'integration'   => array(
+				'cloud_name'     => $this->credentials['cloud_name'],
+				'api_key'        => $this->credentials['api_key'],
+				'cms_type'       => 'wordpress',
+				'insert_caption' => __( 'Import', 'cloudinary' ),
+				'remove_header'  => true,
+				'integration'    => array(
 					'type'     => 'wordpress_plugin',
 					'platform' => 'WordPress ' . get_bloginfo( 'version' ),
 					'version'  => $this->plugin->version,
@@ -1883,6 +1884,7 @@ class Media extends Settings_Component implements Setup {
 				'url'           => $asset['url'],
 				'filename'      => basename( $asset['src'] ),
 				'attachment_id' => $asset['attachment_id'],
+				'public_id'     => $asset['public_id'],
 			);
 			if ( empty( $asset['attachment_id'] ) ) {
 				$return                  = $base_return;

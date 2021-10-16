@@ -206,7 +206,8 @@ class Admin {
 			$page['capability'],
 			$page['slug'],
 			'',
-			$page['icon']
+			$page['icon'],
+			'81.5'
 		);
 		$connected   = $this->settings->get_param( 'connected' );
 		// Setup the Child page handles.

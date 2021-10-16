@@ -147,6 +147,7 @@ final class Plugin {
 		$this->components['responsive_breakpoints'] = new Responsive_Breakpoints( $this );
 		$this->components['assets']                 = new CLD_Assets( $this );
 		$this->components['dashboard']              = new Dashboard( $this );
+		$this->components['dam']                    = new DAM( $this );
 	}
 
 	/**
