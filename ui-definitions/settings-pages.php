@@ -422,6 +422,10 @@ $settings = array(
 			),
 		),
 	),
+	'wizard'         => array(
+		'section'  => 'wizard',
+		'slug'     => 'wizard',
+	),
 );
 
 return apply_filters( 'cloudinary_admin_pages', $settings );
