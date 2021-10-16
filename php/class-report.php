@@ -200,14 +200,33 @@ class Report extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Enabled method check.
+	 *
+	 * @return bool
+	 */
+	public function enabled() {
+		return 'on' === $this->settings->get_value( 'enable_report' );
+	}
+
+	/**
+	 * Check if component is disabled.
+	 *
+	 * @return bool
+	 */
+	public function disabled() {
+		return ! $this->enabled();
+	}
+
+	/**
 	 * Add page section to pages structure.
 	 *
-	 * @param array $settings The current setting structure.
+	 * @param array $pages The current pages structure.
 	 *
 	 * @return array
 	 */
-	public function register_settings( $settings ) {
-		$settings['reporting'] = array(
+	public function register_settings( $pages ) {
+		$self               = $this;
+		$pages['reporting'] = array(
 			'page_title'          => __( 'System Report', 'cloudinary' ),
 			'section'             => self::REPORT_SLUG,
 			'slug'                => 'reporting',
@@ -228,19 +247,11 @@ class Report extends Settings_Component implements Setup {
 						'type'    => 'tag',
 						'element' => 'div',
 						'content' => $this->get_report_body(),
-						'enabled' => function () {
-							$enabled = get_plugin_instance()->settings->get_value( 'enable_report' );
-
-							return 'on' !== $enabled;
-						},
+						'enabled' => array( $this, 'disabled' ),
 					),
 					array(
 						'type'    => 'system',
-						'enabled' => function () {
-							$enabled = get_plugin_instance()->settings->get_value( 'enable_report' );
-
-							return 'on' === $enabled;
-						},
+						'enabled' => array( $this, 'enabled' ),
 					),
 				),
 				array(
@@ -249,7 +260,7 @@ class Report extends Settings_Component implements Setup {
 			),
 		);
 
-		return $settings;
+		return $pages;
 	}
 
 	/**
