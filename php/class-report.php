@@ -225,7 +225,6 @@ class Report extends Settings_Component implements Setup {
 	 * @return array
 	 */
 	public function register_settings( $pages ) {
-		$self               = $this;
 		$pages['reporting'] = array(
 			'page_title'          => __( 'System Report', 'cloudinary' ),
 			'section'             => self::REPORT_SLUG,
