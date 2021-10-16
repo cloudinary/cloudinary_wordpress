@@ -6,6 +6,7 @@
  */
 
 use Cloudinary\Utils;
+use Cloudinary\Report;
 use function Cloudinary\get_plugin_instance;
 
 $media    = $this->get_component( 'media' );
@@ -316,7 +317,7 @@ $settings = array(
 						'type'       => 'tag',
 						'element'    => 'a',
 						'attributes' => array(
-							'href'  => 'https://cloudinary.com/documentation/wordpress_integration',
+							'href'  => add_query_arg( 'section', Report::REPORT_SLUG ),
 							'class' => array(
 								'large-button',
 							),
@@ -334,11 +335,8 @@ $settings = array(
 							'content' => __( 'System Report', 'cloudinary' ),
 						),
 						array(
-							'type'       => 'a',
-							'content'    => __( "Generate a system report to help debug any specific issues you're having with your Cloudinary media, our support team will usually ask for this when submitting a support request.", 'cloudinary' ),
-							'attributes' => array(
-								'href' => '#',
-							),
+							'type'    => 'a',
+							'content' => __( "Generate a system report to help debug any specific issues you're having with your Cloudinary media, our support team will usually ask for this when submitting a support request.", 'cloudinary' ),
 						),
 					),
 				),
@@ -423,6 +421,10 @@ $settings = array(
 				),
 			),
 		),
+	),
+	'wizard'         => array(
+		'section'  => 'wizard',
+		'slug'     => 'wizard',
 	),
 );
 

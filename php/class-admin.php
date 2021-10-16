@@ -226,6 +226,12 @@ class Admin {
 			if ( ! apply_filters( "cloudinary_settings_enabled_{$slug}", true ) ) {
 				continue;
 			}
+			// Add section page if defined.
+			if ( ! empty( $sub_page['section'] ) ) {
+				$this->set_param( $sub_page['section'], $sub_page );
+				// Section pages are more like tabs, so skip menu page registrations.
+				continue;
+			}
 			$capability = ! empty( $sub_page['capability'] ) ? $sub_page['capability'] : $page['capability'];
 			$page_title = ! empty( $sub_page['page_title'] ) ? $sub_page['page_title'] : $page['page_title'];
 			$menu_title = ! empty( $sub_page['menu_title'] ) ? $sub_page['menu_title'] : $page_title;
@@ -263,8 +269,9 @@ class Admin {
 			$page = $this->get_param( $name );
 			$this->settings->set_param( 'active_setting', $page['slug'] );
 			$section = filter_input( INPUT_GET, 'section', FILTER_SANITIZE_STRING );
-			if ( $section && file_exists( $this->plugin->dir_path . 'ui-definitions/components/' . $section . '.php' ) ) {
+			if ( $section && $this->has_param( $section ) ) {
 				$this->section = $section;
+				$this->set_param( 'current_section', $this->get_param( $section ) );
 			}
 			if ( 'page' === $this->section && ! $this->settings->get_param( 'connected' ) && 'help' !== $page['slug'] ) {
 				$args = array(
@@ -285,12 +292,22 @@ class Admin {
 		wp_enqueue_script( $this->plugin->slug );
 		$screen = get_current_screen();
 		$page   = $this->get_param( $screen->id );
+		// Check if a section page was set, and replace page structure with the section.
+		if ( $this->has_param( 'current_section' ) ) {
+			$page = $this->get_param( 'current_section' );
+		}
 
 		$this->set_param( 'active_slug', $page['slug'] );
 		$setting         = $this->init_components( $page, $screen->id );
 		$this->component = $setting->get_component();
+		$template        = $this->section;
 
-		include $this->plugin->dir_path . 'ui-definitions/components/' . $this->section . '.php';
+		$file = $this->plugin->dir_path . 'ui-definitions/components/page.php';
+		if ( file_exists( $this->plugin->dir_path . 'ui-definitions/components/' . $template . '.php' ) ) {
+			// If the section has a defined template, use that instead eg. wizard.
+			$file = $this->plugin->dir_path . 'ui-definitions/components/' . $template . '.php';
+		}
+		include $file;
 	}
 
 	/**
