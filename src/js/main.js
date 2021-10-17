@@ -15,6 +15,7 @@ import Notices from './components/notices';
 import UI from './components/ui';
 import Wizard from './components/wizard';
 import Storage from "./components/storage";
+import Extensions from "./components/extensions";
 
 import '../css/main.scss';
 
@@ -58,5 +59,6 @@ export const cloudinary = {
 	MediaLibrary,
 	Notices,
 	Wizard,
-	Storage
+	Storage,
+	Extensions
 };

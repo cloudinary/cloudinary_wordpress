@@ -334,14 +334,22 @@ class Admin {
 		}
 		$setting = $this->settings->add( $slug, array(), $template );
 		foreach ( $template as $index => $component ) {
-			if ( ! self::filter_template( $index ) ) {
+			if ( is_string( $component ) || ! is_array( $component ) && ! self::filter_template( $index ) ) {
+				continue;
+			}
+			if ( $component instanceof Setting ) {
+				$setting->add( $component );
 				continue;
 			}
 			if ( ! isset( $component['type'] ) ) {
 				$component['type'] = 'frame';
 			}
+			$component_slug = $index;
+			if ( isset( $component['slug'] ) ) {
+				$component_slug = $component['slug'];
+			}
 			if ( ! isset( $component['setting'] ) ) {
-				$component['setting'] = $this->init_components( $component, $slug . '.' . $component['type'] . '_' . $index );
+				$component['setting'] = $this->init_components( $component, $slug . $this->settings->separator . $component_slug );
 			} else {
 				$setting->add( $component['setting'] );
 			}

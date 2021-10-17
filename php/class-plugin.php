@@ -147,7 +147,7 @@ final class Plugin {
 		$this->components['responsive_breakpoints'] = new Responsive_Breakpoints( $this );
 		$this->components['assets']                 = new CLD_Assets( $this );
 		$this->components['dashboard']              = new Dashboard( $this );
-		$this->components['dam']                    = new DAM( $this );
+		$this->components['extensions']             = new Extensions( $this );
 	}
 
 	/**
@@ -273,8 +273,11 @@ final class Plugin {
 	public function register_hooks() {
 		add_action( 'plugins_loaded', array( $this, 'init' ), 9 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'register_enqueue_styles' ), 11 );
-		add_action( 'init', array( $this, 'setup' ), 10 );
-		add_action( 'init', array( $this, 'register_assets' ), 10 );
+
+		// Move to 100 and 200 to allow other plugins/systems to add cloudinary filters and actions that are fired within the init hooks.
+		add_action( 'init', array( $this, 'setup' ), 100 );
+		add_action( 'init', array( $this, 'register_assets' ), 200 );
+
 		add_action( 'admin_notices', array( $this, 'admin_notices' ) );
 		add_filter( 'plugin_row_meta', array( $this, 'force_visit_plugin_site_link' ), 10, 4 );
 		add_action( 'wp_enqueue_editor', array( $this, 'enqueue_assets' ) );
@@ -354,7 +357,7 @@ final class Plugin {
 	 *
 	 * @param object $component The component to check.
 	 *
-	 * @return bool If the component is an asset impmented object or not.
+	 * @return bool If the component is an asset implemented object or not.
 	 */
 	private function is_active_asset_component( $component ) {
 		return $this->is_asset_component( $component ) && $component->is_active();
