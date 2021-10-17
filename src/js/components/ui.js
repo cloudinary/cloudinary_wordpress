@@ -169,6 +169,9 @@ const UI = {
 		const wrap = document.querySelector(
 			'[data-wrap="' + element.dataset.toggle + '"]'
 		);
+		if ( ! wrap ) {
+			return;
+		}
 		const state = States.get( element.id );
 		element.addEventListener( 'click', function ( ev ) {
 			ev.stopPropagation();
