@@ -260,17 +260,45 @@ class Lazy_Load extends Delivery_Feature {
 										),
 										'data-auto-suffix' => '*px;em;rem;vh',
 									),
-									'default'    => '1000px',
+									'default'      => '100px',
 								),
 								array(
-									'type'      => 'radio',
-									'title'     => __( 'Placeholder generation type', 'cloudinary' ),
-									'slug'      => 'lazy_placeholder',
-									'default'   => 'blur',
-									'condition' => array(
+									'type'    => 'tag',
+									'element' => 'hr',
+								),
+								array(
+									'type'        => 'color',
+									'title'       => __( 'Pre-loader color', 'cloudinary' ),
+									'description' => __(
+										'On page load, the pre-loader is used to fill the space while the image is downloaded, preventing content shift.',
+										'cloudinary'
+									),
+									'slug'        => 'lazy_custom_color',
+									'default'     => 'rgba(153,153,153,0.5)',
+								),
+								array(
+									'type'        => 'on_off',
+									'description' => __( 'Pre-loader animation', 'cloudinary' ),
+									'slug'        => 'lazy_animate',
+									'default'     => 'on',
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'hr',
+								),
+								array(
+									'type'        => 'radio',
+									'title'       => __( 'Placeholder generation type', 'cloudinary' ),
+									'description' => __(
+										"Placeholders are low-res representations of the image, that's loaded below the fold. They are then replaced with the actual image, just before it comes into view.",
+										'cloudinary'
+									),
+									'slug'        => 'lazy_placeholder',
+									'default'     => 'blur',
+									'condition'   => array(
 										'use_lazy_load' => true,
 									),
-									'options'   => array(
+									'options'     => array(
 										'blur'        => __( 'Blur', 'cloudinary' ),
 										'pixelate'    => __( 'Pixelate', 'cloudinary' ),
 										'vectorize'   => __( 'Vectorize', 'cloudinary' ),
@@ -278,24 +306,15 @@ class Lazy_Load extends Delivery_Feature {
 										'off'         => __( 'Off', 'cloudinary' ),
 									),
 								),
-								array(
-									'type'    => 'color',
-									'title'   => __( 'Custom color', 'cloudinary' ),
-									'slug'    => 'lazy_custom_color',
-									'default' => 'rgba(153,153,153,0.5)',
-								),
-								array(
-									'type'        => 'on_off',
-									'description' => __( 'Animate', 'cloudinary' ),
-									'slug'        => 'lazy_animate',
-									'default'     => 'on',
-								),
 							),
 						),
 						array(
-							'type'  => 'column',
-							'class' => array(
+							'type'      => 'column',
+							'class'     => array(
 								'cld-ui-preview',
+							),
+							'condition' => array(
+								'use_lazy_load' => true,
 							),
 							array(
 								'type'    => 'lazyload_preview',
