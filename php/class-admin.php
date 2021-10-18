@@ -206,7 +206,8 @@ class Admin {
 			$page['capability'],
 			$page['slug'],
 			'',
-			$page['icon']
+			$page['icon'],
+			'81.5'
 		);
 		$connected   = $this->settings->get_param( 'connected' );
 		// Setup the Child page handles.
@@ -224,6 +225,12 @@ class Admin {
 				$first       = true;
 			}
 			if ( ! apply_filters( "cloudinary_settings_enabled_{$slug}", true ) ) {
+				continue;
+			}
+			// Add section page if defined.
+			if ( ! empty( $sub_page['section'] ) ) {
+				$this->set_param( $sub_page['section'], $sub_page );
+				// Section pages are more like tabs, so skip menu page registrations.
 				continue;
 			}
 			$capability = ! empty( $sub_page['capability'] ) ? $sub_page['capability'] : $page['capability'];
@@ -263,8 +270,9 @@ class Admin {
 			$page = $this->get_param( $name );
 			$this->settings->set_param( 'active_setting', $page['slug'] );
 			$section = filter_input( INPUT_GET, 'section', FILTER_SANITIZE_STRING );
-			if ( $section && file_exists( $this->plugin->dir_path . 'ui-definitions/components/' . $section . '.php' ) ) {
+			if ( $section && $this->has_param( $section ) ) {
 				$this->section = $section;
+				$this->set_param( 'current_section', $this->get_param( $section ) );
 			}
 			if ( 'page' === $this->section && ! $this->settings->get_param( 'connected' ) && 'help' !== $page['slug'] ) {
 				$args = array(
@@ -285,12 +293,22 @@ class Admin {
 		wp_enqueue_script( $this->plugin->slug );
 		$screen = get_current_screen();
 		$page   = $this->get_param( $screen->id );
+		// Check if a section page was set, and replace page structure with the section.
+		if ( $this->has_param( 'current_section' ) ) {
+			$page = $this->get_param( 'current_section' );
+		}
 
 		$this->set_param( 'active_slug', $page['slug'] );
 		$setting         = $this->init_components( $page, $screen->id );
 		$this->component = $setting->get_component();
+		$template        = $this->section;
 
-		include $this->plugin->dir_path . 'ui-definitions/components/' . $this->section . '.php';
+		$file = $this->plugin->dir_path . 'ui-definitions/components/page.php';
+		if ( file_exists( $this->plugin->dir_path . 'ui-definitions/components/' . $template . '.php' ) ) {
+			// If the section has a defined template, use that instead eg. wizard.
+			$file = $this->plugin->dir_path . 'ui-definitions/components/' . $template . '.php';
+		}
+		include $file;
 	}
 
 	/**
@@ -316,14 +334,25 @@ class Admin {
 		}
 		$setting = $this->settings->add( $slug, array(), $template );
 		foreach ( $template as $index => $component ) {
-			if ( ! self::filter_template( $index ) ) {
+			// Add setting components directly.
+			if ( $component instanceof Setting ) {
+				$setting->add( $component );
 				continue;
 			}
+
+			if ( ( ! is_array( $component ) || ! isset( $component['slug'] ) ) && ! self::filter_template( $index ) ) {
+				continue;
+			}
+
 			if ( ! isset( $component['type'] ) ) {
 				$component['type'] = 'frame';
 			}
+			$component_slug = $index;
+			if ( isset( $component['slug'] ) ) {
+				$component_slug = $component['slug'];
+			}
 			if ( ! isset( $component['setting'] ) ) {
-				$component['setting'] = $this->init_components( $component, $slug . '.' . $component['type'] . '_' . $index );
+				$component['setting'] = $this->init_components( $component, $slug . $this->settings->separator . $component_slug );
 			} else {
 				$setting->add( $component['setting'] );
 			}

@@ -58,7 +58,7 @@ trait Params_Trait {
 		} else {
 			$new[ $key ] = $value;
 		}
-		ksort( $new );
+		// @TODO: I took ksort out, need to check that it doesn't have any problems being.
 
 		return $new;
 	}

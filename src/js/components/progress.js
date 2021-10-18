@@ -6,7 +6,9 @@ import { __ } from '@wordpress/i18n';
 
 const Progress = {
 	data: {},
+	context: null,
 	init( context ) {
+		this.context = context;
 		const items = context.querySelectorAll( '[data-progress]' );
 		const charts = context.querySelectorAll( '[data-chart]' );
 		[ ...items ].forEach( ( item ) => {
@@ -155,6 +157,22 @@ const Progress = {
 					}, 10000 );
 				}
 			} );
+
+			for ( const stat in result ) {
+				const eventElements = this.context.querySelectorAll(
+					`[data-key="${ stat }"]`
+				);
+				const textElements = this.context.querySelectorAll(
+					`[data-text="${ stat }"]`
+				);
+				eventElements.forEach( ( element ) => {
+					element.dataset.value = result[ stat ];
+					element.dispatchEvent( new Event( 'focus' ) );
+				} );
+				textElements.forEach( ( element ) => {
+					element.innerText = result[ stat ];
+				} );
+			}
 		} );
 	},
 	setText( bar, value, text ) {

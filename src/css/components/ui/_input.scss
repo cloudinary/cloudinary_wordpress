@@ -2,7 +2,7 @@
 @mixin input {
 	margin: 0 0 23px;
 	display: block;
-	max-width: 500px;
+	max-width: $size-settings-max-width;
 	&-label {
 		.cld-ui-title {
 			font-size: $size-setting-label;
@@ -24,6 +24,10 @@
 	}
 	&-radio-label{
 		display: block;
+
+		&:not(:first-of-type) {
+			padding-top: 8px;
+		}
 	}
 }
 
@@ -44,5 +48,9 @@
 	.suffixed {
 		width: 40%;
 		margin-right: 6px;
+	}
+
+	input::placeholder{
+		color: $color-disabled-grey;
 	}
 }

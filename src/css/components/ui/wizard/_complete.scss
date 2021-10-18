@@ -1,6 +1,11 @@
 
 &-complete {
 	padding: 75px;
+	background-image: url( "images/confetti.png" );
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+
 	&.hidden {
 		display: none;
 	}
@@ -10,9 +15,12 @@
 		justify-content: center;
 		align-items: center;
 		flex-direction: column;
-		width: 450px;
-		margin: 0 auto;
+		margin: -23px -24px;
 		text-align: center;
+
+		* {
+			max-width: 450px;
+		}
 	}
 
 	&-icons {

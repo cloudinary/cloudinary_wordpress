@@ -1,0 +1,45 @@
+&-optimize-panel.cld-row {
+
+}
+
+&-stat {
+	&-percent {
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		margin-top: 34px;
+
+		h2 {
+			font-size: 48px;
+			margin: 0 12px 0 0;
+			color: #54c8db;
+		}
+
+		&-text {
+			font-weight: bold;
+		}
+	}
+
+	&-legend {
+		display: flex;
+		min-width: 200px;
+		margin: 0 0 16px 12px;
+		font-weight: bold;
+		&-dot {
+			display: inline-block;
+			width: 20px;
+			height: 20px;
+			border-radius: 50%;
+			margin-right: 6px;
+			&.blue-dot{
+				background-color: #2e49cd;
+			}
+			&.aqua-dot{
+				background-color: #54c8db;
+			}
+			&.red-dot{
+				background-color: #e12600;
+			}
+		}
+	}
+}

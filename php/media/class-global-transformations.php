@@ -312,7 +312,7 @@ class Global_Transformations {
 	 */
 	public function taxonomy_ordering( $type, $post ) {
 		if ( $this->has_public_taxonomies( $post ) ) {
-			add_meta_box( 'cld-taxonomy-order', __( 'Taxonomy Order', 'cloudinary' ), array( $this, 'render_ordering_box' ), null, 'side', 'core' );
+			add_meta_box( 'cld-taxonomy-order', __( 'Categories/Tags transformations', 'cloudinary' ), array( $this, 'render_ordering_box' ), null, 'side', 'core' );
 		}
 	}
 
@@ -440,11 +440,13 @@ class Global_Transformations {
 	private function init_taxonomy_manager( $post ) {
 		wp_enqueue_script( 'wp-api' );
 
+		$terms = $this->get_terms( $post->ID );
+
 		$out   = array();
 		$out[] = '<div class="cld-tax-order">';
+		$out[] = '<p style="font-size: 12px; font-style: normal; color: rgb( 117, 117, 117 );">' . esc_html__( 'If you placed custom transformations on categories/tags you may order them below. ', 'cloudinary' ) . '</li>';
 		$out[] = '<ul class="cld-tax-order-list" id="cld-tax-items">';
 		$out[] = '<li class="cld-tax-order-list-item no-items">' . esc_html__( 'No terms added', 'cloudinary' ) . '</li>';
-		$terms = $this->get_terms( $post->ID );
 		if ( ! empty( $terms ) ) {
 			foreach ( (array) $terms as $item ) {
 				$out[] = $this->make_term_sort_item( $item['value'], $item['term']->name );
@@ -455,7 +457,7 @@ class Global_Transformations {
 		// Get apply Type.
 		if ( ! empty( $terms ) ) {
 			$type  = get_post_meta( $post->ID, self::META_APPLY_KEY . '_terms', true );
-			$out[] = '<label class="cld-tax-order-list-type"><input ' . checked( 'overwrite', $type, false ) . ' type="checkbox" value="overwrite" name="cld_apply_type" />' . __( 'Overwrite taxonomy', 'cloudinary' ) . '</label>';
+			$out[] = '<label class="cld-tax-order-list-type"><input ' . checked( 'overwrite', $type, false ) . ' type="checkbox" value="overwrite" name="cld_apply_type" />' . esc_html__( 'Disable global transformations', 'cloudinary' ) . '</label>';
 		}
 
 		$out[] = '</div>';

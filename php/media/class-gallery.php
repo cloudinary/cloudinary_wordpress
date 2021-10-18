@@ -336,8 +336,8 @@ class Gallery extends Settings_Component {
 	public function register_settings( $pages ) {
 
 		$pages['gallery'] = array(
-			'page_title'          => __( 'Gallery Settings (Beta)', 'cloudinary' ),
-			'menu_title'          => __( 'Gallery Settings (Beta)', 'cloudinary' ),
+			'page_title'          => __( 'Gallery settings', 'cloudinary' ),
+			'menu_title'          => __( 'Gallery settings', 'cloudinary' ),
 			'priority'            => 5,
 			'requires_connection' => true,
 			'sidebar'             => true,

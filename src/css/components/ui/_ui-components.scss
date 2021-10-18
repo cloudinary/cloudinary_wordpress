@@ -30,7 +30,6 @@
 	}
 
 	&-title {
-		text-transform: capitalize;
 		font-size: $size-panel-subtitle;
 
 		h2 {
@@ -58,7 +57,7 @@
 			font-size: $size-panel-description;
 		}
 
-		.button, .button:hover {
+		.button:not(.wp-color-result) {
 			background-color: $color-cld-blue;
 			color: #fff;
 			text-decoration: none;
@@ -71,11 +70,22 @@
 			margin: 0;
 			display: inline-block;
 		}
-		.button.button-small:hover{
+		.button:hover, .button:active{
+			background-color: $color-cld-dark-blue;
+		}
+		.button:focus{
+			background-color: $color-cld-blue;
+			border-color: $color-cld-blue;
+			box-shadow: 0 0 0 1px $color-white, 0 0 0 3px $color-cld-blue;
+		}
+		.button.button-small, .button.button-small:hover{
 			min-height: 26px;
 			line-height: 2.18181818;
 			padding: 0 8px;
 			font-size: 11px;
+		}
+		.button.wp-color-result{
+			border-color: #d0d0d0;
 		}
 	}
 }

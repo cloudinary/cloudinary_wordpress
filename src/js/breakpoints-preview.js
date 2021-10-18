@@ -22,6 +22,8 @@ const BreakpointsPreview = {
 		this.min.addEventListener( 'change', () => {
 			this.calculateShift();
 		} );
+
+		this.stepper.dispatchEvent( new Event('change') );
 	},
 	calculateShift() {
 		const count = this.counter.value;

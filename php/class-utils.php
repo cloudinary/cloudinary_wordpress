@@ -223,7 +223,7 @@ class Utils {
 	  format varchar(12) DEFAULT NULL,
 	  sync_type varchar(45) DEFAULT NULL,
 	  post_state varchar(12) DEFAULT NULL,
-	  transformations text DEFAULT NULL,	  
+	  transformations text DEFAULT NULL,
 	  PRIMARY KEY (id),
 	  UNIQUE KEY sized_url (sized_url),
 	  KEY post_id (post_id),
@@ -234,5 +234,42 @@ class Utils {
 		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 		// @todo: get VIP approval.
 		dbDelta( $sql ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.dbDelta_dbdelta
+	}
+
+	/**
+	 * Gets the URL for opening a Support Request.
+	 *
+	 * @param string $reason  The reason option slug.
+	 * @param string $subject The subject for the request.
+	 *
+	 * @return string
+	 */
+	public static function get_support_link( $reason = '', $subject = '' ) {
+		$user   = wp_get_current_user();
+		$plugin = get_plugin_instance();
+		$url    = 'https://support.cloudinary.com/hc/en-us/requests/new';
+
+		if ( empty( $reason ) ) {
+			$reason = 'other_help_needed';
+		}
+
+		if ( empty( $subject ) ) {
+			$subject = sprintf(
+				// translators: The plugin version.
+				__( 'I need help with Cloudinary WordPress plugin version %s', 'cloudinary' ),
+				$plugin->version
+			);
+		}
+
+		$args = array(
+			'request_anonymous_requester_email'  => $user->display_name,
+			'request_custom_fields_22246877'     => $user->user_email,
+			'request_custom_fields_360007219560' => $plugin->components['connect']->get_cloud_name(),
+			'request_custom_fields_360017815680' => $reason,
+			'request_subject'                    => $subject,
+			'request_description'                => __( 'Please, provide more details on your request, and if possible, attach a System Report', 'cloudinary' ),
+		);
+
+		return add_query_arg( array_filter( $args ), $url );
 	}
 }

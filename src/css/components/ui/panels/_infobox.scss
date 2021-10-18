@@ -16,7 +16,7 @@
 	.cld-ui-title {
 		h2 {
 			margin: 0 0 6px;
-			font-size: $size-panel-subtitle;
+			font-size: $size-panel-title;
 		}
 	}
 
@@ -50,5 +50,6 @@
 
 	&-text{
 		color: $color-cld-description;
+		font-size: $size-panel-description;
 	}
 }

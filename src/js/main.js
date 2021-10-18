@@ -14,6 +14,8 @@ import MediaLibrary from './components/media-library';
 import Notices from './components/notices';
 import UI from './components/ui';
 import Wizard from './components/wizard';
+import Storage from "./components/storage";
+import Extensions from "./components/extensions";
 
 import '../css/main.scss';
 
@@ -38,6 +40,11 @@ import '../css/images/sample.webp';
 import '../css/images/wizard-welcome.png';
 import '../css/images/document.svg';
 import '../css/images/arrow.svg';
+import '../css/images/documentation.jpg';
+import '../css/images/request.jpg';
+import '../css/images/report.jpg';
+import '../css/images/confetti.png';
+
 
 // jQuery, because reasons.
 window.$ = window.jQuery;
@@ -51,5 +58,7 @@ export const cloudinary = {
 	TermsOrder,
 	MediaLibrary,
 	Notices,
-	Wizard
+	Wizard,
+	Storage,
+	Extensions
 };

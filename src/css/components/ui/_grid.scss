@@ -67,9 +67,11 @@
 		&.cld-info-text {
 			padding-left: 2em;
 			font-weight: bolder;
+			font-size: $size-panel-title;
 
 			.description {
-				font-size: 0.6em;
+				font-size: $size-panel-subtitle;
+				padding-top: 8px;
 			}
 		}
 	}

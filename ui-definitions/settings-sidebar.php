@@ -74,23 +74,6 @@ $settings = array(
 			'title' => __( 'Optimized Images', 'cloudinary' ),
 		),
 	),
-	array(
-		'type'        => 'panel',
-		'title'       => __( 'Extensions', 'cloudinary' ),
-		'description' => __( '1 Active extension', 'cloudinary' ),
-		'collapsible' => 'closed',
-		array(
-			'type'      => 'info_box',
-			'icon'      => $this->dir_url . 'css/images/logo-icon.svg',
-			'title'     => __( 'Cloudinary', 'cloudinary' ),
-			'text'      => __(
-				'Cloudinary\'s digital asset management solution bridges the gap between asset management and delivery, enabling creative.',
-				'cloudinary'
-			),
-			'link_text' => 'Active',
-			'disabled'  => true,
-		),
-	),
 );
 
 return apply_filters( 'cloudinary_admin_sidebar', $settings );
