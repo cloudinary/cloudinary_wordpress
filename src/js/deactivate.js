@@ -6,7 +6,7 @@ const Deactivate = {
 	modalBody: document.getElementById( 'modal-body' ),
 	modalFooter: document.getElementById( 'modal-footer' ),
 	modalUninstall: document.getElementById( 'modal-uninstall' ),
-	modalClose: document.getElementsByClassName( 'cancel-close' ),
+	modalClose: document.querySelectorAll( 'button[data-action="cancel"], button[data-action="close"]' ),
 	// The different links to deactivate the plugin.
 	pluginListLinks: document.querySelectorAll(
 		'.cld-deactivate-link, .cld-deactivate'
@@ -15,24 +15,32 @@ const Deactivate = {
 	triggers: document.getElementsByClassName( 'cld-deactivate' ),
 	// The reasons.
 	options: document.querySelectorAll(
-		'.cloudinary-deactivation input[type="radio"]:checked'
+		'.cloudinary-deactivation .reasons input[type="radio"]'
 	),
-	//report: document.getElementById( 'cld-report' ),
-	//contact: document.getElementById( 'cld-contact' ).parentNode,
+	report: document.getElementById( 'cld-report' ),
+	contact: document.getElementById( 'cld-contact' ),
 	// The feedback submit button.
-	submitButton: document.querySelector(
-		'.cloudinary-deactivation .button-primary'
+	submitButton: document.querySelectorAll(
+		'.cloudinary-deactivation button[data-action="submit"]'
 	),
-	// The skip button.
-	//skipButton: document.querySelector(
-	//	'.cloudinary-deactivation .button-link'
-	//),
+	// The contact me button.
+	contactButton: document.querySelectorAll(
+		'.cloudinary-deactivation button[data-action="contact"]'
+	),
+	// The deactivate button.
+	deactivateButton: document.querySelectorAll(
+		'.cloudinary-deactivation button[data-action="deactivate"]'
+	),
+	// The email field.
+	emailField: document.getElementById( 'email' ),
 	// Selected reason.
 	reason: '',
 	// The more details .
 	more: null,
 	// The deactivation link for the plugin.
 	deactivationUrl: '',
+	// The contact me email.
+	email: '',
 
 	addEvents() {
 		const context = this;
@@ -79,70 +87,86 @@ const Deactivate = {
 				) {
 					ev.preventDefault();
 					// Close the feedback form.
-					document.getElementById( 'TB_closeWindowButton' ).click();
+					context.closeModal();
 				}
 			} );
 		} );
 
-		// Add event listener to skip feedback.
-		//context.skipButton.addEventListener( 'click', function () {
-		//	window.location.href = context.deactivationUrl;
-		//} );
+		[ ...context.contactButton ].forEach( ( button ) => {
+			button.addEventListener( 'click', function () {
+				if ( context.emailField ) {
+					context.email = context.emailField.value;
+				}
+				context.submit();
+			} );
+		} );
+
+		[ ...context.deactivateButton ].forEach( ( button ) => {
+			button.addEventListener( 'click', function () {
+				window.location.href = context.deactivationUrl;
+			} );
+		} );
 
 		// Add event listener to update reason and more container.
 		[ ...context.options ].forEach( ( option ) => {
 			option.addEventListener( 'change', function( ev ) {
-				context.submitButton.removeAttribute( 'disabled' );
 				context.reason = ev.target.value;
 				context.more = ev.target.parentNode.querySelector( 'textarea' );
 			} );
 		} );
 
 		// Allowing Cloudinary contact should include the System Report.
-		/*context.report.addEventListener( 'change', function () {
-		 if ( context.report.checked ) {
-		 context.contact.removeAttribute( 'style' );
-		 } else {
-		 context.contact.style.display = 'none';
-		 }
-		 } );*/
+		if ( context.contact ) {
+			context.report.addEventListener( 'change', function () {
+				if ( context.report.checked ) {
+					context.contact.parentNode.removeAttribute( 'style' );
+				} else {
+					context.contact.parentNode.style.display = 'none';
+				}
+			} );
+		}
 
 		// Add event listener to submit the feedback.
-		context.submitButton.addEventListener( 'click', function() {
-			const option = document.querySelector(
-				'.cloudinary-deactivation input[name="option"]:checked' );
+		[ ...context.submitButton ].forEach( ( button ) => {
+			button.addEventListener( 'click', function() {
+				const option = document.querySelector(
+					'.cloudinary-deactivation .data input[name="option"]:checked' );
+				let value = '';
 
-			if ( 'uninstall' === option.value ) {
-				context.modalBody.style.display = 'none';
-				context.modalFooter.style.display = 'none';
-				context.modalUninstall.style.display = 'block';
+				if ( option.hasOwnProperty( 'value' ) ) {
+					value = option.value;
+					if ( 'uninstall' === option.value ) {
+						context.modalBody.style.display = 'none';
+						context.modalFooter.style.display = 'none';
+						context.modalUninstall.style.display = 'block';
+					 }
+				}
 
-				context.uninstall();
-			} else{
-				window.location.href = context.deactivationUrl;
-			}
+				context.submit( value );
+			} );
 		} );
 	},
 	closeModal() {
+		document.body.style.removeProperty('overflow');
 		this.modal.style.visibility = 'hidden';
 		this.modal.style.opacity = '0';
 	},
 	openModal() {
+		document.body.style.overflow = 'hidden';
 		this.modal.style.visibility = 'visible';
 		this.modal.style.opacity = '1';
 	},
-	uninstall() {
-
-	},
-	submit() {
+	submit( dataHandling = '' ) {
 		wp.ajax
 			.send( {
 				url: CLD_Deactivate.endpoint,
 				data: {
-					reason: context.reason,
-					more: context.more?.value,
-					//report: context.report.checked,
-					//contact: context.contact.checked,
+					reason: this.reason,
+					more: this.more?.value,
+					report: this.report?.checked,
+					contact: this.contact?.checked,
+					email: this.email,
+					dataHandling
 				},
 				beforeSend( request ) {
 					request.setRequestHeader(
@@ -152,7 +176,7 @@ const Deactivate = {
 				},
 			} )
 			.always( function() {
-				window.location.href = context.deactivationUrl;
+				window.location.reload();
 			} );
 	},
 	/**

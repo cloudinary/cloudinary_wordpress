@@ -768,7 +768,15 @@ class Sync_Queue {
 			'autosync' => $this->autosync_threads,
 		);
 
-		return $types[ $type ];
+		if ( 'all' === $type ) {
+			return $types;
+		}
+
+		if ( isset( $types[ $type ] ) ) {
+			return $types[ $type ];
+		}
+
+		return array();
 	}
 
 	/**
@@ -810,7 +818,7 @@ class Sync_Queue {
 	 *
 	 * @param string $thread Thread name.
 	 */
-	protected function reset_thread_queue( $thread ) {
+	public function reset_thread_queue( $thread ) {
 		delete_option( $this->get_thread_option( $thread ) );
 	}
 

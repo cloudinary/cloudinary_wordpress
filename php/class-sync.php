@@ -61,11 +61,11 @@ class Sync implements Setup, Assets {
 	private $to_sync = array();
 
 	/**
-	 * Holds the settings stlug.
+	 * Holds the settings slug.
 	 *
 	 * @var string
 	 */
-	protected $settings_slug = 'sync_media';
+	public $settings_slug = 'sync_media';
 
 	/**
 	 * Holds the sync settings object.
@@ -111,6 +111,11 @@ class Sync implements Setup, Assets {
 		'dashboard_cache'     => '_cloudinary_dashboard_stats',
 		'relationship'        => '_cld_relationship',
 	);
+
+	/**
+	 * Holds the Sync Media option key.
+	 */
+	const SYNC_MEDIA = 'cloudinary_sync_media';
 
 	/**
 	 * Push_Sync constructor.
