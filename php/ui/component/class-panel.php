@@ -25,7 +25,7 @@ class Panel extends Component {
 	 *
 	 * @var string
 	 */
-	protected $blueprint = 'header|icon/|title|description/|/title|collapse/|/header|wrap|body|/body|section/|/wrap|save/';
+	protected $blueprint = 'header|icon/|title_wrap|title/|description/|/title_wrap|collapse/|/header|wrap|body|/body|section/|/wrap|save/';
 
 	/**
 	 * Holds the state.
@@ -97,17 +97,36 @@ class Panel extends Component {
 	 *
 	 * @return array
 	 */
-	protected function title( $struct ) {
+	protected function title_wrap( $struct ) {
 
 		$struct['element'] = 'div';
+		$struct['attributes']['class'] = array(
+			'cld-ui-title',
+		);
 
-		$struct['children']['title']            = $this->get_part( 'h2' );
-		$struct['children']['title']['content'] = $this->setting->get_param( 'title' );
-		if ( $this->setting->has_param( 'description' ) ) {
-			$struct['children']['title']['attributes']['class'][] = 'has-description';
-		}
 		if ( $this->setting->has_param( 'collapsible' ) ) {
 			$struct['attributes']['class'][] = 'collapsible';
+		}
+
+		return $struct;
+	}
+
+	/**
+	 * Filter the title parts structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function title( $struct ) {
+
+		$struct['element'] = 'h2';
+		$struct['content'] = $this->setting->get_param( 'title' );
+		$struct['attributes']['class'] = array(
+			'cld-ui-title-head',
+		);
+		if ( $this->setting->has_param( 'description' ) ) {
+			$struct['attributes']['class'][] = 'has-description';
 		}
 
 		return $struct;

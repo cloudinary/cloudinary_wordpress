@@ -70,4 +70,16 @@ class Color extends Text {
 		return $return;
 	}
 
+	/**
+	 * Filter the description parts structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function description( $struct ) {
+		$struct = parent::description( $struct );
+		$struct['element']               = 'div';
+		return $struct;
+	}
 }
