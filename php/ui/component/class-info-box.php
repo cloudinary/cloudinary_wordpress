@@ -19,7 +19,7 @@ class Info_Box extends Panel {
 	 *
 	 * @var string
 	 */
-	protected $blueprint = 'wrap|div|icon/|/div|body|title/|text/|/body|link/|settings/|/wrap';
+	protected $blueprint = 'wrap|div|icon/|/div|body|title_wrap|title/|description/|/title_wrap|text/|/body|link/|settings/|/wrap';
 
 	/**
 	 * Filter the link parts structure.
