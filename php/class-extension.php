@@ -8,11 +8,14 @@
 namespace Cloudinary;
 
 use Cloudinary\Component\Assets;
+use Cloudinary\Traits\Singleton_Trait;
 
 /**
  * Class extension
  */
 abstract class Extension implements Assets {
+
+	use Singleton_Trait;
 
 	/**
 	 * Holds the plugin instance.
@@ -20,13 +23,6 @@ abstract class Extension implements Assets {
 	 * @var Plugin Instance of the global plugin.
 	 */
 	public $plugin;
-
-	/**
-	 * Holds the singleton instance.
-	 *
-	 * @var self
-	 */
-	protected static $instance;
 
 	/**
 	 * Extension constructor.
@@ -56,19 +52,4 @@ abstract class Extension implements Assets {
 	 */
 	public function is_active() {
 	}
-
-	/**
-	 * Get an instance of this class.
-	 *
-	 * @return self
-	 */
-	public static function get_instance() {
-		if ( ! self::$instance ) {
-			$called         = get_called_class();
-			self::$instance = new $called( get_plugin_instance() );
-		}
-
-		return self::$instance;
-	}
-
 }
