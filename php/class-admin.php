@@ -334,13 +334,16 @@ class Admin {
 		}
 		$setting = $this->settings->add( $slug, array(), $template );
 		foreach ( $template as $index => $component ) {
-			if ( is_string( $component ) || ! is_array( $component ) && ! self::filter_template( $index ) ) {
-				continue;
-			}
+			// Add setting components directly.
 			if ( $component instanceof Setting ) {
 				$setting->add( $component );
 				continue;
 			}
+
+			if ( ( ! is_array( $component ) || ! isset( $component['slug'] ) ) && ! self::filter_template( $index ) ) {
+				continue;
+			}
+
 			if ( ! isset( $component['type'] ) ) {
 				$component['type'] = 'frame';
 			}
