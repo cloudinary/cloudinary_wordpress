@@ -239,7 +239,7 @@ class Extensions extends Settings_Component implements Setup {
 				'href'  => add_query_arg( 'reload', '1' ),
 			),
 		);
-		$this->settings->set_param( 'sidebar.extensions._reload', $params );
+		$this->settings->set_param( 'sidebar.extensions.settings', $params );
 		// Set settings to own.
 		$this->settings = $this->settings->get_setting( $this->settings_slug );
 	}
