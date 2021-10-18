@@ -127,7 +127,7 @@ $settings = array(
 					'icon'  => $this->dir_url . 'css/images/crop.svg',
 					'title' => __( 'What are transformations', 'cloudinary' ),
 					'text'  => __(
-						'A set of parameters included in a Cloudinary URL to programmatically modify the original and generate a newly derived media file.',
+						'A set of parameters included in a Cloudinary URL to programmatically transform the visual appearance of the assets on your website.',
 						'cloudinary'
 					),
 				),

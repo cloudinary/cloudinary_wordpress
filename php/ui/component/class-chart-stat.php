@@ -76,6 +76,9 @@ class Chart_Stat extends Component {
 		$data                               = array();
 		$dates                              = array();
 		foreach ( $this->history as $date => $stats ) {
+			if ( ! is_array( $stats ) ) {
+				continue;
+			}
 			$data[]  = $stats[ $stat ]['usage'];
 			$dates[] = date_i18n( 'j M', strtotime( $date ) );
 		}

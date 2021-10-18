@@ -1137,8 +1137,10 @@ class Sync implements Setup, Assets {
 						'title'        => __( 'Sync method', 'cloudinary' ),
 						'tooltip_text' => sprintf(
 							// translators: The HTML break line, the link to Cloudinary documentation and closing tag.
-							__( 'Defines how your WordPress assets sync with Cloudinary.%1$s“Auto” will sync assets automatically.%1$s“Manual” requires triggering via the WordPress Media Library. %2$sLearn more%3$s', 'cloudinary' ),
-							'<br>',
+							__( 'Defines how your WordPress assets sync with Cloudinary.%1$s“Auto” will sync assets automatically.%2$s“Manual” requires triggering via the WordPress Media Library.%3$s%4$sLearn more%5$s', 'cloudinary' ),
+							'<ul><li>',
+							'</li><li>',
+							'</li></ul>',
 							'<a href="https://cloudinary.com/documentation/wordpress_integration#sync" target="_blank" rel="noopener noreferrer">',
 							'</a>'
 						),
