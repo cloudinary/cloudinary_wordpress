@@ -1,12 +1,14 @@
 // Sidebar.
 &-optimisation {
-	&:first-child{
+	&:first-child {
 		margin-top: 7px;
 	}
+
 	font-size: $size-panel-description;
 	line-height: 2;
 	display: flex;
 	justify-content: space-between;
+
 	&-item {
 		color: $color-cld-blue;
 		font-weight: 600;
@@ -31,9 +33,11 @@
 
 &-ui-sidebar {
 	width: 500px;
-	.cld-panel{
+
+	.cld-panel {
 		padding: $size-padding-sidebar;
 	}
+
 	.cld-ui-header {
 		margin-top: -1px;
 		padding: $size-padding-sidebar-title;
@@ -48,25 +52,40 @@
 			font-size: $size-sidebar-title;
 		}
 	}
-	.cld-info-box{
+
+	.cld-info-box {
 		border: 0;
 		margin: 0;
 		padding: 0;
 		align-items: flex-start;
-		.cld-ui-body{
+
+		.cld-ui-body {
 			padding-top: 0;
 		}
-		.button{
+
+		.button {
 			align-self: flex-start;
 			line-height: inherit;
 			opacity: 0.5;
 			cursor: default;
 		}
 	}
-	.cld-info-icon{
+
+	.cld-info-icon {
 		background-color: transparent;
-		img{
+
+		img {
 			width: 40px;
+		}
+	}
+
+	.extension-item {
+		border-radius: 0;
+		margin-bottom: 18px;
+		border-bottom: 1px solid $color-light-grey;
+		&:last-of-type{
+			border-bottom: none;
+			margin-bottom: 0;
 		}
 	}
 }

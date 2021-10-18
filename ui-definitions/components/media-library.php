@@ -1,6 +1,6 @@
 <?php
 /**
- * The DAM page template.
+ * The Media Library page template.
  *
  * @package Cloudinary
  */

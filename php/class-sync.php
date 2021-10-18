@@ -99,7 +99,7 @@ class Sync implements Setup, Assets {
 		'signature'           => '_sync_signature',
 		'storage'             => '_cloudinary_storage',
 		'suffix'              => '_suffix',
-		'sync_error'          => '_sync_error',
+		'sync_error'          => '_cld_error',
 		'synced'              => '_cld_synced',
 		'syncing'             => '_cloudinary_syncing',
 		'transformation'      => '_transformations',
@@ -238,6 +238,7 @@ class Sync implements Setup, Assets {
 					'code'    => $result->get_error_code(),
 					'message' => $result->get_error_message(),
 				);
+				update_post_meta( $attachment_id, self::META_KEYS['sync_error'], $result['message'] );
 			}
 
 			$log[ $type ][ '_' . time() ] = $result;
@@ -803,8 +804,8 @@ class Sync implements Setup, Assets {
 	 * @return string|null
 	 */
 	public function get_sync_type( $attachment_id, $cached = true ) {
-		if ( ! $this->managers['media']->is_media( $attachment_id ) ) {
-			return null; // Ignore non media items.
+		if ( ! $this->managers['media']->is_media( $attachment_id ) || ! empty( get_post_meta( $attachment_id, self::META_KEYS['sync_error'], true ) ) ) {
+			return null; // Ignore non media items or errored syncs.
 		}
 		$return               = null;
 		$required_signature   = $this->generate_signature( $attachment_id, $cached );
@@ -1067,6 +1068,7 @@ class Sync implements Setup, Assets {
 
 		// Cleanup postmeta.
 		$queued = get_post_meta( $attachment_id, self::META_KEYS['queued'] );
+		delete_post_meta( $attachment_id, self::META_KEYS['sync_error'] );
 		delete_post_meta( $attachment_id, self::META_KEYS['pending'] );
 		delete_post_meta( $attachment_id, self::META_KEYS['queued'] );
 		delete_post_meta( $attachment_id, self::META_KEYS['suffix'] );

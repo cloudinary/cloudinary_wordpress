@@ -125,7 +125,7 @@ $settings = array(
 									'step' => 50,
 									'min'  => 50,
 								),
-								'default'      => 100,
+								'default'      => 200,
 							),
 							array(
 								'type'         => 'number',
@@ -135,11 +135,10 @@ $settings = array(
 									'The maximum number of images to be generated. Note that generating large numbers of images will deliver a more optimal version for a wider range of screen sizes but will result in an increase in your usage.  For smaller images, the responsive algorithm may determine that the ideal number is less than the value you specify.',
 									'cloudinary'
 								),
-								'suffix'       => __( 'Valid values: 3-200', 'cloudinary' ),
-								'default'      => 3,
+								'suffix'       => __( 'Valid values: 3-100', 'cloudinary' ),
 								'attributes'   => array(
 									'min' => 3,
-									'max' => 200,
+									'max' => 100,
 								),
 							),
 							array(
@@ -178,7 +177,7 @@ $settings = array(
 								'slug'       => 'min_width',
 								'prefix'     => __( 'Min', 'cloudinary' ),
 								'suffix'     => __( 'px', 'cloudinary' ),
-								'default'    => 800,
+								'default'    => 200,
 								'attributes' => array(
 									'step' => 50,
 								),
@@ -189,6 +188,9 @@ $settings = array(
 						'type'  => 'column',
 						'class' => array(
 							'cld-ui-preview',
+						),
+						'condition' => array(
+							'enable_breakpoints' => true,
 						),
 						array(
 							'type'    => 'breakpoints_preview',

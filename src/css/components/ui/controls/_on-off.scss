@@ -14,6 +14,24 @@
 		}
 	}
 
+	input[type=checkbox] ~ .spinner {
+		transition: right 0.2s;
+		visibility: visible;
+		margin: 2px;
+		float: none;
+		position: absolute;
+		top: 0;
+		right: 14px;
+		background-size: 12px 12px;
+		width: 12px;;
+		height: 12px;
+		opacity: 1;
+	}
+
+	input[type=checkbox]:checked ~ .spinner {
+		right: 0;
+	}
+
 	$mini-control-width: 20px;
 	$mini-control-height: 10px;
 	$mini-slider-pad: 1px;
@@ -34,6 +52,10 @@
 			opacity: 0;
 			width: 0;
 			height: 0;
+		}
+
+		.spinner {
+
 		}
 
 		&-slider {
