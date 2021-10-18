@@ -135,7 +135,7 @@ class Extensions extends Settings_Component implements Setup {
 				'description' => __( 'Cloudinary Beta features.', 'cloudinary' ),
 				'icon'        => $this->plugin->dir_url . 'css/images/logo-icon.svg',
 			),
-			'dam'  => array(
+			'media-library'  => array(
 				'name'        => __( 'Cloudinary', 'cloudinary' ),
 				'description' => __( "Cloudinary's digital asset management solution bridges the gap between asset management and delivery, enabling creative.", 'cloudinary' ),
 				'icon'        => $this->plugin->dir_url . 'css/images/logo-icon.svg',
@@ -186,6 +186,9 @@ class Extensions extends Settings_Component implements Setup {
 				if ( is_callable( $try ) ) {
 					$instance = call_user_func( $try );
 				}
+
+				// Add to plugin components.
+				$this->plugin->components[ 'extension_' . $slug ] = $instance;
 			}
 
 			$extension_slug    = $this->settings_slug . $this->settings->separator . $slug;
@@ -201,9 +204,6 @@ class Extensions extends Settings_Component implements Setup {
 					),
 				)
 			);
-
-			// Add to plugin components.
-			$this->plugin->components[ 'extension_' . $slug ] = $instance;
 
 			// Create panel in sidebar.
 			$params = array(
