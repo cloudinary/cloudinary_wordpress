@@ -137,7 +137,7 @@ class Dashboard {
 										'element'    => 'h2',
 										'content'    => '0%',
 										'attributes' => array(
-											'data-text' => 'optimized_size_percent',
+											'data-text' => 'optimized_diff_percent',
 										),
 									),
 								),

@@ -373,7 +373,8 @@ class Sync_Queue {
 			// Optimized size. We use the `original_size` to determine the percentage between for the progress bar.
 			'optimized_size'          => $total_remote_size,
 			'optimized_size_percent'  => round( $total_remote_size / $total_local_size * 100 ) . '%', // This is the percentage difference.
-			'optimized_size_hr'       => size_format( $total_remote_size ), // We use this for the "Size saved.." status text.
+			'optimized_diff_percent'  => round( ( $total_local_size - $total_remote_size ) / $total_local_size * 100 ) . '%', // We use this for the "Size saved.." status text.
+			'optimized_size_hr'       => size_format( $total_remote_size ), // This is the formatted byte size.
 
 			// Optimized is the % optimized vs unoptimized.
 			'optimized_percent'       => round( $total_optimized / $total_assets, 4 ),
