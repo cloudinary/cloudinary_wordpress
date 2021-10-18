@@ -44,7 +44,7 @@ class Media_Library extends extension {
 			'manage_options',
 			self::MEDIA_LIBRARY_SLUG,
 			array( $this, 'render' ),
-			'dashicons-cloudinary',
+			'dashicons-cloudinary-media',
 			'81.4'
 		);
 	}
