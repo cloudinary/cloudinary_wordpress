@@ -31,7 +31,7 @@ class Opt_Level extends Line_Stat {
 	 */
 	protected $plugin_settings;
 	/**
-	 * Holds the list of settings slugs that make up the different optimisations.
+	 * Holds the list of settings slugs that make up the different optimizations.
 	 *
 	 * @var string[]
 	 */
@@ -134,12 +134,12 @@ class Opt_Level extends Line_Stat {
 	protected function set_texts() {
 
 		$used_percent = round( $this->used / $this->limit * 100 );
-		/* translators: %s is the percentage optimised. */
-		$this->used_text = sprintf( '%s optimised', $used_percent . '%' );
+		/* translators: %s is the percentage optimized. */
+		$this->used_text = sprintf( __( '%s optimized', 'cloudinary' ), $used_percent . '%' );
 
 		$unused_percent = round( 100 - $used_percent );
 		/* translators: %s is the amount available. */
-		$this->avail_text = sprintf( '%s unoptimised', $unused_percent . '%' );
+		$this->avail_text = sprintf( __( '%s unoptimized', 'cloudinary' ), $unused_percent . '%' );
 	}
 
 	/**

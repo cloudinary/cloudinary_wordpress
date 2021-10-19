@@ -147,6 +147,15 @@ $settings = array(
 					'type'           => 'text',
 					'slug'           => 'video_freeform',
 					'title'          => __( 'Custom transformation', 'cloudinary' ),
+					'tooltip_text'   => sprintf(
+						// translators: The link to transformation reference.
+						__(
+							'A set of additional transformations to apply to all videos. Specify your transformations using Cloudinary URL transformation syntax. See %1$sreference%2$s for all available transformations and syntax.',
+							'cloudinary'
+						),
+						'<a href="https://cloudinary.com/documentation/transformation_reference" target="_blank" rel="noopener noreferrer">',
+						'</a>'
+					),
 					'link'           => array(
 						'text' => __( 'See Examples', 'cloudinary' ),
 						'href' => 'https://cloudinary.com/documentation/transformation_reference',
@@ -163,7 +172,7 @@ $settings = array(
 				array(
 					'type'  => 'info_box',
 					'icon'  => $this->dir_url . 'css/images/video.svg',
-					'title' => __( 'What are transformation', 'cloudinary' ),
+					'title' => __( 'What are transformations', 'cloudinary' ),
 					'text'  => __(
 						'A set of parameters included in a Cloudinary URL to programmatically transform the visual appearance of the assets on your website.',
 						'cloudinary'
