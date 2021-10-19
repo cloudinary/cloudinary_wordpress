@@ -354,8 +354,6 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		if ( ! empty( $additional_urls ) ) {
-			$additional_urls = explode( ' ', $additional_urls );
-
 			$is_uploadable = in_array( $url_host, $additional_urls, true );
 		}
 

@@ -1,7 +1,8 @@
 // Main page. Headers/Footers.
-&-settings{
+&-settings {
 	margin-left: -20px;
 }
+
 &-page {
 	@import "tabs";
 
@@ -13,9 +14,11 @@
 		margin-bottom: 0;
 		justify-content: space-between;
 		min-width: 450px;
-		img{
+
+		img {
 			width: 150px;
 		}
+
 		&-button {
 			background-color: $color-cld-dark-blue;
 			color: #fff;
@@ -32,7 +35,17 @@
 			}
 		}
 
-		p{
+		&-logo {
+			display: flex;
+			align-items: center;
+			.version{
+				margin-left: 12px;
+				color: $color-white;
+				font-size: 10px;
+			}
+		}
+
+		p {
 			font-size: $size-button;
 			margin: 0;
 		}

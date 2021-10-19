@@ -1,0 +1,64 @@
+// Input tags
+&-tags {
+	display: flex;
+	justify-content: flex-start;
+	flex-wrap: wrap;
+	align-items: center;
+	margin: 0;
+
+	&-item {
+		border: 1px solid $color-cld-grey-blue;
+		padding: 3px 4px 3px 8px;
+		border-radius: 14px;
+		margin: 6px 6px 6px 0;
+		display: inline-flex;
+		justify-content: space-between;
+		box-shadow: -25px 0px 0px $color-cld-grey-blue inset;
+		opacity: 1;
+		transition: opacity 0.25s, width 0.5s, margin 0.25s, padding 0.25s;
+		overflow: hidden;
+		&-text {
+			margin-right: 8px;
+		}
+
+		&-delete {
+			cursor: pointer;
+			color: $color-disabled-grey;
+
+			&:hover {
+				color: $color-cld-blue;
+			}
+		}
+		&.pulse {
+			animation: pulse-animation 0.5s infinite;
+		}
+
+		@keyframes pulse-animation {
+			0% {
+				box-shadow: -25px 0px 0px $color-cld-grey-blue inset, 0 0 0 0px rgba(255, 0, 0, 0);
+			}
+			60% {
+				box-shadow: -25px 0px 0px $color-cld-grey-blue inset, 0 0 0 3px rgba(255, 0, 0, 1);
+			}
+			100% {
+				box-shadow: -25px 0px 0px $color-cld-grey-blue inset, 0 0 0 3px rgba(255, 0, 0, 0);
+			}
+		}
+	}
+
+	&-input {
+		opacity: 0.4;
+		overflow: visible;
+		white-space: nowrap;
+		min-width: 100px;
+		padding: 10px 0;
+		display: inline-block;
+		&:focus-visible {
+			outline: none;
+			padding: 10px;
+			opacity: 1;
+		}
+	}
+
+}
+
