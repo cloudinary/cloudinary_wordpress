@@ -21,7 +21,7 @@ class Tags_Input extends Text {
 	 *
 	 * @var string
 	 */
-	protected $blueprint = 'wrap|title/|input/|selection/|capture/|suffix/|description/|/wrap';
+	protected $blueprint = 'wrap|title/|input/|selection|capture/|/selection|suffix/|description/|/wrap';
 
 	/**
 	 * Filter the wrap parts structure.
@@ -129,15 +129,16 @@ class Tags_Input extends Text {
 	 */
 	protected function capture( $struct ) {
 
-		$struct['element']             = 'input';
+		$struct['element']             = 'span';
 		$struct['render']              = true;
 		$struct['attributes']['class'] = array(
 			'cld-input-tags-input',
 		);
 
-		$struct['attributes']['placeholder'] = $this->setting->get_param( 'placeholder', __( 'Comma/space separated', 'cloudinary' ) );
-		$struct['attributes']['data-tags']   = $this->get_id();
-		$struct['attributes']['data-format'] = $this->setting->get_param( 'format', 'text' );
+		$struct['attributes']['data-placeholder'] = $this->setting->get_param( 'placeholder', __( 'Comma/space separated', 'cloudinary' ) );
+		$struct['attributes']['data-tags']        = $this->get_id();
+		$struct['attributes']['data-format']      = $this->setting->get_param( 'format', 'text' );
+		$struct['attributes']['contenteditable']  = 'true';
 
 		return $struct;
 	}
@@ -183,10 +184,6 @@ class Tags_Input extends Text {
 	 * @return string
 	 */
 	protected function host( $value ) {
-		if ( ! preg_match( '/^(?:http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)/', $value ) ) {
-			$value = 'https://' . $value; // Append scheme to URL.
-		}
-
-		return wp_parse_url( $value, PHP_URL_HOST );
+		return preg_replace( '/^(http:\/\/|https:\/\/|\/\/|\/)?/', '', $value );
 	}
 }

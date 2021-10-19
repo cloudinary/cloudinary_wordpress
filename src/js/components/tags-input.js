@@ -10,6 +10,7 @@ const TagsInput = {
 		tagsInput.forEach( ( input ) => this.bind( input ) );
 	},
 	bind( input ) {
+		input.innerText = input.dataset.placeholder;
 		const id = input.dataset.tags;
 		const boundInput = document.getElementById( id );
 		const currentDelete = this.context.querySelectorAll(
@@ -22,27 +23,58 @@ const TagsInput = {
 		input.boundDisplay = this.context.querySelector(
 			`[data-tags-display="${ id }"]`
 		);
-
+		input.boundDisplay.addEventListener( 'click', ( ev ) => {
+			input.focus();
+		} );
+		input.addEventListener( 'focus', ( ev ) => {
+			input.innerText = null;
+		} );
+		input.addEventListener( 'blur', ( ev ) => {
+			input.innerText = input.dataset.placeholder;
+		} );
+		input.addEventListener( 'keydown', ( ev ) => {
+			if ( 'Tab' === ev.key ) {
+				if ( 3 < input.innerText.length ) {
+					ev.preventDefault();
+					this.captureTag( input, input.innerText );
+				}
+			} else if ( 'Escape' === ev.key ) {
+				input.blur();
+			} else if (
+				'Backspace' === ev.key &&
+				0 === input.innerText.length
+			) {
+				const lastItem = input.boundDisplay.lastChild.previousSibling;
+				if ( lastItem ) {
+					lastItem.parentNode.removeChild( lastItem );
+					this.values[ id ].pop();
+					this.updateInput( id );
+				}
+			}
+		} );
 		input.addEventListener( 'keypress', ( ev ) => {
 			if (
 				'Comma' === ev.code ||
 				'Enter' === ev.code ||
+				'Tab' === ev.code ||
 				'Space' === ev.code
 			) {
 				ev.preventDefault();
-				if ( 3 < input.value.length ) {
-					this.captureTag( input, input.value );
+				if ( 3 < input.innerText.length ) {
+					this.captureTag( input, input.innerText );
 				}
 			}
 		} );
 
 		currentDelete.forEach( ( control ) => {
+			control.parentNode.control = control;
 			control.parentNode.style.width = getComputedStyle(
 				control.parentNode
 			).width;
-			control.addEventListener( 'click', () =>
-				this.deleteTag( control )
-			);
+			control.addEventListener( 'click', ( ev ) => {
+				ev.stopPropagation();
+				this.deleteTag( control );
+			} );
 		} );
 	},
 	deleteTag( control ) {
@@ -58,7 +90,7 @@ const TagsInput = {
 		tag.style.margin = 0;
 		setTimeout( () => {
 			tag.parentNode.removeChild( tag );
-		}, 1000 );
+		}, 500 );
 
 		this.updateInput( id );
 	},
@@ -72,8 +104,8 @@ const TagsInput = {
 			const item = this.createTag( value );
 			item.dataset.inputId = input.boundInput;
 			this.values[ input.boundInput ].push( value );
-			input.value = null;
-			input.boundDisplay.appendChild( item );
+			input.innerText = null;
+			input.boundDisplay.insertBefore( item, input ); // phpcs:ignore WordPressVIPMinimum.JS.HTMLExecutingFunctions.insertBefore
 			item.style.width = getComputedStyle( item ).width;
 			item.style.opacity = 1;
 			this.updateInput( input.boundInput );
@@ -95,6 +127,8 @@ const TagsInput = {
 
 		wrap.dataset.value = value;
 		wrap.style.opacity = 0;
+
+		wrap.control = control;
 		return wrap;
 	},
 	validateUnique( display, value ) {
@@ -114,14 +148,7 @@ const TagsInput = {
 		this.inputs[ id ].value = JSON.stringify( this.values[ id ] );
 	},
 	host( value ) {
-		const isUrl = /^(?:http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)/.test(
-			value
-		);
-		if ( false === isUrl ) {
-			value = 'https://' + value;
-		}
-		const url = new URL( value );
-		return url.host;
+		return value.toLowerCase().replace( /http:\/\/|https:\/\//, '' );
 	},
 };
 

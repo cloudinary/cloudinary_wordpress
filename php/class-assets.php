@@ -1374,7 +1374,7 @@ class Assets extends Settings_Component {
 					'title'       => __( 'Domains for each external source.', 'cloudinary' ),
 					'slug'        => 'uploadable_domains',
 					'format'      => 'host',
-					'placeholder' => __( 'Enter a domain and press enter/comma', 'cloudinary' ),
+					'placeholder' => __( 'Enter a domain', 'cloudinary' ),
 				),
 			),
 		);
