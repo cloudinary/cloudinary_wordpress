@@ -10,7 +10,10 @@ namespace Cloudinary;
 $cloudinary = get_plugin_instance();
 ?>
 <header class="cld-ui-wrap cld-page-header" id="cloudinary-header">
-	<img src="<?php echo esc_url( $cloudinary->dir_url . 'css/images/logo.svg' ); ?>" alt="<?php esc_html_e( "Cloudinary's logo", 'cloudinary' ); ?>"/>
+	<span class="cld-page-header-logo">
+		<img src="<?php echo esc_url( $cloudinary->dir_url . 'css/images/logo.svg' ); ?>" alt="<?php esc_html_e( "Cloudinary's logo", 'cloudinary' ); ?>"/>
+		<span class="version"><?php echo esc_html( $cloudinary->version ); ?></span>
+	</span>
 	<p>
 		<a href="<?php echo esc_url( add_query_arg( 'page', 'cloudinary_help' ) ); ?>" class="cld-page-header-button">
 			<?php esc_html_e( 'Need help?', 'cloudinary' ); ?>

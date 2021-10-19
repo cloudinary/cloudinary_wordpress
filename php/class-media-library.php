@@ -12,7 +12,7 @@ use WP_Screen;
 /**
  * Class Media_Library
  */
-class Media_Library extends extension {
+class Media_Library extends Extension {
 
 	/**
 	 * Holds the plugin instance.
