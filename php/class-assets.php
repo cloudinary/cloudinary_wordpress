@@ -1318,9 +1318,6 @@ class Assets extends Settings_Component {
 			'title'       => __( 'Content', 'cloudinary' ),
 			'slug'        => 'content',
 			'collapsible' => 'closed',
-			'enabled'     => function () {
-				return 'off' === get_plugin_instance()->settings->get_value( 'auto_sync' );
-			},
 			'attributes'  => array(
 				'header' => array(
 					'class' => array(
