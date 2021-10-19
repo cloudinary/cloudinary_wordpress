@@ -5,16 +5,20 @@
  * @package Cloudinary
  */
 
+use function Cloudinary\get_plugin_instance;
+
 wp_enqueue_style( 'cld-player' );
 wp_enqueue_script( 'cld-player' );
 
 wp_add_inline_script( 'cloudinary', 'var CLD_GLOBAL_TRANSFORMATIONS = CLD_GLOBAL_TRANSFORMATIONS ? CLD_GLOBAL_TRANSFORMATIONS : {};', 'before' );
 
-$tax_slug = filter_input( INPUT_GET, 'taxonomy', FILTER_SANITIZE_STRING );
-$tax_name = get_taxonomy_labels( get_taxonomy( $tax_slug ) )->name;
+$tax_slug   = filter_input( INPUT_GET, 'taxonomy', FILTER_SANITIZE_STRING );
+$tax_name   = get_taxonomy_labels( get_taxonomy( $tax_slug ) )->name;
+$cloudinary = get_plugin_instance();
 ?>
 <div class="cloudinary-collapsible">
 	<div class="cloudinary-collapsible__toggle">
+		<img class="cld-ui-icon" src="<?php echo esc_url( $cloudinary->dir_url . '/css/images/logo-icon.svg' ); ?>">
 		<h2>
 			<?php
 			// translators: The taxonomy label.
