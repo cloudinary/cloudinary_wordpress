@@ -7,6 +7,7 @@ import CacheManage from './cache-manage';
 import Progress from './progress';
 import States from './states';
 import RestrictedTypes from './restricted-types';
+import TagsInput from './tags-input';
 
 const UI = {
 	bindings: {},
@@ -62,6 +63,7 @@ const UI = {
 		CacheManage.init( context, States );
 		Progress.init( context );
 		RestrictedTypes.init( context );
+		TagsInput.init( context );
 	},
 	_autoSuffix( input ) {
 		const suffixes = input.dataset.autoSuffix;

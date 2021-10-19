@@ -1,0 +1,64 @@
+// Input tags
+&-tags {
+	display: flex;
+	justify-content: flex-start;
+	flex-wrap: wrap;
+	align-items: center;
+	margin: 6px 0 12px -6px;
+	min-height: 50px;
+
+	&-item {
+		border: 1px solid $color-cld-grey-blue;
+		padding: 3px 4px 3px 8px;
+		border-radius: 14px;
+		margin: 6px;
+		display: flex;
+		justify-content: space-between;
+		box-shadow: -25px 0px 0px $color-cld-grey-blue inset;
+		opacity: 1;
+		transition: opacity 0.5s, width 1s, margin 0.5s, padding 0.5s;
+		overflow: hidden;
+		&-text {
+			margin-right: 8px;
+		}
+
+		&-delete {
+			cursor: pointer;
+			color: $color-disabled-grey;
+
+			&:hover {
+				color: $color-cld-blue;
+			}
+		}
+		&.pulse {
+			animation: pulse-animation 0.5s infinite;
+		}
+
+		@keyframes pulse-animation {
+			0% {
+				box-shadow: -25px 0px 0px $color-cld-grey-blue inset, 0 0 0 0px rgba(255, 0, 0, 0);
+			}
+			60% {
+				box-shadow: -25px 0px 0px $color-cld-grey-blue inset, 0 0 0 3px rgba(255, 0, 0, 1);
+			}
+			100% {
+				box-shadow: -25px 0px 0px $color-cld-grey-blue inset, 0 0 0 3px rgba(255, 0, 0, 0);
+			}
+		}
+	}
+
+	&-input {
+		border: 1px solid transparent;
+		border-top-color: $color-cld-grey-blue;
+		background-color: $color-cld-blue-faded;
+		width: 100%;
+		padding: 10px;
+
+		&:focus-visible {
+			outline: none;
+			border-bottom-color: $color-cld-blue;
+		}
+	}
+
+}
+
