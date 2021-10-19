@@ -34,7 +34,7 @@ class Tags_Input extends Text {
 
 		$struct['attributes']['class'] = array(
 			'cld-input',
-			'cld-input-' . $this->type,
+			'cld-' . $this->type,
 		);
 
 		return $struct;
