@@ -1370,9 +1370,11 @@ class Assets extends Settings_Component {
 					'external_assets' => true,
 				),
 				array(
-					'type'  => 'textarea',
-					'title' => __( 'List the domains for each external source (one domain per line)', 'cloudinary' ),
-					'slug'  => 'uploadable_domains',
+					'type'        => 'tags_input',
+					'title'       => __( 'Domains for each external source.', 'cloudinary' ),
+					'slug'        => 'uploadable_domains',
+					'format'      => 'host',
+					'placeholder' => __( 'Enter a domain and press enter/comma', 'cloudinary' ),
 				),
 			),
 		);
