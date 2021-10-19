@@ -133,7 +133,7 @@ class Delivery implements Setup {
 		add_filter( 'cloudinary_filter_out_local', '__return_false' );
 		add_action( 'update_option_cloudinary_media_display', array( $this, 'clear_cache' ) );
 		add_action( 'cloudinary_flush_cache', array( $this, 'do_clear_cache' ) );
-		add_action( 'cloudinary_unsync_asset', array( $this, 'delete_size_relationship' ) );
+		add_action( 'cloudinary_unsync_asset', array( $this, 'unsync_size_relationship' ) );
 		add_action( 'before_delete_post', array( $this, 'delete_size_relationship' ) );
 		add_action( 'delete_attachment', array( $this, 'delete_size_relationship' ) );
 		add_action( 'cloudinary_register_sync_types', array( $this, 'register_sync_type' ), 30 );
@@ -208,7 +208,7 @@ class Delivery implements Setup {
 	}
 
 	/**
-	 * Remove a delivery relationship on unsync or delete of post.
+	 * Remove a delivery relationship on delete of a post.
 	 *
 	 * @param int $attachment_id The attachment ID.
 	 */
@@ -216,6 +216,16 @@ class Delivery implements Setup {
 		global $wpdb;
 
 		$wpdb->delete( Utils::get_relationship_table(), array( 'post_id' => $attachment_id ), array( '%d' ) ); // phpcs:ignore WordPress.DB
+	}
+
+	/**
+	 * Disable a delivery relationship on unsync.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 */
+	public function unsync_size_relationship( $attachment_id ) {
+		self::update_size_relations_public_id( $attachment_id, null );
+		self::update_size_relations_state( $attachment_id, 'disable' );
 	}
 
 	/**
@@ -998,19 +1008,25 @@ class Delivery implements Setup {
 	 */
 	protected function set_usability( $item, $auto_sync = null ) {
 		$this->known[ $item['sized_url'] ] = $item;
-		$is_media                          = 'media' === $item['sync_type'];
-		$is_asset                          = 'inherit' !== $item['post_state'];
+		if ( 'disable' === $item['post_state'] ) {
+			return;
+		}
+
+		$is_media = 'media' === $item['sync_type'];
+		$is_asset = 'inherit' !== $item['post_state'];
 
 		if ( true === $auto_sync && true === $is_media && true === $is_asset ) {
 			// Auto sync on - synced as asset - take over.
 			$this->sync->delete_cloudinary_meta( $item['post_id'] );
 			$this->sync->add_to_sync( $item['post_id'] );
 		} elseif ( true === $auto_sync && true === $is_media && empty( $item['public_id'] ) ) {
-			// Unsynced media item with auto sync on. Add to sync.
+			// Un-synced media item with auto sync on. Add to sync.
 			$this->sync->add_to_sync( $item['post_id'] );
-		} elseif ( ! empty( $item['public_id'] ) && 'disable' !== $item['post_state'] ) {
+		} elseif ( ! empty( $item['public_id'] ) ) {
+			// Most likely an asset with a public ID.
 			$this->usable[ $item['sized_url'] ] = $item['sized_url'];
 		} else {
+			// This is an asset or media without a public id.
 			$this->unusable[ $item['sized_url'] ] = $item;
 		}
 	}

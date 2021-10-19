@@ -199,6 +199,7 @@ class Bypass {
 	 */
 	public function set_attachment_delivery( $attachment_id, $bypass ) {
 		$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['bypass'], $bypass );
+		$this->media->sync->set_signature_item( $attachment_id, 'delivery' );
 	}
 
 	/**
