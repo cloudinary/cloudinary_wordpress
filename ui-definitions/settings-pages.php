@@ -408,12 +408,12 @@ $settings = array(
 					'collapsible' => 'closed',
 					'content'     => sprintf(
 						// translators: The HTML markup.
-						__( 'Your images may be loading locally for a number of reasons:%1$sThe asset has been selected to be delivered from WordPress. You can update this for each asset via the WordPress Media Library.%2$sYour asset is %3$sstored outside%4$s of your WordPress %5$sstorage%4$s.%2$sThe asset is not properly synced with Cloudinary. You can find the sync status of your assets in the WordPress Media Library.%6$s', 'cloudinary' ),
+						__( 'Your images may be loading locally for a number of reasons:%1$sThe asset has been selected to be delivered from WordPress. You can update this for each asset via the %5$sWordPress Media Library%4$s.%2$sYour asset is %3$sstored outside%4$s of your WordPress storage.%2$sThe asset is not properly synced with Cloudinary. You can find the sync status of your assets in the %5$sWordPress Media Library%4$s.%6$s', 'cloudinary' ),
 						'<ul><li>',
 						'</li><li>',
 						'<a href="' . add_query_arg( array( 'page' => 'cloudinary_connect#connect.cache_external.external_assets' ), admin_url( 'admin.php' ) ) . '">',
 						'</a>',
-						'<a href="#">',
+						'<a href="' . admin_url( 'upload.php' ) . '">',
 						'</li></ul>'
 					),
 				),
