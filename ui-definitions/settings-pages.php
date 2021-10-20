@@ -142,21 +142,6 @@ $settings = array(
 								),
 							),
 							array(
-								'type'         => 'select',
-								'slug'         => 'dpr',
-								'priority'     => 8,
-								'title'        => __( 'DPR settings', 'cloudinary' ),
-								'tooltip_text' => __( 'The device pixel ratio to use for your generated images.', 'cloudinary' ),
-								'default'      => 'auto',
-								'options'      => array(
-									'off'  => __( 'None', 'cloudinary' ),
-									'auto' => __( 'Auto', 'cloudinary' ),
-									'2'    => __( '2X', 'cloudinary' ),
-									'3'    => __( '3X', 'cloudinary' ),
-									'4'    => __( '4X', 'cloudinary' ),
-								),
-							),
-							array(
 								'type'        => 'number',
 								'slug'        => 'max_width',
 								'title'       => __( 'Image width limit', 'cloudinary' ),
@@ -180,6 +165,23 @@ $settings = array(
 								'default'    => 200,
 								'attributes' => array(
 									'step' => 50,
+								),
+							),
+							array(
+								'type'    => 'tag',
+								'element' => 'hr',
+							),
+							array(
+								'type'         => 'select',
+								'slug'         => 'dpr',
+								'priority'     => 8,
+								'title'        => __( 'DPR settings', 'cloudinary' ),
+								'tooltip_text' => __( 'The device pixel ratio to use for your generated images.', 'cloudinary' ),
+								'default'      => 'auto',
+								'options'      => array(
+									'off'  => __( 'Off', 'cloudinary' ),
+									'2X'   => __( 'Auto (2x)', 'cloudinary' ),
+									'max'  => __( 'Max DPR', 'cloudinary' ),
 								),
 							),
 						),
