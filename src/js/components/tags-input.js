@@ -97,6 +97,13 @@ const TagsInput = {
 	captureTag( input, value ) {
 		if ( this[ input.dataset.format ] ) {
 			value = this[ input.dataset.format ]( value );
+			if ( typeof value !== 'string' ) {
+				input.classList.add( 'pulse' );
+				setTimeout( () => {
+					input.classList.remove( 'pulse' );
+				}, 1000 );
+				return;
+			}
 		}
 		// Check if it exists.
 		if ( ! this.validateUnique( input.boundDisplay, value ) ) {
@@ -148,7 +155,20 @@ const TagsInput = {
 		this.inputs[ id ].value = JSON.stringify( this.values[ id ] );
 	},
 	host( value ) {
-		return value.toLowerCase().replace( /http:\/\/|https:\/\//, '' );
+		const isUrl = /^(?:http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)/.test(
+			value
+		);
+		if ( false === isUrl ) {
+			value = 'https://' + value;
+		}
+		let url = '';
+		try {
+			url = new URL( value );
+		} catch ( e ) {
+			return e;
+		}
+
+		return decodeURIComponent( url.host );
 	},
 };
 
