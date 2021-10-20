@@ -1,5 +1,6 @@
 // Input tags
 &-tags {
+
 	display: flex;
 	justify-content: flex-start;
 	flex-wrap: wrap;
@@ -17,6 +18,7 @@
 		opacity: 1;
 		transition: opacity 0.25s, width 0.5s, margin 0.25s, padding 0.25s;
 		overflow: hidden;
+
 		&-text {
 			margin-right: 8px;
 		}
@@ -28,9 +30,6 @@
 			&:hover {
 				color: $color-cld-blue;
 			}
-		}
-		&.pulse {
-			animation: pulse-animation 0.5s infinite;
 		}
 
 		@keyframes pulse-animation {
@@ -44,6 +43,12 @@
 				box-shadow: -25px 0px 0px $color-cld-grey-blue inset, 0 0 0 3px rgba(255, 0, 0, 0);
 			}
 		}
+
+		&.pulse {
+			animation: pulse-animation 0.5s infinite;
+		}
+
+
 	}
 
 	&-input {
@@ -53,10 +58,25 @@
 		min-width: 100px;
 		padding: 10px 0;
 		display: inline-block;
+
 		&:focus-visible {
 			outline: none;
 			padding: 10px;
 			opacity: 1;
+		}
+		@keyframes pulse-animation {
+			0% {
+				color: rgba(255, 0, 0, 0);
+			}
+			50% {
+				color: rgba(255, 0, 0, 1);
+			}
+			100% {
+				color: rgba(255, 0, 0, 0);
+			}
+		}
+		&.pulse {
+			animation: pulse-animation 0.5s infinite;
 		}
 	}
 

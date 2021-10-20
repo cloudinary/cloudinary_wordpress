@@ -184,6 +184,11 @@ class Tags_Input extends Text {
 	 * @return string
 	 */
 	protected function host( $value ) {
-		return preg_replace( '/^(http:\/\/|https:\/\/|\/\/|\/)?/', '', $value );
+		if ( ! preg_match( '/^(?:http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)/', $value ) ) {
+			$value = 'https://' . $value; // Append scheme to URL.
+		}
+
+		return wp_parse_url( $value, PHP_URL_HOST );
+
 	}
 }
