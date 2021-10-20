@@ -82,24 +82,47 @@ class Dashboard {
 									),
 								),
 								array(
-									'type'    => 'tag',
-									'element' => 'h3',
-									'content' => __( 'Percentage of assets optimized by Cloudinary', 'cloudinary' ),
-								),
-								array(
 									'type'       => 'tag',
-									'element'    => 'h5',
-									'content'    => '&nbsp;',
+									'element'    => 'h3',
+									'content'    => __( 'Percentage of assets optimized by Cloudinary', 'cloudinary' ),
 									'attributes' => array(
-										'data-text' => 'unoptimized_status_text',
+										'class' => array(
+											'cld-progress-box-title',
+										),
 									),
 								),
 								array(
 									'type'       => 'tag',
-									'element'    => 'h5',
+									'element'    => 'div',
+									'content'    => '&nbsp;',
+									'attributes' => array(
+										'data-text' => 'unoptimized_status_text',
+										'class'     => array(
+											'cld-stat-text',
+										),
+									),
+								),
+								array(
+									'type'       => 'tag',
+									'element'    => 'div',
 									'content'    => '&nbsp;',
 									'attributes' => array(
 										'data-text' => 'optimized_status_text',
+										'class'     => array(
+											'cld-stat-text',
+										),
+									),
+								),
+								array(
+									'type'       => 'tag',
+									'element'    => 'a',
+									'content'    => '&nbsp;',
+									'attributes' => array(
+										'href'      => '#', // @todo: link to filtered media.
+										'data-text' => 'error_count_hr',
+										'class'     => array(
+											'cld-stat-text',
+										),
 									),
 								),
 							),
@@ -204,35 +227,6 @@ class Dashboard {
 									'type'    => 'tag',
 									'element' => 'span',
 									'content' => __( 'Optimized', 'cloudinary' ),
-								),
-							),
-							array(
-								'type'       => 'tag',
-								'element'    => 'div',
-								'attributes' => array(
-									'class' => array(
-										'cld-stat-legend',
-									),
-								),
-								array(
-									'type'       => 'tag',
-									'element'    => 'span',
-									'attributes' => array(
-										'class' => array(
-											'cld-stat-legend-dot',
-											'red-dot',
-										),
-									),
-									'content'    => '&nbsp;',
-								),
-								array(
-									'type'       => 'tag',
-									'element'    => 'a',
-									'content'    => '&nbsp;',
-									'attributes' => array(
-										'href'      => '#', // @todo: link to filtered media.
-										'data-text' => 'error_count_hr',
-									),
 								),
 							),
 						),
