@@ -64,14 +64,13 @@ $settings = array(
 			$percentage = $instance->get_component()->calculate_percentage() . '%';
 
 			/* translators: %s is the percentage optimized. */
-
 			return sprintf( __( '%s Optimized', 'cloudinary' ), $percentage );
 
 		},
 		'collapsible' => 'closed',
 		array(
 			'type'  => 'opt_level',
-			'title' => __( 'Optimized Images', 'cloudinary' ),
+			'title' => __( 'Site optimization', 'cloudinary' ),
 		),
 	),
 );

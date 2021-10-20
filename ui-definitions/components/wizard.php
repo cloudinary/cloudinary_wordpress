@@ -18,7 +18,7 @@ $media_args     = array(
 	'type'         => 'on_off',
 	'description'  => __( 'Optimize media library items', 'cloudinary' ),
 	'tooltip_text' => __(
-		'Images will be delivered using Cloudinary’s automatic format and quality algorithms for the best tradeoff between visual quality and file size. Use Advanced Optimization options to manually tune format and quality.',
+		'Your media assets will be delivered using Cloudinary’s automatic format and quality algorithms for the best tradeoff between visual quality and file size.',
 		'cloudinary'
 	),
 	'default'      => 'on',
@@ -29,7 +29,7 @@ $non_media_args = array(
 	'type'         => 'on_off',
 	'description'  => __( 'Optimize themes, plugins, WP core and uploads folder items', 'cloudinary' ),
 	'tooltip_text' => __(
-		"Images will be delivered using Cloudinary's automatic format and quality algorithms for the best tradeoff between visual quality and file size. Use Advanced Optimization options to manually tune format and quality.",
+		'Additional assets relating to themes, plugins, Wordpress core and your uploads folder will be optimized and delivered by Cloudinary, giving you an additional performance boost.',
 		'cloudinary'
 	),
 	'default'      => 'on',
@@ -38,9 +38,9 @@ $non_media_args = array(
 );
 $advanced_args  = array(
 	'type'         => 'on_off',
-	'description'  => __( 'Activate advanced features (lazy loading and  responsive breakpoints)', 'cloudinary' ),
+	'description'  => __( 'Activate advanced features (lazy loading and responsive breakpoints)', 'cloudinary' ),
 	'tooltip_text' => __(
-		"Images will be delivered using Cloudinary's automatic format and quality algorithms for the best tradeoff between visual quality and file size. Use Advanced Optimization options to manually tune format and quality.",
+		"Cloudinary's lazy loading and responsive image functionality will be applied to your media assets as part of delivery to further optimize your assets.",
 		'cloudinary'
 	),
 	'default'      => 'on',
@@ -80,7 +80,7 @@ $advanced->set_value( 'on' );
 	<div class="cld-ui-wrap has-heading cld-panel">
 		<div class="cld-wizard-content cld-wizard-intro" id="tab-1">
 			<div class="cld-ui-title">
-				<h2><?php esc_html_e( 'Welcome and thank you for installing the Cloudinary Plugin!', 'cloudinary' ); ?></h2>
+				<h2><?php esc_html_e( 'Welcome and thank you for installing the Cloudinary Plugin', 'cloudinary' ); ?></h2>
 			</div>
 			<p>
 				<?php esc_html_e( 'For more control over the quality of the media that your site delivers, you can specify different levels of quality.', 'cloudinary' ); ?>
@@ -129,7 +129,7 @@ $advanced->set_value( 'on' );
 						<span class="dashicons dashicons-yes-alt"></span> <?php esc_html_e( 'Connected!', 'cloudinary' ); ?>
 					</span>
 					<span id="connection-error" class="cld-wizard-connect-status error">
-						<span class="dashicons dashicons-warning"></span> <?php esc_html_e( 'Not correct String', 'cloudinary' ); ?>
+						<span class="dashicons dashicons-warning"></span> <?php esc_html_e( 'Incorrect string', 'cloudinary' ); ?>
 					</span>
 					<span id="connection-working" class="cld-wizard-connect-status working">
 						<span class="spinner"></span>
@@ -145,7 +145,7 @@ $advanced->set_value( 'on' );
 			<p>
 				<?php
 				esc_html_e(
-					'In order to benefit the most from your media, you can read more now start sync all your files into Cloudinary to optimize your website and make it fast and responsive.',
+					'The options below help to optimize all of your assets, we recommend leaving them on for the most optimal site performance. Click next to complete your setup, the plugin will begin syncing your assets to Cloudinary and your website will start being fast, optimized and responsive.',
 					'cloudinary'
 				);
 				?>
@@ -163,18 +163,18 @@ $advanced->set_value( 'on' );
 				<span class="dashicons dashicons-cloudinary"></span>
 			</div>
 			<div class="cld-ui-title">
-				<h3><?php esc_html_e( "All set! We're uploading your files", 'cloudinary' ); ?></h3>
+				<h3><?php esc_html_e( "All set! We're starting to sync your files to Cloudinary", 'cloudinary' ); ?></h3>
 			</div>
 			<p>
 				<?php
 				esc_html_e(
-					'You successfully set up the Cloudinary plugin, by doing so you improve the website optimization, in case you are interested in more capability for your media you can check the plugin.',
+					'You have successfully set up the Cloudinary plugin for your site, your media assets will now be optimized and delivered via fast CDN. To further configure the plugin, take a look at the various settings available.',
 					'cloudinary'
 				);
 				?>
 			</p>
 			<p>
-				<?php esc_html_e( 'You can check your website in case you interested to see the contribution of the plugin.', 'cloudinary' ); ?>
+				<?php esc_html_e( 'Once your assets have finished syncing, the plugin dashboard will show the impact on performance for your site.', 'cloudinary' ); ?>
 			</p>
 			<a class="button button-primary" href="<?php echo esc_url( $url ); ?>"><?php esc_html_e( 'Go to plugin dashboard', 'cloudinary' ); ?></a>
 		</div>

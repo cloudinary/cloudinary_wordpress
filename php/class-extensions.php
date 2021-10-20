@@ -130,13 +130,8 @@ class Extensions extends Settings_Component implements Setup {
 	 */
 	protected function get_internal_extensions() {
 		$internal = array(
-			'beta' => array(
-				'name'        => __( 'Beta', 'cloudinary' ),
-				'description' => __( 'Cloudinary Beta features.', 'cloudinary' ),
-				'icon'        => $this->plugin->dir_url . 'css/images/logo-icon.svg',
-			),
 			'media-library'  => array(
-				'name'        => __( 'Cloudinary', 'cloudinary' ),
+				'name'        => __( 'Cloudinary DAM', 'cloudinary' ),
 				'description' => __( "Cloudinary's digital asset management solution bridges the gap between asset management and delivery, enabling creative.", 'cloudinary' ),
 				'icon'        => $this->plugin->dir_url . 'css/images/logo-icon.svg',
 				'handler'     => '\\Cloudinary\\Media_Library',

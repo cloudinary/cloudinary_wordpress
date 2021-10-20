@@ -962,7 +962,7 @@ class Assets extends Settings_Component {
 	public function register_settings( $pages ) {
 		$pages['connect']['settings'][] = array(
 			'type'                => 'panel',
-			'title'               => __( 'Site Asset Sync Settings', 'cloudinary' ),
+			'title'               => __( 'Additional Asset Sync Settings', 'cloudinary' ),
 			'slug'                => 'cache',
 			'option_name'         => 'site_cache',
 			'requires_connection' => true,
@@ -982,9 +982,9 @@ class Assets extends Settings_Component {
 			array(
 				'type'               => 'on_off',
 				'slug'               => 'enable',
-				'optimisation_title' => __( 'Non-media library files optimisation', 'cloudinary' ),
-				'tooltip_text'       => __( 'Enabling site asset syncing will sync the toggled assets with Cloudinary to make use of advanced optimization and CDN delivery functionality.', 'cloudinary' ),
-				'description'        => __( 'Enable site asset syncing', 'cloudinary' ),
+				'optimisation_title' => __( 'Additional asset optimization', 'cloudinary' ),
+				'tooltip_text'       => __( 'Enabling additional asset syncing will sync the toggled assets with Cloudinary to make use of advanced optimization and CDN delivery functionality.', 'cloudinary' ),
+				'description'        => __( 'Enable additional asset syncing', 'cloudinary' ),
 				'default'            => 'off',
 			),
 			array(

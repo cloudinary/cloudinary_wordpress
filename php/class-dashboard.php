@@ -84,7 +84,7 @@ class Dashboard {
 								array(
 									'type'    => 'tag',
 									'element' => 'h3',
-									'content' => __( 'Percentage of optimized processing images', 'cloudinary' ),
+									'content' => __( 'Percentage of assets optimized by Cloudinary', 'cloudinary' ),
 								),
 								array(
 									'type'       => 'tag',
@@ -144,7 +144,7 @@ class Dashboard {
 								array(
 									'type'       => 'tag',
 									'element'    => 'span',
-									'content'    => __( "That's the size you've saved using by the image optimizer.", 'cloudinary' ),
+									'content'    => __( "That's the amount you've saved by using Cloudinary.", 'cloudinary' ),
 									'attributes' => array(
 										'class' => array(
 											'cld-stat-percent-text',

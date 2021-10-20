@@ -33,7 +33,7 @@ $settings = array(
 					'type'               => 'on_off',
 					'slug'               => 'image_optimization',
 					'title'              => __( 'Image optimization', 'cloudinary' ),
-					'optimisation_title' => __( 'Media library image optimisation', 'cloudinary' ),
+					'optimisation_title' => __( 'Media library image optimization', 'cloudinary' ),
 					'tooltip_text'       => __(
 						'Images will be delivered using Cloudinary’s automatic format and quality algorithms for the best tradeoff between visual quality and file size. Use Advanced Optimization options to manually tune format and quality.',
 						'cloudinary'
@@ -108,10 +108,19 @@ $settings = array(
 				array(
 					'type'           => 'text',
 					'slug'           => 'image_freeform',
-					'title'          => __( 'Image transformation', 'cloudinary' ),
+					'title'          => __( 'Additional image transformations', 'cloudinary' ),
+					'tooltip_text'   => sprintf(
+						// translators: The link to transformation reference.
+						__(
+							'A set of additional transformations to apply to all images. Specify your transformations using Cloudinary URL transformation syntax. See %1$sreference%2$s for all available transformations and syntax.',
+							'cloudinary'
+						),
+						'<a href="https://cloudinary.com/documentation/transformation_reference" target="_blank" rel="noopener noreferrer">',
+						'</a>'
+					),
 					'link'           => array(
 						'text' => __( 'See Examples', 'cloudinary' ),
-						'href' => 'https://cloudinary.com/documentation/transformation_reference',
+						'href' => 'https://cloudinary.com/documentation/image_transformations',
 					),
 					'attributes'     => array(
 						'data-context' => 'image',

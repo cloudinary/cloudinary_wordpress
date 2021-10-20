@@ -118,7 +118,7 @@ $settings = array(
 								'type'         => 'number',
 								'slug'         => 'pixel_step',
 								'priority'     => 9,
-								'title'        => __( 'Breakpoints distance', 'cloudinary' ),
+								'title'        => __( 'Breakpoint distance', 'cloudinary' ),
 								'tooltip_text' => __( 'The distance between each generated image. Adjusting this will adjust the number of images generated.', 'cloudinary' ),
 								'suffix'       => __( 'px', 'cloudinary' ),
 								'attributes'   => array(
@@ -130,12 +130,12 @@ $settings = array(
 							array(
 								'type'         => 'number',
 								'slug'         => 'breakpoints',
-								'title'        => __( 'Max Images', 'cloudinary' ),
+								'title'        => __( 'Max images', 'cloudinary' ),
 								'tooltip_text' => __(
 									'The maximum number of images to be generated. Note that generating large numbers of images will deliver a more optimal version for a wider range of screen sizes but will result in an increase in your usage.  For smaller images, the responsive algorithm may determine that the ideal number is less than the value you specify.',
 									'cloudinary'
 								),
-								'suffix'       => __( 'Valid values: 3-100', 'cloudinary' ),
+								'suffix'       => __( 'Recommended value: 3-40', 'cloudinary' ),
 								'attributes'   => array(
 									'min' => 3,
 									'max' => 100,
@@ -185,8 +185,8 @@ $settings = array(
 						),
 					),
 					array(
-						'type'  => 'column',
-						'class' => array(
+						'type'      => 'column',
+						'class'     => array(
 							'cld-ui-preview',
 						),
 						'condition' => array(
@@ -382,11 +382,7 @@ $settings = array(
 				),
 				array(
 					'type'        => 'panel',
-					'title'       => sprintf(
-						// translators: The HTML markup.
-						__( 'I have various other plugins installed, will the Cloudinary Plugin still work?%sI’m having an incompatibility issue with a theme, plugin, or hosting environment, what can I do?', 'cloudinary' ),
-						'<br>'
-					),
+					'title'       => __( "I'm having an incompatibility issue with a theme, plugin, or hosting environment, what can I do?", 'cloudinary' ),
 					'collapsible' => 'closed',
 					'content'     => sprintf(
 						// translators: The HTML markup.
@@ -425,8 +421,8 @@ $settings = array(
 		),
 	),
 	'wizard'         => array(
-		'section'  => 'wizard',
-		'slug'     => 'wizard',
+		'section' => 'wizard',
+		'slug'    => 'wizard',
 	),
 );
 

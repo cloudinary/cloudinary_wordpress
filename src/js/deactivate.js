@@ -133,13 +133,14 @@ const Deactivate = {
 					'.cloudinary-deactivation .data input[name="option"]:checked' );
 				let value = '';
 
-				if ( option.hasOwnProperty( 'value' ) ) {
+				if ( option ) {
 					value = option.value;
-					if ( 'uninstall' === option.value ) {
-						context.modalBody.style.display = 'none';
-						context.modalFooter.style.display = 'none';
-						context.modalUninstall.style.display = 'block';
-					 }
+				}
+
+				if ( 'uninstall' === value ) {
+					context.modalBody.style.display = 'none';
+					context.modalFooter.style.display = 'none';
+					context.modalUninstall.style.display = 'block';
 				}
 
 				context.submit( value );
