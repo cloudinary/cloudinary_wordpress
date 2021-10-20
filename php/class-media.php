@@ -10,12 +10,13 @@ namespace Cloudinary;
 use Cloudinary\Component\Setup;
 use Cloudinary\Connect\Api;
 use Cloudinary\Media\Filter;
-use Cloudinary\Media\Gallery;
 use Cloudinary\Media\Global_Transformations;
 use Cloudinary\Media\Upgrade;
 use Cloudinary\Media\Video;
 use Cloudinary\Media\WooCommerceGallery;
 use WP_Error;
+use WP_Query;
+use WP_Screen;
 
 /**
  * Class Media
@@ -143,12 +144,34 @@ class Media extends Settings_Component implements Setup {
 	const GLOBAL_VIDEO_TRANSFORMATIONS = 'cloudinary_global_video_transformations';
 
 	/**
+	 * The Cloudinary Media Library filters.
+	 *
+	 * @var array
+	 */
+	protected $cloudinary_filters;
+
+	/**
 	 * Media constructor.
 	 *
 	 * @param Plugin $plugin The global plugin instance.
 	 */
 	public function __construct( Plugin $plugin ) {
 		$this->plugin = $plugin;
+
+		/**
+		 * Filter the Cloudinary Media Library filters.
+		 *
+		 * @hook  cloudinary_media_filters
+		 * @since 3.0.0
+		 *
+		 * @param $filters {array} The default filters.
+		 */
+		$this->cloudinary_filters = apply_filters(
+			'cloudinary_media_filters',
+			array(
+				'error' => __( 'Error', 'cloudinary' ),
+			)
+		);
 
 		// Add upgrade hook, since setup methods are called after the connect upgrade has run.
 		add_action( 'cloudinary_version_upgrade', array( $this, 'upgrade_media_settings' ) );
@@ -2007,7 +2030,7 @@ class Media extends Settings_Component implements Setup {
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'This media is Sprite type.', 'cloudinary' ); ?>"></span>
 				<?php
 			elseif ( $this->is_oversize_media( $attachment_id ) ) :
-				$max_size = ( wp_attachment_is_image( $attachment_id ) ? 'image_max_size_bytes' : 'video_max_size_bytes' );
+				$max_size    = ( wp_attachment_is_image( $attachment_id ) ? 'image_max_size_bytes' : 'video_max_size_bytes' );
 				$max_size_hr = size_format( $this->plugin->components['connect']->usage['media_limits'][ $max_size ] );
 				// translators: variable is file size.
 				$title = sprintf( __( 'File size exceeds the maximum of %s. This media asset will be served from WordPress.', 'cloudinary' ), $max_size_hr );
@@ -2558,6 +2581,44 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Update the Query with the Cloudinary filters.
+	 *
+	 * @param WP_Query $query The query instance.
+	 */
+	public function apply_media_library_filters( $query ) {
+		if ( is_admin() && $query->is_main_query() ) {
+			$request = filter_input( INPUT_GET, 'cloudinary-filter', FILTER_SANITIZE_STRING );
+
+			if ( $request && 'none' !== $request ) {
+				$meta_query   = $query->get( 'meta_query' );
+				$meta_query[] = array();
+				$query->set( 'meta_query', $meta_query );
+			}
+		}
+	}
+
+	/**
+	 * The the Cloudinary's Media Library filters markup.
+	 *
+	 * @param string $post_type The post type slug.
+	 */
+	public function filter_media_library( $post_type ) {
+		$current_screen = get_current_screen();
+
+		if ( $current_screen instanceof WP_Screen && $current_screen->post_type === $post_type ) {
+			$request = filter_input( INPUT_GET, 'cloudinary-filter', FILTER_SANITIZE_STRING );
+			?>
+			<select name="cloudinary-filter" id="cloudinary-filter">
+				<option value="none"><?php esc_html_e( 'No Cloudinary filters', 'cloudinary' ); ?></option>
+				<?php foreach ( $this->cloudinary_filters as $value => $label ) : ?>
+					<option value="<?php echo esc_attr( $value ); ?>>" <?php selected( $value, $request ); ?>><?php echo esc_html( $label ); ?></option>
+				<?php endforeach; ?>
+			</select>
+			<?php
+		}
+	}
+
+	/**
 	 * Setup the hooks and base_url if configured.
 	 */
 	public function setup() {
@@ -2611,6 +2672,9 @@ class Media extends Settings_Component implements Setup {
 
 			// Filter PDF resource type.
 			add_filter( 'cloudinary_resource_type', array( $this, 'pdf_resource_type' ), 10, 2 );
+
+			add_action( 'restrict_manage_posts', array( $this, 'filter_media_library' ) );
+			add_action( 'pre_get_posts', array( $this, 'apply_media_library_filters' ) );
 		}
 	}
 
