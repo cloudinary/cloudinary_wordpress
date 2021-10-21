@@ -131,6 +131,7 @@ class Dashboard {
 										'data-text' => 'error_count_hr',
 										'class'     => array(
 											'cld-stat-text',
+											'cld-error',
 										),
 									),
 								),
@@ -182,60 +183,6 @@ class Dashboard {
 											'cld-stat-percent-text',
 										),
 									),
-								),
-							),
-						),
-						array(
-							'type'  => 'column',
-							'width' => 'auto',
-							array(
-								'type'       => 'tag',
-								'element'    => 'div',
-								'attributes' => array(
-									'class' => array(
-										'cld-stat-legend',
-									),
-								),
-								array(
-									'type'       => 'tag',
-									'element'    => 'span',
-									'attributes' => array(
-										'class' => array(
-											'cld-stat-legend-dot',
-											'blue-dot',
-										),
-									),
-									'content'    => '&nbsp;',
-								),
-								array(
-									'type'    => 'tag',
-									'element' => 'span',
-									'content' => __( 'Unoptimized', 'cloudinary' ),
-								),
-							),
-							array(
-								'type'       => 'tag',
-								'element'    => 'div',
-								'attributes' => array(
-									'class' => array(
-										'cld-stat-legend',
-									),
-								),
-								array(
-									'type'       => 'tag',
-									'element'    => 'span',
-									'attributes' => array(
-										'class' => array(
-											'cld-stat-legend-dot',
-											'aqua-dot',
-										),
-									),
-									'content'    => '&nbsp;',
-								),
-								array(
-									'type'    => 'tag',
-									'element' => 'span',
-									'content' => __( 'Optimized', 'cloudinary' ),
 								),
 							),
 						),
