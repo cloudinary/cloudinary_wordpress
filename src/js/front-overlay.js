@@ -6,7 +6,7 @@ import '../css/front-overlay.scss';
 
 const Front_Overlay = {
 	init() {
-		console.log( document.images );
+
 		[ ...document.images ].forEach( ( image ) => {
 			this.wrapImage( image );
 		} );
