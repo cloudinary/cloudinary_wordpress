@@ -723,7 +723,9 @@ class Delivery implements Setup {
 				$diff                                = $local_size - $remote_size;
 				$tag_element['atts']['data-percent'] = round( $diff / $local_size * 100, 1 );
 			}
-			$tag_element['atts']['data-permalink'] = get_edit_post_link( $tag_element['id'] );
+
+			$base_url                              = $this->plugin->settings->get_url( 'edit_asset' );
+			$tag_element['atts']['data-permalink'] = add_query_arg( 'asset', $tag_element['id'], $base_url );
 		}
 
 		return $tag_element;
