@@ -47,7 +47,9 @@ $settings = array(
 			'element'    => 'a',
 			'content'    => __( 'View my account status', 'cloudinary' ),
 			'attributes' => array(
-				'href'   => add_query_arg( 'page', 'cloudinary', admin_url( 'admin.php' ) ),
+				'href'   => 'https://cloudinary.com/console',
+				'target' => '_blank',
+				'rel'    => 'noopener noreferrer',
 				'class'  => array(
 					'cld-link-button',
 				),
