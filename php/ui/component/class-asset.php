@@ -171,6 +171,8 @@ class Asset extends Panel {
 		$header                                 = $this->get_part( 'thead' );
 		$header_row                             = $this->get_part( 'tr' );
 		$header_search                          = $this->get_part( 'th' );
+		$header_search['attributes']['colspan'] = 2;
+
 		$delete_checkbox                        = $this->get_part( 'input' );
 		$delete_checkbox['attributes']['id']    = $slug . '_deleter'; // @todo: get the ID.
 		$delete_checkbox['attributes']['type']  = 'checkbox';
@@ -247,17 +249,29 @@ class Asset extends Panel {
 	}
 
 	/**
+	 * Enqueue scripts this component may use.
+	 */
+	public function enqueue_scripts() {
+		$plugin = get_plugin_instance();
+		wp_enqueue_script( 'cloudinary-asset-manager', $plugin->dir_url . 'js/asset-manager.js', array(), $plugin->version, true );
+	}
+
+	/**
 	 * Export scripts on pre-render.
 	 */
 	protected function pre_render() {
+		$plugin = get_plugin_instance();
 		$export = array(
 			'update_url' => rest_url( REST_API::BASE . '/disable_cache_items' ),
 			'fetch_url'  => rest_url( REST_API::BASE . '/show_cache' ),
 			'purge_url'  => rest_url( REST_API::BASE . '/purge_cache' ),
 			'purge_all'  => rest_url( REST_API::BASE . '/purge_all' ),
+			'save_url'   => rest_url( REST_API::BASE . '/save_asset' ),
 			'nonce'      => wp_create_nonce( 'wp_rest' ),
 		);
-		wp_add_inline_script( 'cloudinary', 'var CLDCACHE = ' . wp_json_encode( $export ), 'before' );
+		wp_add_inline_script( 'cloudinary', 'var CLDASSETS = ' . wp_json_encode( $export ), 'before' );
+
+		$plugin->add_script_data( 'editor', $export );
 		parent::pre_render();
 	}
 }
