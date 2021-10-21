@@ -117,7 +117,7 @@ class Opt_Level extends Line_Stat {
 
 		if ( 'not-active' === $status ) {
 			$text['content']           = __( 'Not active', 'cloudinary' );
-			$icon                      = $this->dashicon( $this->get_part( 'span' ), 'dashicons-warning' );
+			$icon                      = $this->dashicon( $this->get_part( 'span' ), 'dashicons-dismiss' );
 			$icon['render']            = true;
 			$badge['children']['icon'] = $icon;
 		}
