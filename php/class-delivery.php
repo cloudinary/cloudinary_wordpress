@@ -290,6 +290,20 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Update relationship transformations.
+	 *
+	 * @param int    $attachment_id   The attachment ID.
+	 * @param string $transformations The transformations to set.
+	 */
+	public static function update_size_relations_transformations( $attachment_id, $transformations ) {
+		global $wpdb;
+		$data = array(
+			'transformations' => $transformations,
+		);
+		$wpdb->update( Utils::get_relationship_table(), $data, array( 'post_id' => $attachment_id ), array( '%s' ), array( '%d' ) );// phpcs:ignore WordPress.DB
+	}
+
+	/**
 	 * Delete unneeded sizes in bulk by ID.
 	 *
 	 * @param array $ids The IDs to delete.
