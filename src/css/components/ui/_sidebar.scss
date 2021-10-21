@@ -17,8 +17,8 @@
 			color: $color-cld-dark-blue;
 		}
 
-		&-active {
-			color: $color-success;
+		&-active,
+		&-not-active {
 			font-size: $size-panel-small;
 			font-weight: bold;
 
@@ -28,6 +28,13 @@
 			}
 		}
 
+		&-active {
+			color: $color-success;
+		}
+
+		&-not-active {
+			color: $color-cld-grey-blue;
+		}
 	}
 }
 

@@ -7,7 +7,7 @@
 
 namespace Cloudinary\UI\Component;
 
-use \Cloudinary\Settings;
+use Cloudinary\Settings;
 use function Cloudinary\get_plugin_instance;
 
 /**
@@ -48,7 +48,6 @@ class Opt_Level extends Line_Stat {
 	 */
 	public function setup() {
 		$this->plugin_settings = get_plugin_instance()->settings;
-		$this->setting->set_param( 'icon', 'dashicons-yes-alt' );
 		parent::setup();
 	}
 
@@ -84,13 +83,15 @@ class Opt_Level extends Line_Stat {
 		// Get the link.
 		$link                          = $this->get_part( 'a' );
 		$link['attributes']['class'][] = 'cld-optimisation-item';
-		$link['attributes']['href']    = $this->get_url( $slug );
+		$link['attributes']['href']    = $this->get_url( $slug ) . '#' . $setting->get_slug();
 		$link['content']               = $setting->get_param( 'optimisation_title', $setting->get_param( 'title' ) );
 		$row['children']['link']       = $link;
 
 		// Get the status.
 		if ( 'on' === $setting->get_value() ) {
-			$row['children']['active'] = $this->get_active_badge();
+			$row['children']['active'] = $this->get_badge();
+		} else {
+			$row['children']['not-active'] = $this->get_badge( 'not-active' );
 		}
 
 		return $row;
@@ -99,16 +100,27 @@ class Opt_Level extends Line_Stat {
 	/**
 	 * Get an activated badge.
 	 *
+	 * @param string $status The badge status.
+	 *
 	 * @return array
 	 */
-	protected function get_active_badge() {
+	protected function get_badge( $status = 'active' ) {
 		$badge                          = $this->get_part( 'span' );
-		$badge['attributes']['class'][] = 'cld-optimisation-item-active';
-		$icon                           = $this->dashicon( $this->get_part( 'span' ) );
-		$icon['render']                 = true;
-		$badge['children']['icon']      = $icon;
+		$badge['attributes']['class'][] = "cld-optimisation-item-{$status}";
 		$text                           = $this->get_part( null );
-		$text['content']                = __( 'Activated', 'cloudinary' );
+		if ( 'active' === $status ) {
+			$text['content']           = __( 'Activated', 'cloudinary' );
+			$icon                      = $this->dashicon( $this->get_part( 'span' ) );
+			$icon['render']            = true;
+			$badge['children']['icon'] = $icon;
+		}
+
+		if ( 'not-active' === $status ) {
+			$text['content']           = __( 'Not active', 'cloudinary' );
+			$icon                      = $this->dashicon( $this->get_part( 'span' ), 'dashicons-warning' );
+			$icon['render']            = true;
+			$badge['children']['icon'] = $icon;
+		}
 		$badge['children']['text']      = $text;
 
 		return $badge;
