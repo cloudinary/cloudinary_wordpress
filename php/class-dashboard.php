@@ -131,7 +131,7 @@ class Dashboard {
 										'data-text' => 'error_count_hr',
 										'class'     => array(
 											'cld-stat-text',
-											'cld-error',
+											'cld-ui-error',
 										),
 									),
 								),
