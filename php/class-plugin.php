@@ -677,21 +677,28 @@ final class Plugin {
 	/**
 	 * Add Script data.
 	 *
-	 * @param string $slug  The slug to add.
-	 * @param mixed  $value The value to set.
+	 * @param string      $slug   The slug to add.
+	 * @param mixed       $value  The value to set.
+	 * @param string|null $handle $the optional script handle to add data for.
 	 */
-	public function add_script_data( $slug, $value ) {
-		$this->settings->set_param( '@script' . $this->settings->separator . $slug, $value );
+	public function add_script_data( $slug, $value, $handle = null ) {
+		if ( null === $handle ) {
+			$handle = $this->slug;
+		}
+		$this->settings->set_param( '@script' . $this->settings->separator . $handle . $this->settings->separator . $slug, $value );
 	}
 
 	/**
 	 * Output script data if set.
 	 */
 	public function print_script_data() {
-		$data = $this->settings->get_param( '@script' );
-		if ( ! empty( $data ) ) {
-			$json = wp_json_encode( $data );
-			wp_add_inline_script( $this->slug, 'var cldData = ' . $json, 'before' );
+		$handles = $this->settings->get_param( '@script' );
+		if ( ! empty( $handles ) ) {
+			foreach ( $handles as $handle => $data ) {
+				// We should never be using multiple handles. This is just for cases where data needs to be added where the main script is not loaded.
+				$json = wp_json_encode( $data );
+				wp_add_inline_script( $handle, 'var cldData = ' . $json, 'before' );
+			}
 		}
 	}
 
