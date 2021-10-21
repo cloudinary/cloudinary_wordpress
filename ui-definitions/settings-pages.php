@@ -424,6 +424,33 @@ $settings = array(
 		'section' => 'wizard',
 		'slug'    => 'wizard',
 	),
+	'edit_asset' => array(
+		'page_title'          => __( 'Edit asset', 'cloudinary' ),
+		'section'             => 'edit-asset',
+		'slug'                => 'edit_asset',
+		'requires_connection' => true,
+		array(
+			'type' => 'row',
+			array(
+				'type'       => 'column',
+				'width'      => '950px',
+				'attributes' => array(
+					'wrap' => array(
+						'style' => 'margin: 0 auto;max-width:1200px;',
+					),
+				),
+				array(
+					'type' => 'referrer_link',
+				),
+				array(
+					'type' => 'panel',
+					array(
+						'type' => 'asset_preview',
+					),
+				),
+			),
+		),
+	),
 );
 
 return apply_filters( 'cloudinary_admin_pages', $settings );
