@@ -852,6 +852,72 @@ class Assets extends Settings_Component {
 	}
 
 	/**
+	 * Get a single asset primary record.
+	 *
+	 * @param int    $post_id The post ID to get.
+	 * @param string $type    Type of return: Object or dataset.
+	 *
+	 * @return \WP_Post|array|null
+	 */
+	public function get_asset( $post_id, $type = 'object' ) {
+
+		if ( 'object' === $type ) {
+			return get_post( $post_id );
+		}
+
+		global $wpdb;
+
+		$wpdb->cld_table = Utils::get_relationship_table();
+		$prepare         = $wpdb->prepare( "SELECT * FROM $wpdb->cld_table WHERE post_id = %d AND primary_url = sized_url ;", (int) $post_id );
+		$result          = $wpdb->get_row( $prepare, ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+
+		return $this->build_item( $result );
+	}
+
+	/**
+	 * Build a single asset dataset.
+	 *
+	 * @param array $item The raw data for an asset.
+	 *
+	 * @return array
+	 */
+	public function build_item( $item ) {
+		if ( empty( $item ) ) {
+			return null;
+		}
+		$dirs     = wp_get_upload_dir();
+		$max_size = 900;
+		$parts    = explode( $item['parent_path'], $item['primary_url'] );
+		$parts[0] = $dirs['baseurl'];
+
+		$url     = './' . $parts[1];
+		$size    = $item['width'] > $item['height'] ? array( 'width' => $max_size ) : array( 'height' => $max_size );
+		$break   = null;
+		$preview = wp_get_attachment_thumb_url( $item['post_id'] );
+		if ( ! empty( $item['public_id'] ) ) {
+			$preview = $this->media->cloudinary_url( $item['post_id'], null, array( $size ), $item['public_id'], true );
+			$break   = $item['width'] > $item['height'] ? 'w_' . $max_size : 'h_' . $max_size;
+			$parts   = explode( $break, $preview );
+		}
+
+		$return = array(
+			'ID'              => $item['post_id'],
+			'key'             => $item['id'],
+			'local_url'       => $item['primary_url'],
+			'short_url'       => $url,
+			'active'          => 'enable' === $item['post_state'],
+			'preview'         => $preview,
+			'data'            => $item,
+			'base'            => $parts[0],
+			'file'            => $parts[1],
+			'size'            => $break,
+			'transformations' => $item['transformations'] ? $item['transformations'] : null,
+		);
+
+		return $return;
+	}
+
+	/**
 	 * Create a new asset item.
 	 *
 	 * @param string $url       The assets url.
