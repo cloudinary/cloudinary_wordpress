@@ -68,7 +68,6 @@ $settings = array(
 		'collapsible' => 'closed',
 		array(
 			'type'  => 'opt_level',
-			'title' => __( 'Site optimization', 'cloudinary' ),
 		),
 	),
 );
