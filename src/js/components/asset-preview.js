@@ -57,7 +57,7 @@ const AssetPreview = {
 		this.apply.addEventListener( 'click', () => {
 			this.apply.style.display = 'none';
 			this.reset();
-			this.preview.style.opacity = 0;
+			this.preview.style.opacity = 0.6;
 			this.preview.src = this.url;
 		} );
 

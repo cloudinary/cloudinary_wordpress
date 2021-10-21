@@ -637,7 +637,7 @@ class Global_Transformations {
 	 * @param int    $attachment_id The attachment id.
 	 */
 	public function transformations_column_value( $column_name, $attachment_id ) {
-		if ( 'cld_transformations' === $column_name ) {
+		if ( 'cld_transformations' === $column_name && $this->media->sync->is_synced( $attachment_id ) ) {
 
 			$item = $this->media->plugin->get_component( 'assets' )->get_asset( $attachment_id, 'dataset' );
 			if ( ! empty( $item['data']['public_id'] ) ) {
