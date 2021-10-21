@@ -14,11 +14,11 @@ const MediaTransformations = {
 		trigger.addEventListener( 'click', ( ev ) => {
 			ev.preventDefault();
 			this.editModal.edit( item, ( transformations ) => {
-				item.data.transformations = transformations;
+				item.transformations = transformations;
 				if ( ! transformations.length ) {
 					trigger.innerText = __( 'Add transformations', 'cloudinary' );
 				} else {
-					trigger.innerText = item.data.transformations;
+					trigger.innerText = item.transformations;
 				}
 			} );
 		} );
