@@ -7,7 +7,10 @@
 
 namespace Cloudinary\Media;
 
+use Cloudinary\Connect\Api;
 use Cloudinary\Settings\Setting;
+use Cloudinary\Sync;
+use Cloudinary\REST_API;
 use WP_Post;
 
 /**
@@ -599,6 +602,58 @@ class Global_Transformations {
 	}
 
 	/**
+	 * Insert the cloudinary status column.
+	 *
+	 * @param array $cols Array of columns.
+	 *
+	 * @return array
+	 */
+	public function transformations_column( $cols ) {
+
+		$custom = array(
+			'cld_transformations' => __( 'Transformations', 'cloudinary' ),
+		);
+		$offset = array_search( 'parent', array_keys( $cols ), true );
+		if ( empty( $offset ) ) {
+			$offset = 4; // Default location some where after author, in case another plugin removes parent column.
+		}
+		$cols = array_slice( $cols, 0, $offset ) + $custom + array_slice( $cols, $offset );
+
+		$export = array(
+			'save_url' => rest_url( REST_API::BASE . '/save_asset' ),
+			'nonce'    => wp_create_nonce( 'wp_rest' ),
+		);
+		$this->media->plugin->add_script_data( 'editor', $export, 'cloudinary-media-transformations' );
+		// Add script.
+		wp_enqueue_script( 'cloudinary-media-transformations', $this->media->plugin->dir_url . 'js/media-transformations.js', array(), $this->media->plugin->version, true );
+
+		return $cols;
+	}
+
+	/**
+	 * Display the Cloudinary Column.
+	 *
+	 * @param string $column_name   The column name.
+	 * @param int    $attachment_id The attachment id.
+	 */
+	public function transformations_column_value( $column_name, $attachment_id ) {
+		if ( 'cld_transformations' === $column_name ) {
+
+			$item = $this->media->plugin->get_component( 'assets' )->get_asset( $attachment_id, 'dataset' );
+			if ( ! empty( $item['data']['public_id'] ) ) {
+				$text            = __( 'Add transformations', 'cloudinary' );
+				$transformations = $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['transformation'], true );
+				if ( ! empty( $transformations ) ) {
+					$text = Api::generate_transformation_string( $transformations, $this->media->get_resource_type( $attachment_id ) );
+				}
+				?>
+				<a href="#" data-transformation-item="<?php echo esc_attr( wp_json_encode( $item ) ); ?>"><?php echo esc_html( $text ); ?></a>
+				<?php
+			}
+		}
+	}
+
+	/**
 	 * Setup hooks for the filters.
 	 */
 	public function setup_hooks() {
@@ -619,6 +674,10 @@ class Global_Transformations {
 		add_action( 'save_post', array( $this, 'save_taxonomy_ordering' ), 10, 1 );
 		add_action( 'save_post', array( $this, 'save_overwrite_transformations_featured_image' ), 10, 3 );
 		add_filter( 'admin_post_thumbnail_html', array( $this, 'classic_overwrite_transformations_featured_image' ), 10, 3 );
+
+		// Filter and action the custom column.
+		add_filter( 'manage_media_columns', array( $this, 'transformations_column' ), 11 );
+		add_action( 'manage_media_custom_column', array( $this, 'transformations_column_value' ), 10, 2 );
 
 		// Register Meta.
 		$this->register_featured_overwrite();
