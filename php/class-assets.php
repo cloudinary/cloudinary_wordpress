@@ -982,7 +982,7 @@ class Assets extends Settings_Component {
 			array(
 				'type'               => 'on_off',
 				'slug'               => 'enable',
-				'optimisation_title' => __( 'Additional asset optimization', 'cloudinary' ),
+				'optimisation_title' => __( 'Additional asset sync settings', 'cloudinary' ),
 				'tooltip_text'       => __( 'Enabling additional asset syncing will sync the toggled assets with Cloudinary to make use of advanced optimization and CDN delivery functionality.', 'cloudinary' ),
 				'description'        => __( 'Enable additional asset syncing', 'cloudinary' ),
 				'default'            => 'off',
