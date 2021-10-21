@@ -186,16 +186,8 @@ class Report extends Settings_Component implements Setup {
 			$media = $this->plugin->get_component( 'media' );
 			$meta  = get_post_meta( $post->ID, $sync::META_KEYS['cloudinary'], true );
 			$logs  = array( Sync::META_KEYS['process_log_legacy'] => $media->get_process_logs( $post->ID, true ) );
-
-			$args = array(
-				'type'       => 'tag',
-				'element'    => 'pre',
-				'attributes' => array(
-					'style' => 'overflow:auto;',
-				),
-				'content'    => wp_json_encode( array_merge( $meta, $logs ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ),
-			);
-			$this->settings->create_setting( 'meta_viewer', $args )->get_component()->render( true );
+			$data = array_merge( $meta, $logs );
+			highlight_string( var_export( $data, true ) );
 		}
 	}
 

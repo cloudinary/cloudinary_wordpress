@@ -434,6 +434,14 @@ class Media extends Settings_Component implements Setup {
 
 		$is_oversize[ $attachment_id ] = $file_size > $limit;
 
+		if ( $is_oversize[ $attachment_id ] ) {
+			$max_size    = ( wp_attachment_is_image( $attachment_id ) ? 'image_max_size_bytes' : 'video_max_size_bytes' );
+			$max_size_hr = size_format( $this->plugin->components['connect']->usage['media_limits'][ $max_size ] );
+			// translators: variable is file size.
+			$message = sprintf( __( 'File size exceeds the maximum of %s. This media asset will be served from WordPress.', 'cloudinary' ), $max_size_hr );
+			update_post_meta( $attachment_id, Sync::META_KEYS['sync_error'], $message );
+		}
+
 		return $is_oversize[ $attachment_id ];
 	}
 
@@ -2030,10 +2038,7 @@ class Media extends Settings_Component implements Setup {
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'This media is Sprite type.', 'cloudinary' ); ?>"></span>
 				<?php
 			elseif ( $this->is_oversize_media( $attachment_id ) ) :
-				$max_size    = ( wp_attachment_is_image( $attachment_id ) ? 'image_max_size_bytes' : 'video_max_size_bytes' );
-				$max_size_hr = size_format( $this->plugin->components['connect']->usage['media_limits'][ $max_size ] );
-				// translators: variable is file size.
-				$title = sprintf( __( 'File size exceeds the maximum of %s. This media asset will be served from WordPress.', 'cloudinary' ), $max_size_hr );
+				$title = get_post_meta( $attachment_id, Sync::META_KEYS['sync_error'], true );
 				?>
 				<span class="dashicons-cloudinary error" title="<?php echo esc_attr( $title ); ?>"></span>
 				<?php
