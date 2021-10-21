@@ -101,7 +101,7 @@ $settings = array(
 							'type'               => 'on_off',
 							'slug'               => 'enable_breakpoints',
 							'title'              => __( 'Breakpoints', 'cloudinary' ),
-							'optimisation_title' => __( 'Responsive breakpoints', 'cloudinary' ),
+							'optimisation_title' => __( 'Responsive images', 'cloudinary' ),
 							'tooltip_text'       => __(
 								'Automatically generate multiple sizes based on the configured breakpoints to enable your images to responsively adjust to different screen sizes. Note that your Cloudinary usage will increase when enabling responsive images.',
 								'cloudinary'
