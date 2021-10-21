@@ -118,7 +118,12 @@ class Dashboard {
 									'element'    => 'a',
 									'content'    => '&nbsp;',
 									'attributes' => array(
-										'href'      => '#', // @todo: link to filtered media.
+										'href'      => add_query_arg(
+											array(
+												'cloudinary-filter' => Sync::META_KEYS['sync_error'],
+											),
+											admin_url( 'upload.php' )
+										),
 										'data-text' => 'error_count_hr',
 										'class'     => array(
 											'cld-stat-text',

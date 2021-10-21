@@ -169,7 +169,7 @@ class Media extends Settings_Component implements Setup {
 		$this->cloudinary_filters = apply_filters(
 			'cloudinary_media_filters',
 			array(
-				'error' => __( 'Error', 'cloudinary' ),
+				SYNC::META_KEYS['sync_error'] => __( 'Error', 'cloudinary' ),
 			)
 		);
 
@@ -2591,7 +2591,16 @@ class Media extends Settings_Component implements Setup {
 
 			if ( $request && 'none' !== $request ) {
 				$meta_query   = $query->get( 'meta_query' );
-				$meta_query[] = array();
+				if ( ! is_array( $meta_query ) ) {
+					$meta_query = array();
+				}
+				$meta_query[] = array(
+					'relation'  => 'AND',
+				);
+				$meta_query[] = array(
+					'key'     => $request,
+					'compare' => 'EXISTS',
+				);
 				$query->set( 'meta_query', $meta_query );
 			}
 		}
@@ -2611,7 +2620,7 @@ class Media extends Settings_Component implements Setup {
 			<select name="cloudinary-filter" id="cloudinary-filter">
 				<option value="none"><?php esc_html_e( 'No Cloudinary filters', 'cloudinary' ); ?></option>
 				<?php foreach ( $this->cloudinary_filters as $value => $label ) : ?>
-					<option value="<?php echo esc_attr( $value ); ?>>" <?php selected( $value, $request ); ?>><?php echo esc_html( $label ); ?></option>
+					<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $request ); ?>><?php echo esc_html( $label ); ?></option>
 				<?php endforeach; ?>
 			</select>
 			<?php
