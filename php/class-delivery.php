@@ -238,15 +238,19 @@ class Delivery implements Setup {
 	public function get_sizes( $attachment_id ) {
 		static $sizes = array();
 		if ( empty( $sizes[ $attachment_id ] ) ) {
+			$sizes[ $attachment_id ] = array();
 			$meta                    = wp_get_attachment_metadata( $attachment_id, true );
 			$local_url               = self::clean_url( $this->media->local_url( $attachment_id ), true );
 			$urls                    = array(
 				'primary_url' => $local_url,
 				'sized_url'   => $local_url,
 			);
-			$sizes[ $attachment_id ] = array(
-				$meta['width'] . 'x' . $meta['height'] => $urls,
-			);
+
+			if ( ! empty( $meta['width'] ) && ! empty( $meta['height'] ) ) {
+				$sizes[ $attachment_id ] = array(
+					$meta['width'] . 'x' . $meta['height'] => $urls,
+				);
+			}
 
 			if ( ! empty( $meta['sizes'] ) ) {
 				foreach ( $meta['sizes'] as $size ) {
