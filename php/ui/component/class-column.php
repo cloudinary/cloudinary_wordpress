@@ -25,7 +25,10 @@ class Column extends Row {
 
 		$struct['attributes']['class'][] = 'cld-column';
 		if ( $this->setting->has_param( 'width' ) ) {
-			$struct['attributes']['style'] = 'width:' . $this->setting->get_param( 'width' ) . ';';
+			if ( ! isset( $struct['attributes']['style'] ) ) {
+				$struct['attributes']['style'] = '';
+			}
+			$struct['attributes']['style'] .= 'width:' . $this->setting->get_param( 'width' ) . ';';
 		}
 
 		if ( $this->setting->has_param( 'class' ) ) {
