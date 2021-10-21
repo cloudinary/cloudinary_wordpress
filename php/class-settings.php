@@ -379,6 +379,27 @@ class Settings {
 	}
 
 	/**
+	 * Get the URL for a root page setting.
+	 *
+	 * @param string $slug The page slug to get URL for.
+	 *
+	 * @return string
+	 */
+	public function get_url( $slug ) {
+		$struct = $this->get_param( 'settings' . $this->separator . $slug );
+		$args   = array(
+			'page' => $this->get_storage_key( $slug ),
+		);
+		if ( isset( $struct['section'] ) ) {
+			$args['page']    = $this->get_slug();
+			$args['section'] = $struct['section'];
+		}
+		$path = add_query_arg( $args, 'admin.php' );
+
+		return admin_url( $path );
+	}
+
+	/**
 	 * Find a Setting.
 	 *
 	 * @param string $slug   The setting slug.
