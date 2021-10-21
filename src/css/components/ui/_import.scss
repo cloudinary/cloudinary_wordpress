@@ -7,13 +7,19 @@
 	padding: 0 10px;
 
 	&-item {
+
 		margin-top: 10px;
 		opacity: 0;
 		transition: opacity 0.5s;
 		white-space: nowrap;
+		min-height: 20px;
+		display: flex;
+		align-items: center;
 
 		.spinner {
 			visibility: visible;
+			margin: 0 6px 0 0;
+			width: 24px;
 		}
 
 		&-id {
