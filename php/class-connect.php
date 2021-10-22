@@ -399,11 +399,12 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		$result = array(
 			'type'    => 'connection_success',
 			'message' => null,
+			'url'     => $url,
 		);
 
 		$test  = wp_parse_url( $url );
 		$valid = array_filter(
-			array_keys( $test ),
+			array_keys( (array) $test ),
 			function ( $a ) {
 				return in_array( $a, array( 'scheme', 'host', 'user', 'pass' ), true );
 			}

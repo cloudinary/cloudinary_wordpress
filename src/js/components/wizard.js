@@ -3,6 +3,7 @@ import apiFetch from '@wordpress/api-fetch';
 
 const Wizard = {
 	storageKey: '_cld_wizard',
+	testing: null,
 	next: document.querySelector( '[data-navigate="next"]' ),
 	back: document.querySelector( '[data-navigate="back"]' ),
 	lock: document.getElementById( 'pad-lock' ),
@@ -68,6 +69,7 @@ const Wizard = {
 			} );
 		} );
 		connectionInput.addEventListener( 'input', ( ev ) => {
+			this.lockNext();
 			const value = connectionInput.value.replace(
 				'CLOUDINARY_URL=',
 				''
@@ -76,6 +78,7 @@ const Wizard = {
 			this.connection.success.classList.remove( 'active' );
 			this.connection.working.classList.remove( 'active' );
 			if ( value.length ) {
+				this.testing = value;
 				if ( this.debounceConnect ) {
 					clearTimeout( this.debounceConnect );
 				}
@@ -172,24 +175,24 @@ const Wizard = {
 		switch ( tab ) {
 			case 1:
 				this.hide( this.back );
-				this.next.disabled = '';
+				this.unlockNext();
 				break;
 			case 2:
 				this.show( this.back );
 				if ( ! this.config.cldString.length ) {
-					this.next.disabled = 'disabled';
+					this.lockNext();
 					setTimeout( () => {
 						document
 							.getElementById( 'connect.cloudinary_url' )
 							.focus();
 					}, 0 );
 				} else {
-					this.connection.success.classList.add( 'active' );
+					this.showSuccess();
 				}
 				break;
 			case 3:
 				if ( ! this.config.cldString.length ) {
-					document.location.hash = 2;
+					document.location.hash = '2';
 					return;
 				}
 				this.show( this.lock );
@@ -197,7 +200,7 @@ const Wizard = {
 				break;
 			case 4:
 				if ( ! this.config.cldString.length ) {
-					document.location.hash = 2;
+					document.location.hash = '2';
 					return;
 				}
 				this.hide( this.tabBar );
@@ -221,6 +224,14 @@ const Wizard = {
 	navigateNext() {
 		document.location.hash = this.config.tab + 1;
 	},
+	showError() {
+		this.connection.error.classList.add( 'active' );
+		this.connection.success.classList.remove( 'active' );
+	},
+	showSuccess() {
+		this.connection.error.classList.remove( 'active' );
+		this.connection.success.classList.add( 'active' );
+	},
 	show( item ) {
 		item.classList.remove( 'hidden' );
 		item.style.display = '';
@@ -228,6 +239,12 @@ const Wizard = {
 	hide( item ) {
 		item.classList.add( 'hidden' );
 		item.style.display = 'none';
+	},
+	lockNext() {
+		this.next.disabled = 'disabled';
+	},
+	unlockNext() {
+		this.next.disabled = '';
 	},
 	evaluateConnectionString( value ) {
 		const reg = new RegExp(
@@ -243,13 +260,17 @@ const Wizard = {
 			},
 			method: 'POST',
 		} ).then( ( result ) => {
-			this.connection.working.classList.remove( 'active' );
-			if ( 'connection_error' === result.type ) {
-				this.connection.error.classList.add( 'active' );
-			} else if ( 'connection_success' === result.type ) {
-				this.connection.success.classList.add( 'active' );
-				this.next.disabled = '';
-				this.setConfig( 'cldString', value );
+			if ( result.url === this.testing ) {
+				// Only handle the one that started the request.
+
+				this.connection.working.classList.remove( 'active' );
+				if ( 'connection_error' === result.type ) {
+					this.showError();
+				} else if ( 'connection_success' === result.type ) {
+					this.showSuccess();
+					this.unlockNext();
+					this.setConfig( 'cldString', value );
+				}
 			}
 		} );
 	},
@@ -261,7 +282,7 @@ const Wizard = {
 		);
 	},
 	saveConfig() {
-		this.next.disabled = true;
+		this.lockNext();
 		this.next.innerText = __( 'Setting up Cloudinary', 'cloudinary' );
 		apiFetch( {
 			path: cldData.wizard.saveURL,
@@ -269,7 +290,7 @@ const Wizard = {
 			method: 'POST',
 		} ).then( ( result ) => {
 			this.next.innerText = __( 'Next', 'cloudinary' );
-			this.next.disabled = null;
+			this.unlockNext();
 			this.getTab( 4 );
 			window.localStorage.removeItem( this.storageKey );
 		} );
