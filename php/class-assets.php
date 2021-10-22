@@ -333,7 +333,7 @@ class Assets extends Settings_Component {
 		if ( ! empty( $this->delivery->unusable ) ) {
 			$assets = array();
 			foreach ( $this->delivery->unusable as $unusable ) {
-				if ( isset( $this->active_parents[ $unusable['parent_path'] ] ) && ! in_array( $unusable['post_id'], $assets, true ) ) {
+				if ( 'asset' === $unusable['sync_type'] && isset( $this->active_parents[ $unusable['parent_path'] ] ) && ! in_array( $unusable['post_id'], $assets, true ) ) {
 					$asset_id = (int) $unusable['post_id'];
 					$this->media->sync->set_signature_item( $asset_id, 'cld_asset', 'reset' );
 					$this->media->sync->add_to_sync( $asset_id );
@@ -638,7 +638,7 @@ class Assets extends Settings_Component {
 	public function validate_asset_sync( $attachment_id ) {
 
 		// Default is either a asset type or auto sync off, if it's a media library item.
-		$valid = self::is_asset_type( $attachment_id ) || ! $this->media->sync->is_auto_sync_enabled();
+		$valid = self::is_asset_type( $attachment_id );
 
 		// Check to see if there is a parent. If there is, then the asset is enabled to be synced.
 		if ( true === $valid ) {
