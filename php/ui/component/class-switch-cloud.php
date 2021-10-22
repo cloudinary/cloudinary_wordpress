@@ -36,7 +36,7 @@ class Switch_Cloud extends Submit {
 		);
 
 		$struct['element']             = 'a';
-		$struct['content']             = __( 'Switch Cloud', 'cloudinary' );
+		$struct['content']             = __( 'Launch wizard', 'cloudinary' );
 		$struct['attributes']['href']  = $url;
 		$struct['attributes']['class'] = array(
 			'button',
