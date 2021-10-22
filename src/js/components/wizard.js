@@ -159,7 +159,6 @@ const Wizard = {
 		}
 
 		const current = this.getCurrent();
-		const indicator = this.getCurrentTab();
 		const page = document.getElementById( `tab-${ tab }` );
 
 		this.hideTabs();
@@ -208,7 +207,6 @@ const Wizard = {
 				break;
 		}
 		this.setConfig( 'tab', tab );
-		return indicator;
 	},
 	navigate( direction ) {
 		if ( 'next' === direction ) {
