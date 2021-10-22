@@ -27,12 +27,13 @@
 				font-size: $size-panel-content;
 			}
 		}
-
 	}
 }
 
 &-ui-sidebar {
-	width: 500px;
+	width: auto;
+	min-width: 300px;
+	max-width: 500px;
 
 	.cld-panel {
 		padding: $size-padding-sidebar;
