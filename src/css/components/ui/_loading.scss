@@ -22,3 +22,18 @@
 	padding: 4px;
 	display: inline-block;
 }
+
+&-dashboard {
+	&-placeholder {
+		background-color: #eff5f8;
+		min-height: 120px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		align-content: center;
+		flex-direction: column;
+		h4{
+			margin: 12px 0 0 0;
+		}
+	}
+}
