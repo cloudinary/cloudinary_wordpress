@@ -384,7 +384,7 @@ class Sync_Queue {
 			// Error size: No mockups on what to display here.
 			'error_count'             => $errors_count,
 			// translators: placeholders are the number of errors.
-			'error_count_hr'          => sprintf( _n( '%s sync error detected.', '%s errors detected', $errors_count, 'cloudinary' ), number_format_i18n( $errors_count ) ),
+			'error_count_hr'          => 0 === $errors_count ? '' : sprintf( _n( '%s sync error detected.', '%s errors detected', $errors_count, 'cloudinary' ), number_format_i18n( $errors_count ) ),
 
 			// Number of assets.
 			'total_assets'            => $total_assets, // This is a count of the assets in _cloudinary_relationships.
