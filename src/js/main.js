@@ -16,6 +16,7 @@ import UI from './components/ui';
 import Wizard from './components/wizard';
 import Storage from "./components/storage";
 import Extensions from "./components/extensions";
+import Tabs from "./components/tabs";
 
 import '../css/main.scss';
 
@@ -60,5 +61,6 @@ export const cloudinary = {
 	Notices,
 	Wizard,
 	Storage,
-	Extensions
+	Extensions,
+	Tabs
 };
