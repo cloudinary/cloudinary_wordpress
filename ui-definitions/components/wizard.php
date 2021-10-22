@@ -11,8 +11,37 @@ use Cloudinary\Settings\Setting;
 
 $cloudinary = get_plugin_instance();
 $admin      = $cloudinary->get_component( 'admin' );
-$cloudinary->add_script_data( 'saveURL', rest_url( REST_API::BASE . '/save_settings' ) );
-$cloudinary->add_script_data( 'saveNonce', wp_create_nonce( 'wp_rest' ) );
+
+// Defaults.
+$autosync       = true;
+$nonmedia       = true;
+$advanced       = true;
+$current_tab    = 1;
+$cloudinary_url = $cloudinary->settings->get_value( 'cloudinary_url' );
+if ( ! empty( $cloudinary_url ) ) {
+	$autosync    = 'on' === $cloudinary->settings->get_value( 'auto_sync' );
+	$nonmedia    = 'on' === $cloudinary->settings->get_value( 'cache.enable' );
+	$advanced    = 'on' === $cloudinary->settings->get_value( 'use_lazy_load' ) && 'on' === $cloudinary->settings->get_value( 'enable_breakpoints' );
+	$current_tab = 2;
+}
+
+// Export settings.
+$export_data = array(
+	'testURL'   => rest_url( REST_API::BASE . '/test_connection' ),
+	'saveURL'   => rest_url( REST_API::BASE . '/save_wizard' ),
+	'saveNonce' => wp_create_nonce( 'wp_rest' ),
+	'config'    => array(
+		'tab'          => $current_tab,
+		'cldString'    => $cloudinary_url,
+		'mediaLibrary' => $autosync,
+		'nonMedia'     => $nonmedia,
+		'advanced'     => $advanced,
+
+	),
+);
+
+$cloudinary->add_script_data( 'wizard', $export_data );
+
 $url            = self_admin_url( add_query_arg( 'page', $cloudinary->slug, 'admin.php' ) );
 $media_args     = array(
 	'type'         => 'on_off',
@@ -62,15 +91,15 @@ $advanced->set_value( 'on' );
 			<img src="<?php echo esc_url( $cloudinary->dir_url . 'css/images/logo-icon.svg' ); ?>" width="56px"/>
 		</span>
 		<div class="cld-wizard-tabs" id="wizard-tabs">
-			<div class="cld-wizard-tabs-tab active" data-tab="1">
+			<div class="cld-wizard-tabs-tab active" data-tab="1" id="tab-icon-1">
 				<span class="cld-wizard-tabs-tab-count">1</span>
 				<?php esc_html_e( 'Welcome to Cloudinary', 'cloudinary' ); ?>
 			</div>
-			<div class="cld-wizard-tabs-tab" data-tab="2" data-focus="connect.cloudinary_url" data-disable="next">
+			<div class="cld-wizard-tabs-tab" data-tab="2" data-focus="connect.cloudinary_url" data-disable="next" id="tab-icon-2">
 				<span class="cld-wizard-tabs-tab-count">2</span>
 				<?php esc_html_e( 'Connect Plugin', 'cloudinary' ); ?>
 			</div>
-			<div class="cld-wizard-tabs-tab" data-tab="3">
+			<div class="cld-wizard-tabs-tab" data-tab="3" id="tab-icon-3">
 				<span class="cld-wizard-tabs-tab-count">3</span>
 				<?php esc_html_e( 'Recommended Settings', 'cloudinary' ); ?>
 			</div>
@@ -176,7 +205,7 @@ $advanced->set_value( 'on' );
 			<p>
 				<?php esc_html_e( 'Once your assets have finished syncing, the plugin dashboard will show the impact on performance for your site.', 'cloudinary' ); ?>
 			</p>
-			<a class="button button-primary" href="<?php echo esc_url( $url ); ?>"><?php esc_html_e( 'Go to plugin dashboard', 'cloudinary' ); ?></a>
+			<a id="complete-wizard" class="button button-primary" href="<?php echo esc_url( $url ); ?>"><?php esc_html_e( 'Go to plugin dashboard', 'cloudinary' ); ?></a>
 		</div>
 	</div>
 	<div class="cld-ui-wrap cld-submit">

@@ -700,7 +700,7 @@ class Delivery implements Setup {
 			$tag_element['overwrite_transformations']
 		);
 
-		if ( 'on' === $this->plugin->settings->image_settings->_overlay ) {
+		if ( current_user_can( 'manage_options' ) && 'on' === $this->plugin->settings->image_settings->_overlay ) {
 			$local_size = get_post_meta( $tag_element['id'], Sync::META_KEYS['local_size'], true );
 			if ( empty( $local_size ) && file_exists( get_attached_file( $tag_element['id'] ) ) ) {
 				$local_size = filesize( get_attached_file( $tag_element['id'] ) );

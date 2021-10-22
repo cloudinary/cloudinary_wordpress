@@ -1,10 +1,11 @@
 
 &-complete {
 	padding: 75px;
-	background-image: url( "images/confetti.png" );
+	background-image: url("images/confetti.png");
 	background-size: cover;
 	background-position: center;
 	background-repeat: no-repeat;
+	text-align: center;
 
 	&.hidden {
 		display: none;
@@ -25,10 +26,13 @@
 
 	&-icons {
 		display: flex;
-		img{
+		justify-content: center;
+
+		img {
 			width: 70px;
 			margin: 30px 10px;;
 		}
+
 		.dashicons {
 			font-size: 50px;
 			line-height: 1.4;
@@ -40,16 +44,18 @@
 			box-shadow: 0px 2px 8px 0px rgba(0, 0, 0, 0.3);
 
 		}
-		.dashicons-cloudinary{
+
+		.dashicons-cloudinary {
 			font-size: 65px;
 			line-height: 0.9;
 			color: $color-cld-blue;
 		}
 	}
 
-	.cld-ui-title{
+	.cld-ui-title {
 		margin-top: 30px;
-		h3{
+
+		h3 {
 			font-size: $size-sidebar-title;
 		}
 	}

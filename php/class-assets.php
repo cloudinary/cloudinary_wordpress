@@ -197,7 +197,7 @@ class Assets extends Settings_Component {
 	 * Enqueue assets.
 	 */
 	public function enqueue_assets() {
-		if ( 'on' === $this->plugin->settings->image_settings->_overlay ) {
+		if ( current_user_can( 'manage_options' ) && 'on' === $this->plugin->settings->image_settings->_overlay ) {
 			wp_enqueue_script( 'front-overlay', $this->plugin->dir_url . 'js/front-overlay.js', array(), $this->plugin->version, true );
 			wp_enqueue_style( 'front-overlay', $this->plugin->dir_url . 'css/front-overlay.css', array(), $this->plugin->version );
 		}
@@ -931,6 +931,7 @@ class Assets extends Settings_Component {
 	public function setup() {
 
 		$assets = $this->settings->get_setting( 'assets' )->get_settings();
+		$full   = 'on' === $this->settings->get_value( 'cache.enable' );
 		foreach ( $assets as $asset ) {
 
 			$paths = $asset->get_setting( 'paths' );
