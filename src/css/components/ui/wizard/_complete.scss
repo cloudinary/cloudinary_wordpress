@@ -1,11 +1,13 @@
 
 &-complete {
-	padding: 75px;
+
 	background-image: url("images/confetti.png");
-	background-size: cover;
-	background-position: center;
+	background-position: 50%;
 	background-repeat: no-repeat;
+	background-size: cover;
+	padding: 98px;
 	text-align: center;
+	margin: -23px;
 
 	&.hidden {
 		display: none;
