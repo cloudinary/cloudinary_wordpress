@@ -2009,7 +2009,24 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function media_column_value( $column_name, $attachment_id ) {
 		if ( 'cld_status' === $column_name ) {
-			if ( $this->sync->is_syncable( $attachment_id ) && $this->is_uploadable_media( $attachment_id ) ) :
+			if ( ! $this->is_uploadable_media( $attachment_id ) ) :
+				?>
+				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'Not syncable. This is an external media.', 'cloudinary' ); ?>"></span>
+				<?php
+			elseif ( 'fetch' === $this->get_media_delivery( $attachment_id ) ) :
+				?>
+				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'This media is Fetch type.', 'cloudinary' ); ?>"></span>
+				<?php
+			elseif ( 'sprite' === $this->get_media_delivery( $attachment_id ) ) :
+				?>
+				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'This media is Sprite type.', 'cloudinary' ); ?>"></span>
+				<?php
+			elseif ( get_post_meta( $attachment_id, Sync::META_KEYS['sync_error'], true ) || $this->is_oversize_media( $attachment_id ) ) :
+				$title = get_post_meta( $attachment_id, Sync::META_KEYS['sync_error'], true )
+				?>
+				<span class="dashicons-cloudinary error" title="<?php echo esc_attr( $title ); ?>"></span>
+				<?php
+			elseif ( $this->sync->is_syncable( $attachment_id ) && $this->is_uploadable_media( $attachment_id ) ) :
 				$status = array(
 					'state' => 'inactive',
 					'note'  => esc_html__( 'Not Synced', 'cloudinary' ),
@@ -2024,23 +2041,6 @@ class Media extends Settings_Component implements Setup {
 				$status = apply_filters( 'cloudinary_media_status', $status, $attachment_id );
 				?>
 				<span class="dashicons-cloudinary <?php echo esc_attr( $status['state'] ); ?>" title="<?php echo esc_attr( $status['note'] ); ?>"></span>
-				<?php
-			elseif ( ! $this->is_uploadable_media( $attachment_id ) ) :
-				?>
-				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'Not syncable. This is an external media.', 'cloudinary' ); ?>"></span>
-				<?php
-			elseif ( 'fetch' === $this->get_media_delivery( $attachment_id ) ) :
-				?>
-				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'This media is Fetch type.', 'cloudinary' ); ?>"></span>
-				<?php
-			elseif ( 'sprite' === $this->get_media_delivery( $attachment_id ) ) :
-				?>
-				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'This media is Sprite type.', 'cloudinary' ); ?>"></span>
-				<?php
-			elseif ( $this->is_oversize_media( $attachment_id ) ) :
-				$title = get_post_meta( $attachment_id, Sync::META_KEYS['sync_error'], true );
-				?>
-				<span class="dashicons-cloudinary error" title="<?php echo esc_attr( $title ); ?>"></span>
 				<?php
 			endif;
 		}
