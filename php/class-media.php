@@ -2193,7 +2193,7 @@ class Media extends Settings_Component implements Setup {
 					&& ! empty( $entry['code'] )
 					&& ! empty( $entry['message'] )
 				) {
-					$logs[ $signature ][ $time ] = $raw ? $entry['message'] : new WP_Error( $entry['code'], $entry['message'] );
+					$logs[ $signature ][ $time ] = $raw ? $entry : new WP_Error( $entry['code'], $entry['message'] );
 				}
 			}
 		}
