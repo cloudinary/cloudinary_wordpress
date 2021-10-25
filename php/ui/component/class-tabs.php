@@ -55,14 +55,14 @@ class Tabs extends Page {
 				'cld-page-tabs-tab',
 			);
 
-			if ( empty( $tabs ) ) {
-				$tab['attributes']['class'][] = 'is-active';
-			}
-
 			// Create the link.
-			$link                       = $this->get_part( 'a' );
-			$link['content']            = $tab_conf['text'];
-			$link['attributes']['href'] = $tab_conf['id'];
+			$link                           = $this->get_part( 'button' );
+			$link['content']                = $tab_conf['text'];
+			$link['attributes']['data-tab'] = $tab_conf['id'];
+
+			if ( empty( $tabs ) ) {
+				$link['attributes']['class'][] = 'is-active';
+			}
 
 			// Add tab to list.
 			$tab['children'][ $index ] = $link;

@@ -16,9 +16,6 @@
 		display: table;
 	}
 
-	@media only screen and (max-width: $size-medium) {
-		flex-direction: column;
-	}
 	@media only screen and (max-width: $size-small) {
 		flex-direction: column-reverse;
 	}
@@ -29,9 +26,7 @@
 	width: 100%;
 	box-sizing: border-box;
 	padding: 0 0 0 $size-padding-column;
-	&:last-child{
-		padding-right: $size-padding-column;
-	}
+
 	@media only screen and (min-width: $size-small) {
 
 		&.column-45 {
@@ -41,6 +36,10 @@
 		&.column-55 {
 			width: 55%;
 		}
+
+		&:last-child{
+			padding-right: $size-padding-column;
+		}
 	}
 	@media only screen and (max-width: $size-small) {
 		min-width: 100%;
@@ -48,10 +47,15 @@
 			text-align: center;
 		}
 	}
-	@media only screen and (max-width: $size-medium) {
-		&.cld-ui-preview {
+	@media only screen and (max-width: $size-large) {
+		&.tabbed-content {
 			display: none;
+
+			&.is-active {
+				display: block;
+			}
 		}
+
 	}
 	& &{
 		padding: 0;

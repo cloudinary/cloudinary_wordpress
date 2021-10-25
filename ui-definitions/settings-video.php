@@ -12,10 +12,23 @@ $settings = array(
 		'anchor'      => true,
 		'option_name' => 'media_display',
 		array(
+			'type' => 'tabs',
+			'tabs' => array(
+				'image_setting' => array(
+					'text' => __( 'Settings', 'cloudinary' ),
+					'id'   => 'settings',
+				),
+				'image_preview' => array(
+					'text' => __( 'Preview', 'cloudinary' ),
+					'id'   => 'preview',
+				),
+			),
+		),
+		array(
 			'type' => 'row',
 			array(
-				'type' => 'column',
-
+				'type'   => 'column',
+				'tab_id' => 'settings',
 				array(
 					'type'         => 'select',
 					'slug'         => 'video_player',
@@ -69,7 +82,6 @@ $settings = array(
 					'type'    => 'tag',
 					'element' => 'hr',
 				),
-
 				array(
 					'type' => 'group',
 					array(
@@ -180,7 +192,8 @@ $settings = array(
 				),
 			),
 			array(
-				'type' => 'column',
+				'type'   => 'column',
+				'tab_id' => 'preview',
 				array(
 					'type'           => 'video_preview',
 					'title'          => __( 'Video preview', 'cloudinary' ),

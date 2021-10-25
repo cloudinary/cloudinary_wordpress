@@ -32,6 +32,11 @@ class Column extends Row {
 			$struct['attributes']['class'] = array_merge( $struct['attributes']['class'], $this->setting->get_param( 'class' ) );
 		}
 
+		if ( $this->setting->has_param( 'tab_id' ) ) {
+			$struct['attributes']['id'] = $this->setting->get_param( 'tab_id' );
+			$struct['attributes']['class'][] = 'tabbed-content';
+		}
+
 		return $struct;
 	}
 
