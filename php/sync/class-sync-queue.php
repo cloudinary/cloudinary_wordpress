@@ -354,6 +354,9 @@ class Sync_Queue {
 
 		$data = $this->query_unsynced_data();
 
+		if ( empty( $data['asset_sizes'] ) || empty( $data['asset_sizes']['local'] ) ) {
+			return array(); // Nothing - don't do calculations.
+		}
 		// Lets calculate byte sizes.
 		$total_local_size  = $data['asset_sizes']['local'];
 		$total_remote_size = $data['asset_sizes']['remote'];
@@ -372,7 +375,7 @@ class Sync_Queue {
 
 			// Optimized size. We use the `original_size` to determine the percentage between for the progress bar.
 			'optimized_size'          => $total_remote_size,
-			'optimized_size_percent'  => round( $total_remote_size / $total_local_size * 100 ) . '%', // This is the percentage difference.
+			'optimized_size_percent'  => round( abs( $total_remote_size ) / abs( $total_local_size ) * 100 ) . '%', // This is the percentage difference.
 			'optimized_diff_percent'  => round( ( $total_local_size - $total_remote_size ) / $total_local_size * 100 ) . '%', // We use this for the "Size saved.." status text.
 			'optimized_size_hr'       => size_format( $total_remote_size ), // This is the formatted byte size.
 
@@ -395,9 +398,6 @@ class Sync_Queue {
 			'unoptimized_status_text' => sprintf( _n( '%s Asset unoptimized by your selection.', '%s Assets Unoptimized by your selection.', $total_unoptimized, 'cloudinary' ), number_format_i18n( $total_unoptimized ) ),
 			// translators: placeholders are the number of assets unoptimized.
 			'optimized_status_text'   => sprintf( __( '%1$s / %2$s Assets being optimized now.', 'cloudinary' ), number_format_i18n( $total_queued ), number_format_i18n( $total_assets ) ), // This will be shown when items are pending (check queue).
-
-			// Debug.
-			'data'                    => $data,
 		);
 
 		return $return;
