@@ -2,13 +2,12 @@
 &-tabs {
 	background-color: #fff;
 	display: none;
-	border-top: 1px solid #e5e5e5;
 	border-bottom: 1px solid #e5e5e5;
 	padding: 0 !important;
 	margin: -20px -18px 20px;
 	justify-content: center;
 	flex-wrap: nowrap;
-	@media only screen and (max-width: $size-medium) {
+	@media only screen and (max-width: $size-large) {
 		display: flex;
 	}
 
@@ -19,19 +18,22 @@
 		margin-bottom: 0;
 		width: 100%;
 
-		a {
+		button {
 			display: block;
 			padding: 1rem 2rem;
-			text-decoration: none;
 			font-weight: 500;
 			color: #000001;
 			text-align: center;
 			white-space: nowrap;
-		}
+			width: 100%;
+			background: transparent;
+			border: 0;
+			cursor: pointer;
 
-		&.is-active a {
-			color: $color-cld-blue;
-			border-bottom: 2px solid $color-cld-blue;
+			&.is-active {
+				color: $color-cld-blue;
+				border-bottom: 2px solid $color-cld-blue;
+			}
 		}
 	}
 }

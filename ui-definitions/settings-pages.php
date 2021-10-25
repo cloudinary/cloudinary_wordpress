@@ -94,9 +94,23 @@ $settings = array(
 				'title'       => __( 'Image breakpoints', 'cloudinary' ),
 				'option_name' => 'media_display',
 				array(
+					'type' => 'tabs',
+					'tabs' => array(
+						'image_setting' => array(
+							'text' => __( 'Settings', 'cloudinary' ),
+							'id'   => 'settings',
+						),
+						'image_preview' => array(
+							'text' => __( 'Preview', 'cloudinary' ),
+							'id'   => 'preview',
+						),
+					),
+				),
+				array(
 					'type' => 'row',
 					array(
-						'type' => 'column',
+						'type'   => 'column',
+						'tab_id' => 'settings',
 						array(
 							'type'               => 'on_off',
 							'slug'               => 'enable_breakpoints',
@@ -188,6 +202,7 @@ $settings = array(
 					),
 					array(
 						'type'      => 'column',
+						'tab_id'    => 'preview',
 						'class'     => array(
 							'cld-ui-preview',
 						),

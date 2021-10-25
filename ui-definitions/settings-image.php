@@ -17,18 +17,19 @@ $settings = array(
 			'tabs' => array(
 				'image_setting' => array(
 					'text' => __( 'Settings', 'cloudinary' ),
-					'id'   => '#id',
+					'id'   => 'settings',
 				),
 				'image_preview' => array(
 					'text' => __( 'Preview', 'cloudinary' ),
-					'id'   => '#id2',
+					'id'   => 'preview',
 				),
 			),
 		),
 		array(
 			'type' => 'row',
 			array(
-				'type' => 'column',
+				'type'   => 'column',
+				'tab_id' => 'settings',
 				array(
 					'type'               => 'on_off',
 					'slug'               => 'image_optimization',
@@ -142,8 +143,9 @@ $settings = array(
 				),
 			),
 			array(
-				'type'  => 'column',
-				'class' => array(
+				'type'   => 'column',
+				'tab_id' => 'preview',
+				'class'  => array(
 					'cld-ui-preview',
 				),
 				array(
