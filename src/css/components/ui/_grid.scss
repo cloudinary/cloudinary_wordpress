@@ -16,9 +16,6 @@
 		display: table;
 	}
 
-	@media only screen and (max-width: $size-large) {
-		flex-direction: column;
-	}
 	@media only screen and (max-width: $size-small) {
 		flex-direction: column-reverse;
 	}
