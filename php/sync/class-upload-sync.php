@@ -288,6 +288,9 @@ class Upload_Sync {
 
 			$this->update_breakpoints( $attachment_id, $result );
 			$this->update_content( $attachment_id );
+			delete_post_meta( $attachment_id, Sync::META_KEYS['sync_error'] );
+		} else {
+			update_post_meta( $attachment_id, Sync::META_KEYS['sync_error'], $result->get_error_message() );
 		}
 
 		return $result;
