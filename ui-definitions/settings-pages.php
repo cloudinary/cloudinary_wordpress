@@ -368,7 +368,7 @@ $settings = array(
 					'type'        => 'panel',
 					'title'       => __( 'I’ve installed the plugin, what happens now?', 'cloudinary' ),
 					'collapsible' => 'closed',
-					'content'     => __( 'If you left all the settings as default, all your current media will begin syncing to Cloudinary and will start to be optimized and delivered by fast CDN on your website. Once the syncing is complete, you should start seeing improvements in performance across your site.', 'cloudinary' ),
+					'content'     => __( 'If you left all the settings as default, all your current media will begin syncing with Cloudinary. Once syncing is complete, your media will be optimized and delivered using Cloudinary URLs and you should begin seeing improvements in performance across your site.', 'cloudinary' ),
 				),
 				array(
 					'type'        => 'panel',
