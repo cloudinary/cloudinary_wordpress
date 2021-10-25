@@ -5,6 +5,9 @@ import OnOff from './onoff';
 const Extensions = {
 	pageReloader: document.getElementById( 'page-reloader' ),
 	init() {
+		if ( ! cldData.extensions ) {
+			return;
+		}
 		apiFetch.use(
 			apiFetch.createNonceMiddleware( cldData.extensions.nonce )
 		);

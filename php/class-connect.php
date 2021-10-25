@@ -109,6 +109,96 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		add_action( 'cloudinary_version_upgrade', array( $this, 'upgrade_connection' ) );
 		add_filter( 'cloudinary_setting_get_value', array( $this, 'maybe_connection_string_constant' ), 10, 2 );
 		add_filter( 'cloudinary_admin_pages', array( $this, 'register_meta' ) );
+		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
+	}
+
+	/**
+	 * Add endpoints to the \Cloudinary\REST_API::$endpoints array.
+	 *
+	 * @param array $endpoints Endpoints from the filter.
+	 *
+	 * @return array
+	 */
+	public function rest_endpoints( $endpoints ) {
+
+		$endpoints['test_connection'] = array(
+			'method'              => \WP_REST_Server::CREATABLE,
+			'callback'            => array( $this, 'rest_test_connection' ),
+			'args'                => array(),
+			'permission_callback' => array( 'Cloudinary\REST_API', 'rest_can_manage_options' ),
+		);
+		$endpoints['save_wizard']     = array(
+			'method'              => \WP_REST_Server::CREATABLE,
+			'callback'            => array( $this, 'rest_save_wizard' ),
+			'args'                => array(),
+			'permission_callback' => array( 'Cloudinary\REST_API', 'rest_can_manage_options' ),
+		);
+
+		return $endpoints;
+	}
+
+	/**
+	 * Test a connection string.
+	 *
+	 * @param \WP_REST_Request $request The request.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function rest_test_connection( \WP_REST_Request $request ) {
+
+		$url    = $request->get_param( 'cloudinary_url' );
+		$result = $this->test_connection( $url );
+
+		return rest_ensure_response( $result );
+	}
+
+	/**
+	 * Save the wizard setup.
+	 *
+	 * @param \WP_REST_Request $request The request.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function rest_save_wizard( \WP_REST_Request $request ) {
+
+		$url      = $request->get_param( 'cldString' );
+		$media    = true === $request->get_param( 'mediaLibrary' ) ? 'on' : 'off';
+		$nonmedia = true === $request->get_param( 'nonMedia' ) ? 'on' : 'off';
+		$advanced = true === $request->get_param( 'advanced' ) ? 'on' : 'off';
+
+		// Cloudinary URL.
+		$connect = $this->settings->get_setting( 'cloudinary_url' );
+		$connect->set_pending( $url );
+
+		// Autosync setup.
+		$autosync = $this->settings->get_setting( 'auto_sync' );
+		$autosync->set_pending( $media );
+		$image_optimisation = $this->settings->get_setting( 'image_optimization' );
+		$image_optimisation->set_pending( $media );
+		$video_optimisation = $this->settings->get_setting( 'video_optimization' );
+		$video_optimisation->set_pending( $media );
+
+		// Non-media setup.
+		$assets = $this->settings->get_setting( 'assets' );
+
+		foreach ( $assets->get_settings() as $asset ) {
+			$paths = $asset->get_setting( 'paths' );
+			foreach ( $paths->get_settings() as $path ) {
+				$path->set_pending( $nonmedia );
+			}
+		}
+		$enable_nonmedia = $this->settings->get_setting( 'cache.enable' );
+		$enable_nonmedia->set_pending( $nonmedia );
+
+		// Advanced.
+		$lazyload = $this->settings->get_setting( 'use_lazy_load' );
+		$lazyload->set_pending( $advanced );
+		$breakpoints = $this->settings->get_setting( 'enable_breakpoints' );
+		$breakpoints->set_pending( $advanced );
+
+		$this->settings->save();
+
+		return rest_ensure_response( $this->settings->get_value() );
 	}
 
 	/**
@@ -221,6 +311,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 				$result['message'],
 				'error'
 			);
+
 			return $current;
 		}
 
@@ -308,11 +399,12 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		$result = array(
 			'type'    => 'connection_success',
 			'message' => null,
+			'url'     => $url,
 		);
 
 		$test  = wp_parse_url( $url );
 		$valid = array_filter(
-			array_keys( $test ),
+			array_keys( (array) $test ),
 			function ( $a ) {
 				return in_array( $a, array( 'scheme', 'host', 'user', 'pass' ), true );
 			}
@@ -728,7 +820,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			$data = array(
 				'cloudinary_url' => $cld_url,
 			);
-			$key = $this->settings->get_storage_key( $this->plugin->get_component( 'sync' )->settings_slug );
+			$key  = $this->settings->get_storage_key( $this->plugin->get_component( 'sync' )->settings_slug );
 			// Set auto sync off.
 			$sync = get_option( $key );
 			if ( empty( $sync ) ) {
