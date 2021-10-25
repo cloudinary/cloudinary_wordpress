@@ -134,6 +134,7 @@ class Upgrade {
 					// Indicating this is broken link.
 					$this->media->delete_post_meta( $attachment_id, Sync::META_KEYS['folder_sync'] );
 					$this->media->delete_post_meta( $attachment_id, Sync::META_KEYS['sync_error'] ); // Remove any errors from upgrade. they are outdated.
+					delete_post_meta( $attachment_id, Sync::META_KEYS['sync_error'] ); // Remove any errors from upgrade. they are outdated.
 					$this->sync->set_signature_item( $attachment_id, 'folder' );
 				}
 			}

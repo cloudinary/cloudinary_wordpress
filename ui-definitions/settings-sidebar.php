@@ -47,9 +47,9 @@ $settings = array(
 			'element'    => 'a',
 			'content'    => __( 'View my account status', 'cloudinary' ),
 			'attributes' => array(
-				'href'   => 'https://cloudinary.com/documentation/wordpress_integration',
+				'href'   => 'https://cloudinary.com/console',
 				'target' => '_blank',
-				'rel'    => 'noreferrer',
+				'rel'    => 'noopener noreferrer',
 				'class'  => array(
 					'cld-link-button',
 				),
@@ -60,7 +60,7 @@ $settings = array(
 		'type'        => 'panel',
 		'title'       => __( 'Optimization level', 'cloudinary' ),
 		'description' => function () {
-			$instance   = get_plugin_instance()->settings->get_setting( 'sidebar.panel_1.opt_level_0' );
+			$instance   = get_plugin_instance()->settings->get_setting( 'sidebar.1.0' );
 			$percentage = $instance->get_component()->calculate_percentage() . '%';
 
 			/* translators: %s is the percentage optimized. */
@@ -70,7 +70,6 @@ $settings = array(
 		'collapsible' => 'closed',
 		array(
 			'type'  => 'opt_level',
-			'title' => __( 'Site optimization', 'cloudinary' ),
 		),
 	),
 );

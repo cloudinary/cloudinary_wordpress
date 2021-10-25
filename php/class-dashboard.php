@@ -104,24 +104,57 @@ class Dashboard {
 									),
 								),
 								array(
-									'type'    => 'tag',
-									'element' => 'h3',
-									'content' => __( 'Percentage of assets optimized by Cloudinary', 'cloudinary' ),
-								),
-								array(
 									'type'       => 'tag',
-									'element'    => 'h5',
-									'content'    => '&nbsp;',
+									'element'    => 'h3',
+									'content'    => sprintf(
+										// translators: The BR tag.
+										__( 'Percentage of assets%soptimized by Cloudinary', 'cloudinary' ),
+										'<br>'
+									),
 									'attributes' => array(
-										'data-text' => 'unoptimized_status_text',
+										'class' => array(
+											'cld-progress-box-title',
+										),
 									),
 								),
 								array(
 									'type'       => 'tag',
-									'element'    => 'h5',
+									'element'    => 'div',
+									'content'    => '&nbsp;',
+									'attributes' => array(
+										'data-text' => 'unoptimized_status_text',
+										'class'     => array(
+											'cld-stat-text',
+										),
+									),
+								),
+								array(
+									'type'       => 'tag',
+									'element'    => 'div',
 									'content'    => '&nbsp;',
 									'attributes' => array(
 										'data-text' => 'optimized_status_text',
+										'class'     => array(
+											'cld-stat-text',
+										),
+									),
+								),
+								array(
+									'type'       => 'tag',
+									'element'    => 'a',
+									'content'    => '&nbsp;',
+									'attributes' => array(
+										'href'      => add_query_arg(
+											array(
+												'cloudinary-filter' => Sync::META_KEYS['sync_error'],
+											),
+											admin_url( 'upload.php' )
+										),
+										'data-text' => 'error_count_hr',
+										'class'     => array(
+											'cld-stat-text',
+											'cld-ui-error',
+										),
 									),
 								),
 							),
@@ -175,86 +208,85 @@ class Dashboard {
 								),
 							),
 						),
+					),
+				),
+				array(
+					'type'    => 'panel',
+					'title'   => __( 'How much you optimize', 'cloudinary' ),
+					'enabled' => array( $this, 'no_assets' ),
+					array(
+						'type'       => 'row',
+						'align'      => 'center',
+						'attributes' => array(
+							'wrap' => array(
+								'class' => array(
+									'cld-optimize-panel',
+								),
+							),
+						),
 						array(
 							'type'  => 'column',
-							'width' => 'auto',
+							'width' => '50%',
 							array(
 								'type'       => 'tag',
 								'element'    => 'div',
 								'attributes' => array(
 									'class' => array(
-										'cld-stat-legend',
+										'cld-dashboard-placeholder',
 									),
 								),
 								array(
 									'type'       => 'tag',
-									'element'    => 'span',
+									'element'    => 'img',
+									'render'     => true,
 									'attributes' => array(
-										'class' => array(
-											'cld-stat-legend-dot',
-											'blue-dot',
-										),
+										'src'    => $this->plugin->dir_url . 'css/images/circular-loader.svg',
+										'width'  => '40px',
+										'height' => '40px',
 									),
-									'content'    => '&nbsp;',
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'h4',
+									'content' => __( 'Not enough data to show', 'cloudinary' ),
 								),
 								array(
 									'type'    => 'tag',
 									'element' => 'span',
-									'content' => __( 'Unoptimized', 'cloudinary' ),
+									'content' => __( 'Come back when more data is available', 'cloudinary' ),
 								),
 							),
+						),
+						array(
+							'type'  => 'column',
+							'width' => '50%',
 							array(
 								'type'       => 'tag',
 								'element'    => 'div',
 								'attributes' => array(
 									'class' => array(
-										'cld-stat-legend',
+										'cld-dashboard-placeholder',
 									),
 								),
 								array(
 									'type'       => 'tag',
-									'element'    => 'span',
+									'element'    => 'img',
+									'render'     => true,
 									'attributes' => array(
-										'class' => array(
-											'cld-stat-legend-dot',
-											'aqua-dot',
-										),
+										'src'    => $this->plugin->dir_url . 'css/images/circular-loader.svg',
+										'width'  => '40px',
+										'height' => '40px',
 									),
-									'content'    => '&nbsp;',
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'h4',
+									'content' => __( 'Not enough data to show', 'cloudinary' ),
 								),
 								array(
 									'type'    => 'tag',
 									'element' => 'span',
-									'content' => __( 'Optimized', 'cloudinary' ),
-								),
-							),
-							array(
-								'type'       => 'tag',
-								'element'    => 'div',
-								'attributes' => array(
-									'class' => array(
-										'cld-stat-legend',
-									),
-								),
-								array(
-									'type'       => 'tag',
-									'element'    => 'span',
-									'attributes' => array(
-										'class' => array(
-											'cld-stat-legend-dot',
-											'red-dot',
-										),
-									),
-									'content'    => '&nbsp;',
-								),
-								array(
-									'type'       => 'tag',
-									'element'    => 'a',
-									'content'    => '&nbsp;',
-									'attributes' => array(
-										'href'      => '#', // @todo: link to filtered media.
-										'data-text' => 'error_count_hr',
-									),
+									'content' => __( 'Come back when more data is available', 'cloudinary' ),
 								),
 							),
 						),

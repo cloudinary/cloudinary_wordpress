@@ -34,7 +34,7 @@ $settings = array(
 					'type'               => 'on_off',
 					'slug'               => 'image_optimization',
 					'title'              => __( 'Image optimization', 'cloudinary' ),
-					'optimisation_title' => __( 'Media library image optimization', 'cloudinary' ),
+					'optimisation_title' => __( 'Image optimization', 'cloudinary' ),
 					'tooltip_text'       => __(
 						'Images will be delivered using Cloudinary’s automatic format and quality algorithms for the best tradeoff between visual quality and file size. Use Advanced Optimization options to manually tune format and quality.',
 						'cloudinary'

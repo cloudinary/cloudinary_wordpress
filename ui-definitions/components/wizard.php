@@ -120,7 +120,7 @@ $advanced->set_value( 'on' );
 			<p>
 				<?php esc_html_e( 'Alternatively, choose lower quality settings to save on bandwidth and speed up delivery times.', 'cloudinary' ); ?>
 			</p>
-			<a href="#" class="button button-primary"><?php esc_html_e( 'Signup', 'cloudinary' ); ?></a>
+			<a href="https://cloudinary.com/signup" class="button button-primary" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Signup', 'cloudinary' ); ?></a>
 			<div class="cld-wizard-intro-welcome">
 				<img src="<?php echo esc_url( $cloudinary->dir_url . 'css/images/wizard-welcome.png' ); ?>" width="650px"/>
 				<div class="cld-wizard-intro-welcome-info">

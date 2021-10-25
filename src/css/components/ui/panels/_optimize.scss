@@ -1,13 +1,9 @@
-&-optimize-panel.cld-row {
-
-}
-
 &-stat {
 	&-percent {
 		display: flex;
 		align-items: center;
 		justify-content: flex-start;
-		margin-top: 34px;
+		line-height: 1;
 
 		h2 {
 			font-size: 48px;
@@ -41,5 +37,10 @@
 				background-color: #e12600;
 			}
 		}
+	}
+
+	&-text {
+		font-weight: bold;
+		margin: .75em 0;
 	}
 }
