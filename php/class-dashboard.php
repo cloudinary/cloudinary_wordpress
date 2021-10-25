@@ -32,6 +32,27 @@ class Dashboard {
 	}
 
 	/**
+	 * Check if theres and data in assets.
+	 *
+	 * @return bool
+	 */
+	public function has_data() {
+		$sync = $this->plugin->get_component( 'sync' );
+		$data = $sync->managers['queue']->get_total_synced_media();
+
+		return ! empty( $data );
+	}
+
+	/**
+	 * Check if there no assets..
+	 *
+	 * @return bool
+	 */
+	public function no_assets() {
+		return ! $this->has_data();
+	}
+
+	/**
 	 * Add the settings.
 	 *
 	 * @param array $pages The pages to add to.
@@ -47,8 +68,9 @@ class Dashboard {
 			'sidebar'             => true,
 			'settings'            => array(
 				array(
-					'type'  => 'panel',
-					'title' => __( 'How much you optimize', 'cloudinary' ),
+					'type'    => 'panel',
+					'title'   => __( 'How much you optimize', 'cloudinary' ),
+					'enabled' => array( $this, 'has_data' ),
 					array(
 						'type'       => 'row',
 						'align'      => 'center',
@@ -233,6 +255,88 @@ class Dashboard {
 										'href'      => '#', // @todo: link to filtered media.
 										'data-text' => 'error_count_hr',
 									),
+								),
+							),
+						),
+					),
+				),
+				array(
+					'type'    => 'panel',
+					'title'   => __( 'How much you optimize', 'cloudinary' ),
+					'enabled' => array( $this, 'no_assets' ),
+					array(
+						'type'       => 'row',
+						'align'      => 'center',
+						'attributes' => array(
+							'wrap' => array(
+								'class' => array(
+									'cld-optimize-panel',
+								),
+							),
+						),
+						array(
+							'type'  => 'column',
+							'width' => '50%',
+							array(
+								'type'       => 'tag',
+								'element'    => 'div',
+								'attributes' => array(
+									'class' => array(
+										'cld-dashboard-placeholder',
+									),
+								),
+								array(
+									'type'       => 'tag',
+									'element'    => 'img',
+									'render'     => true,
+									'attributes' => array(
+										'src'    => $this->plugin->dir_url . 'css/images/circular-loader.svg',
+										'width'  => '40px',
+										'height' => '40px',
+									),
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'h4',
+									'content' => __( 'Not enough data to show', 'cloudinary' ),
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'span',
+									'content' => __( 'Come back when more data is available', 'cloudinary' ),
+								),
+							),
+						),
+						array(
+							'type'  => 'column',
+							'width' => '50%',
+							array(
+								'type'       => 'tag',
+								'element'    => 'div',
+								'attributes' => array(
+									'class' => array(
+										'cld-dashboard-placeholder',
+									),
+								),
+								array(
+									'type'       => 'tag',
+									'element'    => 'img',
+									'render'     => true,
+									'attributes' => array(
+										'src'    => $this->plugin->dir_url . 'css/images/circular-loader.svg',
+										'width'  => '40px',
+										'height' => '40px',
+									),
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'h4',
+									'content' => __( 'Not enough data to show', 'cloudinary' ),
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'span',
+									'content' => __( 'Come back when more data is available', 'cloudinary' ),
 								),
 							),
 						),

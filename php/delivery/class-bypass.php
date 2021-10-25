@@ -136,8 +136,7 @@ class Bypass {
 	 */
 	protected function get_actions() {
 		return array(
-			self::BYPASS_KEYS['wp']  => __( 'Deliver from WordPress', 'cloudinary' ),
-			self::BYPASS_KEYS['cld'] => __( 'Deliver from Cloudinary', 'cloudinary' ),
+			self::BYPASS_KEYS['wp'] => __( 'Deliver from WordPress', 'cloudinary' ),
 		);
 	}
 
@@ -154,23 +153,25 @@ class Bypass {
 		$bypassed = $this->is_bypassed( $post->ID );
 		$action   = $bypassed ? self::BYPASS_KEYS['cld'] : self::BYPASS_KEYS['wp'];
 		$messages = $this->get_actions();
+		if ( ! empty( $messages[ $action ] ) ) {
 
-		// Set url for action handling.
-		$action_url = add_query_arg(
-			array(
-				'action'   => $action,
-				'media[]'  => $post->ID,
-				'_wpnonce' => wp_create_nonce( 'bulk-media' ),
-			),
-			'upload.php'
-		);
+			// Set url for action handling.
+			$action_url = add_query_arg(
+				array(
+					'action'   => $action,
+					'media[]'  => $post->ID,
+					'_wpnonce' => wp_create_nonce( 'bulk-media' ),
+				),
+				'upload.php'
+			);
 
-		// Add link th actions.
-		$actions[ $action ] = sprintf(
-			'<a href="%1$s" aria-label="%2$s">%2$s</a>',
-			$action_url,
-			$messages[ $action ]
-		);
+			// Add link th actions.
+			$actions[ $action ] = sprintf(
+				'<a href="%1$s" aria-label="%2$s">%2$s</a>',
+				$action_url,
+				$messages[ $action ]
+			);
+		}
 
 		return $actions;
 	}

@@ -245,6 +245,7 @@ class Unsync {
 		foreach ( Sync::META_KEYS as $key ) {
 			delete_post_meta( $attachment_id, $key );
 		}
+		$this->sync->set_signature_item( $attachment_id, 'file' );
 		/**
 		 * Action unsyncing an attachment.
 		 *
