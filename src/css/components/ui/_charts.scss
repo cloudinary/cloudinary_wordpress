@@ -16,7 +16,7 @@
 		display: block;
 		width: 160px;
 		height: 160px;
-		margin: 2em;
+		margin: 2em .5em 2em 0;
 		position: relative;
 
 		.progressbar-text {
@@ -49,7 +49,8 @@
 
 		&-title {
 			font-size: 15px;
-			margin: 12px 0 6px 0;
+			margin: 12px 0 16px 0;
+			line-height: 1.4;
 		}
 
 		&-line {
@@ -81,7 +82,7 @@
 		&-titles {
 			display: flex;
 			justify-content: space-between;
-			font-size: $size-line-chart-value;
+			font-size: $size-panel-content;
 			margin-top: 5px;
 
 			&-left {
