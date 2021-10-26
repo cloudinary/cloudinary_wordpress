@@ -158,7 +158,7 @@ $advanced->set_value( 'on' );
 						<span class="dashicons dashicons-yes-alt"></span> <?php esc_html_e( 'Connected!', 'cloudinary' ); ?>
 					</span>
 					<span id="connection-error" class="cld-wizard-connect-status error">
-						<span class="dashicons dashicons-warning"></span> <?php esc_html_e( 'Incorrect string', 'cloudinary' ); ?>
+						<span class="dashicons dashicons-warning"></span> <?php esc_html_e( 'Incorrect connection string', 'cloudinary' ); ?>
 					</span>
 					<span id="connection-working" class="cld-wizard-connect-status working">
 						<span class="spinner"></span>
