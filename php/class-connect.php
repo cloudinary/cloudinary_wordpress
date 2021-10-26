@@ -56,13 +56,6 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	private $credentials = array();
 
 	/**
-	 * Holds the handle for the media page.
-	 *
-	 * @var string
-	 */
-	public $handle;
-
-	/**
 	 * Holder of general notices.
 	 *
 	 * @var array
@@ -223,43 +216,6 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		}
 
 		return $pages;
-	}
-
-	/**
-	 * Add the Cloudinary media library scripts.
-	 */
-	public function media_library_script() {
-		$screen = get_current_screen();
-		if ( is_object( $screen ) && $screen->id === $this->handle ) {
-
-			// External assets.
-			wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, array(), $this->plugin->version, true );
-			$params = array(
-				'nonce'     => wp_create_nonce( 'wp_rest' ),
-				'mloptions' => array(
-					'cloud_name'    => $this->credentials['cloud_name'],
-					'api_key'       => $this->credentials['api_key'],
-					'remove_header' => true,
-				),
-			);
-
-			// sign maybe.
-			if ( ! empty( $this->credentials['user_email'] ) ) {
-				$timestamp                        = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
-				$params['mloptions']['username']  = $this->credentials['user_email'];
-				$params['mloptions']['timestamp'] = (string) $timestamp;
-				$query                            = array(
-					'cloud_name' => $this->credentials['cloud_name'],
-					'timestamp'  => $timestamp,
-					'username'   => $this->credentials['user_email'] . $this->credentials['api_secret'],
-				);
-				$params['mloptions']['signature'] = hash( 'sha256', build_query( $query ) );
-			}
-			$params['mloptions']['insert_transformation'] = true;
-			$params['mloptions']['inline_container']      = '#cloudinary-embed';
-
-			wp_add_inline_script( 'cloudinary-media-library', 'var CLD_ML = ' . wp_json_encode( $params ), 'before' );
-		}
 	}
 
 	/**

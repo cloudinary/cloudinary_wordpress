@@ -106,11 +106,7 @@ class Dashboard {
 								array(
 									'type'       => 'tag',
 									'element'    => 'h3',
-									'content'    => sprintf(
-										// translators: The BR tag.
-										__( 'Percentage of assets%soptimized by Cloudinary', 'cloudinary' ),
-										'<br>'
-									),
+									'content'    => __( 'Percentage of assets optimized by Cloudinary', 'cloudinary' ),
 									'attributes' => array(
 										'class' => array(
 											'cld-progress-box-title',

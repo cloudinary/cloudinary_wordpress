@@ -1,5 +1,4 @@
 import apiFetch from '@wordpress/api-fetch';
-import OnOff from './onoff';
 
 const MediaLibrary = {
 	wpWrap: document.getElementById( 'wpwrap' ),

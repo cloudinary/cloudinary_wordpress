@@ -319,7 +319,7 @@ $settings = array(
 						),
 						array(
 							'type'    => 'span',
-							'content' => __( 'If you’re encountering an issue or struggling to get the plugin work, open a ticket to contact our support team. To help us debug your queries, we recommend generating a system report.', 'cloudinary' ),
+							'content' => __( 'If you’re encountering an issue or struggling to get the plugin to work, open a ticket to contact our support team. To help us debug your queries, we recommend generating a system report.', 'cloudinary' ),
 						),
 					),
 				),
