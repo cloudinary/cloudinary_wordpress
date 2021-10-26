@@ -158,7 +158,7 @@ $settings = array(
 				array(
 					'type'           => 'text',
 					'slug'           => 'video_freeform',
-					'title'          => __( 'Custom transformation', 'cloudinary' ),
+					'title'          => __( 'Additional video transformations', 'cloudinary' ),
 					'tooltip_text'   => sprintf(
 						// translators: The link to transformation reference.
 						__(
@@ -184,7 +184,7 @@ $settings = array(
 				array(
 					'type'  => 'info_box',
 					'icon'  => $this->dir_url . 'css/images/video.svg',
-					'title' => __( 'What are transformations', 'cloudinary' ),
+					'title' => __( 'What are transformations?', 'cloudinary' ),
 					'text'  => __(
 						'A set of parameters included in a Cloudinary URL to programmatically transform the visual appearance of the assets on your website.',
 						'cloudinary'
