@@ -122,18 +122,7 @@ $advanced->set_value( 'on' );
 			</p>
 			<a href="https://cloudinary.com/signup" class="button button-primary" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Signup', 'cloudinary' ); ?></a>
 			<div class="cld-wizard-intro-welcome">
-				<img src="<?php echo esc_url( $cloudinary->dir_url . 'css/images/wizard-welcome.png' ); ?>" width="650px"/>
-				<div class="cld-wizard-intro-welcome-info">
-					<img src="<?php echo esc_url( $cloudinary->dir_url . 'css/images/document.svg' ); ?>" width="650px"/>
-					<div class="cld-wizard-intro-welcome-info-content">
-						<div class="cld-ui-title">
-							<h2><?php esc_html_e( 'We will be able to improve your performance by 80%', 'cloudinary' ); ?></h2>
-						</div>
-						<div class="cld-ui-content">
-							<?php esc_html_e( 'All you need to do is follow few steps and your website will be faster with high quality images', 'cloudinary' ); ?>
-						</div>
-					</div>
-				</div>
+				<img src="<?php echo esc_url( $cloudinary->dir_url . 'css/images/wizard-welcome.jpg' ); ?>" width="650px"/>
 			</div>
 		</div>
 		<div class="cld-wizard-content cld-wizard-connect hidden" id="tab-2">
