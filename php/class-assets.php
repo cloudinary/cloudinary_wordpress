@@ -231,37 +231,19 @@ class Assets extends Settings_Component {
 			return;
 		}
 
-		$parent = array(
-			'id'    => 'cloudinary-cache',
-			'title' => __( 'Cloudinary Cache', 'cloudinary' ),
-			'meta'  => array(
-				'title' => __( 'Cloudinary Cache', 'cloudinary' ),
-			),
-		);
-		$admin_bar->add_menu( $parent );
-
-		$nonce = wp_create_nonce( 'cloudinary-cache-clear' );
-		$clear = array(
-			'id'     => 'cloudinary-clear-cache',
-			'parent' => 'cloudinary-cache',
-			'title'  => '{cld-cache-counter}',
-			'href'   => '?cloudinary-cache-clear=' . $nonce,
-			'meta'   => array(
-				'title' => __( 'Purge', 'cloudinary' ),
-				'class' => 'cloudinary-{cld-cache-status}',
-			),
-		);
-		$admin_bar->add_menu( $clear );
+		if ( 'off' === $this->plugin->settings->image_settings->_overlay ) {
+			$title = __( 'Enable Cloudinary status', 'cloudinary' );
+		} else {
+			$title = __( 'Disable Cloudinary status', 'cloudinary' );
+		}
 
 		$nonce   = wp_create_nonce( 'cloudinary-cache-overlay' );
 		$overlay = array(
-			'id'     => 'cloudinary-overlay',
-			'parent' => 'cloudinary-cache',
-			'title'  => __( 'Show overlay', 'cloudinary' ),
+			'id'    => 'cloudinary-overlay',
+			'title' => $title,
 			'href'   => '?cloudinary-cache-overlay=' . $nonce,
-			'meta'   => array(
-				'title' => __( 'Show overlay', 'cloudinary' ),
-				'class' => 'cloudinary-{cld-overlay-status}',
+			'meta'  => array(
+				'title' => $title,
 			),
 		);
 		$admin_bar->add_menu( $overlay );
@@ -358,25 +340,8 @@ class Assets extends Settings_Component {
 	 * @hook cloudinary_string_replace
 	 */
 	public function add_url_replacements() {
-		$clear   = filter_input( INPUT_GET, 'cloudinary-cache-clear', FILTER_SANITIZE_STRING );
 		$overlay = filter_input( INPUT_GET, 'cloudinary-cache-overlay', FILTER_SANITIZE_STRING );
 		$setting = $this->plugin->settings->image_settings->overlay;
-
-		if ( $clear && wp_verify_nonce( $clear, 'cloudinary-cache-clear' ) ) {
-			$referrer = filter_input( INPUT_SERVER, 'HTTP_REFERER', FILTER_SANITIZE_URL );
-			if ( ! empty( $this->delivery->known ) ) {
-				$delete = array();
-				foreach ( $this->delivery->known as $set ) {
-					if ( is_int( $set ) || empty( $set['public_id'] ) || 'asset' !== $set['sync_type'] || in_array( $set['post_id'], $delete, true ) ) {
-						continue;
-					}
-					Delivery::update_size_relations_public_id( $set['post_id'], null );
-					$delete[] = $set['post_id'];
-				}
-			}
-			wp_safe_redirect( $referrer );
-			exit;
-		}
 
 		if ( $overlay && wp_verify_nonce( $overlay, 'cloudinary-cache-overlay' ) ) {
 			$referrer = filter_input( INPUT_SERVER, 'HTTP_REFERER', FILTER_SANITIZE_URL );
@@ -388,7 +353,6 @@ class Assets extends Settings_Component {
 			wp_safe_redirect( $referrer );
 			exit;
 		}
-		$total = 0;
 		if ( ! empty( $this->delivery->known ) ) {
 
 			foreach ( $this->delivery->known as $url => $set ) {
@@ -405,17 +369,8 @@ class Assets extends Settings_Component {
 					String_Replace::replace( 'http:' . $url, $cloudinary_url );
 					String_Replace::replace( 'https:' . $url, $cloudinary_url );
 				}
-				$total ++;
 			}
-			String_Replace::replace( '{cld-cache-status}', 'on' );
-		} else {
-			String_Replace::replace( '{cld-cache-status}', 'off' );
 		}
-		// translators: Placeholders are the number of items.
-		$message = sprintf( _n( '%s cached item', '%s cached items', $total, 'cloudinary' ), number_format_i18n( $total ) );
-		String_Replace::replace( '{cld-cache-counter}', $message );
-		String_Replace::replace( '{cld-overlay-status}', ! empty( $setting->get_value() ) ? $setting->get_value() : 'off' );
-
 	}
 
 	/**
