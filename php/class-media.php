@@ -2733,7 +2733,7 @@ class Media extends Settings_Component implements Setup {
 							'cloudinary'
 						),
 						'url'       => 'https://cloudinary.com/documentation/transformation_reference',
-						'link_text' => __( 'See Examples', 'cloudinary' ),
+						'link_text' => __( 'See examples', 'cloudinary' ),
 					),
 					$image_settings,
 					$video_settings,

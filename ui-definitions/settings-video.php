@@ -169,7 +169,7 @@ $settings = array(
 						'</a>'
 					),
 					'link'           => array(
-						'text' => __( 'See Examples', 'cloudinary' ),
+						'text' => __( 'See examples', 'cloudinary' ),
 						'href' => 'https://cloudinary.com/documentation/transformation_reference',
 					),
 					'attributes'     => array(

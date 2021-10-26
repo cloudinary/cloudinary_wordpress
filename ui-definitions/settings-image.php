@@ -120,7 +120,7 @@ $settings = array(
 						'</a>'
 					),
 					'link'           => array(
-						'text' => __( 'See Examples', 'cloudinary' ),
+						'text' => __( 'See examples', 'cloudinary' ),
 						'href' => 'https://cloudinary.com/documentation/image_transformations',
 					),
 					'attributes'     => array(
