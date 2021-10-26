@@ -352,11 +352,10 @@ class Gallery extends Settings_Component {
 		if ( WooCommerceGallery::woocommerce_active() ) {
 			$panel[] = array(
 				'type'  => 'group',
-				'title' => 'WooCommerce',
 				array(
 					'type'         => 'on_off',
 					'slug'         => 'gallery_woocommerce_enabled',
-					'title'        => __( 'Replace Gallery', 'cloudinary' ),
+					'title'        => __( 'Replace WooCommerce Gallery', 'cloudinary' ),
 					'tooltip_text' => __( 'Replace the default WooCommerce gallery with the Cloudinary Gallery on product pages.', 'cloudinary' ),
 				),
 			);
