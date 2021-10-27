@@ -86,6 +86,6 @@ class Media_Library extends Extension {
 		);
 
 		$this->plugin->add_script_data( 'dam', $params );
-		$media->editor_assets( true );
+		$media->editor_assets();
 	}
 }

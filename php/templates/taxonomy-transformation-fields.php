@@ -21,7 +21,7 @@ $cloudinary = get_plugin_instance();
 		<h2>
 			<?php
 			// translators: The taxonomy label.
-			echo esc_html( sprintf( __( 'Cloudinary %s transformations', 'cloudinary' ), $tax_labels->name ) );
+			echo esc_html( sprintf( __( 'Cloudinary %s transformations', 'cloudinary' ), strtolower( $tax_labels->singular_name ) ) );
 			?>
 		</h2>
 		<button type="button"><i class="dashicons dashicons-arrow-down-alt2"></i></button>
