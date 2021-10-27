@@ -1,0 +1,104 @@
+// Sidebar.
+&-optimisation {
+	&:first-child {
+		margin-top: 7px;
+	}
+
+	font-size: $size-panel-description;
+	line-height: 2;
+	display: flex;
+	justify-content: space-between;
+
+	&-item {
+		color: $color-cld-blue;
+		font-weight: 600;
+
+		&:hover {
+			color: $color-cld-dark-blue;
+		}
+
+		&-active,
+		&-not-active {
+			font-size: $size-panel-small;
+			font-weight: bold;
+
+			.dashicons {
+				line-height: 2;
+				font-size: $size-panel-content;
+			}
+		}
+
+		&-active {
+			color: $color-success;
+		}
+
+		&-not-active {
+			color: $color-cld-grey-blue;
+		}
+	}
+}
+
+&-ui-sidebar {
+	width: 100%;
+
+	@media only screen and (min-width: $size-small) {
+		width: auto;
+		min-width: 400px;
+		max-width: 500px;
+	}
+
+	.cld-panel {
+		padding: $size-padding-sidebar;
+	}
+
+	.cld-ui-header {
+		margin-top: -1px;
+		padding: $size-padding-sidebar-title;
+	}
+
+	.cld-ui-header:first-child {
+		margin-top: 13px;
+	}
+
+	.cld-ui-title {
+		h2 {
+			font-size: $size-sidebar-title;
+		}
+	}
+
+	.cld-info-box {
+		border: 0;
+		margin: 0;
+		padding: 0;
+		align-items: flex-start;
+
+		.cld-ui-body {
+			padding-top: 0;
+		}
+
+		.button {
+			align-self: flex-start;
+			line-height: inherit;
+			opacity: 0.5;
+			cursor: default;
+		}
+	}
+
+	.cld-info-icon {
+		background-color: transparent;
+
+		img {
+			width: 40px;
+		}
+	}
+
+	.extension-item {
+		border-radius: 0;
+		margin-bottom: 18px;
+		border-bottom: 1px solid $color-light-grey;
+		&:last-of-type{
+			border-bottom: none;
+			margin-bottom: 0;
+		}
+	}
+}

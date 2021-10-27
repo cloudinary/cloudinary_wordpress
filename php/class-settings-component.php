@@ -7,18 +7,18 @@
 
 namespace Cloudinary;
 
-use \Cloudinary\Component\Settings;
-use \Cloudinary\Settings\Setting;
+use Cloudinary\Component\Settings;
+use Cloudinary\Settings as CoreSetting;
 
 /**
- * Plugin Exception class.
+ * Plugin Settings Component class.
  */
 abstract class Settings_Component implements Settings {
 
 	/**
 	 * Holds the settings object for this Class.
 	 *
-	 * @var Setting
+	 * @var CoreSetting
 	 */
 	protected $settings;
 
@@ -48,19 +48,18 @@ abstract class Settings_Component implements Settings {
 	/**
 	 * Init the settings object.
 	 *
-	 * @param Setting $setting The setting object to init onto.
+	 * @param CoreSetting $settings The setting object to init onto.
 	 */
-	public function init_settings( $setting ) {
-
-		// Add a update action for upgrading where needed.
-		add_action( "{$setting->get_slug()}_settings_upgrade", array( $this, 'upgrade_settings' ), 10, 2 );
+	public function init_settings( $settings ) {
 
 		if ( ! $this->settings_slug ) {
 			$class               = strtolower( get_class( $this ) );
 			$this->settings_slug = substr( strrchr( $class, '\\' ), 1 );
 		}
+		// Add a update action for upgrading where needed.
+		add_action( "{$settings->get_slug()}_settings_upgrade", array( $this, 'upgrade_settings' ), 10, 2 );
 
-		$this->settings = $setting->get_setting( $this->settings_slug );
+		$this->settings = $settings;
 		// Add enabling filter.
 		add_filter( "cloudinary_settings_enabled_{$this->settings_slug}", array( $this, 'is_enabled' ) );
 	}
@@ -68,20 +67,10 @@ abstract class Settings_Component implements Settings {
 	/**
 	 * Get the setting object.
 	 *
-	 * @return Setting
+	 * @return CoreSetting
 	 */
 	public function get_settings() {
 		return $this->settings;
-	}
-
-	/**
-	 * Setup Settings.
-	 */
-	public function register_settings() {
-		$params = $this->settings();
-		if ( ! empty( $params ) ) {
-			$this->settings->setup_setting( $params );
-		}
 	}
 
 	/**
@@ -103,11 +92,4 @@ abstract class Settings_Component implements Settings {
 	public function is_enabled( $enabled ) {
 		return $enabled;
 	}
-
-	/**
-	 * Returns the setting definitions.
-	 *
-	 * @return array
-	 */
-	abstract public function settings();
 }

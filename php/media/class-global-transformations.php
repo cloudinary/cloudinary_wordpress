@@ -7,7 +7,10 @@
 
 namespace Cloudinary\Media;
 
+use Cloudinary\Connect\Api;
 use Cloudinary\Settings\Setting;
+use Cloudinary\Sync;
+use Cloudinary\REST_API;
 use WP_Post;
 
 /**
@@ -73,17 +76,20 @@ class Global_Transformations {
 	 */
 	public function __construct( \Cloudinary\Media $media ) {
 		$this->media            = $media;
-		$this->media_settings   = $this->media->get_settings()->get_setting( $media::MEDIA_SETTINGS_SLUG );
+		$this->media_settings   = $this->media->get_settings();
 		$this->globals['image'] = $this->media_settings->get_setting( 'image_settings' );
 		$this->globals['video'] = $this->media_settings->get_setting( 'video_settings' );
 		// Set value to null, to rebuild data to get defaults.
-		$this->media_settings->set_value( null );
-		$field_slugs = array_keys( $this->media_settings->get_value() );
+		$field_slugs = array_keys( $this->globals['image']->get_value() );
+		$field_slugs = array_merge( $field_slugs, array_keys( $this->globals['image']->get_value() ) );
 		foreach ( $field_slugs as $slug ) {
 			$setting = $this->media_settings->get_setting( $slug );
 			if ( $setting->has_param( 'taxonomy_field' ) ) {
-				$context  = $setting->get_param( 'taxonomy_field:context', 'global' );
-				$priority = intval( $setting->get_param( 'taxonomy_field:priority', 10 ) ) * 1000;
+				$context = $setting->get_param( 'taxonomy_field.context', 'global' );
+				if ( isset( $this->taxonomy_fields[ $context ] ) && in_array( $setting, $this->taxonomy_fields[ $context ], true ) ) {
+					continue;
+				}
+				$priority = intval( $setting->get_param( 'taxonomy_field.priority', 10 ) ) * 1000;
 				while ( isset( $this->taxonomy_fields[ $context ][ $priority ] ) ) {
 					$priority ++;
 				}
@@ -135,7 +141,7 @@ class Global_Transformations {
 
 			foreach ( $set as $setting ) {
 
-				$meta_key = self::META_ORDER_KEY . '_' . $setting->get_slug();
+				$meta_key = self::META_ORDER_KEY . '_' . $setting->get_param( 'slug' );
 				$value    = $setting->get_submitted_value();
 
 				// Check if it's option based.
@@ -167,7 +173,7 @@ class Global_Transformations {
 	private function get_term_transformations( $term_id, $type ) {
 		$meta_data = array();
 		foreach ( $this->taxonomy_fields[ $type ] as $setting ) {
-			$slug               = $setting->get_slug();
+			$slug               = $setting->get_param( 'slug' );
 			$meta_key           = self::META_ORDER_KEY . '_' . $slug;
 			$value              = get_term_meta( $term_id, $meta_key, true );
 			$meta_data[ $slug ] = $value;
@@ -309,7 +315,7 @@ class Global_Transformations {
 	 */
 	public function taxonomy_ordering( $type, $post ) {
 		if ( $this->has_public_taxonomies( $post ) ) {
-			add_meta_box( 'cld-taxonomy-order', __( 'Taxonomy Order', 'cloudinary' ), array( $this, 'render_ordering_box' ), null, 'side', 'core' );
+			add_meta_box( 'cld-taxonomy-order', __( 'Categories/Tags transformations', 'cloudinary' ), array( $this, 'render_ordering_box' ), null, 'side', 'core' );
 		}
 	}
 
@@ -437,11 +443,13 @@ class Global_Transformations {
 	private function init_taxonomy_manager( $post ) {
 		wp_enqueue_script( 'wp-api' );
 
+		$terms = $this->get_terms( $post->ID );
+
 		$out   = array();
 		$out[] = '<div class="cld-tax-order">';
+		$out[] = '<p style="font-size: 12px; font-style: normal; color: rgb( 117, 117, 117 );">' . esc_html__( 'If you placed custom transformations on categories/tags you may order them below. ', 'cloudinary' ) . '</li>';
 		$out[] = '<ul class="cld-tax-order-list" id="cld-tax-items">';
 		$out[] = '<li class="cld-tax-order-list-item no-items">' . esc_html__( 'No terms added', 'cloudinary' ) . '</li>';
-		$terms = $this->get_terms( $post->ID );
 		if ( ! empty( $terms ) ) {
 			foreach ( (array) $terms as $item ) {
 				$out[] = $this->make_term_sort_item( $item['value'], $item['term']->name );
@@ -452,7 +460,7 @@ class Global_Transformations {
 		// Get apply Type.
 		if ( ! empty( $terms ) ) {
 			$type  = get_post_meta( $post->ID, self::META_APPLY_KEY . '_terms', true );
-			$out[] = '<label class="cld-tax-order-list-type"><input ' . checked( 'overwrite', $type, false ) . ' type="checkbox" value="overwrite" name="cld_apply_type" />' . __( 'Overwrite taxonomy', 'cloudinary' ) . '</label>';
+			$out[] = '<label class="cld-tax-order-list-type"><input ' . checked( 'overwrite', $type, false ) . ' type="checkbox" value="overwrite" name="cld_apply_type" />' . esc_html__( 'Disable global transformations', 'cloudinary' ) . '</label>';
 		}
 
 		$out[] = '</div>';
@@ -594,6 +602,58 @@ class Global_Transformations {
 	}
 
 	/**
+	 * Insert the cloudinary status column.
+	 *
+	 * @param array $cols Array of columns.
+	 *
+	 * @return array
+	 */
+	public function transformations_column( $cols ) {
+
+		$custom = array(
+			'cld_transformations' => __( 'Transformations', 'cloudinary' ),
+		);
+		$offset = array_search( 'parent', array_keys( $cols ), true );
+		if ( empty( $offset ) ) {
+			$offset = 4; // Default location some where after author, in case another plugin removes parent column.
+		}
+		$cols = array_slice( $cols, 0, $offset ) + $custom + array_slice( $cols, $offset );
+
+		$export = array(
+			'save_url' => rest_url( REST_API::BASE . '/save_asset' ),
+			'nonce'    => wp_create_nonce( 'wp_rest' ),
+		);
+		$this->media->plugin->add_script_data( 'editor', $export, 'cloudinary-media-transformations' );
+		// Add script.
+		wp_enqueue_script( 'cloudinary-media-transformations', $this->media->plugin->dir_url . 'js/media-transformations.js', array(), $this->media->plugin->version, true );
+
+		return $cols;
+	}
+
+	/**
+	 * Display the Cloudinary Column.
+	 *
+	 * @param string $column_name   The column name.
+	 * @param int    $attachment_id The attachment id.
+	 */
+	public function transformations_column_value( $column_name, $attachment_id ) {
+		if ( 'cld_transformations' === $column_name && $this->media->sync->is_synced( $attachment_id ) ) {
+
+			$item = $this->media->plugin->get_component( 'assets' )->get_asset( $attachment_id, 'dataset' );
+			if ( ! empty( $item['data']['public_id'] ) ) {
+				$text            = __( 'Add transformations', 'cloudinary' );
+				$transformations = $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['transformation'], true );
+				if ( ! empty( $transformations ) ) {
+					$text = Api::generate_transformation_string( $transformations, $this->media->get_resource_type( $attachment_id ) );
+				}
+				?>
+				<a href="#" data-transformation-item="<?php echo esc_attr( wp_json_encode( $item ) ); ?>"><?php echo esc_html( $text ); ?></a>
+				<?php
+			}
+		}
+	}
+
+	/**
 	 * Setup hooks for the filters.
 	 */
 	public function setup_hooks() {
@@ -614,6 +674,10 @@ class Global_Transformations {
 		add_action( 'save_post', array( $this, 'save_taxonomy_ordering' ), 10, 1 );
 		add_action( 'save_post', array( $this, 'save_overwrite_transformations_featured_image' ), 10, 3 );
 		add_filter( 'admin_post_thumbnail_html', array( $this, 'classic_overwrite_transformations_featured_image' ), 10, 3 );
+
+		// Filter and action the custom column.
+		add_filter( 'manage_media_columns', array( $this, 'transformations_column' ), 11 );
+		add_action( 'manage_media_custom_column', array( $this, 'transformations_column_value' ), 10, 2 );
 
 		// Register Meta.
 		$this->register_featured_overwrite();

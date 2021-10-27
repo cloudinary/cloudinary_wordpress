@@ -19,7 +19,7 @@ class Select extends Text {
 	 *
 	 * @var string
 	 */
-	protected $blueprint = 'wrap|icon/|div|label|title|tooltip/|/title|prefix/|/label|/div|input|option/|/input|suffix/|description/|/wrap';
+	protected $blueprint = 'wrap|icon/|div|label|title|/title|prefix/|/label|/div|input|option/|/input|suffix/|description/|tooltip/|/wrap';
 
 	/**
 	 * Filter the select input parts structure.

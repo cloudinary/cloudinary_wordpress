@@ -89,7 +89,7 @@ class Upload_Sync {
 			'bulk_actions-upload',
 			function ( $actions ) {
 				$cloudinary_actions = array(
-					'cloudinary-push' => __( 'Push to Cloudinary', 'cloudinary' ),
+					'cloudinary-push' => __( 'Sync with Cloudinary', 'cloudinary' ),
 				);
 
 				return array_merge( $cloudinary_actions, $actions );
@@ -106,7 +106,7 @@ class Upload_Sync {
 	 * @return array
 	 */
 	public function add_inline_action( $actions, $post ) {
-		if ( $this->media->is_media( $post->ID ) && current_user_can( 'delete_post', $post->ID ) ) {
+		if ( $this->sync->is_syncable( $post->ID ) && $this->media->is_uploadable_media( $post->ID ) && $this->media->is_media( $post->ID ) && current_user_can( 'delete_post', $post->ID ) ) {
 			$action_url = add_query_arg(
 				array(
 					'action'   => 'cloudinary-push',
@@ -125,8 +125,8 @@ class Upload_Sync {
 				$actions['cloudinary-push'] = sprintf(
 					'<a href="%s" aria-label="%s">%s</a>',
 					$action_url,
-					esc_attr__( 'Push to Cloudinary', 'cloudinary' ),
-					esc_html__( 'Push to Cloudinary', 'cloudinary' )
+					esc_attr__( 'Sync and deliver from Cloudinary', 'cloudinary' ),
+					esc_html__( 'Sync and deliver from Cloudinary', 'cloudinary' )
 				);
 			} else {
 				if ( file_exists( get_attached_file( $post->ID ) ) ) {
@@ -173,6 +173,7 @@ class Upload_Sync {
 					if ( ! $this->media->is_cloudinary_url( get_post_meta( $post_id, '_wp_attached_file', true ) ) ) {
 						$this->sync->delete_cloudinary_meta( $post_id );
 						$this->sync->set_signature_item( $post_id, 'file', '' );
+						$this->sync->set_signature_item( $post_id, 'cld_asset' );
 						$this->media->delete_post_meta( $post_id, Sync::META_KEYS['public_id'] );
 						$this->sync->add_to_sync( $post_id );
 					}
@@ -287,6 +288,9 @@ class Upload_Sync {
 
 			$this->update_breakpoints( $attachment_id, $result );
 			$this->update_content( $attachment_id );
+			delete_post_meta( $attachment_id, Sync::META_KEYS['sync_error'] );
+		} else {
+			update_post_meta( $attachment_id, Sync::META_KEYS['sync_error'], $result->get_error_message() );
 		}
 
 		return $result;

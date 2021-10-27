@@ -5,7 +5,7 @@ const OnOff = {
 	bind( inputs ) {
 		this.controlled = inputs;
 		this.controlled.forEach( ( input ) => {
-			this._master( input );
+			this._main( input );
 		} );
 		this._init();
 	},
@@ -14,28 +14,26 @@ const OnOff = {
 			this._checkUp( input );
 		} );
 	},
-	_master( input ) {
-		const masters = JSON.parse( input.dataset.master );
+	_main( input ) {
+		const mains = JSON.parse( input.dataset.main );
 		if ( input.dataset.size ) {
 			input.filesize = parseInt( input.dataset.size, 10 );
 		}
-		input.masters = masters.map( ( master ) => {
-			const masterElement = document.getElementById( master );
-			const sizespan = document.getElementById(
-				master + '_size_wrapper'
-			);
+		input.mains = mains.map( ( main ) => {
+			const mainElement = document.getElementById( main );
+			const sizespan = document.getElementById( main + '_size_wrapper' );
 			if ( sizespan ) {
-				masterElement.filesize = 0;
-				masterElement.sizespan = sizespan;
+				mainElement.filesize = 0;
+				mainElement.sizespan = sizespan;
 			}
-			this._addChild( masterElement, input );
-			return masterElement;
+			this._addChild( mainElement, input );
+			return mainElement;
 		} );
 
 		this._bindEvents( input );
 
-		input.masters.forEach( ( master ) => {
-			this._bindEvents( master );
+		input.mains.forEach( ( main ) => {
+			this._bindEvents( main );
 		} );
 	},
 	_bindEvents( input ) {
@@ -46,7 +44,7 @@ const OnOff = {
 					this._checkDown( target );
 					this._evaluateSize( target );
 				}
-				if ( target.masters ) {
+				if ( target.mains ) {
 					this._checkUp( input );
 				}
 			} );
@@ -88,13 +86,13 @@ const OnOff = {
 		}
 	},
 	_checkUp( input, exclude ) {
-		if ( input.masters ) {
-			[ ...input.masters ].forEach( ( master ) => {
-				if ( master !== exclude ) {
-					this._evaluateCheckStatus( master );
+		if ( input.mains ) {
+			[ ...input.mains ].forEach( ( main ) => {
+				if ( main !== exclude ) {
+					this._evaluateCheckStatus( main );
 				}
-				this._checkUp( master );
-				this._evaluateSize( master );
+				this._checkUp( main );
+				this._evaluateSize( main );
 			} );
 		}
 	},

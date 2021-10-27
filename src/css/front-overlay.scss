@@ -1,0 +1,47 @@
+// Vars
+@import "variables";
+
+.overlay-tag {
+	font-size: 0.8rem;
+	position: absolute;
+	padding: 10px;
+	border-radius: 0 0 4px 0;
+	color: #fff;
+	text-align: right;
+	z-index: 9999;
+
+	&.wp-tag {
+		background-color: $color-red;
+	}
+
+	&.cld-tag {
+		background-color: $color-cld-blue;
+	}
+}
+
+[data-tippy-root]{
+	.tippy-box{
+		max-width: initial !important;
+	}
+	.tippy-content{
+		background-color: #333;
+		min-width: 250px;
+		width: auto;
+		div{
+			display: flex;
+			justify-content: space-between;
+			border-bottom: 1px solid #555;
+			padding: 4px 0;
+			margin-bottom: 4px;
+		}
+		.title{
+			margin-right: 50px;
+		}
+		.edit-link{
+			color: $color-white;
+			width: 100%;
+			text-align: right;
+		}
+	}
+}
+

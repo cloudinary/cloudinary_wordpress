@@ -32,7 +32,7 @@ class Tag extends Component {
 	 */
 	protected function tag_wrap( $struct ) {
 
-		$struct['element']    = $this->setting->get_param( 'element', 'div' );
+		$struct['element']    = $this->setting->get_param( 'element', null );
 		$struct['attributes'] = $this->setting->get_param( 'attributes', array() );
 		$struct['render']     = true;
 		if ( $this->setting->has_param( 'content' ) ) {

@@ -9,6 +9,7 @@ namespace Cloudinary\Sync;
 
 use Cloudinary\Sync;
 use Cloudinary\Settings\Setting;
+use Cloudinary\Utils;
 
 /**
  * Class Sync_Queue.
@@ -256,6 +257,7 @@ class Sync_Queue {
 	 * @return int|false
 	 */
 	public function get_post( $thread ) {
+
 		$return = false;
 		if ( ( $this->is_running( $this->get_thread_type( $thread ) ) ) ) {
 			$thread_queue = $this->get_thread_queue( $thread );
@@ -292,6 +294,116 @@ class Sync_Queue {
 	}
 
 	/**
+	 * Get the data from _cloudinary_relationships. We need to get a count of all assets, which have public_id's, group by type etc.
+	 *
+	 * @return array
+	 */
+	protected function query_unsynced_data() {
+		global $wpdb;
+
+		$cached = get_transient( Sync::META_KEYS['dashboard_cache'] );
+		if ( empty( $cached ) ) {
+			$wpdb->cld_table              = Utils::get_relationship_table();
+			$return['total_assets']       = (int) $wpdb->get_var( "SELECT COUNT( id ) as total FROM {$wpdb->cld_table} WHERE primary_url = sized_url;" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$return['unoptimized_assets'] = (int) $wpdb->get_var( "SELECT COUNT( id ) as total FROM {$wpdb->cld_table} WHERE public_id IS NULL AND primary_url = sized_url;" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+
+			$asset_sizes           = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				$wpdb->prepare(
+					"SELECT 
+			SUM(meta_value) as total, meta_key as type
+		FROM
+		{$wpdb->cld_table} AS cld
+		RIGHT JOIN {$wpdb->postmeta} AS wp ON (cld.post_id = wp.post_id ) 
+		WHERE 
+			meta_key IN (%s,%s )
+		AND
+			primary_url = sized_url
+		GROUP BY meta_key",
+					Sync::META_KEYS['local_size'],
+					Sync::META_KEYS['remote_size']
+				),
+				ARRAY_A
+			);
+			$return['asset_sizes'] = array(
+				'local'  => 0,
+				'remote' => 0,
+			);
+			foreach ( $asset_sizes as $set ) {
+				$type                           = Sync::META_KEYS['local_size'] === $set['type'] ? 'local' : 'remote';
+				$return['asset_sizes'][ $type ] = (int) $set['total'];
+			}
+
+			$threads                = $this->autosync_threads;
+			$primary_queue          = array_shift( $threads );
+			$return['total_queued'] = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s;", $primary_queue ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$return['errors']       = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s;", Sync::META_KEYS['sync_error'] ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+
+			set_transient( Sync::META_KEYS['dashboard_cache'], $return, 15 );
+			$cached = $return;
+		}
+
+		return $cached;
+	}
+
+	/**
+	 * Get the sync status.
+	 *
+	 * @return array
+	 */
+	public function get_total_synced_media() {
+
+		$data = $this->query_unsynced_data();
+
+		if ( empty( $data['asset_sizes'] ) || empty( $data['asset_sizes']['local'] ) ) {
+			return array(); // Nothing - don't do calculations.
+		}
+		// Lets calculate byte sizes.
+		$total_local_size  = $data['asset_sizes']['local'];
+		$total_remote_size = $data['asset_sizes']['remote'];
+		$total_assets      = $data['total_assets'];
+		$total_unoptimized = $data['unoptimized_assets'];
+		$total_optimized   = $data['total_assets'] - $data['unoptimized_assets'];
+		$total_queued      = $data['total_queued'];
+		$errors_count      = $data['errors'];
+
+		// Prepare the package.
+		$return = array(
+			// Original sizes.
+			'original_size'           => $total_local_size,
+			'original_size_percent'   => '100%', // The original will always be 100%, as it's the comparison to optimized.
+			'original_size_hr'        => size_format( $total_local_size ),
+
+			// Optimized size. We use the `original_size` to determine the percentage between for the progress bar.
+			'optimized_size'          => $total_remote_size,
+			'optimized_size_percent'  => round( abs( $total_remote_size ) / abs( $total_local_size ) * 100 ) . '%', // This is the percentage difference.
+			'optimized_diff_percent'  => round( ( $total_local_size - $total_remote_size ) / $total_local_size * 100 ) . '%', // We use this for the "Size saved.." status text.
+			'optimized_size_hr'       => size_format( $total_remote_size ), // This is the formatted byte size.
+
+			// Optimized is the % optimized vs unoptimized.
+			'optimized_percent'       => round( $total_optimized / $total_assets, 4 ),
+			'optimized_percent_hr'    => round( $total_optimized / $total_assets * 100, 1 ) . '%',
+			'optimized_info'          => 'Total Assets',
+
+			// Error size: No mockups on what to display here.
+			'error_count'             => $errors_count,
+			// translators: placeholders are the number of errors.
+			'error_count_hr'          => 0 === $errors_count ? '' : sprintf( _n( '%s sync error detected.', '%s errors detected', $errors_count, 'cloudinary' ), number_format_i18n( $errors_count ) ),
+
+			// Number of assets.
+			'total_assets'            => $total_assets, // This is a count of the assets in _cloudinary_relationships.
+			'total_unoptimized'       => $total_optimized, // This is the number of assets that dont have a public_id in _cloudinary_relationships.
+
+			// Status text.
+			// translators: placeholders are the number of assets unoptimized.
+			'unoptimized_status_text' => sprintf( _n( '%s Asset unoptimized by your selection.', '%s Assets Unoptimized by your selection.', $total_unoptimized, 'cloudinary' ), number_format_i18n( $total_unoptimized ) ),
+			// translators: placeholders are the number of assets unoptimized.
+			'optimized_status_text'   => sprintf( __( '%1$s / %2$s Assets being optimized now.', 'cloudinary' ), number_format_i18n( $total_queued ), number_format_i18n( $total_assets ) ), // This will be shown when items are pending (check queue).
+		);
+
+		return $return;
+	}
+
+	/**
 	 * Build the upload sync queue.
 	 */
 	public function build_queue() {
@@ -300,6 +412,7 @@ class Sync_Queue {
 			'post_type'           => 'attachment',
 			'post_mime_type'      => array( 'image', 'video' ),
 			'post_status'         => 'inherit',
+			'paged'               => 1,
 			'posts_per_page'      => 100,
 			'fields'              => 'ids',
 			// phpcs:ignore WordPress.DB.SlowDBQuery
@@ -325,8 +438,8 @@ class Sync_Queue {
 		/**
 		 * Filter the params for the query used to build a queue.
 		 *
-		 * @hook  cloudinary_build_queue_query
-		 * @since 2.7.6
+		 * @hook   cloudinary_build_queue_query
+		 * @since  2.7.6
 		 *
 		 * @param $args {array} The arguments for the query.
 		 *
@@ -346,7 +459,13 @@ class Sync_Queue {
 
 			return;
 		}
-		$ids = $query->get_posts();
+		$ids = array();
+		do {
+			$ids  = array_merge( $ids, $query->get_posts() );
+			$args = $query->query_vars;
+			$args['paged'] ++;
+			$query = new \WP_Query( $args );
+		} while ( $query->have_posts() );
 
 		$threads          = $this->add_to_queue( $ids );
 		$queue['total']   = array_sum( $threads );
@@ -649,7 +768,15 @@ class Sync_Queue {
 			'autosync' => $this->autosync_threads,
 		);
 
-		return $types[ $type ];
+		if ( 'all' === $type ) {
+			return $types;
+		}
+
+		if ( isset( $types[ $type ] ) ) {
+			return $types[ $type ];
+		}
+
+		return array();
 	}
 
 	/**
@@ -691,7 +818,7 @@ class Sync_Queue {
 	 *
 	 * @param string $thread Thread name.
 	 */
-	protected function reset_thread_queue( $thread ) {
+	public function reset_thread_queue( $thread ) {
 		delete_option( $this->get_thread_option( $thread ) );
 	}
 

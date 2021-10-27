@@ -7,11 +7,13 @@
 
 namespace Cloudinary;
 
-use WP_REST_Server;
-use WP_REST_Request;
+use Cloudinary\Media\Global_Transformations;
 use WP_Error;
 use WP_HTTP_Response;
+use WP_REST_Request;
 use WP_REST_Response;
+use WP_REST_Server;
+use WP_Screen;
 
 /**
  * Class Deactivation.
@@ -37,6 +39,20 @@ class Deactivation {
 	protected $plugin;
 
 	/**
+	 * Holds the plugin settings.
+	 *
+	 * @var Settings
+	 */
+	protected $settings;
+
+	/**
+	 * Cleaning data key.
+	 *
+	 * @var string
+	 */
+	const CLEANING_KEY = 'cloudinary_cleaning_up';
+
+	/**
 	 * Initiate the plugin deactivation.
 	 *
 	 * @param Plugin $plugin Instance of the plugin.
@@ -46,6 +62,9 @@ class Deactivation {
 
 		add_action( 'init', array( $this, 'load_hooks' ) );
 		add_action( 'current_screen', array( $this, 'maybe_load_hooks' ) );
+		add_action( 'cloudinary_init_settings', array( $this, 'settings_init' ) );
+
+		add_filter( 'plugin_action_links_' . $this->plugin->plugin_file, array( $this, 'tag_deactivate' ) );
 	}
 
 	/**
@@ -57,6 +76,7 @@ class Deactivation {
 	 */
 	public function load_hooks() {
 		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoint' ) );
+		add_action( 'cloudinary_cleanup_event', array( $this, 'cleanup' ) );
 	}
 
 	/**
@@ -69,12 +89,17 @@ class Deactivation {
 	public function maybe_load_hooks() {
 		$current_screen = get_current_screen();
 
-		if ( ! empty( $current_screen->base ) && 'plugins' === $current_screen->base ) {
-			add_thickbox();
-
+		if ( $current_screen instanceof WP_Screen && 'plugins' === $current_screen->base ) {
 			add_action( 'admin_head-plugins.php', array( $this, 'markup' ) );
 			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		}
+	}
+
+	/**
+	 * Init Settings.
+	 */
+	public function settings_init() {
+		$this->settings = $this->plugin->settings;
 	}
 
 	/**
@@ -85,31 +110,47 @@ class Deactivation {
 	protected function get_reasons() {
 		return array(
 			array(
-				'id'   => 'dont_understand_value',
-				'text' => __( 'I don’t get any value from the plugin.', 'cloudinary' ),
+				'id'   => 'difficult_setup',
+				'text' => __( 'Set up is too difficult', 'cloudinary' ),
 			),
 			array(
-				'id'   => 'dont_know_how',
-				'text' => __( 'I don’t know how to use the plugin.', 'cloudinary' ),
+				'id'   => 'documentation',
+				'text' => __( 'Lack of documentation', 'cloudinary' ),
 			),
 			array(
-				'id'   => 'temporary',
-				'text' => __( 'This is temporary. I’ll use the plugin again soon.', 'cloudinary' ),
+				'id'   => 'missing_features',
+				'text' => __( 'Not the features I wanted', 'cloudinary' ),
 			),
 			array(
-				'id'   => 'technical_problems',
-				'text' => __( 'I encountered technical issues with the plugin.', 'cloudinary' ),
-				'more' => true,
+				'id'   => 'different_plugin',
+				'text' => __( 'Found a better plugin', 'cloudinary' ),
 			),
 			array(
-				'id'   => 'other_plugins',
-				'text' => __( 'I use another plugin that works better for me.', 'cloudinary' ),
-				'more' => true,
+				'id'   => 'compatibility_reason',
+				'text' => __( 'Incompatible with theme or plugin', 'cloudinary' ),
 			),
 			array(
 				'id'   => 'other_reason',
-				'text' => __( 'Other.', 'cloudinary' ),
-				'more' => true,
+				'text' => __( 'Other', 'cloudinary' ),
+			),
+		);
+	}
+
+	/**
+	 * Get the action option for deactivation.
+	 *
+	 * @return array
+	 */
+	protected function get_options() {
+		return array(
+			array(
+				'id'      => 'keep_data',
+				'text'    => __( 'Keep plugin data as it is', 'cloudinary' ),
+				'default' => true,
+			),
+			array(
+				'id'   => 'uninstall',
+				'text' => __( 'Remove all plugin data and settings', 'cloudinary' ),
 			),
 		);
 	}
@@ -120,11 +161,22 @@ class Deactivation {
 	 * @return void
 	 */
 	public function markup() {
+		if ( $this->plugin->get_component( 'connect' )->is_connected() ) {
+			$this->render_connected();
+		} else {
+			$this->render_not_connected();
+		}
+	}
+
+	/**
+	 * Renders connected accounts deactivation modal.
+	 */
+	public function render_connected() {
 		$report_label = sprintf(
-			// translators: The System Report link tag.
+		// translators: The System Report link tag.
 			__( 'Share a %s with Cloudinary to help improve the plugin.', 'cloudinary' ),
 			sprintf(
-				// translators: The System Report link and label.
+			// translators: The System Report link and label.
 				'<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
 				'https://cloudinary.com/documentation/wordpress_integration#system_report',
 				'System Report'
@@ -132,56 +184,126 @@ class Deactivation {
 		);
 
 		?>
-<a href="#TB_inline?&width=520&height=390&inlineId=cloudinary-deactivation" class="thickbox" id="cld-deactivation-link" title="<?php esc_attr_e( 'Tell us how to improve!', 'cloudinary' ); ?>" style="display: none;"><?php esc_html_e( 'Deactivation feedback', 'cloudinary' ); ?>></a>
-<div id="cloudinary-deactivation" style="display: none;">
-	<div class="cloudinary-deactivation">
-		<div class="modal-body">
-			<p>
-				<?php esc_html_e( 'Please select a reason for deactivating so we can make our plugin better:', 'cloudinary' ); ?>
-			</p>
-			<ul>
-			<?php foreach ( $this->get_reasons() as $reason ) : ?>
-				<li>
-					<input type="radio" name="reason" value="<?php echo esc_attr( $reason['id'] ); ?>" id="reason-<?php echo esc_attr( $reason['id'] ); ?>"/>
-					<label for="reason-<?php echo esc_attr( $reason['id'] ); ?>">
-						<?php echo esc_html( $reason['text'] ); ?>
-					</label>
-					<?php if ( ! empty( $reason['more'] ) ) : ?>
-						<label for="more-<?php echo esc_attr( $reason['id'] ); ?>" class="more">
-							<?php esc_html_e( 'Additional details:', 'cloudinary' ); ?><br>
-							<textarea name="reason-more" id="more-<?php echo esc_attr( $reason['id'] ); ?>" cols="50" rows="5"></textarea>
+		<div id="cloudinary-deactivation" class="cld-modal">
+			<div class="cloudinary-deactivation cld-modal-box">
+				<div class="modal-body" id="modal-body">
+					<p>
+						<?php esc_html_e( 'Before you deactivate the plugin, would you quickly give us your reason for doing so?', 'cloudinary' ); ?>
+					</p>
+					<ul class="reasons">
+						<?php foreach ( $this->get_reasons() as $reason ) : ?>
+							<li>
+								<input type="radio" name="reason" value="<?php echo esc_attr( $reason['id'] ); ?>" id="reason-<?php echo esc_attr( $reason['id'] ); ?>"/>
+								<label for="reason-<?php echo esc_attr( $reason['id'] ); ?>">
+									<?php echo esc_html( $reason['text'] ); ?>
+								</label>
+								<label for="more-<?php echo esc_attr( $reason['id'] ); ?>" class="more">
+									<?php esc_html_e( 'Additional details:', 'cloudinary' ); ?><br>
+									<textarea name="reason-more" id="more-<?php echo esc_attr( $reason['id'] ); ?>" rows="5"></textarea>
+								</label>
+							</li>
+						<?php endforeach; ?>
+					</ul>
+					<p>
+						<?php esc_html_e( 'Please, choose one option what we should do with the plugin’s settings', 'cloudinary' ); ?>
+					</p>
+					<ul class="data">
+						<?php foreach ( $this->get_options() as $option ) : ?>
+							<?php
+							$checked = '';
+							if ( ! empty( $option['default'] ) ) {
+								$checked = 'checked';
+							}
+							?>
+							<li>
+								<input type="radio" name="option" <?php echo esc_attr( $checked ); ?> value="<?php echo esc_attr( $option['id'] ); ?>" id="option-<?php echo esc_attr( $option['id'] ); ?>"/>
+								<label for="option-<?php echo esc_attr( $option['id'] ); ?>">
+									<?php echo esc_html( $option['text'] ); ?>
+								</label>
+							</li>
+						<?php endforeach; ?>
+					</ul>
+					<p>
+						<input type="checkbox" id="cld-report" name="report">
+						<label for="cld-report">
+							<?php echo wp_kses_post( $report_label ); ?>
 						</label>
-					<?php endif; ?>
-				</li>
-			<?php endforeach; ?>
-			</ul>
+					</p>
+					<p style="display:none">
+						<input type="checkbox" id="cld-contact" name="contact">
+						<label for="cld-contact">
+							<?php esc_html_e( 'Allow Cloudinary to contact me regarding deactivation of the plugin.', 'cloudinary' ); ?>
+						</label>
+					</p>
+				</div>
+				<div class="modal-footer" id="modal-footer">
+					<button class="button cancel-close" data-action="cancel">
+						<?php esc_html_e( 'Cancel', 'cloudinary' ); ?>
+					</button>
+					<button class="button button-primary" data-action="submit">
+						<?php esc_html_e( 'Deactivate', 'cloudinary' ); ?>
+					</button>
+					<span class="modal-processing hidden">
+						<?php esc_html_e( 'Sending…', 'cloudinary' ); ?>
+					</span>
+					<div class="clear"></div>
+				</div>
+				<div id="modal-uninstall" class="modal-uninstall">
+					<p><?php esc_html_e( 'Uninstall has been started and the plugin will automatically be deactivated once complete.', 'cloudinary' ); ?></p>
+					<div class="modal-footer">
+						<button class="button button-primary cancel-close" data-action="close">
+							<?php esc_html_e( 'Close', 'cloudinary' ); ?>
+						</button>
+					</div>
+				</div>
+			</div>
 		</div>
-		<div class="modal-footer">
-			<p>
-				<input type="checkbox" id="cld-report" name="report">
-				<label for="cld-report">
-					<?php echo wp_kses_post( $report_label ); ?>
-				</label>
-			</p>
-			<p style="display:none">
-				<input type="checkbox" id="cld-contact" name="contact">
-				<label for="cld-contact">
-					<?php esc_html_e( 'Allow Cloudinary to contact me regarding deactivation of the plugin.', 'cloudinary' ); ?>
-				</label>
-			</p>
-			<button class="button button-primary" disabled="disabled">
-				<?php esc_html_e( 'Submit and deactivate', 'cloudinary' ); ?>
-			</button>
-			<button class="button button-link">
-				<?php esc_html_e( 'Skip and deactivate', 'cloudinary' ); ?>
-			</button>
-			<span class="modal-processing hidden">
-				<?php esc_html_e( 'Sending…', 'cloudinary' ); ?>
-			</span>
-			<div class="clear"></div>
+		<?php
+	}
+
+	/**
+	 * Renders not connected accounts deactivation modal.
+	 */
+	public function render_not_connected() {
+		$user = wp_get_current_user();
+		?>
+		<div id="cloudinary-deactivation" class="cld-modal">
+			<div class="cloudinary-deactivation cld-modal-box">
+				<div class="modal-body" id="modal-body">
+					<p>
+						<?php esc_html_e( "We noticed you didn't connect your account. Maybe we can help?", 'cloudinary' ); ?><br>
+						<?php esc_html_e( 'Place your email below and our support will get back to you as soon as possible.', 'cloudinary' ); ?>
+					</p>
+					<p>
+						<label for="email"><?php esc_html_e( 'Your email address', 'cloudinary' ); ?></label><br>
+						<input type="email" id="email" placeholder="<?php esc_attr_e( 'Your email address', 'cloudinary' ); ?>" value="<?php echo esc_attr( $user->user_email ); ?>">
+					</p>
+				</div>
+				<div class="modal-footer" id="modal-footer">
+					<button class="button cancel-close" data-action="cancel">
+						<?php esc_html_e( 'Cancel', 'cloudinary' ); ?>
+					</button>
+					<button class="button button-secondary" data-action="deactivate">
+						<?php esc_html_e( 'Deactivate', 'cloudinary' ); ?>
+					</button>
+					<button class="button button-primary" data-action="contact">
+						<?php esc_html_e( 'Contact me', 'cloudinary' ); ?>
+					</button>
+					<span class="modal-processing hidden">
+						<?php esc_html_e( 'Sending…', 'cloudinary' ); ?>
+					</span>
+					<div class="clear"></div>
+				</div>
+				<div id="modal-uninstall" class="modal-uninstall">
+					<p><?php esc_html_e( 'Uninstall has been started and the plugin will automatically be deactivated once complete.', 'cloudinary' ); ?></p>
+					<div class="modal-footer">
+						<button class="button button-primary cancel-close">
+							<?php esc_html_e( 'Close', 'cloudinary' ); ?>
+						</button>
+					</div>
+				</div>
+			</div>
 		</div>
-	</div>
-</div>
 		<?php
 	}
 
@@ -214,7 +336,7 @@ class Deactivation {
 			'method'              => WP_REST_Server::CREATABLE,
 			'callback'            => array( $this, 'rest_callback' ),
 			'args'                => array(),
-			'permission_callback' => function() {
+			'permission_callback' => function () {
 				return current_user_can( 'activate_plugins' );
 			},
 		);
@@ -255,10 +377,7 @@ class Deactivation {
 		$more    = $request->get_param( 'more' );
 		$report  = filter_var( $request->get_param( 'report' ), FILTER_VALIDATE_BOOLEAN );
 		$contact = filter_var( $request->get_param( 'contact' ), FILTER_VALIDATE_BOOLEAN );
-
-		if ( empty( $reason ) ) {
-			return rest_ensure_response( 200 );
-		}
+		$data    = $request->get_param( 'dataHandling' );
 
 		if (
 			! in_array(
@@ -267,7 +386,7 @@ class Deactivation {
 				true
 			)
 		) {
-			return rest_ensure_response( 418 );
+			$reason = 'no_reason_provided';
 		}
 
 		$args = array(
@@ -285,12 +404,183 @@ class Deactivation {
 			$args['contact'] = $contact;
 		}
 
-		$url = add_query_arg( $args, CLOUDINARY_ENDPOINTS_DEACTIVATION );
+		if ( filter_var( $request->get_param( 'email' ), FILTER_VALIDATE_EMAIL ) ) {
+			$args['reason'] = 'not_connected';
+			$args['email']  = filter_var( $request->get_param( 'email' ), FILTER_SANITIZE_EMAIL );
+		}
+
+		$url = add_query_arg( array_filter( $args ), CLOUDINARY_ENDPOINTS_DEACTIVATION );
 
 		$response = wp_safe_remote_get( $url );
+
+		if ( 'uninstall' === $data ) {
+			$this->cleanup();
+		}
+
+		deactivate_plugins( $this->plugin->plugin_file );
 
 		return rest_ensure_response(
 			wp_remote_retrieve_response_code( $response )
 		);
+	}
+
+	/**
+	 * Add a deactivate class to the deactivate link to trigger a warning if storage is only on Cloudinary.
+	 *
+	 * @param array $actions The actions for the plugin.
+	 *
+	 * @return array
+	 */
+	public function tag_deactivate( $actions ) {
+		if ( 'cld' === $this->settings->get_value( 'offload' ) ) {
+			$actions['deactivate'] = str_replace( '<a ', '<a class="cld-deactivate" ', $actions['deactivate'] );
+		} else {
+			$actions['deactivate'] = str_replace( '<a ', '<a class="cld-deactivate-link" ', $actions['deactivate'] );
+		}
+
+		if ( get_option( self::CLEANING_KEY ) ) {
+			$actions['deactivate'] = __( 'Data clean up. The plugin will self deactivate once complete. ', 'cloudinary' );
+		}
+
+		return $actions;
+	}
+
+	/**
+	 * Cleanup Cloudinary data.
+	 */
+	protected function cleanup() {
+		wp_schedule_single_event( time() + 5 * MINUTE_IN_SECONDS, 'cloudinary_cleanup_event' );
+		add_option( self::CLEANING_KEY, true, '', false );
+		$this->cleanup_user_data();
+		$this->cleanup_post_meta();
+		$this->cleanup_term_meta();
+		$this->cleanup_post_type();
+		$this->drop_tables();
+		$this->cleanup_options();
+
+		// If we got this far, let's remove the cron event.
+		wp_clear_scheduled_hook( 'cloudinary_cleanup_event' );
+	}
+
+	/**
+	 * Cleanup Cloudinary's user data related.
+	 */
+	protected function cleanup_user_data() {
+		$user_meta_keys = array(
+			'_cld_ui_state',
+		);
+
+		foreach ( $user_meta_keys as $key ) {
+			// Inspired on https://developer.wordpress.org/reference/functions/delete_post_meta_by_key/.
+			delete_metadata( 'user', null, $key, '', true );
+		}
+	}
+
+	/**
+	 * Cleanup Cloudinary's post meta related.
+	 */
+	protected function cleanup_post_meta() {
+		$post_meta_keys = array_merge(
+			Sync::META_KEYS,
+			array(
+				Global_Transformations::META_FEATURED_IMAGE_KEY,
+				Global_Transformations::META_ORDER_KEY . '_terms',
+				Delivery::META_CACHE_KEY,
+			)
+		);
+
+		foreach ( $post_meta_keys as $key ) {
+			delete_post_meta_by_key( $key );
+		}
+	}
+
+	/**
+	 * Cleanup Cloudinary's term meta related.
+	 */
+	protected function cleanup_term_meta() {
+		$term_meta_keys = array(
+			'cloudinary_transformations_image_freeform',
+			'cloudinary_transformations_video_freeform',
+		);
+
+		foreach ( $term_meta_keys as $key ) {
+			// Inspired on https://developer.wordpress.org/reference/functions/delete_post_meta_by_key/.
+			delete_metadata( 'term', null, $key, '', true );
+		}
+	}
+
+	/**
+	 * Drop Cloudinary's tables.
+	 */
+	protected function drop_tables() {
+		global $wpdb;
+
+		$tables = array(
+			Utils::get_relationship_table(),
+		);
+
+		foreach ( $tables as $table ) {
+			$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				$wpdb->prepare(
+					'DROP TABLE IF EXISTS %s',
+					$table
+				)
+			);
+		}
+	}
+
+	/**
+	 * Cleanup Cloudinary's post types related.
+	 */
+	protected function cleanup_post_type() {
+		global $wpdb;
+
+		$post_types = array(
+			Assets::POST_TYPE_SLUG,
+		);
+
+		foreach ( $post_types as $type ) {
+			$wpdb->delete( //phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				$wpdb->posts,
+				array( 'post_type' => $type ),
+				array( '%s' )
+			);
+		}
+	}
+
+	/**
+	 * Cleanup Cloudinary's options related.
+	 */
+	protected function cleanup_options() {
+		$all = $this->settings->get_param( 'settings' );
+		foreach ( $all as $slug => $setting ) {
+			$this->settings->delete( $slug );
+		}
+
+		$queue       = $this->plugin->get_component( 'sync' )->managers['queue'];
+		$all_threads = $queue->get_threads( 'all' );
+		foreach ( $all_threads as $threads ) {
+			foreach ( $threads as $thread ) {
+				$queue->reset_thread_queue( $thread );
+				delete_post_meta_by_key( $thread );
+			}
+		}
+
+		$option_keys = array_merge(
+			$this->settings->get_storage_keys(),
+			array(
+				'cloudinary_setup',
+				'cloudinary_main_cache_page',
+				'_cld_disable_http_upload',
+				Report::REPORT_KEY,
+				Media::GLOBAL_VIDEO_TRANSFORMATIONS,
+				self::CLEANING_KEY,
+			)
+		);
+
+		foreach ( $option_keys as $key ) {
+			delete_option( $key );
+			delete_transient( $key );
+		}
 	}
 }

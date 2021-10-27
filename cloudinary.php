@@ -34,6 +34,7 @@ define( 'CLDN_PATH', plugin_dir_path( __FILE__ ) );
 
 if ( version_compare( phpversion(), '5.6', '>=' ) ) {
 	require_once __DIR__ . '/instance.php';
+	register_activation_hook( __FILE__, array( 'Cloudinary\Utils', 'install' ) );
 } else {
 	if ( defined( 'WP_CLI' ) ) {
 		WP_CLI::warning( _cloudinary_php_version_text() );

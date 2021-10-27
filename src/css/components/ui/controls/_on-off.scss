@@ -1,0 +1,125 @@
+// On/Off toggle.
+
+&-on-off {
+
+	.description {
+		margin: 0;
+		font-size: $size-setting-field;
+		color: inherit;
+		font-weight: 600;
+
+		&.left {
+			margin-left: 0;
+			margin-right: 0.4rem;
+		}
+	}
+
+	input[type=checkbox] ~ .spinner {
+		transition: right 0.2s;
+		visibility: visible;
+		margin: 2px;
+		float: none;
+		position: absolute;
+		top: 0;
+		right: 14px;
+		background-size: 12px 12px;
+		width: 12px;;
+		height: 12px;
+		opacity: 1;
+	}
+
+	input[type=checkbox]:checked ~ .spinner {
+		right: 0;
+	}
+
+	$mini-control-width: 20px;
+	$mini-control-height: 10px;
+	$mini-slider-pad: 1px;
+	$mini-slider-size: $mini-control-height - $mini-slider-pad - $mini-slider-pad;
+
+	&-control {
+		$control-width: 30px;
+		$control-height: 16px;
+		$slider-pad: 2px;
+		$slider-size: $control-height - $slider-pad - $slider-pad;
+		position: relative;
+		display: inline-block;
+		width: $control-width;
+		height: $control-height;
+		margin-right: 0.4rem;
+
+		input, input:disabled {
+			opacity: 0;
+			width: 0;
+			height: 0;
+		}
+
+		&-slider {
+
+			position: absolute;
+			cursor: pointer;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background-color: $color-disabled-grey;
+			transition: background-color 0.3s;
+			border-radius: 10px;
+
+			input:disabled + & {
+				opacity: 0.4;
+			}
+
+			input:checked + & {
+				background-color: $color-cld-blue !important;
+			}
+
+			input:checked.partial + & {
+				background-color: $color-orange !important;
+			}
+
+			input:checked.delete + & {
+				background-color: $color-red !important;
+			}
+
+			&::before {
+				position: absolute;
+				display: block;
+				content: "";
+				height: $slider-size;
+				width: $slider-size;
+				left: $slider-pad;
+				bottom: $slider-pad;
+				background-color: $color-white;
+				transition: transform 0.2s;
+				border-radius: 50%;
+
+				input:checked + & {
+					transform: translateX($control-width - $slider-size - $slider-pad * 2);
+				}
+
+				.mini input:checked + & {
+					transform: translateX($mini-control-width - $mini-slider-size - $mini-slider-pad * 2);
+				}
+			}
+		}
+
+		&.mini {
+			width: $mini-control-width;
+			height: $mini-control-height;
+		}
+	}
+
+	.mini &-control {
+		&-slider {
+
+			&::before {
+				height: $mini-slider-size;
+				width: $mini-slider-size;
+				left: $mini-slider-pad;
+				bottom: $mini-slider-pad;
+
+			}
+		}
+	}
+}

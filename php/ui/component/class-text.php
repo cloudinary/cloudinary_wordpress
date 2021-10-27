@@ -21,14 +21,14 @@ class Text extends Component {
 	 *
 	 * @var string
 	 */
-	protected $blueprint = 'wrap|icon/|div|label|title|tooltip/|/title|/label|/div|prefix/|input/|suffix/|description/|/wrap';
+	protected $blueprint = 'wrap|icon/|div|label|title|link/|/title|extra_title/|/label|/div|prefix/|input/|suffix/|description/|tooltip/|/wrap';
 
 	/**
 	 * Flag if component is a capture type.
 	 *
 	 * @var bool
 	 */
-	public $capture = true;
+	protected static $capture = true;
 
 	/**
 	 * Filter the wrap parts structure.
@@ -63,6 +63,46 @@ class Text extends Component {
 	}
 
 	/**
+	 * Filter the link parts structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function link( $struct ) {
+		$link = $this->setting->get_param( 'link', array() );
+		if ( ! empty( $link ) ) {
+			$struct['element']               = 'a';
+			$struct['attributes']['class'][] = 'cld-input-label-link';
+			$struct['attributes']['href']    = $link['href'];
+			$struct['attributes']['target']  = '_blank';
+			$struct['content']               = $link['text'];
+		}
+
+		return $struct;
+	}
+
+	/**
+	 * Filter the extra_title parts structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function extra_title( $struct ) {
+		$struct['content'] = null;
+		if ( $this->setting->has_param( 'extra_title' ) ) {
+			$struct['render']              = true;
+			$struct['attributes']['class'] = array(
+				'cld-tooltip',
+			);
+			$struct['content']             = $this->setting->get_param( 'extra_title' );
+		}
+
+		return $struct;
+	}
+
+	/**
 	 * Filter the input parts structure.
 	 *
 	 * @param array $struct The array structure.
@@ -73,7 +113,7 @@ class Text extends Component {
 
 		$struct['element']               = 'input';
 		$struct['attributes']['name']    = $this->get_name();
-		$struct['attributes']['id']      = $this->setting->get_slug();
+		$struct['attributes']['id']      = $this->get_id();
 		$struct['attributes']['value']   = $this->setting->get_value();
 		$struct['attributes']['class'][] = 'regular-' . $this->type;
 		$struct['render']                = true;
@@ -120,7 +160,22 @@ class Text extends Component {
 	 * @return string
 	 */
 	protected function get_name() {
-		return $this->setting->get_option_name() . '[' . $this->setting->get_slug() . ']';
+		$parts = explode( $this->setting->separator, $this->setting->get_slug() );
+		$name  = array_shift( $parts );
+		if ( ! empty( $parts ) ) {
+			$name .= '[' . implode( $this->setting->separator, $parts ) . ']';
+		}
+
+		return $name;
+	}
+
+	/**
+	 * Get the field ID.
+	 *
+	 * @return string
+	 */
+	protected function get_id() {
+		return $this->setting->get_slug();
 	}
 
 	/**

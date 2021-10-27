@@ -55,7 +55,7 @@ module.exports = function ( grunt ) {
 		compress: {
 			release: {
 				options: {
-					archive: 'cloudinary-wordpress-v2.zip',
+					archive: 'cloudinary-wordpress-v3.zip',
 				},
 				cwd: '<%= dist_dir %>',
 				expand: true,

@@ -1,0 +1,64 @@
+
+&-complete {
+
+	background-image: url("images/confetti.png");
+	background-position: 50%;
+	background-repeat: no-repeat;
+	background-size: cover;
+	padding: 98px;
+	text-align: center;
+	margin: -23px;
+
+	&.hidden {
+		display: none;
+	}
+
+	&.active {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		flex-direction: column;
+		margin: -23px -24px;
+		text-align: center;
+
+		* {
+			max-width: 450px;
+		}
+	}
+
+	&-icons {
+		display: flex;
+		justify-content: center;
+
+		img {
+			width: 70px;
+			margin: 30px 10px;;
+		}
+
+		.dashicons {
+			font-size: 50px;
+			line-height: 1.4;
+			width: 70px;
+			height: 70px;
+			border: 4px solid $color-white;
+			border-radius: 6px;
+			background-color: $color-grey-background;
+			box-shadow: 0px 2px 8px 0px rgba(0, 0, 0, 0.3);
+
+		}
+
+		.dashicons-cloudinary {
+			font-size: 65px;
+			line-height: 0.9;
+			color: $color-cld-blue;
+		}
+	}
+
+	.cld-ui-title {
+		margin-top: 30px;
+
+		h3 {
+			font-size: $size-sidebar-title;
+		}
+	}
+}

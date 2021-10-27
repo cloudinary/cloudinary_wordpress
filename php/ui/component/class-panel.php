@@ -7,8 +7,11 @@
 
 namespace Cloudinary\UI\Component;
 
+use Cloudinary\REST_API;
+use Cloudinary\Settings;
 use Cloudinary\UI\Component;
 use Cloudinary\Settings\Setting;
+use Cloudinary\UI\State;
 
 /**
  * Class Component
@@ -22,7 +25,49 @@ class Panel extends Component {
 	 *
 	 * @var string
 	 */
-	protected $blueprint = 'header|icon/|title/|collapse/|/header|wrap|body|/body|section/|/wrap';
+	protected $blueprint = 'header|icon/|title_wrap|title/|description/|/title_wrap|collapse/|/header|wrap|body|/body|section/|/wrap|save/';
+
+	/**
+	 * Holds the state.
+	 *
+	 * @var string
+	 */
+	protected $current_state;
+
+	/**
+	 * Setup the component.
+	 */
+	public function setup() {
+		parent::setup();
+		$this->current_state = $this->state->get_state( $this->setting->get_slug(), $this->setting->get_param( 'collapsible' ) );
+	}
+
+	/**
+	 * Holds the save button id an options name is set.
+	 *
+	 * @param array $struct The struct.
+	 *
+	 * @return array
+	 */
+	protected function save( $struct ) {
+		$struct['element'] = null;
+		if ( $this->setting->has_param( 'option_name' ) ) {
+			$struct                          = $this->get_part( 'wrap' );
+			$struct['attributes']['class'][] = 'cld-submit';
+			$button                          = $this->get_part( 'button' );
+			$button['content']               = $this->setting->get_param( 'label', __( 'Save Changes', 'cloudinary' ) );
+			$button['attributes']['type']    = $this->type;
+			$button['attributes']['name']    = 'cld_submission';
+			$button['attributes']['value']   = $this->setting->get_param( 'option_name' );
+			$classes                         = array(
+				'button',
+			);
+			$button['attributes']['class']   = array_merge( $classes, (array) $this->setting->get_param( 'style', array( 'button-primary' ) ) );
+			$struct['children']['button']    = $button;
+		}
+
+		return $struct;
+	}
 
 	/**
 	 * Filter the header parts structure.
@@ -52,12 +97,54 @@ class Panel extends Component {
 	 *
 	 * @return array
 	 */
+	protected function title_wrap( $struct ) {
+
+		$struct['element'] = 'div';
+		$struct['attributes']['class'] = array(
+			'cld-ui-title',
+		);
+
+		if ( $this->setting->has_param( 'collapsible' ) ) {
+			$struct['attributes']['class'][] = 'collapsible';
+		}
+
+		return $struct;
+	}
+
+	/**
+	 * Filter the title parts structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
 	protected function title( $struct ) {
 
 		$struct['element'] = 'h2';
 		$struct['content'] = $this->setting->get_param( 'title' );
-		if ( $this->setting->has_param( 'collapsible' ) ) {
-			$struct['attributes']['class'][] = 'collapsible';
+		$struct['attributes']['class'] = array(
+			'cld-ui-title-head',
+		);
+		if ( $this->setting->has_param( 'description' ) ) {
+			$struct['attributes']['class'][] = 'has-description';
+		}
+
+		return $struct;
+	}
+
+	/**
+	 * Filter the description parts structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function description( $struct ) {
+		$struct['element'] = null;
+		if ( $this->setting->has_param( 'description' ) ) {
+			$struct['element']               = 'div';
+			$struct['content']               = $this->setting->get_param( 'description' );
+			$struct['attributes']['class'][] = 'description';
 		}
 
 		return $struct;
@@ -76,8 +163,7 @@ class Panel extends Component {
 			$struct['element']                   = 'span';
 			$struct['render']                    = true;
 			$struct['attributes']['class'][]     = 'dashicons';
-			$state                               = $this->setting->get_param( 'collapsible' );
-			$struct['attributes']['class'][]     = 'open' === $state ? 'dashicons-arrow-up-alt2' : 'dashicons-arrow-down-alt2';
+			$struct['attributes']['class'][]     = 'open' === $this->current_state ? 'dashicons-arrow-up-alt2' : 'dashicons-arrow-down-alt2';
 			$struct['attributes']['data-toggle'] = $this->setting->get_slug();
 			$struct['attributes']['id']          = $this->setting->get_slug();
 		}
@@ -98,8 +184,9 @@ class Panel extends Component {
 			$struct['attributes']['class'][] = 'has-heading';
 
 			if ( $this->setting->has_param( 'collapsible' ) ) {
-				$struct['attributes']['class'][]   = $this->setting->get_param( 'collapsible' );
-				$struct['attributes']['data-wrap'] = $this->setting->get_slug();
+				$struct['attributes']['class'][]    = $this->current_state;
+				$struct['attributes']['data-wrap']  = $this->setting->get_slug();
+				$struct['attributes']['data-state'] = $this->current_state;
 			}
 		}
 

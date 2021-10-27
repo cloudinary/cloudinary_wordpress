@@ -23,7 +23,7 @@ class Folder_Table extends Table {
 	 *
 	 * @var bool
 	 */
-	public $capture = true;
+	protected static $capture = true;
 
 	/**
 	 * Holds the slugs for the file lists.
@@ -77,7 +77,7 @@ class Folder_Table extends Table {
 					'type'        => 'on_off',
 					'default'     => 'on',
 					'description' => $this->setting->get_param( 'title', '' ),
-					'master'      => $this->setting->get_param( 'master', array() ),
+					'main'        => $this->setting->get_param( 'main', array() ),
 				),
 			),
 			'apply_changes' => array(
@@ -96,15 +96,15 @@ class Folder_Table extends Table {
 	 * @return  array
 	 */
 	protected function get_rows() {
-		$roots       = $this->setting->get_param( 'root_paths', array() );
+		$roots       = $this->setting->get_settings();
 		$row_default = array(
 			'title'    => null,
 			'src_path' => null,
 			'url'      => null,
 		);
 		$rows        = array();
-		foreach ( $roots as $slug => $row ) {
-			$row             = wp_parse_args( $row, $row_default );
+		foreach ( $roots as $slug => $path ) {
+			$row             = wp_parse_args( $path->get_params(), $row_default );
 			$row['slug']     = $slug;
 			$row['src_path'] = str_replace( ABSPATH, '', $row['src_path'] );
 			// Add to list.
@@ -153,7 +153,7 @@ class Folder_Table extends Table {
 						$slug => true,
 					),
 					array(
-						'element'    => 'table',
+						'element' => 'table',
 
 						'attributes' => array(
 							'class' => array(
@@ -260,7 +260,7 @@ class Folder_Table extends Table {
 					'default'   => 'on',
 					'base_path' => $row['src_path'],
 					'action'    => 'all_selector',
-					'master'    => array(
+					'main'      => array(
 						$this->get_title_slug(),
 					),
 				),
@@ -339,7 +339,7 @@ class Folder_Table extends Table {
 	 * @return string
 	 */
 	protected function get_title_slug() {
-		return $this->setting->get_slug() . '_title';
+		return $this->setting->get_param( 'slug' ) . '_title';
 	}
 
 	/**

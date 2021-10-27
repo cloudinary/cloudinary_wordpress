@@ -36,12 +36,30 @@ class Report extends Settings_Component implements Setup {
 	const REPORT_KEY = '_cloudinary_report';
 
 	/**
+	 * Holds the key to generate the report and download.
+	 */
+	const REPORT_DOWNLOAD_KEY = 'generate-report';
+
+	/**
+	 * Holds the report page/section slug.
+	 */
+	const REPORT_SLUG = 'system-report';
+
+	/**
 	 * Report constructor.
 	 *
 	 * @param Plugin $plugin Global instance of the main plugin.
 	 */
 	public function __construct( Plugin $plugin ) {
 		parent::__construct( $plugin );
+		add_action( 'cloudinary_connected', array( $this, 'init' ) );
+		add_filter( 'cloudinary_admin_pages', array( $this, 'register_settings' ) );
+	}
+
+	/**
+	 * Init component on connection.
+	 */
+	public function init() {
 		add_action( 'cloudinary_settings_save_setting_enable_report', array( $this, 'init_reporting' ), 10, 3 );
 		add_filter( 'media_row_actions', array( $this, 'add_inline_action' ), 50, 2 );
 		add_filter( 'post_row_actions', array( $this, 'add_inline_action' ), 50, 2 );
@@ -124,6 +142,7 @@ class Report extends Settings_Component implements Setup {
 	public function setup() {
 		if ( 'on' === $this->settings->get_value( 'enable_report' ) ) {
 			add_action( 'add_meta_boxes', array( $this, 'image_meta_viewer' ) );
+			$this->maybe_generate_report();
 		}
 	}
 
@@ -165,64 +184,74 @@ class Report extends Settings_Component implements Setup {
 		if ( 'attachment' === $post->post_type ) {
 			$sync  = $this->plugin->get_component( 'sync' );
 			$media = $this->plugin->get_component( 'media' );
-			$meta  = get_post_meta( $post->ID, $sync::META_KEYS['cloudinary'], true );
-			$logs  = array( Sync::META_KEYS['process_log_legacy'] => $media->get_process_logs( $post->ID, true ) );
-
-			$args = array(
-				'type'       => 'tag',
-				'element'    => 'pre',
-				'attributes' => array(
-					'style' => 'overflow:auto;',
-				),
-				'content'    => wp_json_encode( array_merge( $meta, $logs ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ),
-			);
-			$this->settings->create_setting( 'meta_viewer', $args )->get_component()->render( true );
+			$meta  = (array) get_post_meta( $post->ID, $sync::META_KEYS['cloudinary'], true );
+			$logs  = array( Sync::META_KEYS['process_log_legacy'] => $media->get_process_logs( $post->ID ) );
+			$data = array_merge( $meta, $logs );
+			highlight_string( var_export( $data, true ) );
 		}
 	}
 
 	/**
-	 * Get the settings structure.
+	 * Enabled method check.
+	 *
+	 * @return bool
+	 */
+	public function enabled() {
+		return 'on' === $this->settings->get_value( 'enable_report' );
+	}
+
+	/**
+	 * Check if component is disabled.
+	 *
+	 * @return bool
+	 */
+	public function disabled() {
+		return ! $this->enabled();
+	}
+
+	/**
+	 * Add page section to pages structure.
+	 *
+	 * @param array $pages The current pages structure.
 	 *
 	 * @return array
 	 */
-	public function settings() {
-		return array(
-			'type'       => 'page',
-			'menu_title' => __( 'System Report', 'cloudinary' ),
-			'tabs'       => array(
-				'setup' => array(
-					'page_title' => __( 'System Report', 'cloudinary' ),
+	public function register_settings( $pages ) {
+		$pages['reporting'] = array(
+			'page_title'          => __( 'System Report', 'cloudinary' ),
+			'section'             => self::REPORT_SLUG,
+			'slug'                => 'reporting',
+			'option_name'         => 'system_report',
+			'priority'            => 1,
+			'requires_connection' => true,
+			'sidebar'             => true,
+			'settings'            => array(
+				array(
+					'type'  => 'panel',
+					'title' => __( 'System information report', 'cloudinary' ),
 					array(
-						'type'  => 'panel',
-						'title' => __( 'System information report', 'cloudinary' ),
-						array(
-							'title' => __( 'Enable report', 'cloudinary' ),
-							'type'  => 'on_off',
-							'slug'  => 'enable_report',
-						),
-						array(
-							'type'    => 'tag',
-							'element' => 'div',
-							'content' => $this->get_report_body(),
-							'enabled' => function () {
-								$enabled = get_plugin_instance()->settings->get_value( 'enable_report' );
-								return 'on' !== $enabled;
-							},
-						),
-						array(
-							'type'    => 'system',
-							'enabled' => function () {
-								$enabled = get_plugin_instance()->settings->get_value( 'enable_report' );
-								return 'on' === $enabled;
-							},
-						),
+						'description' => __( 'Enable report', 'cloudinary' ),
+						'type'        => 'on_off',
+						'slug'        => 'enable_report',
 					),
 					array(
-						'type' => 'submit',
+						'type'    => 'tag',
+						'element' => 'div',
+						'content' => $this->get_report_body(),
+						'enabled' => array( $this, 'disabled' ),
 					),
+					array(
+						'type'    => 'system',
+						'enabled' => array( $this, 'enabled' ),
+					),
+				),
+				array(
+					'type' => 'submit',
 				),
 			),
 		);
+
+		return $pages;
 	}
 
 	/**
@@ -392,5 +421,25 @@ class Report extends Settings_Component implements Setup {
 			$config['gallery'] = $this->plugin->get_component( 'media' )->gallery->get_config();
 		}
 		$this->add_report_block( 'config_report', $config );
+	}
+
+	/**
+	 * Maybe generate the report.
+	 */
+	public function maybe_generate_report() {
+		$download = filter_input( INPUT_GET, self::REPORT_DOWNLOAD_KEY, FILTER_VALIDATE_BOOLEAN );
+		if ( $download ) {
+			$report = $this->get_report_data();
+			header( 'Content-Description: File Transfer' );
+			header( 'Content-Type: application/octet-stream' );
+			header( "Content-Disposition: attachment; filename={$report['filename']}" );
+			header( 'Content-Transfer-Encoding: text' );
+			header( 'Connection: Keep-Alive' );
+			header( 'Expires: 0' );
+			header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
+			header( 'Pragma: public' );
+			echo wp_json_encode( $report['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
+			exit;
+		}
 	}
 }
