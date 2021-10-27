@@ -1724,43 +1724,37 @@ class Media extends Settings_Component implements Setup {
 
 	/**
 	 * Setup and include cloudinary assets for DAM widget.
-	 *
-	 * @param bool $force To enforce loading the Cloudinary ML script.
 	 */
-	public function editor_assets( $force = false ) {
+	public function editor_assets() {
 
-		$screen = get_current_screen();
-		if ( $force || ( $screen instanceof WP_Screen && 'post' === $screen->id ) ) {
-
-			// External assets.
-			wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, array(), $this->plugin->version, true );
-			$params = array(
-				'nonce'     => wp_create_nonce( 'wp_rest' ),
-				'mloptions' => array(
-					'cloud_name'     => $this->credentials['cloud_name'],
-					'api_key'        => $this->credentials['api_key'],
-					'cms_type'       => 'wordpress',
-					'insert_caption' => __( 'Import', 'cloudinary' ),
-					'remove_header'  => true,
-					'integration'    => array(
-						'type'     => 'wordpress_plugin',
-						'platform' => 'WordPress ' . get_bloginfo( 'version' ),
-						'version'  => $this->plugin->version,
-					),
+		// External assets.
+		wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, array(), $this->plugin->version, true );
+		$params = array(
+			'nonce'     => wp_create_nonce( 'wp_rest' ),
+			'mloptions' => array(
+				'cloud_name'     => $this->credentials['cloud_name'],
+				'api_key'        => $this->credentials['api_key'],
+				'cms_type'       => 'wordpress',
+				'insert_caption' => __( 'Import', 'cloudinary' ),
+				'remove_header'  => true,
+				'integration'    => array(
+					'type'     => 'wordpress_plugin',
+					'platform' => 'WordPress ' . get_bloginfo( 'version' ),
+					'version'  => $this->plugin->version,
 				),
-			);
+			),
+		);
 
-			// Set folder if needed.
-			$folder = $this->get_cloudinary_folder( false );
-			if ( ! empty( $folder ) ) {
-				$params['mloptions']['folder'] = array( 'path' => $folder );
-			}
-
-			$params['mloptions']['insert_transformation'] = true;
-			$params['mloptions']['inline_container']      = '#cloudinary-dam';
-
-			wp_add_inline_script( 'cloudinary-media-library', 'var CLDN = ' . wp_json_encode( $params ), 'before' );
+		// Set folder if needed.
+		$folder = $this->get_cloudinary_folder( false );
+		if ( ! empty( $folder ) ) {
+			$params['mloptions']['folder'] = array( 'path' => $folder );
 		}
+
+		$params['mloptions']['insert_transformation'] = true;
+		$params['mloptions']['inline_container']      = '#cloudinary-dam';
+
+		wp_add_inline_script( 'cloudinary-media-library', 'var CLDN = ' . wp_json_encode( $params ), 'before' );
 	}
 
 	/**
