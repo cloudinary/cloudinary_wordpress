@@ -816,9 +816,7 @@ class Delivery implements Setup {
 		$tag_element['tag']  = array_shift( $attributes );
 		$tag_element['type'] = 'img' === $tag_element['tag'] ? 'image' : $tag_element['tag'];
 		$url                 = isset( $attributes['src'] ) ? self::clean_url( $attributes['src'] ) : '';
-		if ( ! in_array( $url, $this->found_urls, true ) ) {
-			return null; // Dont continue if it's not a url we found.
-		}
+
 		if ( ! empty( $this->known[ $url ] ) && ! empty( $this->known[ $url ]['public_id'] ) ) {
 			if ( ! empty( $this->known[ $url ]['transformations'] ) ) {
 				$tag_element['transformations'] = $this->media->get_transformations_from_string( $this->known[ $url ]['transformations'], $tag_element['type'] );
