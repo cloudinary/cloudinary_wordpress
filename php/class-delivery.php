@@ -836,7 +836,7 @@ class Delivery implements Setup {
 			}
 		}
 
-		$inline_transformations = $this->get_transformations_maybe( $attributes['src'] );
+		$inline_transformations = $this->get_transformations_maybe( $url );
 		if ( $inline_transformations ) {
 			$tag_element['transformations'] = array_merge( $tag_element['transformations'], $inline_transformations );
 		}
