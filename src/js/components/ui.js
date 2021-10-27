@@ -3,7 +3,6 @@
 import tippy from 'tippy.js';
 import 'tippy.js/dist/tippy.css';
 import OnOff from './onoff';
-import CacheManage from './cache-manage';
 import Progress from './progress';
 import States from './states';
 import RestrictedTypes from './restricted-types';
@@ -60,7 +59,6 @@ const UI = {
 			} );
 		} );
 		// Start cache manager.
-		CacheManage.init( context, States );
 		Progress.init( context );
 		RestrictedTypes.init( context );
 		TagsInput.init( context );

@@ -1,15 +1,19 @@
 import apiFetch from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
-import OnOff from './onoff';
+import OnOff from './components/onoff';
+import AssetEditModal from './components/asset-edit-modal';
+import States from './components/states';
 
-const CacheManage = {
+const AssetManager = {
 	cachePoints: {},
 	spinners: {},
 	states: null,
+	editModal: AssetEditModal.init( 'cldAsset' ),
 	init( context, States ) {
 		this.states = States;
-		if ( typeof CLDCACHE !== 'undefined' ) {
-			apiFetch.use( apiFetch.createNonceMiddleware( CLDCACHE.nonce ) );
+
+		if ( typeof CLDASSETS !== 'undefined' ) {
+			apiFetch.use( apiFetch.createNonceMiddleware( CLDASSETS.nonce ) );
 			const cachePoints = context.querySelectorAll(
 				'[data-cache-point]'
 			);
@@ -164,7 +168,7 @@ const CacheManage = {
 		this.open( cachePoint.loader );
 		cachePoint.loader.firstChild.style.height = height;
 		apiFetch( {
-			path: CLDCACHE.fetch_url,
+			path: CLDASSETS.fetch_url,
 			data: {
 				ID,
 				page: cachePoint.currentPage,
@@ -214,7 +218,7 @@ const CacheManage = {
 		if ( ! button.dataset.purging && ! button.dataset.updating ) {
 			button.dataset.updating = true;
 			apiFetch( {
-				path: CLDCACHE.purge_all,
+				path: CLDASSETS.purge_all,
 				data: {
 					count: true,
 				},
@@ -253,7 +257,7 @@ const CacheManage = {
 	_purgeAction( button, count, callback ) {
 		const parent = button.dataset.parent;
 		apiFetch( {
-			path: CLDCACHE.purge_all,
+			path: CLDASSETS.purge_all,
 			data: {
 				count,
 				parent,
@@ -297,7 +301,7 @@ const CacheManage = {
 	_set_state( cachePoint, state, ids ) {
 		this._showSpinners( ids );
 		apiFetch( {
-			path: CLDCACHE.update_url,
+			path: CLDASSETS.update_url,
 			data: {
 				state,
 				ids,
@@ -372,7 +376,9 @@ const CacheManage = {
 				off: 'disable',
 			} );
 			const file = this._getFile( cachePoint, item, row );
+			const edit = this._getEdit( item, cachePoint );
 			row.appendChild( file );
+			row.appendChild( edit );
 			row.appendChild( statSwitch );
 			cachePoint.appendChild( row );
 		} );
@@ -436,7 +442,7 @@ const CacheManage = {
 					purge.dataset.parent = cachePoint.dataset.cachePoint;
 					const self = this;
 					purge.classList.add( 'button-primary' );
-					this._purgeAll( purge, false, function () {
+					this._purgeAll( purge, false, function() {
 						self._load( cachePoint.dataset.cachePoint );
 					} );
 				}
@@ -457,6 +463,31 @@ const CacheManage = {
 			row.id = 'row_' + itemID;
 		}
 		return row;
+	},
+	_getEdit( item ) {
+		const td = document.createElement( 'td' );
+		const editor = document.createElement( 'a' );
+
+		editor.href = '#';
+		if ( ! item.data.transformations ) {
+			editor.innerText = __( 'Add transformations', 'cloudinary' );
+		} else {
+			editor.innerText = item.data.transformations;
+		}
+
+		editor.addEventListener( 'click', ( ev ) => {
+			ev.preventDefault();
+			this.editModal.edit( item, ( transformations ) => {
+				item.data.transformations = transformations;
+				if ( ! transformations.length ) {
+					editor.innerText = __( 'Add transformations', 'cloudinary' );
+				} else {
+					editor.innerText = item.data.transformations;
+				}
+			} );
+		} );
+		td.appendChild( editor );
+		return td;
 	},
 	_getFile( cachePoint, item ) {
 		const file = document.createElement( 'td' );
@@ -545,4 +576,11 @@ const CacheManage = {
 	},
 };
 
-export default CacheManage;
+const context = document.getElementById( 'cloudinary-settings-page' );
+
+if ( context ) {
+	// Init states.
+	States.init();
+	// Init.
+	window.addEventListener( 'load', () => AssetManager.init( context, States ) );
+}

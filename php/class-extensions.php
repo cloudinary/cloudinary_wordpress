@@ -135,7 +135,7 @@ class Extensions extends Settings_Component implements Setup {
 				'description' => __( "Cloudinary's digital asset management solution bridges the gap between asset management and delivery, enabling creative.", 'cloudinary' ),
 				'icon'        => $this->plugin->dir_url . 'css/images/logo-icon.svg',
 				'handler'     => '\\Cloudinary\\Media_Library',
-				'default'     => 'on',
+				'default'     => 'off',
 			),
 		);
 

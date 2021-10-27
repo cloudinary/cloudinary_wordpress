@@ -8,6 +8,8 @@
 namespace Cloudinary\Assets;
 
 use Cloudinary\Assets;
+use Cloudinary\Connect\Api;
+use Cloudinary\Sync;
 use Cloudinary\Utils;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -84,7 +86,43 @@ class Rest_Assets {
 			'args'                => array(),
 		);
 
+		$endpoints['save_asset'] = array(
+			'method'              => \WP_REST_Server::CREATABLE,
+			'callback'            => array( $this, 'rest_save_asset' ),
+			'permission_callback' => array( $this, 'rest_can_manage_options' ),
+			'args'                => array(),
+		);
+
 		return $endpoints;
+	}
+
+	/**
+	 * Update an assets transformations.
+	 *
+	 * @param WP_REST_Request $request The request object.
+	 *
+	 * @return WP_Error|WP_HTTP_Response|WP_REST_Response
+	 */
+	public function rest_save_asset( $request ) {
+
+		$media                = $this->assets->media;
+		$attachment_id        = $request->get_param( 'ID' );
+		$transformations      = $request->get_param( 'transformations' );
+		$type                 = $media->get_resource_type( $attachment_id );
+		$transformation_array = $media->get_transformations_from_string( $transformations, $type );
+		$cleaned              = Api::generate_transformation_string( $transformation_array, $type );
+		$this->assets->delivery->update_size_relations_transformations( $attachment_id, $cleaned );
+		$this->assets->media->update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], $transformation_array );
+
+		$return = array(
+			'transformations' => $cleaned,
+		);
+
+		if ( $cleaned !== $transformations ) {
+			$return['note'] = __( 'Some transformations were invalid and were removed.', 'cloudinary' );
+		}
+
+		return rest_ensure_response( $return );
 	}
 
 	/**
@@ -261,13 +299,22 @@ class Rest_Assets {
 			$start = $limit * $page - 1;
 		}
 		if ( empty( $cache ) ) {
+			$search_ext = null;
+			if ( ! empty( $search ) ) {
+				if ( is_numeric( $search ) ) {
+					$search_ext = $wpdb->prepare( ' AND post_id = %d', (int) $search );
+				} else {
+					$search_ext = " AND sized_url LIKE '%%{$search}%%'";
+				}
+			}
+
 			$prepare        = $wpdb->prepare(
-				"SELECT COUNT( id ) as total FROM $wpdb->cld_table WHERE parent_path = %s AND primary_url = sized_url AND sync_type = 'asset';",
+				"SELECT COUNT( id ) as total FROM $wpdb->cld_table WHERE parent_path = %s AND primary_url = sized_url AND post_state != 'inherit' {$search_ext};", // phpcs:ignore WordPress.DB.PreparedSQL
 				$cache_point->post_title
 			);
 			$cache['total'] = (int) $wpdb->get_var( $prepare ); // phpcs:ignore WordPress.DB
 			$prepare        = $wpdb->prepare(
-				"SELECT * FROM $wpdb->cld_table WHERE public_id IS NOT NULL && parent_path = %s AND primary_url = sized_url AND sync_type = 'asset' limit %d,%d;",
+				"SELECT * FROM $wpdb->cld_table WHERE public_id IS NOT NULL && parent_path = %s AND primary_url = sized_url AND post_state != 'inherit' {$search_ext} limit %d,%d;", // phpcs:ignore WordPress.DB.PreparedSQL
 				$cache_point->post_title,
 				$start,
 				$limit
@@ -288,15 +335,7 @@ class Rest_Assets {
 		}
 		$items = array();
 		foreach ( $cache['items'] as $item ) {
-			$parts   = explode( $item['parent_path'], $item['primary_url'] );
-			$url     = './' . $parts[1];
-			$items[] = array(
-				'ID'        => $item['post_id'],
-				'key'       => $item['id'],
-				'local_url' => $item['primary_url'],
-				'short_url' => $url,
-				'active'    => 'enable' === $item['post_state'],
-			);
+			$items[] = $this->assets->build_item( $item );
 		}
 		$total_items = $cache['total'];
 		$pages       = ceil( $total_items / $limit );
