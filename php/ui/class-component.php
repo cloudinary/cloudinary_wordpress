@@ -689,14 +689,15 @@ abstract class Component {
 	/**
 	 * Filter the dashicon parts structure.
 	 *
-	 * @param array $struct The array structure.
+	 * @param array  $struct The array structure.
+	 * @param string $icon   The dashicon slug.
 	 *
 	 * @return array
 	 */
-	protected function dashicon( $struct ) {
+	protected function dashicon( $struct, $icon = 'dashicons-yes-alt' ) {
 		$struct['element']               = 'span';
 		$struct['attributes']['class'][] = 'dashicons';
-		$struct['attributes']['class'][] = $this->setting->get_param( 'icon' );
+		$struct['attributes']['class'][] = $icon;
 
 		return $struct;
 	}

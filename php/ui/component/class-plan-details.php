@@ -67,13 +67,13 @@ class Plan_Details extends Component {
 		$connection = get_plugin_instance()->get_component( 'connect' );
 		$units      = $connection->get_usage_stat( 'credits', 'limit' );
 		$units_used = $connection->get_usage_stat( 'credits', 'usage' );
-		$extra      = $connection->get_usage_stat( 'credits', 'extra' );
+		$remaining  = $units - $units_used;
 
 		$struct['children']['plan'] = $this->make_item( __( 'Plan', 'cloudinary' ), $data['plan'], $this->dir_url . 'css/images/star.svg' );
 
 		$usage                             = $units . ' per month / ' . $units_used . ' used';
 		$struct['children']['units']       = $this->make_item( __( 'Plan Units', 'cloudinary' ), $usage, $this->dir_url . 'css/images/units.svg' );
-		$struct['children']['extra_units'] = $this->make_item( __( 'Extra Units', 'cloudinary' ), $extra, $this->dir_url . 'css/images/units-plus.svg' );
+		$struct['children']['remaining_units'] = $this->make_item( __( 'Remaining Units', 'cloudinary' ), $remaining, $this->dir_url . 'css/images/units-plus.svg' );
 		$struct['children']['requests']    = $this->make_item( __( 'Total Requests', 'cloudinary' ), number_format_i18n( $data['requests'] ), $this->dir_url . 'css/images/requests.svg' );
 		$struct['children']['assets']      = $this->make_item( __( 'Total Assets', 'cloudinary' ), $data['resources'], $this->dir_url . 'css/images/image.svg' );
 

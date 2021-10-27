@@ -243,15 +243,19 @@ class Delivery implements Setup {
 	public function get_sizes( $attachment_id ) {
 		static $sizes = array();
 		if ( empty( $sizes[ $attachment_id ] ) ) {
+			$sizes[ $attachment_id ] = array();
 			$meta                    = wp_get_attachment_metadata( $attachment_id, true );
 			$local_url               = self::clean_url( $this->media->local_url( $attachment_id ), true );
 			$urls                    = array(
 				'primary_url' => $local_url,
 				'sized_url'   => $local_url,
 			);
-			$sizes[ $attachment_id ] = array(
-				$meta['width'] . 'x' . $meta['height'] => $urls,
-			);
+
+			if ( ! empty( $meta['width'] ) && ! empty( $meta['height'] ) ) {
+				$sizes[ $attachment_id ] = array(
+					$meta['width'] . 'x' . $meta['height'] => $urls,
+				);
+			}
 
 			if ( ! empty( $meta['sizes'] ) ) {
 				foreach ( $meta['sizes'] as $size ) {
@@ -722,7 +726,7 @@ class Delivery implements Setup {
 			$tag_element['overwrite_transformations']
 		);
 
-		if ( 'on' === $this->plugin->settings->image_settings->_overlay ) {
+		if ( current_user_can( 'manage_options' ) && 'on' === $this->plugin->settings->image_settings->_overlay ) {
 			$local_size = get_post_meta( $tag_element['id'], Sync::META_KEYS['local_size'], true );
 			if ( empty( $local_size ) && file_exists( get_attached_file( $tag_element['id'] ) ) ) {
 				$local_size = filesize( get_attached_file( $tag_element['id'] ) );

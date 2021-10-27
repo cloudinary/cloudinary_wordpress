@@ -32,6 +32,27 @@ class Dashboard {
 	}
 
 	/**
+	 * Check if theres and data in assets.
+	 *
+	 * @return bool
+	 */
+	public function has_data() {
+		$sync = $this->plugin->get_component( 'sync' );
+		$data = $sync->managers['queue']->get_total_synced_media();
+
+		return ! empty( $data );
+	}
+
+	/**
+	 * Check if there no assets..
+	 *
+	 * @return bool
+	 */
+	public function no_assets() {
+		return ! $this->has_data();
+	}
+
+	/**
 	 * Add the settings.
 	 *
 	 * @param array $pages The pages to add to.
@@ -47,8 +68,9 @@ class Dashboard {
 			'sidebar'             => true,
 			'settings'            => array(
 				array(
-					'type'  => 'panel',
-					'title' => __( 'How much you optimize', 'cloudinary' ),
+					'type'    => 'panel',
+					'title'   => __( 'How much you optimize', 'cloudinary' ),
+					'enabled' => array( $this, 'has_data' ),
 					array(
 						'type'       => 'row',
 						'align'      => 'center',
@@ -82,24 +104,53 @@ class Dashboard {
 									),
 								),
 								array(
-									'type'    => 'tag',
-									'element' => 'h3',
-									'content' => __( 'Percentage of assets optimized by Cloudinary', 'cloudinary' ),
-								),
-								array(
 									'type'       => 'tag',
-									'element'    => 'h5',
-									'content'    => '&nbsp;',
+									'element'    => 'h3',
+									'content'    => __( 'Percentage of assets optimized by Cloudinary', 'cloudinary' ),
 									'attributes' => array(
-										'data-text' => 'unoptimized_status_text',
+										'class' => array(
+											'cld-progress-box-title',
+										),
 									),
 								),
 								array(
 									'type'       => 'tag',
-									'element'    => 'h5',
+									'element'    => 'div',
+									'content'    => '&nbsp;',
+									'attributes' => array(
+										'data-text' => 'unoptimized_status_text',
+										'class'     => array(
+											'cld-stat-text',
+										),
+									),
+								),
+								array(
+									'type'       => 'tag',
+									'element'    => 'div',
 									'content'    => '&nbsp;',
 									'attributes' => array(
 										'data-text' => 'optimized_status_text',
+										'class'     => array(
+											'cld-stat-text',
+										),
+									),
+								),
+								array(
+									'type'       => 'tag',
+									'element'    => 'a',
+									'content'    => '&nbsp;',
+									'attributes' => array(
+										'href'      => add_query_arg(
+											array(
+												'cloudinary-filter' => Sync::META_KEYS['sync_error'],
+											),
+											admin_url( 'upload.php' )
+										),
+										'data-text' => 'error_count_hr',
+										'class'     => array(
+											'cld-stat-text',
+											'cld-ui-error',
+										),
 									),
 								),
 							),
@@ -153,86 +204,167 @@ class Dashboard {
 								),
 							),
 						),
+					),
+				),
+				array(
+					'type'    => 'panel',
+					'title'   => __( 'How much you optimize', 'cloudinary' ),
+					'enabled' => array( $this, 'no_assets' ),
+					array(
+						'type'       => 'row',
+						'align'      => 'center',
+						'attributes' => array(
+							'wrap' => array(
+								'class' => array(
+									'cld-optimize-panel',
+								),
+							),
+						),
 						array(
 							'type'  => 'column',
-							'width' => 'auto',
+							'width' => '50%',
 							array(
 								'type'       => 'tag',
 								'element'    => 'div',
 								'attributes' => array(
 									'class' => array(
-										'cld-stat-legend',
+										'cld-dashboard-placeholder',
 									),
 								),
 								array(
 									'type'       => 'tag',
-									'element'    => 'span',
+									'element'    => 'img',
+									'render'     => true,
 									'attributes' => array(
-										'class' => array(
-											'cld-stat-legend-dot',
-											'blue-dot',
-										),
+										'src'    => $this->plugin->dir_url . 'css/images/circular-loader.svg',
+										'width'  => '40px',
+										'height' => '40px',
 									),
-									'content'    => '&nbsp;',
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'h4',
+									'content' => __( 'Not enough data to show', 'cloudinary' ),
 								),
 								array(
 									'type'    => 'tag',
 									'element' => 'span',
-									'content' => __( 'Unoptimized', 'cloudinary' ),
+									'content' => __( 'Come back when more data is available', 'cloudinary' ),
 								),
 							),
+						),
+						array(
+							'type'  => 'column',
+							'width' => '50%',
 							array(
 								'type'       => 'tag',
 								'element'    => 'div',
 								'attributes' => array(
 									'class' => array(
-										'cld-stat-legend',
+										'cld-dashboard-placeholder',
 									),
 								),
 								array(
 									'type'       => 'tag',
-									'element'    => 'span',
+									'element'    => 'img',
+									'render'     => true,
 									'attributes' => array(
-										'class' => array(
-											'cld-stat-legend-dot',
-											'aqua-dot',
-										),
+										'src'    => $this->plugin->dir_url . 'css/images/circular-loader.svg',
+										'width'  => '40px',
+										'height' => '40px',
 									),
-									'content'    => '&nbsp;',
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'h4',
+									'content' => __( 'Not enough data to show', 'cloudinary' ),
 								),
 								array(
 									'type'    => 'tag',
 									'element' => 'span',
-									'content' => __( 'Optimized', 'cloudinary' ),
+									'content' => __( 'Come back when more data is available', 'cloudinary' ),
 								),
 							),
+						),
+					),
+				),
+				array(
+					'type'    => 'panel',
+					'title'   => __( 'How much you optimize', 'cloudinary' ),
+					'enabled' => array( $this, 'no_assets' ),
+					array(
+						'type'       => 'row',
+						'align'      => 'center',
+						'attributes' => array(
+							'wrap' => array(
+								'class' => array(
+									'cld-optimize-panel',
+								),
+							),
+						),
+						array(
+							'type'  => 'column',
+							'width' => '50%',
 							array(
 								'type'       => 'tag',
 								'element'    => 'div',
 								'attributes' => array(
 									'class' => array(
-										'cld-stat-legend',
+										'cld-dashboard-placeholder',
 									),
 								),
 								array(
 									'type'       => 'tag',
-									'element'    => 'span',
+									'element'    => 'img',
+									'render'     => true,
 									'attributes' => array(
-										'class' => array(
-											'cld-stat-legend-dot',
-											'red-dot',
-										),
+										'src'    => $this->plugin->dir_url . 'css/images/circular-loader.svg',
+										'width'  => '40px',
+										'height' => '40px',
 									),
-									'content'    => '&nbsp;',
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'h4',
+									'content' => __( 'Not enough data to show', 'cloudinary' ),
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'span',
+									'content' => __( 'Come back when more data is available', 'cloudinary' ),
+								),
+							),
+						),
+						array(
+							'type'  => 'column',
+							'width' => '50%',
+							array(
+								'type'       => 'tag',
+								'element'    => 'div',
+								'attributes' => array(
+									'class' => array(
+										'cld-dashboard-placeholder',
+									),
 								),
 								array(
 									'type'       => 'tag',
-									'element'    => 'a',
-									'content'    => '&nbsp;',
+									'element'    => 'img',
+									'render'     => true,
 									'attributes' => array(
-										'href'      => '#', // @todo: link to filtered media.
-										'data-text' => 'error_count_hr',
+										'src'    => $this->plugin->dir_url . 'css/images/circular-loader.svg',
+										'width'  => '40px',
+										'height' => '40px',
 									),
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'h4',
+									'content' => __( 'Not enough data to show', 'cloudinary' ),
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'span',
+									'content' => __( 'Come back when more data is available', 'cloudinary' ),
 								),
 							),
 						),

@@ -8,11 +8,11 @@
 namespace Cloudinary;
 
 use Cloudinary\Media\Global_Transformations;
-use WP_REST_Server;
-use WP_REST_Request;
 use WP_Error;
 use WP_HTTP_Response;
+use WP_REST_Request;
 use WP_REST_Response;
+use WP_REST_Server;
 use WP_Screen;
 
 /**
@@ -451,9 +451,11 @@ class Deactivation {
 	protected function cleanup() {
 		wp_schedule_single_event( time() + 5 * MINUTE_IN_SECONDS, 'cloudinary_cleanup_event' );
 		add_option( self::CLEANING_KEY, true, '', false );
+		$this->cleanup_user_data();
 		$this->cleanup_post_meta();
 		$this->cleanup_term_meta();
 		$this->cleanup_post_type();
+		$this->drop_tables();
 		$this->cleanup_options();
 
 		// If we got this far, let's remove the cron event.
@@ -508,6 +510,26 @@ class Deactivation {
 	}
 
 	/**
+	 * Drop Cloudinary's tables.
+	 */
+	protected function drop_tables() {
+		global $wpdb;
+
+		$tables = array(
+			Utils::get_relationship_table(),
+		);
+
+		foreach ( $tables as $table ) {
+			$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				$wpdb->prepare(
+					'DROP TABLE IF EXISTS %s',
+					$table
+				)
+			);
+		}
+	}
+
+	/**
 	 * Cleanup Cloudinary's post types related.
 	 */
 	protected function cleanup_post_type() {
@@ -550,6 +572,7 @@ class Deactivation {
 				'cloudinary_setup',
 				'cloudinary_main_cache_page',
 				'_cld_disable_http_upload',
+				Report::REPORT_KEY,
 				Media::GLOBAL_VIDEO_TRANSFORMATIONS,
 				self::CLEANING_KEY,
 			)

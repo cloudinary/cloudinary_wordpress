@@ -17,23 +17,24 @@ $settings = array(
 			'tabs' => array(
 				'image_setting' => array(
 					'text' => __( 'Settings', 'cloudinary' ),
-					'id'   => '#id',
+					'id'   => 'settings',
 				),
 				'image_preview' => array(
 					'text' => __( 'Preview', 'cloudinary' ),
-					'id'   => '#id2',
+					'id'   => 'preview',
 				),
 			),
 		),
 		array(
 			'type' => 'row',
 			array(
-				'type' => 'column',
+				'type'   => 'column',
+				'tab_id' => 'settings',
 				array(
 					'type'               => 'on_off',
 					'slug'               => 'image_optimization',
 					'title'              => __( 'Image optimization', 'cloudinary' ),
-					'optimisation_title' => __( 'Media library image optimization', 'cloudinary' ),
+					'optimisation_title' => __( 'Image optimization', 'cloudinary' ),
 					'tooltip_text'       => __(
 						'Images will be delivered using Cloudinary’s automatic format and quality algorithms for the best tradeoff between visual quality and file size. Use Advanced Optimization options to manually tune format and quality.',
 						'cloudinary'
@@ -119,7 +120,7 @@ $settings = array(
 						'</a>'
 					),
 					'link'           => array(
-						'text' => __( 'See Examples', 'cloudinary' ),
+						'text' => __( 'See examples', 'cloudinary' ),
 						'href' => 'https://cloudinary.com/documentation/image_transformations',
 					),
 					'attributes'     => array(
@@ -134,7 +135,7 @@ $settings = array(
 				array(
 					'type'  => 'info_box',
 					'icon'  => $this->dir_url . 'css/images/crop.svg',
-					'title' => __( 'What are transformations', 'cloudinary' ),
+					'title' => __( 'What are transformations?', 'cloudinary' ),
 					'text'  => __(
 						'A set of parameters included in a Cloudinary URL to programmatically transform the visual appearance of the assets on your website.',
 						'cloudinary'
@@ -142,8 +143,9 @@ $settings = array(
 				),
 			),
 			array(
-				'type'  => 'column',
-				'class' => array(
+				'type'   => 'column',
+				'tab_id' => 'preview',
+				'class'  => array(
 					'cld-ui-preview',
 				),
 				array(

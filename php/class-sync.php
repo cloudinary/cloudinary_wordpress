@@ -232,7 +232,7 @@ class Sync implements Setup, Assets {
 	 * @param mixed  $result        The result.
 	 */
 	public function log_sync_result( $attachment_id, $type, $result ) {
-		$log  = $this->managers['media']->get_process_logs( $attachment_id );
+		$log  = $this->managers['media']->get_process_logs( $attachment_id, true );
 		$keys = array_keys( $this->sync_base_struct );
 		if ( empty( $log ) || count( $log ) !== count( $keys ) ) {
 			$log = array_fill_keys( $keys, array() );
@@ -893,7 +893,7 @@ class Sync implements Setup, Assets {
 			}
 
 			// Check if there's an error.
-			$has_error = $this->managers['media']->get_post_meta( $attachment_id, self::META_KEYS['sync_error'], true );
+			$has_error = get_post_meta( $attachment_id, self::META_KEYS['sync_error'], true );
 			if ( ! empty( $has_error ) && $this->get_sync_type( $attachment_id ) ) {
 				$status['state'] = 'error';
 				$status['note']  = $has_error;

@@ -35,7 +35,7 @@
 		h2 {
 			font-size: $size-panel-title;
 			font-weight: bold;
-			margin: 0;
+			margin: 6px 0 1px;
 		}
 
 
@@ -91,6 +91,10 @@
 		.button.wp-color-result {
 			border-color: #d0d0d0;
 		}
+	}
+
+	&-error {
+		color: $color-red;
 	}
 }
 

@@ -1,5 +1,6 @@
 const LazyLoad = {
-	density: window.devicePixelRatio ? window.devicePixelRatio : 'auto',
+	deviceDensity: window.devicePixelRatio ? window.devicePixelRatio : 'auto',
+	density: null,
 	images: [],
 	debounce: null,
 	config: CLDLB ? CLDLB : {},
@@ -78,21 +79,28 @@ const LazyLoad = {
 		}, 100 );
 	},
 	_getDensity() {
-		const maxDensity = this.config.dpr ? this.config.dpr.replace(
+		if ( this.density ) {
+			return this.density;
+		}
+		let maxDensity = this.config.dpr ? this.config.dpr.replace(
 			'X', '' ) : 'off';
 		if ( 'off' === maxDensity ) {
+			this.density = 1;
 			return 1;
 		}
-		let deviceDensity = this.density;
+		let deviceDensity = this.deviceDensity;
 		if (
-			'auto' !== maxDensity &&
+			'max' !== maxDensity &&
 			'auto' !== deviceDensity
 		) {
+			maxDensity = parseFloat( maxDensity );
 			deviceDensity =
 				deviceDensity > Math.ceil( maxDensity )
 					? maxDensity
 					: deviceDensity;
 		}
+
+		this.density = deviceDensity;
 
 		return deviceDensity;
 	},
@@ -214,7 +222,6 @@ const LazyLoad = {
 			image.width,
 			this.config.pixel_step
 		);
-		const density = this._getDensity();
 		let newSize = [];
 		if ( width ) {
 			newSize.push( 'w_' + width );

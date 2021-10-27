@@ -53,11 +53,8 @@
 
 	&-help {
 		display: flex;
+		justify-content: space-between;
 		align-items: center;
 		margin-top: 50px;
-
-		img {
-			height: 175px;
-		}
 	}
 }

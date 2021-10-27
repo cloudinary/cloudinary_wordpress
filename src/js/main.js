@@ -16,6 +16,7 @@ import UI from './components/ui';
 import Wizard from './components/wizard';
 import Storage from "./components/storage";
 import Extensions from "./components/extensions";
+import Tabs from "./components/tabs";
 
 import '../css/main.scss';
 
@@ -44,6 +45,7 @@ import '../css/images/documentation.jpg';
 import '../css/images/request.jpg';
 import '../css/images/report.jpg';
 import '../css/images/confetti.png';
+import '../css/images/circular-loader.svg';
 
 
 // jQuery, because reasons.
@@ -60,5 +62,6 @@ export const cloudinary = {
 	Notices,
 	Wizard,
 	Storage,
-	Extensions
+	Extensions,
+	Tabs
 };

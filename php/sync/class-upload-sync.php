@@ -125,8 +125,8 @@ class Upload_Sync {
 				$actions['cloudinary-push'] = sprintf(
 					'<a href="%s" aria-label="%s">%s</a>',
 					$action_url,
-					esc_attr__( 'Sync with Cloudinary', 'cloudinary' ),
-					esc_html__( 'Sync with Cloudinary', 'cloudinary' )
+					esc_attr__( 'Sync and deliver from Cloudinary', 'cloudinary' ),
+					esc_html__( 'Sync and deliver from Cloudinary', 'cloudinary' )
 				);
 			} else {
 				if ( file_exists( get_attached_file( $post->ID ) ) ) {
@@ -288,6 +288,9 @@ class Upload_Sync {
 
 			$this->update_breakpoints( $attachment_id, $result );
 			$this->update_content( $attachment_id );
+			delete_post_meta( $attachment_id, Sync::META_KEYS['sync_error'] );
+		} else {
+			update_post_meta( $attachment_id, Sync::META_KEYS['sync_error'], $result->get_error_message() );
 		}
 
 		return $result;

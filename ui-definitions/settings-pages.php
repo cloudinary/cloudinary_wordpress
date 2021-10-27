@@ -94,14 +94,28 @@ $settings = array(
 				'title'       => __( 'Image breakpoints', 'cloudinary' ),
 				'option_name' => 'media_display',
 				array(
+					'type' => 'tabs',
+					'tabs' => array(
+						'image_setting' => array(
+							'text' => __( 'Settings', 'cloudinary' ),
+							'id'   => 'settings',
+						),
+						'image_preview' => array(
+							'text' => __( 'Preview', 'cloudinary' ),
+							'id'   => 'preview',
+						),
+					),
+				),
+				array(
 					'type' => 'row',
 					array(
-						'type' => 'column',
+						'type'   => 'column',
+						'tab_id' => 'settings',
 						array(
 							'type'               => 'on_off',
 							'slug'               => 'enable_breakpoints',
 							'title'              => __( 'Breakpoints', 'cloudinary' ),
-							'optimisation_title' => __( 'Responsive breakpoints', 'cloudinary' ),
+							'optimisation_title' => __( 'Responsive images', 'cloudinary' ),
 							'tooltip_text'       => __(
 								'Automatically generate multiple sizes based on the configured breakpoints to enable your images to responsively adjust to different screen sizes. Note that your Cloudinary usage will increase when enabling responsive images.',
 								'cloudinary'
@@ -142,21 +156,6 @@ $settings = array(
 								),
 							),
 							array(
-								'type'         => 'select',
-								'slug'         => 'dpr',
-								'priority'     => 8,
-								'title'        => __( 'DPR settings', 'cloudinary' ),
-								'tooltip_text' => __( 'The device pixel ratio to use for your generated images.', 'cloudinary' ),
-								'default'      => 'auto',
-								'options'      => array(
-									'off'  => __( 'None', 'cloudinary' ),
-									'auto' => __( 'Auto', 'cloudinary' ),
-									'2'    => __( '2X', 'cloudinary' ),
-									'3'    => __( '3X', 'cloudinary' ),
-									'4'    => __( '4X', 'cloudinary' ),
-								),
-							),
-							array(
 								'type'        => 'number',
 								'slug'        => 'max_width',
 								'title'       => __( 'Image width limit', 'cloudinary' ),
@@ -182,10 +181,28 @@ $settings = array(
 									'step' => 50,
 								),
 							),
+							array(
+								'type'    => 'tag',
+								'element' => 'hr',
+							),
+							array(
+								'type'         => 'select',
+								'slug'         => 'dpr',
+								'priority'     => 8,
+								'title'        => __( 'DPR settings', 'cloudinary' ),
+								'tooltip_text' => __( 'The device pixel ratio to use for your generated images.', 'cloudinary' ),
+								'default'      => 'auto',
+								'options'      => array(
+									'off'  => __( 'Off', 'cloudinary' ),
+									'2X'   => __( 'Auto (2x)', 'cloudinary' ),
+									'max'  => __( 'Max DPR', 'cloudinary' ),
+								),
+							),
 						),
 					),
 					array(
 						'type'      => 'column',
+						'tab_id'    => 'preview',
 						'class'     => array(
 							'cld-ui-preview',
 						),
@@ -302,7 +319,7 @@ $settings = array(
 						),
 						array(
 							'type'    => 'span',
-							'content' => __( 'If you’re encountering an issue or struggling to get the plugin work, open a ticket to contact our support team. To help us debug your queries, we recommend generating a system report.', 'cloudinary' ),
+							'content' => __( 'If you’re encountering an issue or struggling to get the plugin to work, open a ticket to contact our support team. To help us debug your queries, we recommend generating a system report.', 'cloudinary' ),
 						),
 					),
 				),
@@ -366,7 +383,7 @@ $settings = array(
 					'type'        => 'panel',
 					'title'       => __( 'I’ve installed the plugin, what happens now?', 'cloudinary' ),
 					'collapsible' => 'closed',
-					'content'     => __( 'If you left all the settings as default, all your current media will begin syncing to Cloudinary and will start to be optimized and delivered by fast CDN on your website. Once the syncing is complete, you should start seeing improvements in performance across your site.', 'cloudinary' ),
+					'content'     => __( 'If you left all the settings as default, all your current media will begin syncing with Cloudinary. Once syncing is complete, your media will be optimized and delivered using Cloudinary URLs and you should begin seeing improvements in performance across your site.', 'cloudinary' ),
 				),
 				array(
 					'type'        => 'panel',
@@ -408,12 +425,12 @@ $settings = array(
 					'collapsible' => 'closed',
 					'content'     => sprintf(
 						// translators: The HTML markup.
-						__( 'Your images may be loading locally for a number of reasons:%1$sThe asset has been selected to be delivered from WordPress. You can update this for each asset via the WordPress Media Library.%2$sYour asset is %3$sstored outside%4$s of your WordPress %5$sstorage%4$s.%2$sThe asset is not properly synced with Cloudinary. You can find the sync status of your assets in the WordPress Media Library.%6$s', 'cloudinary' ),
+						__( 'Your images may be loading locally for a number of reasons:%1$sThe asset has been selected to be delivered from WordPress. You can update this for each asset via the %5$sWordPress Media Library%4$s.%2$sYour asset is %3$sstored outside%4$s of your WordPress storage.%2$sThe asset is not properly synced with Cloudinary. You can find the sync status of your assets in the %5$sWordPress Media Library%4$s.%6$s', 'cloudinary' ),
 						'<ul><li>',
 						'</li><li>',
 						'<a href="' . add_query_arg( array( 'page' => 'cloudinary_connect#connect.cache_external.external_assets' ), admin_url( 'admin.php' ) ) . '">',
 						'</a>',
-						'<a href="#">',
+						'<a href="' . admin_url( 'upload.php' ) . '">',
 						'</li></ul>'
 					),
 				),

@@ -12,10 +12,23 @@ $settings = array(
 		'anchor'      => true,
 		'option_name' => 'media_display',
 		array(
+			'type' => 'tabs',
+			'tabs' => array(
+				'image_setting' => array(
+					'text' => __( 'Settings', 'cloudinary' ),
+					'id'   => 'settings',
+				),
+				'image_preview' => array(
+					'text' => __( 'Preview', 'cloudinary' ),
+					'id'   => 'preview',
+				),
+			),
+		),
+		array(
 			'type' => 'row',
 			array(
-				'type' => 'column',
-
+				'type'   => 'column',
+				'tab_id' => 'settings',
 				array(
 					'type'         => 'select',
 					'slug'         => 'video_player',
@@ -69,7 +82,6 @@ $settings = array(
 					'type'    => 'tag',
 					'element' => 'hr',
 				),
-
 				array(
 					'type' => 'group',
 					array(
@@ -146,7 +158,7 @@ $settings = array(
 				array(
 					'type'           => 'text',
 					'slug'           => 'video_freeform',
-					'title'          => __( 'Custom transformation', 'cloudinary' ),
+					'title'          => __( 'Additional video transformations', 'cloudinary' ),
 					'tooltip_text'   => sprintf(
 						// translators: The link to transformation reference.
 						__(
@@ -157,7 +169,7 @@ $settings = array(
 						'</a>'
 					),
 					'link'           => array(
-						'text' => __( 'See Examples', 'cloudinary' ),
+						'text' => __( 'See examples', 'cloudinary' ),
 						'href' => 'https://cloudinary.com/documentation/transformation_reference',
 					),
 					'attributes'     => array(
@@ -172,7 +184,7 @@ $settings = array(
 				array(
 					'type'  => 'info_box',
 					'icon'  => $this->dir_url . 'css/images/video.svg',
-					'title' => __( 'What are transformations', 'cloudinary' ),
+					'title' => __( 'What are transformations?', 'cloudinary' ),
 					'text'  => __(
 						'A set of parameters included in a Cloudinary URL to programmatically transform the visual appearance of the assets on your website.',
 						'cloudinary'
@@ -180,7 +192,8 @@ $settings = array(
 				),
 			),
 			array(
-				'type' => 'column',
+				'type'   => 'column',
+				'tab_id' => 'preview',
 				array(
 					'type'           => 'video_preview',
 					'title'          => __( 'Video preview', 'cloudinary' ),

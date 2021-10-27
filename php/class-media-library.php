@@ -39,13 +39,13 @@ class Media_Library extends Extension {
 	public function setup() {
 		// Setup the main page.
 		$this->handle = add_menu_page(
-			'Cloudinary Media Library',
-			'Media Library',
+			__( 'Cloudinary Media Library', 'cloudinary' ),
+			__( 'Cloudinary DAM', 'cloudinary' ),
 			'manage_options',
 			self::MEDIA_LIBRARY_SLUG,
 			array( $this, 'render' ),
 			'dashicons-cloudinary-media',
-			'81.4'
+			'81.6'
 		);
 	}
 
@@ -86,6 +86,6 @@ class Media_Library extends Extension {
 		);
 
 		$this->plugin->add_script_data( 'dam', $params );
-		$media->editor_assets();
+		$media->editor_assets( true );
 	}
 }

@@ -17,8 +17,8 @@
 			color: $color-cld-dark-blue;
 		}
 
-		&-active {
-			color: $color-success;
+		&-active,
+		&-not-active {
 			font-size: $size-panel-small;
 			font-weight: bold;
 
@@ -28,11 +28,24 @@
 			}
 		}
 
+		&-active {
+			color: $color-success;
+		}
+
+		&-not-active {
+			color: $color-cld-grey-blue;
+		}
 	}
 }
 
 &-ui-sidebar {
-	width: 500px;
+	width: 100%;
+
+	@media only screen and (min-width: $size-small) {
+		width: auto;
+		min-width: 400px;
+		max-width: 500px;
+	}
 
 	.cld-panel {
 		padding: $size-padding-sidebar;
