@@ -638,8 +638,13 @@ class Global_Transformations {
 				if ( ! empty( $transformations ) ) {
 					$text = Api::generate_transformation_string( $transformations, $this->media->get_resource_type( $attachment_id ) );
 				}
+				$args = array(
+					'page'    => 'cloudinary',
+					'section' => 'edit-asset',
+					'asset'   => $attachment_id,
+				);
 				?>
-				<a href="#" data-transformation-item="<?php echo esc_attr( wp_json_encode( $item ) ); ?>"><?php echo esc_html( $text ); ?></a>
+				<a href="<?php echo esc_url( add_query_arg( $args, 'admin.php' ) ); ?>" data-transformation-item="<?php echo esc_attr( wp_json_encode( $item ) ); ?>"><?php echo esc_html( $text ); ?></a>
 				<?php
 			}
 		}
