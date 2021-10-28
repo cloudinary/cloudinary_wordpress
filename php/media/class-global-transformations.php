@@ -619,14 +619,6 @@ class Global_Transformations {
 		}
 		$cols = array_slice( $cols, 0, $offset ) + $custom + array_slice( $cols, $offset );
 
-		$export = array(
-			'save_url' => rest_url( REST_API::BASE . '/save_asset' ),
-			'nonce'    => wp_create_nonce( 'wp_rest' ),
-		);
-		$this->media->plugin->add_script_data( 'editor', $export, 'cloudinary-media-transformations' );
-		// Add script.
-		wp_enqueue_script( 'cloudinary-media-transformations', $this->media->plugin->dir_url . 'js/media-transformations.js', array(), $this->media->plugin->version, true );
-
 		return $cols;
 	}
 
