@@ -466,24 +466,13 @@ const AssetManager = {
 		const td = document.createElement( 'td' );
 		const editor = document.createElement( 'a' );
 
-		editor.href = '#';
+		editor.href = item.edit_url;
 		if ( ! item.data.transformations ) {
 			editor.innerText = __( 'Add transformations', 'cloudinary' );
 		} else {
 			editor.innerText = item.data.transformations;
 		}
 
-		editor.addEventListener( 'click', ( ev ) => {
-			ev.preventDefault();
-			this.editModal.edit( item, ( transformations ) => {
-				item.data.transformations = transformations;
-				if ( ! transformations.length ) {
-					editor.innerText = __( 'Add transformations', 'cloudinary' );
-				} else {
-					editor.innerText = item.data.transformations;
-				}
-			} );
-		} );
 		td.appendChild( editor );
 		return td;
 	},
