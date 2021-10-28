@@ -1,14 +1,12 @@
 import apiFetch from '@wordpress/api-fetch';
 import { __ } from '@wordpress/i18n';
 import OnOff from './components/onoff';
-import AssetEditModal from './components/asset-edit-modal';
 import States from './components/states';
 
 const AssetManager = {
 	cachePoints: {},
 	spinners: {},
 	states: null,
-	editModal: AssetEditModal.init( 'cldAsset' ),
 	init( context, States ) {
 		this.states = States;
 
