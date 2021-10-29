@@ -22,7 +22,6 @@ if ( ! empty( $cloudinary_url ) ) {
 	$autosync    = 'on' === $cloudinary->settings->get_value( 'auto_sync' );
 	$nonmedia    = 'on' === $cloudinary->settings->get_value( 'cache.enable' );
 	$advanced    = 'on' === $cloudinary->settings->get_value( 'use_lazy_load' ) && 'on' === $cloudinary->settings->get_value( 'enable_breakpoints' );
-	$current_tab = 2;
 }
 
 // Export settings.
