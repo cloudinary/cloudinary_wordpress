@@ -191,7 +191,9 @@ class Download_Sync {
 			$this->sync->set_signature_item( $attachment_id, 'download' );
 			$this->sync->set_signature_item( $attachment_id, 'file' );
 			$this->sync->set_signature_item( $attachment_id, 'folder' );
-			$this->sync->add_to_sync( $attachment_id ); // Update storage and other sync types.
+			if ( $this->sync->can_sync( $attachment_id ) ) {
+				$this->sync->add_to_sync( $attachment_id ); // Update storage and other sync types.
+			}
 		} catch ( \Exception $e ) {
 			return new \WP_Error( 'download_error', $e->getMessage() );
 		}
