@@ -81,7 +81,6 @@ const cldCore = {
 		'lazyload-preview': './src/js/lazyload-preview.js',
 		'asset-manager': './src/js/asset-manager.js',
 		'asset-edit': './src/js/asset-edit.js',
-		'media-transformations': './src/js/media-transformations.js',
 	},
 	module: {
 		rules: [

@@ -855,6 +855,12 @@ class Assets extends Settings_Component {
 			$parts   = explode( $break, $preview );
 		}
 
+		$args = array(
+			'page'    => 'cloudinary',
+			'section' => 'edit-asset',
+			'asset'   => $item['post_id'],
+		);
+
 		$return = array(
 			'ID'              => $item['post_id'],
 			'key'             => $item['id'],
@@ -867,6 +873,7 @@ class Assets extends Settings_Component {
 			'file'            => $parts[1],
 			'size'            => $break,
 			'transformations' => $item['transformations'] ? $item['transformations'] : null,
+			'edit_url'        => admin_url( add_query_arg( $args, 'admin.php' ) ),
 		);
 
 		return $return;
