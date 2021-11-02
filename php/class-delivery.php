@@ -9,13 +9,10 @@ namespace Cloudinary;
 
 use Cloudinary\Component\Setup;
 use Cloudinary\Connect\Api;
+use Cloudinary\Delivery\Bypass;
 use Cloudinary\Media\Filter;
 use Cloudinary\Media\Global_Transformations;
-use Cloudinary\Sync;
-use Cloudinary\String_Replace;
 use Cloudinary\UI\Component\HTML;
-use Cloudinary\Delivery\Bypass;
-use WP_Post;
 
 /**
  * Plugin Delivery class.
@@ -387,6 +384,7 @@ class Delivery implements Setup {
 		add_action( 'save_post', array( $this, 'remove_replace_cache' ) );
 		add_action( 'cloudinary_string_replace', array( $this, 'catch_urls' ) );
 		add_filter( 'post_thumbnail_html', array( $this, 'process_featured_image' ), 100, 3 );
+		add_filter( 'do_shortcode_tag', array( $this, 'load_shortcode_hook' ), 1 );
 
 		add_filter( 'cloudinary_current_post_id', array( $this, 'get_current_post_id' ) );
 		add_filter( 'the_content', array( $this, 'add_post_id' ) );
@@ -523,6 +521,59 @@ class Delivery implements Setup {
 		}
 
 		return HTML::build_tag( $tag_element['tag'], $tag_element['atts'] );
+	}
+
+	/**
+	 * Load Cloudinary hook to resolve shortcodes.
+	 *
+	 * @param string $content The content.
+	 *
+	 * @return string
+	 */
+	public function load_shortcode_hook( $content ) {
+		add_filter( 'cloudinary_delivery_tag', array( $this, 'update_delivery_tag_data' ) );
+
+		return $content;
+	}
+
+	/**
+	 * Filter the delivery tag data.
+	 *
+	 * @param array $data The delivery tag data.
+	 *
+	 * @return array
+	 */
+	public function update_delivery_tag_data( $data ) {
+		// We do have all we need.
+		if ( ! empty( $data['id'] ) ) {
+			return $data;
+		}
+
+		// Try to get the ID via URL.
+		if ( ! empty( $data['atts']['src'] ) ) {
+			$data['id'] = $this->media->get_id_from_url( $data['atts']['src'] );
+		}
+
+		// Bail early we can't find the attachment ID.
+		if ( empty( $data['id'] ) ) {
+			return $data;
+		}
+
+		// Get the largest size for the attachment — relevant for the aspect ratio.
+		if ( empty( $data['atts']['width'] ) && empty( $data['atts']['height'] ) ) {
+			$sizes                  = wp_get_attachment_image_src( $data['id'], 'full' );
+			$data['atts']['width']  = $sizes[1];
+			$data['atts']['height'] = $sizes[2];
+			$data['width']          = $sizes[1];
+			$data['height']         = $sizes[2];
+		}
+
+		// Get the public_id if empty.
+		if ( empty( $data['atts']['data-public-id'] ) ) {
+			$data['atts']['data-public-id'] = $this->media->get_public_id( $data['id'] );
+		}
+
+		return $data;
 	}
 
 	/**
@@ -666,6 +717,19 @@ class Delivery implements Setup {
 			 * @return {int|false}
 			 */
 			$set['id'] = apply_filters( 'cloudinary_delivery_get_id', $set['id'], $set );
+
+			/**
+			 * Filter the delivery tag.
+			 *
+			 * @hook   cloudinary_delivery_tag
+			 * @since  3.0.0
+			 *
+			 * @param $tag_element {array} The tag element.
+			 *
+			 * @return {array}
+			 */
+			$set = apply_filters( 'cloudinary_delivery_tag', $set );
+
 			if ( empty( $set['id'] ) ) {
 				continue;
 			}
