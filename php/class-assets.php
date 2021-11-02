@@ -231,10 +231,10 @@ class Assets extends Settings_Component {
 			return;
 		}
 
-		if ( 'off' === $this->plugin->settings->image_settings->_overlay ) {
-			$title = __( 'Enable Cloudinary status', 'cloudinary' );
-		} else {
+		if ( 'on' === $this->plugin->settings->image_settings->_overlay ) {
 			$title = __( 'Disable Cloudinary status', 'cloudinary' );
+		} else {
+			$title = __( 'Enable Cloudinary status', 'cloudinary' );
 		}
 
 		$nonce   = wp_create_nonce( 'cloudinary-cache-overlay' );
