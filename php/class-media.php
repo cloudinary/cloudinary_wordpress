@@ -658,7 +658,7 @@ class Media extends Settings_Component implements Setup {
 		$file      = implode( '/', $parts );
 		$path_info = pathinfo( $file );
 
-		$public_id = '.' !== $path_info['dirname'] ? $path_info['dirname'] : $path_info['filename'];
+		$public_id = isset( $path_info['dirname'] ) && '.' !== $path_info['dirname'] ? $path_info['dirname'] : $path_info['filename'];
 		$public_id = trim( $public_id, './' );
 
 		if ( $as_sync_key ) {
