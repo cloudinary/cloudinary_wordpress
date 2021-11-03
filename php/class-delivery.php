@@ -835,6 +835,8 @@ class Delivery implements Setup {
 			'delivery'                  => 'wp',
 			'breakpoints'               => true,
 			'transformations'           => array(),
+			'width'                     => 0,
+			'height'                    => 0,
 		);
 		// Cleanup element.
 		$element = trim( $element, '</>' );
@@ -865,7 +867,9 @@ class Delivery implements Setup {
 			}
 			$tag_element['id']            = (int) $this->known[ $url ]['post_id'];
 			$tag_element['width']         = $this->known[ $url ]['width'];
+			$attributes['width']          = $this->known[ $url ]['width'];
 			$tag_element['height']        = $this->known[ $url ]['height'];
+			$attributes['height']         = $this->known[ $url ]['height'];
 			$attributes['data-public-id'] = $this->known[ $url ]['public_id'];
 		}
 		if ( ! empty( $attributes['class'] ) ) {
