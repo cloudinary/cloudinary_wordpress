@@ -382,12 +382,12 @@ class Sync_Queue {
 			// Optimized is the % optimized vs unoptimized.
 			'optimized_percent'       => round( $total_optimized / $total_assets, 4 ),
 			'optimized_percent_hr'    => round( $total_optimized / $total_assets * 100, 1 ) . '%',
-			'optimized_info'          => 'Total Assets',
+			'optimized_info'          => __( 'Optimized assets', 'cloudinary' ),
 
 			// Error size: No mockups on what to display here.
 			'error_count'             => $errors_count,
 			// translators: placeholders are the number of errors.
-			'error_count_hr'          => 0 === $errors_count ? '' : sprintf( _n( '%s sync error detected.', '%s errors detected', $errors_count, 'cloudinary' ), number_format_i18n( $errors_count ) ),
+			'error_count_hr'          => 0 === $errors_count ? '' : sprintf( _n( '%s error with assets.', '%s errors with assets', $errors_count, 'cloudinary' ), number_format_i18n( $errors_count ) ),
 
 			// Number of assets.
 			'total_assets'            => $total_assets, // This is a count of the assets in _cloudinary_relationships.
@@ -395,9 +395,9 @@ class Sync_Queue {
 
 			// Status text.
 			// translators: placeholders are the number of assets unoptimized.
-			'unoptimized_status_text' => sprintf( _n( '%s Asset unoptimized by your selection.', '%s Assets Unoptimized by your selection.', $total_unoptimized, 'cloudinary' ), number_format_i18n( $total_unoptimized ) ),
+			'unoptimized_status_text' => 0 === $total_unoptimized ? __( 'All assets optimized.', 'cloudinary' ) : sprintf( _n( '%s asset excluded from optimization.', '%s assets excluded from optimization.', $total_unoptimized, 'cloudinary' ), number_format_i18n( $total_unoptimized ) ),
 			// translators: placeholders are the number of assets unoptimized.
-			'optimized_status_text'   => sprintf( __( '%1$s / %2$s Assets being optimized now.', 'cloudinary' ), number_format_i18n( $total_queued ), number_format_i18n( $total_assets ) ), // This will be shown when items are pending (check queue).
+			'optimized_status_text'   => 0 !== $total_queued ? sprintf( __( '%1$s assets of %2$s currently syncing with Cloudinary.', 'cloudinary' ), number_format_i18n( $total_queued ), number_format_i18n( $total_assets ) ) : '', // This will be shown when items are pending (check queue).
 		);
 
 		return $return;

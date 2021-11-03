@@ -260,7 +260,7 @@ class Assets extends Settings_Component {
 	 * @return bool
 	 */
 	public function can_sync( $can, $asset_id ) {
-		if ( self::is_asset_type( $asset_id ) || 'off' === $this->settings->get_value( 'auto_sync' ) && 'on' === $this->settings->get_value( 'content.enabled' ) ) {
+		if ( self::is_asset_type( $asset_id ) && 'off' === $this->settings->get_value( 'auto_sync' ) && 'on' === $this->settings->get_value( 'content.enabled' ) ) {
 			$can = true;
 		}
 

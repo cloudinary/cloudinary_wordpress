@@ -631,6 +631,20 @@ class Global_Transformations {
 	public function transformations_column_value( $column_name, $attachment_id ) {
 		if ( 'cld_transformations' === $column_name && $this->media->sync->is_synced( $attachment_id ) ) {
 
+			// Transformations are only available for Images and Videos.
+			if (
+				! in_array(
+					$this->media->get_media_type( $attachment_id ),
+					array(
+						'image',
+						'video',
+					),
+					true
+				)
+			) {
+				return;
+			}
+
 			$item = $this->media->plugin->get_component( 'assets' )->get_asset( $attachment_id, 'dataset' );
 			if ( ! empty( $item['data']['public_id'] ) ) {
 				$text            = __( 'Add transformations', 'cloudinary' );
