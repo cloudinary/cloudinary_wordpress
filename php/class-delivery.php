@@ -880,6 +880,8 @@ class Delivery implements Setup {
 			if ( in_array( 'cld-overwrite', $attributes['class'], true ) ) {
 				$tag_element['overwrite_transformations'] = true;
 			}
+		} else {
+			$attributes['class'] = array();
 		}
 
 		$inline_transformations = $this->get_transformations_maybe( $url );
