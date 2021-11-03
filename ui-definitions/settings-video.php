@@ -117,6 +117,7 @@ $settings = array(
 							'none' => __( 'Not set', 'cloudinary' ),
 							'auto' => __( 'Auto', 'cloudinary' ),
 						),
+						'suffix'       => 'f_auto',
 						'attributes'   => array(
 							'data-context' => 'video',
 							'data-meta'    => 'f',
@@ -144,6 +145,7 @@ $settings = array(
 							'40'        => '40',
 							'20'        => '20',
 						),
+						'suffix'       => 'q_auto',
 						'attributes'   => array(
 							'data-context' => 'video',
 							'data-meta'    => 'q',
