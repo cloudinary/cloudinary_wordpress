@@ -843,7 +843,21 @@ class Delivery implements Setup {
 		$attributes          = shortcode_parse_atts( $element );
 		$tag_element['tag']  = array_shift( $attributes );
 		$tag_element['type'] = 'img' === $tag_element['tag'] ? 'image' : $tag_element['tag'];
-		$url                 = isset( $attributes['src'] ) ? self::clean_url( $attributes['src'] ) : '';
+		$raw_url             = isset( $attributes['src'] ) ? $attributes['src'] : '';
+		$url                 = self::clean_url( $raw_url );
+
+		// Track back the found URL.
+		if ( $this->media->is_cloudinary_url( $raw_url ) ) {
+			$filename  = basename( remove_query_arg( '_i', $raw_url ) );
+			$public_id = $this->media->get_public_id_from_url( $raw_url );
+			foreach ( $this->known as $key_url => $set ) {
+				if ( $set['public_id'] === $public_id && basename( $set['sized_url'] ) === $filename ) {
+					$url               = $set['sized_url'];
+					$attributes['src'] = $set['sized_url'];
+					break;
+				}
+			}
+		}
 
 		if ( ! empty( $this->known[ $url ] ) && ! empty( $this->known[ $url ]['public_id'] ) ) {
 			if ( ! empty( $this->known[ $url ]['transformations'] ) ) {
@@ -1068,14 +1082,31 @@ class Delivery implements Setup {
 	 */
 	protected function get_urls( $content ) {
 		global $wpdb;
-		$base_urls = array_map( array( $this, 'clean_url' ), wp_extract_urls( $content ) );
-		$urls      = array_filter( array_unique( $base_urls ), array( $this, 'validate_url' ) ); // clean out empty urls.
-		if ( empty( $urls ) ) {
+		$base_urls       = array_unique( wp_extract_urls( $content ) );
+		$urls            = array_filter( $base_urls, array( $this, 'validate_url' ) ); // clean out empty urls.
+		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
+		if ( empty( $urls ) && empty( $cloudinary_urls ) ) {
 			return; // Bail since theres nothing.
 		}
-		$list      = implode( ', ', array_fill( 0, count( $urls ), '%s' ) );
+		// Clean URLS for search.
+		$urls       = array_map( array( $this, 'clean_url' ), $urls );
+		$public_ids = array_filter( array_map( array( $this->media, 'get_public_id_from_url' ), $cloudinary_urls ) );
+
+		$wheres = array();
+		if ( ! empty( $urls ) ) {
+			// Do the URLS.
+			$list     = implode( ', ', array_fill( 0, count( $urls ), '%s' ) );
+			$wheres[] = "sized_url IN( {$list} )";
+		}
+		if ( ! empty( $public_ids ) ) {
+			// Do the public_ids.
+			$list     = implode( ', ', array_fill( 0, count( $public_ids ), '%s' ) );
+			$wheres[] = "public_id IN( {$list} )";
+			$urls    += $public_ids;
+		}
+
 		$tablename = Utils::get_relationship_table();
-		$sql       = "SELECT * from {$tablename} WHERE sized_url IN( {$list} )";
+		$sql       = "SELECT * from {$tablename} WHERE " . implode( ' OR ', $wheres );
 		$prepared  = $wpdb->prepare( $sql, $urls ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$cache_key = md5( $prepared );
 		$results   = wp_cache_get( $cache_key, 'cld_delivery' );
