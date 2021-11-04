@@ -36,10 +36,10 @@ const LazyLoad = {
 		} );
 		// Resize handler.
 		window.addEventListener( 'resize', ( ev ) => {
-			this._debounceBuild();
+			this._build();
 		} );
 		window.addEventListener( 'scroll', ( ev ) => {
-			this._debounceBuild();
+			this._build();
 		} );
 		// Build images.
 		setTimeout( () => this._build(), 0 );
@@ -69,14 +69,6 @@ const LazyLoad = {
 				unit = number;
 		}
 		this.lazyThreshold = window.innerHeight + parseInt( unit, 10 );
-	},
-	_debounceBuild() {
-		if ( this.debounce ) {
-			clearTimeout( this.debounce );
-		}
-		this.debounce = setTimeout( () => {
-			this._build();
-		}, 100 );
 	},
 	_getDensity() {
 		if ( this.density ) {
