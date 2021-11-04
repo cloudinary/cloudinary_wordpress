@@ -57,6 +57,54 @@ class Responsive_Breakpoints extends Delivery_Feature {
 		$tag_element['atts']['data-responsive'] = true;
 		unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 
+		$lazy = $this->plugin->get_component( 'lazy_load' );
+
+		if ( is_null( $lazy ) || ! $lazy->is_enabled() ) {
+			$tag_element = $this->apply_breakpoints( $tag_element );
+		}
+
+		return $tag_element;
+	}
+
+	/**
+	 * Apply srcset breakpoints if lazy loading is off.
+	 *
+	 * @param array $tag_element The tag element array.
+	 *
+	 * @return array
+	 */
+	protected function apply_breakpoints( $tag_element ) {
+
+		$settings            = $this->settings->get_value( 'media_display' );
+		$max                 = $settings['max_width'];
+		$min                 = $settings['min_width'];
+		$width               = $tag_element['width'];
+		$height              = $tag_element['height'];
+		$size_tag            = '-' . $width . 'x' . $height . '.';
+		$step                = $settings['pixel_step'];
+		$ratio               = $width / $height;
+		$src                 = $tag_element['atts']['src'];
+		$size_transformation = $this->media->get_crop_from_transformation( $this->media->get_transformations_from_string( $src ) );
+		$size_string         = Api::generate_transformation_string( array( $size_transformation ) );
+		$breakpoints         = array();
+		while ( $max > $min ) {
+			if ( $width >= $max ) {
+				$size_transformation['width']  = $max;
+				$size_transformation['height'] = floor( $max / $ratio );
+				$new_size_tag                  = '-' . $size_transformation['width'] . 'x' . $size_transformation['height'] . '.';
+				$new_size                      = Api::generate_transformation_string( array( $size_transformation ) );
+				$new_url                       = str_replace( $size_string, $new_size, $src );
+				$new_url                       = str_replace( $size_tag, $new_size_tag, $new_url );
+				$breakpoints[]                 = $new_url . ' ' . $max . 'w';
+			}
+			$max -= $step;
+		}
+
+		if ( ! empty( $breakpoints ) ) {
+			$tag_element['atts']['srcset'] = implode( ', ', $breakpoints );
+			$tag_element['atts']['sizes']  = '(max-width: ' . $width . 'px) 100vw ' . $width . 'px';
+		}
+
 		return $tag_element;
 	}
 
@@ -71,18 +119,6 @@ class Responsive_Breakpoints extends Delivery_Feature {
 		unset( $structs['breakpoints'] );
 
 		return $structs;
-	}
-
-	/**
-	 * Check to see if Breakpoints are enabled.
-	 *
-	 * @return bool
-	 */
-	public function is_enabled() {
-		$lazy    = $this->plugin->get_component( 'lazy_load' );
-		$enabled = parent::is_enabled();
-
-		return ! is_null( $lazy ) && $lazy->is_enabled() && $enabled;
 	}
 
 	/**
