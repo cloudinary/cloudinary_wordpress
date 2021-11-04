@@ -192,7 +192,7 @@ const Wizard = {
 				break;
 			case 3:
 				if ( ! this.config.cldString.length ) {
-					document.location.hash = '2';
+					document.location.hash = '1';
 					return;
 				}
 				this.show( this.lock );
@@ -200,7 +200,7 @@ const Wizard = {
 				break;
 			case 4:
 				if ( ! this.config.cldString.length ) {
-					document.location.hash = '2';
+					document.location.hash = '1';
 					return;
 				}
 				this.hide( this.tabBar );

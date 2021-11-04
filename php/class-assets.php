@@ -231,10 +231,10 @@ class Assets extends Settings_Component {
 			return;
 		}
 
-		if ( 'off' === $this->plugin->settings->image_settings->_overlay ) {
-			$title = __( 'Enable Cloudinary status', 'cloudinary' );
-		} else {
+		if ( 'on' === $this->plugin->settings->image_settings->_overlay ) {
 			$title = __( 'Disable Cloudinary status', 'cloudinary' );
+		} else {
+			$title = __( 'Enable Cloudinary status', 'cloudinary' );
 		}
 
 		$nonce   = wp_create_nonce( 'cloudinary-cache-overlay' );
@@ -260,7 +260,7 @@ class Assets extends Settings_Component {
 	 * @return bool
 	 */
 	public function can_sync( $can, $asset_id ) {
-		if ( self::is_asset_type( $asset_id ) || 'off' === $this->settings->get_value( 'auto_sync' ) && 'on' === $this->settings->get_value( 'content.enabled' ) ) {
+		if ( self::is_asset_type( $asset_id ) && 'off' === $this->settings->get_value( 'auto_sync' ) && 'on' === $this->settings->get_value( 'content.enabled' ) ) {
 			$can = true;
 		}
 
@@ -855,6 +855,12 @@ class Assets extends Settings_Component {
 			$parts   = explode( $break, $preview );
 		}
 
+		$args = array(
+			'page'    => 'cloudinary',
+			'section' => 'edit-asset',
+			'asset'   => $item['post_id'],
+		);
+
 		$return = array(
 			'ID'              => $item['post_id'],
 			'key'             => $item['id'],
@@ -867,6 +873,7 @@ class Assets extends Settings_Component {
 			'file'            => $parts[1],
 			'size'            => $break,
 			'transformations' => $item['transformations'] ? $item['transformations'] : null,
+			'edit_url'        => admin_url( add_query_arg( $args, 'admin.php' ) ),
 		);
 
 		return $return;

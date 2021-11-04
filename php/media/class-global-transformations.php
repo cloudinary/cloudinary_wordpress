@@ -619,14 +619,6 @@ class Global_Transformations {
 		}
 		$cols = array_slice( $cols, 0, $offset ) + $custom + array_slice( $cols, $offset );
 
-		$export = array(
-			'save_url' => rest_url( REST_API::BASE . '/save_asset' ),
-			'nonce'    => wp_create_nonce( 'wp_rest' ),
-		);
-		$this->media->plugin->add_script_data( 'editor', $export, 'cloudinary-media-transformations' );
-		// Add script.
-		wp_enqueue_script( 'cloudinary-media-transformations', $this->media->plugin->dir_url . 'js/media-transformations.js', array(), $this->media->plugin->version, true );
-
 		return $cols;
 	}
 
@@ -639,6 +631,20 @@ class Global_Transformations {
 	public function transformations_column_value( $column_name, $attachment_id ) {
 		if ( 'cld_transformations' === $column_name && $this->media->sync->is_synced( $attachment_id ) ) {
 
+			// Transformations are only available for Images and Videos.
+			if (
+				! in_array(
+					$this->media->get_media_type( $attachment_id ),
+					array(
+						'image',
+						'video',
+					),
+					true
+				)
+			) {
+				return;
+			}
+
 			$item = $this->media->plugin->get_component( 'assets' )->get_asset( $attachment_id, 'dataset' );
 			if ( ! empty( $item['data']['public_id'] ) ) {
 				$text            = __( 'Add transformations', 'cloudinary' );
@@ -646,8 +652,13 @@ class Global_Transformations {
 				if ( ! empty( $transformations ) ) {
 					$text = Api::generate_transformation_string( $transformations, $this->media->get_resource_type( $attachment_id ) );
 				}
+				$args = array(
+					'page'    => 'cloudinary',
+					'section' => 'edit-asset',
+					'asset'   => $attachment_id,
+				);
 				?>
-				<a href="#" data-transformation-item="<?php echo esc_attr( wp_json_encode( $item ) ); ?>"><?php echo esc_html( $text ); ?></a>
+				<a href="<?php echo esc_url( add_query_arg( $args, 'admin.php' ) ); ?>" data-transformation-item="<?php echo esc_attr( wp_json_encode( $item ) ); ?>"><?php echo esc_html( $text ); ?></a>
 				<?php
 			}
 		}
