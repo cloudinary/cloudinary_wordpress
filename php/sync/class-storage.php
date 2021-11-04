@@ -188,8 +188,7 @@ class Storage implements Notice {
 					return;
 				}
 				$this->remove_local_assets( $attachment_id );
-				$cloudinary_url = $this->media->cloudinary_url( $attachment_id, false );
-				$cloudinary_url = remove_query_arg( '_i', $cloudinary_url );
+				$cloudinary_url = $this->media->raw_cloudinary_url( $attachment_id );
 				update_post_meta( $attachment_id, '_wp_attached_file', $cloudinary_url );
 				break;
 			case 'dual_low':
@@ -204,9 +203,7 @@ class Storage implements Notice {
 			case 'dual_full':
 				$exists = get_attached_file( $attachment_id );
 				if ( ! empty( $previous_state ) && ! file_exists( $exists ) ) {
-					// Only do this is it's changing a state.
-					$transformations = $this->media->get_transformation_from_meta( $attachment_id );
-					$url             = $this->media->cloudinary_url( $attachment_id, array(), $transformations, null, true );
+					$url = $this->media->raw_cloudinary_url( $attachment_id );
 				}
 				break;
 		}
@@ -467,6 +464,10 @@ class Storage implements Notice {
 			$this->sync->register_sync_type( 'size', $structure );
 
 			add_filter( 'cloudinary_can_sync_asset', array( $this, 'delay_cld_only' ), 10, 3 );
+		}
+		if ( 'cld' === $this->settings['offload'] ) {
+			add_filter( 'wp_get_attachment_url', array( $this->media, 'attachment_url' ), 10, 2 );
+			add_filter( 'wp_get_original_image_url', array( $this->media, 'attachment_url' ), 10, 2 );
 		}
 	}
 }

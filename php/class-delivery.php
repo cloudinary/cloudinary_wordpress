@@ -156,10 +156,11 @@ class Delivery implements Setup {
 	 * @return string
 	 */
 	public function generate_signature( $attachment_id ) {
-		$sizes     = $this->get_sizes( $attachment_id );
-		$public_id = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
+		$sizes      = $this->get_sizes( $attachment_id );
+		$public_id  = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
+		$registered = wp_json_encode( wp_get_registered_image_subsizes() );
 
-		return wp_json_encode( $sizes ) . $public_id;
+		return wp_json_encode( $sizes ) . $public_id . $registered;
 	}
 
 	/**
@@ -713,7 +714,9 @@ class Delivery implements Setup {
 
 		// Get size.
 		$size = $this->get_size_from_atts( $tag_element['atts'] );
-
+		if ( true === $tag_element['crop'] ) {
+			$size[] = true;
+		}
 		// Unset srcset and sizes.
 		unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 
@@ -722,7 +725,7 @@ class Delivery implements Setup {
 			$tag_element['id'],
 			$size,
 			$tag_element['transformations'],
-			$tag_element['atts']['data-public-id'],
+			$tag_element['atts']['data-public-id'] . '.' . $tag_element['format'],
 			$tag_element['overwrite_transformations']
 		);
 
@@ -835,6 +838,9 @@ class Delivery implements Setup {
 			'delivery'                  => 'wp',
 			'breakpoints'               => true,
 			'transformations'           => array(),
+			'width'                     => 0,
+			'height'                    => 0,
+			'crop'                      => false,
 		);
 		// Cleanup element.
 		$element = trim( $element, '</>' );
@@ -843,16 +849,38 @@ class Delivery implements Setup {
 		$attributes          = shortcode_parse_atts( $element );
 		$tag_element['tag']  = array_shift( $attributes );
 		$tag_element['type'] = 'img' === $tag_element['tag'] ? 'image' : $tag_element['tag'];
-		$url                 = isset( $attributes['src'] ) ? self::clean_url( $attributes['src'] ) : '';
+		$raw_url             = isset( $attributes['src'] ) ? $this->sanitize_url( $attributes['src'] ) : '';
+		$url                 = self::clean_url( $raw_url );
+
+		// Track back the found URL.
+		if ( $this->media->is_cloudinary_url( $raw_url ) ) {
+			$sized     = $this->media->get_size_from_url( basename( $raw_url ) );
+			$public_id = $this->media->get_public_id_from_url( $raw_url );
+			foreach ( $this->known as $key_url => $set ) {
+				if ( $set['public_id'] === $public_id ) {
+					if ( ! empty( $sized ) && false == strpos( basename( $key_url ), '-' . implode( 'x', $sized ) . '.' ) ) {
+						continue;
+					}
+					$url               = $set['sized_url'];
+					$attributes['src'] = $set['sized_url'];
+					break;
+				}
+			}
+		}
 
 		if ( ! empty( $this->known[ $url ] ) && ! empty( $this->known[ $url ]['public_id'] ) ) {
-			if ( ! empty( $this->known[ $url ]['transformations'] ) ) {
-				$tag_element['transformations'] = $this->media->get_transformations_from_string( $this->known[ $url ]['transformations'], $tag_element['type'] );
+			$item = $this->known[ $url ];
+			if ( ! empty( $item['transformations'] ) ) {
+				$tag_element['transformations'] = $this->media->get_transformations_from_string( $item['transformations'], $tag_element['type'] );
 			}
-			$tag_element['id']            = (int) $this->known[ $url ]['post_id'];
-			$tag_element['width']         = $this->known[ $url ]['width'];
-			$tag_element['height']        = $this->known[ $url ]['height'];
-			$attributes['data-public-id'] = $this->known[ $url ]['public_id'];
+			$tag_element['id']            = (int) $item['post_id'];
+			$tag_element['width']         = $item['width'];
+			$attributes['width']          = $item['width'];
+			$tag_element['height']        = $item['height'];
+			$attributes['height']         = $item['height'];
+			$attributes['data-public-id'] = $item['public_id'];
+			$tag_element['crop']          = $item['crop'];
+			$tag_element['format']        = $item['format'];
 		}
 		if ( ! empty( $attributes['class'] ) ) {
 			if ( preg_match( '/wp-post-(\d*)/', $attributes['class'], $match ) ) {
@@ -862,6 +890,8 @@ class Delivery implements Setup {
 			if ( in_array( 'cld-overwrite', $attributes['class'], true ) ) {
 				$tag_element['overwrite_transformations'] = true;
 			}
+		} else {
+			$attributes['class'] = array();
 		}
 
 		$inline_transformations = $this->get_transformations_maybe( $url );
@@ -955,13 +985,15 @@ class Delivery implements Setup {
 	 * @return string
 	 */
 	public static function clean_url( $url, $scheme_less = true ) {
+
 		$default = array(
 			'scheme' => '',
 			'host'   => '',
 			'path'   => '',
 		);
 		$parts   = wp_parse_args( wp_parse_url( $url ), $default );
-		$url     = '//' . $parts['host'] . $parts['path'];
+
+		$url = '//' . $parts['host'] . $parts['path'];
 		if ( false === $scheme_less ) {
 			$url = $parts['scheme'] . ':' . $url;
 		}
@@ -1037,7 +1069,19 @@ class Delivery implements Setup {
 	 * @param null|bool $auto_sync If auto_sync is on.
 	 */
 	protected function set_usability( $item, $auto_sync = null ) {
+
+		$item['crop'] = false;
+		$size         = $this->media->get_size_from_url( basename( $item['sized_url'] ) );
+		if ( ! empty( $size ) ) {
+			$item['crop'] = true;
+		}
+
 		$this->known[ $item['sized_url'] ] = $item;
+		$this->known[ $item['public_id'] ] = $item;
+		// Prep a scaled alias.
+		if ( false !== strpos( $item['sized_url'], '-scaled.' ) ) {
+			$this->known[ str_replace( '-scaled.', '.', $item['sized_url'] ) ] = $item;
+		}
 		if ( 'disable' === $item['post_state'] ) {
 			return;
 		}
@@ -1062,20 +1106,63 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Sanitize a url.
+	 *
+	 * @param string $url URL to sanitize.
+	 *
+	 * @return string|null
+	 */
+	protected function sanitize_url( $url ) {
+
+		// Catch mixed URLs.
+		if ( 5 < strlen( $url ) && false !== strpos( $url, 'https://', 5 ) ) {
+			$url = substr( $url, strpos( $url, 'https://', 5 ) );
+		}
+
+		// Remove Query string.
+		$url = strtok( $url, '?' );
+
+		// check the url is more than a domain.
+		if ( ! filter_var( $url, FILTER_VALIDATE_URL ) || 3 > substr_count( rtrim( $url, '/' ), '/' ) ) {
+			$url = null;
+		}
+
+		return $url;
+	}
+
+	/**
 	 * Get urls from HTML.
 	 *
 	 * @param string $content The content html.
 	 */
 	protected function get_urls( $content ) {
 		global $wpdb;
-		$base_urls = array_map( array( $this, 'clean_url' ), wp_extract_urls( $content ) );
-		$urls      = array_filter( array_unique( $base_urls ), array( $this, 'validate_url' ) ); // clean out empty urls.
-		if ( empty( $urls ) ) {
+		$all_urls        = array_unique( wp_extract_urls( $content ) );
+		$base_urls       = array_filter( array_map( array( $this, 'sanitize_url' ), $all_urls ) );
+		$clean_urls      = array_map( array( $this, 'clean_url' ), $base_urls );
+		$urls            = array_filter( $clean_urls, array( $this, 'validate_url' ) ); // clean out empty urls.
+		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
+		if ( empty( $urls ) && empty( $cloudinary_urls ) ) {
 			return; // Bail since theres nothing.
 		}
-		$list      = implode( ', ', array_fill( 0, count( $urls ), '%s' ) );
+		// Clean URLS for search.
+		$public_ids = array_filter( array_map( array( $this->media, 'get_public_id_from_url' ), $cloudinary_urls ) );
+
+		$wheres = array();
+		if ( ! empty( $urls ) ) {
+			// Do the URLS.
+			$list     = implode( ', ', array_fill( 0, count( $urls ), '%s' ) );
+			$wheres[] = "sized_url IN( {$list} )";
+		}
+		if ( ! empty( $public_ids ) ) {
+			// Do the public_ids.
+			$list     = implode( ', ', array_fill( 0, count( $public_ids ), '%s' ) );
+			$wheres[] = "public_id IN( {$list} )";
+			$urls    += $public_ids;
+		}
+
 		$tablename = Utils::get_relationship_table();
-		$sql       = "SELECT * from {$tablename} WHERE sized_url IN( {$list} )";
+		$sql       = "SELECT * from {$tablename} WHERE " . implode( ' OR ', $wheres );
 		$prepared  = $wpdb->prepare( $sql, $urls ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$cache_key = md5( $prepared );
 		$results   = wp_cache_get( $cache_key, 'cld_delivery' );
@@ -1085,12 +1172,12 @@ class Delivery implements Setup {
 			wp_cache_add( $cache_key, $results, 'cld_delivery' );
 		}
 
-		$auto_sync        = $this->sync->is_auto_sync_enabled();
-		$this->found_urls = $urls;
+		$auto_sync = $this->sync->is_auto_sync_enabled();
 
 		foreach ( $results as $result ) {
 			$this->set_usability( $result, $auto_sync );
 		}
+
 		$this->unknown = array_diff( $urls, array_keys( $this->known ) );
 	}
 
