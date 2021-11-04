@@ -391,13 +391,23 @@ class Report extends Settings_Component implements Setup {
 			foreach ( $report_items as $post_id ) {
 				$post_type = get_post_type( $post_id );
 				if ( 'attachment' === $post_type ) {
-					$data                   = wp_get_attachment_metadata( $post_id );
-					$data['all_meta']       = get_post_meta( $post_id );
-					$data['attachment']     = get_post( $post_id );
+					$data               = wp_get_attachment_metadata( $post_id );
+					$all_meta           = get_post_meta( $post_id );
+					$data['attachment'] = get_post( $post_id );
+
+					foreach ( $all_meta as $key => $meta ) {
+						$data['all_meta'][ $key ] = array_map( 'maybe_unserialize', $meta );
+					}
+
 					$media_data[ $post_id ] = $data;
 				} else {
-					$data                  = get_post( $post_id, ARRAY_A );
-					$data['post_meta']     = get_post_meta( $post_id );
+					$data      = get_post( $post_id, ARRAY_A );
+					$post_meta = get_post_meta( $post_id );
+
+					foreach ( $post_meta as $key => $meta ) {
+						$data['post_meta'][ $key ] = array_map( 'maybe_unserialize', $meta );
+					}
+
 					$post_data[ $post_id ] = $data;
 				}
 			}
