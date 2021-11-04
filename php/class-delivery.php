@@ -853,10 +853,13 @@ class Delivery implements Setup {
 
 		// Track back the found URL.
 		if ( $this->media->is_cloudinary_url( $raw_url ) ) {
-			$filename  = basename( remove_query_arg( '_i', $raw_url ) );
+			$sized     = $this->media->get_size_from_url( $raw_url );
 			$public_id = $this->media->get_public_id_from_url( $raw_url );
 			foreach ( $this->known as $key_url => $set ) {
-				if ( $set['public_id'] === $public_id && basename( $key_url ) === $filename ) {
+				if ( $set['public_id'] === $public_id ) {
+					if ( ! empty( $sized ) && false == strpos( basename( $key_url ), '-' . implode( 'x', $sized ) . '.' ) ) {
+						continue;
+					}
 					$url               = $set['sized_url'];
 					$attributes['src'] = $set['sized_url'];
 					break;
