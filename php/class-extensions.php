@@ -133,7 +133,7 @@ class Extensions extends Settings_Component implements Setup {
 			'media-library'  => array(
 				'name'        => __( 'Cloudinary DAM', 'cloudinary' ),
 				'description' => __( "Cloudinary's digital asset management solution bridges the gap between asset management and delivery, enabling creative.", 'cloudinary' ),
-				'icon'        => $this->plugin->dir_url . 'css/images/logo-icon.svg',
+				'icon'        => $this->plugin->dir_url . 'css/images/dam-icon.svg',
 				'handler'     => '\\Cloudinary\\Media_Library',
 				'default'     => 'off',
 			),
