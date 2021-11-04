@@ -853,7 +853,7 @@ class Delivery implements Setup {
 			$filename  = basename( remove_query_arg( '_i', $raw_url ) );
 			$public_id = $this->media->get_public_id_from_url( $raw_url );
 			foreach ( $this->known as $key_url => $set ) {
-				if ( $set['public_id'] === $public_id && basename( $set['sized_url'] ) === $filename ) {
+				if ( $set['public_id'] === $public_id && basename( $key_url ) === $filename ) {
 					$url               = $set['sized_url'];
 					$attributes['src'] = $set['sized_url'];
 					break;
@@ -1058,6 +1058,10 @@ class Delivery implements Setup {
 	 */
 	protected function set_usability( $item, $auto_sync = null ) {
 		$this->known[ $item['sized_url'] ] = $item;
+		// Prep a scaled alias.
+		if ( false !== strpos( $item['sized_url'], '-scaled.' ) ) {
+			$this->known[ str_replace( '-scaled.', '.', $item['sized_url'] ) ] = $item;
+		}
 		if ( 'disable' === $item['post_state'] ) {
 			return;
 		}
