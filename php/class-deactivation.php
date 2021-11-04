@@ -409,6 +409,8 @@ class Deactivation {
 			$args['email']  = filter_var( $request->get_param( 'email' ), FILTER_SANITIZE_EMAIL );
 		}
 
+		$args['version'] = $this->plugin->version;
+
 		$url = add_query_arg( array_filter( $args ), CLOUDINARY_ENDPOINTS_DEACTIVATION );
 
 		$response = wp_safe_remote_get( $url );
