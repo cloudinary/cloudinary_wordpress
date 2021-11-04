@@ -156,10 +156,11 @@ class Delivery implements Setup {
 	 * @return string
 	 */
 	public function generate_signature( $attachment_id ) {
-		$sizes     = $this->get_sizes( $attachment_id );
-		$public_id = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
+		$sizes      = $this->get_sizes( $attachment_id );
+		$public_id  = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
+		$registered = wp_json_encode( wp_get_registered_image_subsizes() );
 
-		return wp_json_encode( $sizes ) . $public_id;
+		return wp_json_encode( $sizes ) . $public_id . $registered;
 	}
 
 	/**
@@ -853,7 +854,7 @@ class Delivery implements Setup {
 
 		// Track back the found URL.
 		if ( $this->media->is_cloudinary_url( $raw_url ) ) {
-			$sized     = $this->media->get_size_from_url( $raw_url );
+			$sized     = $this->media->get_size_from_url( basename( $raw_url ) );
 			$public_id = $this->media->get_public_id_from_url( $raw_url );
 			foreach ( $this->known as $key_url => $set ) {
 				if ( $set['public_id'] === $public_id ) {
@@ -1068,20 +1069,11 @@ class Delivery implements Setup {
 	 * @param null|bool $auto_sync If auto_sync is on.
 	 */
 	protected function set_usability( $item, $auto_sync = null ) {
-		static $wp_sizes = array();
-		if ( empty( $wp_sizes ) ) {
-			$all_sizes = wp_get_registered_image_subsizes();
-			foreach ( $all_sizes as $size ) {
-				if ( true === $size['crop'] ) {
-					$wp_sizes[ $size['width'] . 'x' . $size['height'] ] = true;
-				}
-			}
-		}
+
 		$item['crop'] = false;
 		$size         = $this->media->get_size_from_url( basename( $item['sized_url'] ) );
 		if ( ! empty( $size ) ) {
-			$size_key     = implode( 'x', $size );
-			$item['crop'] = isset( $wp_sizes[ $size_key ] );
+			$item['crop'] = true;
 		}
 
 		$this->known[ $item['sized_url'] ] = $item;

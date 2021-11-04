@@ -1275,11 +1275,10 @@ class Media extends Settings_Component implements Setup {
 	 * @return string|false
 	 */
 	public function local_url( $attachment_id ) {
-		$this->in_downsize = true;
-		$meta              = wp_get_attachment_metadata( $attachment_id );
-		$dirs              = wp_get_upload_dir();
-		$url               = wp_normalize_path( trailingslashit( $dirs['baseurl'] ) . $meta['file'] );
-		$this->in_downsize = false;
+
+		$meta = wp_get_attachment_metadata( $attachment_id );
+		$dirs = wp_get_upload_dir();
+		$url  = wp_normalize_path( trailingslashit( $dirs['baseurl'] ) . $meta['file'] );
 
 		/**
 		 * Filter local URL.
@@ -1308,7 +1307,7 @@ class Media extends Settings_Component implements Setup {
 			$api = $this->plugin->components['connect']->api;
 		}
 		$transformations = $this->get_transformation_from_meta( $attachment_id );
-		$parts = array(
+		$parts           = array(
 			'https:/',
 			$api->asset_url,
 			$api->credentials['cloud_name'],
@@ -1318,7 +1317,7 @@ class Media extends Settings_Component implements Setup {
 			'v' . $this->get_cloudinary_version( $attachment_id ),
 			$this->get_cloudinary_id( $attachment_id ),
 		);
-		$url   = implode( '/', array_filter( $parts ) );
+		$url             = implode( '/', array_filter( $parts ) );
 
 		/**
 		 * Filter a base Cloudinary URL (no transformations).
