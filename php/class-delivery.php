@@ -848,7 +848,7 @@ class Delivery implements Setup {
 		$attributes          = shortcode_parse_atts( $element );
 		$tag_element['tag']  = array_shift( $attributes );
 		$tag_element['type'] = 'img' === $tag_element['tag'] ? 'image' : $tag_element['tag'];
-		$raw_url             = isset( $attributes['src'] ) ? $attributes['src'] : '';
+		$raw_url             = isset( $attributes['src'] ) ? $this->sanitize_url( $attributes['src'] ) : '';
 		$url                 = self::clean_url( $raw_url );
 
 		// Track back the found URL.
@@ -1143,7 +1143,7 @@ class Delivery implements Setup {
 	protected function get_urls( $content ) {
 		global $wpdb;
 		$all_urls        = array_unique( wp_extract_urls( $content ) );
-		$base_urls       = array_map( array( $this, 'sanitize_url' ), $all_urls );
+		$base_urls       = array_filter( array_map( array( $this, 'sanitize_url' ), $all_urls ) );
 		$clean_urls      = array_map( array( $this, 'clean_url' ), $base_urls );
 		$urls            = array_filter( $clean_urls, array( $this, 'validate_url' ) ); // clean out empty urls.
 		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
@@ -1182,6 +1182,7 @@ class Delivery implements Setup {
 		foreach ( $results as $result ) {
 			$this->set_usability( $result, $auto_sync );
 		}
+
 		$this->unknown = array_diff( $urls, array_keys( $this->known ) );
 	}
 
