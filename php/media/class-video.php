@@ -357,6 +357,19 @@ class Video {
 		$params['player'] = wp_parse_args( $attributes, $params['player'] );
 		$url              = add_query_arg( $params, CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_EMBED );
 
+		$tag_atts = array(
+			'src'             => $url,
+			'width'           => $video['width'],
+			'height'          => $video['height'],
+			'allow'           => 'autoplay; fullscreen; encrypted-media; picture-in-picture',
+			'allowfullscreen' => true,
+			'frameborder'     => 0,
+		);
+		// Counter the issue of portrait videos.
+		if ( $video['height'] > $video['width'] ) {
+			$tag_atts['onload'] = 'this.height = this.parentNode.offsetWidth/(this.width/this.height)';
+		}
+
 		// Build the Player HTML.
 		$tag_args = array(
 			'type'       => 'tag',
@@ -375,14 +388,7 @@ class Video {
 				array(
 					'type'       => 'tag',
 					'element'    => 'iframe',
-					'attributes' => array(
-						'src'             => $url,
-						'width'           => $video['width'],
-						'height'          => $video['height'],
-						'allow'           => 'autoplay; fullscreen; encrypted-media; picture-in-picture',
-						'allowfullscreen' => true,
-						'frameborder'     => 0,
-					),
+					'attributes' => $tag_atts,
 				),
 			),
 		);
