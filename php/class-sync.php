@@ -80,7 +80,9 @@ class Sync implements Setup, Assets {
 	const META_KEYS = array(
 		'breakpoints'         => '_cloudinary_breakpoints',
 		'bypass'              => '_bypass_delivery',
-		'cloudinary'          => '_cloudinary_v2',
+		'cloudinary'          => '_cloudinary',
+		'cloudinary_legacy'   => '_cloudinary_v2',
+		'dashboard_cache'     => '_cloudinary_dashboard_stats',
 		'delay'               => '_cloudinary_sync_delay',
 		'delivery'            => '_cloudinary_delivery',
 		'downloading'         => '_cloudinary_downloading',
@@ -94,6 +96,7 @@ class Sync implements Setup, Assets {
 		'process_log_legacy'  => '_process_log',
 		'public_id'           => '_public_id',
 		'queued'              => '_cloudinary_sync_queued',
+		'relationship'        => '_cld_relationship',
 		'remote_format'       => '_cld_remote_format',
 		'remote_size'         => '_cld_remote_size',
 		'signature'           => '_sync_signature',
@@ -107,9 +110,6 @@ class Sync implements Setup, Assets {
 		'unsynced'            => '_cld_unsynced',
 		'upgrading'           => '_cloudinary_upgrading',
 		'version'             => '_cloudinary_version',
-		'cloudinary_v3'       => '_cloudinary',
-		'dashboard_cache'     => '_cloudinary_dashboard_stats',
-		'relationship'        => '_cld_relationship',
 	);
 
 	/**
