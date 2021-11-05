@@ -1278,7 +1278,11 @@ class Media extends Settings_Component implements Setup {
 
 		$meta = wp_get_attachment_metadata( $attachment_id );
 		$dirs = wp_get_upload_dir();
-		$url  = wp_normalize_path( trailingslashit( $dirs['baseurl'] ) . $meta['file'] );
+		if ( ! empty( $meta['file'] ) ) {
+			$url = wp_normalize_path( trailingslashit( $dirs['baseurl'] ) . $meta['file'] );
+		} else {
+			$url = get_post_meta( $attachment_id, '_wp_attached_file', true );
+		}
 
 		/**
 		 * Filter local URL.
