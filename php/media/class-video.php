@@ -340,7 +340,14 @@ class Video {
 		if ( isset( $attributes['poster'] ) ) {
 			$poster_id = $this->media->get_public_id_from_url( $attributes['poster'] );
 			if ( $poster_id ) {
-				$params['source']['poster'] = $poster_id;
+				$params['source']['poster']['public_id']      = $poster_id;
+				$poster_transformation                        = array(
+					'width'   => $video['width'],
+					'height'  => $video['height'],
+					'crop'    => 'fill',
+					'gravity' => 'auto',
+				);
+				$params['source']['poster']['transformation'] = $this->media->apply_default_transformations( array( $poster_transformation ), 'image' );
 			}
 			unset( $attributes['poster'] );
 		}
