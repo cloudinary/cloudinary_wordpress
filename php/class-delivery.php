@@ -878,9 +878,7 @@ class Delivery implements Setup {
 			}
 			$tag_element['id']            = (int) $item['post_id'];
 			$tag_element['width']         = $item['width'];
-			$attributes['width']          = $item['width'];
 			$tag_element['height']        = $item['height'];
-			$attributes['height']         = $item['height'];
 			$attributes['data-public-id'] = $item['public_id'];
 			$tag_element['crop']          = $item['crop'];
 			$tag_element['format']        = $item['format'];
