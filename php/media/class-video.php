@@ -367,7 +367,8 @@ class Video {
 		);
 		// Counter the issue of portrait videos.
 		if ( $video['height'] > $video['width'] ) {
-			$tag_atts['onload'] = 'this.height = this.parentNode.offsetWidth/(this.width/this.height)';
+			$ratio              = round( $video['width'] / $video['height'], 3 );
+			$tag_atts['onload'] = 'this.height = this.parentNode.offsetWidth/' . $ratio;
 		}
 
 		// Build the Player HTML.
@@ -394,6 +395,7 @@ class Video {
 		);
 
 		$new_tag = $this->media->plugin->get_component( 'admin' )->init_components( $tag_args, $public_id );
+
 		return $new_tag->get_component()->render();
 	}
 
