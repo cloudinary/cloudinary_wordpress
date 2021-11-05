@@ -1275,10 +1275,17 @@ class Media extends Settings_Component implements Setup {
 	 * @return string|false
 	 */
 	public function local_url( $attachment_id ) {
-
+		static $urls = array();
+		if ( ! empty( $urls[ $attachment_id ] ) ) {
+			return $urls[ $attachment_id ];
+		}
 		$meta = wp_get_attachment_metadata( $attachment_id );
-		$dirs = wp_get_upload_dir();
-		$url  = wp_normalize_path( trailingslashit( $dirs['baseurl'] ) . $meta['file'] );
+		if ( ! isset( $meta['file'] ) ) {
+			// if theres no file, try get it from attached file (ie. video).
+			$meta['file'] = get_post_meta( $attachment_id, '_wp_attached_file', true );
+		}
+		$dirs                   = wp_get_upload_dir();
+		$urls[ $attachment_id ] = wp_normalize_path( trailingslashit( $dirs['baseurl'] ) . $meta['file'] );
 
 		/**
 		 * Filter local URL.
@@ -1291,7 +1298,7 @@ class Media extends Settings_Component implements Setup {
 		 *
 		 * @return  {string|false}
 		 */
-		return apply_filters( 'cloudinary_local_url', $url, $attachment_id );
+		return apply_filters( 'cloudinary_local_url', $urls[ $attachment_id ], $attachment_id );
 	}
 
 	/**
