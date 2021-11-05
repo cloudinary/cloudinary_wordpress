@@ -1057,12 +1057,12 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Apply default image transformations before building the URL.
 	 *
-	 * @param array $transformations The set of transformations.
-	 * @param int   $attachment_id   The attachment ID.
+	 * @param array      $transformations    The set of transformations.
+	 * @param int|string $attachment_id_type The attachment ID | or attachment type.
 	 *
 	 * @return array
 	 */
-	public function apply_default_transformations( array $transformations, $attachment_id ) {
+	public function apply_default_transformations( array $transformations, $attachment_id_type ) {
 		static $cache = array(), $freeform = array();
 
 		$key = $this->get_cache_key( func_get_args() );
@@ -1072,15 +1072,18 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter to allow bypassing defaults. Return false to not apply defaults.
 		 *
-		 * @param bool $true          True to apply defaults.
-		 * @param int  $attachment_id The current attachment ID.
+		 * @param bool       $true               True to apply defaults.
+		 * @param int|string $attachment_id_type The current attachment ID or type.
 		 *
 		 * @return bool
 		 */
-		if ( false === apply_filters( 'cloudinary_apply_default_transformations', true, $attachment_id ) ) {
+		if ( false === apply_filters( 'cloudinary_apply_default_transformations', true, $attachment_id_type ) ) {
 			return $transformations;
 		}
-		$type = $this->get_media_type( $attachment_id );
+		$type = $attachment_id_type;
+		if ( is_numeric( $attachment_id_type ) ) {
+			$type = $this->get_media_type( $attachment_id_type );
+		}
 		// Base image level.
 		$new_transformations = array(
 			'image'  => Api::generate_transformation_string( $transformations, $type ),
