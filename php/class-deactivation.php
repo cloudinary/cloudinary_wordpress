@@ -522,12 +522,7 @@ class Deactivation {
 		);
 
 		foreach ( $tables as $table ) {
-			$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-				$wpdb->prepare(
-					'DROP TABLE IF EXISTS %s',
-					$table
-				)
-			);
+			$wpdb->query( "DROP TABLE IF EXISTS {$table};" ); // phpcs:ignore WordPress.DB
 		}
 	}
 

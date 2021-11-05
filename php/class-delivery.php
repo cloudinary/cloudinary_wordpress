@@ -372,7 +372,7 @@ class Delivery implements Setup {
 		);
 
 		$insert_id = false;
-		$created   = $wpdb->insert( Utils::get_relationship_table(), $data ); // phpcs:ignore WordPress.DB
+		$created   = $wpdb->replace( Utils::get_relationship_table(), $data ); // phpcs:ignore WordPress.DB
 		if ( 0 < $created ) {
 			$insert_id = $wpdb->insert_id;
 		}
