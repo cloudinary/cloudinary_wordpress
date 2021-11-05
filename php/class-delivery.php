@@ -512,6 +512,9 @@ class Delivery implements Setup {
 	 */
 	public function process_featured_image( $html, $post_id, $attachment_id ) {
 
+		if ( empty( $html ) ) {
+			return $html; // Ignore empty tags.
+		}
 		// Get tag element.
 		$tag_element                    = $this->parse_element( $html );
 		$tag_element['id']              = $attachment_id;
