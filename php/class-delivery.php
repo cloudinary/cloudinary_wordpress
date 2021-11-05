@@ -707,6 +707,10 @@ class Delivery implements Setup {
 			'width'  => $tag_element['width'],
 			'height' => $tag_element['height'],
 		);
+		if ( 'video' === $tag_element['tag'] ) {
+			// Video is handled different with sizes, so we dont set default widths and heights.
+			$default = array();
+		}
 		// Add default.
 		$tag_element['atts'] = wp_parse_args( $tag_element['atts'], $default );
 
@@ -795,14 +799,14 @@ class Delivery implements Setup {
 		/**
 		 * Filter the tag element.
 		 *
-		 * @hook   cloudinary_pre_image_tag
+		 * @hook   cloudinary_pre_image_tag | cloudinary_pre_video_tag
 		 * @since  2.7.5
 		 *
 		 * @param $tag_element {array}  The tag_element (tag + attributes array).
 		 *
 		 * @return {array}
 		 */
-		$tag_element = apply_filters( 'cloudinary_pre_image_tag', $tag_element );
+		$tag_element = apply_filters( "cloudinary_pre_{$tag_element['type']}_tag", $tag_element );
 
 		// Setup new tag.
 		$replace = HTML::build_tag( $tag_element['tag'], $tag_element['atts'] );
@@ -810,7 +814,7 @@ class Delivery implements Setup {
 		/**
 		 * Filter the new built tag element.
 		 *
-		 * @hook   cloudinary_image_tag
+		 * @hook   cloudinary_image_tag | cloudinary_video_tag
 		 * @since  3.0.0
 		 *
 		 * @param $replace     {string} The new HTML tag.
@@ -818,7 +822,7 @@ class Delivery implements Setup {
 		 *
 		 * @return {array}
 		 */
-		return apply_filters( 'cloudinary_image_tag', $replace, $tag_element );
+		return apply_filters( "cloudinary_{$tag_element['type']}_tag", $replace, $tag_element );
 	}
 
 	/**
