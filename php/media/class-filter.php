@@ -737,8 +737,6 @@ class Filter {
 	/**
 	 * Record attachment with meta being updated.
 	 *
-	 * @hook wp_update_attachment_metadata
-	 *
 	 * @param array $data The new meta array.
 	 * @param int   $id   The id.
 	 *
