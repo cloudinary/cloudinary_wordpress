@@ -2642,12 +2642,12 @@ class Media extends Settings_Component implements Setup {
 			$request = filter_input( INPUT_GET, 'cloudinary-filter', FILTER_SANITIZE_STRING );
 
 			if ( $request && 'none' !== $request ) {
-				$meta_query   = $query->get( 'meta_query' );
+				$meta_query = $query->get( 'meta_query' );
 				if ( ! is_array( $meta_query ) ) {
 					$meta_query = array();
 				}
 				$meta_query[] = array(
-					'relation'  => 'AND',
+					'relation' => 'AND',
 				);
 				$meta_query[] = array(
 					'key'     => $request,

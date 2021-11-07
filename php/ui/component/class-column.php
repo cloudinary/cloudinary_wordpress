@@ -36,7 +36,7 @@ class Column extends Row {
 		}
 
 		if ( $this->setting->has_param( 'tab_id' ) ) {
-			$struct['attributes']['id'] = $this->setting->get_param( 'tab_id' );
+			$struct['attributes']['id']      = $this->setting->get_param( 'tab_id' );
 			$struct['attributes']['class'][] = 'tabbed-content';
 		}
 

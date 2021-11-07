@@ -241,7 +241,7 @@ class Assets extends Settings_Component {
 		$overlay = array(
 			'id'    => 'cloudinary-overlay',
 			'title' => $title,
-			'href'   => '?cloudinary-cache-overlay=' . $nonce,
+			'href'  => '?cloudinary-cache-overlay=' . $nonce,
 			'meta'  => array(
 				'title' => $title,
 			),

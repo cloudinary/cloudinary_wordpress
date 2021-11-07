@@ -35,8 +35,8 @@ class Referrer_Link extends Component {
 		$referrer          = filter_input( INPUT_SERVER, 'HTTP_REFERER', FILTER_SANITIZE_URL );
 
 		if ( $referrer ) {
-			$struct['element']            = 'a';
-			$struct['attributes']['href'] = $referrer;
+			$struct['element']             = 'a';
+			$struct['attributes']['href']  = $referrer;
 			$struct['attributes']['class'] = array(
 				'cld-referrer-link',
 			);

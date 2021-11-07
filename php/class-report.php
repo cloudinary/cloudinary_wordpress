@@ -186,7 +186,7 @@ class Report extends Settings_Component implements Setup {
 			$media = $this->plugin->get_component( 'media' );
 			$meta  = (array) get_post_meta( $post->ID, $sync::META_KEYS['cloudinary'], true );
 			$logs  = array( Sync::META_KEYS['process_log_legacy'] => $media->get_process_logs( $post->ID ) );
-			$data = array_merge( $meta, $logs );
+			$data  = array_merge( $meta, $logs );
 			highlight_string( var_export( $data, true ) );
 		}
 	}
