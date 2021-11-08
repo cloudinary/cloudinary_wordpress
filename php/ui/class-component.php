@@ -746,6 +746,10 @@ abstract class Component {
 	public static function build_attributes( $attributes ) {
 		$return = array();
 		foreach ( $attributes as $attribute => $value ) {
+			if ( is_numeric( $attribute ) ) {
+				$return[] = esc_attr( $value );
+				continue;
+			}
 			if ( is_array( $value ) ) {
 				if ( count( $value ) !== count( $value, COUNT_RECURSIVE ) ) {
 					$value = wp_json_encode( $value );

@@ -76,6 +76,13 @@ abstract class Delivery_Feature implements Assets {
 	protected $priority = 10;
 
 	/**
+	 * Holds the delivery type.
+	 *
+	 * @var string
+	 */
+	protected $type = 'image';
+
+	/**
 	 * Delivery_Feature constructor.
 	 *
 	 * @param Plugin $plugin Instance of the plugin.
@@ -115,7 +122,7 @@ abstract class Delivery_Feature implements Assets {
 	public function maybe_enqueue_assets() {
 		if ( $this->is_enabled() ) {
 			// Add filter to add features.
-			add_filter( 'cloudinary_pre_image_tag', array( $this, 'add_features' ), $this->priority );
+			add_filter( "cloudinary_pre_{$this->type}_tag", array( $this, 'add_features' ), $this->priority );
 			$this->enqueue_assets();
 		}
 	}

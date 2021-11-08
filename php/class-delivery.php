@@ -372,7 +372,7 @@ class Delivery implements Setup {
 		);
 
 		$insert_id = false;
-		$created   = $wpdb->insert( Utils::get_relationship_table(), $data ); // phpcs:ignore WordPress.DB
+		$created   = $wpdb->replace( Utils::get_relationship_table(), $data ); // phpcs:ignore WordPress.DB
 		if ( 0 < $created ) {
 			$insert_id = $wpdb->insert_id;
 		}
@@ -512,6 +512,9 @@ class Delivery implements Setup {
 	 */
 	public function process_featured_image( $html, $post_id, $attachment_id ) {
 
+		if ( empty( $html ) ) {
+			return $html; // Ignore empty tags.
+		}
 		// Get tag element.
 		$tag_element                    = $this->parse_element( $html );
 		$tag_element['id']              = $attachment_id;
@@ -704,6 +707,10 @@ class Delivery implements Setup {
 			'width'  => $tag_element['width'],
 			'height' => $tag_element['height'],
 		);
+		if ( 'video' === $tag_element['tag'] ) {
+			// Video is handled different with sizes, so we dont set default widths and heights.
+			$default = array();
+		}
 		// Add default.
 		$tag_element['atts'] = wp_parse_args( $tag_element['atts'], $default );
 
@@ -792,14 +799,14 @@ class Delivery implements Setup {
 		/**
 		 * Filter the tag element.
 		 *
-		 * @hook   cloudinary_pre_image_tag
+		 * @hook   cloudinary_pre_image_tag | cloudinary_pre_video_tag
 		 * @since  2.7.5
 		 *
 		 * @param $tag_element {array}  The tag_element (tag + attributes array).
 		 *
 		 * @return {array}
 		 */
-		$tag_element = apply_filters( 'cloudinary_pre_image_tag', $tag_element );
+		$tag_element = apply_filters( "cloudinary_pre_{$tag_element['type']}_tag", $tag_element );
 
 		// Setup new tag.
 		$replace = HTML::build_tag( $tag_element['tag'], $tag_element['atts'] );
@@ -807,7 +814,7 @@ class Delivery implements Setup {
 		/**
 		 * Filter the new built tag element.
 		 *
-		 * @hook   cloudinary_image_tag
+		 * @hook   cloudinary_image_tag | cloudinary_video_tag
 		 * @since  3.0.0
 		 *
 		 * @param $replace     {string} The new HTML tag.
@@ -815,7 +822,7 @@ class Delivery implements Setup {
 		 *
 		 * @return {array}
 		 */
-		return apply_filters( 'cloudinary_image_tag', $replace, $tag_element );
+		return apply_filters( "cloudinary_{$tag_element['type']}_tag", $replace, $tag_element );
 	}
 
 	/**
@@ -875,9 +882,7 @@ class Delivery implements Setup {
 			}
 			$tag_element['id']            = (int) $item['post_id'];
 			$tag_element['width']         = $item['width'];
-			$attributes['width']          = $item['width'];
 			$tag_element['height']        = $item['height'];
-			$attributes['height']         = $item['height'];
 			$attributes['data-public-id'] = $item['public_id'];
 			$tag_element['crop']          = $item['crop'];
 			$tag_element['format']        = $item['format'];
