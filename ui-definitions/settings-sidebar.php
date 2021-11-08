@@ -69,7 +69,7 @@ $settings = array(
 		},
 		'collapsible' => 'closed',
 		array(
-			'type'  => 'opt_level',
+			'type' => 'opt_level',
 		),
 	),
 );

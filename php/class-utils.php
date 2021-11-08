@@ -232,7 +232,7 @@ class Utils {
 	  KEY sync_type (sync_type)
 	) $charset_collate";
 
-		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		// @todo: get VIP approval.
 		dbDelta( $sql ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.dbDelta_dbdelta
 	}

@@ -121,7 +121,7 @@ class Opt_Level extends Line_Stat {
 			$icon['render']            = true;
 			$badge['children']['icon'] = $icon;
 		}
-		$badge['children']['text']      = $text;
+		$badge['children']['text'] = $text;
 
 		return $badge;
 	}

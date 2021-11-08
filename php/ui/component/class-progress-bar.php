@@ -93,10 +93,10 @@ class Progress_Bar extends Component {
 	 */
 	protected function value( $struct ) {
 
-		$struct['element']                = 'span';
+		$struct['element']                 = 'span';
 		$struct['content']                 = '&nbsp;';
 		$struct['attributes']['data-text'] = $this->setting->get_param( 'value_key', $this->setting->get_param( 'slug' ) . '-value' );
-		$struct['attributes']['class']    = array(
+		$struct['attributes']['class']     = array(
 			'cld-progress-box-line-value',
 		);
 

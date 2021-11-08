@@ -137,7 +137,7 @@ class File_Folder extends On_Off {
 	 * @param string $slug   The slug of the setting to be controlled.
 	 */
 	protected function set_main( $main, $slug ) {
-		$main = $this->setting->find_setting( $main );
+		$main   = $this->setting->find_setting( $main );
 		$list   = $main->get_param( 'main', array() );
 		$list[] = $slug;
 		$main->set_param( 'main', $list );

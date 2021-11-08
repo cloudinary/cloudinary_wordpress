@@ -71,11 +71,11 @@ class Plan_Details extends Component {
 
 		$struct['children']['plan'] = $this->make_item( __( 'Plan', 'cloudinary' ), $data['plan'], $this->dir_url . 'css/images/star.svg' );
 
-		$usage                             = $units . ' per month / ' . $units_used . ' used';
-		$struct['children']['units']       = $this->make_item( __( 'Plan Units', 'cloudinary' ), $usage, $this->dir_url . 'css/images/units.svg' );
+		$usage                                 = $units . ' per month / ' . $units_used . ' used';
+		$struct['children']['units']           = $this->make_item( __( 'Plan Units', 'cloudinary' ), $usage, $this->dir_url . 'css/images/units.svg' );
 		$struct['children']['remaining_units'] = $this->make_item( __( 'Remaining Units', 'cloudinary' ), $remaining, $this->dir_url . 'css/images/units-plus.svg' );
-		$struct['children']['requests']    = $this->make_item( __( 'Total Requests', 'cloudinary' ), number_format_i18n( $data['requests'] ), $this->dir_url . 'css/images/requests.svg' );
-		$struct['children']['assets']      = $this->make_item( __( 'Optimized assets', 'cloudinary' ), $data['resources'], $this->dir_url . 'css/images/image.svg' );
+		$struct['children']['requests']        = $this->make_item( __( 'Total Requests', 'cloudinary' ), number_format_i18n( $data['requests'] ), $this->dir_url . 'css/images/requests.svg' );
+		$struct['children']['assets']          = $this->make_item( __( 'Optimized assets', 'cloudinary' ), $data['resources'], $this->dir_url . 'css/images/image.svg' );
 
 		return $struct;
 	}

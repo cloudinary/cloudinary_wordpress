@@ -153,7 +153,7 @@ class Folder_Table extends Table {
 						$slug => true,
 					),
 					array(
-						'element' => 'table',
+						'element'    => 'table',
 
 						'attributes' => array(
 							'class' => array(

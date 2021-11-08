@@ -1283,6 +1283,7 @@ class Media extends Settings_Component implements Setup {
 			return $urls[ $attachment_id ];
 		}
 		$meta = wp_get_attachment_metadata( $attachment_id );
+
 		if ( ! isset( $meta['file'] ) ) {
 			// if theres no file, try get it from attached file (ie. video).
 			$meta['file'] = get_post_meta( $attachment_id, '_wp_attached_file', true );
@@ -2648,12 +2649,12 @@ class Media extends Settings_Component implements Setup {
 			$request = filter_input( INPUT_GET, 'cloudinary-filter', FILTER_SANITIZE_STRING );
 
 			if ( $request && 'none' !== $request ) {
-				$meta_query   = $query->get( 'meta_query' );
+				$meta_query = $query->get( 'meta_query' );
 				if ( ! is_array( $meta_query ) ) {
 					$meta_query = array();
 				}
 				$meta_query[] = array(
-					'relation'  => 'AND',
+					'relation' => 'AND',
 				);
 				$meta_query[] = array(
 					'key'     => $request,
