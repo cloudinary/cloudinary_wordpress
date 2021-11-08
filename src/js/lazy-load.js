@@ -189,6 +189,7 @@ const LazyLoad = {
 		const ratio = image.originalWidth / image.originalHeight;
 		const height = Math.round( width / ratio );
 		const density = this._getDensity();
+		const format = image.dataset.format ? image.dataset.format : 'webp';
 		let name = image.dataset.publicId.split( '/' ).pop();
 		let newSize = [];
 
@@ -213,7 +214,7 @@ const LazyLoad = {
 			newSize.join( ',' ),
 			image.dataset.transformations,
 			image.dataset.publicId,
-			name
+			name + '.' + format + '?_i=AA'
 		];
 
 		const url = parts.filter( this.empty ).join( '/' );
