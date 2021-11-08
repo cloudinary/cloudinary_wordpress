@@ -2,7 +2,7 @@ const LazyLoad = {
 	deviceDensity: window.devicePixelRatio ? window.devicePixelRatio : 'auto',
 	density: null,
 	images: [],
-	debounce: null,
+	throttle: false,
 	config: CLDLB ? CLDLB : {},
 	lazyThreshold: 0,
 	_init() {
@@ -37,11 +37,11 @@ const LazyLoad = {
 			this.images.push( image );
 		} );
 		// Resize handler.
-		window.addEventListener( 'resize', ( ev ) => {
-			this._debounceBuild();
+		window.addEventListener( 'resize', () => {
+			this._throttle( this._build.bind( this ), 100, true );
 		} );
-		window.addEventListener( 'scroll', ( ev ) => {
-			this._debounceBuild();
+		window.addEventListener( 'scroll', () => {
+			this._throttle( this._build.bind( this ), 100, false );
 		} );
 		// Build images.
 		setTimeout( () => this._build(), 0 );
@@ -72,14 +72,6 @@ const LazyLoad = {
 		}
 		this.lazyThreshold = window.innerHeight + parseInt( unit, 10 );
 	},
-	_debounceBuild() {
-		if ( this.debounce ) {
-			clearTimeout( this.debounce );
-		}
-		this.debounce = setTimeout( () => {
-			this._build();
-		}, 100 );
-	},
 	_getDensity() {
 		if ( this.density ) {
 			return this.density;
@@ -106,8 +98,21 @@ const LazyLoad = {
 
 		return deviceDensity;
 	},
-	_build() {
+	_throttle( callback, time, force ) {
+		if ( this.throttle ) {
+			return;
+		}
+
+		setTimeout(()=>{
+			callback( force );
+			this.throttle = false;
+		}, time );
+	},
+	_build( force ) {
 		this.images.forEach( ( image ) => {
+			if ( ! force && image.cld_loaded ) {
+				return;
+			}
 			this.buildSize( image );
 		} );
 	},
