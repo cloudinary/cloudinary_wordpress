@@ -228,6 +228,7 @@ class Utils {
 	  UNIQUE KEY sized_url (sized_url),
 	  KEY post_id (post_id),
 	  KEY parent_path (parent_path),
+	  KEY public_id (public_id),
 	  KEY sync_type (sync_type)
 	) $charset_collate";
 

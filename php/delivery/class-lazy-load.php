@@ -142,16 +142,21 @@ class Lazy_Load extends Delivery_Feature {
 	 */
 	public function add_features( $tag_element ) {
 
-		$transformations = $this->media->get_transformations_from_string( $tag_element['atts']['src'] );
-		array_shift( $transformations ); // We always get a sized url, the first will be the size, which we don't need.
-
-		$tag_element['atts']['data-transformations'] = API::generate_transformation_string( $transformations, $tag_element['type'] );
-
-		// Capture the size.
-		$tag_element['atts']['data-size'] = array(
+		$sizes = array(
 			$tag_element['atts']['width'],
 			$tag_element['atts']['height'],
 		);
+
+		$transformations                             = $this->media->get_transformations_from_string( $tag_element['atts']['src'] );
+		$crop_size                                   = array_shift( $transformations ); // We always get a sized url, the first will be the size, which we don't need.
+		$tag_element['atts']['data-transformations'] = API::generate_transformation_string( $transformations, $tag_element['type'] );
+		if ( true === $tag_element['crop'] ) {
+			unset( $crop_size['width'], $crop_size['height'] );
+			$sizes[] = Api::generate_transformation_string( array( $crop_size ) );
+		}
+
+		// Capture the size.
+		$tag_element['atts']['data-size'] = array_filter( $sizes );
 
 		$colors    = $this->config['lazy_custom_color'];
 		$animation = array(

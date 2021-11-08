@@ -658,7 +658,7 @@ class Media extends Settings_Component implements Setup {
 		$file      = implode( '/', $parts );
 		$path_info = pathinfo( $file );
 
-		$public_id = '.' !== $path_info['dirname'] ? $path_info['dirname'] : $path_info['filename'];
+		$public_id = isset( $path_info['dirname'] ) && '.' !== $path_info['dirname'] ? $path_info['dirname'] : $path_info['filename'];
 		$public_id = trim( $public_id, './' );
 
 		if ( $as_sync_key ) {
@@ -1020,14 +1020,16 @@ class Media extends Settings_Component implements Setup {
 		static $urls = array();
 		if ( isset( $urls[ $url ] ) ) {
 			// prevent infinite loops.
-			return $url; // Return the actual url, since it would already be converted.
+			return $urls[ $url ]; // Return the actual url, since it would already be converted.
 		}
-		$urls[ $url ] = true;
+
 		// Previous v1 and Cloudinary only storage.
 		if ( false !== strpos( $url, 'https://', 5 ) ) {
 			$dirs = wp_get_upload_dir();
 
-			return str_replace( trailingslashit( $dirs['baseurl'] ), '', $url );
+			$urls[ $url ] = str_replace( trailingslashit( $dirs['baseurl'] ), '', $url );
+
+			return $urls[ $url ];
 		}
 
 		if (
@@ -1047,6 +1049,7 @@ class Media extends Settings_Component implements Setup {
 				$url = $this->cloudinary_url( $attachment_id );
 			}
 		}
+		$urls[ $url ] = $url;
 
 		return $url;
 	}
@@ -1272,9 +1275,10 @@ class Media extends Settings_Component implements Setup {
 	 * @return string|false
 	 */
 	public function local_url( $attachment_id ) {
-		$this->in_downsize = true;
-		$url               = wp_get_attachment_url( $attachment_id );
-		$this->in_downsize = false;
+
+		$meta = wp_get_attachment_metadata( $attachment_id );
+		$dirs = wp_get_upload_dir();
+		$url  = wp_normalize_path( trailingslashit( $dirs['baseurl'] ) . $meta['file'] );
 
 		/**
 		 * Filter local URL.
@@ -1288,6 +1292,45 @@ class Media extends Settings_Component implements Setup {
 		 * @return  {string|false}
 		 */
 		return apply_filters( 'cloudinary_local_url', $url, $attachment_id );
+	}
+
+	/**
+	 * Get the local URL for an attachment.
+	 *
+	 * @param int $attachment_id The attachment ID to get.
+	 *
+	 * @return string|false
+	 */
+	public function raw_cloudinary_url( $attachment_id ) {
+		static $api;
+		if ( ! $api ) {
+			$api = $this->plugin->components['connect']->api;
+		}
+		$transformations = $this->get_transformation_from_meta( $attachment_id );
+		$parts           = array(
+			'https:/',
+			$api->asset_url,
+			$api->credentials['cloud_name'],
+			$this->get_resource_type( $attachment_id ),
+			$this->get_media_delivery( $attachment_id ),
+			$api::generate_transformation_string( $transformations ),
+			'v' . $this->get_cloudinary_version( $attachment_id ),
+			$this->get_cloudinary_id( $attachment_id ),
+		);
+		$url             = implode( '/', array_filter( $parts ) );
+
+		/**
+		 * Filter a base Cloudinary URL (no transformations).
+		 *
+		 * @hook    cloudinary_raw_url
+		 * @since   3.0.0
+		 *
+		 * @param $url           {string|false} The local URL
+		 * @param $attachment_id {int}  The attachment ID.
+		 *
+		 * @return  {string|false}
+		 */
+		return apply_filters( 'cloudinary_raw_url', $url, $attachment_id );
 	}
 
 	/**
@@ -1680,7 +1723,7 @@ class Media extends Settings_Component implements Setup {
 		$test_parts = wp_parse_url( $url );
 		$cld_url    = $this->plugin->components['connect']->api->asset_url;
 
-		return $test_parts['host'] === $cld_url;
+		return isset( $test_parts['path'] ) && $test_parts['host'] === $cld_url;
 	}
 
 	/**

@@ -31,7 +31,9 @@ const LazyLoad = {
 			const size = image.dataset.size.split( ' ' );
 			image.originalWidth = size[ 0 ];
 			image.originalHeight = size[ 1 ];
-
+			if( size[ 2 ] ) {
+				image.crop = size[ 2 ];
+			}
 			this.images.push( image );
 		} );
 		// Resize handler.
@@ -196,6 +198,9 @@ const LazyLoad = {
 		let newSize = [];
 
 		if ( width ) {
+			if( image.crop ) {
+				newSize.push( image.crop );
+			}
 			newSize.push( 'w_' + width );
 
 			if ( height ) {
@@ -227,9 +232,17 @@ const LazyLoad = {
 			image.width,
 			this.config.pixel_step
 		);
+		const ratio = image.originalWidth / image.originalHeight;
+		const height = Math.round( width / ratio );
 		let newSize = [];
 		if ( width ) {
+			if( image.crop ) {
+				newSize.push( image.crop );
+			}
 			newSize.push( 'w_' + width );
+			if ( height ) {
+				newSize.push( 'h_' + height );
+			}
 		}
 
 		const parts = [
