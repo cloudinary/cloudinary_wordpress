@@ -193,9 +193,9 @@ $settings = array(
 								'tooltip_text' => __( 'The device pixel ratio to use for your generated images.', 'cloudinary' ),
 								'default'      => 'auto',
 								'options'      => array(
-									'off'  => __( 'Off', 'cloudinary' ),
-									'2X'   => __( 'Auto (2x)', 'cloudinary' ),
-									'max'  => __( 'Max DPR', 'cloudinary' ),
+									'off' => __( 'Off', 'cloudinary' ),
+									'2X'  => __( 'Auto (2x)', 'cloudinary' ),
+									'max' => __( 'Max DPR', 'cloudinary' ),
 								),
 							),
 						),
@@ -441,7 +441,7 @@ $settings = array(
 		'section' => 'wizard',
 		'slug'    => 'wizard',
 	),
-	'edit_asset' => array(
+	'edit_asset'     => array(
 		'page_title'          => __( 'Edit asset', 'cloudinary' ),
 		'section'             => 'edit-asset',
 		'slug'                => 'edit_asset',

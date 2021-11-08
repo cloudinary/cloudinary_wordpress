@@ -78,8 +78,8 @@ class Plan_Details extends Component {
 			$struct = $this->plan_classic( $struct, $connection );
 		}
 
-		$struct['children']['requests']        = $this->make_item( __( 'Total Requests', 'cloudinary' ), number_format_i18n( $data['requests'] ), $this->dir_url . 'css/images/requests.svg' );
-		$struct['children']['assets']          = $this->make_item( __( 'Optimized assets', 'cloudinary' ), $data['resources'], $this->dir_url . 'css/images/image.svg' );
+		$struct['children']['requests'] = $this->make_item( __( 'Total Requests', 'cloudinary' ), number_format_i18n( $data['requests'] ), $this->dir_url . 'css/images/requests.svg' );
+		$struct['children']['assets']   = $this->make_item( __( 'Optimized assets', 'cloudinary' ), $data['resources'], $this->dir_url . 'css/images/image.svg' );
 
 		return $struct;
 	}
@@ -117,6 +117,7 @@ class Plan_Details extends Component {
 		$struct['children']['storage']         = $this->make_item( __( 'Storage', 'cloudinary' ), $connection->get_usage_stat( 'storage', 'used_percent' ) . '%', $this->dir_url . 'css/images/cloud.svg' );
 		$struct['children']['transformations'] = $this->make_item( __( 'Transformations', 'cloudinary' ), $connection->get_usage_stat( 'transformations', 'used_percent' ) . '%', $this->dir_url . 'css/images/transformation.svg' );
 		$struct['children']['bandwidth']       = $this->make_item( __( 'Bandwidth', 'cloudinary' ), $connection->get_usage_stat( 'bandwidth', 'used_percent' ) . '%', $this->dir_url . 'css/images/bandwidth.svg' );
+
 
 		return $struct;
 	}

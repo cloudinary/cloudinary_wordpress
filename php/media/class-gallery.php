@@ -351,7 +351,7 @@ class Gallery extends Settings_Component {
 
 		if ( WooCommerceGallery::woocommerce_active() ) {
 			$panel[] = array(
-				'type'  => 'group',
+				'type' => 'group',
 				array(
 					'type'         => 'on_off',
 					'slug'         => 'gallery_woocommerce_enabled',

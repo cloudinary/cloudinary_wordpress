@@ -19,9 +19,9 @@ $advanced       = true;
 $current_tab    = 1;
 $cloudinary_url = $cloudinary->settings->get_value( 'cloudinary_url' );
 if ( ! empty( $cloudinary_url ) ) {
-	$autosync    = 'on' === $cloudinary->settings->get_value( 'auto_sync' );
-	$nonmedia    = 'on' === $cloudinary->settings->get_value( 'cache.enable' );
-	$advanced    = 'on' === $cloudinary->settings->get_value( 'use_lazy_load' ) && 'on' === $cloudinary->settings->get_value( 'enable_breakpoints' );
+	$autosync = 'on' === $cloudinary->settings->get_value( 'auto_sync' );
+	$nonmedia = 'on' === $cloudinary->settings->get_value( 'cache.enable' );
+	$advanced = 'on' === $cloudinary->settings->get_value( 'use_lazy_load' ) && 'on' === $cloudinary->settings->get_value( 'enable_breakpoints' );
 }
 
 // Export settings.
