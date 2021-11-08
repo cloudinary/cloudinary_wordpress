@@ -7,11 +7,11 @@
 
 namespace Cloudinary\UI\Component;
 
-use function Cloudinary\get_plugin_instance;
-use Cloudinary\UI\Component;
+use Cloudinary\Connect;
 use Cloudinary\Settings;
 use Cloudinary\Settings\Setting;
-use Cloudinary\Connect;
+use Cloudinary\UI\Component;
+use function Cloudinary\get_plugin_instance;
 
 /**
  * Plan Component to render plan details.
@@ -60,22 +60,63 @@ class Plan_Details extends Component {
 	 * @return array
 	 */
 	protected function plan( $struct ) {
+		$data       = $this->plugin_settings->get_value( 'last_usage' );
+		$connection = get_plugin_instance()->get_component( 'connect' );
+
+		if ( ! $connection instanceof Connect ) {
+			return $struct;
+		}
+
 		$struct['element']               = 'div';
 		$struct['attributes']['class'][] = 'cld-plan';
 
-		$data       = $this->plugin_settings->get_value( 'last_usage' );
-		$connection = get_plugin_instance()->get_component( 'connect' );
+		$struct['children']['plan'] = $this->make_item( __( 'Plan', 'cloudinary' ), $data['plan'], $this->dir_url . 'css/images/star.svg' );
+
+		if ( $connection->get_usage_stat( 'credits', 'limit' ) ) {
+			$struct = $this->plan_credit( $struct, $connection );
+		} else {
+			$struct = $this->plan_classic( $struct, $connection );
+		}
+
+		$struct['children']['requests']        = $this->make_item( __( 'Total Requests', 'cloudinary' ), number_format_i18n( $data['requests'] ), $this->dir_url . 'css/images/requests.svg' );
+		$struct['children']['assets']          = $this->make_item( __( 'Optimized assets', 'cloudinary' ), $data['resources'], $this->dir_url . 'css/images/image.svg' );
+
+		return $struct;
+	}
+
+	/**
+	 * The metrics for Credit base accounts.
+	 *
+	 * @param array   $struct     The array structure.
+	 * @param Connect $connection The connect instance.
+	 *
+	 * @return array
+	 */
+	protected function plan_credit( $struct, $connection ) {
 		$units      = $connection->get_usage_stat( 'credits', 'limit' );
 		$units_used = $connection->get_usage_stat( 'credits', 'usage' );
 		$remaining  = $units - $units_used;
 
-		$struct['children']['plan'] = $this->make_item( __( 'Plan', 'cloudinary' ), $data['plan'], $this->dir_url . 'css/images/star.svg' );
 
-		$usage                             = $units . ' per month / ' . $units_used . ' used';
-		$struct['children']['units']       = $this->make_item( __( 'Plan Units', 'cloudinary' ), $usage, $this->dir_url . 'css/images/units.svg' );
+		$usage                                 = $units . ' per month / ' . $units_used . ' used';
+		$struct['children']['units']           = $this->make_item( __( 'Plan Units', 'cloudinary' ), $usage, $this->dir_url . 'css/images/units.svg' );
 		$struct['children']['remaining_units'] = $this->make_item( __( 'Remaining Units', 'cloudinary' ), $remaining, $this->dir_url . 'css/images/units-plus.svg' );
-		$struct['children']['requests']    = $this->make_item( __( 'Total Requests', 'cloudinary' ), number_format_i18n( $data['requests'] ), $this->dir_url . 'css/images/requests.svg' );
-		$struct['children']['assets']      = $this->make_item( __( 'Optimized assets', 'cloudinary' ), $data['resources'], $this->dir_url . 'css/images/image.svg' );
+
+		return $struct;
+	}
+
+	/**
+	 * The metrics for Classic base accounts.
+	 *
+	 * @param array   $struct     The array structure.
+	 * @param Connect $connection The connect instance.
+	 *
+	 * @return array
+	 */
+	protected function plan_classic( $struct, $connection ) {
+		$struct['children']['storage']         = $this->make_item( __( 'Storage', 'cloudinary' ), $connection->get_usage_stat( 'storage', 'used_percent' ) . '%', $this->dir_url . 'css/images/cloud.svg' );
+		$struct['children']['transformations'] = $this->make_item( __( 'Transformations', 'cloudinary' ), $connection->get_usage_stat( 'transformations', 'used_percent' ) . '%', $this->dir_url . 'css/images/transformation.svg' );
+		$struct['children']['bandwidth']       = $this->make_item( __( 'Bandwidth', 'cloudinary' ), $connection->get_usage_stat( 'bandwidth', 'used_percent' ) . '%', $this->dir_url . 'css/images/bandwidth.svg' );
 
 		return $struct;
 	}
