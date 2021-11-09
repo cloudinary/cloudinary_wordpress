@@ -85,15 +85,23 @@ class Utils {
 	}
 
 	/**
-	 * Check whether the inputted HTML string is powered by AMP.
+	 * Check whether the inputted HTML string is powered by AMP, or if the request is an amp page.
 	 * Reference on how to detect an AMP page: https://amp.dev/documentation/guides-and-tutorials/learn/spec/amphtml/?format=websites#ampd.
 	 *
-	 * @param string $html_string The HTML string to check.
+	 * @param string|null $html_string Optional: The specific HTML string to check.
 	 *
 	 * @return bool
 	 */
-	public static function is_amp( $html_string ) {
-		return strpos( $html_string, '<html amp' ) !== false || strpos( $html_string, '<html ⚡' ) !== false;
+	public static function is_amp( $html_string = null ) {
+		if ( ! empty( $html_string ) ) {
+			return preg_match( '/<html.+(amp|⚡)+[^>]/', substr( $html_string, 0, 200 ), $found );
+		}
+		$is_amp = false;
+		if ( function_exists( 'amp_is_request' ) ) {
+			$is_amp = amp_is_request();
+		}
+
+		return $is_amp;
 	}
 
 	/**
