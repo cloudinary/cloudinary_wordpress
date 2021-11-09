@@ -647,8 +647,8 @@ class Delivery implements Setup {
 			$cached = $has_cache[ $type ];
 		}
 
-		$tags = $this->get_media_tags( $content );
-		$tags = array_map( array( $this, 'parse_element' ), array_unique( $tags ) );
+		$tags = $this->get_media_tags( $content, 'img|video|article' );
+		$tags = array_map( array( $this, 'parse_element' ), $tags );
 		$tags = array_filter( $tags );
 
 		$replacements = array();
@@ -833,7 +833,7 @@ class Delivery implements Setup {
 	 * @return array
 	 */
 	public function parse_element( $element ) {
-
+		static $post_context = 0;
 		$tag_element = array(
 			'tag'                       => '',
 			'atts'                      => array(),
@@ -853,8 +853,16 @@ class Delivery implements Setup {
 		$element = trim( $element, '</>' );
 
 		// Break element up.
-		$attributes          = shortcode_parse_atts( $element );
-		$tag_element['tag']  = array_shift( $attributes );
+		$attributes         = shortcode_parse_atts( $element );
+		$tag_element['tag'] = array_shift( $attributes );
+		// Context Switch Check.
+		if ( 'article' === $tag_element['tag'] ) {
+			if ( ! empty( $attributes['id'] ) && false !== strpos( $attributes['id'], 'post-' ) ) {
+				$post_context = intval( substr( $attributes['id'], 5 ) );
+			}
+
+			return null;
+		}
 		$tag_element['type'] = 'img' === $tag_element['tag'] ? 'image' : $tag_element['tag'];
 		$raw_url             = isset( $attributes['src'] ) ? $this->sanitize_url( $attributes['src'] ) : '';
 		$url                 = self::clean_url( $raw_url );
@@ -874,7 +882,7 @@ class Delivery implements Setup {
 				}
 			}
 		}
-
+		$tag_element['context'] = $post_context;
 		if ( ! empty( $this->known[ $url ] ) && ! empty( $this->known[ $url ]['public_id'] ) ) {
 			$item = $this->known[ $url ];
 			if ( ! empty( $item['transformations'] ) ) {
@@ -890,13 +898,18 @@ class Delivery implements Setup {
 		if ( ! empty( $attributes['class'] ) ) {
 			if ( preg_match( '/wp-post-(\d*)/', $attributes['class'], $match ) ) {
 				$tag_element['context'] = (int) $match[1];
+				$post_context           = $tag_element['context'];
+			} else {
+				$attributes['class'] .= ' wp-post-' . $tag_element['context'];
 			}
 			$attributes['class'] = explode( ' ', $attributes['class'] );
 			if ( in_array( 'cld-overwrite', $attributes['class'], true ) ) {
 				$tag_element['overwrite_transformations'] = true;
 			}
 		} else {
-			$attributes['class'] = array();
+			$attributes['class'] = array(
+				'wp-post-' . $tag_element['context'],
+			);
 		}
 
 		$inline_transformations = $this->get_transformations_maybe( $url );
