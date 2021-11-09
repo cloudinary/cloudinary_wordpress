@@ -512,6 +512,16 @@ class Video {
 				// The render_block_data filter was only introduced on WP 5.1.0. This is the fallback for 5.0.*.
 				add_filter( 'render_block', array( $this, 'filter_video_block_render_block' ), 10, 2 );
 			}
+		} else {
+			// Remove the _i query var in admin, when the video shortcode is used.
+			add_filter(
+				'shortcode_atts_video',
+				function ( $atts ) {
+					$atts['src'] = remove_query_arg( '_i', $atts['src'] );
+
+					return $atts;
+				}
+			);
 		}
 
 		// Add inline scripts for gutenberg.
