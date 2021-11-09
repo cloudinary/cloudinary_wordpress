@@ -241,7 +241,7 @@ class Assets extends Settings_Component {
 		$overlay = array(
 			'id'    => 'cloudinary-overlay',
 			'title' => $title,
-			'href'   => '?cloudinary-cache-overlay=' . $nonce,
+			'href'  => '?cloudinary-cache-overlay=' . $nonce,
 			'meta'  => array(
 				'title' => $title,
 			),
@@ -304,8 +304,6 @@ class Assets extends Settings_Component {
 
 	/**
 	 * Compiles all metadata and preps upload at shutdown.
-	 *
-	 * @hook shutdown
 	 */
 	public function meta_updates() {
 		if ( $this->is_locked() ) {
@@ -712,8 +710,6 @@ class Assets extends Settings_Component {
 
 	/**
 	 * Get the asset src file.
-	 *
-	 * @hook get_attached_file
 	 *
 	 * @param string $file     The file as from the filter.
 	 * @param int    $asset_id The asset ID.

@@ -78,8 +78,8 @@ class Color extends Text {
 	 * @return array
 	 */
 	protected function description( $struct ) {
-		$struct = parent::description( $struct );
-		$struct['element']               = 'div';
+		$struct            = parent::description( $struct );
+		$struct['element'] = 'div';
 		return $struct;
 	}
 }

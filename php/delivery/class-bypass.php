@@ -179,8 +179,6 @@ class Bypass {
 	/**
 	 * Handle saving the deliver setting in single attachment edit.
 	 *
-	 * @hook wp_insert_attachment_data
-	 *
 	 * @param array $post_data The post array (unused).
 	 * @param array $data      The submitted data to save.
 	 *

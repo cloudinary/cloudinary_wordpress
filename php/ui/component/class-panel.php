@@ -99,7 +99,7 @@ class Panel extends Component {
 	 */
 	protected function title_wrap( $struct ) {
 
-		$struct['element'] = 'div';
+		$struct['element']             = 'div';
 		$struct['attributes']['class'] = array(
 			'cld-ui-title',
 		);
@@ -120,8 +120,8 @@ class Panel extends Component {
 	 */
 	protected function title( $struct ) {
 
-		$struct['element'] = 'h2';
-		$struct['content'] = $this->setting->get_param( 'title' );
+		$struct['element']             = 'h2';
+		$struct['content']             = $this->setting->get_param( 'title' );
 		$struct['attributes']['class'] = array(
 			'cld-ui-title-head',
 		);
