@@ -142,7 +142,9 @@ class Lazy_Load extends Delivery_Feature {
 	 * @return array
 	 */
 	public function add_features( $tag_element ) {
-
+		if ( Utils::is_amp() ) {
+			return $tag_element;
+		}
 		$sizes = array(
 			$tag_element['atts']['width'],
 			$tag_element['atts']['height'],
