@@ -13,7 +13,10 @@ const MediaLibrary = {
 		const self = this;
 		const library = this.libraryWrap;
 		const status = this.importStatus;
-		if ( typeof CLDN !== 'undefined' ) {
+		if (
+			typeof CLDN !== 'undefined' &&
+			document.querySelector( CLDN.mloptions.inline_container )
+		) {
 			apiFetch.use( apiFetch.createNonceMiddleware( CLDN.nonce ) );
 			cloudinary.openMediaLibrary( CLDN.mloptions, {
 				insertHandler( data ) {
