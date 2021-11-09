@@ -643,6 +643,9 @@ class Delivery implements Setup {
 	public function convert_tags( $content ) {
 		$has_cache = $this->get_context_cache();
 		$type      = is_ssl() ? 'https' : 'http';
+		if ( Utils::is_amp() ) {
+			$type = 'amp';
+		}
 		if ( ! empty( $has_cache[ $type ] ) ) {
 			$cached = $has_cache[ $type ];
 		}

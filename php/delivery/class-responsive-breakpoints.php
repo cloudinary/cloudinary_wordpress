@@ -9,6 +9,7 @@ namespace Cloudinary\Delivery;
 
 use Cloudinary\Delivery_Feature;
 use Cloudinary\Connect\Api;
+use Cloudinary\Utils;
 
 /**
  * Class Responsive_Breakpoints
@@ -54,12 +55,16 @@ class Responsive_Breakpoints extends Delivery_Feature {
 	 * @return array
 	 */
 	public function add_features( $tag_element ) {
-		$tag_element['atts']['data-responsive'] = true;
+		if ( Utils::is_amp() ) {
+			$tag_element['atts']['layout'] = 'responsive';
+		} else {
+			$tag_element['atts']['data-responsive'] = true;
+		}
 		unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 
 		$lazy = $this->plugin->get_component( 'lazy_load' );
 
-		if ( is_null( $lazy ) || ! $lazy->is_enabled() ) {
+		if ( is_null( $lazy ) || ! $lazy->is_enabled() || Utils::is_amp() ) {
 			$tag_element = $this->apply_breakpoints( $tag_element );
 		}
 

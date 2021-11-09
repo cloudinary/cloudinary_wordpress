@@ -11,6 +11,7 @@ use Cloudinary\Connect\Api;
 use Cloudinary\Delivery_Feature;
 use Cloudinary\Plugin;
 use Cloudinary\UI\Component\HTML;
+use Cloudinary\Utils;
 
 /**
  * Class Responsive_Breakpoints
@@ -141,7 +142,9 @@ class Lazy_Load extends Delivery_Feature {
 	 * @return array
 	 */
 	public function add_features( $tag_element ) {
-
+		if ( Utils::is_amp() ) {
+			return $tag_element;
+		}
 		$sizes = array(
 			$tag_element['atts']['width'],
 			$tag_element['atts']['height'],
@@ -204,6 +207,15 @@ class Lazy_Load extends Delivery_Feature {
 		}
 		$config['base_url'] = $this->media->base_url;
 		wp_add_inline_script( 'cld-lazy-load', 'var CLDLB = ' . wp_json_encode( $config ), 'before' );
+	}
+
+	/**
+	 * Enqueue assets if not AMP.
+	 */
+	public function maybe_enqueue_assets() {
+		if ( ! Utils::is_amp() ) {
+			parent::maybe_enqueue_assets();
+		}
 	}
 
 	/**
