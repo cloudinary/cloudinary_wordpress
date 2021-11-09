@@ -31,10 +31,16 @@ const LazyLoad = {
 			const size = image.dataset.size.split( ' ' );
 			image.originalWidth = size[ 0 ];
 			image.originalHeight = size[ 1 ];
-			if( size[ 2 ] ) {
+			if ( size[ 2 ] ) {
 				image.crop = size[ 2 ];
 			}
 			this.images.push( image );
+			image.addEventListener( 'error', ( ev ) => {
+				// If load error, set a broken image and remove from images list to prevent infinite load loop.
+				image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="rgba(0,0,0,0.1)"/><text x="50%" y="50%" fill="red" text-anchor="middle" dominant-baseline="middle">%26%23x26A0%3B︎</text></svg>';
+				const index = this.images.indexOf( image );
+				this.images.splice( index, 1 );
+			} );
 		} );
 		// Resize handler.
 		window.addEventListener( 'resize', () => {
@@ -194,11 +200,12 @@ const LazyLoad = {
 		const ratio = image.originalWidth / image.originalHeight;
 		const height = Math.round( width / ratio );
 		const density = this._getDensity();
+		const format = 'auto' !== this.config['image_format'] && 'none' !== this.config['image_format'] ? this.config['image_format'] : image.dataset.format;
 		let name = image.dataset.publicId.split( '/' ).pop();
 		let newSize = [];
 
 		if ( width ) {
-			if( image.crop ) {
+			if ( image.crop ) {
 				newSize.push( image.crop );
 			}
 			newSize.push( 'w_' + width );
@@ -218,7 +225,7 @@ const LazyLoad = {
 			newSize.join( ',' ),
 			image.dataset.transformations,
 			image.dataset.publicId,
-			name
+			name + '.' + format + '?_i=AA'
 		];
 
 		const url = parts.filter( this.empty ).join( '/' );
@@ -236,7 +243,7 @@ const LazyLoad = {
 		const height = Math.round( width / ratio );
 		let newSize = [];
 		if ( width ) {
-			if( image.crop ) {
+			if ( image.crop ) {
 				newSize.push( image.crop );
 			}
 			newSize.push( 'w_' + width );
