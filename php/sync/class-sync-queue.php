@@ -304,8 +304,8 @@ class Sync_Queue {
 		$cached = get_transient( Sync::META_KEYS['dashboard_cache'] );
 		if ( empty( $cached ) ) {
 			$wpdb->cld_table              = Utils::get_relationship_table();
-			$return['total_assets']       = (int) $wpdb->get_var( "SELECT COUNT( id ) as total FROM {$wpdb->cld_table} WHERE primary_url = sized_url;" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$return['unoptimized_assets'] = (int) $wpdb->get_var( "SELECT COUNT( id ) as total FROM {$wpdb->cld_table} WHERE public_id IS NULL AND primary_url = sized_url;" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$return['total_assets']       = (int) $wpdb->get_var( "SELECT COUNT( DISTINCT post_id ) as total FROM {$wpdb->cld_table} WHERE primary_url = sized_url;" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$return['unoptimized_assets'] = (int) $wpdb->get_var( "SELECT COUNT( DISTINCT post_id ) as total FROM {$wpdb->cld_table} WHERE public_id IS NULL AND primary_url = sized_url;" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
 			$asset_sizes           = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 				$wpdb->prepare(
