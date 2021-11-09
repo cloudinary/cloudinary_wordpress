@@ -309,12 +309,12 @@ class Sync_Queue {
 
 			$asset_sizes           = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 				$wpdb->prepare(
-					"SELECT 
+					"SELECT
 			SUM(meta_value) as total, meta_key as type
 		FROM
 		{$wpdb->cld_table} AS cld
-		RIGHT JOIN {$wpdb->postmeta} AS wp ON (cld.post_id = wp.post_id ) 
-		WHERE 
+		RIGHT JOIN {$wpdb->postmeta} AS wp ON (cld.post_id = wp.post_id )
+		WHERE
 			meta_key IN (%s,%s )
 		AND
 			primary_url = sized_url
