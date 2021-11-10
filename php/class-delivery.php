@@ -762,14 +762,37 @@ class Delivery implements Setup {
 		unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 
 		// Get cloudinary URL.
-		$tag_element['atts']['src'] = $this->media->cloudinary_url(
+		$url                        = $this->media->cloudinary_url(
 			$tag_element['id'],
 			$size,
 			$tag_element['transformations'],
 			$tag_element['atts']['data-public-id'] . '.' . $tag_element['format'],
 			$tag_element['overwrite_transformations']
 		);
-
+		$tag_element['atts']['src'] = $url;
+		// Convert any URLS that exist in attributes ( 3rd party lazyload etc..).
+		foreach ( $tag_element['atts'] as &$att ) {
+			if ( is_array( $att ) ) {
+				continue;
+			}
+			$parts = array_filter( explode( ' ', $att ) );
+			foreach ( $parts as &$part ) {
+				if ( $this->validate_url( $part ) ) {
+					$has_wp_size = $this->media->get_crop( $part, $tag_element['id'] );
+					if ( ! empty( $has_wp_size ) ) {
+						$size = $has_wp_size;
+					}
+					$part = $this->media->cloudinary_url(
+						$tag_element['id'],
+						$size,
+						$tag_element['transformations'],
+						$tag_element['atts']['data-public-id'] . '.' . $tag_element['format'],
+						$tag_element['overwrite_transformations']
+					);
+				}
+			}
+			$att = implode( ' ', $parts );
+		}
 		if ( current_user_can( 'manage_options' ) && 'on' === $this->plugin->settings->image_settings->_overlay ) {
 			$local_size = get_post_meta( $tag_element['id'], Sync::META_KEYS['local_size'], true );
 			if ( empty( $local_size ) && file_exists( get_attached_file( $tag_element['id'] ) ) ) {
