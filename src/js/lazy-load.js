@@ -7,22 +7,6 @@ const LazyLoad = {
 	lazyThreshold: 0,
 	_init() {
 		this._calcThreshold();
-
-		const lazysNoScripts = document.querySelectorAll(
-			'noscript[data-image]' );
-
-		[ ...lazysNoScripts ].forEach( ( noscript ) => {
-			const attributes = JSON.parse( noscript.dataset.image );
-			const image = document.createElement( 'img' );
-			for ( let att in attributes ) {
-				image.setAttribute( att, attributes[ att ] );
-			}
-			image.originalWidth = attributes[ 'data-size' ][ 0 ];
-			image.originalHeight = attributes[ 'data-size' ][ 1 ];
-
-			this.images.push( image );
-			noscript.parentNode.replaceChild( image, noscript );
-		} );
 		[ ...document.images ].forEach( ( image ) => {
 			if ( ! image.dataset.publicId ) {
 				return;
@@ -109,7 +93,7 @@ const LazyLoad = {
 			return;
 		}
 
-		setTimeout(()=>{
+		setTimeout( () => {
 			callback( force );
 			this.throttle = false;
 		}, time );
@@ -123,11 +107,7 @@ const LazyLoad = {
 		} );
 	},
 	_shouldRebuild( image ) {
-		const width = this.scaleSize(
-			image.originalWidth,
-			image.width,
-			this.config.pixel_step
-		);
+		const width = this.scaleWidth( image );
 		const rect = image.getBoundingClientRect();
 		const density = 'auto' !== this.density ? this._getDensity() : 1;
 		return (
@@ -136,11 +116,7 @@ const LazyLoad = {
 		);
 	},
 	_shouldPlacehold( image ) {
-		const width = this.scaleSize(
-			image.originalWidth,
-			image.width,
-			this.config.pixel_step
-		);
+		const width = this.scaleWidth( image );
 		const rect = image.getBoundingClientRect();
 		const density = 'auto' !== this.density ? this._getDensity() : 1;
 		return (
@@ -149,28 +125,45 @@ const LazyLoad = {
 			rect.top < this.lazyThreshold * 2 &&
 			( width > image.naturalWidth / density || ! image.cld_placehold )
 		);
+	},
+	scaleWidth( image ) {
+		const responsiveStep = this.config.pixel_step;
+		const diff = Math.floor( ( image.originalWidth - image.width ) / responsiveStep );
+		let scaledWidth = image.originalWidth - responsiveStep * diff;
+		if ( scaledWidth > image.originalWidth ) {
+			scaledWidth = image.originalWidth;
+		} else if ( this.config.max_width < scaledWidth ) {
+			scaledWidth = this.config.max_width;
+		} else if ( this.config.min_width > scaledWidth ) {
+			scaledWidth = this.config.min_width;
+		}
+		return scaledWidth;
+	},
+	scaleSize( image, dpr ) {
+		const ratio = ( image.originalWidth / image.originalHeight ).toFixed( 3 );
+		const renderedRatio = ( image.width / image.height ).toFixed( 3 );
+		const scaledWidth = this.scaleWidth( image );
+		const newSize = [];
+		if ( image.width !== image.originalWidth ) {
+			// We know it's a different size.
+			newSize.push( ratio === renderedRatio ? 'c_scale' : 'c_fill,g_auto' );
+		}
+		const scaledHeight = Math.round( scaledWidth / renderedRatio );
 
-	},
-	getResponsiveSteps( image ) {
-		const steps = Math.ceil(
-			image.dataset.breakpoints
-				? image.originalWidth / image.dataset.breakpoints
-				: this.responsiveStep
-		);
-		return steps;
-	},
-	scaleSize( original, newSize, responsiveStep ) {
-		const diff = Math.floor( ( original - newSize ) / responsiveStep );
-		let scaledSize = original - responsiveStep * diff;
-		if ( scaledSize > original ) {
-			scaledSize = original;
-		} else if ( this.config.max_width < scaledSize ) {
-			scaledSize = this.config.max_width;
-		} else if ( this.config.min_width > scaledSize ) {
-			scaledSize = this.config.min_width;
+		newSize.push( 'w_' + scaledWidth );
+		newSize.push( 'h_' + scaledHeight );
+
+		if ( dpr ) {
+			const density = this._getDensity();
+			if ( 1 !== density ) {
+				newSize.push( 'dpr_' + density );
+			}
 		}
 
-		return scaledSize;
+		return {
+			transformation: newSize.join( ',' ),
+			nameExtension: scaledWidth + 'x' + scaledHeight,
+		};
 	},
 	buildSize( image ) {
 		if ( this._shouldRebuild( image ) ) {
@@ -186,79 +179,35 @@ const LazyLoad = {
 		}
 	},
 	getSizeURL( image ) {
+
 		image.cld_loaded = true;
-		if ( image.dataset.srcset ) {
-			image.srcset = image.dataset.srcset;
-			delete image.dataset.srcset;
-			return '';
-		}
-		const width = this.scaleSize(
-			image.originalWidth,
-			image.width,
-			this.config.pixel_step
-		);
-		const ratio = image.originalWidth / image.originalHeight;
-		const height = Math.round( width / ratio );
-		const density = this._getDensity();
-		const format = 'auto' !== this.config['image_format'] && 'none' !== this.config['image_format'] ? this.config['image_format'] : image.dataset.format;
-		let name = image.dataset.publicId.split( '/' ).pop();
-		let newSize = [];
+		const newSize = this.scaleSize( image, true );
 
-		if ( width ) {
-			if ( image.crop ) {
-				newSize.push( image.crop );
-			}
-			newSize.push( 'w_' + width );
-
-			if ( height ) {
-				newSize.push( 'h_' + height );
-				name += `-${ width }x${ height }`;
-			}
-			if ( 1 !== density ) {
-				newSize.push( 'dpr_' + density );
-			}
-		}
+		const format = 'auto' !== this.config[ 'image_format' ] && 'none' !== this.config[ 'image_format' ] ? this.config[ 'image_format' ] : image.dataset.format;
+		const name = image.dataset.publicId.split( '/' ).pop();
 
 		const parts = [
 			this.config.base_url,
 			'images',
-			newSize.join( ',' ),
+			newSize.transformation,
 			image.dataset.transformations,
 			image.dataset.publicId,
-			name + '.' + format + '?_i=AA'
+			name + '-' + newSize.nameExtension + '.' + format + '?_i=AA'
 		];
 
-		const url = parts.filter( this.empty ).join( '/' );
-
-		return url;
+		return parts.filter( this.empty ).join( '/' );
 	},
 	getPlaceholderURL( image ) {
 		image.cld_placehold = true;
-		const width = this.scaleSize(
-			image.originalWidth,
-			image.width,
-			this.config.pixel_step
-		);
-		const ratio = image.originalWidth / image.originalHeight;
-		const height = Math.round( width / ratio );
-		let newSize = [];
-		if ( width ) {
-			if ( image.crop ) {
-				newSize.push( image.crop );
-			}
-			newSize.push( 'w_' + width );
-			if ( height ) {
-				newSize.push( 'h_' + height );
-			}
-		}
+		const newSize = this.scaleSize( image, false );
 
 		const parts = [
 			this.config.base_url,
 			'images',
-			newSize.join( ',' ),
+			newSize.transformation,
 			this.config.placeholder,
 			image.dataset.publicId,
-			'responsive'
+			'placeholder'
 		];
 
 		return parts.filter( this.empty ).join( '/' );
