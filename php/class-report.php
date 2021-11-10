@@ -220,8 +220,7 @@ class Report extends Settings_Component implements Setup {
 		$pages['reporting'] = array(
 			'page_title'          => __( 'System Report', 'cloudinary' ),
 			'section'             => self::REPORT_SLUG,
-			'slug'                => 'reporting',
-			'option_name'         => 'system_report',
+			'option_name'         => 'setup',
 			'priority'            => 1,
 			'requires_connection' => true,
 			'sidebar'             => true,
