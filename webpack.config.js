@@ -193,6 +193,18 @@ const cldLazyLoad = {
 	},
 };
 
+const cldInlineLoader = {
+	...defaultConfig,
+	entry: {
+		'inline-loader': './src/js/inline-loader.js',
+	},
+	output: {
+		path: path.resolve( process.cwd(), 'js' ),
+		filename: '[name].js',
+		chunkFilename: '[name].js',
+	},
+};
+
 module.exports = [
 	cldBlockEditor,
 	cldCore,
@@ -203,4 +215,5 @@ module.exports = [
 	cldSettingsGallery,
 	cldGalleryUI,
 	cldLazyLoad,
+	cldInlineLoader,
 ];
