@@ -211,17 +211,19 @@ class Utils {
 	}
 
 	/**
-	 * Install our custom table.
+	 * Get the table create SQL.
+	 *
+	 * @return string
 	 */
-	public static function install() {
+	public static function get_table_sql() {
 		global $wpdb;
 
 		$table_name      = self::get_relationship_table();
 		$charset_collate = $wpdb->get_charset_collate();
 		// Setup the sql.
 		$sql = "CREATE TABLE $table_name (
-	  id int(11) unsigned NOT NULL AUTO_INCREMENT,
-	  post_id int(11) DEFAULT NULL,
+	  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+	  post_id bigint(20) DEFAULT NULL,
 	  public_id varchar(255) DEFAULT NULL,
 	  parent_path varchar(255) DEFAULT NULL,
 	  primary_url varchar(255) DEFAULT NULL,
@@ -239,6 +241,16 @@ class Utils {
 	  KEY public_id (public_id),
 	  KEY sync_type (sync_type)
 	) $charset_collate";
+
+		return $sql;
+	}
+
+	/**
+	 * Install our custom table.
+	 */
+	public static function install() {
+
+		$sql = self::get_table_sql();
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		// @todo: get VIP approval.

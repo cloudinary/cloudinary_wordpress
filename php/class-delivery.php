@@ -156,11 +156,15 @@ class Delivery implements Setup {
 	 * @return string
 	 */
 	public function generate_signature( $attachment_id ) {
+		static $sql;
+		if ( ! $sql ) {
+			$sql = Utils::get_table_sql();
+		}
 		$sizes      = $this->get_sizes( $attachment_id );
 		$public_id  = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
 		$registered = wp_json_encode( wp_get_registered_image_subsizes() );
 
-		return wp_json_encode( $sizes ) . $public_id . $registered;
+		return wp_json_encode( $sizes ) . $public_id . $registered . $sql;
 	}
 
 	/**
