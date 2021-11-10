@@ -898,7 +898,16 @@ class Delivery implements Setup {
 		}
 		$tag_element['type'] = 'img' === $tag_element['tag'] ? 'image' : $tag_element['tag'];
 		$raw_url             = isset( $attributes['src'] ) ? $this->sanitize_url( $attributes['src'] ) : '';
-		$url                 = self::clean_url( $raw_url );
+		if ( empty( $raw_url ) ) {
+			foreach ( $attributes as $attribute ) {
+				// Attempt to find a src.
+				if ( $this->validate_url( $attribute ) ) {
+					$raw_url = $this->sanitize_url( $attribute );
+					break;
+				}
+			}
+		}
+		$url = self::clean_url( $raw_url );
 
 		// Track back the found URL.
 		if ( $this->media->is_cloudinary_url( $raw_url ) ) {
