@@ -965,26 +965,6 @@ class Delivery implements Setup {
 	}
 
 	/**
-	 * Get the size from the attributes.
-	 *
-	 * @param array $atts Attributes array.
-	 *
-	 * @return array
-	 */
-	protected function get_size_from_atts( $atts ) {
-
-		$size = array();
-		if ( ! empty( $atts['width'] ) ) {
-			$size[] = $atts['width'];
-		}
-		if ( ! empty( $atts['height'] ) ) {
-			$size[] = $atts['height'];
-		}
-
-		return $size;
-	}
-
-	/**
 	 * Maybe get the inline transformations from an image url.
 	 *
 	 * @param string $url The image src url.
