@@ -1,31 +1,35 @@
-const LazyLoad = {
+window.Cloudinary_Inline_Loader = {
 	deviceDensity: window.devicePixelRatio ? window.devicePixelRatio : 'auto',
 	density: null,
 	images: [],
 	throttle: false,
 	config: CLDLB ? CLDLB : {},
 	lazyThreshold: 0,
+	enabled: false,
+	bind( image ) {
+		if ( image.originalWidth ) {
+			return;
+		}
+		if ( ! this.enabled ) {
+			this._init();
+		}
+		const size = image.dataset.size.split( ' ' );
+		image.originalWidth = size[ 0 ];
+		image.originalHeight = size[ 1 ];
+		if ( size[ 2 ] ) {
+			image.crop = size[ 2 ];
+		}
+		this.images.push( image );
+		image.addEventListener( 'error', ( ev ) => {
+			// If load error, set a broken image and remove from images list to prevent infinite load loop.
+			image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="rgba(0,0,0,0.1)"/><text x="50%" y="50%" fill="red" text-anchor="middle" dominant-baseline="middle">%26%23x26A0%3B︎</text></svg>';
+			const index = this.images.indexOf( image );
+			this.images.splice( index, 1 );
+		} );
+		this.buildSize( image );
+	},
 	_init() {
 		this._calcThreshold();
-		[ ...document.images ].forEach( ( image ) => {
-			if ( ! image.dataset.publicId ) {
-				return;
-			}
-
-			const size = image.dataset.size.split( ' ' );
-			image.originalWidth = size[ 0 ];
-			image.originalHeight = size[ 1 ];
-			if ( size[ 2 ] ) {
-				image.crop = size[ 2 ];
-			}
-			this.images.push( image );
-			image.addEventListener( 'error', ( ev ) => {
-				// If load error, set a broken image and remove from images list to prevent infinite load loop.
-				image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="rgba(0,0,0,0.1)"/><text x="50%" y="50%" fill="red" text-anchor="middle" dominant-baseline="middle">%26%23x26A0%3B︎</text></svg>';
-				const index = this.images.indexOf( image );
-				this.images.splice( index, 1 );
-			} );
-		} );
 		// Resize handler.
 		window.addEventListener( 'resize', () => {
 			this._throttle( this._build.bind( this ), 100, true );
@@ -33,8 +37,7 @@ const LazyLoad = {
 		window.addEventListener( 'scroll', () => {
 			this._throttle( this._build.bind( this ), 100, false );
 		} );
-		// Build images.
-		setTimeout( () => this._build(), 0 );
+		this.enabled = true;
 	},
 	_calcThreshold() {
 		const number = this.config.lazy_threshold.replace( /[^0-9]/g, '' );
@@ -127,17 +130,13 @@ const LazyLoad = {
 		);
 	},
 	scaleWidth( image ) {
-		const responsiveStep = this.config.pixel_step;
-		const diff = Math.floor( ( image.originalWidth - image.width ) / responsiveStep );
-		let scaledWidth = image.originalWidth - responsiveStep * diff;
-		if ( scaledWidth > image.originalWidth ) {
-			scaledWidth = image.originalWidth;
-		} else if ( this.config.max_width < scaledWidth ) {
-			scaledWidth = this.config.max_width;
-		} else if ( this.config.min_width > scaledWidth ) {
-			scaledWidth = this.config.min_width;
+		let maxWidth = this.config.max_width;
+
+		while ( maxWidth > image.width ) {
+			maxWidth = maxWidth - parseInt( this.config.pixel_step );
 		}
-		return scaledWidth;
+
+		return maxWidth;
 	},
 	scaleSize( image, dpr ) {
 		const ratio = ( image.originalWidth / image.originalHeight ).toFixed( 3 );
@@ -216,7 +215,5 @@ const LazyLoad = {
 		return 0 !== thing.length;
 	}
 };
-// Init.
-window.addEventListener( 'load', () => {
-	LazyLoad._init();
-} );
+
+

@@ -146,19 +146,11 @@ class Lazy_Load extends Delivery_Feature {
 			return $tag_element;
 		}
 		$sizes = array(
-			$tag_element['atts']['width'],
-			$tag_element['atts']['height'],
+			$tag_element['width'],
+			$tag_element['height'],
 		);
 
-		$transformations                             = $this->media->get_transformations_from_string( $tag_element['atts']['src'] );
-		$crop_size                                   = array_shift( $transformations ); // We always get a sized url, the first will be the size, which we don't need.
-		$tag_element['atts']['data-transformations'] = API::generate_transformation_string( $transformations, $tag_element['type'] );
-		if ( true === $tag_element['crop'] ) {
-			unset( $crop_size['width'], $crop_size['height'] );
-			$sizes[] = Api::generate_transformation_string( array( $crop_size ) );
-		}
-
-		// Capture the size.
+		// Capture the original size.
 		$tag_element['atts']['data-size'] = array_filter( $sizes );
 
 		$colors    = $this->config['lazy_custom_color'];
@@ -183,6 +175,7 @@ class Lazy_Load extends Delivery_Feature {
 			$tag_element['atts']['data-sizes']  = $tag_element['atts']['sizes'];
 			unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 		}
+		$tag_element['atts']['onload'] = 'Cloudinary_Inline_Loader.bind(this)';
 
 		return $tag_element;
 
@@ -199,14 +192,12 @@ class Lazy_Load extends Delivery_Feature {
 	 * Apply front end filters on the enqueue_assets hook.
 	 */
 	public function enqueue_assets() {
-		wp_enqueue_script( 'cld-lazy-load' );
 		$config = $this->config; // Get top most config.
-
 		if ( 'off' !== $config['lazy_placeholder'] ) {
 			$config['placeholder'] = API::generate_transformation_string( $this->get_placeholder_transformations( $config['lazy_placeholder'] ) );
 		}
 		$config['base_url'] = $this->media->base_url;
-		wp_add_inline_script( 'cld-lazy-load', 'var CLDLB = ' . wp_json_encode( $config ), 'before' );
+		wp_print_inline_script_tag( 'var CLDLB = ' . wp_json_encode( $config ) . ';' . file_get_contents( $this->plugin->dir_path . 'js/inline-loader.js' ) );
 	}
 
 	/**
