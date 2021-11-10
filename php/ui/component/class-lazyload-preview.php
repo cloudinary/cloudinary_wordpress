@@ -112,10 +112,12 @@ class Lazyload_Preview extends Breakpoints_Preview {
 	 */
 	protected function get_preloader_image() {
 		$tag_element = array(
-			'tag'  => 'img',
-			'type' => 'image',
-			'crop' => false,
-			'atts' => array(
+			'tag'    => 'img',
+			'type'   => 'image',
+			'crop'   => false,
+			'width'  => '600px',
+			'height' => '400px',
+			'atts'   => array(
 				'src'        => $this->config['lazyload_preview'],
 				'width'      => '600px',
 				'height'     => '400px',
