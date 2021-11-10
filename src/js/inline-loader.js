@@ -130,17 +130,13 @@ window.Cloudinary_Inline_Loader = {
 		);
 	},
 	scaleWidth( image ) {
-		const responsiveStep = this.config.pixel_step;
-		const diff = Math.floor( ( image.originalWidth - image.width ) / responsiveStep );
-		let scaledWidth = image.originalWidth - responsiveStep * diff;
-		if ( scaledWidth > image.originalWidth ) {
-			scaledWidth = image.originalWidth;
-		} else if ( this.config.max_width < scaledWidth ) {
-			scaledWidth = this.config.max_width;
-		} else if ( this.config.min_width > scaledWidth ) {
-			scaledWidth = this.config.min_width;
+		let maxWidth = this.config.max_width;
+
+		while ( maxWidth > image.width ) {
+			maxWidth = maxWidth - parseInt( this.config.pixel_step );
 		}
-		return scaledWidth;
+
+		return maxWidth;
 	},
 	scaleSize( image, dpr ) {
 		const ratio = ( image.originalWidth / image.originalHeight ).toFixed( 3 );
