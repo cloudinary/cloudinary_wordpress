@@ -246,7 +246,10 @@ class Delivery implements Setup {
 	 * @return array
 	 */
 	public function get_sizes( $attachment_id ) {
-		static $sizes = array();
+		static $sizes = array(), $registered_sizes;
+		if ( ! $registered_sizes ) {
+			$registered_sizes = wp_get_registered_image_subsizes();
+		}
 		if ( empty( $sizes[ $attachment_id ] ) ) {
 			$sizes[ $attachment_id ] = array();
 			$meta                    = wp_get_attachment_metadata( $attachment_id, true );
@@ -255,18 +258,33 @@ class Delivery implements Setup {
 				'primary_url' => $local_url,
 				'sized_url'   => $local_url,
 			);
-
+			$file                    = $meta['file'];
+			if ( isset( $meta['original_image'] ) ) {
+				$file = $meta['original_image'];
+			}
+			$filename = pathinfo( $file, PATHINFO_FILENAME );
+			$ext      = pathinfo( $file, PATHINFO_EXTENSION );
 			if ( ! empty( $meta['width'] ) && ! empty( $meta['height'] ) ) {
 				$sizes[ $attachment_id ] = array(
 					$meta['width'] . 'x' . $meta['height'] => $urls,
 				);
-			}
 
-			if ( ! empty( $meta['sizes'] ) ) {
-				foreach ( $meta['sizes'] as $size ) {
-					$size_key                             = $size['width'] . 'x' . $size['height'];
-					$sized_url                            = $urls;
-					$sized_url['sized_url']               = dirname( $local_url ) . '/' . $size['file'];
+				foreach ( $registered_sizes as $size ) {
+
+					$new_size = image_resize_dimensions( $meta['width'], $meta['height'], $size['width'], $size['height'], $size['crop'] );
+					if ( false === $new_size ) {
+						continue; // Image don't fit.
+					}
+					// Set the size to what the image should be.
+					$size['width']  = $new_size[4];
+					$size['height'] = $new_size[5];
+
+					// Create the size entry.
+					$size_key               = $size['width'] . 'x' . $size['height'];
+					$sized_url              = $urls;
+					$sized_url['sized_url'] = dirname( $local_url ) . '/' . $filename . '-' . $size_key . '.' . $ext;
+
+					// Add the sized URL to the sizes.
 					$sizes[ $attachment_id ][ $size_key ] = $sized_url;
 				}
 			}
