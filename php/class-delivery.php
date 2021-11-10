@@ -927,13 +927,13 @@ class Delivery implements Setup {
 			$attributes['data-public-id'] = $item['public_id'];
 			$tag_element['format']        = $item['format'];
 		}
+
 		if ( ! empty( $attributes['class'] ) ) {
-			if ( preg_match( '/wp-post-(\d*)/', $attributes['class'], $match ) ) {
+			if ( preg_match( '/wp-post-(\d+)+/', $attributes['class'], $match ) ) {
 				$tag_element['context'] = (int) $match[1];
 				$post_context           = $tag_element['context'];
-			} else {
-				$attributes['class'] .= ' wp-post-' . $tag_element['context'];
 			}
+
 			$attributes['class'] = explode( ' ', $attributes['class'] );
 			if ( in_array( 'cld-overwrite', $attributes['class'], true ) ) {
 				$tag_element['overwrite_transformations'] = true;
