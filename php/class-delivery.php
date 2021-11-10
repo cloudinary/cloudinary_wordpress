@@ -730,9 +730,15 @@ class Delivery implements Setup {
 		}
 
 		// Get size.
-		$size = $this->get_size_from_atts( $tag_element['atts'] );
-		if ( true === $tag_element['crop'] ) {
-			$size[] = true;
+		$size = array(
+			$tag_element['atts']['width'],
+			$tag_element['atts']['height'],
+		);
+		if ( ! empty( $tag_element['atts']['src'] ) ) {
+			$has_wp_size = $this->media->get_crop( $tag_element['atts']['src'], $tag_element['id'] );
+			if ( ! empty( $has_wp_size ) ) {
+				$size = $has_wp_size;
+			}
 		}
 		// Unset srcset and sizes.
 		unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
@@ -1098,14 +1104,9 @@ class Delivery implements Setup {
 	 */
 	protected function set_usability( $item, $auto_sync = null ) {
 
-		$item['crop'] = false;
-		$size         = $this->media->get_size_from_url( basename( $item['sized_url'] ) );
-		if ( ! empty( $size ) ) {
-			$item['crop'] = true;
-		}
-
 		$this->known[ $item['sized_url'] ] = $item;
 		$this->known[ $item['public_id'] ] = $item;
+
 		// Prep a scaled alias.
 		if ( false !== strpos( $item['sized_url'], '-scaled.' ) ) {
 			$this->known[ str_replace( '-scaled.', '.', $item['sized_url'] ) ] = $item;
