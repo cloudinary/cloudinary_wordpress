@@ -794,6 +794,12 @@ class Delivery implements Setup {
 			}
 			$att = implode( ' ', $parts );
 		}
+
+		// Add transformations attribute.
+		$transformations = $this->media->get_transformations_from_string( $tag_element['atts']['src'] );
+		array_shift( $transformations ); // We always get a sized url, the first will be the size, which we don't need.
+		$tag_element['atts']['data-transformations'] = API::generate_transformation_string( $transformations, $tag_element['type'] );
+
 		if ( current_user_can( 'manage_options' ) && 'on' === $this->plugin->settings->image_settings->_overlay ) {
 			$local_size = get_post_meta( $tag_element['id'], Sync::META_KEYS['local_size'], true );
 			if ( empty( $local_size ) && file_exists( get_attached_file( $tag_element['id'] ) ) ) {

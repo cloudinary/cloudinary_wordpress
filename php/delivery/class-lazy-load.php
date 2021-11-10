@@ -150,10 +150,6 @@ class Lazy_Load extends Delivery_Feature {
 			$tag_element['height'],
 		);
 
-		$transformations = $this->media->get_transformations_from_string( $tag_element['atts']['src'] );
-		array_shift( $transformations ); // We always get a sized url, the first will be the size, which we don't need.
-		$tag_element['atts']['data-transformations'] = API::generate_transformation_string( $transformations, $tag_element['type'] );
-
 		// Capture the original size.
 		$tag_element['atts']['data-size'] = array_filter( $sizes );
 
