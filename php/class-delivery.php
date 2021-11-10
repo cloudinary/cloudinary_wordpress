@@ -881,7 +881,6 @@ class Delivery implements Setup {
 			'transformations'           => array(),
 			'width'                     => 0,
 			'height'                    => 0,
-			'crop'                      => false,
 		);
 		// Cleanup element.
 		$element = trim( $element, '</>' );
@@ -926,7 +925,6 @@ class Delivery implements Setup {
 			$tag_element['width']         = $item['width'];
 			$tag_element['height']        = $item['height'];
 			$attributes['data-public-id'] = $item['public_id'];
-			$tag_element['crop']          = $item['crop'];
 			$tag_element['format']        = $item['format'];
 		}
 		if ( ! empty( $attributes['class'] ) ) {
