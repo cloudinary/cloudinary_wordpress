@@ -246,6 +246,7 @@ final class Plugin {
 	 * @param Settings_Component[] $components of components to init settings for.
 	 */
 	private function init_component_settings( $components ) {
+		$version = get_option( Connect::META_KEYS['version'] );
 		foreach ( $components as $slug => $component ) {
 			/**
 			 * Component that implements Settings.
@@ -253,6 +254,15 @@ final class Plugin {
 			 * @var  Component\Settings $component
 			 */
 			$component->init_settings( $this->settings );
+
+			// Upgrade settings if needed.
+			if ( $version < $this->version ) {
+				$component->upgrade_settings( $version, $this->version );
+			}
+		}
+		// Update settings version, if needed.
+		if ( $version < $this->version ) {
+			update_option( Connect::META_KEYS['version'], $this->version );
 		}
 	}
 
