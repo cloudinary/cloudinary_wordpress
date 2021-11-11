@@ -220,14 +220,15 @@ class Report extends Settings_Component implements Setup {
 		$pages['reporting'] = array(
 			'page_title'          => __( 'System Report', 'cloudinary' ),
 			'section'             => self::REPORT_SLUG,
-			'option_name'         => 'setup',
+			'slug'                => 'reporting',
 			'priority'            => 1,
 			'requires_connection' => true,
 			'sidebar'             => true,
 			'settings'            => array(
 				array(
-					'type'  => 'panel',
-					'title' => __( 'System information report', 'cloudinary' ),
+					'type'        => 'panel',
+					'title'       => __( 'System information report', 'cloudinary' ),
+					'option_name' => 'setup',
 					array(
 						'description' => __( 'Enable report', 'cloudinary' ),
 						'type'        => 'on_off',
@@ -244,13 +245,27 @@ class Report extends Settings_Component implements Setup {
 						'enabled' => array( $this, 'enabled' ),
 					),
 				),
-				array(
-					'type' => 'submit',
-				),
 			),
 		);
 
 		return $pages;
+	}
+
+	/**
+	 * Upgrade method for version changes.
+	 *
+	 * @param string $previous_version The previous version number.
+	 * @param string $new_version      The New version number.
+	 */
+	public function upgrade_settings( $previous_version, $new_version ) {
+		if ( $previous_version < '3.0.0' ) {
+			$previous = $this->settings->get_value( 'setup.enable_report' );
+			$current  = $this->settings->get_value( 'enable_report' );
+			if ( $current !== $previous ) {
+				$this->settings->set_pending( 'enable_report', $previous );
+				$this->settings->save();
+			}
+		}
 	}
 
 	/**
@@ -277,17 +292,16 @@ class Report extends Settings_Component implements Setup {
 		ob_start();
 		esc_attr_e( 'Enabling system information reporting will allow you to generate and download a realtime snapshot report. The report will be in JSON format and will include information about:', 'cloudinary' );
 		?>
-<ul>
-	<li><?php esc_html_e( 'Current WordPress and Cloudinary configuration.', 'cloudinary' ); ?></li>
-	<li><?php esc_html_e( 'Currently installed plugins.', 'cloudinary' ); ?></li>
-	<li><?php esc_html_e( 'Any themes that are being used.', 'cloudinary' ); ?></li>
-	<li><?php esc_html_e( 'Any specifically selected media. These can be added to the report from the WordPress Media Library.', 'cloudinary' ); ?></li>
-	<li><?php esc_html_e( 'Any specifically selected posts or pages. These can be added to the report from the relevant listing pages.', 'cloudinary' ); ?></li>
-</ul>
+		<ul>
+			<li><?php esc_html_e( 'Current WordPress and Cloudinary configuration.', 'cloudinary' ); ?></li>
+			<li><?php esc_html_e( 'Currently installed plugins.', 'cloudinary' ); ?></li>
+			<li><?php esc_html_e( 'Any themes that are being used.', 'cloudinary' ); ?></li>
+			<li><?php esc_html_e( 'Any specifically selected media. These can be added to the report from the WordPress Media Library.', 'cloudinary' ); ?></li>
+			<li><?php esc_html_e( 'Any specifically selected posts or pages. These can be added to the report from the relevant listing pages.', 'cloudinary' ); ?></li>
+		</ul>
 		<?php
 		return ob_get_clean();
 	}
-
 
 	/**
 	 * Get the report data.

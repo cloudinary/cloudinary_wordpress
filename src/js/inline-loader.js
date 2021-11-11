@@ -26,17 +26,24 @@ window.Cloudinary_Inline_Loader = {
 			const index = this.images.indexOf( image );
 			this.images.splice( index, 1 );
 		} );
+
 		this.buildSize( image );
 	},
 	_init() {
 		this._calcThreshold();
 		// Resize handler.
 		window.addEventListener( 'resize', () => {
-			this._throttle( this._build.bind( this ), 100, true );
+			this._throttle( this._build.bind( this ), 50, true );
 		} );
 		window.addEventListener( 'scroll', () => {
-			this._throttle( this._build.bind( this ), 100, false );
+			this._throttle( this._build.bind( this ), 50, false );
 		} );
+		window.addEventListener( 'load', () => {
+			this._throttle( this._build.bind( this ), 50, true );
+		} );
+		this.config.max_width = parseInt( this.config.max_width ) ;
+		this.config.min_width = parseInt( this.config.min_width ) ;
+		this.config.pixel_step = parseInt( this.config.pixel_step ) ;
 		this.enabled = true;
 	},
 	_calcThreshold() {
@@ -131,19 +138,22 @@ window.Cloudinary_Inline_Loader = {
 	},
 	scaleWidth( image ) {
 		let maxWidth = this.config.max_width;
+		const minWidth = image.width < this.config.min_width ? this.config.min_width : image.width;
+		const step = this.config.pixel_step;
+		while ( maxWidth - step > minWidth ) {
 
-		while ( maxWidth > image.width ) {
-			maxWidth = maxWidth - parseInt( this.config.pixel_step );
+			maxWidth = maxWidth - step;
 		}
 
-		return maxWidth;
+		return minWidth < maxWidth ? maxWidth : minWidth;
 	},
 	scaleSize( image, dpr ) {
+		const bounds = image.getBoundingClientRect();
 		const ratio = ( image.originalWidth / image.originalHeight ).toFixed( 3 );
-		const renderedRatio = ( image.width / image.height ).toFixed( 3 );
+		const renderedRatio = ( bounds.width / bounds.height ).toFixed( 3 );
 		const scaledWidth = this.scaleWidth( image );
 		const newSize = [];
-		if ( image.width !== image.originalWidth ) {
+		if ( bounds.width !== image.originalWidth ) {
 			// We know it's a different size.
 			newSize.push( ratio === renderedRatio ? 'c_scale' : 'c_fill,g_auto' );
 		}

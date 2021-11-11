@@ -1780,9 +1780,11 @@ class Media extends Settings_Component implements Setup {
 	 * Setup and include cloudinary assets for DAM widget.
 	 */
 	public function editor_assets() {
-
+		$this->plugin->register_assets(); // Ensure assets are registered.
 		// External assets.
 		wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, array(), $this->plugin->version, true );
+		wp_enqueue_script( 'cloudinary' );
+		wp_enqueue_style( 'cloudinary' );
 		$params = array(
 			'nonce'     => wp_create_nonce( 'wp_rest' ),
 			'mloptions' => array(
