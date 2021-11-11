@@ -61,7 +61,7 @@ const Progress = {
 					},
 					scales: {
 						y: {
-							min: -10,
+							suggestedMin: 0,
 							ticks: {
 								color: '#999999',
 								callback( val, index ) {
