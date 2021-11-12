@@ -2,10 +2,13 @@ window.Cloudinary_Inline_Loader = {
 	deviceDensity: window.devicePixelRatio ? window.devicePixelRatio : 'auto',
 	density: null,
 	images: [],
-	throttle: false,
 	config: CLDLB ? CLDLB : {},
 	lazyThreshold: 0,
 	enabled: false,
+	sizeBands: [],
+	iObserver: null,
+	pObserver: null,
+	rObserver: null,
 	bind( image ) {
 		if ( image.originalWidth ) {
 			return;
@@ -16,34 +19,66 @@ window.Cloudinary_Inline_Loader = {
 		const size = image.dataset.size.split( ' ' );
 		image.originalWidth = size[ 0 ];
 		image.originalHeight = size[ 1 ];
-		if ( size[ 2 ] ) {
-			image.crop = size[ 2 ];
-		}
-		this.images.push( image );
+		this.pObserver.observe( image );
+		this.iObserver.observe( image );
 		image.addEventListener( 'error', ( ev ) => {
 			// If load error, set a broken image and remove from images list to prevent infinite load loop.
 			image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="rgba(0,0,0,0.1)"/><text x="50%" y="50%" fill="red" text-anchor="middle" dominant-baseline="middle">%26%23x26A0%3B︎</text></svg>';
-			const index = this.images.indexOf( image );
-			this.images.splice( index, 1 );
+			this.rObserver.unobserve( image );
 		} );
-
-		this.buildSize( image );
 	},
 	_init() {
+		this.enabled = true;
 		this._calcThreshold();
-		// Resize handler.
-		window.addEventListener( 'resize', () => {
-			this._throttle( this._build.bind( this ), 50, true );
+		this._getDensity();
+		let maxWidth = parseInt( this.config.max_width );
+		const minWidth = parseInt( this.config.min_width );
+		const pixelStep = parseInt( this.config.pixel_step );
+		while ( maxWidth - pixelStep >= minWidth ) {
+			maxWidth = maxWidth - pixelStep;
+			this.sizeBands.push( maxWidth );
+		}
+		const iOptions = {
+			rootMargin: this.lazyThreshold + 'px 0px ' + this.lazyThreshold + 'px 0px',
+		};
+		const pOptions = {
+			rootMargin: this.lazyThreshold * 2 + 'px 0px ' + this.lazyThreshold * 2 + 'px 0px',
+		};
+		this.rObserver = new ResizeObserver( ( entries, observer ) => {
+			entries.forEach( entry => {
+				if( entry.target.cld_loaded && entry.contentRect.width >= entry.target.cld_loaded ) {
+					entry.target.src = this.getSizeURL( entry.target );
+				}
+			} );
 		} );
-		window.addEventListener( 'scroll', () => {
-			this._throttle( this._build.bind( this ), 50, false );
-		} );
-		window.addEventListener( 'load', () => {
-			this._throttle( this._build.bind( this ), 50, true );
-		} );
-		this.config.max_width = parseInt( this.config.max_width ) ;
-		this.config.min_width = parseInt( this.config.min_width ) ;
-		this.config.pixel_step = parseInt( this.config.pixel_step ) ;
+		this.iObserver = new IntersectionObserver( ( entries, observer ) => {
+			entries.forEach( entry => {
+				if ( entry.isIntersecting ) {
+					if ( entry.target.dataset.srcset ) {
+						entry.target.cld_loaded = true;
+						entry.target.srcset = entry.target.dataset.srcset;
+					} else {
+						entry.target.src = this.getSizeURL( entry.target );
+					}
+					observer.unobserve( entry.target );
+					this.rObserver.observe( entry.target );
+				}
+			} );
+		}, iOptions );
+
+		this.pObserver = new IntersectionObserver( ( entries, observer ) => {
+			entries.forEach( entry => {
+				if ( entry.isIntersecting ) {
+					if( entry.intersectionRatio < 0.5 ) {
+						// Low so that it doesn't show partly.
+						entry.target.src = this.getPlaceholderURL( entry.target );
+					}
+					observer.unobserve( entry.target );
+				}
+			} );
+		}, pOptions );
+
+
 		this.enabled = true;
 	},
 	_calcThreshold() {
@@ -70,12 +105,9 @@ window.Cloudinary_Inline_Loader = {
 			default:
 				unit = number;
 		}
-		this.lazyThreshold = window.innerHeight + parseInt( unit, 10 );
+		this.lazyThreshold = parseInt( unit, 10 );
 	},
 	_getDensity() {
-		if ( this.density ) {
-			return this.density;
-		}
 		let maxDensity = this.config.dpr ? this.config.dpr.replace(
 			'X', '' ) : 'off';
 		if ( 'off' === maxDensity ) {
@@ -95,65 +127,20 @@ window.Cloudinary_Inline_Loader = {
 		}
 
 		this.density = deviceDensity;
-
-		return deviceDensity;
-	},
-	_throttle( callback, time, force ) {
-		if ( this.throttle ) {
-			return;
-		}
-
-		setTimeout( () => {
-			callback( force );
-			this.throttle = false;
-		}, time );
-	},
-	_build( force ) {
-		this.images.forEach( ( image ) => {
-			if ( ! force && image.cld_loaded ) {
-				return;
-			}
-			this.buildSize( image );
-		} );
-	},
-	_shouldRebuild( image ) {
-		const width = this.scaleWidth( image );
-		const rect = image.getBoundingClientRect();
-		const density = 'auto' !== this.density ? this._getDensity() : 1;
-		return (
-			rect.top < this.lazyThreshold &&
-			( width > image.naturalWidth / density || ! image.cld_loaded )
-		);
-	},
-	_shouldPlacehold( image ) {
-		const width = this.scaleWidth( image );
-		const rect = image.getBoundingClientRect();
-		const density = 'auto' !== this.density ? this._getDensity() : 1;
-		return (
-			this.config.placeholder &&
-			! image.cld_loaded &&
-			rect.top < this.lazyThreshold * 2 &&
-			( width > image.naturalWidth / density || ! image.cld_placehold )
-		);
 	},
 	scaleWidth( image ) {
-		let maxWidth = this.config.max_width;
-		const minWidth = image.width < this.config.min_width ? this.config.min_width : image.width;
-		const step = this.config.pixel_step;
-		while ( maxWidth - step > minWidth ) {
-
-			maxWidth = maxWidth - step;
+		let width = image.width;
+		while( -1 === this.sizeBands.indexOf( width ) ){
+			width++;
 		}
-
-		return minWidth < maxWidth ? maxWidth : minWidth;
+		return width;
 	},
 	scaleSize( image, dpr ) {
-		const bounds = image.getBoundingClientRect();
 		const ratio = ( image.originalWidth / image.originalHeight ).toFixed( 3 );
-		const renderedRatio = ( bounds.width / bounds.height ).toFixed( 3 );
+		const renderedRatio = ( image.width / image.height ).toFixed( 3 );
 		const scaledWidth = this.scaleWidth( image );
 		const newSize = [];
-		if ( bounds.width !== image.originalWidth ) {
+		if ( image.width !== image.originalWidth ) {
 			// We know it's a different size.
 			newSize.push( ratio === renderedRatio ? 'c_scale' : 'c_fill,g_auto' );
 		}
@@ -163,35 +150,18 @@ window.Cloudinary_Inline_Loader = {
 		newSize.push( 'h_' + scaledHeight );
 
 		if ( dpr ) {
-			const density = this._getDensity();
-			if ( 1 !== density ) {
-				newSize.push( 'dpr_' + density );
+			if ( 1 !== this.density ) {
+				newSize.push( 'dpr_' + this.density );
 			}
 		}
-
+		image.cld_loaded = scaledWidth;
 		return {
 			transformation: newSize.join( ',' ),
 			nameExtension: scaledWidth + 'x' + scaledHeight,
 		};
 	},
-	buildSize( image ) {
-		if ( this._shouldRebuild( image ) ) {
-
-			if ( image.dataset.srcset ) {
-				image.cld_loaded = true;
-				image.srcset = image.dataset.srcset;
-			} else {
-				image.src = this.getSizeURL( image );
-			}
-		} else if ( this._shouldPlacehold( image ) ) {
-			image.src = this.getPlaceholderURL( image );
-		}
-	},
 	getSizeURL( image ) {
-
-		image.cld_loaded = true;
 		const newSize = this.scaleSize( image, true );
-
 		const format = 'auto' !== this.config[ 'image_format' ] && 'none' !== this.config[ 'image_format' ] ? this.config[ 'image_format' ] : image.dataset.format;
 		const name = image.dataset.publicId.split( '/' ).pop();
 
@@ -225,5 +195,3 @@ window.Cloudinary_Inline_Loader = {
 		return 0 !== thing.length;
 	}
 };
-
-
