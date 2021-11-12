@@ -304,20 +304,18 @@ class Sync_Queue {
 		$cached = get_transient( Sync::META_KEYS['dashboard_cache'] );
 		if ( empty( $cached ) ) {
 			$wpdb->cld_table              = Utils::get_relationship_table();
-			$return['total_assets']       = (int) $wpdb->get_var( "SELECT COUNT( DISTINCT post_id ) as total FROM {$wpdb->cld_table} WHERE primary_url = sized_url;" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$return['unoptimized_assets'] = (int) $wpdb->get_var( "SELECT COUNT( DISTINCT post_id ) as total FROM {$wpdb->cld_table} WHERE public_id IS NULL AND primary_url = sized_url;" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$return['total_assets']       = (int) $wpdb->get_var( "SELECT COUNT( DISTINCT post_id ) as total FROM {$wpdb->cld_table};" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$return['unoptimized_assets'] = (int) $wpdb->get_var( "SELECT COUNT( DISTINCT post_id ) as total FROM {$wpdb->cld_table} WHERE public_id IS NULL;" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
 			$asset_sizes           = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 				$wpdb->prepare(
 					"SELECT
-			SUM(meta_value) as total, meta_key as type
+			SUM( meta_value ) as total, meta_key as type
 		FROM
 		{$wpdb->cld_table} AS cld
-		RIGHT JOIN {$wpdb->postmeta} AS wp ON (cld.post_id = wp.post_id )
+		RIGHT JOIN {$wpdb->postmeta} AS wp ON ( cld.post_id = wp.post_id )
 		WHERE
-			meta_key IN (%s,%s )
-		AND
-			primary_url = sized_url
+			meta_key IN ( %s,%s )
 		GROUP BY meta_key",
 					Sync::META_KEYS['local_size'],
 					Sync::META_KEYS['remote_size']

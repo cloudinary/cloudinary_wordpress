@@ -309,12 +309,12 @@ class Rest_Assets {
 			}
 
 			$prepare        = $wpdb->prepare(
-				"SELECT COUNT( id ) as total FROM $wpdb->cld_table WHERE parent_path = %s AND primary_url = sized_url AND post_state != 'inherit' {$search_ext};", // phpcs:ignore WordPress.DB.PreparedSQL
+				"SELECT COUNT( id ) as total FROM $wpdb->cld_table WHERE parent_path = %s AND post_state != 'inherit' {$search_ext};", // phpcs:ignore WordPress.DB.PreparedSQL
 				$cache_point->post_title
 			);
 			$cache['total'] = (int) $wpdb->get_var( $prepare ); // phpcs:ignore WordPress.DB
 			$prepare        = $wpdb->prepare(
-				"SELECT * FROM $wpdb->cld_table WHERE public_id IS NOT NULL && parent_path = %s AND primary_url = sized_url AND post_state != 'inherit' {$search_ext} limit %d,%d;", // phpcs:ignore WordPress.DB.PreparedSQL
+				"SELECT * FROM $wpdb->cld_table WHERE public_id IS NOT NULL && parent_path = %s AND post_state != 'inherit' {$search_ext} limit %d,%d;", // phpcs:ignore WordPress.DB.PreparedSQL
 				$cache_point->post_title,
 				$start,
 				$limit
