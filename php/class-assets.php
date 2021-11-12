@@ -913,7 +913,7 @@ class Assets extends Settings_Component {
 		wp_generate_attachment_metadata( $id, $file_path );
 
 		// Init the auto sync.
-		Delivery::create_size_relation( $id, $url, $url, $size, $base );
+		Delivery::create_size_relation( $id, $url, $size, $base );
 		Delivery::update_size_relations_state( $id, 'enable' );
 		$this->media->sync->set_signature_item( $id, 'delivery' );
 		$this->media->sync->get_sync_type( $id );
