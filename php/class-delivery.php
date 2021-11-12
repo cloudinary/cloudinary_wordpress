@@ -542,16 +542,16 @@ class Delivery implements Setup {
 		$search  = array();
 		$baseurl = self::clean_url( $dirs['baseurl'] );
 		foreach ( $this->unknown as $url ) {
-			$url = ltrim( str_replace( $baseurl, '', $url ), '/' );
-			if ( ! preg_match( '/(-(\d+)x(\d+))\./i', $url, $match ) ) {
-				$search[] = $url;
-				continue;
-			}
-			$search[] = str_replace( $match[1], '', $url );
-			$search[] = str_replace( $match[1], '-scaled', $url );
+			$url      = ltrim( str_replace( $baseurl, '', $url ), '/' );
+			$search[] = $url;
+			$url      = self::maybe_unsize_url( $url );
+			$search[] = $url;
+			$file     = pathinfo( $url, PATHINFO_FILENAME );
+			$ext      = pathinfo( $url, PATHINFO_EXTENSION );
+			$search[] = dirname( $url ) . '/' . $file . '-scaled.' . $ext;
 		}
-
-		$in = implode( ',', array_fill( 0, count( $search ), '%s' ) );
+		$search = array_unique( $search );
+		$in     = implode( ',', array_fill( 0, count( $search ), '%s' ) );
 
 		// Prepare a query to find all in a single request.
 		$sql = $wpdb->prepare(
@@ -564,6 +564,7 @@ class Delivery implements Setup {
 		if ( false === $cached ) {
 			$cached  = array();
 			$results = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared
+
 			if ( $results ) {
 				foreach ( $results as $result ) {
 					// If we are here, it means that an attachment in the media library doesn't have a delivery for the url.
@@ -1176,6 +1177,7 @@ class Delivery implements Setup {
 	 */
 	public static function maybe_unsize_url( $url ) {
 		$no_scale = preg_replace( '/(\S+)+(-\d+x\d+)\.(\S+)+/', '$1.$3', $url );
+
 		return $no_scale ? $no_scale : $url;
 	}
 
@@ -1190,10 +1192,12 @@ class Delivery implements Setup {
 		$base_urls  = array_filter( array_map( array( $this, 'sanitize_url' ), $all_urls ) );
 		$clean_urls = array_map( array( $this, 'clean_url' ), $base_urls );
 		$urls       = array_filter( $clean_urls, array( $this, 'validate_url' ) );
+
 		// De-size.
 		$desized = array_map( array( $this, 'maybe_unsize_url' ), $urls );
-		$urls    = array_merge( array_filter( $desized ), $urls );
-		$urls    = array_unique( $urls );
+		$desized = array_unique( array_filter( $desized ) );
+		$urls    = array_merge( $desized, $urls );
+		$urls    = array_values( $urls );
 		// clean out empty urls.
 		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
 		if ( empty( $urls ) && empty( $cloudinary_urls ) ) {
@@ -1212,7 +1216,7 @@ class Delivery implements Setup {
 			// Do the public_ids.
 			$list     = implode( ', ', array_fill( 0, count( $public_ids ), '%s' ) );
 			$wheres[] = "public_id IN( {$list} )";
-			$urls     += $public_ids;
+			$urls     = array_merge( $urls, $public_ids );
 		}
 
 		$tablename = Utils::get_relationship_table();
@@ -1235,8 +1239,8 @@ class Delivery implements Setup {
 		$unknown = array_diff( $urls, array_keys( $this->known ) );
 		foreach ( $unknown as $url ) {
 			$url = self::maybe_unsize_url( $url );
-			if ( ! isset( $this->known[ $url ] ) ) {
-				$this->unknown = $url;
+			if ( ! isset( $this->known[ $url ] ) && ! in_array( $url, $this->unknown, true ) ) {
+				$this->unknown[] = $url;
 			}
 		}
 	}
