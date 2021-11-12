@@ -819,7 +819,7 @@ class Assets extends Settings_Component {
 		global $wpdb;
 
 		$wpdb->cld_table = Utils::get_relationship_table();
-		$prepare         = $wpdb->prepare( "SELECT * FROM $wpdb->cld_table WHERE post_id = %d AND primary_url = sized_url ;", (int) $post_id );
+		$prepare         = $wpdb->prepare( "SELECT * FROM $wpdb->cld_table WHERE post_id = %d;", (int) $post_id );
 		$result          = $wpdb->get_row( $prepare, ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
 
 		return $this->build_item( $result );
@@ -838,7 +838,7 @@ class Assets extends Settings_Component {
 		}
 		$dirs     = wp_get_upload_dir();
 		$max_size = 900;
-		$parts    = explode( $item['parent_path'], $item['primary_url'] );
+		$parts    = explode( $item['parent_path'], $item['sized_url'] );
 		$parts[0] = $dirs['baseurl'];
 
 		$url     = './' . $parts[1];
@@ -860,7 +860,7 @@ class Assets extends Settings_Component {
 		$return = array(
 			'ID'              => $item['post_id'],
 			'key'             => $item['id'],
-			'local_url'       => $item['primary_url'],
+			'local_url'       => $item['sized_url'],
 			'short_url'       => $url,
 			'active'          => 'enable' === $item['post_state'],
 			'preview'         => $preview,
@@ -913,7 +913,7 @@ class Assets extends Settings_Component {
 		wp_generate_attachment_metadata( $id, $file_path );
 
 		// Init the auto sync.
-		Delivery::create_size_relation( $id, $url, $url, $size, $base );
+		Delivery::create_size_relation( $id, $url, $size, $base );
 		Delivery::update_size_relations_state( $id, 'enable' );
 		$this->media->sync->set_signature_item( $id, 'delivery' );
 		$this->media->sync->get_sync_type( $id );

@@ -160,7 +160,7 @@ class Delivery implements Setup {
 		if ( ! $sql ) {
 			$sql = Utils::get_table_sql();
 		}
-		$sizes      = $this->get_sizes( $attachment_id );
+		$sizes      = $this->get_sized( $attachment_id );
 		$public_id  = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
 		$registered = wp_json_encode( wp_get_registered_image_subsizes() );
 
@@ -174,12 +174,10 @@ class Delivery implements Setup {
 	 */
 	public function create_delivery( $attachment_id ) {
 		$this->delete_size_relationship( $attachment_id );
-		$sizes     = $this->get_sizes( $attachment_id );
+		$size      = $this->get_sized( $attachment_id );
 		$public_id = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
 		$base      = $this->get_content_path();
-		foreach ( $sizes as $size => $urls ) {
-			self::create_size_relation( $attachment_id, $urls['primary_url'], $urls['sized_url'], $size, $base );
-		}
+		self::create_size_relation( $attachment_id, $size['sized_url'], $size['size'], $base );
 		// Update public ID and type.
 		self::update_size_relations_public_id( $attachment_id, $public_id );
 		self::update_size_relations_state( $attachment_id, 'inherit' );
@@ -246,7 +244,7 @@ class Delivery implements Setup {
 	 *
 	 * @return array
 	 */
-	public function get_sizes( $attachment_id ) {
+	public function get_sized( $attachment_id ) {
 		static $sizes = array(), $registered_sizes;
 		if ( ! $registered_sizes ) {
 			$registered_sizes = wp_get_registered_image_subsizes();
@@ -254,40 +252,14 @@ class Delivery implements Setup {
 		if ( empty( $sizes[ $attachment_id ] ) ) {
 			$sizes[ $attachment_id ] = array();
 			$meta                    = wp_get_attachment_metadata( $attachment_id, true );
-			$local_url               = self::clean_url( $this->media->local_url( $attachment_id ), true );
-			$urls                    = array(
-				'primary_url' => $local_url,
-				'sized_url'   => $local_url,
-			);
-			$file                    = $meta['file'];
-			if ( isset( $meta['original_image'] ) ) {
-				$file = $meta['original_image'];
-			}
-			$filename = pathinfo( $file, PATHINFO_FILENAME );
-			$ext      = pathinfo( $file, PATHINFO_EXTENSION );
 			if ( ! empty( $meta['width'] ) && ! empty( $meta['height'] ) ) {
+				$local_url               = self::clean_url( $this->media->local_url( $attachment_id ), true );
 				$sizes[ $attachment_id ] = array(
-					$meta['width'] . 'x' . $meta['height'] => $urls,
+					'sized_url' => $local_url,
+					'size'      => $meta['width'] . 'x' . $meta['height'],
 				);
 
-				foreach ( $registered_sizes as $size ) {
-
-					$new_size = image_resize_dimensions( $meta['width'], $meta['height'], $size['width'], $size['height'], $size['crop'] );
-					if ( false === $new_size ) {
-						continue; // Image don't fit.
-					}
-					// Set the size to what the image should be.
-					$size['width']  = $new_size[4];
-					$size['height'] = $new_size[5];
-
-					// Create the size entry.
-					$size_key               = $size['width'] . 'x' . $size['height'];
-					$sized_url              = $urls;
-					$sized_url['sized_url'] = dirname( $local_url ) . '/' . $filename . '-' . $size_key . '.' . $ext;
-
-					// Add the sized URL to the sizes.
-					$sizes[ $attachment_id ][ $size_key ] = $sized_url;
-				}
+				return $sizes[ $attachment_id ];
 			}
 		}
 
@@ -364,14 +336,13 @@ class Delivery implements Setup {
 	 * Create a size relationship.
 	 *
 	 * @param int    $attachment_id The attachment ID.
-	 * @param string $primary_url   The primary (full) URL.
 	 * @param string $sized_url     The sized url.
 	 * @param string $size          The size in (width)x(height) format.
 	 * @param string $parent_path   The path of the parent if external.
 	 *
 	 * @return false|int
 	 */
-	public static function create_size_relation( $attachment_id, $primary_url, $sized_url, $size = '0x0', $parent_path = '' ) {
+	public static function create_size_relation( $attachment_id, $sized_url, $size = '0x0', $parent_path = '' ) {
 		global $wpdb;
 		static $media;
 		if ( ! $media ) {
@@ -384,11 +355,10 @@ class Delivery implements Setup {
 		$data            = array(
 			'post_id'         => $attachment_id,
 			'parent_path'     => $parent_path,
-			'primary_url'     => $primary_url,
 			'sized_url'       => $sized_url,
 			'width'           => $width_height[0] ? $width_height[0] : 0,
 			'height'          => $width_height[1] ? $width_height[1] : 0,
-			'format'          => pathinfo( $primary_url, PATHINFO_EXTENSION ),
+			'format'          => pathinfo( $sized_url, PATHINFO_EXTENSION ),
 			'sync_type'       => $type,
 			'post_state'      => 'inherit',
 			'transformations' => ! empty( $transformations ) ? Api::generate_transformation_string( $transformations, $resource ) : null,
@@ -572,16 +542,16 @@ class Delivery implements Setup {
 		$search  = array();
 		$baseurl = self::clean_url( $dirs['baseurl'] );
 		foreach ( $this->unknown as $url ) {
-			$url = ltrim( str_replace( $baseurl, '', $url ), '/' );
-			if ( ! preg_match( '/(-(\d+)x(\d+))\./i', $url, $match ) ) {
-				$search[] = $url;
-				continue;
-			}
-			$search[] = str_replace( $match[1], '', $url );
-			$search[] = str_replace( $match[1], '-scaled', $url );
+			$url      = ltrim( str_replace( $baseurl, '', $url ), '/' );
+			$search[] = $url;
+			$url      = self::maybe_unsize_url( $url );
+			$search[] = $url;
+			$file     = pathinfo( $url, PATHINFO_FILENAME );
+			$ext      = pathinfo( $url, PATHINFO_EXTENSION );
+			$search[] = dirname( $url ) . '/' . $file . '-scaled.' . $ext;
 		}
-
-		$in = implode( ',', array_fill( 0, count( $search ), '%s' ) );
+		$search = array_unique( $search );
+		$in     = implode( ',', array_fill( 0, count( $search ), '%s' ) );
 
 		// Prepare a query to find all in a single request.
 		$sql = $wpdb->prepare(
@@ -594,16 +564,15 @@ class Delivery implements Setup {
 		if ( false === $cached ) {
 			$cached  = array();
 			$results = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared
+
 			if ( $results ) {
 				foreach ( $results as $result ) {
 					// If we are here, it means that an attachment in the media library doesn't have a delivery for the url.
 					// Reset the signature for delivery and add to sync, to update it.
 					$this->sync->set_signature_item( $result->post_id, 'delivery', 'reset' );
 					$this->sync->get_sync_type( $result->post_id );
-					$sizes = $this->get_sizes( $result->post_id );
-					foreach ( $sizes as $urls ) {
-						$cached[ $urls['sized_url'] ] = (int) $result->post_id;
-					}
+					$size                         = $this->get_sized( $result->post_id );
+					$cached[ $size['sized_url'] ] = (int) $result->post_id;
 				}
 			}
 			wp_cache_add( $key, $cached );
@@ -898,6 +867,7 @@ class Delivery implements Setup {
 	 */
 	public function parse_element( $element ) {
 		static $post_context = 0;
+
 		$tag_element = array(
 			'tag'                       => '',
 			'atts'                      => array(),
@@ -937,7 +907,7 @@ class Delivery implements Setup {
 				}
 			}
 		}
-		$url = self::clean_url( $raw_url );
+		$url = self::maybe_unsize_url( self::clean_url( $raw_url ) );
 
 		// Track back the found URL.
 		if ( $this->media->is_cloudinary_url( $raw_url ) ) {
@@ -1139,8 +1109,12 @@ class Delivery implements Setup {
 	 */
 	protected function set_usability( $item, $auto_sync = null ) {
 
-		$this->known[ $item['sized_url'] ] = $item;
+		$base                              = dirname( $item['sized_url'] );
+		$filename                          = pathinfo( $item['sized_url'], PATHINFO_FILENAME );
+		$scaled                            = $base . '/' . $filename . '-scaled' . $item['format'];
+		$this->known[ $scaled ]            = $item;
 		$this->known[ $item['public_id'] ] = $item;
+		$this->known[ $item['sized_url'] ] = $item;
 
 		// Prep a scaled alias.
 		if ( false !== strpos( $item['sized_url'], '-scaled.' ) ) {
@@ -1195,16 +1169,36 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Maybe remove a size from a URL.
+	 *
+	 * @param string $url The url to remove size from.
+	 *
+	 * @return string
+	 */
+	public static function maybe_unsize_url( $url ) {
+		$no_scale = preg_replace( '/(\S+)+(-\d+x\d+)\.(\S+)+/', '$1.$3', $url );
+
+		return $no_scale ? $no_scale : $url;
+	}
+
+	/**
 	 * Get urls from HTML.
 	 *
 	 * @param string $content The content html.
 	 */
 	protected function get_urls( $content ) {
 		global $wpdb;
-		$all_urls        = array_unique( wp_extract_urls( $content ) );
-		$base_urls       = array_filter( array_map( array( $this, 'sanitize_url' ), $all_urls ) );
-		$clean_urls      = array_map( array( $this, 'clean_url' ), $base_urls );
-		$urls            = array_filter( $clean_urls, array( $this, 'validate_url' ) ); // clean out empty urls.
+		$all_urls   = array_unique( wp_extract_urls( $content ) );
+		$base_urls  = array_filter( array_map( array( $this, 'sanitize_url' ), $all_urls ) );
+		$clean_urls = array_map( array( $this, 'clean_url' ), $base_urls );
+		$urls       = array_filter( $clean_urls, array( $this, 'validate_url' ) );
+
+		// De-size.
+		$desized = array_map( array( $this, 'maybe_unsize_url' ), $urls );
+		$desized = array_unique( array_filter( $desized ) );
+		$urls    = array_merge( $desized, $urls );
+		$urls    = array_values( $urls );
+		// clean out empty urls.
 		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
 		if ( empty( $urls ) && empty( $cloudinary_urls ) ) {
 			return; // Bail since theres nothing.
@@ -1222,7 +1216,7 @@ class Delivery implements Setup {
 			// Do the public_ids.
 			$list     = implode( ', ', array_fill( 0, count( $public_ids ), '%s' ) );
 			$wheres[] = "public_id IN( {$list} )";
-			$urls    += $public_ids;
+			$urls     = array_merge( $urls, $public_ids );
 		}
 
 		$tablename = Utils::get_relationship_table();
@@ -1241,8 +1235,14 @@ class Delivery implements Setup {
 		foreach ( $results as $result ) {
 			$this->set_usability( $result, $auto_sync );
 		}
-
-		$this->unknown = array_diff( $urls, array_keys( $this->known ) );
+		// Set unknowns.
+		$unknown = array_diff( $urls, array_keys( $this->known ) );
+		foreach ( $unknown as $url ) {
+			$url = self::maybe_unsize_url( $url );
+			if ( ! isset( $this->known[ $url ] ) && ! in_array( $url, $this->unknown, true ) ) {
+				$this->unknown[] = $url;
+			}
+		}
 	}
 
 	/**

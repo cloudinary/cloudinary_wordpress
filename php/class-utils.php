@@ -226,7 +226,6 @@ class Utils {
 	  post_id bigint(20) DEFAULT NULL,
 	  public_id varchar(255) DEFAULT NULL,
 	  parent_path varchar(255) DEFAULT NULL,
-	  primary_url varchar(255) DEFAULT NULL,
 	  sized_url varchar(255) DEFAULT NULL,
 	  width int(11) DEFAULT NULL,
 	  height int(11) DEFAULT NULL,
