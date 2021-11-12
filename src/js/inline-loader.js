@@ -46,7 +46,7 @@ window.Cloudinary_Inline_Loader = {
 		};
 		this.rObserver = new ResizeObserver( ( entries, observer ) => {
 			entries.forEach( entry => {
-				if( entry.target.cld_loaded && entry.contentRect.width >= entry.target.cld_loaded ) {
+				if ( entry.target.cld_loaded && entry.contentRect.width >= entry.target.cld_loaded ) {
 					entry.target.src = this.getSizeURL( entry.target );
 				}
 			} );
@@ -69,7 +69,7 @@ window.Cloudinary_Inline_Loader = {
 		this.pObserver = new IntersectionObserver( ( entries, observer ) => {
 			entries.forEach( entry => {
 				if ( entry.isIntersecting ) {
-					if( entry.intersectionRatio < 0.5 ) {
+					if ( entry.intersectionRatio < 0.5 ) {
 						// Low so that it doesn't show partly.
 						entry.target.src = this.getPlaceholderURL( entry.target );
 					}
@@ -77,7 +77,6 @@ window.Cloudinary_Inline_Loader = {
 				}
 			} );
 		}, pOptions );
-
 
 		this.enabled = true;
 	},
@@ -130,8 +129,11 @@ window.Cloudinary_Inline_Loader = {
 	},
 	scaleWidth( image ) {
 		let width = image.width;
-		while( -1 === this.sizeBands.indexOf( width ) ){
+		while ( -1 === this.sizeBands.indexOf( width ) ) {
 			width++;
+		}
+		if ( image.originalWidth < width ) {
+			width = image.originalWidth;
 		}
 		return width;
 	},
