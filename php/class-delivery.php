@@ -160,7 +160,7 @@ class Delivery implements Setup {
 		if ( ! $sql ) {
 			$sql = Utils::get_table_sql();
 		}
-		$sizes      = $this->get_sizes( $attachment_id );
+		$sizes      = $this->get_sized( $attachment_id );
 		$public_id  = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
 		$registered = wp_json_encode( wp_get_registered_image_subsizes() );
 
@@ -174,7 +174,7 @@ class Delivery implements Setup {
 	 */
 	public function create_delivery( $attachment_id ) {
 		$this->delete_size_relationship( $attachment_id );
-		$size      = $this->get_sizes( $attachment_id );
+		$size      = $this->get_sized( $attachment_id );
 		$public_id = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
 		$base      = $this->get_content_path();
 		self::create_size_relation( $attachment_id, $size['sized_url'], $size['size'], $base );
@@ -244,7 +244,7 @@ class Delivery implements Setup {
 	 *
 	 * @return array
 	 */
-	public function get_sizes( $attachment_id ) {
+	public function get_sized( $attachment_id ) {
 		static $sizes = array(), $registered_sizes;
 		if ( ! $registered_sizes ) {
 			$registered_sizes = wp_get_registered_image_subsizes();
@@ -570,7 +570,7 @@ class Delivery implements Setup {
 					// Reset the signature for delivery and add to sync, to update it.
 					$this->sync->set_signature_item( $result->post_id, 'delivery', 'reset' );
 					$this->sync->get_sync_type( $result->post_id );
-					$size                         = $this->get_sizes( $result->post_id );
+					$size                         = $this->get_sized( $result->post_id );
 					$cached[ $size['sized_url'] ] = (int) $result->post_id;
 				}
 			}
@@ -906,7 +906,7 @@ class Delivery implements Setup {
 				}
 			}
 		}
-		$url = self::clean_url( $raw_url );
+		$url = self::maybe_unsize_url( self::clean_url( $raw_url ) );
 
 		// Track back the found URL.
 		if ( $this->media->is_cloudinary_url( $raw_url ) ) {
@@ -924,10 +924,6 @@ class Delivery implements Setup {
 			}
 		}
 		$tag_element['context'] = $post_context;
-		$no_scale               = preg_replace( '/(\S+)+(-\d+x\d+)\.(\S+)+/', '$1.$3', $url );
-		if ( $no_scale ) {
-			$url = $no_scale;
-		}
 		if ( ! empty( $this->known[ $url ] ) && ! empty( $this->known[ $url ]['public_id'] ) ) {
 			$item = $this->known[ $url ];
 			if ( ! empty( $item['transformations'] ) ) {
@@ -1172,6 +1168,18 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Maybe remove a size from a URL.
+	 *
+	 * @param string $url The url to remove size from.
+	 *
+	 * @return string
+	 */
+	public static function maybe_unsize_url( $url ) {
+		$no_scale = preg_replace( '/(\S+)+(-\d+x\d+)\.(\S+)+/', '$1.$3', $url );
+		return $no_scale ? $no_scale : $url;
+	}
+
+	/**
 	 * Get urls from HTML.
 	 *
 	 * @param string $content The content html.
@@ -1183,25 +1191,9 @@ class Delivery implements Setup {
 		$clean_urls = array_map( array( $this, 'clean_url' ), $base_urls );
 		$urls       = array_filter( $clean_urls, array( $this, 'validate_url' ) );
 		// De-size.
-		$desized  = array_map(
-			function ( $url ) {
-				$no_scale = preg_replace( '/(\S+)+(-\d+x\d+)\.(\S+)+/', '$1.$3', $url );
-
-				return $no_scale ? $no_scale : null;
-			},
-			$urls
-		);
-		$descaled = array_map(
-			function ( $url ) {
-				$no_scale = preg_replace( '/(\S+)+(-\d+x\d+)\.(\S+)+/', '$1-scaled.$3', $url );
-
-				return $no_scale ? $no_scale : null;
-			},
-			$urls
-		);
-		$desized  = array_merge( array_filter( $desized ), $descaled );
-		$urls     = array_merge( $desized, $urls );
-
+		$desized = array_map( array( $this, 'maybe_unsize_url' ), $urls );
+		$urls    = array_merge( array_filter( $desized ), $urls );
+		$urls    = array_unique( $urls );
 		// clean out empty urls.
 		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
 		if ( empty( $urls ) && empty( $cloudinary_urls ) ) {
@@ -1239,8 +1231,14 @@ class Delivery implements Setup {
 		foreach ( $results as $result ) {
 			$this->set_usability( $result, $auto_sync );
 		}
-
-		$this->unknown = array_diff( $urls, array_keys( $this->known ) );
+		// Set unknowns.
+		$unknown = array_diff( $urls, array_keys( $this->known ) );
+		foreach ( $unknown as $url ) {
+			$url = self::maybe_unsize_url( $url );
+			if ( ! isset( $this->known[ $url ] ) ) {
+				$this->unknown = $url;
+			}
+		}
 	}
 
 	/**
