@@ -19,13 +19,30 @@ window.Cloudinary_Inline_Loader = {
 		const size = image.dataset.size.split( ' ' );
 		image.originalWidth = size[ 0 ];
 		image.originalHeight = size[ 1 ];
-		this.pObserver.observe( image );
-		this.iObserver.observe( image );
-		image.addEventListener( 'error', ( ev ) => {
-			// If load error, set a broken image and remove from images list to prevent infinite load loop.
-			image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="rgba(0,0,0,0.1)"/><text x="50%" y="50%" fill="red" text-anchor="middle" dominant-baseline="middle">%26%23x26A0%3B︎</text></svg>';
-			this.rObserver.unobserve( image );
+		if ( this.pObserver ) {
+			this.pObserver.observe( image );
+			this.iObserver.observe( image );
+			image.addEventListener( 'error', ( ev ) => {
+				// If load error, set a broken image and remove from images list to prevent infinite load loop.
+				image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="rgba(0,0,0,0.1)"/><text x="50%" y="50%" fill="red" text-anchor="middle" dominant-baseline="middle">%26%23x26A0%3B︎</text></svg>';
+				this.rObserver.unobserve( image );
+			} );
+		} else {
+			this.setupFallback( image );
+		}
+	},
+	setupFallback( image ) {
+		const srcSet = [];
+		this.sizeBands.forEach( ( size ) => {
+			if( size <= image.originalWidth ) {
+				let newURL = this.getSizeURL( image, size, true ) + ` ${ size }w`;
+				if ( -1 === srcSet.indexOf( newURL ) ) {
+					srcSet.push( newURL );
+				}
+			}
 		} );
+		image.srcset = srcSet.join(',' );
+		image.sizes = `(max-width: ${image.originalWidth}px) 100vw, ${image.originalWidth}px`;
 	},
 	_init() {
 		this.enabled = true;
@@ -38,6 +55,14 @@ window.Cloudinary_Inline_Loader = {
 			maxWidth = maxWidth - pixelStep;
 			this.sizeBands.push( maxWidth );
 		}
+
+		if ( typeof IntersectionObserver !== 'undefined' ) {
+			this._setupObservers();
+		}
+
+		this.enabled = true;
+	},
+	_setupObservers() {
 		const iOptions = {
 			rootMargin: this.lazyThreshold + 'px 0px ' + this.lazyThreshold + 'px 0px',
 		};
@@ -59,9 +84,9 @@ window.Cloudinary_Inline_Loader = {
 						entry.target.srcset = entry.target.dataset.srcset;
 					} else {
 						entry.target.src = this.getSizeURL( entry.target );
+						this.rObserver.observe( entry.target );
 					}
 					observer.unobserve( entry.target );
-					this.rObserver.observe( entry.target );
 				}
 			} );
 		}, iOptions );
@@ -77,8 +102,6 @@ window.Cloudinary_Inline_Loader = {
 				}
 			} );
 		}, pOptions );
-
-		this.enabled = true;
 	},
 	_calcThreshold() {
 		const number = this.config.lazy_threshold.replace( /[^0-9]/g, '' );
@@ -127,20 +150,26 @@ window.Cloudinary_Inline_Loader = {
 
 		this.density = deviceDensity;
 	},
-	scaleWidth( image ) {
-		let width = image.width;
-		while ( -1 === this.sizeBands.indexOf( width ) ) {
-			width++;
+	scaleWidth( image, width ) {
+		const maxSize = parseInt( this.config.max_width );
+		if ( ! width ) {
+			width = image.width;
+			while ( -1 === this.sizeBands.indexOf( width ) && width < maxSize ) {
+				width++;
+			}
+		}
+		if ( width > maxSize ) {
+			width = maxSize;
 		}
 		if ( image.originalWidth < width ) {
 			width = image.originalWidth;
 		}
 		return width;
 	},
-	scaleSize( image, dpr ) {
+	scaleSize( image, width, dpr ) {
 		const ratio = ( image.originalWidth / image.originalHeight ).toFixed( 3 );
 		const renderedRatio = ( image.width / image.height ).toFixed( 3 );
-		const scaledWidth = this.scaleWidth( image );
+		const scaledWidth = this.scaleWidth( image, width );
 		const newSize = [];
 		if ( image.width !== image.originalWidth ) {
 			// We know it's a different size.
@@ -162,8 +191,8 @@ window.Cloudinary_Inline_Loader = {
 			nameExtension: scaledWidth + 'x' + scaledHeight,
 		};
 	},
-	getSizeURL( image ) {
-		const newSize = this.scaleSize( image, true );
+	getSizeURL( image, width ) {
+		const newSize = this.scaleSize( image, width, true );
 		const format = 'auto' !== this.config[ 'image_format' ] && 'none' !== this.config[ 'image_format' ] ? this.config[ 'image_format' ] : image.dataset.format;
 		const name = image.dataset.publicId.split( '/' ).pop();
 
@@ -180,7 +209,7 @@ window.Cloudinary_Inline_Loader = {
 	},
 	getPlaceholderURL( image ) {
 		image.cld_placehold = true;
-		const newSize = this.scaleSize( image, false );
+		const newSize = this.scaleSize( image, null, false );
 
 		const parts = [
 			this.config.base_url,
