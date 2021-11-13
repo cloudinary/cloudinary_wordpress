@@ -1,7 +1,6 @@
-window.Cloudinary_Inline_Loader = {
+window.CloudinaryInlineLoader = {
 	deviceDensity: window.devicePixelRatio ? window.devicePixelRatio : 'auto',
 	density: null,
-	images: [],
 	config: CLDLB ? CLDLB : {},
 	lazyThreshold: 0,
 	enabled: false,
@@ -9,6 +8,7 @@ window.Cloudinary_Inline_Loader = {
 	iObserver: null,
 	pObserver: null,
 	rObserver: null,
+	overFold: false,
 	bind( image ) {
 		if ( image.originalWidth ) {
 			return;
@@ -20,8 +20,12 @@ window.Cloudinary_Inline_Loader = {
 		image.originalWidth = size[ 0 ];
 		image.originalHeight = size[ 1 ];
 		if ( this.pObserver ) {
-			this.pObserver.observe( image );
-			this.iObserver.observe( image );
+			if( ! this.overFold && this.inInitialView( image ) ){
+				this.buildImage( image );
+			}else {
+				this.pObserver.observe( image );
+				this.iObserver.observe( image );
+			}
 			image.addEventListener( 'error', ( ev ) => {
 				// If load error, set a broken image and remove from images list to prevent infinite load loop.
 				image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="rgba(0,0,0,0.1)"/><text x="50%" y="50%" fill="red" text-anchor="middle" dominant-baseline="middle">%26%23x26A0%3B︎</text></svg>';
@@ -30,6 +34,20 @@ window.Cloudinary_Inline_Loader = {
 		} else {
 			this.setupFallback( image );
 		}
+	},
+	buildImage( image ){
+		if ( image.dataset.srcset ) {
+			image.cld_loaded = true;
+			image.srcset = image.dataset.srcset;
+		} else {
+			image.src = this.getSizeURL( image );
+			this.rObserver.observe( image );
+		}
+	},
+	inInitialView( image ){
+		const rect = image.getBoundingClientRect();
+		this.overFold = rect.top < window.innerHeight + this.lazyThreshold;
+		return this.overFold;
 	},
 	setupFallback( image ) {
 		const srcSet = [];
@@ -79,13 +97,7 @@ window.Cloudinary_Inline_Loader = {
 		this.iObserver = new IntersectionObserver( ( entries, observer ) => {
 			entries.forEach( entry => {
 				if ( entry.isIntersecting ) {
-					if ( entry.target.dataset.srcset ) {
-						entry.target.cld_loaded = true;
-						entry.target.srcset = entry.target.dataset.srcset;
-					} else {
-						entry.target.src = this.getSizeURL( entry.target );
-						this.rObserver.observe( entry.target );
-					}
+					this.buildImage( entry.target );
 					observer.unobserve( entry.target );
 				}
 			} );
