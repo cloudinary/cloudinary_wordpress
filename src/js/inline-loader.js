@@ -1,4 +1,4 @@
-window.CloudinaryInlineLoader = {
+const CloudinaryLoader = {
 	deviceDensity: window.devicePixelRatio ? window.devicePixelRatio : 'auto',
 	density: null,
 	config: CLDLB ? CLDLB : {},
@@ -8,11 +8,9 @@ window.CloudinaryInlineLoader = {
 	iObserver: null,
 	pObserver: null,
 	rObserver: null,
-	overFold: false,
+	aboveFold: true,
 	bind( image ) {
-		if ( image.originalWidth ) {
-			return;
-		}
+		image.CLDbound = true;
 		if ( ! this.enabled ) {
 			this._init();
 		}
@@ -20,7 +18,7 @@ window.CloudinaryInlineLoader = {
 		image.originalWidth = size[ 0 ];
 		image.originalHeight = size[ 1 ];
 		if ( this.pObserver ) {
-			if( ! this.overFold && this.inInitialView( image ) ){
+			if( this.aboveFold && this.inInitialView( image ) ){
 				this.buildImage( image );
 			}else {
 				this.pObserver.observe( image );
@@ -46,8 +44,8 @@ window.CloudinaryInlineLoader = {
 	},
 	inInitialView( image ){
 		const rect = image.getBoundingClientRect();
-		this.overFold = rect.top < window.innerHeight + this.lazyThreshold;
-		return this.overFold;
+		this.aboveFold = rect.top < window.innerHeight + this.lazyThreshold;
+		return this.aboveFold;
 	},
 	setupFallback( image ) {
 		const srcSet = [];
@@ -236,5 +234,10 @@ window.CloudinaryInlineLoader = {
 	},
 	empty( thing ) {
 		return 0 !== thing.length;
+	}
+};
+window.CLDBind = ( image )=>{
+	if( ! image.CLDbound ){
+		CloudinaryLoader.bind( image );
 	}
 };
