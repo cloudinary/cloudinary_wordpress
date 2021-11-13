@@ -176,7 +176,7 @@ class Lazy_Load extends Delivery_Feature {
 			unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 		}
 		if ( ! is_admin() ) {
-			$tag_element['atts']['onload'] = 'Cloudinary_Inline_Loader.bind(this)';
+			$tag_element['atts']['onload'] = 'CLDBind(this)';
 		}
 
 		return $tag_element;
