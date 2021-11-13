@@ -1109,10 +1109,6 @@ class Delivery implements Setup {
 	 */
 	protected function set_usability( $item, $auto_sync = null ) {
 
-		$base                              = dirname( $item['sized_url'] );
-		$filename                          = pathinfo( $item['sized_url'], PATHINFO_FILENAME );
-		$scaled                            = $base . '/' . $filename . '-scaled' . $item['format'];
-		$this->known[ $scaled ]            = $item;
 		$this->known[ $item['public_id'] ] = $item;
 		$this->known[ $item['sized_url'] ] = $item;
 
@@ -1182,6 +1178,19 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Make a scaled version.
+	 *
+	 * @param string $url The url to make scaled.
+	 *
+	 * @return string
+	 */
+	public static function make_scaled_url( $url ) {
+		$file = pathinfo( $url );
+
+		return $file['dirname'] . '/' . $file['filename'] . '-scaled.' . $file['extension'];
+	}
+
+	/**
 	 * Get urls from HTML.
 	 *
 	 * @param string $content The content html.
@@ -1196,7 +1205,9 @@ class Delivery implements Setup {
 		// De-size.
 		$desized = array_map( array( $this, 'maybe_unsize_url' ), $urls );
 		$desized = array_unique( array_filter( $desized ) );
+		$scaled  = array_map( array( $this, 'make_scaled_url' ), $desized );
 		$urls    = array_merge( $desized, $urls );
+		$urls    = array_merge( $scaled, $urls );
 		$urls    = array_values( $urls );
 		// clean out empty urls.
 		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
