@@ -1018,19 +1018,21 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function attachment_url( $url, $attachment_id ) {
 		static $urls = array();
-		if ( isset( $urls[ $attachment_id ] ) ) {
+		if ( isset( $urls[ $url ] ) ) {
 			// prevent infinite loops.
-			return $urls[ $attachment_id ]; // Return the actual url, since it would already be converted.
+			return $urls[ $url ]; // Return the actual url, since it would already be converted.
 		}
 
 		// Previous v1 and Cloudinary only storage.
 		if ( false !== strpos( $url, 'https://', 5 ) ) {
 			$dirs = wp_get_upload_dir();
 
-			$urls[ $attachment_id ] = str_replace( trailingslashit( $dirs['baseurl'] ), '', $url );
+			$urls[ $url ] = str_replace( trailingslashit( $dirs['baseurl'] ), '', $url );
 
-			return $urls[ $attachment_id ];
+			return $urls[ $url ];
 		}
+		// Preset cache.
+		$urls[ $url ] = $url;
 
 		if (
 			! doing_action( 'wp_insert_post_data' )
@@ -1046,10 +1048,25 @@ class Media extends Settings_Component implements Setup {
 			&& ! apply_filters( 'cloudinary_doing_upload', false )
 		) {
 			if ( $this->cloudinary_id( $attachment_id ) ) {
-				$url = $this->cloudinary_url( $attachment_id );
+				$urls[ $url ] = $this->cloudinary_url( $attachment_id );
 			}
 		}
-		$urls[ $attachment_id ] = $url;
+
+		return $urls[ $url ];
+	}
+
+	/**
+	 * Get the original size URL, when original_attachment_url is called, and it's a Cloudinary URL.
+	 *
+	 * @param string $url           The current url.
+	 * @param int    $attachment_id The attachment ID.
+	 *
+	 * @return string Cloudinary URL.
+	 */
+	public function original_attachment_url( $url, $attachment_id ) {
+		if ( $this->is_cloudinary_url( $url ) ) {
+			$url = $this->raw_cloudinary_url( $attachment_id );
+		}
 
 		return $url;
 	}
@@ -2724,7 +2741,7 @@ class Media extends Settings_Component implements Setup {
 			if ( is_admin() ) {
 				add_filter( 'wp_calculate_image_srcset', array( $this, 'image_srcset' ), 10, 5 );
 				add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
-				add_filter( 'wp_get_original_image_url', array( $this, 'attachment_url' ), 10, 2 );
+				add_filter( 'wp_get_original_image_url', array( $this, 'original_attachment_url' ), 10, 2 );
 
 				add_filter( 'image_downsize', array( $this, 'filter_downsize' ), 10, 3 );
 				// Hook into Featured Image cycle.
