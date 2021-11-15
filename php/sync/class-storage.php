@@ -428,6 +428,38 @@ class Storage implements Notice {
 	}
 
 	/**
+	 * Get the local URL for cloudinary only storage, when wp_get_attachment_url is called on the front.
+	 * This allows the delivery system, to find the correct relationship.
+	 *
+	 * @param string $url           The current url.
+	 * @param int    $attachment_id The attachment ID.
+	 * @param bool   $original      Flag to get the original local url.
+	 *
+	 * @return string Cloudinary URL.
+	 */
+	public function attachment_url( $url, $attachment_id, $original = false ) {
+		$state = $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['storage'], true );
+		if ( 'cld' === $state ) {
+			$url = $this->media->local_url( $attachment_id, $original );
+		}
+
+		return $url;
+	}
+
+	/**
+	 * Get the original local URL for cloudinary only storage, when original_attachment_url is called on the front.
+	 * This allows the delivery system, to find the correct relationship.
+	 *
+	 * @param string $url           The current url.
+	 * @param int    $attachment_id The attachment ID.
+	 *
+	 * @return string Cloudinary URL.
+	 */
+	public function original_attachment_url( $url, $attachment_id ) {
+		return $this->attachment_url( $url, $attachment_id, true );
+	}
+
+	/**
 	 * Setup hooks for the filters.
 	 */
 	public function setup() {
@@ -465,9 +497,10 @@ class Storage implements Notice {
 
 			add_filter( 'cloudinary_can_sync_asset', array( $this, 'delay_cld_only' ), 10, 3 );
 		}
-		if ( 'cld' === $this->settings['offload'] ) {
-			add_filter( 'wp_get_attachment_url', array( $this->media, 'attachment_url' ), 10, 2 );
-			add_filter( 'wp_get_original_image_url', array( $this->media, 'attachment_url' ), 10, 2 );
+		if ( ! is_admin() ) {
+			// On the frontend, we don't want to get cloudinary URLs, since this is the job of the delivery system.
+			add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
+			add_filter( 'wp_get_original_image_url', array( $this, 'original_attachment_url' ), 10, 2 );
 		}
 	}
 }
