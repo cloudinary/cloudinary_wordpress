@@ -416,7 +416,7 @@ class Storage implements Notice {
 		$remote_format = wp_remote_retrieve_header( $request, 'Content-Type' );
 		$local_size    = get_post_meta( $attachment_id, Sync::META_KEYS['local_size'], true );
 		if ( empty( $local_size ) ) {
-			$url        = $this->media->local_url( $attachment_id );
+			$url        = $this->media->cloudinary_url( $attachment_id, null, null, $public_id, true );
 			$request    = wp_remote_head( $url, $args );
 			$local_size = wp_remote_retrieve_header( $request, 'Content-Length' );
 
@@ -425,6 +425,41 @@ class Storage implements Notice {
 		update_post_meta( $attachment_id, Sync::META_KEYS['remote_size'], $remote_size );
 		update_post_meta( $attachment_id, Sync::META_KEYS['remote_format'], $remote_format );
 		$this->sync->set_signature_item( $attachment_id, 'size' );
+	}
+
+	/**
+	 * Get the local URL for cloudinary only storage, when wp_get_attachment_url is called on the front.
+	 * This allows the delivery system, to find the correct relationship.
+	 *
+	 * @param string $url           The current url.
+	 * @param int    $attachment_id The attachment ID.
+	 * @param bool   $original      Flag to get the original local url.
+	 *
+	 * @return string Cloudinary URL.
+	 */
+	public function attachment_url( $url, $attachment_id, $original = false ) {
+		if ( defined( 'REST_REQUEST' ) && true === REST_REQUEST ) {
+			return $url; // Bail.
+		}
+		$state = $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['storage'], true );
+		if ( 'cld' === $state ) {
+			$url = $this->media->local_url( $attachment_id, $original );
+		}
+
+		return $url;
+	}
+
+	/**
+	 * Get the original local URL for cloudinary only storage, when original_attachment_url is called on the front.
+	 * This allows the delivery system, to find the correct relationship.
+	 *
+	 * @param string $url           The current url.
+	 * @param int    $attachment_id The attachment ID.
+	 *
+	 * @return string Cloudinary URL.
+	 */
+	public function original_attachment_url( $url, $attachment_id ) {
+		return $this->attachment_url( $url, $attachment_id, true );
 	}
 
 	/**
@@ -465,9 +500,10 @@ class Storage implements Notice {
 
 			add_filter( 'cloudinary_can_sync_asset', array( $this, 'delay_cld_only' ), 10, 3 );
 		}
-		if ( 'cld' === $this->settings['offload'] ) {
-			add_filter( 'wp_get_attachment_url', array( $this->media, 'attachment_url' ), 10, 2 );
-			add_filter( 'wp_get_original_image_url', array( $this->media, 'attachment_url' ), 10, 2 );
+		if ( ! is_admin() ) {
+			// On the frontend, we don't want to get cloudinary URLs, since this is the job of the delivery system.
+			add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
+			add_filter( 'wp_get_original_image_url', array( $this, 'original_attachment_url' ), 10, 2 );
 		}
 	}
 }

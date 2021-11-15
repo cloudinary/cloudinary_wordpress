@@ -1031,6 +1031,8 @@ class Media extends Settings_Component implements Setup {
 
 			return $urls[ $url ];
 		}
+		// Preset cache.
+		$urls[ $url ] = $url;
 
 		if (
 			! doing_action( 'wp_insert_post_data' )
@@ -1046,10 +1048,25 @@ class Media extends Settings_Component implements Setup {
 			&& ! apply_filters( 'cloudinary_doing_upload', false )
 		) {
 			if ( $this->cloudinary_id( $attachment_id ) ) {
-				$url = $this->cloudinary_url( $attachment_id );
+				$urls[ $url ] = $this->cloudinary_url( $attachment_id );
 			}
 		}
-		$urls[ $url ] = $url;
+
+		return $urls[ $url ];
+	}
+
+	/**
+	 * Get the original size URL, when original_attachment_url is called, and it's a Cloudinary URL.
+	 *
+	 * @param string $url           The current url.
+	 * @param int    $attachment_id The attachment ID.
+	 *
+	 * @return string Cloudinary URL.
+	 */
+	public function original_attachment_url( $url, $attachment_id ) {
+		if ( $this->is_cloudinary_url( $url ) ) {
+			$url = $this->raw_cloudinary_url( $attachment_id );
+		}
 
 		return $url;
 	}
@@ -1273,11 +1290,12 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Get the local URL for an attachment.
 	 *
-	 * @param int $attachment_id The attachment ID to get.
+	 * @param int  $attachment_id The attachment ID to get.
+	 * @param bool $original      Flag to get the original local url.
 	 *
 	 * @return string|false
 	 */
-	public function local_url( $attachment_id ) {
+	public function local_url( $attachment_id, $original = false ) {
 		static $urls = array();
 		if ( ! empty( $urls[ $attachment_id ] ) ) {
 			return $urls[ $attachment_id ];
@@ -1288,6 +1306,10 @@ class Media extends Settings_Component implements Setup {
 			// if theres no file, try get it from attached file (ie. video).
 			$meta['file'] = get_post_meta( $attachment_id, '_wp_attached_file', true );
 		}
+		if ( true === $original && ! empty( $meta['original_image'] ) ) {
+			$meta['file'] = dirname( $meta['file'] ) . '/' . $meta['original_image'];
+		}
+
 		$dirs                   = wp_get_upload_dir();
 		$urls[ $attachment_id ] = wp_normalize_path( trailingslashit( $dirs['baseurl'] ) . $meta['file'] );
 
@@ -1442,9 +1464,6 @@ class Media extends Settings_Component implements Setup {
 		// Check for a public_id.
 		if ( $this->has_public_id( $attachment_id ) ) {
 			$public_id = $this->get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
-			if ( $this->is_folder_synced( $attachment_id ) ) {
-				$public_id = $this->get_cloudinary_folder() . pathinfo( $public_id, PATHINFO_BASENAME );
-			}
 			if ( true === $suffixed && ! empty( $this->get_post_meta( $attachment_id, Sync::META_KEYS['suffix'], true ) ) ) {
 				$suffix = $this->get_post_meta( $attachment_id, Sync::META_KEYS['suffix'], true );
 				if ( false === strrpos( $public_id, $suffix ) ) {
@@ -2722,7 +2741,7 @@ class Media extends Settings_Component implements Setup {
 			if ( is_admin() ) {
 				add_filter( 'wp_calculate_image_srcset', array( $this, 'image_srcset' ), 10, 5 );
 				add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
-				add_filter( 'wp_get_original_image_url', array( $this, 'attachment_url' ), 10, 2 );
+				add_filter( 'wp_get_original_image_url', array( $this, 'original_attachment_url' ), 10, 2 );
 
 				add_filter( 'image_downsize', array( $this, 'filter_downsize' ), 10, 3 );
 				// Hook into Featured Image cycle.
