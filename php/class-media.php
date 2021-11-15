@@ -1273,11 +1273,12 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Get the local URL for an attachment.
 	 *
-	 * @param int $attachment_id The attachment ID to get.
+	 * @param int  $attachment_id The attachment ID to get.
+	 * @param bool $original      Flag to get the original local url.
 	 *
 	 * @return string|false
 	 */
-	public function local_url( $attachment_id ) {
+	public function local_url( $attachment_id, $original = false ) {
 		static $urls = array();
 		if ( ! empty( $urls[ $attachment_id ] ) ) {
 			return $urls[ $attachment_id ];
@@ -1288,6 +1289,10 @@ class Media extends Settings_Component implements Setup {
 			// if theres no file, try get it from attached file (ie. video).
 			$meta['file'] = get_post_meta( $attachment_id, '_wp_attached_file', true );
 		}
+		if ( true === $original && ! empty( $meta['original_image'] ) ) {
+			$meta['file'] = dirname( $meta['file'] ) . '/' . $meta['original_image'];
+		}
+
 		$dirs                   = wp_get_upload_dir();
 		$urls[ $attachment_id ] = wp_normalize_path( trailingslashit( $dirs['baseurl'] ) . $meta['file'] );
 
