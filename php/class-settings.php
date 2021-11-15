@@ -338,35 +338,40 @@ class Settings {
 	/**
 	 * Get a setting value.
 	 *
-	 * @param string $slug The slug to get.
+	 * @param string|null $slug     The slug to get.
+	 * @param string      ...$slugs Additional slugs to get settings for.
 	 *
 	 * @return mixed
 	 */
-	public function get_value( $slug = null ) {
-		$key = self::META_KEYS['data'];
-		if ( $slug ) {
-			$setting      = $this->get_setting( $slug );
-			$storage_path = $setting->get_param( self::META_KEYS['storage'], $setting->get_slug() );
-			$key         .= $this->separator . $storage_path;
-		}
-		if ( ! isset( $value ) ) {
+	public function get_value( $slug = null, ...$slugs ) {
+		$slugs  = array_merge( (array) $slug, $slugs );
+		$return = array();
+		foreach ( $slugs as $slug ) {
+			$key = self::META_KEYS['data'];
+			if ( ! empty( $slug ) ) {
+				$setting      = $this->get_setting( $slug );
+				$storage_path = $setting->get_param( self::META_KEYS['storage'], $setting->get_slug() );
+				$key         .= $this->separator . $storage_path;
+			}
 			$value = $this->get_param( $key );
-		}
-		if ( ! $slug ) {
-			$slug = $this->slug;
-		}
-		$base_slug = explode( $this->separator, $slug );
-		$base_slug = array_pop( $base_slug );
+			if ( ! $slug ) {
+				$slug = $this->slug;
+			}
+			$base_slug = explode( $this->separator, $slug );
+			$base_slug = array_pop( $base_slug );
 
-		/**
-		 * Filter the setting value.
-		 *
-		 * @hook cloudinary_setting_get_value
-		 *
-		 * @param $value {mixed} The setting value.
-		 * @param $slug  {string}  The setting slug.
-		 */
-		return apply_filters( 'cloudinary_setting_get_value', $value, $slug );
+			/**
+			 * Filter the setting value.
+			 *
+			 * @hook cloudinary_setting_get_value
+			 *
+			 * @param $value {mixed} The setting value.
+			 * @param $slug  {string}  The setting slug.
+			 */
+			$return[ $slug ] = apply_filters( 'cloudinary_setting_get_value', $value, $slug );
+		}
+
+		return 1 === count( $slugs ) ? array_shift( $return ) : $return;
 	}
 
 	/**
