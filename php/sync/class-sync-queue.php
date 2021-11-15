@@ -359,11 +359,15 @@ class Sync_Queue {
 		$total_local_size  = $data['asset_sizes']['local'];
 		$total_remote_size = $data['asset_sizes']['remote'];
 		$total_assets      = $data['total_assets'];
-		$total_unoptimized = $data['unoptimized_assets'];
+		$total_unoptimized = $data['unoptimized_assets'] - $data['total_queued']; // Queued is removed from unoptimized count.
 		$total_optimized   = $data['total_assets'] - $data['unoptimized_assets'];
 		$total_queued      = $data['total_queued'];
 		$errors_count      = $data['errors'];
 
+		$unoptimized_text = __( 'All assets optimized.', 'cloudinary' );
+		if ( 0 < $total_queued && 0 === $total_unoptimized ) {
+			$unoptimized_text = __( 'Optimizing assets.', 'cloudinary' );
+		}
 		// Prepare the package.
 		$return = array(
 			// Original sizes.
@@ -393,7 +397,7 @@ class Sync_Queue {
 
 			// Status text.
 			// translators: placeholders are the number of assets unoptimized.
-			'unoptimized_status_text' => 0 === $total_unoptimized ? __( 'All assets optimized.', 'cloudinary' ) : sprintf( _n( '%s asset excluded from optimization.', '%s assets excluded from optimization.', $total_unoptimized, 'cloudinary' ), number_format_i18n( $total_unoptimized ) ),
+			'unoptimized_status_text' => 0 === $total_unoptimized ? $unoptimized_text : sprintf( _n( '%s asset excluded from optimization.', '%s assets excluded from optimization.', $total_unoptimized, 'cloudinary' ), number_format_i18n( $total_unoptimized ) ),
 			// translators: placeholders are the number of assets unoptimized.
 			'optimized_status_text'   => 0 !== $total_queued ? sprintf( __( '%1$s assets of %2$s currently syncing with Cloudinary.', 'cloudinary' ), number_format_i18n( $total_queued ), number_format_i18n( $total_assets ) ) : '', // This will be shown when items are pending (check queue).
 		);
