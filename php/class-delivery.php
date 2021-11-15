@@ -178,7 +178,18 @@ class Delivery implements Setup {
 		$size      = $this->get_sized( $attachment_id );
 		$public_id = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
 		$base      = $this->get_content_path();
-		self::create_size_relation( $attachment_id, $size['sized_url'], $size['size'], $base );
+		$sized_url = '';
+		$wh        = '0x0';
+		// Some attachments do not have Sizes.
+		if ( ! empty( $size ) ) {
+			$sized_url = $size['sized_url'];
+			$wh        = $size['size'];
+		}
+
+		if ( empty( $sized_url ) ) {
+			$sized_url = self::clean_url( wp_get_attachment_url( $attachment_id ), true );
+		}
+		self::create_size_relation( $attachment_id, $sized_url, $wh, $base );
 		// Update public ID and type.
 		self::update_size_relations_public_id( $attachment_id, $public_id );
 		self::update_size_relations_state( $attachment_id, 'inherit' );
