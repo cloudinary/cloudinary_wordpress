@@ -233,6 +233,7 @@ class Utils {
 	  sync_type varchar(45) DEFAULT NULL,
 	  post_state varchar(12) DEFAULT NULL,
 	  transformations text DEFAULT NULL,
+	  signature varchar(45) DEFAULT NULL,	  
 	  PRIMARY KEY (id),
 	  UNIQUE KEY sized_url (sized_url),
 	  KEY post_id (post_id),
