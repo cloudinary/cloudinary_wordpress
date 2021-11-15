@@ -1018,18 +1018,18 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function attachment_url( $url, $attachment_id ) {
 		static $urls = array();
-		if ( isset( $urls[ $url ] ) ) {
+		if ( isset( $urls[ $attachment_id ] ) ) {
 			// prevent infinite loops.
-			return $urls[ $url ]; // Return the actual url, since it would already be converted.
+			return $urls[ $attachment_id ]; // Return the actual url, since it would already be converted.
 		}
 
 		// Previous v1 and Cloudinary only storage.
 		if ( false !== strpos( $url, 'https://', 5 ) ) {
 			$dirs = wp_get_upload_dir();
 
-			$urls[ $url ] = str_replace( trailingslashit( $dirs['baseurl'] ), '', $url );
+			$urls[ $attachment_id ] = str_replace( trailingslashit( $dirs['baseurl'] ), '', $url );
 
-			return $urls[ $url ];
+			return $urls[ $attachment_id ];
 		}
 
 		if (
@@ -1049,7 +1049,7 @@ class Media extends Settings_Component implements Setup {
 				$url = $this->cloudinary_url( $attachment_id );
 			}
 		}
-		$urls[ $url ] = $url;
+		$urls[ $attachment_id ] = $url;
 
 		return $url;
 	}
