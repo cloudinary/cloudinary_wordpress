@@ -530,7 +530,6 @@ class Sync implements Setup, Assets {
 						untrailingslashit( $this->managers['media']->get_cloudinary_folder() )
 					);
 				},
-				'required' => true, // Required to complete URL render flag.
 			),
 			'public_id'    => array(
 				'generate' => array( $this->managers['media'], 'get_public_id' ),

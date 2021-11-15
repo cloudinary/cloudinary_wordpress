@@ -416,7 +416,7 @@ class Storage implements Notice {
 		$remote_format = wp_remote_retrieve_header( $request, 'Content-Type' );
 		$local_size    = get_post_meta( $attachment_id, Sync::META_KEYS['local_size'], true );
 		if ( empty( $local_size ) ) {
-			$url        = $this->media->local_url( $attachment_id );
+			$url        = $this->media->cloudinary_url( $attachment_id, null, null, $public_id, true );
 			$request    = wp_remote_head( $url, $args );
 			$local_size = wp_remote_retrieve_header( $request, 'Content-Length' );
 
@@ -438,6 +438,9 @@ class Storage implements Notice {
 	 * @return string Cloudinary URL.
 	 */
 	public function attachment_url( $url, $attachment_id, $original = false ) {
+		if ( defined( 'REST_REQUEST' ) && true === REST_REQUEST ) {
+			return $url; // Bail.
+		}
 		$state = $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['storage'], true );
 		if ( 'cld' === $state ) {
 			$url = $this->media->local_url( $attachment_id, $original );
