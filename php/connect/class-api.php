@@ -385,7 +385,7 @@ class Api {
 		$args                = $this->clean_args( $args );
 		$disable_https_fetch = get_transient( '_cld_disable_http_upload' );
 		add_filter( 'wp_get_attachment_url', array( $media, 'attachment_url' ), 10, 2 );
-		add_filter( 'wp_get_original_image_url', array( $media, 'attachment_url' ), 10, 2 );
+		add_filter( 'wp_get_original_image_url', array( $media, 'original_attachment_url' ), 10, 2 );
 		if (
 			function_exists( 'wp_get_original_image_url' )
 			&& wp_attachment_is_image( $attachment_id )
