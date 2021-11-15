@@ -160,11 +160,12 @@ class Delivery implements Setup {
 		if ( ! $sql ) {
 			$sql = Utils::get_table_sql();
 		}
-		$sizes      = $this->get_sized( $attachment_id );
-		$public_id  = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
-		$registered = wp_json_encode( wp_get_registered_image_subsizes() );
+		$sizes              = $this->get_sized( $attachment_id );
+		$public_id          = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
+		$registered         = wp_json_encode( wp_get_registered_image_subsizes() );
+		$settings_signature = self::get_settings_signature();
 
-		return wp_json_encode( $sizes ) . $public_id . $registered . $sql;
+		return wp_json_encode( $sizes ) . $public_id . $registered . $sql . $settings_signature;
 	}
 
 	/**
@@ -362,6 +363,7 @@ class Delivery implements Setup {
 			'sync_type'       => $type,
 			'post_state'      => 'inherit',
 			'transformations' => ! empty( $transformations ) ? Api::generate_transformation_string( $transformations, $resource ) : null,
+			'signature'       => self::get_settings_signature(),
 		);
 
 		$insert_id = false;
@@ -371,6 +373,21 @@ class Delivery implements Setup {
 		}
 
 		return $insert_id;
+	}
+
+	/**
+	 * Get a signature of the current settings that result in a sync check.
+	 *
+	 * @return string string
+	 */
+	public static function get_settings_signature() {
+		static $signature;
+		if ( ! $signature ) {
+			$settings  = get_plugin_instance()->settings->get_value( 'cloudinary_url', 'sync_media' );
+			$signature = md5( wp_json_encode( $settings ) );
+		}
+
+		return $signature;
 	}
 
 	/**
@@ -1133,6 +1150,9 @@ class Delivery implements Setup {
 		} elseif ( ! empty( $item['public_id'] ) ) {
 			// Most likely an asset with a public ID.
 			$this->usable[ $item['sized_url'] ] = $item['sized_url'];
+			if ( self::get_settings_signature() !== $item['signature'] ) {
+				$this->sync->add_to_sync( $item['post_id'] );
+			}
 		} else {
 			// This is an asset or media without a public id.
 			$this->unusable[ $item['sized_url'] ] = $item;
@@ -1277,6 +1297,5 @@ class Delivery implements Setup {
 			String_Replace::replace( $src, $replace );
 		}
 
-		// @todo: throw $this->known to background action to confirm sync.
 	}
 }
