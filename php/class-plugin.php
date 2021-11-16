@@ -294,6 +294,8 @@ final class Plugin {
 		add_action( 'wp_enqueue_editor', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_print_footer_scripts', array( $this, 'print_script_data' ), 1 );
 		add_action( 'wp_print_footer_scripts', array( $this, 'print_script_data' ), 1 );
+
+		add_action( 'cloudinary_version_upgrade', array( Utils::class, 'install' ) );
 	}
 
 	/**
