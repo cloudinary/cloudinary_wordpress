@@ -1300,18 +1300,16 @@ class Media extends Settings_Component implements Setup {
 		if ( ! empty( $urls[ $attachment_id ] ) ) {
 			return $urls[ $attachment_id ];
 		}
-		$meta = wp_get_attachment_metadata( $attachment_id );
-
-		if ( ! isset( $meta['file'] ) ) {
-			// if theres no file, try get it from attached file (ie. video).
-			$meta['file'] = get_post_meta( $attachment_id, '_wp_attached_file', true );
+		$url               = null;
+		$this->in_downsize = true;
+		if ( $original && function_exists( 'wp_get_original_image_url' ) ) {
+			$url = wp_get_original_image_url( $attachment_id );
 		}
-		if ( true === $original && ! empty( $meta['original_image'] ) ) {
-			$meta['file'] = dirname( $meta['file'] ) . '/' . $meta['original_image'];
+		if ( empty( $url ) ) {
+			$url = wp_get_attachment_url( $attachment_id );
 		}
-
-		$dirs                   = wp_get_upload_dir();
-		$urls[ $attachment_id ] = wp_normalize_path( trailingslashit( $dirs['baseurl'] ) . $meta['file'] );
+		$this->in_downsize      = false;
+		$urls[ $attachment_id ] = $url;
 
 		/**
 		 * Filter local URL.
@@ -1319,12 +1317,13 @@ class Media extends Settings_Component implements Setup {
 		 * @hook    cloudinary_local_url
 		 * @since   3.0.0
 		 *
-		 * @param $url           {string|false} The local URL
-		 * @param $attachment_id {int}  The attachment ID.
+		 * @param      $url           {string|false} The local URL
+		 * @param      $attachment_id {int}  The attachment ID.
+		 * @param bool $original      Flag to get the original local url.
 		 *
 		 * @return  {string|false}
 		 */
-		return apply_filters( 'cloudinary_local_url', $urls[ $attachment_id ], $attachment_id );
+		return apply_filters( 'cloudinary_local_url', $urls[ $attachment_id ], $attachment_id, $original );
 	}
 
 	/**

@@ -808,21 +808,35 @@ class Assets extends Settings_Component {
 	 * @param int    $post_id The post ID to get.
 	 * @param string $type    Type of return: Object or dataset.
 	 *
-	 * @return \WP_Post|array|null
+	 * @return \WP_Post|array|null|false
 	 */
 	public function get_asset( $post_id, $type = 'object' ) {
-
+		static $assets = array();
 		if ( 'object' === $type ) {
 			return get_post( $post_id );
 		}
+		if ( empty( $assets[ $post_id ] ) ) {
+			global $wpdb;
 
-		global $wpdb;
+			$wpdb->cld_table = Utils::get_relationship_table();
+			$prepare         = $wpdb->prepare( "SELECT * FROM $wpdb->cld_table WHERE post_id = %d;", (int) $post_id );
+			$result          = $wpdb->get_row( $prepare, ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+			if ( ! isset( $assets[ $post_id ] ) ) {
+				$assets[ $post_id ] = false;
+				if ( empty( $result ) ) {
+					$this->media->sync->set_signature_item( $post_id, 'delivery', 'reset' );
+					$this->media->sync->get_sync_type( $post_id, false );
 
-		$wpdb->cld_table = Utils::get_relationship_table();
-		$prepare         = $wpdb->prepare( "SELECT * FROM $wpdb->cld_table WHERE post_id = %d;", (int) $post_id );
-		$result          = $wpdb->get_row( $prepare, ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+					$this->get_asset( $post_id, $type );
+				}
+			}
 
-		return $this->build_item( $result );
+			if ( false === $assets[ $post_id ] ) {
+				$assets[ $post_id ] = $this->build_item( $result );
+			}
+		}
+
+		return $assets[ $post_id ];
 	}
 
 	/**
@@ -840,8 +854,12 @@ class Assets extends Settings_Component {
 		$max_size = 900;
 		$parts    = explode( $item['parent_path'], $item['sized_url'] );
 		$parts[0] = $dirs['baseurl'];
-
-		$url     = './' . $parts[1];
+		$url      = $item['sized_url'];
+		if ( ! isset( $parts[1] ) ) {
+			$parts[1] = ''; // Empty.
+		} else {
+			$url = './' . $parts[1];
+		}
 		$size    = $item['width'] > $item['height'] ? array( 'width' => $max_size ) : array( 'height' => $max_size );
 		$break   = null;
 		$preview = wp_get_attachment_thumb_url( $item['post_id'] );

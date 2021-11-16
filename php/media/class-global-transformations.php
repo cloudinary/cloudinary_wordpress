@@ -645,8 +645,8 @@ class Global_Transformations {
 				return;
 			}
 
-			$item = $this->media->plugin->get_component( 'assets' )->get_asset( $attachment_id, 'dataset' );
-			if ( ! empty( $item['data']['public_id'] ) ) {
+
+			if ( $this->media->has_public_id( $attachment_id ) ) {
 				$text            = __( 'Add transformations', 'cloudinary' );
 				$transformations = $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['transformation'], true );
 				if ( ! empty( $transformations ) ) {
@@ -658,7 +658,7 @@ class Global_Transformations {
 					'asset'   => $attachment_id,
 				);
 				?>
-				<a href="<?php echo esc_url( add_query_arg( $args, 'admin.php' ) ); ?>" data-transformation-item="<?php echo esc_attr( wp_json_encode( $item ) ); ?>"><?php echo esc_html( $text ); ?></a>
+				<a href="<?php echo esc_url( add_query_arg( $args, 'admin.php' ) ); ?>"><?php echo esc_html( $text ); ?></a>
 				<?php
 			}
 		}

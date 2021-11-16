@@ -250,6 +250,9 @@ class Upload_Sync {
 		// Add suffix.
 		$options['public_id'] .= $suffix;
 
+		// Add sync type.
+		$options['sync_type'] = $type;
+
 		// Run the upload Call.
 		$result = $this->connect->api->upload( $attachment_id, $options, array(), $try_remote );
 

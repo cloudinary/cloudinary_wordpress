@@ -463,6 +463,36 @@ class Storage implements Notice {
 	}
 
 	/**
+	 * Filter the local URL in case its CLD only.
+	 *
+	 * @param string $url           The url to filter.
+	 * @param int    $attachment_id The attachment ID.
+	 * @param bool   $original      Flag to get the original image.
+	 *
+	 * @return string
+	 */
+	public function maybe_get_local_url( $url, $attachment_id, $original ) {
+
+		if ( 'cld' === $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['storage'], true ) ) {
+			$dirs = wp_get_upload_dir();
+			// Only create the local if we have a broken local or Cloudinary URL.
+			if ( $this->media->is_cloudinary_url( $url ) || false !== strpos( $url, $this->media->base_url ) ) {
+				$meta = wp_get_attachment_metadata( $attachment_id );
+				if ( ! isset( $meta['file'] ) ) {
+					// if theres no file, try get it from attached file (ie. video).
+					$meta['file'] = get_post_meta( $attachment_id, '_wp_attached_file', true );
+				}
+				if ( true === $original && ! empty( $meta['original_image'] ) ) {
+					$meta['file'] = dirname( $meta['file'] ) . '/' . $meta['original_image'];
+				}
+				$url = wp_normalize_path( trailingslashit( $dirs['baseurl'] ) . $meta['file'] );
+			}
+		}
+
+		return $url;
+	}
+
+	/**
 	 * Setup hooks for the filters.
 	 */
 	public function setup() {
@@ -505,5 +535,7 @@ class Storage implements Notice {
 			add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
 			add_filter( 'wp_get_original_image_url', array( $this, 'original_attachment_url' ), 10, 2 );
 		}
+
+		add_filter( 'cloudinary_local_url', array( $this, 'maybe_get_local_url' ), 10, 3 );
 	}
 }

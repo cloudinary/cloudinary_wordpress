@@ -384,16 +384,21 @@ class Api {
 		$url                 = $this->url( $resource, 'upload', true );
 		$args                = $this->clean_args( $args );
 		$disable_https_fetch = get_transient( '_cld_disable_http_upload' );
-		add_filter( 'wp_get_attachment_url', array( $media, 'attachment_url' ), 10, 2 );
-		add_filter( 'wp_get_original_image_url', array( $media, 'original_attachment_url' ), 10, 2 );
-		if (
-			function_exists( 'wp_get_original_image_url' )
-			&& wp_attachment_is_image( $attachment_id )
-		) {
-			$file_url = wp_get_original_image_url( $attachment_id );
+		if ( 'folder' !== $args['sync_type'] ) {
+			add_filter( 'wp_get_attachment_url', array( $media, 'attachment_url' ), 10, 2 );
+			add_filter( 'wp_get_original_image_url', array( $media, 'original_attachment_url' ), 10, 2 );
+			if (
+				function_exists( 'wp_get_original_image_url' )
+				&& wp_attachment_is_image( $attachment_id )
+			) {
+				$file_url = wp_get_original_image_url( $attachment_id );
+			} else {
+				$file_url = wp_get_attachment_url( $attachment_id );
+			}
 		} else {
-			$file_url = wp_get_attachment_url( $attachment_id );
+			$file_url = $media->raw_cloudinary_url( $attachment_id );
 		}
+		unset( $args['sync_type'] );
 		if ( empty( $file_url ) ) {
 			$disable_https_fetch = true;
 		}
