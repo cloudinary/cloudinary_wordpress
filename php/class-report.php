@@ -182,11 +182,19 @@ class Report extends Settings_Component implements Setup {
 	 */
 	public function render( $post ) {
 		if ( 'attachment' === $post->post_type ) {
-			$sync  = $this->plugin->get_component( 'sync' );
-			$media = $this->plugin->get_component( 'media' );
-			$meta  = (array) get_post_meta( $post->ID, $sync::META_KEYS['cloudinary'], true );
-			$logs  = array( Sync::META_KEYS['process_log_legacy'] => $media->get_process_logs( $post->ID ) );
-			$data  = array_merge( $meta, $logs );
+			$media      = $this->plugin->get_component( 'media' );
+			$meta       = get_post_meta( $post->ID );
+			$cld        = (array) get_post_meta( $post->ID, Sync::META_KEYS['cloudinary'], true );
+			$logs       = array( Sync::META_KEYS['process_log_legacy'] => $media->get_process_logs( $post->ID ) );
+			$attachment = (array) wp_get_attachment_metadata( $post->ID );
+
+			unset( $meta[ Sync::META_KEYS['cloudinary'] ], $meta[ Sync::META_KEYS['process_log'] ], $meta['_wp_attachment_metadata'] );
+
+			ksort( $attachment );
+			ksort( $meta );
+
+			$data  = array_merge( $cld, $logs, $attachment, $meta );
+
 			highlight_string( var_export( $data, true ) );
 		}
 	}
@@ -401,6 +409,7 @@ class Report extends Settings_Component implements Setup {
 		if ( ! empty( $report_items ) ) {
 			$post_data  = array();
 			$media_data = array();
+			$media      = $this->plugin->get_component( 'media' );
 			foreach ( $report_items as $post_id ) {
 				$post_type = get_post_type( $post_id );
 				if ( 'attachment' === $post_type ) {
@@ -411,6 +420,8 @@ class Report extends Settings_Component implements Setup {
 					foreach ( $all_meta as $key => $meta ) {
 						$data['all_meta'][ $key ] = array_map( 'maybe_unserialize', $meta );
 					}
+
+					$data['all_meta'][ Sync::META_KEYS['process_log'] ] = $media->get_process_logs( $post_id );
 
 					$media_data[ $post_id ] = $data;
 				} else {
@@ -450,8 +461,10 @@ class Report extends Settings_Component implements Setup {
 	 * Maybe generate the report.
 	 */
 	public function maybe_generate_report() {
+		$page     = filter_input( INPUT_GET, 'page', FILTER_SANITIZE_STRING );
+		$section  = filter_input( INPUT_GET, 'section', FILTER_SANITIZE_STRING );
 		$download = filter_input( INPUT_GET, self::REPORT_DOWNLOAD_KEY, FILTER_VALIDATE_BOOLEAN );
-		if ( $download ) {
+		if ( $download && 'cloudinary_help' === $page && 'system-report' === $section && current_user_can( 'manage_options' ) ) {
 			$report = $this->get_report_data();
 			header( 'Content-Description: File Transfer' );
 			header( 'Content-Type: application/octet-stream' );
