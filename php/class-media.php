@@ -2263,12 +2263,15 @@ class Media extends Settings_Component implements Setup {
 
 		foreach ( $logs as $signature => $log ) {
 			foreach ( $log as $time => $entry ) {
+				$readable_time                        = gmdate( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), trim( $time, '_' ) );
+				$logs[ $signature ][ $readable_time ] = $entry;
+				unset( $logs[ $signature ][ $time ] );
 				if (
 					is_array( $entry )
 					&& ! empty( $entry['code'] )
 					&& ! empty( $entry['message'] )
 				) {
-					$logs[ $signature ][ $time ] = $raw ? $entry : new WP_Error( $entry['code'], $entry['message'] );
+					$logs[ $signature ][ $readable_time ] = $raw ? $entry : new WP_Error( $entry['code'], $entry['message'] );
 				}
 			}
 		}
