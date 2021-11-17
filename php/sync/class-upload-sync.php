@@ -243,10 +243,10 @@ class Upload_Sync {
 			2
 		);
 
-		$type       = $this->sync->get_sync_type( $attachment_id );
-		$options    = $this->media->get_upload_options( $attachment_id );
-		$try_remote = 'cloud_name' !== $type;
-
+		$type                 = $this->sync->get_sync_type( $attachment_id );
+		$options              = $this->media->get_upload_options( $attachment_id );
+		$try_remote           = 'cloud_name' !== $type;
+		$options['sync_type'] = $type;
 		// Add suffix.
 		$options['public_id'] .= $suffix;
 
@@ -287,7 +287,6 @@ class Upload_Sync {
 			$this->sync->set_signature_item( $attachment_id, 'public_id' );
 
 			$this->update_breakpoints( $attachment_id, $result );
-			$this->update_content( $attachment_id );
 			delete_post_meta( $attachment_id, Sync::META_KEYS['sync_error'] );
 		} else {
 			update_post_meta( $attachment_id, Sync::META_KEYS['sync_error'], $result->get_error_message() );
@@ -357,28 +356,6 @@ class Upload_Sync {
 				$this->media->delete_post_meta( $attachment_id, Sync::META_KEYS['breakpoints'] );
 			}
 			$this->sync->set_signature_item( $attachment_id, 'breakpoints' );
-		}
-	}
-
-	/**
-	 * Trigger an update on content that contains the same attachment ID to allow filters to capture and process.
-	 *
-	 * @param int $attachment_id The attachment id to find and init an update.
-	 */
-	public function update_content( $attachment_id ) {
-		// Search and update link references in content.
-		$content_search = new \WP_Query(
-			array(
-				's'              => 'wp-image-' . $attachment_id,
-				'fields'         => 'ids',
-				'posts_per_page' => 1000, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page
-			)
-		); // phpcs:ignore WordPress.WP.PostsPerPage
-		if ( ! empty( $content_search->found_posts ) ) {
-			$content_posts = array_unique( $content_search->get_posts() ); // ensure post only gets updated once.
-			foreach ( $content_posts as $content_id ) {
-				wp_update_post( array( 'ID' => $content_id ) ); // Trigger an update, internal filters will filter out remote URLS.
-			}
 		}
 	}
 }

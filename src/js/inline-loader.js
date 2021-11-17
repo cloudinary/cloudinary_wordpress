@@ -212,7 +212,7 @@ const CloudinaryLoader = {
 			newSize.transformation,
 			image.dataset.transformations,
 			image.dataset.publicId,
-			name + '-' + newSize.nameExtension + '.' + format + '?_i=AA'
+			name.replace(/\./g, '-') + '-' + newSize.nameExtension + '.' + format + '?_i=AA'
 		];
 
 		return parts.filter( this.empty ).join( '/' );

@@ -404,7 +404,7 @@ class Sync implements Setup, Assets {
 			$file = get_attached_file( $attachment_id );
 		}
 		$filename  = pathinfo( $file, PATHINFO_FILENAME );
-		$public_id = $cld_folder . str_replace( '.', '-', $filename );
+		$public_id = $cld_folder . $filename;
 
 		return ltrim( $public_id, '/' );
 	}

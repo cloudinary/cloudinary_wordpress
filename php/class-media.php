@@ -1017,22 +1017,13 @@ class Media extends Settings_Component implements Setup {
 	 * @return string Cloudinary URL.
 	 */
 	public function attachment_url( $url, $attachment_id ) {
-		static $urls = array();
-		if ( isset( $urls[ $url ] ) ) {
-			// prevent infinite loops.
-			return $urls[ $url ]; // Return the actual url, since it would already be converted.
-		}
 
 		// Previous v1 and Cloudinary only storage.
 		if ( false !== strpos( $url, 'https://', 5 ) ) {
 			$dirs = wp_get_upload_dir();
 
-			$urls[ $url ] = str_replace( trailingslashit( $dirs['baseurl'] ), '', $url );
-
-			return $urls[ $url ];
+			return str_replace( trailingslashit( $dirs['baseurl'] ), '', $url );
 		}
-		// Preset cache.
-		$urls[ $url ] = $url;
 
 		if (
 			! doing_action( 'wp_insert_post_data' )
@@ -1047,12 +1038,12 @@ class Media extends Settings_Component implements Setup {
 			 */
 			&& ! apply_filters( 'cloudinary_doing_upload', false )
 		) {
-			if ( $this->cloudinary_id( $attachment_id ) ) {
-				$urls[ $url ] = $this->cloudinary_url( $attachment_id );
+			if ( ! $this->is_cloudinary_url( $url ) && $this->cloudinary_id( $attachment_id ) ) {
+				$url = $this->cloudinary_url( $attachment_id );
 			}
 		}
 
-		return $urls[ $url ];
+		return $url;
 	}
 
 	/**
@@ -1290,28 +1281,18 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Get the local URL for an attachment.
 	 *
-	 * @param int  $attachment_id The attachment ID to get.
-	 * @param bool $original      Flag to get the original local url.
+	 * @param int $attachment_id The attachment ID to get.
 	 *
 	 * @return string|false
 	 */
-	public function local_url( $attachment_id, $original = false ) {
+	public function local_url( $attachment_id ) {
 		static $urls = array();
 		if ( ! empty( $urls[ $attachment_id ] ) ) {
 			return $urls[ $attachment_id ];
 		}
-		$meta = wp_get_attachment_metadata( $attachment_id );
-
-		if ( ! isset( $meta['file'] ) ) {
-			// if theres no file, try get it from attached file (ie. video).
-			$meta['file'] = get_post_meta( $attachment_id, '_wp_attached_file', true );
-		}
-		if ( true === $original && ! empty( $meta['original_image'] ) ) {
-			$meta['file'] = dirname( $meta['file'] ) . '/' . $meta['original_image'];
-		}
-
-		$dirs                   = wp_get_upload_dir();
-		$urls[ $attachment_id ] = wp_normalize_path( trailingslashit( $dirs['baseurl'] ) . $meta['file'] );
+		$this->in_downsize      = true;
+		$urls[ $attachment_id ] = wp_get_attachment_url( $attachment_id );
+		$this->in_downsize      = false;
 
 		/**
 		 * Filter local URL.
@@ -2263,7 +2244,7 @@ class Media extends Settings_Component implements Setup {
 
 		foreach ( $logs as $signature => $log ) {
 			foreach ( $log as $time => $entry ) {
-				$readable_time                        = gmdate( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), trim( $time, '_' ) );
+				$readable_time                        = gmdate( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), (int) trim( $time, '_' ) );
 				$logs[ $signature ][ $readable_time ] = $entry;
 				unset( $logs[ $signature ][ $time ] );
 				if (
