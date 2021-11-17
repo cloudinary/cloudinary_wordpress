@@ -203,7 +203,7 @@ class Delivery implements Setup {
 		$structure = array(
 			'asset_state' => 0,
 			'generate'    => array( $this, 'generate_signature' ), // Method to generate a signature.
-			'priority'    => 0.1,
+			'priority'    => 50,
 			'sync'        => array( $this, 'create_delivery' ),
 			'state'       => '',
 			'note'        => '',
@@ -939,17 +939,11 @@ class Delivery implements Setup {
 
 		// Track back the found URL.
 		if ( $this->media->is_cloudinary_url( $raw_url ) ) {
-			$sized     = $this->media->get_size_from_url( basename( $raw_url ) );
 			$public_id = $this->media->get_public_id_from_url( $raw_url );
-			foreach ( $this->known as $key_url => $set ) {
-				if ( $set['public_id'] === $public_id ) {
-					if ( ! empty( $sized ) && false == strpos( basename( $key_url ), '-' . implode( 'x', $sized ) . '.' ) ) {
-						continue;
-					}
-					$url               = $set['sized_url'];
-					$attributes['src'] = $set['sized_url'];
-					break;
-				}
+			if ( isset( $this->known[ $public_id ] ) ) {
+
+				$url               = $this->known[ $public_id ]['sized_url'];
+				$attributes['src'] = $url;
 			}
 		}
 		$tag_element['context'] = $post_context;
