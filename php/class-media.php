@@ -1017,22 +1017,13 @@ class Media extends Settings_Component implements Setup {
 	 * @return string Cloudinary URL.
 	 */
 	public function attachment_url( $url, $attachment_id ) {
-		static $urls = array();
-		if ( isset( $urls[ $url ] ) ) {
-			// prevent infinite loops.
-			return $urls[ $url ]; // Return the actual url, since it would already be converted.
-		}
 
 		// Previous v1 and Cloudinary only storage.
 		if ( false !== strpos( $url, 'https://', 5 ) ) {
 			$dirs = wp_get_upload_dir();
 
-			$urls[ $url ] = str_replace( trailingslashit( $dirs['baseurl'] ), '', $url );
-
-			return $urls[ $url ];
+			return str_replace( trailingslashit( $dirs['baseurl'] ), '', $url );
 		}
-		// Preset cache.
-		$urls[ $url ] = $url;
 
 		if (
 			! doing_action( 'wp_insert_post_data' )
@@ -1047,12 +1038,12 @@ class Media extends Settings_Component implements Setup {
 			 */
 			&& ! apply_filters( 'cloudinary_doing_upload', false )
 		) {
-			if ( $this->cloudinary_id( $attachment_id ) ) {
-				$urls[ $url ] = $this->cloudinary_url( $attachment_id );
+			if ( ! $this->is_cloudinary_url( $url ) && $this->cloudinary_id( $attachment_id ) ) {
+				$url = $this->cloudinary_url( $attachment_id );
 			}
 		}
 
-		return $urls[ $url ];
+		return $url;
 	}
 
 	/**
