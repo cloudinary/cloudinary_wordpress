@@ -228,10 +228,6 @@ class Storage implements Notice {
 		$this->sync->set_signature_item( $attachment_id, 'storage' );
 		$this->sync->set_signature_item( $attachment_id, 'breakpoints' );
 		$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['storage'], $this->settings['offload'] ); // Save the state.
-		// If bringing media back to WordPress, we need to trigger content update to allow unfiltered Cloudinary URL's to be filtered.
-		if ( ! empty( $previous_state ) && 'cld' !== $this->settings['offload'] ) {
-			$this->sync->managers['upload']->update_content( $attachment_id );
-		}
 	}
 
 	/**
