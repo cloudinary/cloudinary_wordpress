@@ -74,23 +74,6 @@ const Deactivate = {
 			} );
 		} );
 
-		// Add it a trigger watch to stop deactivation.
-		[ ...context.triggers ].forEach( ( trigger ) => {
-			trigger.addEventListener( 'click', function( ev ) {
-				if (
-					! confirm(
-						wp.i18n.__(
-							'Caution: Your storage setting is currently set to "Cloudinary only", disabling the plugin will result in broken links to media assets. Are you sure you want to continue?',
-							'cloudinary'
-						)
-					)
-				) {
-					ev.preventDefault();
-					// Close the feedback form.
-					context.closeModal();
-				}
-			} );
-		} );
 
 		[ ...context.contactButton ].forEach( ( button ) => {
 			button.addEventListener( 'click', function () {
