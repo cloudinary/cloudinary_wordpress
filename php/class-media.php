@@ -1281,28 +1281,18 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Get the local URL for an attachment.
 	 *
-	 * @param int  $attachment_id The attachment ID to get.
-	 * @param bool $original      Flag to get the original local url.
+	 * @param int $attachment_id The attachment ID to get.
 	 *
 	 * @return string|false
 	 */
-	public function local_url( $attachment_id, $original = false ) {
+	public function local_url( $attachment_id ) {
 		static $urls = array();
 		if ( ! empty( $urls[ $attachment_id ] ) ) {
 			return $urls[ $attachment_id ];
 		}
-		$meta = wp_get_attachment_metadata( $attachment_id );
-
-		if ( ! isset( $meta['file'] ) ) {
-			// if theres no file, try get it from attached file (ie. video).
-			$meta['file'] = get_post_meta( $attachment_id, '_wp_attached_file', true );
-		}
-		if ( true === $original && ! empty( $meta['original_image'] ) ) {
-			$meta['file'] = dirname( $meta['file'] ) . '/' . $meta['original_image'];
-		}
-
-		$dirs                   = wp_get_upload_dir();
-		$urls[ $attachment_id ] = wp_normalize_path( trailingslashit( $dirs['baseurl'] ) . $meta['file'] );
+		$this->in_downsize      = true;
+		$urls[ $attachment_id ] = wp_get_attachment_url( $attachment_id );
+		$this->in_downsize      = false;
 
 		/**
 		 * Filter local URL.
