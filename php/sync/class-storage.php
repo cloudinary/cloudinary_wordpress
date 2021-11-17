@@ -337,10 +337,21 @@ class Storage implements Notice {
 	 * @return false|string
 	 */
 	public function size_signature( $attachment_id ) {
-		$local  = get_post_meta( $attachment_id, Sync::META_KEYS['local_size'], true );
-		$local .= get_post_meta( $attachment_id, Sync::META_KEYS['remote_format'], true );
+		$fields                  = array(
+			'image_optimization',
+			'image_format',
+			'image_quality',
+			'image_freeform',
+			'video_optimization',
+			'video_format',
+			'video_quality',
+			'video_freeform',
+		);
+		$settings                = $this->plugin->settings->get_value( $fields );
+		$settings['local_size']  = get_post_meta( $attachment_id, Sync::META_KEYS['local_size'], true );
+		$settings['remote_size'] = get_post_meta( $attachment_id, Sync::META_KEYS['remote_format'], true );
 
-		return empty( $local ) ? false : $local . wp_json_encode( $this->media->apply_default_transformations( array(), $attachment_id ) );
+		return empty( $settings['local_size'] ) ? false : wp_json_encode( $settings );
 	}
 
 	/**
