@@ -364,6 +364,11 @@ class Sync_Queue {
 		$total_queued      = $data['total_queued'];
 		$errors_count      = $data['errors'];
 
+		// Prevent negative numbers.
+		if ( 0 > $total_unoptimized ) {
+			$total_unoptimized = 0;
+		}
+
 		$unoptimized_text = __( 'All assets optimized.', 'cloudinary' );
 		if ( 0 < $total_queued && 0 === $total_unoptimized ) {
 			$unoptimized_text = __( 'Optimizing assets.', 'cloudinary' );
