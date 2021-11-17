@@ -243,10 +243,10 @@ class Upload_Sync {
 			2
 		);
 
-		$type       = $this->sync->get_sync_type( $attachment_id );
-		$options    = $this->media->get_upload_options( $attachment_id );
-		$try_remote = 'cloud_name' !== $type;
-
+		$type                 = $this->sync->get_sync_type( $attachment_id );
+		$options              = $this->media->get_upload_options( $attachment_id );
+		$try_remote           = 'cloud_name' !== $type;
+		$options['sync_type'] = $type;
 		// Add suffix.
 		$options['public_id'] .= $suffix;
 
