@@ -84,8 +84,6 @@ class Storage implements Notice {
 	public function __construct( \Cloudinary\Plugin $plugin ) {
 		$this->plugin = $plugin;
 		add_action( 'cloudinary_register_sync_types', array( $this, 'setup' ), 20 );
-		// Add File validation sync.
-		add_filter( 'cloudinary_sync_base_struct', array( $this, 'add_file_folder_validators' ) );
 		// Add sync storage checks.
 		add_filter( 'cloudinary_render_field', array( $this, 'maybe_disable_connect' ), 10, 2 );
 	}
@@ -118,44 +116,6 @@ class Storage implements Notice {
 		}
 
 		return $field;
-	}
-
-	/**
-	 * Add a validators for the file and folder sync type to allow skipping the upload if of-storage is on.
-	 *
-	 * @param array $sync_types The array of sync types.
-	 *
-	 * @return array
-	 */
-	public function add_file_folder_validators( $sync_types ) {
-
-		if ( isset( $sync_types['file'] ) && ! isset( $sync_types['file']['validate'] ) ) {
-			$sync_types['file']['validate'] = array( $this, 'validate_file_folder_sync' );
-		}
-		if ( isset( $sync_types['folder'] ) && ! isset( $sync_types['folder']['validate'] ) ) {
-			$sync_types['folder']['required'] = array( $this, 'validate_file_folder_sync' );
-		}
-
-		return $sync_types;
-	}
-
-	/**
-	 * Validator and Required check to skip file and folder required for of-storage.
-	 *
-	 * @param int $attachment_id The attachment ID.
-	 *
-	 * @return bool
-	 */
-	public function validate_file_folder_sync( $attachment_id ) {
-
-		$return = true;
-		// Check if this is not a Cloudinary URL.
-		if ( 'cld' === $this->settings['offload'] ) {
-			$file   = get_post_meta( $attachment_id, '_wp_attached_file', true );
-			$return = ! $this->media->is_cloudinary_url( $file );
-		}
-
-		return $return;
 	}
 
 	/**
@@ -495,11 +455,6 @@ class Storage implements Notice {
 			$this->sync->register_sync_type( 'size', $structure );
 
 			add_filter( 'cloudinary_can_sync_asset', array( $this, 'delay_cld_only' ), 10, 3 );
-		}
-		if ( ! is_admin() ) {
-			// On the frontend, we don't want to get cloudinary URLs, since this is the job of the delivery system.
-			add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
-			add_filter( 'wp_get_original_image_url', array( $this, 'original_attachment_url' ), 10, 2 );
 		}
 	}
 }
