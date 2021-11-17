@@ -148,8 +148,6 @@ class Storage implements Notice {
 					return;
 				}
 				$this->remove_local_assets( $attachment_id );
-				$cloudinary_url = $this->media->raw_cloudinary_url( $attachment_id );
-				update_post_meta( $attachment_id, '_wp_attached_file', $cloudinary_url );
 				break;
 			case 'dual_low':
 				$transformations = $this->media->get_transformation_from_meta( $attachment_id );
@@ -380,42 +378,14 @@ class Storage implements Notice {
 		}
 		update_post_meta( $attachment_id, Sync::META_KEYS['remote_size'], $remote_size );
 		update_post_meta( $attachment_id, Sync::META_KEYS['remote_format'], $remote_format );
+
+		// Cleanup from v2.7.7.
+		$file = get_post_meta( $attachment_id, '_wp_attached_file', true );
+		if ( $this->media->is_cloudinary_url( $file ) ) {
+			$meta = wp_get_attachment_metadata( $attachment_id );
+			update_post_meta( $attachment_id, '_wp_attached_file', $meta['file'] );
+		}
 		$this->sync->set_signature_item( $attachment_id, 'size' );
-	}
-
-	/**
-	 * Get the local URL for cloudinary only storage, when wp_get_attachment_url is called on the front.
-	 * This allows the delivery system, to find the correct relationship.
-	 *
-	 * @param string $url           The current url.
-	 * @param int    $attachment_id The attachment ID.
-	 * @param bool   $original      Flag to get the original local url.
-	 *
-	 * @return string Cloudinary URL.
-	 */
-	public function attachment_url( $url, $attachment_id, $original = false ) {
-		if ( defined( 'REST_REQUEST' ) && true === REST_REQUEST ) {
-			return $url; // Bail.
-		}
-		$state = $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['storage'], true );
-		if ( 'cld' === $state ) {
-			$url = $this->media->local_url( $attachment_id, $original );
-		}
-
-		return $url;
-	}
-
-	/**
-	 * Get the original local URL for cloudinary only storage, when original_attachment_url is called on the front.
-	 * This allows the delivery system, to find the correct relationship.
-	 *
-	 * @param string $url           The current url.
-	 * @param int    $attachment_id The attachment ID.
-	 *
-	 * @return string Cloudinary URL.
-	 */
-	public function original_attachment_url( $url, $attachment_id ) {
-		return $this->attachment_url( $url, $attachment_id, true );
 	}
 
 	/**
