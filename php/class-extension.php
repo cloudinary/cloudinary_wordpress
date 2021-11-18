@@ -7,13 +7,13 @@
 
 namespace Cloudinary;
 
-use Cloudinary\Component\Assets;
+use Cloudinary\Component;
 use Cloudinary\Traits\Singleton_Trait;
 
 /**
  * Class extension
  */
-abstract class Extension implements Assets {
+abstract class Extension implements Component\Assets {
 
 	use Singleton_Trait;
 
