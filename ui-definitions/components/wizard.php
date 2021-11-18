@@ -55,9 +55,9 @@ $media_args     = array(
 );
 $non_media_args = array(
 	'type'         => 'on_off',
-	'description'  => __( 'Optimize themes, plugins, WP core and uploads folder items', 'cloudinary' ),
+	'description'  => __( 'Optimize themes, plugins, WordPress core and uploads folder items', 'cloudinary' ),
 	'tooltip_text' => __(
-		'Additional assets relating to themes, plugins, Wordpress core and your uploads folder will be optimized and delivered by Cloudinary, giving you an additional performance boost.',
+		'Additional assets relating to themes, plugins, WordPress core and your uploads folder will be optimized and delivered by Cloudinary, giving you an additional performance boost.',
 		'cloudinary'
 	),
 	'default'      => 'on',
