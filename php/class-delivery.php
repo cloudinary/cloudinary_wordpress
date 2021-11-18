@@ -583,7 +583,7 @@ class Delivery implements Setup {
 
 		// Prepare a query to find all in a single request.
 		$sql = $wpdb->prepare(
-			"SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = '_wp_attached_file' AND meta_value IN ({$in})", // phpcs:ignore WordPress.DB
+			"SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = '_wp_attached_file' AND meta_value IN ({$in}) LIMIT 100", // phpcs:ignore WordPress.DB
 			$search
 		);
 
@@ -597,8 +597,8 @@ class Delivery implements Setup {
 				foreach ( $results as $result ) {
 					// If we are here, it means that an attachment in the media library doesn't have a delivery for the url.
 					// Reset the signature for delivery and add to sync, to update it.
-					$this->sync->set_signature_item( $result->post_id, 'delivery', 'reset' );
-					$this->sync->get_sync_type( $result->post_id );
+					$this->create_delivery( $result->post_id );
+					$this->media->cloudinary_id( $result->post_id );
 					$size                         = $this->get_sized( $result->post_id );
 					$cached[ $size['sized_url'] ] = (int) $result->post_id;
 				}

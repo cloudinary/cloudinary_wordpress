@@ -7,13 +7,13 @@
 
 namespace Cloudinary;
 
-use Cloudinary\Component\Settings;
+use Cloudinary\Component;
 use Cloudinary\Settings as CoreSetting;
 
 /**
  * Plugin Settings Component class.
  */
-abstract class Settings_Component implements Settings {
+abstract class Settings_Component implements Component\Settings {
 
 	/**
 	 * Holds the settings object for this Class.
