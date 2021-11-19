@@ -572,7 +572,9 @@ class Delivery implements Setup {
 		foreach ( $this->unknown as $url ) {
 			$url      = ltrim( str_replace( $baseurl, '', $url ), '/' );
 			$search[] = $url;
+			$search[] = self::make_scaled_url( $url );
 		}
+
 		$search = array_unique( $search );
 		$in     = implode( ',', array_fill( 0, count( $search ), '%s' ) );
 
@@ -1130,12 +1132,11 @@ class Delivery implements Setup {
 	protected function set_usability( $item, $auto_sync = null ) {
 
 		$this->known[ $item['public_id'] ] = $item;
-		$this->known[ $item['sized_url'] ] = $item;
+		$scaled                            = self::make_scaled_url( $item['sized_url'] );
+		$descaled                          = self::descaled_url( $item['sized_url'] );
+		$this->known[ $scaled ]            = $item;
+		$this->known[ $descaled ]          = $item;
 
-		// Prep a scaled alias.
-		if ( false !== strpos( $item['sized_url'], '-scaled.' ) ) {
-			$this->known[ str_replace( '-scaled.', '.', $item['sized_url'] ) ] = $item;
-		}
 		if ( 'disable' === $item['post_state'] ) {
 			return;
 		}
@@ -1215,11 +1216,30 @@ class Delivery implements Setup {
 	 */
 	public static function make_scaled_url( $url ) {
 		$file = pathinfo( $url );
-		if ( false !== $file['filename'] ) {
+		$dash = strrchr( $file['filename'], '-' );
+		if ( '-scaled' === $dash ) {
 			return $url;
 		}
 
 		return $file['dirname'] . '/' . $file['filename'] . '-scaled.' . $file['extension'];
+	}
+
+	/**
+	 * Make a descaled version.
+	 *
+	 * @param string $url The url to descaled.
+	 *
+	 * @return string
+	 */
+	public static function descaled_url( $url ) {
+		$file = pathinfo( $url );
+		$dash = strrchr( $file['filename'], '-' );
+		if ( '-scaled' === $dash ) {
+			$file['filename'] = str_replace( '-scaled', '', $file['filename'] );
+			$url              = $file['dirname'] . '/' . $file['filename'] . '.' . $file['extension'];
+		}
+
+		return $url;
 	}
 
 	/**
@@ -1237,7 +1257,7 @@ class Delivery implements Setup {
 		// De-size.
 		$desized = array_unique( array_map( array( $this, 'maybe_unsize_url' ), $urls ) );
 		$scaled  = array_unique( array_map( array( $this, 'make_scaled_url' ), $desized ) );
-		$urls    = array_merge( $desized, $scaled, $urls );
+		$urls    = array_merge( $desized, $scaled );
 		$urls    = array_values( $urls ); // resets the index.
 
 		// clean out empty urls.
@@ -1273,22 +1293,11 @@ class Delivery implements Setup {
 		}
 
 		$auto_sync = $this->sync->is_auto_sync_enabled();
-
 		foreach ( $results as $result ) {
 			$this->set_usability( $result, $auto_sync );
 		}
 		// Set unknowns.
-		$unknown = array_diff( $urls, array_keys( $this->known ) );
-		foreach ( $unknown as $url ) {
-			if ( ! isset( $this->known[ $url ] ) && ! in_array( $url, $this->unknown, true ) ) {
-				$this->unknown[] = $url;
-				continue;
-			}
-			$url = self::maybe_unsize_url( $url );
-			if ( ! isset( $this->known[ $url ] ) && ! in_array( $url, $this->unknown, true ) ) {
-				$this->unknown[] = $url;
-			}
-		}
+		$this->unknown = array_diff( $urls, array_keys( $this->known ) );
 	}
 
 	/**
