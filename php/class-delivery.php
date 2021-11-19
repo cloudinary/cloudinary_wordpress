@@ -572,23 +572,20 @@ class Delivery implements Setup {
 		foreach ( $this->unknown as $url ) {
 			$url      = ltrim( str_replace( $baseurl, '', $url ), '/' );
 			$search[] = $url;
-			$url      = self::maybe_unsize_url( $url );
-			$search[] = $url;
-			$file     = pathinfo( $url, PATHINFO_FILENAME );
-			$ext      = pathinfo( $url, PATHINFO_EXTENSION );
-			$search[] = dirname( $url ) . '/' . $file . '-scaled.' . $ext;
 		}
+
 		$search = array_unique( $search );
 		$in     = implode( ',', array_fill( 0, count( $search ), '%s' ) );
 
 		// Prepare a query to find all in a single request.
 		$sql = $wpdb->prepare(
-			"SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = '_wp_attached_file' AND meta_value IN ({$in}) LIMIT 100", // phpcs:ignore WordPress.DB
+			"SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = '_wp_attached_file' AND meta_value IN ({$in}) limit 1000", // phpcs:ignore WordPress.DB
 			$search
 		);
 
-		$key    = md5( $sql );
-		$cached = wp_cache_get( $key );
+		$key       = md5( $sql );
+		$cached    = wp_cache_get( $key );
+		$auto_sync = $this->sync->is_auto_sync_enabled();
 		if ( false === $cached ) {
 			$cached  = array();
 			$results = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared
@@ -598,7 +595,9 @@ class Delivery implements Setup {
 					// If we are here, it means that an attachment in the media library doesn't have a delivery for the url.
 					// Reset the signature for delivery and add to sync, to update it.
 					$this->create_delivery( $result->post_id );
-					$this->media->cloudinary_id( $result->post_id );
+					if ( true === $auto_sync ) {
+						$this->sync->add_to_sync( $result->post_id );
+					}
 					$size                         = $this->get_sized( $result->post_id );
 					$cached[ $size['sized_url'] ] = (int) $result->post_id;
 				}
@@ -759,14 +758,18 @@ class Delivery implements Setup {
 		// Unset srcset and sizes.
 		unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 
+		$public_id = $tag_element['atts']['data-public-id'];
+
 		// Get cloudinary URL.
-		$url                        = $this->media->cloudinary_url(
+		$url = $this->media->cloudinary_url(
 			$tag_element['id'],
 			$size,
 			$tag_element['transformations'],
-			$tag_element['atts']['data-public-id'] . '.' . $tag_element['format'],
+			$public_id,
 			$tag_element['overwrite_transformations']
 		);
+
+		// Set the src.
 		$tag_element['atts']['src'] = $url;
 		// Convert any URLS that exist in attributes ( 3rd party lazyload etc..).
 		foreach ( $tag_element['atts'] as &$att ) {
@@ -784,7 +787,7 @@ class Delivery implements Setup {
 						$tag_element['id'],
 						$size,
 						$tag_element['transformations'],
-						$tag_element['atts']['data-public-id'] . '.' . $tag_element['format'],
+						$public_id,
 						$tag_element['overwrite_transformations']
 					);
 				}
@@ -794,7 +797,9 @@ class Delivery implements Setup {
 
 		// Add transformations attribute.
 		$transformations = $this->media->get_transformations_from_string( $tag_element['atts']['src'] );
-		array_shift( $transformations ); // We always get a sized url, the first will be the size, which we don't need.
+		if ( false !== $this->media->get_crop_from_transformation( $transformations ) ) {
+			array_shift( $transformations );
+		}
 		$tag_element['atts']['data-transformations'] = API::generate_transformation_string( $transformations, $tag_element['type'] );
 
 		if ( current_user_can( 'manage_options' ) && 'on' === $this->plugin->settings->image_settings->_overlay ) {
@@ -952,10 +957,15 @@ class Delivery implements Setup {
 			if ( ! empty( $item['transformations'] ) ) {
 				$tag_element['transformations'] = $this->media->get_transformations_from_string( $item['transformations'], $tag_element['type'] );
 			}
+			// Get the public ID and append the extension if it's missing.
+			$public_id = $item['public_id'];
+			if ( strrchr( $public_id, '.' ) !== '.' . $item['format'] ) {
+				$public_id .= '.' . $item['format'];
+			}
 			$tag_element['id']            = (int) $item['post_id'];
 			$tag_element['width']         = $item['width'];
 			$tag_element['height']        = $item['height'];
-			$attributes['data-public-id'] = $item['public_id'];
+			$attributes['data-public-id'] = $public_id;
 			$tag_element['format']        = $item['format'];
 		}
 
@@ -1132,12 +1142,11 @@ class Delivery implements Setup {
 	protected function set_usability( $item, $auto_sync = null ) {
 
 		$this->known[ $item['public_id'] ] = $item;
-		$this->known[ $item['sized_url'] ] = $item;
+		$scaled                            = self::make_scaled_url( $item['sized_url'] );
+		$descaled                          = self::descaled_url( $item['sized_url'] );
+		$this->known[ $scaled ]            = $item;
+		$this->known[ $descaled ]          = $item;
 
-		// Prep a scaled alias.
-		if ( false !== strpos( $item['sized_url'], '-scaled.' ) ) {
-			$this->known[ str_replace( '-scaled.', '.', $item['sized_url'] ) ] = $item;
-		}
 		if ( 'disable' === $item['post_state'] ) {
 			return;
 		}
@@ -1197,9 +1206,15 @@ class Delivery implements Setup {
 	 * @return string
 	 */
 	public static function maybe_unsize_url( $url ) {
-		$no_scale = preg_replace( '/(\S+)+(-\d+x\d+)\.(\S+)+/', '$1.$3', $url );
+		$file = pathinfo( $url, PATHINFO_FILENAME );
+		$dash = strrchr( $file, '-' );
+		if ( false !== $dash && 1 === substr_count( $dash, 'x' ) ) {
+			if ( is_numeric( str_replace( 'x', '', ltrim( $dash, '-' ) ) ) ) {
+				$url = str_replace( $dash, '', $url );
+			}
+		}
 
-		return $no_scale ? $no_scale : $url;
+		return $url;
 	}
 
 	/**
@@ -1211,8 +1226,30 @@ class Delivery implements Setup {
 	 */
 	public static function make_scaled_url( $url ) {
 		$file = pathinfo( $url );
+		$dash = strrchr( $file['filename'], '-' );
+		if ( '-scaled' === $dash ) {
+			return $url;
+		}
 
 		return $file['dirname'] . '/' . $file['filename'] . '-scaled.' . $file['extension'];
+	}
+
+	/**
+	 * Make a descaled version.
+	 *
+	 * @param string $url The url to descaled.
+	 *
+	 * @return string
+	 */
+	public static function descaled_url( $url ) {
+		$file = pathinfo( $url );
+		$dash = strrchr( $file['filename'], '-' );
+		if ( '-scaled' === $dash ) {
+			$file['basename'] = str_replace( '-scaled.', '.', $file['basename'] );
+			$url              = $file['dirname'] . '/' . $file['basename'];
+		}
+
+		return $url;
 	}
 
 	/**
@@ -1228,12 +1265,11 @@ class Delivery implements Setup {
 		$urls       = array_filter( $clean_urls, array( $this, 'validate_url' ) );
 
 		// De-size.
-		$desized = array_map( array( $this, 'maybe_unsize_url' ), $urls );
-		$desized = array_unique( array_filter( $desized ) );
-		$scaled  = array_map( array( $this, 'make_scaled_url' ), $desized );
-		$urls    = array_merge( $desized, $urls );
-		$urls    = array_merge( $scaled, $urls );
-		$urls    = array_values( $urls );
+		$desized = array_unique( array_map( array( $this, 'maybe_unsize_url' ), $urls ) );
+		$scaled  = array_unique( array_map( array( $this, 'make_scaled_url' ), $desized ) );
+		$urls    = array_merge( $desized, $scaled );
+		$urls    = array_values( $urls ); // resets the index.
+
 		// clean out empty urls.
 		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
 		if ( empty( $urls ) && empty( $cloudinary_urls ) ) {
@@ -1267,18 +1303,11 @@ class Delivery implements Setup {
 		}
 
 		$auto_sync = $this->sync->is_auto_sync_enabled();
-
 		foreach ( $results as $result ) {
 			$this->set_usability( $result, $auto_sync );
 		}
 		// Set unknowns.
-		$unknown = array_diff( $urls, array_keys( $this->known ) );
-		foreach ( $unknown as $url ) {
-			$url = self::maybe_unsize_url( $url );
-			if ( ! isset( $this->known[ $url ] ) && ! in_array( $url, $this->unknown, true ) ) {
-				$this->unknown[] = $url;
-			}
-		}
+		$this->unknown = array_diff( $urls, array_keys( $this->known ) );
 	}
 
 	/**
