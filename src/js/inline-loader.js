@@ -39,7 +39,9 @@ const CloudinaryLoader = {
 			image.srcset = image.dataset.srcset;
 		} else {
 			image.src = this.getSizeURL( image );
-			this.rObserver.observe( image );
+			if( image.dataset.responsive ) {
+				this.rObserver.observe( image );
+			}
 		}
 	},
 	inInitialView( image ){
@@ -203,16 +205,14 @@ const CloudinaryLoader = {
 	},
 	getSizeURL( image, width ) {
 		const newSize = this.scaleSize( image, width, true );
-		const format = 'auto' !== this.config[ 'image_format' ] && 'none' !== this.config[ 'image_format' ] ? this.config[ 'image_format' ] : image.dataset.format;
-		const name = image.dataset.publicId.split( '/' ).pop();
 
 		const parts = [
 			this.config.base_url,
-			'images',
-			newSize.transformation,
+			'image',
+			image.dataset.delivery,
+			'upload' === image.dataset.delivery ? newSize.transformation : '',
 			image.dataset.transformations,
-			image.dataset.publicId,
-			name.replace(/\./g, '-') + '-' + newSize.nameExtension + '.' + format + '?_i=AA'
+			image.dataset.publicId + '?_i=AA'
 		];
 
 		return parts.filter( this.empty ).join( '/' );
@@ -223,11 +223,10 @@ const CloudinaryLoader = {
 
 		const parts = [
 			this.config.base_url,
-			'images',
-			newSize.transformation,
+			'image',
+			image.dataset.delivery,
 			this.config.placeholder,
-			image.dataset.publicId,
-			'placeholder'
+			image.dataset.publicId
 		];
 
 		return parts.filter( this.empty ).join( '/' );

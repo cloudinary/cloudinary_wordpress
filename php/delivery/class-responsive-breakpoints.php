@@ -55,6 +55,9 @@ class Responsive_Breakpoints extends Delivery_Feature {
 	 * @return array
 	 */
 	public function add_features( $tag_element ) {
+		if ( 'upload' !== $this->media->get_media_delivery( $tag_element['id'] ) ) {
+			return $tag_element;
+		}
 		if ( Utils::is_amp() ) {
 			$tag_element['atts']['layout'] = 'responsive';
 		} else {

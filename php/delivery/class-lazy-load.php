@@ -176,7 +176,8 @@ class Lazy_Load extends Delivery_Feature {
 			unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 		}
 		if ( ! is_admin() ) {
-			$tag_element['atts']['onload'] = 'CLDBind(this)';
+			$tag_element['atts']['data-delivery'] = $this->media->get_media_delivery( $tag_element['id'] );
+			$tag_element['atts']['onload']        = 'CLDBind(this)';
 		}
 
 		return $tag_element;

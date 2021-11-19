@@ -572,7 +572,6 @@ class Delivery implements Setup {
 		foreach ( $this->unknown as $url ) {
 			$url      = ltrim( str_replace( $baseurl, '', $url ), '/' );
 			$search[] = $url;
-			$search[] = self::make_scaled_url( $url );
 		}
 
 		$search = array_unique( $search );
@@ -580,7 +579,7 @@ class Delivery implements Setup {
 
 		// Prepare a query to find all in a single request.
 		$sql = $wpdb->prepare(
-			"SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = '_wp_attached_file' AND meta_value IN ({$in})", // phpcs:ignore WordPress.DB
+			"SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = '_wp_attached_file' AND meta_value IN ({$in}) limit 1000", // phpcs:ignore WordPress.DB
 			$search
 		);
 
@@ -759,14 +758,18 @@ class Delivery implements Setup {
 		// Unset srcset and sizes.
 		unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 
+		$public_id = $tag_element['atts']['data-public-id'];
+
 		// Get cloudinary URL.
-		$url                        = $this->media->cloudinary_url(
+		$url = $this->media->cloudinary_url(
 			$tag_element['id'],
 			$size,
 			$tag_element['transformations'],
-			$tag_element['atts']['data-public-id'] . '.' . $tag_element['format'],
+			$public_id,
 			$tag_element['overwrite_transformations']
 		);
+
+		// Set the src.
 		$tag_element['atts']['src'] = $url;
 		// Convert any URLS that exist in attributes ( 3rd party lazyload etc..).
 		foreach ( $tag_element['atts'] as &$att ) {
@@ -784,7 +787,7 @@ class Delivery implements Setup {
 						$tag_element['id'],
 						$size,
 						$tag_element['transformations'],
-						$tag_element['atts']['data-public-id'] . '.' . $tag_element['format'],
+						$public_id,
 						$tag_element['overwrite_transformations']
 					);
 				}
@@ -794,7 +797,9 @@ class Delivery implements Setup {
 
 		// Add transformations attribute.
 		$transformations = $this->media->get_transformations_from_string( $tag_element['atts']['src'] );
-		array_shift( $transformations ); // We always get a sized url, the first will be the size, which we don't need.
+		if ( false !== $this->media->get_crop_from_transformation( $transformations ) ) {
+			array_shift( $transformations );
+		}
 		$tag_element['atts']['data-transformations'] = API::generate_transformation_string( $transformations, $tag_element['type'] );
 
 		if ( current_user_can( 'manage_options' ) && 'on' === $this->plugin->settings->image_settings->_overlay ) {
@@ -952,10 +957,15 @@ class Delivery implements Setup {
 			if ( ! empty( $item['transformations'] ) ) {
 				$tag_element['transformations'] = $this->media->get_transformations_from_string( $item['transformations'], $tag_element['type'] );
 			}
+			// Get the public ID and append the extension if it's missing.
+			$public_id = $item['public_id'];
+			if ( strrchr( $public_id, '.' ) !== '.' . $item['format'] ) {
+				$public_id .= '.' . $item['format'];
+			}
 			$tag_element['id']            = (int) $item['post_id'];
 			$tag_element['width']         = $item['width'];
 			$tag_element['height']        = $item['height'];
-			$attributes['data-public-id'] = $item['public_id'];
+			$attributes['data-public-id'] = $public_id;
 			$tag_element['format']        = $item['format'];
 		}
 
@@ -1235,8 +1245,8 @@ class Delivery implements Setup {
 		$file = pathinfo( $url );
 		$dash = strrchr( $file['filename'], '-' );
 		if ( '-scaled' === $dash ) {
-			$file['filename'] = str_replace( '-scaled', '', $file['filename'] );
-			$url              = $file['dirname'] . '/' . $file['filename'] . '.' . $file['extension'];
+			$file['basename'] = str_replace( '-scaled.', '.', $file['basename'] );
+			$url              = $file['dirname'] . '/' . $file['basename'];
 		}
 
 		return $url;
