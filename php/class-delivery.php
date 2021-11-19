@@ -572,23 +572,19 @@ class Delivery implements Setup {
 		foreach ( $this->unknown as $url ) {
 			$url      = ltrim( str_replace( $baseurl, '', $url ), '/' );
 			$search[] = $url;
-			$url      = self::maybe_unsize_url( $url );
-			$search[] = $url;
-			$file     = pathinfo( $url, PATHINFO_FILENAME );
-			$ext      = pathinfo( $url, PATHINFO_EXTENSION );
-			$search[] = dirname( $url ) . '/' . $file . '-scaled.' . $ext;
 		}
 		$search = array_unique( $search );
 		$in     = implode( ',', array_fill( 0, count( $search ), '%s' ) );
 
 		// Prepare a query to find all in a single request.
 		$sql = $wpdb->prepare(
-			"SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = '_wp_attached_file' AND meta_value IN ({$in}) LIMIT 100", // phpcs:ignore WordPress.DB
+			"SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = '_wp_attached_file' AND meta_value IN ({$in})", // phpcs:ignore WordPress.DB
 			$search
 		);
 
-		$key    = md5( $sql );
-		$cached = wp_cache_get( $key );
+		$key       = md5( $sql );
+		$cached    = wp_cache_get( $key );
+		$auto_sync = $this->sync->is_auto_sync_enabled();
 		if ( false === $cached ) {
 			$cached  = array();
 			$results = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared
@@ -598,7 +594,9 @@ class Delivery implements Setup {
 					// If we are here, it means that an attachment in the media library doesn't have a delivery for the url.
 					// Reset the signature for delivery and add to sync, to update it.
 					$this->create_delivery( $result->post_id );
-					$this->media->cloudinary_id( $result->post_id );
+					if ( true === $auto_sync ) {
+						$this->sync->add_to_sync( $result->post_id );
+					}
 					$size                         = $this->get_sized( $result->post_id );
 					$cached[ $size['sized_url'] ] = (int) $result->post_id;
 				}
@@ -1197,9 +1195,15 @@ class Delivery implements Setup {
 	 * @return string
 	 */
 	public static function maybe_unsize_url( $url ) {
-		$no_scale = preg_replace( '/(\S+)+(-\d+x\d+)\.(\S+)+/', '$1.$3', $url );
+		$file = pathinfo( $url, PATHINFO_FILENAME );
+		$dash = strrchr( $file, '-' );
+		if ( false !== $dash && 1 === substr_count( $dash, 'x' ) ) {
+			if ( is_numeric( str_replace( 'x', '', ltrim( $dash, '-' ) ) ) ) {
+				$url = str_replace( $dash, '', $url );
+			}
+		}
 
-		return $no_scale ? $no_scale : $url;
+		return $url;
 	}
 
 	/**
@@ -1211,6 +1215,9 @@ class Delivery implements Setup {
 	 */
 	public static function make_scaled_url( $url ) {
 		$file = pathinfo( $url );
+		if ( false !== $file['filename'] ) {
+			return $url;
+		}
 
 		return $file['dirname'] . '/' . $file['filename'] . '-scaled.' . $file['extension'];
 	}
@@ -1228,12 +1235,11 @@ class Delivery implements Setup {
 		$urls       = array_filter( $clean_urls, array( $this, 'validate_url' ) );
 
 		// De-size.
-		$desized = array_map( array( $this, 'maybe_unsize_url' ), $urls );
-		$desized = array_unique( array_filter( $desized ) );
-		$scaled  = array_map( array( $this, 'make_scaled_url' ), $desized );
-		$urls    = array_merge( $desized, $urls );
-		$urls    = array_merge( $scaled, $urls );
-		$urls    = array_values( $urls );
+		$desized = array_unique( array_map( array( $this, 'maybe_unsize_url' ), $urls ) );
+		$scaled  = array_unique( array_map( array( $this, 'make_scaled_url' ), $desized ) );
+		$urls    = array_merge( $desized, $scaled, $urls );
+		$urls    = array_values( $urls ); // resets the index.
+
 		// clean out empty urls.
 		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
 		if ( empty( $urls ) && empty( $cloudinary_urls ) ) {
@@ -1274,6 +1280,10 @@ class Delivery implements Setup {
 		// Set unknowns.
 		$unknown = array_diff( $urls, array_keys( $this->known ) );
 		foreach ( $unknown as $url ) {
+			if ( ! isset( $this->known[ $url ] ) && ! in_array( $url, $this->unknown, true ) ) {
+				$this->unknown[] = $url;
+				continue;
+			}
 			$url = self::maybe_unsize_url( $url );
 			if ( ! isset( $this->known[ $url ] ) && ! in_array( $url, $this->unknown, true ) ) {
 				$this->unknown[] = $url;
