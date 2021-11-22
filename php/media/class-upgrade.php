@@ -199,6 +199,7 @@ class Upgrade {
 			// Migrate to v3.
 			update_post_meta( $attachment_id, Sync::META_KEYS['cloudinary'], $v2_meta );
 			delete_post_meta( $attachment_id, Sync::META_KEYS['cloudinary_legacy'] );
+			$meta = $v2_meta;
 		} else {
 			// Attempt old post meta.
 			$public_id = get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
