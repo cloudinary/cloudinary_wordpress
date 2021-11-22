@@ -990,6 +990,22 @@ class Delivery implements Setup {
 			$tag_element['transformations'] = array_merge( $tag_element['transformations'], $inline_transformations );
 		}
 
+		// Check if ID was found, and upgrade if needed.
+		if ( empty( $tag_element['id'] ) ) {
+			// Old method to aid in upgrade from 2.7.7.
+			$maybe_id = $this->media->filter->get_id_from_tag( $tag_element['original'] );
+			if ( ! empty( $maybe_id ) ) {
+				$tag_element['id']   = $maybe_id;
+				$cloudinary_id_maybe = $this->media->cloudinary_id( $tag_element['id'] );
+				if ( ! empty( $cloudinary_id_maybe ) ) {
+					$meta                                  = wp_get_attachment_metadata( $maybe_id );
+					$tag_element['width']                  = ! empty( $meta['width'] ) ? $meta['width'] : 0;
+					$tag_element['height']                 = ! empty( $meta['height'] ) ? $meta['height'] : 0;
+					$tag_element['atts']['data-public-id'] = $cloudinary_id_maybe;
+					$tag_element['format']                 = pathinfo( $cloudinary_id_maybe, PATHINFO_EXTENSION );
+				}
+			}
+		}
 		// Set atts.
 		$tag_element['atts'] = wp_parse_args( $attributes, $tag_element['atts'] );
 

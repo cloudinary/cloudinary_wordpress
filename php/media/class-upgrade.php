@@ -200,6 +200,14 @@ class Upgrade {
 			update_post_meta( $attachment_id, Sync::META_KEYS['cloudinary'], $v2_meta );
 			delete_post_meta( $attachment_id, Sync::META_KEYS['cloudinary_legacy'] );
 			$meta = $v2_meta;
+			// Cleanup from v2.7.7.
+			if ( ! empty( $meta[ Sync::META_KEYS['storage'] ] ) && 'cld' === $meta[ Sync::META_KEYS['storage'] ] ) {
+				$file = get_post_meta( $attachment_id, '_wp_attached_file', true );
+				if ( $this->media->is_cloudinary_url( $file ) ) {
+					$meta = wp_get_attachment_metadata( $attachment_id );
+					update_post_meta( $attachment_id, '_wp_attached_file', $meta['file'] );
+				}
+			}
 		} else {
 			// Attempt old post meta.
 			$public_id = get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );

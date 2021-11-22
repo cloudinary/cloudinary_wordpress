@@ -390,12 +390,6 @@ class Storage implements Notice {
 		update_post_meta( $attachment_id, Sync::META_KEYS['remote_size'], $remote_size );
 		update_post_meta( $attachment_id, Sync::META_KEYS['remote_format'], $remote_format );
 
-		// Cleanup from v2.7.7.
-		$file = get_post_meta( $attachment_id, '_wp_attached_file', true );
-		if ( $this->media->is_cloudinary_url( $file ) ) {
-			$meta = wp_get_attachment_metadata( $attachment_id );
-			update_post_meta( $attachment_id, '_wp_attached_file', $meta['file'] );
-		}
 		$this->sync->set_signature_item( $attachment_id, 'size' );
 	}
 
