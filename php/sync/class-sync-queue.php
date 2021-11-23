@@ -246,6 +246,8 @@ class Sync_Queue {
 				break;
 		}
 
+		$return = wp_parse_args( $return, $default );
+
 		return $return;
 	}
 
