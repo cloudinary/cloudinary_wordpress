@@ -212,6 +212,7 @@ const CloudinaryLoader = {
 			image.dataset.delivery,
 			'upload' === image.dataset.delivery ? newSize.transformation : '',
 			image.dataset.transformations,
+			'v' + image.dataset.version,
 			image.dataset.publicId + '?_i=AA'
 		];
 
