@@ -200,7 +200,7 @@ class Lazy_Load extends Delivery_Feature {
 			$config['placeholder'] = API::generate_transformation_string( $this->get_placeholder_transformations( $config['lazy_placeholder'] ) );
 		}
 		$config['base_url'] = $this->media->base_url;
-		wp_print_inline_script_tag( 'var CLDLB = ' . wp_json_encode( $config ) . ';' . file_get_contents( $this->plugin->dir_path . 'js/inline-loader.js' ) );
+		Utils::print_inline_tag( 'var CLDLB = ' . wp_json_encode( $config ) . ';' . file_get_contents( $this->plugin->dir_path . 'js/inline-loader.js' ) );
 	}
 
 	/**

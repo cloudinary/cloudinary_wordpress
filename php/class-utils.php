@@ -293,4 +293,20 @@ class Utils {
 
 		return add_query_arg( array_filter( $args ), $url );
 	}
+
+	/**
+	 * Wrapper function to core wp_get_inline_script_tag.
+	 *
+	 * @param string $javascript Inline JavaScript code.
+	 */
+	public static function print_inline_tag( $javascript ) {
+		if ( function_exists( 'wp_print_inline_script_tag' ) ) {
+			wp_print_inline_script_tag( $javascript );
+			return;
+		}
+
+		$javascript = "\n" . trim( $javascript, "\n\r " ) . "\n";
+
+		echo sprintf( "<script type='text/javascript'>%s</script>\n", $javascript ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
 }
