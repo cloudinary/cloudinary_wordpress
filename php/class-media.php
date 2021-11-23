@@ -2236,13 +2236,17 @@ class Media extends Settings_Component implements Setup {
 		$logs = get_post_meta( $attachment_id, Sync::META_KEYS['process_log'], true );
 
 		if ( empty( $logs ) ) {
-			$logs = $this->get_post_meta( $attachment_id, Sync::META_KEYS['process_log_legacy'], true, array() );
+			$logs = (array) $this->get_post_meta( $attachment_id, Sync::META_KEYS['process_log_legacy'], true, array() );
 			add_post_meta( $attachment_id, Sync::META_KEYS['process_log'], $logs, true );
 
 			$this->delete_post_meta( $attachment_id, Sync::META_KEYS['process_log_legacy'] );
 		}
 
 		foreach ( $logs as $signature => $log ) {
+			if ( empty( $log ) ) {
+				$logs[ $signature ] = array();
+				continue;
+			}
 			foreach ( $log as $time => $entry ) {
 				$readable_time                        = gmdate( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), (int) trim( $time, '_' ) );
 				$logs[ $signature ][ $readable_time ] = $entry;
