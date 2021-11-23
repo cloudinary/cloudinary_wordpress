@@ -1728,7 +1728,7 @@ class Media extends Settings_Component implements Setup {
 	 * @return bool
 	 */
 	public function is_cloudinary_url( $url ) {
-		if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
+		if ( ! filter_var( utf8_uri_encode( $url ), FILTER_VALIDATE_URL ) ) {
 			return false;
 		}
 		$test_parts = wp_parse_url( $url );
