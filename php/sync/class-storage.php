@@ -439,6 +439,24 @@ class Storage implements Notice {
 	}
 
 	/**
+	 * Ensure metadata for CLD only.
+	 *
+	 * @param array $data          The meta data array.
+	 * @param int   $attachment_id The attachment ID.
+	 *
+	 * @return array
+	 */
+	public function ensure_metadata( $data, $attachment_id ) {
+		if ( defined( 'REST_REQUEST' ) && true === REST_REQUEST ) {
+			if ( isset( $data['sizes'] ) && 'cld' === $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['storage'], true ) ) {
+				unset( $data['original_image'] );
+			}
+		}
+
+		return $data;
+	}
+
+	/**
 	 * Setup hooks for the filters.
 	 */
 	public function setup() {
@@ -476,6 +494,7 @@ class Storage implements Notice {
 
 			add_filter( 'cloudinary_can_sync_asset', array( $this, 'delay_cld_only' ), 10, 3 );
 			add_filter( 'wp_unique_filename', array( $this, 'unique_filename' ), 10, 3 );
+			add_filter( 'wp_get_attachment_metadata', array( $this, 'ensure_metadata' ), 10, 2 );
 		}
 	}
 }
