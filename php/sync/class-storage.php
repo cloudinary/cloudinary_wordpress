@@ -10,6 +10,7 @@ namespace Cloudinary;
 namespace Cloudinary\Sync;
 
 use Cloudinary\Component\Notice;
+use Cloudinary\Delivery;
 use Cloudinary\Sync;
 
 /**
@@ -301,11 +302,15 @@ class Storage implements Notice {
 			$now     = time();
 			if ( empty( $delayed ) ) {
 				update_post_meta( $attachment_id, Sync::META_KEYS['delay'], $now );
+				$file = get_post_meta( $attachment_id, '_wp_attached_file', true );
+				update_post_meta( $attachment_id, '_' . md5( $file ), $file );
 			}
 			$valid = file_exists( get_attached_file( $attachment_id ) );
 		} else {
 			// Remove the delay meta.
 			delete_post_meta( $attachment_id, Sync::META_KEYS['delay'] );
+			$file = get_post_meta( $attachment_id, '_wp_attached_file', true );
+			delete_post_meta( $attachment_id, '_' . md5( $file ), $file );
 		}
 
 		return $valid;
@@ -394,6 +399,46 @@ class Storage implements Notice {
 	}
 
 	/**
+	 * Create a unique file name based on file hash meta entry.
+	 *
+	 * @param string $filename The proposed file name.
+	 * @param string $ext      The file extension.
+	 * @param string $dir      The file directory.
+	 *
+	 * @return string
+	 */
+	public function unique_filename( $filename, $ext, $dir ) {
+		$dirs = wp_get_upload_dir();
+
+		$path     = str_replace( $dirs['basedir'] . '/', '', $dir );
+		$base     = array(
+			'base'  => pathinfo( $filename, PATHINFO_FILENAME ),
+			'count' => null,
+			'ext'   => $ext,
+		);
+		$count    = 1;
+		$unique   = false;
+		$filename = path_join( $path, implode( '', $base ) );
+
+		while ( 20 > $count ) {
+			$exists = $this->media->get_id_from_sync_key( $filename );
+			if ( empty( $exists ) ) {
+				$exists = $this->media->get_id_from_sync_key( Delivery::make_scaled_url( $filename ) );
+				if ( empty( $exists ) ) {
+					$filename = basename( $filename );
+					break;
+				}
+			}
+
+			$base['count'] = '-' . $count;
+			$filename      = path_join( $path, implode( '', $base ) );
+			$count ++;
+		}
+
+		return $filename;
+	}
+
+	/**
 	 * Setup hooks for the filters.
 	 */
 	public function setup() {
@@ -430,6 +475,7 @@ class Storage implements Notice {
 			$this->sync->register_sync_type( 'size', $structure );
 
 			add_filter( 'cloudinary_can_sync_asset', array( $this, 'delay_cld_only' ), 10, 3 );
+			add_filter( 'wp_unique_filename', array( $this, 'unique_filename' ), 10, 3 );
 		}
 	}
 }

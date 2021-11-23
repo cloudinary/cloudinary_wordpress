@@ -213,6 +213,7 @@ class Upgrade {
 					if ( $this->media->is_cloudinary_url( $file ) ) {
 						$file = path_join( dirname( $old_meta['file'] ), basename( $file ) );
 						update_post_meta( $attachment_id, '_wp_attached_file', $file );
+						update_post_meta( $attachment_id, '_' . md5( $file ), $file );
 					}
 				}
 			}
