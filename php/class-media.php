@@ -1728,7 +1728,7 @@ class Media extends Settings_Component implements Setup {
 	 * @return bool
 	 */
 	public function is_cloudinary_url( $url ) {
-		if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
+		if ( ! filter_var( utf8_uri_encode( $url ), FILTER_VALIDATE_URL ) ) {
 			return false;
 		}
 		$test_parts = wp_parse_url( $url );
@@ -2087,7 +2087,7 @@ class Media extends Settings_Component implements Setup {
 					'state' => 'inactive',
 					'note'  => esc_html__( 'Not Synced', 'cloudinary' ),
 				);
-				if ( $this->cloudinary_id( $attachment_id ) && $this->has_delivery_type( $attachment_id ) ) {
+				if ( $this->cloudinary_id( $attachment_id ) && 'upload' === $this->get_media_delivery( $attachment_id ) ) {
 					$status = array(
 						'state' => 'success',
 						'note'  => esc_html__( 'Synced', 'cloudinary' ),
@@ -2236,13 +2236,17 @@ class Media extends Settings_Component implements Setup {
 		$logs = get_post_meta( $attachment_id, Sync::META_KEYS['process_log'], true );
 
 		if ( empty( $logs ) ) {
-			$logs = $this->get_post_meta( $attachment_id, Sync::META_KEYS['process_log_legacy'], true, array() );
+			$logs = (array) $this->get_post_meta( $attachment_id, Sync::META_KEYS['process_log_legacy'], true, array() );
 			add_post_meta( $attachment_id, Sync::META_KEYS['process_log'], $logs, true );
 
 			$this->delete_post_meta( $attachment_id, Sync::META_KEYS['process_log_legacy'] );
 		}
 
 		foreach ( $logs as $signature => $log ) {
+			if ( empty( $log ) ) {
+				$logs[ $signature ] = array();
+				continue;
+			}
 			foreach ( $log as $time => $entry ) {
 				$readable_time                        = gmdate( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), (int) trim( $time, '_' ) );
 				$logs[ $signature ][ $readable_time ] = $entry;

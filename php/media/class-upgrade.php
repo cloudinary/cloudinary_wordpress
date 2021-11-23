@@ -57,6 +57,7 @@ class Upgrade {
 		if ( ! empty( get_post_meta( $attachment_id, Sync::META_KEYS['cloudinary'], true ) ) ) {
 			// V2.5 changed the meta. if it had, theres no upgrades needed.
 			$this->sync->set_signature_item( $attachment_id, 'upgrade' );
+
 			return $this->media->get_public_id( $attachment_id );
 		}
 		$file = get_post_meta( $attachment_id, '_wp_attached_file', true );
@@ -170,6 +171,7 @@ class Upgrade {
 
 		if ( ! empty( $parts[1] ) ) {
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['delivery'], 'fetch' );
+
 			return $parts[1];
 		}
 
@@ -184,39 +186,54 @@ class Upgrade {
 	 * @return array();
 	 */
 	public function migrate_legacy_meta( $attachment_id ) {
-		$meta     = array();
+
 		$old_meta = wp_get_attachment_metadata( $attachment_id, true );
 		$v2_meta  = get_post_meta( $attachment_id, Sync::META_KEYS['cloudinary_legacy'], true );
-		$v3_meta  = get_post_meta( $attachment_id, Sync::META_KEYS['cloudinary'], true );
-		if ( isset( $old_meta[ Sync::META_KEYS['cloudinary_legacy'] ] ) ) {
-			$meta = $old_meta[ Sync::META_KEYS['cloudinary_legacy'] ];
+		$v3_meta  = array();
+
+		// Direct from old meta to v3, create v2 to chain the upgrade path.
+		if ( isset( $old_meta[ Sync::META_KEYS['cloudinary_legacy'] ] ) && empty( $v2_meta ) ) {
+			$v2_meta = $old_meta[ Sync::META_KEYS['cloudinary_legacy'] ];
 			// Add public ID.
-			$public_id                            = get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
-			$meta[ Sync::META_KEYS['public_id'] ] = $public_id;
-			update_post_meta( $attachment_id, Sync::META_KEYS['cloudinary'], $meta );
+			$public_id                               = get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
+			$v2_meta[ Sync::META_KEYS['public_id'] ] = $public_id;
 			delete_post_meta( $attachment_id, Sync::META_KEYS['public_id'] );
-		} elseif ( empty( $v3_meta ) && ! empty( $v2_meta ) ) {
+		}
+
+		// Handle v2 upgrade.
+		if ( ! empty( $v2_meta ) ) {
 			// Migrate to v3.
 			update_post_meta( $attachment_id, Sync::META_KEYS['cloudinary'], $v2_meta );
 			delete_post_meta( $attachment_id, Sync::META_KEYS['cloudinary_legacy'] );
-			$meta = $v2_meta;
-			// Cleanup from v2.7.7.
-			if ( ! empty( $meta[ Sync::META_KEYS['storage'] ] ) && 'cld' === $meta[ Sync::META_KEYS['storage'] ] ) {
-				$file = get_post_meta( $attachment_id, '_wp_attached_file', true );
-				if ( $this->media->is_cloudinary_url( $file ) ) {
-					$meta = wp_get_attachment_metadata( $attachment_id );
-					update_post_meta( $attachment_id, '_wp_attached_file', $meta['file'] );
+			$v3_meta = $v2_meta;
+			if ( ! empty( $v3_meta[ Sync::META_KEYS['public_id'] ] ) ) {
+				// Cleanup from v2.7.7.
+				if ( ! empty( $v3_meta[ Sync::META_KEYS['storage'] ] ) && 'cld' === $v3_meta[ Sync::META_KEYS['storage'] ] ) {
+					$file = get_post_meta( $attachment_id, '_wp_attached_file', true );
+					if ( $this->media->is_cloudinary_url( $file ) ) {
+						$file = path_join( dirname( $old_meta['file'] ), basename( $file ) );
+						update_post_meta( $attachment_id, '_wp_attached_file', $file );
+						update_post_meta( $attachment_id, '_' . md5( $file ), $file );
+					}
 				}
 			}
-		} else {
+			// Remove old data style.
+			unset( $old_meta[ Sync::META_KEYS['cloudinary_legacy'] ] );
+		}
+
+		// Attempt to update old meta, which will fail if nothing changed.
+		update_post_meta( $attachment_id, '_wp_attachment_metadata', $old_meta );
+
+		// migrate from pre v2 meta.
+		if ( empty( $v2_meta ) && empty( $v3_meta ) ) {
 			// Attempt old post meta.
 			$public_id = get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
 			if ( ! empty( $public_id ) ) {
 				// Loop through all types and create new meta item.
-				$meta = array(
+				$v3_meta = array(
 					Sync::META_KEYS['public_id'] => $public_id,
 				);
-				update_post_meta( $attachment_id, Sync::META_KEYS['cloudinary'], $meta );
+				update_post_meta( $attachment_id, Sync::META_KEYS['cloudinary'], $v3_meta );
 				foreach ( Sync::META_KEYS as $meta_key ) {
 					if ( Sync::META_KEYS['cloudinary'] === $meta_key ) {
 						// Dont use the root as it will be an infinite loop.
@@ -224,14 +241,14 @@ class Upgrade {
 					}
 					$value = get_post_meta( $attachment_id, $meta_key, true );
 					if ( ! empty( $value ) ) {
-						$meta[ $meta_key ] = $value;
+						$v3_meta[ $meta_key ] = $value;
 						$this->media->update_post_meta( $attachment_id, $meta_key, $value );
 					}
 				}
 			}
 		}
 
-		return $meta;
+		return $v3_meta;
 	}
 
 	/**

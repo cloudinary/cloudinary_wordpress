@@ -995,9 +995,9 @@ class Delivery implements Setup {
 			// Old method to aid in upgrade from 2.7.7.
 			$maybe_id = $this->media->filter->get_id_from_tag( $tag_element['original'] );
 			if ( ! empty( $maybe_id ) ) {
-				$tag_element['id']   = $maybe_id;
-				$cloudinary_id_maybe = $this->media->cloudinary_id( $tag_element['id'] );
+				$cloudinary_id_maybe = $this->media->cloudinary_id( $maybe_id );
 				if ( ! empty( $cloudinary_id_maybe ) ) {
+					$tag_element['id']                     = $maybe_id;
 					$meta                                  = wp_get_attachment_metadata( $maybe_id );
 					$tag_element['width']                  = ! empty( $meta['width'] ) ? $meta['width'] : 0;
 					$tag_element['height']                 = ! empty( $meta['height'] ) ? $meta['height'] : 0;
