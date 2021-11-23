@@ -188,14 +188,7 @@ class Upgrade {
 		$old_meta = wp_get_attachment_metadata( $attachment_id, true );
 		$v2_meta  = get_post_meta( $attachment_id, Sync::META_KEYS['cloudinary_legacy'], true );
 		$v3_meta  = get_post_meta( $attachment_id, Sync::META_KEYS['cloudinary'], true );
-		if ( isset( $old_meta[ Sync::META_KEYS['cloudinary_legacy'] ] ) ) {
-			$meta = $old_meta[ Sync::META_KEYS['cloudinary_legacy'] ];
-			// Add public ID.
-			$public_id                            = get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
-			$meta[ Sync::META_KEYS['public_id'] ] = $public_id;
-			update_post_meta( $attachment_id, Sync::META_KEYS['cloudinary'], $meta );
-			delete_post_meta( $attachment_id, Sync::META_KEYS['public_id'] );
-		} elseif ( empty( $v3_meta ) && ! empty( $v2_meta ) ) {
+		if ( empty( $v3_meta ) && ! empty( $v2_meta ) ) {
 			// Migrate to v3.
 			update_post_meta( $attachment_id, Sync::META_KEYS['cloudinary'], $v2_meta );
 			delete_post_meta( $attachment_id, Sync::META_KEYS['cloudinary_legacy'] );
@@ -208,6 +201,13 @@ class Upgrade {
 					update_post_meta( $attachment_id, '_wp_attached_file', $meta['file'] );
 				}
 			}
+		} elseif ( isset( $old_meta[ Sync::META_KEYS['cloudinary_legacy'] ] ) ) {
+			$meta = $old_meta[ Sync::META_KEYS['cloudinary_legacy'] ];
+			// Add public ID.
+			$public_id                            = get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
+			$meta[ Sync::META_KEYS['public_id'] ] = $public_id;
+			update_post_meta( $attachment_id, Sync::META_KEYS['cloudinary'], $meta );
+			delete_post_meta( $attachment_id, Sync::META_KEYS['public_id'] );
 		} else {
 			// Attempt old post meta.
 			$public_id = get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );

@@ -2087,7 +2087,7 @@ class Media extends Settings_Component implements Setup {
 					'state' => 'inactive',
 					'note'  => esc_html__( 'Not Synced', 'cloudinary' ),
 				);
-				if ( $this->cloudinary_id( $attachment_id ) && $this->has_delivery_type( $attachment_id ) ) {
+				if ( $this->cloudinary_id( $attachment_id ) && 'upload' === $this->get_media_delivery( $attachment_id ) ) {
 					$status = array(
 						'state' => 'success',
 						'note'  => esc_html__( 'Synced', 'cloudinary' ),
