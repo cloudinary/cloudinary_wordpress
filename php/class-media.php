@@ -997,6 +997,10 @@ class Media extends Settings_Component implements Setup {
 			$items = explode( ',', $chain );
 			foreach ( $items as $item ) {
 				$item = trim( $item );
+				// After the asset version, there are no further transformations.
+				if ( 'v' === $item[0] && is_numeric( substr( $item, 1 ) ) ) {
+					break 2;
+				}
 				foreach ( $params as $param => $type ) {
 					if ( substr( $item, 0, strlen( $param ) + 1 ) === $param . '_' ) {
 						$transformations[ $index ][ $type ] = substr( $item, strlen( $param ) + 1 );
