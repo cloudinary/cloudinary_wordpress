@@ -820,6 +820,8 @@ class Delivery implements Setup {
 			$tag_element['atts']['data-permalink'] = add_query_arg( 'asset', $tag_element['id'], $base_url );
 		}
 
+		$tag_element['atts']['data-version'] = $this->media->get_cloudinary_version( $tag_element['id'] );
+
 		return $tag_element;
 	}
 
