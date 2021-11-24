@@ -41,6 +41,8 @@ const Deactivate = {
 	deactivationUrl: '',
 	// The contact me email.
 	email: '',
+	// Is Cloudinary Only
+	isCloudinaryOnly: false,
 
 	addEvents() {
 		const context = this;
@@ -129,6 +131,13 @@ const Deactivate = {
 				context.submit( value );
 			} );
 		} );
+
+		if ( this.isCloudinaryOnly ) {
+			const bypass = document.getElementById( 'cld-bypass-cloudinary-only' );
+			bypass.addEventListener( 'change', function ( ev ) {
+				this.modal.dataset.cloudinaryOnly = ! bypass.checked;
+			}.bind( this ) );
+		}
 	},
 	closeModal() {
 		document.body.style.removeProperty('overflow');
@@ -167,6 +176,7 @@ const Deactivate = {
 	 * Init method.
 	 */
 	init() {
+		this.isCloudinaryOnly = !! this.modal.dataset.cloudinaryOnly;
 		this.addEvents();
 	},
 };
