@@ -162,10 +162,9 @@ class Delivery implements Setup {
 		}
 		$sizes              = $this->get_sized( $attachment_id );
 		$public_id          = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
-		$registered         = wp_json_encode( wp_get_registered_image_subsizes() );
 		$settings_signature = self::get_settings_signature();
 
-		return wp_json_encode( $sizes ) . $public_id . $registered . $sql . $settings_signature;
+		return wp_json_encode( $sizes ) . $public_id . $sql . $settings_signature;
 	}
 
 	/**
@@ -197,19 +196,43 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Sync method for the relation type.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 */
+	public function update_relation( $attachment_id ) {
+		$public_id = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
+		// Update public ID and type.
+		self::update_size_relations_public_id( $attachment_id, $public_id );
+		$this->sync->set_signature_item( $attachment_id, 'relation' );
+	}
+
+	/**
 	 * Add our delivery sync type.
 	 */
 	public function register_sync_type() {
 		$structure = array(
 			'asset_state' => 0,
-			'generate'    => array( $this, 'generate_signature' ), // Method to generate a signature.
-			'priority'    => 50,
+			'generate'    => '__return_false',
+			'priority'    => 0.5,
 			'sync'        => array( $this, 'create_delivery' ),
 			'state'       => '',
 			'note'        => '',
 			'realtime'    => true,
 		);
 		$this->sync->register_sync_type( 'delivery', $structure );
+
+		$structure = array(
+			'asset_state' => 1,
+			'generate'    => array( $this, 'generate_signature' ), // Method to generate a signature.
+			'priority'    => 50,
+			'sync'        => array( $this, 'update_relation' ),
+			'state'       => '',
+			'note'        => '',
+			'realtime'    => true,
+		);
+		$this->sync->register_sync_type( 'relation', $structure );
+
 	}
 
 	/**
@@ -820,6 +843,8 @@ class Delivery implements Setup {
 			$tag_element['atts']['data-permalink'] = add_query_arg( 'asset', $tag_element['id'], $base_url );
 		}
 
+		$tag_element['atts']['data-version'] = $this->media->get_cloudinary_version( $tag_element['id'] );
+
 		return $tag_element;
 	}
 
@@ -1207,7 +1232,7 @@ class Delivery implements Setup {
 		$url = strtok( $url, '?' );
 
 		// check the url is more than a domain.
-		if ( ! filter_var( $url, FILTER_VALIDATE_URL ) || 3 > substr_count( rtrim( $url, '/' ), '/' ) ) {
+		if ( ! filter_var( utf8_uri_encode( $url ), FILTER_VALIDATE_URL ) || 3 > substr_count( rtrim( $url, '/' ), '/' ) ) {
 			$url = null;
 		}
 
