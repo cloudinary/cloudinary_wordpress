@@ -243,16 +243,22 @@ class Upload_Sync {
 			2
 		);
 
-		$type                 = $this->sync->get_sync_type( $attachment_id );
-		$options              = $this->media->get_upload_options( $attachment_id );
-		$try_remote           = 'cloud_name' !== $type;
-		$options['sync_type'] = $type;
+		$type       = $this->sync->get_sync_type( $attachment_id );
+		$options    = $this->media->get_upload_options( $attachment_id );
+
 		// Add suffix.
 		$options['public_id'] .= $suffix;
 
 		// Run the upload Call.
-		$result = $this->connect->api->upload( $attachment_id, $options, array(), $try_remote );
-
+		switch ( $type ) {
+			case 'cloud_name':
+			case 'folder':
+				$result = $this->connect->api->copy( $attachment_id, $options );
+				break;
+			default:
+				$result = $this->connect->api->upload( $attachment_id, $options, array() );
+				break;
+		}
 		remove_filter( 'cloudinary_doing_upload', '__return_true' );
 
 		if ( ! is_wp_error( $result ) ) {
@@ -273,6 +279,9 @@ class Upload_Sync {
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['version'], $result['version'] );
 			// Set the delivery type.
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['delivery'], $result['type'] );
+
+			// Set the raw url.
+			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['raw_url'], $result['secure_url'] );
 
 			// Create a trackable key in post meta to allow getting the attachment id from URL with transformations.
 			update_post_meta( $attachment_id, '_' . md5( $options['public_id'] ), true );

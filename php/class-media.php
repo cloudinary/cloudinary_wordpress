@@ -1320,18 +1320,23 @@ class Media extends Settings_Component implements Setup {
 		if ( ! $api ) {
 			$api = $this->plugin->components['connect']->api;
 		}
-		$transformations = $this->get_transformation_from_meta( $attachment_id );
-		$parts           = array(
-			'https:/',
-			$api->asset_url,
-			$api->credentials['cloud_name'],
-			$this->get_resource_type( $attachment_id ),
-			$this->get_media_delivery( $attachment_id ),
-			$api::generate_transformation_string( $transformations ),
-			'v' . $this->get_cloudinary_version( $attachment_id ),
-			$this->get_cloudinary_id( $attachment_id ),
-		);
-		$url             = implode( '/', array_filter( $parts ) );
+
+		$url = $this->get_post_meta( $attachment_id, Sync::META_KEYS['raw_url'], true );
+		if ( empty( $url ) ) {
+			$transformations = $this->get_transformation_from_meta( $attachment_id );
+			$parts           = array(
+				'https:/',
+				$api->asset_url,
+				$api->credentials['cloud_name'],
+				$this->get_resource_type( $attachment_id ),
+				$this->get_media_delivery( $attachment_id ),
+				$api::generate_transformation_string( $transformations ),
+				'v' . $this->get_cloudinary_version( $attachment_id ),
+				$this->get_cloudinary_id( $attachment_id ),
+			);
+			$url             = implode( '/', array_filter( $parts ) );
+			$this->update_post_meta( $attachment_id, Sync::META_KEYS['raw_url'], $url );
+		}
 
 		/**
 		 * Filter a base Cloudinary URL (no transformations).

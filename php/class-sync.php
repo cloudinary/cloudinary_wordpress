@@ -110,6 +110,7 @@ class Sync implements Setup, Assets {
 		'unsynced'            => '_cld_unsynced',
 		'upgrading'           => '_cloudinary_upgrading',
 		'version'             => '_cloudinary_version',
+		'raw_url'             => '_cloudinary_url',
 	);
 
 	/**
