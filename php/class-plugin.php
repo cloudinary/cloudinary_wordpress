@@ -450,6 +450,16 @@ final class Plugin {
 				$component->setup();
 			}
 		}
+
+		/**
+		 * Action indicating that the Cloudinary is ready and setup.
+		 *
+		 * @hook  cloudinary_ready
+		 * @since 3.0.0
+		 *
+		 * @param $plugin {Plugin} The core plugin object.
+		 */
+		do_action( 'cloudinary_ready', $this );
 	}
 
 	/**
