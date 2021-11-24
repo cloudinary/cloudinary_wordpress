@@ -184,7 +184,7 @@ class Deactivation {
 			)
 		);
 
-		$is_cloudinary_only = Storage::is_cloudinary_only();
+		$is_cloudinary_only = 'cld' === $this->plugin->settings->get_value( 'offload' );
 		?>
 		<div id="cloudinary-deactivation" class="cld-modal" data-cloudinary-only="<?php echo esc_attr( $is_cloudinary_only ); ?>">
 			<div class="cloudinary-deactivation cld-modal-box">
