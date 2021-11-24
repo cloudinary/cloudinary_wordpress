@@ -8,6 +8,7 @@
 namespace Cloudinary;
 
 use Cloudinary\Media\Global_Transformations;
+use Cloudinary\Sync\Storage;
 use WP_Error;
 use WP_HTTP_Response;
 use WP_REST_Request;
@@ -179,13 +180,25 @@ class Deactivation {
 			// translators: The System Report link and label.
 				'<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
 				'https://cloudinary.com/documentation/wordpress_integration#system_report',
-				'System Report'
+				__( 'System Report', 'cloudinary' )
 			)
 		);
 
+		$is_cloudinary_only = Storage::is_cloudinary_only();
 		?>
-		<div id="cloudinary-deactivation" class="cld-modal">
+		<div id="cloudinary-deactivation" class="cld-modal" data-cloudinary-only="<?php echo esc_attr( $is_cloudinary_only ); ?>">
 			<div class="cloudinary-deactivation cld-modal-box">
+				<?php if ( $is_cloudinary_only ) : ?>
+					<div class="modal-header" id="modal-header">
+						<p class="warning">
+							<?php esc_html_e( 'Caution: Your storage setting is currently set to "Cloudinary only", disabling the plugin will result in broken links to media assets. Are you sure you want to continue?', 'cloudinary' ); ?>
+						</p>
+						<input type="checkbox" id="cld-bypass-cloudinary-only" name="bypass-cloudinary-only">
+						<label for="cld-bypass-cloudinary-only">
+							<?php esc_html_e( 'I understand and I want to proceed', 'cloudinary' ); ?>
+						</label>
+					</div>
+				<?php endif; ?>
 				<div class="modal-body" id="modal-body">
 					<p>
 						<?php esc_html_e( 'Before you deactivate the plugin, would you quickly give us your reason for doing so?', 'cloudinary' ); ?>

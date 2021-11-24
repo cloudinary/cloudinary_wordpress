@@ -70,7 +70,7 @@ class Storage implements Notice {
 	 *
 	 * @var array
 	 */
-	protected $settings;
+	protected static $settings;
 
 	/**
 	 * The delay in seconds before local assets get deleted if Cloudinary only storage.
@@ -457,6 +457,15 @@ class Storage implements Notice {
 	}
 
 	/**
+	 * Is storage Cloudinary Only.
+	 *
+	 * @return bool
+	 */
+	public static function is_cloudinary_only() {
+		return 'cld' === self::$settings['offload'];
+	}
+
+	/**
 	 * Setup hooks for the filters.
 	 */
 	public function setup() {
@@ -471,7 +480,7 @@ class Storage implements Notice {
 				'offload' => 'dual_full',
 			);
 			$settings       = $this->media->get_settings()->get_value( 'sync_media' );
-			$this->settings = wp_parse_args( $settings, $defaults );
+			self::$settings = wp_parse_args( $settings, $defaults );
 			$structure      = array(
 				'generate' => array( $this, 'generate_signature' ),
 				'validate' => array( $this, 'validate' ),
