@@ -1057,7 +1057,9 @@ class Sync implements Setup, Assets {
 	public function delete_cloudinary_meta( $attachment_id ) {
 		// Update attachment meta.
 		$meta = wp_get_attachment_metadata( $attachment_id, true );
-		unset( $meta[ self::META_KEYS['cloudinary'] ] );
+		if ( ! empty( $meta[ self::META_KEYS['cloudinary'] ] ) ) {
+			unset( $meta[ self::META_KEYS['cloudinary'] ] );
+		}
 		wp_update_attachment_metadata( $attachment_id, $meta );
 
 		// Cleanup postmeta.
