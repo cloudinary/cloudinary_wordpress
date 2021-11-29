@@ -168,6 +168,17 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Is attachment deliverable in the FE.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function is_deliverable( $attachment_id ) {
+		return wp_attachment_is_image( $attachment_id ) || wp_attachment_is( 'video', $attachment_id );
+	}
+
+	/**
 	 * Create delivery entries.
 	 *
 	 * @param int $attachment_id The attachment ID.
@@ -216,6 +227,7 @@ class Delivery implements Setup {
 			'generate'    => '__return_false',
 			'priority'    => 0.5,
 			'sync'        => array( $this, 'create_delivery' ),
+			'validate'    => array( $this, 'is_deliverable' ),
 			'state'       => '',
 			'note'        => '',
 			'realtime'    => true,
@@ -227,6 +239,7 @@ class Delivery implements Setup {
 			'generate'    => array( $this, 'generate_signature' ), // Method to generate a signature.
 			'priority'    => 50,
 			'sync'        => array( $this, 'update_relation' ),
+			'validate'    => array( $this, 'is_deliverable' ),
 			'state'       => '',
 			'note'        => '',
 			'realtime'    => true,
