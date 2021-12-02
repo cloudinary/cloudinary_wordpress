@@ -145,6 +145,12 @@ class Lazy_Load extends Delivery_Feature {
 		if ( Utils::is_amp() ) {
 			return $tag_element;
 		}
+
+		// SVGs shouldn't be lazy loaded.
+		if ( 'svg' === $tag_element['format'] ) {
+			return $tag_element;
+		}
+
 		$sizes = array(
 			$tag_element['width'],
 			$tag_element['height'],
