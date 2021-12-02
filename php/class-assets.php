@@ -866,7 +866,7 @@ class Assets extends Settings_Component {
 			'preview'         => $preview,
 			'data'            => $item,
 			'base'            => $parts[0],
-			'file'            => $parts[1],
+			'file'            => ! empty( $parts[1] ) ? $parts[1] : basename( $item['sized_url'] ),
 			'size'            => $break,
 			'transformations' => $item['transformations'] ? $item['transformations'] : null,
 			'edit_url'        => admin_url( add_query_arg( $args, 'admin.php' ) ),
