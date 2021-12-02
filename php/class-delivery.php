@@ -177,6 +177,12 @@ class Delivery implements Setup {
 	public function is_deliverable( $attachment_id ) {
 		$is = wp_attachment_is_image( $attachment_id ) || wp_attachment_is( 'video', $attachment_id );
 
+		// Ensure that the attachment has dimensions to be delivered.
+		if ( $is ) {
+			$meta = wp_get_attachment_metadata( $attachment_id, true );
+			$is   = ! empty( $meta['width'] ) && ! empty( $meta['height'] );
+		}
+
 		/**
 		 * Filter deliverable attachments.
 		 *
@@ -915,18 +921,20 @@ class Delivery implements Setup {
 		 */
 		if ( apply_filters( 'cloudinary_apply_breakpoints', true ) ) {
 			$meta = wp_get_attachment_metadata( $tag_element['id'] );
-			// Check overwrite.
-			$meta['overwrite_transformations'] = $tag_element['overwrite_transformations'];
-			$meta['cloudinary_id']             = $tag_element['atts']['data-public-id'];
-			// Add new srcset.
-			$element = wp_image_add_srcset_and_sizes( $tag_element['original'], $meta, $tag_element['id'] );
+			if ( ! empty( $meta['width'] ) && ! empty( $meta['height'] ) ) {
+				// Check overwrite.
+				$meta['overwrite_transformations'] = $tag_element['overwrite_transformations'];
+				$meta['cloudinary_id']             = $tag_element['atts']['data-public-id'];
+				// Add new srcset.
+				$element = wp_image_add_srcset_and_sizes( $tag_element['original'], $meta, $tag_element['id'] );
 
-			$atts = Utils::get_tag_attributes( $element );
-			if ( ! empty( $atts['srcset'] ) ) {
-				$tag_element['atts']['srcset'] = $atts['srcset'];
-			}
-			if ( ! empty( $atts['sizes'] ) ) {
-				$tag_element['atts']['sizes'] = $atts['sizes'];
+				$atts = Utils::get_tag_attributes( $element );
+				if ( ! empty( $atts['srcset'] ) ) {
+					$tag_element['atts']['srcset'] = $atts['srcset'];
+				}
+				if ( ! empty( $atts['sizes'] ) ) {
+					$tag_element['atts']['sizes'] = $atts['sizes'];
+				}
 			}
 		}
 
