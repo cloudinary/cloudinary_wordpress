@@ -237,22 +237,6 @@ class Delivery implements Setup {
 	}
 
 	/**
-	 * Filter delivery for TIFF images.
-	 *
-	 * @param bool $is            Is deliverable attachment.
-	 * @param int  $attachment_id The attachment ID.
-	 *
-	 * @return bool
-	 */
-	public function bypass_delivery_tiff( $is, $attachment_id ) {
-		if ( wp_attachment_is_image( $attachment_id ) && 'image/tiff' === get_post_mime_type( $attachment_id ) ) {
-			$is = false;
-		}
-
-		return $is;
-	}
-
-	/**
 	 * Add our delivery sync type.
 	 */
 	public function register_sync_type() {
@@ -483,8 +467,6 @@ class Delivery implements Setup {
 		add_filter( 'cloudinary_current_post_id', array( $this, 'get_current_post_id' ) );
 		add_filter( 'the_content', array( $this, 'add_post_id' ) );
 		add_action( 'wp_resource_hints', array( $this, 'dns_prefetch' ), 10, 2 );
-
-		add_filter( 'cloudinary_is_deliverable', array( $this, 'bypass_delivery_tiff' ), 10, 2 );
 
 		// Clear cache on taxonomy update.
 		$taxonomies = get_taxonomies( array( 'show_ui' => true ) );
