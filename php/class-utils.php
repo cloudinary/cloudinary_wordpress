@@ -171,7 +171,7 @@ class Utils {
 	public static function user_can( $task ) {
 
 		/**
-		 * Filter the capability required for a specific cloudinary task.
+		 * Filter the capability required for a specific Cloudinary task.
 		 *
 		 * @hook    cloudinary_task_capability_{task}
 		 * @since   2.7.6
@@ -184,7 +184,7 @@ class Utils {
 		$capability = apply_filters( "cloudinary_task_capability_{$task}", 'manage_options' );
 
 		/**
-		 * Filter the capability required for cloudinary tasks.
+		 * Filter the capability required for Cloudinary tasks.
 		 *
 		 * @hook    cloudinary_task_capability
 		 * @since   2.7.6

@@ -287,6 +287,12 @@ class Delivery implements Setup {
 
 		$wpdb->delete( Utils::get_relationship_table(), array( 'post_id' => $attachment_id ), array( '%d' ) ); // phpcs:ignore WordPress.DB
 
+		/**
+		 * Action to flush delivery caches.
+		 *
+		 * @hook   cloudinary_flush_cache
+		 * @since  3.0.0
+		 */
 		do_action( 'cloudinary_flush_cache' );
 	}
 
@@ -300,6 +306,12 @@ class Delivery implements Setup {
 		self::update_size_relations_state( $attachment_id, 'disable' );
 		self::update_size_relations_transformations( $attachment_id, null );
 
+		/**
+		 * Action to flush delivery caches.
+		 *
+		 * @hook   cloudinary_flush_cache
+		 * @since  3.0.0
+		 */
 		do_action( 'cloudinary_flush_cache' );
 	}
 
@@ -345,6 +357,12 @@ class Delivery implements Setup {
 		);
 		$wpdb->update( Utils::get_relationship_table(), $data, array( 'post_id' => $attachment_id ), array( '%s' ), array( '%d' ) );// phpcs:ignore WordPress.DB
 
+		/**
+		 * Action to flush delivery caches.
+		 *
+		 * @hook   cloudinary_flush_cache
+		 * @since  3.0.0
+		 */
 		do_action( 'cloudinary_flush_cache' );
 	}
 
@@ -361,6 +379,12 @@ class Delivery implements Setup {
 		);
 		$wpdb->update( Utils::get_relationship_table(), $data, array( 'post_id' => $attachment_id ), array( '%s' ), array( '%d' ) );// phpcs:ignore WordPress.DB
 
+		/**
+		 * Action to flush delivery caches.
+		 *
+		 * @hook   cloudinary_flush_cache
+		 * @since  3.0.0
+		 */
 		do_action( 'cloudinary_flush_cache' );
 	}
 
@@ -377,6 +401,12 @@ class Delivery implements Setup {
 		);
 		$wpdb->update( Utils::get_relationship_table(), $data, array( 'post_id' => $attachment_id ), array( '%s' ), array( '%d' ) );// phpcs:ignore WordPress.DB
 
+		/**
+		 * Action to flush delivery caches.
+		 *
+		 * @hook   cloudinary_flush_cache
+		 * @since  3.0.0
+		 */
 		do_action( 'cloudinary_flush_cache' );
 	}
 
@@ -395,6 +425,12 @@ class Delivery implements Setup {
 
 		$wpdb->query( $prepared );// phpcs:ignore WordPress.DB
 
+		/**
+		 * Action to flush delivery caches.
+		 *
+		 * @hook   cloudinary_flush_cache
+		 * @since  3.0.0
+		 */
 		do_action( 'cloudinary_flush_cache' );
 	}
 
@@ -508,8 +544,6 @@ class Delivery implements Setup {
 
 	/**
 	 * Delete cached metadata.
-	 *
-	 * @hook cloudinary_flush_cache
 	 */
 	public function do_clear_cache() {
 		delete_post_meta_by_key( self::META_CACHE_KEY );
@@ -1110,7 +1144,7 @@ class Delivery implements Setup {
 		/**
 		 * Filter if the url is a local asset.
 		 *
-		 * @hook   cloudinary_pre_image_tag
+		 * @hook   cloudinary_is_content_dir
 		 * @since  2.7.6
 		 *
 		 * @param $is_local {bool}   If the url is a local asset.

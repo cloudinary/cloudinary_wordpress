@@ -454,7 +454,12 @@ class Admin {
 		} else {
 			$this->add_admin_notice( 'error_notice', __( 'No changes to save', 'cloudinary' ), 'success' );
 		}
-		// Flush cache.
+		/**
+		 * Action to flush delivery caches.
+		 *
+		 * @hook   cloudinary_flush_cache
+		 * @since  3.0.0
+		 */
 		do_action( 'cloudinary_flush_cache' );
 	}
 

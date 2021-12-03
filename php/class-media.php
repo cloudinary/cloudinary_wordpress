@@ -165,6 +165,8 @@ class Media extends Settings_Component implements Setup {
 		 * @since 3.0.0
 		 *
 		 * @param $filters {array} The default filters.
+		 *
+		 * @returns {array}
 		 */
 		$this->cloudinary_filters = apply_filters(
 			'cloudinary_media_filters',
@@ -1342,7 +1344,7 @@ class Media extends Settings_Component implements Setup {
 		 * @since   3.0.0
 		 *
 		 * @param $url           {string|false} The local URL
-		 * @param $attachment_id {int}  The attachment ID.
+		 * @param $attachment_id {int}          The attachment ID.
 		 *
 		 * @return  {string|false}
 		 */
@@ -2457,7 +2459,7 @@ class Media extends Settings_Component implements Setup {
 		 *
 		 * @param $options {array}   The options array.
 		 * @param $post    {WP_Post} The attachment post.
-		 * @param $this    {Sync}    The sync object instance.
+		 * @param $this    {Media}   The media object instance.
 		 *
 		 * @return {array}
 		 */
@@ -2531,7 +2533,7 @@ class Media extends Settings_Component implements Setup {
 		 *
 		 * @param $options {array}   The options array.
 		 * @param $post    {WP_Post} The attachment post.
-		 * @param $this    {Sync}    The sync object instance.
+		 * @param $this    {Media}   The media object instance.
 		 *
 		 * @return {array}
 		 */

@@ -157,6 +157,8 @@ class Lazy_Load extends Delivery_Feature {
 				 * @since 3.0.0
 				 *
 				 * @param $formats {array) The list of formats to exclude.
+				 *
+				 * @return {array}
 				 */
 				apply_filters( 'cloudinary_lazy_load_bypass_formats', array( 'svg' ) ),
 				true
