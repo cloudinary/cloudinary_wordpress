@@ -15,6 +15,7 @@
   },
   "scripts": {
     "build": "wp-scripts build && npm run build:docs",
+    "build:docs": "rm -rf docs/ && jsdoc -c hookdoc-conf.json php ui-definitions cloudinary.php",
     "deploy": "npm run build && grunt deploy && npm run release",
     "deploy-assets": "grunt deploy-assets",
     "dev": "wp-scripts start",
@@ -30,8 +31,7 @@
     "readme": "composer readme",
     "release": "release-it --no-increment",
     "release:ci": "release-it --ci",
-    "release:dry": "release-it --dry-run",
-    "build:docs": "rm -rf docs && jsdoc -c hookdoc-conf.json php ui-definitions cloudinary.php"
+    "release:dry": "release-it --dry-run"
   },
   "husky": {
     "hooks": {
