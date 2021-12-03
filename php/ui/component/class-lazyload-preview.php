@@ -117,6 +117,7 @@ class Lazyload_Preview extends Breakpoints_Preview {
 			'crop'   => false,
 			'width'  => '600px',
 			'height' => '400px',
+			'format' => 'jpg',
 			'atts'   => array(
 				'src'        => $this->config['lazyload_preview'],
 				'width'      => '600px',
