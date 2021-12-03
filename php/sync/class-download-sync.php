@@ -141,7 +141,12 @@ class Download_Sync {
 			$source = wp_get_attachment_url( $attachment_id );
 		}
 
-		$file_name = basename( strtok( $source, '?' ) );
+		$meta = wp_get_attachment_metadata( $attachment_id );
+		if ( ! empty( $meta['file'] ) ) {
+			$file_name = isset( $meta['original_image'] ) ? basename( $meta['original_image'] ) : basename( $meta['file'] );
+		} else {
+			$file_name = basename( strtok( $source, '?' ) );
+		}
 		try {
 			// Prime a file to stream to.
 			$upload = wp_upload_bits( $file_name, null, 'temp', $date );
@@ -191,7 +196,9 @@ class Download_Sync {
 			$this->sync->set_signature_item( $attachment_id, 'download' );
 			$this->sync->set_signature_item( $attachment_id, 'file' );
 			$this->sync->set_signature_item( $attachment_id, 'folder' );
-
+			if ( $this->sync->can_sync( $attachment_id ) ) {
+				$this->sync->add_to_sync( $attachment_id ); // Update storage and other sync types.
+			}
 		} catch ( \Exception $e ) {
 			return new \WP_Error( 'download_error', $e->getMessage() );
 		}

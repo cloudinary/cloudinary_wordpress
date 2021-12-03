@@ -750,7 +750,7 @@ class Cache_Point {
 	 */
 	protected function filter_duplicate_base( $url ) {
 		static $urls = array();
-		$clean = $this->clean_url( $url );
+		$clean       = $this->clean_url( $url );
 		if ( isset( $urls[ $clean ] ) ) {
 			return false;
 		}

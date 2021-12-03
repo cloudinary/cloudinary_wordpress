@@ -76,6 +76,11 @@ const cldCore = {
 		cloudinary: './src/js/main.js',
 		video: './src/css/video.scss',
 		'wp-color-picker-alpha': './src/js/wp-color-picker-alpha.js',
+		'front-overlay': './src/js/front-overlay.js',
+		'breakpoints-preview': './src/js/breakpoints-preview.js',
+		'lazyload-preview': './src/js/lazyload-preview.js',
+		'asset-manager': './src/js/asset-manager.js',
+		'asset-edit': './src/js/asset-edit.js',
 	},
 	module: {
 		rules: [
@@ -188,6 +193,18 @@ const cldLazyLoad = {
 	},
 };
 
+const cldInlineLoader = {
+	...defaultConfig,
+	entry: {
+		'inline-loader': './src/js/inline-loader.js',
+	},
+	output: {
+		path: path.resolve( process.cwd(), 'js' ),
+		filename: '[name].js',
+		chunkFilename: '[name].js',
+	},
+};
+
 module.exports = [
 	cldBlockEditor,
 	cldCore,
@@ -198,4 +215,5 @@ module.exports = [
 	cldSettingsGallery,
 	cldGalleryUI,
 	cldLazyLoad,
+	cldInlineLoader,
 ];

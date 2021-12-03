@@ -11,8 +11,12 @@ use Cloudinary\Component\Assets;
 use Cloudinary\Component\Config;
 use Cloudinary\Component\Notice;
 use Cloudinary\Component\Setup;
-use Cloudinary\Settings\Setting;
+use Cloudinary\Delivery\Lazy_Load;
+use Cloudinary\Delivery\Responsive_Breakpoints;
+use Cloudinary\Assets as CLD_Assets;
+use Cloudinary\Media\Gallery;
 use Cloudinary\Sync\Storage;
+use Cloudinary\UI\State;
 use WP_REST_Request;
 use WP_REST_Server;
 use const E_USER_WARNING;
@@ -28,7 +32,7 @@ final class Plugin {
 	 *
 	 * @since   0.1
 	 *
-	 * @var     Media[]|Sync[]|Settings_Page[]|REST_API[]|Connect[]
+	 * @var     Media[]|Sync[]|Admin[]|REST_API[]|Connect[]
 	 */
 	public $components;
 	/**
@@ -41,7 +45,7 @@ final class Plugin {
 	/**
 	 * The core Settings object.
 	 *
-	 * @var Setting
+	 * @var Settings
 	 */
 	public $settings;
 
@@ -115,6 +119,7 @@ final class Plugin {
 		$this->dir_path      = $location['dir_path'];
 		$this->template_path = $this->dir_path . 'php/templates/';
 		$this->dir_url       = $location['dir_url'];
+		$this->plugin_file   = pathinfo( dirname( CLDN_CORE ), PATHINFO_BASENAME ) . '/' . basename( CLDN_CORE );
 		$this->setup_endpoints();
 		spl_autoload_register( array( $this, 'autoload' ) );
 		$this->register_hooks();
@@ -128,14 +133,22 @@ final class Plugin {
 	 * that extend the Customizer to ensure resources are available in time.
 	 */
 	public function init() {
-		$this->components['connect']      = new Connect( $this );
-		$this->components['deactivation'] = new Deactivation( $this );
-		$this->components['sync']         = new Sync( $this );
-		$this->components['media']        = new Media( $this );
-		$this->components['api']          = new REST_API( $this );
-		$this->components['storage']      = new Storage( $this );
-		$this->components['report']       = new Report( $this );
-		$this->components['beta']         = new Beta( $this );
+		$this->components['admin']                  = new Admin( $this );
+		$this->components['state']                  = new State( $this );
+		$this->components['connect']                = new Connect( $this );
+		$this->components['deactivation']           = new Deactivation( $this );
+		$this->components['sync']                   = new Sync( $this );
+		$this->components['media']                  = new Media( $this );
+		$this->components['gallery']                = new Gallery( $this );
+		$this->components['api']                    = new REST_API( $this );
+		$this->components['storage']                = new Storage( $this );
+		$this->components['report']                 = new Report( $this );
+		$this->components['delivery']               = new Delivery( $this );
+		$this->components['lazy_load']              = new Lazy_Load( $this );
+		$this->components['responsive_breakpoints'] = new Responsive_Breakpoints( $this );
+		$this->components['assets']                 = new CLD_Assets( $this );
+		$this->components['dashboard']              = new Dashboard( $this );
+		$this->components['extensions']             = new Extensions( $this );
 	}
 
 	/**
@@ -143,7 +156,7 @@ final class Plugin {
 	 *
 	 * @param mixed $component The component.
 	 *
-	 * @return Report|Connect|Media|REST_API|Settings_Page|Sync|Cache|null
+	 * @return Report|Connect|Media|REST_API|Admin|Sync|Cache|null
 	 */
 	public function get_component( $component ) {
 		$return = null;
@@ -162,9 +175,7 @@ final class Plugin {
 	private function get_settings_page_structure() {
 
 		$parts = array(
-			'header' => array(),
-			'pages'  => array(),
-			'footer' => array(),
+			'pages' => array(),
 		);
 
 		foreach ( $parts as $slug => $part ) {
@@ -174,15 +185,14 @@ final class Plugin {
 		}
 
 		$structure = array(
-			'version'     => $this->version,
-			'page_title'  => __( 'Cloudinary', 'cloudinary' ),
-			'menu_title'  => __( 'Cloudinary', 'cloudinary' ),
-			'capability'  => 'manage_options',
-			'icon'        => 'dashicons-cloudinary',
-			'option_name' => $this->slug,
-			'page_header' => $parts['header'],
-			'page_footer' => $parts['footer'],
-			'pages'       => $parts['pages'],
+			'version'    => $this->version,
+			'page_title' => __( 'Cloudinary', 'cloudinary' ),
+			'menu_title' => __( 'Cloudinary', 'cloudinary' ),
+			'capability' => 'manage_options',
+			'icon'       => 'dashicons-cloudinary',
+			'slug'       => $this->slug,
+			'settings'   => $parts['pages'],
+			'sidebar'    => include CLDN_PATH . 'ui-definitions/settings-sidebar.php',
 		);
 
 		return $structure;
@@ -193,28 +203,29 @@ final class Plugin {
 	 */
 	public function setup_settings() {
 		$params         = $this->get_settings_page_structure();
-		$this->settings = \Cloudinary\Settings::create_setting( $this->slug, $params );
+		$this->settings = new Settings( $this->slug, $params );
 		$components     = array_filter( $this->components, array( $this, 'is_setting_component' ) );
 		$this->init_component_settings( $components );
-		$this->register_component_settings( $components );
 
-		// Init settings.
-		\Cloudinary\Settings::init_setting( $this->slug );
-
-		// Add count notice if not connected.
-		$this->settings->set_param( 'connected', $this->get_component( 'connect' )->is_connected() );
-		if ( ! $this->settings->get_param( 'connected' ) ) {
+		// Setup connection.
+		$connection = $this->get_component( 'connect' )->is_connected();
+		if ( false === $connection ) {
 			$count      = sprintf( ' <span class="update-plugins count-%d"><span class="update-count">%d</span></span>', 1, number_format_i18n( 1 ) );
 			$main_title = $this->settings->get_param( 'menu_title' ) . $count;
 			$this->settings->set_param( 'menu_title', $main_title );
 			$this->settings->set_param( 'connect_count', $count );
-
-			// Set the Getting Started title.
-			$connect       = $this->settings->find_setting( 'dashboard' );
-			$connect_title = $connect->get_param( 'menu_title' ) . $count;
-			$connect->set_param( 'menu_title', $connect_title );
+		} else {
+			$this->settings->set_param( 'connected', true );
+			/**
+			 * Action indicating that the cloudinary is connected.
+			 *
+			 * @hook  cloudinary_connected
+			 * @since 3.0.0
+			 *
+			 * @param $plugin {Plugin} The core plugin object.
+			 */
+			do_action( 'cloudinary_connected', $this );
 		}
-
 		/**
 		 * Action indicating that the Settings are initialised.
 		 *
@@ -224,6 +235,9 @@ final class Plugin {
 		 * @param $plugin {Plugin} The core plugin object.
 		 */
 		do_action( 'cloudinary_init_settings', $this );
+
+		// Register with admin.
+		$this->components['admin']->register_page( $this->slug, $this->settings->get_params() );
 	}
 
 	/**
@@ -232,6 +246,7 @@ final class Plugin {
 	 * @param Settings_Component[] $components of components to init settings for.
 	 */
 	private function init_component_settings( $components ) {
+		$version = get_option( Connect::META_KEYS['version'] );
 		foreach ( $components as $slug => $component ) {
 			/**
 			 * Component that implements Settings.
@@ -239,22 +254,15 @@ final class Plugin {
 			 * @var  Component\Settings $component
 			 */
 			$component->init_settings( $this->settings );
-		}
-	}
 
-	/**
-	 * Register settings.
-	 *
-	 * @param Settings_Component[] $components Array of components to register settings for.
-	 */
-	private function register_component_settings( $components ) {
-		foreach ( $components as $slug => $component ) {
-			/**
-			 * Component that implements Settings.
-			 *
-			 * @var  Component\Settings $component
-			 */
-			$component->register_settings( $this->settings );
+			// Upgrade settings if needed.
+			if ( $version < $this->version ) {
+				$component->upgrade_settings( $version, $this->version );
+			}
+		}
+		// Update settings version, if needed.
+		if ( $version < $this->version ) {
+			update_option( Connect::META_KEYS['version'], $this->version );
 		}
 	}
 
@@ -276,30 +284,18 @@ final class Plugin {
 	public function register_hooks() {
 		add_action( 'plugins_loaded', array( $this, 'init' ), 9 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'register_enqueue_styles' ), 11 );
-		add_action( 'init', array( $this, 'setup' ), 10 );
-		add_action( 'init', array( $this, 'register_assets' ), 10 );
+
+		// Move to 100 and 200 to allow other plugins/systems to add cloudinary filters and actions that are fired within the init hooks.
+		add_action( 'init', array( $this, 'setup' ), 100 );
+		add_action( 'init', array( $this, 'register_assets' ), 200 );
+
 		add_action( 'admin_notices', array( $this, 'admin_notices' ) );
 		add_filter( 'plugin_row_meta', array( $this, 'force_visit_plugin_site_link' ), 10, 4 );
-		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
 		add_action( 'wp_enqueue_editor', array( $this, 'enqueue_assets' ) );
-	}
+		add_action( 'admin_print_footer_scripts', array( $this, 'print_script_data' ), 1 );
+		add_action( 'wp_print_footer_scripts', array( $this, 'print_script_data' ), 1 );
 
-	/**
-	 * Add endpoints to the \Cloudinary\REST_API::$endpoints array.
-	 *
-	 * @param array $endpoints Endpoints from the filter.
-	 *
-	 * @return array
-	 */
-	public function rest_endpoints( $endpoints ) {
-
-		$endpoints['dismiss_notice'] = array(
-			'method'   => WP_REST_Server::CREATABLE,
-			'callback' => array( $this, 'rest_dismiss_notice' ),
-			'args'     => array(),
-		);
-
-		return $endpoints;
+		add_action( 'cloudinary_version_upgrade', array( Utils::class, 'install' ) );
 	}
 
 	/**
@@ -374,7 +370,7 @@ final class Plugin {
 	 *
 	 * @param object $component The component to check.
 	 *
-	 * @return bool If the component is an asset impmented object or not.
+	 * @return bool If the component is an asset implemented object or not.
 	 */
 	private function is_active_asset_component( $component ) {
 		return $this->is_asset_component( $component ) && $component->is_active();
@@ -454,18 +450,16 @@ final class Plugin {
 				$component->setup();
 			}
 		}
-	}
 
-	/**
-	 * Set a transient with the duration using a token as an identifier.
-	 *
-	 * @param WP_REST_Request $request The request object.
-	 */
-	public function rest_dismiss_notice( WP_REST_Request $request ) {
-		$token    = $request->get_param( 'token' );
-		$duration = $request->get_param( 'duration' );
-
-		set_transient( $token, true, $duration );
+		/**
+		 * Action indicating that the Cloudinary is ready and setup.
+		 *
+		 * @hook  cloudinary_ready
+		 * @since 3.0.0
+		 *
+		 * @param $plugin {Plugin} The core plugin object.
+		 */
+		do_action( 'cloudinary_ready', $this );
 	}
 
 	/**
@@ -494,7 +488,7 @@ final class Plugin {
 			$notices = $component->get_notices();
 			foreach ( $notices as $notice ) {
 				$notice = wp_parse_args( $notice, $default );
-				$setting->add_admin_notice( 'cld_general', $notice['message'], $notice['type'], $notice['dismissible'], $notice['duration'], $notice['icon'] );
+				$this->components['admin']->add_admin_notice( 'cld_general', $notice['message'], $notice['type'], $notice['dismissible'], $notice['duration'], $notice['icon'] );
 			}
 		}
 	}
@@ -699,6 +693,34 @@ final class Plugin {
 			// @phpcs:disable
 			trigger_error( esc_html( get_class( $this ) . ': ' . $message ), $code );
 			// @phpcs:enable
+		}
+	}
+
+	/**
+	 * Add Script data.
+	 *
+	 * @param string      $slug   The slug to add.
+	 * @param mixed       $value  The value to set.
+	 * @param string|null $handle $the optional script handle to add data for.
+	 */
+	public function add_script_data( $slug, $value, $handle = null ) {
+		if ( null === $handle ) {
+			$handle = $this->slug;
+		}
+		$this->settings->set_param( '@script' . $this->settings->separator . $handle . $this->settings->separator . $slug, $value );
+	}
+
+	/**
+	 * Output script data if set.
+	 */
+	public function print_script_data() {
+		$handles = $this->settings->get_param( '@script' );
+		if ( ! empty( $handles ) ) {
+			foreach ( $handles as $handle => $data ) {
+				// We should never be using multiple handles. This is just for cases where data needs to be added where the main script is not loaded.
+				$json = wp_json_encode( $data );
+				wp_add_inline_script( $handle, 'var cldData = ' . $json, 'before' );
+			}
 		}
 	}
 

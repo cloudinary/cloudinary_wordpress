@@ -455,16 +455,18 @@ class Filter {
 		if ( ! isset( $attachment->data['id'] ) ) {
 			return $attachment;
 		}
-
-		$cloudinary_id = $this->media->cloudinary_id( $attachment->data['id'] );
-
-		if ( $cloudinary_id ) {
-			$attachment->data['source_url'] = $this->media->cloudinary_url( $attachment->data['id'], false );
-		}
-
 		$has_transformations = ! empty( $this->media->get_transformation_from_meta( $attachment->data['id'] ) );
 		if ( $has_transformations ) {
 			$attachment->data['transformations'] = $has_transformations;
+		}
+		$cloudinary_id = $this->media->cloudinary_id( $attachment->data['id'] );
+		if ( $cloudinary_id ) {
+			$attachment->data['source_url'] = $this->media->cloudinary_url( $attachment->data['id'], false );
+			if ( isset( $attachment->data['media_details'] ) ) {
+				foreach ( $attachment->data['media_details']['sizes'] as $size => &$details ) {
+					$details['source_url'] = $this->media->cloudinary_url( $attachment->data['id'], $size, $has_transformations, $cloudinary_id );
+				}
+			}
 		}
 
 		return $attachment;
@@ -727,7 +729,7 @@ class Filter {
 		foreach ( $types as $type ) {
 			$post_type = get_post_type_object( $type );
 			// Check if this is a rest supported type.
-			if ( true === $post_type->show_in_rest ) {
+			if ( property_exists( $post_type, 'show_in_rest' ) && true === $post_type->show_in_rest ) {
 				// Add filter only to rest supported types.
 				add_filter( 'rest_prepare_' . $type, array( $this, 'pre_filter_rest_content' ), 10, 3 );
 			}
@@ -736,8 +738,6 @@ class Filter {
 
 	/**
 	 * Record attachment with meta being updated.
-	 *
-	 * @hook wp_update_attachment_metadata
 	 *
 	 * @param array $data The new meta array.
 	 * @param int   $id   The id.
@@ -756,8 +756,8 @@ class Filter {
 	 */
 	public function setup_hooks() {
 		// Filter URLS within content.
-		add_action( 'wp_insert_post_data', array( $this, 'filter_out_cloudinary' ) );
-		add_action( 'wp_insert_post_data', array( $this, 'prepare_amp_posts' ), 11 );
+		add_filter( 'wp_insert_post_data', array( $this, 'filter_out_cloudinary' ) );
+		add_filter( 'wp_insert_post_data', array( $this, 'prepare_amp_posts' ), 11 );
 		add_filter( 'wp_prepare_attachment_for_js', array( $this, 'filter_attachment_for_js' ), 11 );
 
 		// Add support for custom header.
@@ -785,34 +785,10 @@ class Filter {
 		add_filter( 'wp_update_attachment_metadata', array( $this, 'record_meta_update' ), 10, 2 );
 
 		// Filter out locals and responsive images setup.
-		if ( $this->media->can_filter_out_local() || is_admin() ) {
+		if ( is_admin() ) {
 			// Filtering out locals.
 			add_filter( 'the_editor_content', array( $this, 'filter_out_local' ) );
 			add_filter( 'the_content', array( $this, 'filter_out_local' ), 100 );
-			// Cancel out breakpoints till later.
-			add_filter(
-				'wp_img_tag_add_srcset_and_sizes_attr',
-				function ( $add, $image, $context, $attachment_id ) {
-					$use = true;
-					/**
-					 * Filter to allow bypass filter local assets int the Front End.
-					 *
-					 * @hook    cloudinary_filter_out_local
-					 * @default true
-					 *
-					 * @param $true {bool} Defaults to true.
-					 *
-					 * @return {bool}
-					 */
-					if ( $this->media->has_public_id( $attachment_id ) && apply_filters( 'cloudinary_filter_out_local', true ) ) {
-						$use = false;
-					}
-
-					return $use;
-				},
-				10,
-				4
-			);
 		}
 	}
 }

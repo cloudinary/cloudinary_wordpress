@@ -62,7 +62,7 @@ class Delete_Sync {
 				// Check if is pending.
 				if ( ! $this->plugin->components['sync']->is_synced( $post_id ) && $this->plugin->components['sync']->is_pending( $post_id ) ) {
 					// Check for errors.
-					$has_error = $this->plugin->components['media']->get_post_meta( $post_id, Sync::META_KEYS['sync_error'], true );
+					$has_error = get_post_meta( $post_id, Sync::META_KEYS['sync_error'], true );
 					if ( empty( $has_error ) ) {
 						$all_caps['delete_posts'] = false;
 						$action                   = filter_input( INPUT_GET, 'action', FILTER_SANITIZE_STRING );

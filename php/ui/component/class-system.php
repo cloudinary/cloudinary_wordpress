@@ -28,13 +28,6 @@ class System extends Panel {
 	protected $plugin;
 
 	/**
-	 * Holds the Report instance.
-	 *
-	 * @var Report
-	 */
-	protected $report;
-
-	/**
 	 * Holds the components build blueprint.
 	 *
 	 * @var string
@@ -49,9 +42,6 @@ class System extends Panel {
 	public function __construct( $setting ) {
 		parent::__construct( $setting );
 		$this->plugin = get_plugin_instance();
-		$this->report = $this->plugin->get_component( 'report' );
-
-		add_action( 'admin_init', array( $this, 'maybe_generate_report' ) );
 	}
 
 	/**
@@ -104,13 +94,12 @@ class System extends Panel {
 	 * @return array
 	 */
 	protected function button( $struct ) {
-		$url = add_query_arg(
+		$url                  = add_query_arg(
 			array(
-				'generate_report' => true,
-			),
-			$this->setting->get_option_parent()->get_component()->get_url()
+				'section'                   => Report::REPORT_SLUG,
+				Report::REPORT_DOWNLOAD_KEY => true,
+			)
 		);
-
 		$button               = $this->get_part( 'a' );
 		$button['content']    = __( 'Download report', 'cloudinary' );
 		$button['attributes'] = array(
@@ -185,25 +174,5 @@ class System extends Panel {
 		$li['content'] = $item;
 
 		return $li;
-	}
-
-	/**
-	 * Maybe generate the report.
-	 */
-	public function maybe_generate_report() {
-		$download = filter_input( INPUT_GET, 'generate_report', FILTER_VALIDATE_BOOLEAN );
-		if ( $download ) {
-			$report = $this->report->get_report_data();
-			header( 'Content-Description: File Transfer' );
-			header( 'Content-Type: application/octet-stream' );
-			header( "Content-Disposition: attachment; filename={$report['filename']}" );
-			header( 'Content-Transfer-Encoding: text' );
-			header( 'Connection: Keep-Alive' );
-			header( 'Expires: 0' );
-			header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
-			header( 'Pragma: public' );
-			echo wp_json_encode( $report['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
-			exit;
-		}
 	}
 }

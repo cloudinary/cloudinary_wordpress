@@ -89,7 +89,7 @@ class Upload_Sync {
 			'bulk_actions-upload',
 			function ( $actions ) {
 				$cloudinary_actions = array(
-					'cloudinary-push' => __( 'Push to Cloudinary', 'cloudinary' ),
+					'cloudinary-push' => __( 'Sync with Cloudinary', 'cloudinary' ),
 				);
 
 				return array_merge( $cloudinary_actions, $actions );
@@ -106,7 +106,7 @@ class Upload_Sync {
 	 * @return array
 	 */
 	public function add_inline_action( $actions, $post ) {
-		if ( $this->media->is_media( $post->ID ) && current_user_can( 'delete_post', $post->ID ) ) {
+		if ( $this->sync->is_syncable( $post->ID ) && $this->media->is_uploadable_media( $post->ID ) && $this->media->is_media( $post->ID ) && current_user_can( 'delete_post', $post->ID ) ) {
 			$action_url = add_query_arg(
 				array(
 					'action'   => 'cloudinary-push',
@@ -125,8 +125,8 @@ class Upload_Sync {
 				$actions['cloudinary-push'] = sprintf(
 					'<a href="%s" aria-label="%s">%s</a>',
 					$action_url,
-					esc_attr__( 'Push to Cloudinary', 'cloudinary' ),
-					esc_html__( 'Push to Cloudinary', 'cloudinary' )
+					esc_attr__( 'Sync and deliver from Cloudinary', 'cloudinary' ),
+					esc_html__( 'Sync and deliver from Cloudinary', 'cloudinary' )
 				);
 			} else {
 				if ( file_exists( get_attached_file( $post->ID ) ) ) {
@@ -173,6 +173,7 @@ class Upload_Sync {
 					if ( ! $this->media->is_cloudinary_url( get_post_meta( $post_id, '_wp_attached_file', true ) ) ) {
 						$this->sync->delete_cloudinary_meta( $post_id );
 						$this->sync->set_signature_item( $post_id, 'file', '' );
+						$this->sync->set_signature_item( $post_id, 'cld_asset' );
 						$this->media->delete_post_meta( $post_id, Sync::META_KEYS['public_id'] );
 						$this->sync->add_to_sync( $post_id );
 					}
@@ -244,14 +245,20 @@ class Upload_Sync {
 
 		$type       = $this->sync->get_sync_type( $attachment_id );
 		$options    = $this->media->get_upload_options( $attachment_id );
-		$try_remote = 'cloud_name' !== $type;
 
 		// Add suffix.
 		$options['public_id'] .= $suffix;
 
 		// Run the upload Call.
-		$result = $this->connect->api->upload( $attachment_id, $options, array(), $try_remote );
-
+		switch ( $type ) {
+			case 'cloud_name':
+			case 'folder':
+				$result = $this->connect->api->copy( $attachment_id, $options );
+				break;
+			default:
+				$result = $this->connect->api->upload( $attachment_id, $options, array() );
+				break;
+		}
 		remove_filter( 'cloudinary_doing_upload', '__return_true' );
 
 		if ( ! is_wp_error( $result ) ) {
@@ -273,6 +280,9 @@ class Upload_Sync {
 			// Set the delivery type.
 			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['delivery'], $result['type'] );
 
+			// Set the raw url.
+			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['raw_url'], $result['secure_url'] );
+
 			// Create a trackable key in post meta to allow getting the attachment id from URL with transformations.
 			update_post_meta( $attachment_id, '_' . md5( $options['public_id'] ), true );
 
@@ -286,7 +296,9 @@ class Upload_Sync {
 			$this->sync->set_signature_item( $attachment_id, 'public_id' );
 
 			$this->update_breakpoints( $attachment_id, $result );
-			$this->update_content( $attachment_id );
+			delete_post_meta( $attachment_id, Sync::META_KEYS['sync_error'] );
+		} else {
+			update_post_meta( $attachment_id, Sync::META_KEYS['sync_error'], $result->get_error_message() );
 		}
 
 		return $result;
@@ -353,28 +365,6 @@ class Upload_Sync {
 				$this->media->delete_post_meta( $attachment_id, Sync::META_KEYS['breakpoints'] );
 			}
 			$this->sync->set_signature_item( $attachment_id, 'breakpoints' );
-		}
-	}
-
-	/**
-	 * Trigger an update on content that contains the same attachment ID to allow filters to capture and process.
-	 *
-	 * @param int $attachment_id The attachment id to find and init an update.
-	 */
-	public function update_content( $attachment_id ) {
-		// Search and update link references in content.
-		$content_search = new \WP_Query(
-			array(
-				's'              => 'wp-image-' . $attachment_id,
-				'fields'         => 'ids',
-				'posts_per_page' => 1000, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page
-			)
-		); // phpcs:ignore WordPress.WP.PostsPerPage
-		if ( ! empty( $content_search->found_posts ) ) {
-			$content_posts = array_unique( $content_search->get_posts() ); // ensure post only gets updated once.
-			foreach ( $content_posts as $content_id ) {
-				wp_update_post( array( 'ID' => $content_id ) ); // Trigger an update, internal filters will filter out remote URLS.
-			}
 		}
 	}
 }

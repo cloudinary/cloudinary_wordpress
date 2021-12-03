@@ -1,0 +1,22 @@
+&-lock {
+	display: flex;
+	cursor: pointer;
+	&.hidden{
+		display: none;
+		width:0;
+		height: 0;
+	}
+	.dashicons {
+		font-size: 25px;
+		line-height: 0.7;
+		margin-right: 10px;
+		color: $color-cld-blue;
+	}
+}
+&-optimize {
+	&-settings {
+		&.disabled {
+			opacity: 0.4;
+		}
+	}
+}

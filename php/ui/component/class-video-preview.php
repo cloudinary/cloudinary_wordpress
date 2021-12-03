@@ -69,7 +69,7 @@ class Video_Preview extends Image_Preview {
 			'error'       => esc_html__( 'Invalid transformations or error loading preview.', 'cloudinary' ),
 			'valid_types' => \Cloudinary\Connect\Api::$transformation_index['video'],
 		);
-
+		wp_add_inline_script( 'cloudinary', 'var CLD_GLOBAL_TRANSFORMATIONS = CLD_GLOBAL_TRANSFORMATIONS ? CLD_GLOBAL_TRANSFORMATIONS : {};', 'before' );
 		wp_add_inline_script( 'cloudinary', 'CLD_GLOBAL_TRANSFORMATIONS.video = ' . wp_json_encode( $script_data ), 'before' );
 
 		$player   = array();

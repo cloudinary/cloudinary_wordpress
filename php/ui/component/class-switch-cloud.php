@@ -29,13 +29,14 @@ class Switch_Cloud extends Submit {
 		$plugin = get_plugin_instance();
 		$url    = add_query_arg(
 			array(
-				'switch-account' => true,
+				'page'    => $this->setting->get_root_setting()->get_slug(),
+				'section' => 'wizard',
 			),
-			$this->setting->get_option_parent()->get_component()->get_url()
+			'admin.php'
 		);
 
 		$struct['element']             = 'a';
-		$struct['content']             = __( 'Switch Cloud', 'cloudinary' );
+		$struct['content']             = __( 'Launch wizard', 'cloudinary' );
 		$struct['attributes']['href']  = $url;
 		$struct['attributes']['class'] = array(
 			'button',

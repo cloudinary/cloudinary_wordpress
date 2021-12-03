@@ -8,6 +8,9 @@
 namespace Cloudinary\Assets;
 
 use Cloudinary\Assets;
+use Cloudinary\Connect\Api;
+use Cloudinary\Sync;
+use Cloudinary\Utils;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
@@ -83,7 +86,43 @@ class Rest_Assets {
 			'args'                => array(),
 		);
 
+		$endpoints['save_asset'] = array(
+			'method'              => \WP_REST_Server::CREATABLE,
+			'callback'            => array( $this, 'rest_save_asset' ),
+			'permission_callback' => array( $this, 'rest_can_manage_options' ),
+			'args'                => array(),
+		);
+
 		return $endpoints;
+	}
+
+	/**
+	 * Update an assets transformations.
+	 *
+	 * @param WP_REST_Request $request The request object.
+	 *
+	 * @return WP_Error|WP_HTTP_Response|WP_REST_Response
+	 */
+	public function rest_save_asset( $request ) {
+
+		$media                = $this->assets->media;
+		$attachment_id        = $request->get_param( 'ID' );
+		$transformations      = $request->get_param( 'transformations' );
+		$type                 = $media->get_resource_type( $attachment_id );
+		$transformation_array = $media->get_transformations_from_string( $transformations, $type );
+		$cleaned              = Api::generate_transformation_string( $transformation_array, $type );
+		$this->assets->delivery->update_size_relations_transformations( $attachment_id, $cleaned );
+		$this->assets->media->update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], $transformation_array );
+
+		$return = array(
+			'transformations' => $cleaned,
+		);
+
+		if ( $cleaned !== $transformations ) {
+			$return['note'] = __( 'Some transformations were invalid and were removed.', 'cloudinary' );
+		}
+
+		return rest_ensure_response( $return );
 	}
 
 	/**
@@ -125,39 +164,49 @@ class Rest_Assets {
 	 * @return WP_Error|WP_HTTP_Response|WP_REST_Response
 	 */
 	public function rest_purge_all( $request ) {
-
-		$count         = $request->get_param( 'count' );
-		$asset_parent  = (int) $request->get_param( 'parent' );
-		$transient_key = '_purge_cache' . $asset_parent;
-		$query_args    = array(
-			'post_type'              => Assets::POST_TYPE_SLUG,
-			'posts_per_page'         => 1,
-			'paged'                  => 1,
-			'post_status'            => array( 'inherit', 'draft', 'publish' ),
-			'fields'                 => 'ids',
-			'update_post_meta_cache' => false,
-			'update_post_term_cache' => false,
+		global $wpdb;
+		$parent_url = $request->get_param( 'parent' );
+		$count      = $request->get_param( 'count' );
+		$clean      = $this->assets->clean_path( $parent_url );
+		$parent     = $this->assets->get_param( $clean );
+		$result     = array(
+			'total'   => 0,
+			'pending' => count( $this->assets->get_asset_parents() ),
+			'percent' => 0,
 		);
-		if ( ! empty( $asset_parent ) ) {
-			$query_args['post_parent'] = $asset_parent;
-		}
-		$query = new \WP_Query( $query_args );
-
-		$result  = array(
-			'total'   => $query->found_posts,
-			'pending' => $query->found_posts,
-			'percent' => empty( $query->found_posts ) ? 100 : 0,
-		);
-		$tracker = get_transient( $transient_key );
-
-		if ( ! empty( $tracker ) && isset( $tracker['time'] ) ) {
-			$result['percent'] = ( $tracker['total'] - $result['pending'] ) / $tracker['total'] * 100;
-		}
-		if ( empty( $count ) && ! empty( $query->found_posts ) ) {
-			if ( empty( $result['time'] ) ) {
-				set_transient( $transient_key, $result, MINUTE_IN_SECONDS );
-				$this->assets->plugin->get_component( 'api' )->background_request( 'purge_cache', array( 'asset_parent' => $asset_parent ) );
-			}
+		if ( $parent instanceof \WP_Post ) {
+			$data   = array(
+				'public_id'  => null,
+				'post_state' => 'enable',
+			);
+			$where  = array(
+				'parent_path' => $clean,
+				'sync_type'   => 'asset',
+			);
+			$format = array(
+				'%s',
+				'%s',
+			);
+			$wpdb->update( Utils::get_relationship_table(), $data, $where, $format, $format ); // phpcs:ignore WordPress.DB
+			$result['total']   = 0;
+			$result['pending'] = 0;
+			$result['percent'] = 100;
+		} elseif ( false === $count ) {
+			$data   = array(
+				'public_id'  => null,
+				'post_state' => 'enable',
+			);
+			$where  = array(
+				'sync_type' => 'asset',
+			);
+			$format = array(
+				'%s',
+				'%s',
+			);
+			$wpdb->update( Utils::get_relationship_table(), $data, $where, $format, array( '%s' ) ); // phpcs:ignore WordPress.DB
+			$result['total']   = 0;
+			$result['pending'] = 0;
+			$result['percent'] = 100;
 		}
 
 		return rest_ensure_response( $result );
@@ -203,22 +252,27 @@ class Rest_Assets {
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
 	 */
 	public function rest_handle_state( $request ) {
+		global $wpdb;
 		$ids   = $request['ids'];
 		$state = $request['state'];
 		foreach ( $ids as $id ) {
-			if ( Assets::POST_TYPE_SLUG !== get_post_type( $id ) ) {
-				continue;
-			}
+			$where = array(
+				'post_id'    => $id,
+				'post_state' => 'asset',
+			);
 			if ( 'delete' === $state ) {
-				wp_delete_post( $id );
+				$data = array(
+					'public_id'  => null,
+					'post_state' => 'enable',
+				);
+				$wpdb->update( Utils::get_relationship_table(), $data, $where ); // phpcs:ignore WordPress.DB
 				continue;
 			}
 
-			$args = array(
-				'ID'          => $id,
-				'post_status' => 'disable' === $state ? 'draft' : 'inherit',
+			$data = array(
+				'post_state' => strtolower( $state ),
 			);
-			wp_update_post( $args );
+			$wpdb->update( Utils::get_relationship_table(), $data, $where ); // phpcs:ignore WordPress.DB
 		}
 
 		return $ids;
@@ -234,35 +288,57 @@ class Rest_Assets {
 	 * @return array
 	 */
 	public function get_assets( $id, $search = null, $page = 1 ) {
+		global $wpdb;
 		$cache_point = get_post( $id );
-		if ( is_null( $cache_point ) ) {
-			return array();
+
+		$wpdb->cld_table = Utils::get_relationship_table();
+		$cache           = wp_cache_get( $id, 'cld_query' );
+		$limit           = 20;
+		$start           = 0;
+		if ( $page > 1 ) {
+			$start = $limit * $page - 1;
 		}
-		$args = array(
-			'post_type'              => Assets::POST_TYPE_SLUG,
-			'posts_per_page'         => 20,
-			'paged'                  => $page,
-			'post_parent'            => $id,
-			'post_status'            => array( 'inherit', 'draft' ),
-			'update_post_meta_cache' => false,
-			'update_post_term_cache' => false,
-		);
-		if ( ! empty( $search ) ) {
-			$args['s'] = $search;
-		}
-		$posts = new \WP_Query( $args );
-		$items = array();
-		foreach ( $posts->get_posts() as $post ) {
-			$items[] = array(
-				'ID'        => $post->ID,
-				'key'       => $post->post_name,
-				'local_url' => $post->post_title,
-				'short_url' => str_replace( $cache_point->post_title, '', $post->post_title ),
-				'active'    => 'inherit' === $post->post_status,
+		if ( empty( $cache ) ) {
+			$search_ext = null;
+			if ( ! empty( $search ) ) {
+				if ( is_numeric( $search ) ) {
+					$search_ext = $wpdb->prepare( ' AND post_id = %d', (int) $search );
+				} else {
+					$search_ext = " AND sized_url LIKE '%%{$search}%%'";
+				}
+			}
+
+			$prepare        = $wpdb->prepare(
+				"SELECT COUNT( id ) as total FROM $wpdb->cld_table WHERE parent_path = %s AND post_state != 'inherit' {$search_ext};", // phpcs:ignore WordPress.DB.PreparedSQL
+				$cache_point->post_title
 			);
+			$cache['total'] = (int) $wpdb->get_var( $prepare ); // phpcs:ignore WordPress.DB
+			$prepare        = $wpdb->prepare(
+				"SELECT * FROM $wpdb->cld_table WHERE public_id IS NOT NULL && parent_path = %s AND post_state != 'inherit' {$search_ext} limit %d,%d;", // phpcs:ignore WordPress.DB.PreparedSQL
+				$cache_point->post_title,
+				$start,
+				$limit
+			);
+			$cache['items'] = $wpdb->get_results( $prepare, ARRAY_A ); // phpcs:ignore WordPress.DB
+			wp_cache_set( $id, $cache, 'cld_query' );
 		}
-		$total_items = $posts->found_posts;
-		$pages       = ceil( $total_items / 20 );
+
+		$default = array(
+			'items'        => array(),
+			'total'        => $cache['total'],
+			'total_pages'  => 1,
+			'current_page' => 1,
+			'nav_text'     => __( 'No items cached.', 'cloudinary' ),
+		);
+		if ( is_null( $cache_point ) ) {
+			return $default;
+		}
+		$items = array();
+		foreach ( $cache['items'] as $item ) {
+			$items[] = $this->assets->build_item( $item );
+		}
+		$total_items = $cache['total'];
+		$pages       = ceil( $total_items / $limit );
 		// translators: The current page and total pages.
 		$description = sprintf( __( 'Page %1$d of %2$d', 'cloudinary' ), $page, $pages );
 

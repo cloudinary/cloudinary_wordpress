@@ -1,0 +1,55 @@
+// Infobox.
+
+&-info-box {
+	@extend .cld-panel;
+	display: flex;
+	padding: 0;
+	margin: 0 0 19px;
+	border-radius: 4px;
+	align-items: stretch;
+	max-width: 500px;
+
+	@media only screen and (min-width: $size-small) {
+		flex-direction: row;
+	}
+
+	.cld-ui-title {
+		h2 {
+			margin: 0 0 6px;
+			font-size: $size-panel-title;
+		}
+	}
+
+	.cld-info-icon {
+		background-color: $color-cld-light-grey;
+		display: flex;
+		width: 49px;
+		text-align: center;
+		vertical-align: center;
+		justify-content: center;
+		border-radius: 4px 0 0 4px;
+
+		img{
+			width: 24px;
+		}
+	}
+
+	img,
+	a.button {
+		align-self: center;
+	}
+
+	.cld-ui-body {
+		line-height: normal;
+		margin: 0 auto;
+		padding: 12px 9px;
+		display: inline-block;
+		width: 100%;
+		font-size: $size-panel-content;
+	}
+
+	&-text{
+		color: $color-cld-description;
+		font-size: $size-panel-description;
+	}
+}

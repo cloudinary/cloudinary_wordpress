@@ -127,6 +127,11 @@ class Push_Sync {
 			'callback' => array( $this, 'process_queue' ),
 			'args'     => array(),
 		);
+		$endpoints['stats'] = array(
+			'method'   => \WP_REST_Server::READABLE,
+			'callback' => array( $this->queue, 'get_total_synced_media' ),
+			'args'     => array(),
+		);
 
 		return $endpoints;
 	}
@@ -270,7 +275,7 @@ class Push_Sync {
 		if ( ! empty( $queue['next'] ) && $this->queue->is_running( $thread_type ) ) {
 			while ( ( $attachment_id = $this->queue->get_post( $thread ) ) && $runs < 10 ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition
 				if ( $last_id === $attachment_id ) {
-					$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['sync_error'], __( 'Asset in sync loop.', 'cloudinary' ) );
+					update_post_meta( $attachment_id, Sync::META_KEYS['sync_error'], __( 'Asset in sync loop.', 'cloudinary' ) );
 					delete_post_meta( $attachment_id, $thread );
 					continue;
 				}
@@ -301,7 +306,7 @@ class Push_Sync {
 		 *
 		 * @param $action_message {string} The message.
 		 * @param $thread         {string} The thread.
- 		 */
+		 */
 		do_action( 'cloudinary_queue_action', $action_message, $thread );
 	}
 }

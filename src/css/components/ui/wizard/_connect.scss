@@ -1,0 +1,60 @@
+
+&-connect {
+	&-connection {
+		display: flex;
+		flex-direction: row;
+		justify-content: flex-start;
+		align-items: flex-end;
+
+		&-input {
+			width: 725px;
+			margin-right: 10px;
+			margin-top: 20px;
+
+			input {
+				max-width: 100%;
+				width: 100%;
+			}
+		}
+	}
+
+	&-status {
+		display: none;
+		align-items: center;
+		justify-content: space-between;
+		padding: 5px 11px;
+		border-radius: 14px;
+		font-weight: bold;
+
+		&.active {
+			display: inline-flex;
+		}
+
+		&.success {
+			background-color: #ccefc9;
+			color: $color-success;
+		}
+
+		&.error {
+			background-color: #f9cecd;
+			color: $color-red;
+		}
+
+		&.working {
+			background-color: $color-cld-light-grey;
+			color: $color-cld-dark-blue;
+			padding: 5px;
+			.spinner{
+				visibility: visible;
+				margin: 0;
+			}
+		}
+	}
+
+	&-help {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-top: 50px;
+	}
+}

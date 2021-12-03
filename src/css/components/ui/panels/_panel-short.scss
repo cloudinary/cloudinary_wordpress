@@ -1,0 +1,8 @@
+// Panel short
+
+&-panel-short {
+	@extend .cld-panel;
+	min-width: 270px;
+	width: auto;
+	display: inline-block;
+}

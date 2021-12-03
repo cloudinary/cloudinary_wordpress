@@ -23,4 +23,21 @@ class Row extends Component {
 	 */
 	protected $blueprint = 'wrap|settings/|/wrap';
 
+	/**
+	 * Gets the wrap structs.
+	 *
+	 * @param array $struct The wrap struct.
+	 *
+	 * @return array
+	 */
+	protected function wrap( $struct ) {
+
+		$struct['attributes']['class'][] = 'cld-row';
+		if ( $this->setting->has_param( 'align' ) ) {
+			$struct['attributes']['class'][] = 'align-' . $this->setting->get_param( 'align' );
+		}
+
+		return $struct;
+	}
+
 }

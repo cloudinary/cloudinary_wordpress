@@ -34,6 +34,14 @@ class REST_API {
 	 * Init the REST API endpoints.
 	 */
 	public function rest_api_init() {
+
+		$defaults = array(
+			'method'              => \WP_REST_Server::READABLE,
+			'callback'            => __return_empty_array(),
+			'args'                => array(),
+			'permission_callback' => '__return_true',
+		);
+
 		/**
 		 * Filter the Cloudinary REST API endpoints.
 		 *
@@ -47,15 +55,7 @@ class REST_API {
 		$this->endpoints = apply_filters( 'cloudinary_api_rest_endpoints', array() );
 
 		foreach ( $this->endpoints as $route => $endpoint ) {
-			$endpoint = wp_parse_args(
-				$endpoint,
-				array(
-					'method'              => 'GET',
-					'callback'            => null,
-					'arg'                 => array(),
-					'permission_callback' => '__return_true',
-				)
-			);
+			$endpoint = wp_parse_args( $endpoint, $defaults );
 			register_rest_route(
 				static::BASE,
 				$route,
@@ -67,7 +67,17 @@ class REST_API {
 				)
 			);
 		}
+	}
 
+	/**
+	 * Basic permission callback.
+	 *
+	 * Explicitly defined to allow easier testability.
+	 *
+	 * @return bool
+	 */
+	public static function rest_can_manage_options() {
+		return current_user_can( 'manage_options' );
 	}
 
 	/**

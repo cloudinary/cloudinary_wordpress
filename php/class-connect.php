@@ -56,13 +56,6 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	private $credentials = array();
 
 	/**
-	 * Holds the handle for the media page.
-	 *
-	 * @var string
-	 */
-	public $handle;
-
-	/**
 	 * Holder of general notices.
 	 *
 	 * @var array
@@ -83,10 +76,11 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		'usage'      => '_cloudinary_usage',
 		'last_usage' => '_cloudinary_last_usage',
 		'signature'  => 'cloudinary_connection_signature',
-		'version'    => 'cloudinary_version',
+		'version'    => '_cloudinary_settings_version',
 		'url'        => 'cloudinary_url',
 		'connection' => 'cloudinary_connect',
 		'status'     => 'cloudinary_status',
+		'history'    => '_cloudinary_history',
 	);
 
 	/**
@@ -106,45 +100,122 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		add_action( 'update_option_cloudinary_connect', array( $this, 'updated_option' ) );
 		add_action( 'cloudinary_status', array( $this, 'check_status' ) );
 		add_action( 'cloudinary_version_upgrade', array( $this, 'upgrade_connection' ) );
-
 		add_filter( 'cloudinary_setting_get_value', array( $this, 'maybe_connection_string_constant' ), 10, 2 );
+		add_filter( 'cloudinary_admin_pages', array( $this, 'register_meta' ) );
+		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
 	}
 
 	/**
-	 * Add the Cloudinary media library scripts.
+	 * Add endpoints to the \Cloudinary\REST_API::$endpoints array.
+	 *
+	 * @param array $endpoints Endpoints from the filter.
+	 *
+	 * @return array
 	 */
-	public function media_library_script() {
-		$screen = get_current_screen();
-		if ( is_object( $screen ) && $screen->id === $this->handle ) {
+	public function rest_endpoints( $endpoints ) {
 
-			// External assets.
-			wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, array(), $this->plugin->version, true );
-			$params = array(
-				'nonce'     => wp_create_nonce( 'wp_rest' ),
-				'mloptions' => array(
-					'cloud_name'    => $this->credentials['cloud_name'],
-					'api_key'       => $this->credentials['api_key'],
-					'remove_header' => true,
-				),
-			);
+		$endpoints['test_connection'] = array(
+			'method'              => \WP_REST_Server::CREATABLE,
+			'callback'            => array( $this, 'rest_test_connection' ),
+			'args'                => array(),
+			'permission_callback' => array( 'Cloudinary\REST_API', 'rest_can_manage_options' ),
+		);
+		$endpoints['save_wizard']     = array(
+			'method'              => \WP_REST_Server::CREATABLE,
+			'callback'            => array( $this, 'rest_save_wizard' ),
+			'args'                => array(),
+			'permission_callback' => array( 'Cloudinary\REST_API', 'rest_can_manage_options' ),
+		);
 
-			// sign maybe.
-			if ( ! empty( $this->credentials['user_email'] ) ) {
-				$timestamp                        = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
-				$params['mloptions']['username']  = $this->credentials['user_email'];
-				$params['mloptions']['timestamp'] = (string) $timestamp;
-				$query                            = array(
-					'cloud_name' => $this->credentials['cloud_name'],
-					'timestamp'  => $timestamp,
-					'username'   => $this->credentials['user_email'] . $this->credentials['api_secret'],
-				);
-				$params['mloptions']['signature'] = hash( 'sha256', build_query( $query ) );
+		return $endpoints;
+	}
+
+	/**
+	 * Test a connection string.
+	 *
+	 * @param \WP_REST_Request $request The request.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function rest_test_connection( \WP_REST_Request $request ) {
+
+		$url    = $request->get_param( 'cloudinary_url' );
+		$result = $this->test_connection( $url );
+
+		return rest_ensure_response( $result );
+	}
+
+	/**
+	 * Save the wizard setup.
+	 *
+	 * @param \WP_REST_Request $request The request.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function rest_save_wizard( \WP_REST_Request $request ) {
+
+		$url      = $request->get_param( 'cldString' );
+		$media    = true === $request->get_param( 'mediaLibrary' ) ? 'on' : 'off';
+		$nonmedia = true === $request->get_param( 'nonMedia' ) ? 'on' : 'off';
+		$advanced = true === $request->get_param( 'advanced' ) ? 'on' : 'off';
+
+		// Cloudinary URL.
+		$connect = $this->settings->get_setting( 'cloudinary_url' );
+		$connect->set_pending( $url );
+
+		// Autosync setup.
+		$autosync = $this->settings->get_setting( 'auto_sync' );
+		$autosync->set_pending( $media );
+		$image_optimisation = $this->settings->get_setting( 'image_optimization' );
+		$image_optimisation->set_pending( $media );
+		$video_optimisation = $this->settings->get_setting( 'video_optimization' );
+		$video_optimisation->set_pending( $media );
+
+		// Non-media setup.
+		$assets = $this->settings->get_setting( 'assets' );
+
+		foreach ( $assets->get_settings() as $asset ) {
+			$paths = $asset->get_setting( 'paths' );
+			foreach ( $paths->get_settings() as $path ) {
+				$path->set_pending( $nonmedia );
 			}
-			$params['mloptions']['insert_transformation'] = true;
-			$params['mloptions']['inline_container']      = '#cloudinary-embed';
-
-			wp_add_inline_script( 'cloudinary-media-library', 'var CLD_ML = ' . wp_json_encode( $params ), 'before' );
 		}
+		$enable_nonmedia = $this->settings->get_setting( 'cache.enable' );
+		$enable_nonmedia->set_pending( $nonmedia );
+
+		// Advanced.
+		$lazyload = $this->settings->get_setting( 'use_lazy_load' );
+		$lazyload->set_pending( $advanced );
+		$breakpoints = $this->settings->get_setting( 'enable_breakpoints' );
+		$breakpoints->set_pending( $advanced );
+
+		$this->settings->save();
+
+		return rest_ensure_response( $this->settings->get_value() );
+	}
+
+	/**
+	 * Register meta data with the pages/settings.
+	 *
+	 * @param array $pages The pages array.
+	 *
+	 * @return array
+	 */
+	public function register_meta( $pages ) {
+
+		// Add data storage.
+		foreach ( self::META_KEYS as $slug => $option_name ) {
+			if ( 'url' === $slug || 'connection' === $slug ) {
+				continue; // URL and connection already set.
+			}
+			$pages['connect']['settings'][] = array(
+				'slug'        => $slug,
+				'option_name' => $option_name,
+				'type'        => 'data',
+			);
+		}
+
+		return $pages;
 	}
 
 	/**
@@ -152,18 +223,19 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 *
 	 * @param array $data The submitted data to verify.
 	 *
-	 * @return array The data if cleared.
+	 * @return array|\WP_Error The data if cleared.
 	 */
 	public function verify_connection( $data ) {
+		$admin = $this->plugin->get_component( 'admin' );
 		if ( empty( $data['cloudinary_url'] ) ) {
 			delete_option( self::META_KEYS['signature'] );
-
-			add_settings_error(
-				'cloudinary_connect',
+			$admin->add_admin_notice(
 				'connection_error',
 				__( 'Connection to Cloudinary has been removed.', 'cloudinary' ),
-				'notice-warning'
+				'error',
+				true
 			);
+			$this->plugin->settings->set_param( 'connected', false );
 
 			return $data;
 		}
@@ -178,8 +250,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 
 		// Pattern match to ensure validity of the provided url.
 		if ( ! preg_match( '~' . self::CLOUDINARY_VARIABLE_REGEX . '~', $data['cloudinary_url'] ) ) {
-			add_settings_error(
-				'cloudinary_connect',
+			$admin->add_admin_notice(
 				'format_mismatch',
 				__( 'The environment variable URL must be in this format: cloudinary://API_KEY:API_SECRET@CLOUD_NAME', 'cloudinary' ),
 				'error'
@@ -191,19 +262,23 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		$result = $this->test_connection( $data['cloudinary_url'] );
 
 		if ( ! empty( $result['message'] ) ) {
-			add_settings_error( 'cloudinary_connect', $result['type'], $result['message'], 'error' );
+			$admin->add_admin_notice(
+				$result['type'],
+				$result['message'],
+				'error'
+			);
 
 			return $current;
 		}
 
-		add_settings_error(
-			'cloudinary_connect',
+		$admin->add_admin_notice(
 			'connection_success',
 			__( 'Successfully connected to Cloudinary.', 'cloudinary' ),
 			'updated'
 		);
 
-		$this->settings->get_setting( 'signature' )->set_value( md5( $data['cloudinary_url'] ) )->save_value();
+		$this->settings->get_setting( 'signature' )->save_value( md5( $data['cloudinary_url'] ) );
+		$this->plugin->settings->set_param( 'connected', true );
 
 		return $data;
 	}
@@ -280,11 +355,12 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		$result = array(
 			'type'    => 'connection_success',
 			'message' => null,
+			'url'     => $url,
 		);
 
 		$test  = wp_parse_url( $url );
 		$valid = array_filter(
-			array_keys( $test ),
+			array_keys( (array) $test ),
 			function ( $a ) {
 				return in_array( $a, array( 'scheme', 'host', 'user', 'pass' ), true );
 			}
@@ -329,19 +405,46 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	}
 
 	/**
+	 * Get historical usage data.
+	 *
+	 * @param int $days Number of days to get.
+	 *
+	 * @return array
+	 */
+	public function history( $days = 1 ) {
+		$return  = array();
+		$history = get_option( self::META_KEYS['history'], array() );
+		for ( $i = 1; $i <= $days; $i ++ ) {
+			$date = date_i18n( 'd-m-Y', strtotime( '- ' . $i . ' days' ) );
+			if ( ! isset( $history[ $date ] ) ) {
+				$history[ $date ] = $this->api->usage( $date );
+			}
+			$return[ $date ] = $history[ $date ];
+		}
+		update_option( self::META_KEYS['history'], $history, false );
+
+		return $return;
+	}
+
+	/**
 	 * After updating the cloudinary_connect option, remove flag.
 	 */
 	public function updated_option() {
-		wp_safe_redirect(
-			add_query_arg(
-				array(
-					'page' => 'dashboard',
-					'tab'  => 'connect',
-				),
-				admin_url( 'admin.php' )
-			)
-		);
-		exit;
+		if ( ! defined( 'REST_REQUEST' ) || true !== REST_REQUEST ) {
+			$page = 'cloudinary';
+			if ( $this->is_connected() ) {
+				$page .= '_connect';
+			}
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'page' => $page,
+					),
+					admin_url( 'admin.php' )
+				)
+			);
+			exit;
+		}
 	}
 
 	/**
@@ -495,29 +598,6 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			$this->usage_stats();
 			$this->setup_status_cron();
 			$this->plugin->settings->set_param( 'connected', $this->is_connected() );
-
-			// Add cancel button.
-			if ( $this->switch_account() ) {
-				$link = array(
-					'type'       => 'link',
-					'content'    => 'Cancel',
-					'url'        => $this->settings->find_setting( 'connect' )->get_component()->get_url(),
-					'target'     => '_self',
-					'attributes' => array(
-						'class'    => array(
-							'button',
-							'button-secondary',
-						),
-						'link_tag' => array(
-							'style' => array(
-								'margin-left:12px;',
-							),
-						),
-					),
-				);
-
-				$this->settings->create_setting( 'cancel_switch', $link, $this->settings->find_setting( 'connect_button' ) );
-			}
 		}
 	}
 
@@ -595,7 +675,9 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 */
 	public function get_config() {
 		$old_version = $this->settings->get_value( 'version' );
-
+		if ( empty( $old_version ) ) {
+			$old_version = '2.0.1';
+		}
 		if ( version_compare( $this->plugin->version, $old_version, '>' ) ) {
 			/**
 			 * Do action to allow upgrading of different areas.
@@ -667,21 +749,6 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 */
 	public function get_notices() {
 		$this->usage_notices();
-		$screen             = get_current_screen();
-		$connection_setting = $this->settings->find_setting( self::META_KEYS['url'] );
-		$cloudinary_url     = $connection_setting->get_value();
-		if ( empty( $cloudinary_url ) ) {
-			$page_base = $this->settings->get_root_setting()->get_slug();
-			if ( is_object( $screen ) && $page_base === $screen->parent_base ) {
-				$url             = $connection_setting->get_option_parent()->get_component()->get_url();
-				$link            = '<a href="' . esc_url( $url ) . '">' . __( 'Connect', 'cloudinary' ) . '</a> ';
-				$this->notices[] = array(
-					'message'     => $link . __( 'your Cloudinary account with WordPress to get started.', 'cloudinary' ),
-					'type'        => 'error',
-					'dismissible' => true,
-				);
-			}
-		}
 
 		return $this->notices;
 	}
@@ -697,7 +764,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 
 		if ( version_compare( $old_version, '2.0.0', '>' ) ) {
 			// Post V1 - quick check all details are valid.
-			$data = get_option( self::META_KEYS['connection'], array() );
+			$data = $this->settings->get_value( 'connect' );
 			if ( ! isset( $data['cloudinary_url'] ) || empty( $data['cloudinary_url'] ) ) {
 				return; // Not setup at all, abort upgrade.
 			}
@@ -710,8 +777,9 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			$data = array(
 				'cloudinary_url' => $cld_url,
 			);
+			$key  = $this->settings->get_storage_key( $this->plugin->get_component( 'sync' )->settings_slug );
 			// Set auto sync off.
-			$sync = get_option( 'cloudinary_sync_media' );
+			$sync = get_option( $key );
 			if ( empty( $sync ) ) {
 				$sync = array(
 					'auto_sync'         => '',
@@ -719,7 +787,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 				);
 			}
 			$sync['auto_sync'] = 'off';
-			update_option( 'cloudinary_sync_media', $sync );
+			update_option( $key, $sync );
 			delete_option( 'cloudinary_settings_cache' ); // remove the cache.
 		}
 
@@ -794,147 +862,6 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		}
 
 		return $return;
-	}
-
-	/**
-	 * Define the Settings.
-	 *
-	 * @return array
-	 */
-	public function settings() {
-		$self = $this;
-		$url  = add_query_arg(
-			array(
-				'page' => 'media',
-				'tab'  => 'media_display',
-			),
-			admin_url( 'admin.php' )
-		);
-
-		$args = array(
-			'menu_title' => __( 'Getting Started', 'cloudinary' ),
-			'page_title' => __( 'Getting Started', 'cloudinary' ),
-			'type'       => 'page',
-			'tabs'       => array(
-				'about'   => array(
-					'page_title' => __( 'About', 'cloudinary' ),
-					array(
-						'type'  => 'info_box',
-						'title' => __( 'Welcome to Cloudinary.', 'cloudinary' ),
-						'text'  => __(
-							'Cloudinary supercharges your application media! It enables you to easily upload images and videos to the cloud and deliver them optimized, via a lightning-fast CDN, using industry best practices. Perform smart resizing, add watermarks, apply effects, and much more without leaving your WordPress console or installing any software.',
-							'cloudinary'
-						),
-					),
-					array(
-						'type'      => 'info_box',
-						'icon'      => $this->plugin->dir_url . 'css/images/crop.svg',
-						'title'     => __( 'Image Delivery Settings', 'cloudinary' ),
-						'text'      => __(
-							'Configure how your images are shown on your site. You can apply transformations to adjust the quality, format or visual appearance and define other settings such as responsive images.',
-							'cloudinary'
-						),
-						'url'       => $url . '#panel-image-settings',
-						'blank'     => false,
-						'link_text' => __( 'Image settings', 'cloudinary' ),
-					),
-					array(
-						'type'      => 'info_box',
-						'icon'      => $this->plugin->dir_url . 'css/images/video.svg',
-						'title'     => __( 'Video Settings', 'cloudinary' ),
-						'text'      => __(
-							'Configure how your videos are shown on your site. You can apply transformations to adjust the quality, format or visual appearance and define other settings such as whether to use the Cloudinary video player.',
-							'cloudinary'
-						),
-						'url'       => $url . '#panel-video-settings',
-						'blank'     => false,
-						'link_text' => __( 'Video settings', 'cloudinary' ),
-					),
-					array(
-						'type'      => 'info_box',
-						'icon'      => $this->plugin->dir_url . 'css/images/transformation.svg',
-						'title'     => __( 'Learn More', 'cloudinary' ),
-						'text'      => __(
-							'You can upload and manage your images and videos in Cloudinary directly from your WordPress interface. The plugin also supports automated (single-click) migration of all media assets from your existing posts to Cloudinary. Once your WordPress media is stored in Cloudinary, you can take advantage of Cloudinary\'s transformation, optimization, and responsive features as well as fast CDN delivery.',
-							'cloudinary'
-						),
-						'url'       => 'https://cloudinary.com/documentation/image_transformations#quick_example',
-						'link_text' => __( 'See Examples', 'cloudinary' ),
-					),
-				),
-				'connect' => array(
-					'page_title' => __( 'Connect', 'cloudinary' ),
-					array(
-						'enabled' => function () use ( $self ) {
-							return ! $self->switch_account() && $this->is_connected();
-						},
-						array(
-							'type' => 'panel',
-							array(
-								'type' => 'connect',
-							),
-						),
-						array(
-							'type' => 'switch_cloud',
-						),
-					),
-					array(
-						'enabled' => function () use ( $self ) {
-							return $self->switch_account() || ! $this->is_connected();
-						},
-						array(
-							'title' => __( 'Connect to Cloudinary!', 'cloudinary' ),
-							'type'  => 'panel',
-							array(
-								'content' => __( 'You need to connect your Cloudinary account to WordPress by adding your unique connection string. See below for where to find this.', 'cloudinary' ),
-							),
-							array(
-								'placeholder'  => 'cloudinary://API_KEY:API_SECRET@CLOUD_NAME',
-								'slug'         => self::META_KEYS['url'],
-								'title'        => __( 'Connection string', 'cloudinary' ),
-								'tooltip_text' => __(
-									'The connection string is made up of your Cloudinary Cloud name, API Key and API Secret and known as the API Environment Variable. This authenticates the Cloudinary WordPress plugin with your Cloudinary account.',
-									'cloudinary'
-								),
-								'type'         => 'text',
-								'attributes'   => array(
-									'class' => array(
-										'connection-string',
-									),
-								),
-							),
-						),
-						array(
-							'label' => __( 'Connect', 'cloudinary' ),
-							'type'  => 'submit',
-							'slug'  => 'connect_button',
-						),
-						array(
-							'collapsible' => 'open',
-							'title'       => __( 'Where to find my Connection string?', 'cloudinary' ),
-							'type'        => 'panel',
-							array(
-								'content' => $this->get_connection_string_content(),
-							),
-						),
-					),
-				),
-			),
-		);
-
-		// Add data storage.
-		foreach ( self::META_KEYS as $slug => $option_name ) {
-			if ( 'url' === $slug ) {
-				continue; // URL already set.
-			}
-			$args[] = array(
-				'slug'        => $slug,
-				'option_name' => $option_name,
-				'type'        => 'data',
-			);
-		}
-
-		return $args;
 	}
 
 	/**

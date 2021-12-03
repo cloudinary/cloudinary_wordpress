@@ -1,0 +1,61 @@
+// Main page. Headers/Footers.
+&-settings {
+	margin-left: -20px;
+}
+
+&-page {
+	@import "tabs";
+
+	&-header {
+		background-color: $color-cld-blue;
+		display: flex;
+		padding: 16px;
+		align-items: center;
+		margin-bottom: 0;
+		justify-content: space-between;
+		flex-direction: column;
+
+		@media only screen and (min-width: $size-small) {
+			flex-direction: initial;
+		}
+
+		img {
+			width: 150px;
+		}
+
+		&-button {
+			background-color: $color-cld-dark-blue;
+			color: #fff;
+			text-decoration: none;
+			padding: 5px 14px;
+			border-radius: 4px;
+			font-weight: bold;
+			margin: 1em 0 0 9px;
+			display: inline-block;
+
+			@media only screen and (min-width: $size-small) {
+				margin-top: 0;
+			}
+
+			&:hover, &:focus {
+				color: #fff;
+				text-decoration: none;
+			}
+		}
+
+		&-logo {
+			display: flex;
+			align-items: center;
+			.version{
+				margin-left: 12px;
+				color: $color-white;
+				font-size: 10px;
+			}
+		}
+
+		p {
+			font-size: $size-button;
+			margin: 0;
+		}
+	}
+}

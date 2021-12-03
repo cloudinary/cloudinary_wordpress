@@ -36,6 +36,7 @@ class Color extends Text {
 	protected function input( $struct ) {
 		$struct                                     = parent::input( $struct );
 		$struct['attributes']['type']               = 'text';
+		$struct['attributes']['class'][]            = str_replace( '.', '-', $this->get_id() );
 		$struct['attributes']['data-alpha-enabled'] = true;
 		$struct['attributes']['data-default-color'] = $this->setting->get_param( 'default' );
 
@@ -56,7 +57,11 @@ class Color extends Text {
 			( function( $ ) {
 				// Add Color Picker init script.
 				$( function() {
-					$( '#<?php echo esc_attr( $this->setting->get_slug() ); ?>' ).wpColorPicker();
+					$( '.<?php echo esc_attr( str_replace( '.', '-', $this->get_id() ) ); ?>' ).wpColorPicker( {
+						change: function( event ) {
+							event.target.dispatchEvent( new Event( 'input' ) );
+						}
+					} );
 				} );
 			} )( jQuery );
 		</script>
@@ -65,4 +70,16 @@ class Color extends Text {
 		return $return;
 	}
 
+	/**
+	 * Filter the description parts structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function description( $struct ) {
+		$struct            = parent::description( $struct );
+		$struct['element'] = 'div';
+		return $struct;
+	}
 }

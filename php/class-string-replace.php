@@ -47,7 +47,7 @@ class String_Replace implements Setup {
 		foreach ( $types as $type ) {
 			$post_type = get_post_type_object( $type );
 			// Check if this is a rest supported type.
-			if ( true === $post_type->show_in_rest ) {
+			if ( property_exists( $post_type, 'show_in_rest' ) && true === $post_type->show_in_rest ) {
 				// Add filter only to rest supported types.
 				add_filter( 'rest_prepare_' . $type, array( $this, 'pre_filter_rest_content' ), 10, 3 );
 			}
@@ -91,12 +91,12 @@ class String_Replace implements Setup {
 	 * @return null|string
 	 */
 	public function init_debug( $template ) {
-		if ( defined( 'WP_DEBUG' ) && true === WP_DEBUG ) {
+		if ( defined( 'WP_DEBUG' ) && true === WP_DEBUG && ! filter_input( INPUT_GET, '_bypass', FILTER_SANITIZE_STRING ) ) {
 			ob_start();
 			include $template;
 			$html = ob_get_clean();
 			echo $this->replace_strings( $html ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			$template = null;
+			$template = $this->plugin->template_path . 'blank-template.php';
 		}
 
 		return $template;

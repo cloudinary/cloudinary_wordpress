@@ -8,6 +8,7 @@
 namespace Cloudinary\UI\Component;
 
 use Cloudinary\Utils;
+use function Cloudinary\get_plugin_instance;
 
 /**
  * Page Class Component
@@ -205,14 +206,12 @@ class Page extends Panel {
 	 * @return string
 	 */
 	public function get_url() {
+		$admin = get_plugin_instance()->get_component( 'admin' );
 
+		$slug = $admin->get_param( 'active_slug' );
 		$args = array(
-			'page' => $this->setting->get_slug(),
+			'page' => $this->setting->get_root_setting()->get_slug() . '_' . $slug,
 		);
-		if ( $this->setting->has_parent() && $this->setting->get_parent()->has_param( 'has_tabs' ) ) {
-			$args['tab']  = $args['page'];
-			$args['page'] = $this->setting->get_parent()->get_slug();
-		}
 
 		return add_query_arg( $args, admin_url( 'admin.php' ) );
 	}

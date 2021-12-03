@@ -7,8 +7,11 @@
 
 namespace Cloudinary\Delivery;
 
-use Cloudinary\Delivery_Feature;
 use Cloudinary\Connect\Api;
+use Cloudinary\Delivery_Feature;
+use Cloudinary\Plugin;
+use Cloudinary\UI\Component\HTML;
+use Cloudinary\Utils;
 
 /**
  * Class Responsive_Breakpoints
@@ -22,7 +25,7 @@ class Lazy_Load extends Delivery_Feature {
 	 *
 	 * @var string
 	 */
-	protected $settings_slug = 'lazy_load';
+	protected $settings_slug = 'media_display';
 
 	/**
 	 * Holds the enabler slug.
@@ -30,6 +33,44 @@ class Lazy_Load extends Delivery_Feature {
 	 * @var string
 	 */
 	protected $enable_slug = 'use_lazy_load';
+
+	/**
+	 * Lazy_Load constructor.
+	 *
+	 * @param \Cloudinary\Plugin $plugin The main instance of the plugin.
+	 */
+	public function __construct( Plugin $plugin ) {
+		parent::__construct( $plugin );
+		add_filter( 'cloudinary_image_tag-disabled', array( $this, 'js_noscript' ), 10, 2 );
+	}
+
+	/**
+	 * Wrap image tags in noscript to allow no-javascript browsers to get images.
+	 *
+	 * @param string $tag         The original html tag.
+	 * @param array  $tag_element The original tag_element.
+	 *
+	 * @return string
+	 */
+	public function js_noscript( $tag, $tag_element ) {
+
+		$options          = $tag_element['atts'];
+		$options['class'] = implode( ' ', $options['class'] );
+
+		unset(
+			$options['srcset'],
+			$options['sizes'],
+			$options['loading'],
+			$options['src'],
+			$options['class']
+		);
+		$atts = array(
+			'data-image' => wp_json_encode( $options ),
+		);
+
+		return HTML::build_tag( 'noscript', $atts ) . $tag . HTML::build_tag( 'noscript', null, 'close' );
+
+	}
 
 	/**
 	 * Get the placeholder generation transformations.
@@ -96,74 +137,71 @@ class Lazy_Load extends Delivery_Feature {
 	/**
 	 * Add features to a tag element set.
 	 *
-	 * @param array  $tag_element   The tag element set.
-	 * @param int    $attachment_id The attachment id.
-	 * @param string $original_tag  The original html tag.
+	 * @param array $tag_element The tag element set.
 	 *
 	 * @return array
 	 */
-	public function add_features( $tag_element, $attachment_id, $original_tag ) {
+	public function add_features( $tag_element ) {
+		if ( Utils::is_amp() ) {
+			return $tag_element;
+		}
 
-		$settings = $this->settings->get_value();
+		// Bypass file formats that shouldn't be lazy loaded.
+		if (
+			in_array(
+				$tag_element['format'],
+				/**
+				 * Filter out file formats for Lazy Load.
+				 *
+				 * @hook  cloudinary_lazy_load_bypass_formats
+				 * @since 3.0.0
+				 *
+				 * @param $formats {array) The list of formats to exclude.
+				 */
+				apply_filters( 'cloudinary_lazy_load_bypass_formats', array( 'svg' ) ),
+				true
+			)
+		) {
+			return $tag_element;
+		}
 
-		$meta = wp_get_attachment_metadata( $attachment_id, true );
-		$size = array(
-			'100%',
-			'100%',
+		$sizes = array(
+			$tag_element['width'],
+			$tag_element['height'],
 		);
-		if ( isset( $meta['width'] ) ) {
-			$size[0] = $meta['width'];
-		}
-		if ( isset( $meta['height'] ) ) {
-			$size[1] = $meta['height'];
-		}
-		$format = $this->media->get_settings()->get_value( 'image_format' );
 
+		// Capture the original size.
+		$tag_element['atts']['data-size'] = array_filter( $sizes );
+
+		$colors    = $this->config['lazy_custom_color'];
+		$animation = array(
+			$colors,
+		);
+		if ( 'on' === $this->config['lazy_animate'] ) {
+			preg_match_all( '/(\d\.*)+/', $colors, $matched );
+			$fade        = $matched[0];
+			$fade[3]     = 0.1;
+			$fade        = 'rgba(' . implode( ',', $fade ) . ')';
+			$animation[] = $fade;
+			$animation[] = $colors;
+		}
+		$colors = implode( ';', $animation );
+
+		// Add svg placeholder.
+		$svg                        = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $tag_element['atts']['width'] . '" height="' . $tag_element['atts']['height'] . '"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $colors . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
+		$tag_element['atts']['src'] = 'data:image/svg+xml;utf8,' . $svg;
 		if ( isset( $tag_element['atts']['srcset'] ) ) {
 			$tag_element['atts']['data-srcset'] = $tag_element['atts']['srcset'];
-			unset( $tag_element['atts']['srcset'] );
+			$tag_element['atts']['data-sizes']  = $tag_element['atts']['sizes'];
+			unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 		}
-		$src = $tag_element['atts']['src'];
-		if ( ! $this->media->is_cloudinary_url( $src ) ) {
-			$src = $this->media->cloudinary_url( $attachment_id, array(), array(), null, $tag_element['cld-overwrite'] );
+		if ( ! is_admin() ) {
+			$tag_element['atts']['data-delivery'] = $this->media->get_media_delivery( $tag_element['id'] );
+			$tag_element['atts']['onload']        = 'CLDBind(this)';
 		}
-		$tag_element['atts']['data-src'] = $src;
-		$transformations                 = $this->media->get_transformations_from_string( $src );
-		$placehold_transformations       = $transformations;
-		$original_string                 = Api::generate_transformation_string( $transformations );
-
-		// placeholder.
-		if ( 'off' !== $settings['lazy_placeholder'] ) {
-			// Remove the optimize (last) transformation.
-			array_pop( $placehold_transformations );
-			$placehold_transformations               = array_merge( $placehold_transformations, $this->get_placeholder_transformations( $settings['lazy_placeholder'] ) );
-			$palcehold_str                           = Api::generate_transformation_string( $placehold_transformations );
-			$placeholder                             = str_replace( $original_string, $palcehold_str, $src );
-			$tag_element['atts']['data-placeholder'] = $placeholder;
-		}
-
-		$color_str = $settings['lazy_custom_color'];
-		if ( 'on' === $settings['lazy_animate'] ) {
-			preg_match_all( '/[0-9.^]+/', $settings['lazy_custom_color'], $custom );
-			$colors = array_shift( $custom );
-			if ( ! isset( $colors[3] ) ) {
-				$colors[3] = 1;
-			}
-
-			$color1    = 'rgba(' . $colors[0] . ',' . $colors[1] . ',' . $colors[2] . ',' . $colors[3] . ')';
-			$color2    = 'rgba(' . $colors[0] . ',' . $colors[1] . ',' . $colors[2] . ',0)';
-			$color_str = $color1 . ';' . $color2 . ';' . $color1;
-		}
-		$svg                              = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $size[0] . '" height="' . $size[1] . '"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $color_str . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
-		$tag_element['atts']['src']       = 'data:image/svg+xml;utf8,' . $svg;
-		$tag_element['atts']['data-type'] = $format;
-
-		unset( $tag_element['atts']['loading'] );
-		$tag_element['atts']['decoding']   = 'async';
-		$tag_element['atts']['data-width'] = $size[0];
-		$tag_element['delivery']           = 'cld';
 
 		return $tag_element;
+
 	}
 
 	/**
@@ -177,9 +215,21 @@ class Lazy_Load extends Delivery_Feature {
 	 * Apply front end filters on the enqueue_assets hook.
 	 */
 	public function enqueue_assets() {
-		wp_enqueue_script( 'cld-lazy-load' );
-		$config = $this->settings->get_parent()->get_value(); // Get top most config.
-		wp_add_inline_script( 'cld-lazy-load', 'var CLDLB = ' . wp_json_encode( $config ), 'before' );
+		$config = $this->config; // Get top most config.
+		if ( 'off' !== $config['lazy_placeholder'] ) {
+			$config['placeholder'] = API::generate_transformation_string( $this->get_placeholder_transformations( $config['lazy_placeholder'] ) );
+		}
+		$config['base_url'] = $this->media->base_url;
+		Utils::print_inline_tag( 'var CLDLB = ' . wp_json_encode( $config ) . ';' . file_get_contents( $this->plugin->dir_path . 'js/inline-loader.js' ) );
+	}
+
+	/**
+	 * Enqueue assets if not AMP.
+	 */
+	public function maybe_enqueue_assets() {
+		if ( ! Utils::is_amp() ) {
+			parent::maybe_enqueue_assets();
+		}
 	}
 
 	/**
@@ -193,102 +243,138 @@ class Lazy_Load extends Delivery_Feature {
 	}
 
 	/**
-	 * Define the settings.
+	 * Add the settings.
+	 *
+	 * @param array $pages The pages to add to.
 	 *
 	 * @return array
 	 */
-	public function settings() {
+	public function register_settings( $pages ) {
 
-		$args = array(
-			'type'        => 'group',
-			'title'       => __( 'Lazy Loading', 'cloudinary' ),
-			'priority'    => 9,
-			'collapsible' => 'open',
-			array(
-				'type'        => 'on_off',
-				'description' => __( 'Enable lazy loading', 'cloudinary' ),
-				'slug'        => 'use_lazy_load',
-				'default'     => 'on',
-			),
-			array(
-				'type'      => 'group',
-				'condition' => array(
-					'use_lazy_load' => true,
-				),
+		$pages['lazy_loading'] = array(
+			'page_title'          => __( 'Lazy loading', 'cloudinary' ),
+			'menu_title'          => __( 'Lazy loading', 'cloudinary' ),
+			'priority'            => 5,
+			'requires_connection' => true,
+			'sidebar'             => true,
+			'settings'            => array(
 				array(
-					'type'       => 'text',
-					'title'      => __( 'Lazy loading threshold', 'cloudinary' ),
-					'slug'       => 'lazy_threshold',
-					'attributes' => array(
-						'style'            => array(
-							'width:100px;display:block;',
+					'type'        => 'panel',
+					'title'       => __( 'Lazy Loading', 'cloudinary' ),
+					'priority'    => 9,
+					'option_name' => 'media_display',
+					array(
+						'type' => 'tabs',
+						'tabs' => array(
+							'image_setting' => array(
+								'text' => __( 'Settings', 'cloudinary' ),
+								'id'   => 'settings',
+							),
+							'image_preview' => array(
+								'text' => __( 'Preview', 'cloudinary' ),
+								'id'   => 'preview',
+							),
 						),
-						'data-auto-suffix' => '*px;em;rem;vh',
 					),
-					'default'    => '1000px',
-				),
-				array(
-					'type'      => 'radio',
-					'title'     => __( 'Placeholder generation', 'cloudinary' ),
-					'slug'      => 'lazy_placeholder',
-					'default'   => 'blur',
-					'condition' => array(
-						'enable_breakpoints' => true,
+					array(
+						'type' => 'row',
+						array(
+							'type'   => 'column',
+							'tab_id' => 'settings',
+							array(
+								'type'               => 'on_off',
+								'description'        => __( 'Enable lazy loading', 'cloudinary' ),
+								'tooltip_text'       => __( 'Lazy loading delays the initialization of your web assets to improve page load times.', 'cloudinary' ),
+								'optimisation_title' => __( 'Lazy loading', 'cloudinary' ),
+								'slug'               => 'use_lazy_load',
+								'default'            => 'on',
+							),
+							array(
+								'type'      => 'group',
+								'condition' => array(
+									'use_lazy_load' => true,
+								),
+								array(
+									'type'         => 'text',
+									'title'        => __( 'Lazy loading threshold', 'cloudinary' ),
+									'tooltip_text' => __( 'How far down the page to start lazy loading assets.', 'cloudinary' ),
+									'slug'         => 'lazy_threshold',
+									'attributes'   => array(
+										'style'            => array(
+											'width:100px;display:block;',
+										),
+										'data-auto-suffix' => '*px;em;rem;vh',
+									),
+									'default'      => '100px',
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'hr',
+								),
+								array(
+									'type'        => 'color',
+									'title'       => __( 'Pre-loader color', 'cloudinary' ),
+									'description' => __(
+										'On page load, the pre-loader is used to fill the space while the image is downloaded, preventing content shift.',
+										'cloudinary'
+									),
+									'slug'        => 'lazy_custom_color',
+									'default'     => 'rgba(153,153,153,0.5)',
+								),
+								array(
+									'type'        => 'on_off',
+									'description' => __( 'Pre-loader animation', 'cloudinary' ),
+									'slug'        => 'lazy_animate',
+									'default'     => 'on',
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'hr',
+								),
+								array(
+									'type'        => 'radio',
+									'title'       => __( 'Placeholder generation type', 'cloudinary' ),
+									'description' => __(
+										"Placeholders are low-res representations of the image, that's loaded below the fold. They are then replaced with the actual image, just before it comes into view.",
+										'cloudinary'
+									),
+									'slug'        => 'lazy_placeholder',
+									'default'     => 'blur',
+									'condition'   => array(
+										'use_lazy_load' => true,
+									),
+									'options'     => array(
+										'blur'        => __( 'Blur', 'cloudinary' ),
+										'pixelate'    => __( 'Pixelate', 'cloudinary' ),
+										'vectorize'   => __( 'Vectorize', 'cloudinary' ),
+										'predominant' => __( 'Dominant Color', 'cloudinary' ),
+										'off'         => __( 'Off', 'cloudinary' ),
+									),
+								),
+							),
+						),
+						array(
+							'type'      => 'column',
+							'tab_id'    => 'preview',
+							'class'     => array(
+								'cld-ui-preview',
+							),
+							'condition' => array(
+								'use_lazy_load' => true,
+							),
+							array(
+								'type'    => 'lazyload_preview',
+								'title'   => __( 'Preview', 'cloudinary' ),
+								'slug'    => 'lazyload_preview',
+								'default' => CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE . 'w_600/sample.jpg',
+							),
+						),
 					),
-					'options'   => array(
-						'blur'        => __( 'Blur', 'cloudinary' ),
-						'pixelate'    => __( 'Pixelate', 'cloudinary' ),
-						'vectorize'   => __( 'Vectorize', 'cloudinary' ),
-						'predominant' => __( 'Dominant Color', 'cloudinary' ),
-						'off'         => __( 'Off', 'cloudinary' ),
-					),
-				),
-				array(
-					'type'    => 'color',
-					'title'   => __( 'Use custom color', 'cloudinary' ),
-					'slug'    => 'lazy_custom_color',
-					'default' => 'rgba(153,153,153,0.5)',
-				),
-				array(
-					'type'    => 'on_off',
-					'title'   => __( 'Animate', 'cloudinary' ),
-					'slug'    => 'lazy_animate',
-					'default' => 'on',
+
 				),
 			),
 		);
 
-		return $args;
-	}
-
-	/**
-	 * Register the setting under media.
-	 */
-	protected function register_settings() {
-
-		// Move setting to media.
-		$media_settings = $this->media->get_settings()->get_setting( 'image_display' );
-
-		// Add to media.
-		$media_settings->add_setting( $this->settings );
-
-		// Reset the option parent.
-		$this->settings->get_option_parent()->set_value( null );
-
-		$condition = array(
-			'use_lazy_load' => false,
-		);
-		$bk        = $media_settings->get_setting( 'breakpoints' );
-		$bk->set_param( 'condition', $condition );
-		$bk->rebuild_component();
-
-		$image_breakpoints = $media_settings->get_setting( 'image_breakpoints' );
-		$bytes_step        = $image_breakpoints->get_setting( 'bytes_step' );
-		$condition         = array(
-			'use_lazy_load' => false,
-		);
-		$bytes_step->set_param( 'condition', $condition );
-		$bytes_step->rebuild_component();
-
+		return $pages;
 	}
 }
