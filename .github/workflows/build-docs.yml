@@ -1,0 +1,23 @@
+name: Build Cloudinary Docs
+
+on:
+ push:
+   branches:
+    - master
+
+jobs:
+  hookdocs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup node
+      uses: actions/setup-node@v2
+      with:
+        node-version: '12.x'
+    - run: npm install
+    - run: npm run build:docs
+    - name: Deploy to GH Pages
+      uses: maxheld83/ghpages@v0.3.0
+      env:
+        BUILD_DIR: 'docs/'
+        GH_PAT: ${{ secrets.GH_PAT }}
