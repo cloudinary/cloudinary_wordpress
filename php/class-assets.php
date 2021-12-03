@@ -283,8 +283,6 @@ class Assets extends Settings_Component {
 	/**
 	 * Filter out sizes for assets.
 	 *
-	 * @hook intermediate_image_sizes_advanced
-	 *
 	 * @param array    $new_sizes     The sizes to remove.
 	 * @param array    $image_meta    The image meta.
 	 * @param int|null $attachment_id The asset ID.
