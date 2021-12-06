@@ -145,6 +145,26 @@ class Lazy_Load extends Delivery_Feature {
 		if ( Utils::is_amp() ) {
 			return $tag_element;
 		}
+
+		// Bypass file formats that shouldn't be lazy loaded.
+		if (
+			in_array(
+				$tag_element['format'],
+				/**
+				 * Filter out file formats for Lazy Load.
+				 *
+				 * @hook  cloudinary_lazy_load_bypass_formats
+				 * @since 3.0.0
+				 *
+				 * @param $formats {array) The list of formats to exclude.
+				 */
+				apply_filters( 'cloudinary_lazy_load_bypass_formats', array( 'svg' ) ),
+				true
+			)
+		) {
+			return $tag_element;
+		}
+
 		$sizes = array(
 			$tag_element['width'],
 			$tag_element['height'],

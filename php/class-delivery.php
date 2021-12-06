@@ -177,6 +177,12 @@ class Delivery implements Setup {
 	public function is_deliverable( $attachment_id ) {
 		$is = wp_attachment_is_image( $attachment_id ) || wp_attachment_is( 'video', $attachment_id );
 
+		// Ensure that the attachment has dimensions to be delivered.
+		if ( $is ) {
+			$meta = wp_get_attachment_metadata( $attachment_id, true );
+			$is   = ! empty( $meta['width'] ) && ! empty( $meta['height'] );
+		}
+
 		/**
 		 * Filter deliverable attachments.
 		 *
@@ -228,22 +234,6 @@ class Delivery implements Setup {
 		// Update public ID and type.
 		self::update_size_relations_public_id( $attachment_id, $public_id );
 		$this->sync->set_signature_item( $attachment_id, 'relation' );
-	}
-
-	/**
-	 * Filter delivery for TIFF images.
-	 *
-	 * @param bool $is            Is deliverable attachment.
-	 * @param int  $attachment_id The attachment ID.
-	 *
-	 * @return bool
-	 */
-	public function bypass_delivery_tiff( $is, $attachment_id ) {
-		if ( wp_attachment_is_image( $attachment_id ) && 'image/tiff' === get_post_mime_type( $attachment_id ) ) {
-			$is = false;
-		}
-
-		return $is;
 	}
 
 	/**
@@ -477,8 +467,6 @@ class Delivery implements Setup {
 		add_filter( 'cloudinary_current_post_id', array( $this, 'get_current_post_id' ) );
 		add_filter( 'the_content', array( $this, 'add_post_id' ) );
 		add_action( 'wp_resource_hints', array( $this, 'dns_prefetch' ), 10, 2 );
-
-		add_filter( 'cloudinary_is_deliverable', array( $this, 'bypass_delivery_tiff' ), 10, 2 );
 
 		// Clear cache on taxonomy update.
 		$taxonomies = get_taxonomies( array( 'show_ui' => true ) );
@@ -915,18 +903,20 @@ class Delivery implements Setup {
 		 */
 		if ( apply_filters( 'cloudinary_apply_breakpoints', true ) ) {
 			$meta = wp_get_attachment_metadata( $tag_element['id'] );
-			// Check overwrite.
-			$meta['overwrite_transformations'] = $tag_element['overwrite_transformations'];
-			$meta['cloudinary_id']             = $tag_element['atts']['data-public-id'];
-			// Add new srcset.
-			$element = wp_image_add_srcset_and_sizes( $tag_element['original'], $meta, $tag_element['id'] );
+			if ( ! empty( $meta['width'] ) && ! empty( $meta['height'] ) ) {
+				// Check overwrite.
+				$meta['overwrite_transformations'] = $tag_element['overwrite_transformations'];
+				$meta['cloudinary_id']             = $tag_element['atts']['data-public-id'];
+				// Add new srcset.
+				$element = wp_image_add_srcset_and_sizes( $tag_element['original'], $meta, $tag_element['id'] );
 
-			$atts = Utils::get_tag_attributes( $element );
-			if ( ! empty( $atts['srcset'] ) ) {
-				$tag_element['atts']['srcset'] = $atts['srcset'];
-			}
-			if ( ! empty( $atts['sizes'] ) ) {
-				$tag_element['atts']['sizes'] = $atts['sizes'];
+				$atts = Utils::get_tag_attributes( $element );
+				if ( ! empty( $atts['srcset'] ) ) {
+					$tag_element['atts']['srcset'] = $atts['srcset'];
+				}
+				if ( ! empty( $atts['sizes'] ) ) {
+					$tag_element['atts']['sizes'] = $atts['sizes'];
+				}
 			}
 		}
 

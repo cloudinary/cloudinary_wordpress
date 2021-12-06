@@ -1331,13 +1331,24 @@ class Media extends Settings_Component implements Setup {
 			$parts           = array(
 				'https:/',
 				$api->asset_url,
-				$api->credentials['cloud_name'],
-				$this->get_resource_type( $attachment_id ),
-				$this->get_media_delivery( $attachment_id ),
-				$api::generate_transformation_string( $transformations ),
-				'v' . $this->get_cloudinary_version( $attachment_id ),
-				$this->get_cloudinary_id( $attachment_id ),
 			);
+
+			// We should use the cloud name on cname accounts.
+			if ( empty( $this->credentials['cname'] ) ) {
+				$parts[] = $api->credentials['cloud_name'];
+			}
+
+			$parts = array_merge(
+				$parts,
+				array(
+					$this->get_resource_type( $attachment_id ),
+					$this->get_media_delivery( $attachment_id ),
+					$api::generate_transformation_string( $transformations ),
+					'v' . $this->get_cloudinary_version( $attachment_id ),
+					$this->get_cloudinary_id( $attachment_id ),
+				)
+			);
+
 			$url             = implode( '/', array_filter( $parts ) );
 			$this->update_post_meta( $attachment_id, Sync::META_KEYS['raw_url'], $url );
 		}
