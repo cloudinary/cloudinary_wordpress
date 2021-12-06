@@ -1,8 +1,8 @@
 === Cloudinary – Image and Video Optimization, Manipulation, and Delivery ===
 Contributors: Cloudinary, XWP, Automattic
-Tags: image, video, DAM, optimization, CDN
+Tags: images, videos, DAM, optimization, CDN
 Requires at least: 4.7
-Tested up to: 5.8.1
+Tested up to: 5.8.2
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -11,11 +11,10 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Use Cloudinary's plugin to efficiently create, manage and deliver images, videos, and other media, personalized and optimized for every device and channel.
 
 == Description ==
-Cloudinary's [award-winning plugin](https://www.businesswire.com/news/home/20200923005566/en/Cloudinary-Wins-2020-MarTech-Breakthrough-Award-for-Best-WordPress-Plugin) makes automating your image, video, and rich media workflow easy, offering a variety of features. From media upload to image optimization, video transcoding and transformations through delivery via global CDNs, everything is offered from within the plugin.
-
-https://youtu.be/B1Jx5hB1Ijk
 
 Cloudinary’s [award-winning plugin](https://www.businesswire.com/news/home/20200923005566/en/Cloudinary-Wins-2020-MarTech-Breakthrough-Award-for-Best-WordPress-Plugin) makes automating your image, video, and visual media workflows easy, offering a variety of features. From image and video upload through management, transformation, optimization, and global CDN delivery, all features are offered within the plugin. Users can get started in minutes with a true plug-and-play solution paired with an intuitive onboarding wizard helping deliver optimized and responsive media out-of-the-box.
+
+https://youtu.be/B1Jx5hB1Ijk
 
 On top of that, users can also leverage a dashboard giving insights into optimization metrics and data usage so there are never any surprises. No matter if your use case is for personal use or business needs, the Cloudinary plugin offers enterprise quality and architecture for all.
 
@@ -130,7 +129,7 @@ Your site is now setup to start using Cloudinary.
 1. DAM-Powered Media Library
 1. Easy Generation of Asset Derivatives
 1. Automatically Deliver Responsive Images
-1. Global Image Transformation Settings”60
+1. Global Image Transformation Settings
 1. Global Video Transformation Settings
 1. Improve web performance with Lazy Loading assets
 1. Display assets in a customizable and responsive product gallery
@@ -142,6 +141,24 @@ Your site is now setup to start using Cloudinary.
 1. Need help? We’ve got you covered
 
 == Changelog ==
+
+= 3.0.0 (06 December 2021) =
+
+Release of a new major version of the plugin
+
+* Entire new look and feel
+* New set-up wizard for a quick and simple configuration
+* New Dashboard displaying the optimization level of your site’s assets
+* New improved section of the dashboard displaying your Cloudinary’s plan details
+* New levels of optimization settings across the plugin screens
+* New asset sync settings which allows to sync additional media files such as themes & plugins
+* New External Asset Sync settings from specific external sources with Cloudinary
+* Cloudinary DAM as a new extension of the plugin
+* New lazy loading controls with built in simulation!
+* Added a preview to the Responsive images settings which now includes new DPR control
+* Granular control of asset transformations within the WordPress media library
+* New Cloudinary status as an extra information overlay on the frontend - images only
+* Brand new Help Centre screen
 
 = 2.7.7 (11 October 2021) =
 
