@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Source: php/delivery/class-lazy-load.php - Cloudinary Docs</title>
+
+	<script src="scripts/prettify/prettify.js"></script>
+	<script src="scripts/prettify/lang-css.js"></script>
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+	<link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+
+	<link
+			href="https://fonts.googleapis.com/css?family=IBM+Plex+Mono|IBM+Plex+Sans:300,400|Playfair+Display:900&display=swap"
+			rel="stylesheet">
+</head>
+
+<body>
+
+<div id="main">
+
+	
+	<h1 class="page-title">Source: php/delivery/class-lazy-load.php</h1>
+	
+
+	
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>&lt;?php
+/**
+ * Lazy Load.
+ *
+ * @package Cloudinary
+ */
+
+namespace Cloudinary\Delivery;
+
+use Cloudinary\Connect\Api;
+use Cloudinary\Delivery_Feature;
+use Cloudinary\Plugin;
+use Cloudinary\UI\Component\HTML;
+use Cloudinary\Utils;
+
+/**
+ * Class Responsive_Breakpoints
+ *
+ * @package Cloudinary
+ */
+class Lazy_Load extends Delivery_Feature {
+
+	/**
+	 * Holds the settings slug.
+	 *
+	 * @var string
+	 */
+	protected $settings_slug = 'media_display';
+
+	/**
+	 * Holds the enabler slug.
+	 *
+	 * @var string
+	 */
+	protected $enable_slug = 'use_lazy_load';
+
+	/**
+	 * Lazy_Load constructor.
+	 *
+	 * @param \Cloudinary\Plugin $plugin The main instance of the plugin.
+	 */
+	public function __construct( Plugin $plugin ) {
+		parent::__construct( $plugin );
+		add_filter( 'cloudinary_image_tag-disabled', array( $this, 'js_noscript' ), 10, 2 );
+	}
+
+	/**
+	 * Wrap image tags in noscript to allow no-javascript browsers to get images.
+	 *
+	 * @param string $tag         The original html tag.
+	 * @param array  $tag_element The original tag_element.
+	 *
+	 * @return string
+	 */
+	public function js_noscript( $tag, $tag_element ) {
+
+		$options          = $tag_element['atts'];
+		$options['class'] = implode( ' ', $options['class'] );
+
+		unset(
+			$options['srcset'],
+			$options['sizes'],
+			$options['loading'],
+			$options['src'],
+			$options['class']
+		);
+		$atts = array(
+			'data-image' => wp_json_encode( $options ),
+		);
+
+		return HTML::build_tag( 'noscript', $atts ) . $tag . HTML::build_tag( 'noscript', null, 'close' );
+
+	}
+
+	/**
+	 * Get the placeholder generation transformations.
+	 *
+	 * @param string $placeholder The placeholder to get.
+	 *
+	 * @return array
+	 */
+	public function get_placeholder_transformations( $placeholder ) {
+
+		$transformations = array(
+			'predominant' => array(
+				array(
+					'$currWidth'  => 'w',
+					'$currHeight' => 'h',
+				),
+				array(
+					'width'        => 'iw_div_2',
+					'aspect_ratio' => 1,
+					'crop'         => 'pad',
+					'background'   => 'auto',
+				),
+				array(
+					'crop'    => 'crop',
+					'width'   => 10,
+					'height'  => 10,
+					'gravity' => 'north_east',
+				),
+				array(
+					'width'  => '$currWidth',
+					'height' => '$currHeight',
+					'crop'   => 'fill',
+				),
+				array(
+					'fetch_format' => 'auto',
+					'quality'      => 'auto',
+				),
+			),
+			'vectorize'   => array(
+				array(
+					'effect'       => 'vectorize:3:0.1',
+					'fetch_format' => 'svg',
+				),
+			),
+			'blur'        => array(
+				array(
+					'effect'       => 'blur:2000',
+					'quality'      => 1,
+					'fetch_format' => 'auto',
+				),
+			),
+			'pixelate'    => array(
+				array(
+					'effect'       => 'pixelate',
+					'quality'      => 1,
+					'fetch_format' => 'auto',
+				),
+			),
+		);
+
+		return $transformations[ $placeholder ];
+	}
+
+	/**
+	 * Add features to a tag element set.
+	 *
+	 * @param array $tag_element The tag element set.
+	 *
+	 * @return array
+	 */
+	public function add_features( $tag_element ) {
+		if ( Utils::is_amp() ) {
+			return $tag_element;
+		}
+
+		// Bypass file formats that shouldn't be lazy loaded.
+		if (
+			in_array(
+				$tag_element['format'],
+				/**
+				 * Filter out file formats for Lazy Load.
+				 *
+				 * @hook  cloudinary_lazy_load_bypass_formats
+				 * @since 3.0.0
+				 *
+				 * @param $formats {array) The list of formats to exclude.
+				 *
+				 * @return {array}
+				 */
+				apply_filters( 'cloudinary_lazy_load_bypass_formats', array( 'svg' ) ),
+				true
+			)
+		) {
+			return $tag_element;
+		}
+
+		$sizes = array(
+			$tag_element['width'],
+			$tag_element['height'],
+		);
+
+		// Capture the original size.
+		$tag_element['atts']['data-size'] = array_filter( $sizes );
+
+		$colors    = $this->config['lazy_custom_color'];
+		$animation = array(
+			$colors,
+		);
+		if ( 'on' === $this->config['lazy_animate'] ) {
+			preg_match_all( '/(\d\.*)+/', $colors, $matched );
+			$fade        = $matched[0];
+			$fade[3]     = 0.1;
+			$fade        = 'rgba(' . implode( ',', $fade ) . ')';
+			$animation[] = $fade;
+			$animation[] = $colors;
+		}
+		$colors = implode( ';', $animation );
+
+		// Add svg placeholder.
+		$svg                        = '&lt;svg xmlns="http://www.w3.org/2000/svg" width="' . $tag_element['atts']['width'] . '" height="' . $tag_element['atts']['height'] . '">&lt;rect width="100%" height="100%">&lt;animate attributeName="fill" values="' . $colors . '" dur="2s" repeatCount="indefinite" />&lt;/rect>&lt;/svg>';
+		$tag_element['atts']['src'] = 'data:image/svg+xml;utf8,' . $svg;
+		if ( isset( $tag_element['atts']['srcset'] ) ) {
+			$tag_element['atts']['data-srcset'] = $tag_element['atts']['srcset'];
+			$tag_element['atts']['data-sizes']  = $tag_element['atts']['sizes'];
+			unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
+		}
+		if ( ! is_admin() ) {
+			$tag_element['atts']['data-delivery'] = $this->media->get_media_delivery( $tag_element['id'] );
+			$tag_element['atts']['onload']        = 'CLDBind(this)';
+		}
+
+		return $tag_element;
+
+	}
+
+	/**
+	 * Register front end hooks.
+	 */
+	public function register_assets() {
+		wp_register_script( 'cld-lazy-load', $this->plugin->dir_url . 'js/lazy-load.js', null, $this->plugin->version, false );
+	}
+
+	/**
+	 * Apply front end filters on the enqueue_assets hook.
+	 */
+	public function enqueue_assets() {
+		$config = $this->config; // Get top most config.
+		if ( 'off' !== $config['lazy_placeholder'] ) {
+			$config['placeholder'] = API::generate_transformation_string( $this->get_placeholder_transformations( $config['lazy_placeholder'] ) );
+		}
+		$config['base_url'] = $this->media->base_url;
+		Utils::print_inline_tag( 'var CLDLB = ' . wp_json_encode( $config ) . ';' . file_get_contents( $this->plugin->dir_path . 'js/inline-loader.js' ) );
+	}
+
+	/**
+	 * Enqueue assets if not AMP.
+	 */
+	public function maybe_enqueue_assets() {
+		if ( ! Utils::is_amp() ) {
+			parent::maybe_enqueue_assets();
+		}
+	}
+
+	/**
+	 * Check if component is active.
+	 *
+	 * @return bool
+	 */
+	public function is_active() {
+
+		return ! is_admin();
+	}
+
+	/**
+	 * Add the settings.
+	 *
+	 * @param array $pages The pages to add to.
+	 *
+	 * @return array
+	 */
+	public function register_settings( $pages ) {
+
+		$pages['lazy_loading'] = array(
+			'page_title'          => __( 'Lazy loading', 'cloudinary' ),
+			'menu_title'          => __( 'Lazy loading', 'cloudinary' ),
+			'priority'            => 5,
+			'requires_connection' => true,
+			'sidebar'             => true,
+			'settings'            => array(
+				array(
+					'type'        => 'panel',
+					'title'       => __( 'Lazy Loading', 'cloudinary' ),
+					'priority'    => 9,
+					'option_name' => 'media_display',
+					array(
+						'type' => 'tabs',
+						'tabs' => array(
+							'image_setting' => array(
+								'text' => __( 'Settings', 'cloudinary' ),
+								'id'   => 'settings',
+							),
+							'image_preview' => array(
+								'text' => __( 'Preview', 'cloudinary' ),
+								'id'   => 'preview',
+							),
+						),
+					),
+					array(
+						'type' => 'row',
+						array(
+							'type'   => 'column',
+							'tab_id' => 'settings',
+							array(
+								'type'               => 'on_off',
+								'description'        => __( 'Enable lazy loading', 'cloudinary' ),
+								'tooltip_text'       => __( 'Lazy loading delays the initialization of your web assets to improve page load times.', 'cloudinary' ),
+								'optimisation_title' => __( 'Lazy loading', 'cloudinary' ),
+								'slug'               => 'use_lazy_load',
+								'default'            => 'on',
+							),
+							array(
+								'type'      => 'group',
+								'condition' => array(
+									'use_lazy_load' => true,
+								),
+								array(
+									'type'         => 'text',
+									'title'        => __( 'Lazy loading threshold', 'cloudinary' ),
+									'tooltip_text' => __( 'How far down the page to start lazy loading assets.', 'cloudinary' ),
+									'slug'         => 'lazy_threshold',
+									'attributes'   => array(
+										'style'            => array(
+											'width:100px;display:block;',
+										),
+										'data-auto-suffix' => '*px;em;rem;vh',
+									),
+									'default'      => '100px',
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'hr',
+								),
+								array(
+									'type'        => 'color',
+									'title'       => __( 'Pre-loader color', 'cloudinary' ),
+									'description' => __(
+										'On page load, the pre-loader is used to fill the space while the image is downloaded, preventing content shift.',
+										'cloudinary'
+									),
+									'slug'        => 'lazy_custom_color',
+									'default'     => 'rgba(153,153,153,0.5)',
+								),
+								array(
+									'type'        => 'on_off',
+									'description' => __( 'Pre-loader animation', 'cloudinary' ),
+									'slug'        => 'lazy_animate',
+									'default'     => 'on',
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'hr',
+								),
+								array(
+									'type'        => 'radio',
+									'title'       => __( 'Placeholder generation type', 'cloudinary' ),
+									'description' => __(
+										"Placeholders are low-res representations of the image, that's loaded below the fold. They are then replaced with the actual image, just before it comes into view.",
+										'cloudinary'
+									),
+									'slug'        => 'lazy_placeholder',
+									'default'     => 'blur',
+									'condition'   => array(
+										'use_lazy_load' => true,
+									),
+									'options'     => array(
+										'blur'        => __( 'Blur', 'cloudinary' ),
+										'pixelate'    => __( 'Pixelate', 'cloudinary' ),
+										'vectorize'   => __( 'Vectorize', 'cloudinary' ),
+										'predominant' => __( 'Dominant Color', 'cloudinary' ),
+										'off'         => __( 'Off', 'cloudinary' ),
+									),
+								),
+							),
+						),
+						array(
+							'type'      => 'column',
+							'tab_id'    => 'preview',
+							'class'     => array(
+								'cld-ui-preview',
+							),
+							'condition' => array(
+								'use_lazy_load' => true,
+							),
+							array(
+								'type'    => 'lazyload_preview',
+								'title'   => __( 'Preview', 'cloudinary' ),
+								'slug'    => 'lazyload_preview',
+								'default' => CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE . 'w_600/sample.jpg',
+							),
+						),
+					),
+
+				),
+			),
+		);
+
+		return $pages;
+	}
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+	<h2><a href="index.html">Home</a></h2><h3>Actions</h3><ul><li><a href="cloudinary_connected.html">cloudinary_connected</a></li><li><a href="cloudinary_flush_cache.html">cloudinary_flush_cache</a></li><li><a href="cloudinary_id.html">cloudinary_id</a></li><li><a href="cloudinary_init_delivery.html">cloudinary_init_delivery</a></li><li><a href="cloudinary_init_settings.html">cloudinary_init_settings</a></li><li><a href="cloudinary_queue_action.html">cloudinary_queue_action</a></li><li><a href="cloudinary_ready.html">cloudinary_ready</a></li><li><a href="cloudinary_register_sync_types.html">cloudinary_register_sync_types</a></li><li><a href="cloudinary_string_replace.html">cloudinary_string_replace</a></li><li><a href="cloudinary_unsync_asset.html">cloudinary_unsync_asset</a></li><li><a href="cloudinary_version_upgrade.html">cloudinary_version_upgrade</a></li></ul><h3>Filters</h3><ul><li><a href="cloudinary_admin_image_settings.html">cloudinary_admin_image_settings</a></li><li><a href="cloudinary_admin_pages.html">cloudinary_admin_pages</a></li><li><a href="cloudinary_admin_video_settings.html">cloudinary_admin_video_settings</a></li><li><a href="cloudinary_allowed_extensions.html">cloudinary_allowed_extensions</a></li><li><a href="cloudinary_api_rest_endpoints.html">cloudinary_api_rest_endpoints</a></li><li><a href="cloudinary_apply_breakpoints.html">cloudinary_apply_breakpoints</a></li><li><a href="cloudinary_apply_default_transformations.html">cloudinary_apply_default_transformations</a></li><li><a href="cloudinary_asset_state.html">cloudinary_asset_state</a></li><li><a href="cloudinary_autosync_threads.html">cloudinary_autosync_threads</a></li><li><a href="cloudinary_build_queue_query.html">cloudinary_build_queue_query</a></li><li><a href="cloudinary_bypass_cache.html">cloudinary_bypass_cache</a></li><li><a href="cloudinary_can_sync_asset.html">cloudinary_can_sync_asset</a></li><li><a href="cloudinary_context_options.html">cloudinary_context_options</a></li><li><a href="cloudinary_convert_media_types.html">cloudinary_convert_media_types</a></li><li><a href="cloudinary_converted_url.html">cloudinary_converted_url</a></li><li><a href="cloudinary_cron_frequency.html">cloudinary_cron_frequency</a></li><li><a href="cloudinary_cron_start_offset.html">cloudinary_cron_start_offset</a></li><li><a href="cloudinary_current_post_id.html">cloudinary_current_post_id</a></li><li><a href="cloudinary_default_freeform_transformations_%257B$type%257D.html">cloudinary_default_freeform_transformations_{$type}</a></li><li><a href="cloudinary_default_qf_transformations_%257B$type%257D.html">cloudinary_default_qf_transformations_{$type}</a></li><li><a href="cloudinary_default_transformations.html">cloudinary_default_transformations</a></li><li><a href="cloudinary_delivery_get_id.html">cloudinary_delivery_get_id</a></li><li><a href="cloudinary_doing_upload.html">cloudinary_doing_upload</a></li><li><a href="cloudinary_filter_out_local.html">cloudinary_filter_out_local</a></li><li><a href="cloudinary_gallery_config.html">cloudinary_gallery_config</a></li><li><a href="cloudinary_gallery_html_container.html">cloudinary_gallery_html_container</a></li><li><a href="cloudinary_get_signature.html">cloudinary_get_signature</a></li><li><a href="cloudinary_is_content_dir.html">cloudinary_is_content_dir</a></li><li><a href="cloudinary_is_deliverable.html">cloudinary_is_deliverable</a></li><li><a href="cloudinary_is_folder_synced.html">cloudinary_is_folder_synced</a></li><li><a href="cloudinary_is_media.html">cloudinary_is_media</a></li><li><a href="cloudinary_is_uploadable_media.html">cloudinary_is_uploadable_media</a></li><li><a href="cloudinary_lazy_load_bypass_formats.html">cloudinary_lazy_load_bypass_formats</a></li><li><a href="cloudinary_local_url.html">cloudinary_local_url</a></li><li><a href="cloudinary_media_filters.html">cloudinary_media_filters</a></li><li><a href="cloudinary_media_status.html">cloudinary_media_status</a></li><li><a href="cloudinary_media_types.html">cloudinary_media_types</a></li><li><a href="cloudinary_migrate_legacy_meta.html">cloudinary_migrate_legacy_meta</a></li><li><a href="cloudinary_on_demand_sync_limit.html">cloudinary_on_demand_sync_limit</a></li><li><a href="cloudinary_plugin_asset_cache_filters.html">cloudinary_plugin_asset_cache_filters</a></li><li><a href="cloudinary_plugin_asset_cache_inline_types.html">cloudinary_plugin_asset_cache_inline_types</a></li><li><a href="cloudinary_prepare_size.html">cloudinary_prepare_size</a></li><li><a href="cloudinary_preview_types.html">cloudinary_preview_types</a></li><li><a href="cloudinary_queue_threads.html">cloudinary_queue_threads</a></li><li><a href="cloudinary_raw_url.html">cloudinary_raw_url</a></li><li><a href="cloudinary_register_extensions.html">cloudinary_register_extensions</a></li><li><a href="cloudinary_resource_type.html">cloudinary_resource_type</a></li><li><a href="cloudinary_setting_get_value.html">cloudinary_setting_get_value</a></li><li><a href="cloudinary_settings_save_setting.html">cloudinary_settings_save_setting</a></li><li><a href="cloudinary_setup_component_parts.html">cloudinary_setup_component_parts</a></li><li><a href="cloudinary_sync_base.html">cloudinary_sync_base</a></li><li><a href="cloudinary_sync_base_struct.html">cloudinary_sync_base_struct</a></li><li><a href="cloudinary_syncable_delivery_types.html">cloudinary_syncable_delivery_types</a></li><li><a href="cloudinary_task_capability.html">cloudinary_task_capability</a></li><li><a href="cloudinary_task_capability_%257Btask%257D.html">cloudinary_task_capability_{task}</a></li><li><a href="cloudinary_thread_queue_details_query.html">cloudinary_thread_queue_details_query</a></li><li><a href="cloudinary_transformations.html">cloudinary_transformations</a></li><li><a href="cloudinary_upload_options.html">cloudinary_upload_options</a></li><li><a href="cloudinary_validate_cloudinary_id.html">cloudinary_validate_cloudinary_id</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+	<a href="https://cloudinary.com/" target="_blank" rel="noopener noreferrer">Cloudinary</a> |
+	<a href="https://github.com/cloudinary/cloudinary_wordpress/" target="_blank" rel="noopener noreferrer">Cloudinary
+		on GitHub</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>

@@ -43,6 +43,7 @@ namespace Cloudinary\Sync;
 
 use Cloudinary\Sync;
 use Cloudinary\Settings\Setting;
+use Cloudinary\Utils;
 
 /**
  * Class Sync_Queue.
@@ -301,6 +302,8 @@ class Sync_Queue {
 				break;
 		}
 
+		$return = wp_parse_args( $return, $default );
+
 		return $return;
 	}
 
@@ -312,6 +315,7 @@ class Sync_Queue {
 	 * @return int|false
 	 */
 	public function get_post( $thread ) {
+
 		$return = false;
 		if ( ( $this->is_running( $this->get_thread_type( $thread ) ) ) ) {
 			$thread_queue = $this->get_thread_queue( $thread );
@@ -356,6 +360,121 @@ class Sync_Queue {
 	}
 
 	/**
+	 * Get the data from _cloudinary_relationships. We need to get a count of all assets, which have public_id's, group by type etc.
+	 *
+	 * @return array
+	 */
+	protected function query_unsynced_data() {
+		global $wpdb;
+
+		$cached = get_transient( Sync::META_KEYS['dashboard_cache'] );
+		if ( empty( $cached ) ) {
+			$wpdb->cld_table              = Utils::get_relationship_table();
+			$return['total_assets']       = (int) $wpdb->get_var( "SELECT COUNT( DISTINCT post_id ) as total FROM {$wpdb->cld_table};" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$return['unoptimized_assets'] = (int) $wpdb->get_var( "SELECT COUNT( DISTINCT post_id ) as total FROM {$wpdb->cld_table} WHERE public_id IS NULL;" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+
+			$asset_sizes           = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				$wpdb->prepare(
+					"SELECT
+			SUM( meta_value ) as total, meta_key as type
+		FROM
+		{$wpdb->cld_table} AS cld
+		RIGHT JOIN {$wpdb->postmeta} AS wp ON ( cld.post_id = wp.post_id )
+		WHERE
+			meta_key IN ( %s,%s )
+		GROUP BY meta_key",
+					Sync::META_KEYS['local_size'],
+					Sync::META_KEYS['remote_size']
+				),
+				ARRAY_A
+			);
+			$return['asset_sizes'] = array(
+				'local'  => 0,
+				'remote' => 0,
+			);
+			foreach ( $asset_sizes as $set ) {
+				$type                           = Sync::META_KEYS['local_size'] === $set['type'] ? 'local' : 'remote';
+				$return['asset_sizes'][ $type ] = (int) $set['total'];
+			}
+
+			$threads                = $this->autosync_threads;
+			$primary_queue          = array_shift( $threads );
+			$return['total_queued'] = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s;", $primary_queue ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$return['errors']       = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s;", Sync::META_KEYS['sync_error'] ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+
+			set_transient( Sync::META_KEYS['dashboard_cache'], $return, 15 );
+			$cached = $return;
+		}
+
+		return $cached;
+	}
+
+	/**
+	 * Get the sync status.
+	 *
+	 * @return array
+	 */
+	public function get_total_synced_media() {
+
+		$data = $this->query_unsynced_data();
+
+		if ( empty( $data['asset_sizes'] ) || empty( $data['asset_sizes']['local'] ) ) {
+			return array(); // Nothing - don't do calculations.
+		}
+		// Lets calculate byte sizes.
+		$total_local_size  = $data['asset_sizes']['local'];
+		$total_remote_size = $data['asset_sizes']['remote'];
+		$total_assets      = $data['total_assets'];
+		$total_unoptimized = $data['unoptimized_assets'] - $data['total_queued']; // Queued is removed from unoptimized count.
+		$total_optimized   = $data['total_assets'] - $data['unoptimized_assets'];
+		$total_queued      = $data['total_queued'];
+		$errors_count      = $data['errors'];
+		// Remove negative.
+		if ( 0 > $total_unoptimized ) {
+			$total_unoptimized = 0;
+		}
+		$unoptimized_text = __( 'All assets optimized.', 'cloudinary' );
+		if ( 0 &lt; $total_queued &amp;&amp; 0 === $total_unoptimized ) {
+			$unoptimized_text = __( 'Optimizing assets.', 'cloudinary' );
+		}
+		// Prepare the package.
+		$return = array(
+			// Original sizes.
+			'original_size'           => $total_local_size,
+			'original_size_percent'   => '100%', // The original will always be 100%, as it's the comparison to optimized.
+			'original_size_hr'        => size_format( $total_local_size ),
+
+			// Optimized size. We use the `original_size` to determine the percentage between for the progress bar.
+			'optimized_size'          => $total_remote_size,
+			'optimized_size_percent'  => round( abs( $total_remote_size ) / abs( $total_local_size ) * 100 ) . '%', // This is the percentage difference.
+			'optimized_diff_percent'  => round( ( $total_local_size - $total_remote_size ) / $total_local_size * 100 ) . '%', // We use this for the "Size saved.." status text.
+			'optimized_size_hr'       => size_format( $total_remote_size ), // This is the formatted byte size.
+
+			// Optimized is the % optimized vs unoptimized.
+			'optimized_percent'       => round( $total_optimized / $total_assets, 4 ),
+			'optimized_percent_hr'    => round( $total_optimized / $total_assets * 100, 1 ) . '%',
+			'optimized_info'          => __( 'Optimized assets', 'cloudinary' ),
+
+			// Error size: No mockups on what to display here.
+			'error_count'             => $errors_count,
+			// translators: placeholders are the number of errors.
+			'error_count_hr'          => 0 === $errors_count ? '' : sprintf( _n( '%s error with assets.', '%s errors with assets', $errors_count, 'cloudinary' ), number_format_i18n( $errors_count ) ),
+
+			// Number of assets.
+			'total_assets'            => $total_assets, // This is a count of the assets in _cloudinary_relationships.
+			'total_unoptimized'       => $total_optimized, // This is the number of assets that dont have a public_id in _cloudinary_relationships.
+
+			// Status text.
+			// translators: placeholders are the number of assets unoptimized.
+			'unoptimized_status_text' => 0 === $total_unoptimized ? $unoptimized_text : sprintf( _n( '%s asset excluded from optimization.', '%s assets excluded from optimization.', $total_unoptimized, 'cloudinary' ), number_format_i18n( $total_unoptimized ) ),
+			// translators: placeholders are the number of assets unoptimized.
+			'optimized_status_text'   => 0 !== $total_queued ? sprintf( __( '%1$s assets of %2$s currently syncing with Cloudinary.', 'cloudinary' ), number_format_i18n( $total_queued ), number_format_i18n( $total_assets ) ) : '', // This will be shown when items are pending (check queue).
+		);
+
+		return $return;
+	}
+
+	/**
 	 * Build the upload sync queue.
 	 */
 	public function build_queue() {
@@ -364,6 +483,7 @@ class Sync_Queue {
 			'post_type'           => 'attachment',
 			'post_mime_type'      => array( 'image', 'video' ),
 			'post_status'         => 'inherit',
+			'paged'               => 1,
 			'posts_per_page'      => 100,
 			'fields'              => 'ids',
 			// phpcs:ignore WordPress.DB.SlowDBQuery
@@ -389,8 +509,8 @@ class Sync_Queue {
 		/**
 		 * Filter the params for the query used to build a queue.
 		 *
-		 * @hook  cloudinary_build_queue_query
-		 * @since 2.7.6
+		 * @hook   cloudinary_build_queue_query
+		 * @since  2.7.6
 		 *
 		 * @param $args {array} The arguments for the query.
 		 *
@@ -424,7 +544,13 @@ class Sync_Queue {
 
 			return;
 		}
-		$ids = $query->get_posts();
+		$ids = array();
+		do {
+			$ids  = array_merge( $ids, $query->get_posts() );
+			$args = $query->query_vars;
+			$args['paged'] ++;
+			$query = new \WP_Query( $args );
+		} while ( $query->have_posts() );
 
 		$threads          = $this->add_to_queue( $ids );
 		$queue['total']   = array_sum( $threads );
@@ -750,7 +876,15 @@ class Sync_Queue {
 			'autosync' => $this->autosync_threads,
 		);
 
-		return $types[ $type ];
+		if ( 'all' === $type ) {
+			return $types;
+		}
+
+		if ( isset( $types[ $type ] ) ) {
+			return $types[ $type ];
+		}
+
+		return array();
 	}
 
 	/**
@@ -792,7 +926,7 @@ class Sync_Queue {
 	 *
 	 * @param string $thread Thread name.
 	 */
-	protected function reset_thread_queue( $thread ) {
+	public function reset_thread_queue( $thread ) {
 		delete_option( $this->get_thread_option( $thread ) );
 	}
 
@@ -890,7 +1024,7 @@ class Sync_Queue {
 </div>
 
 <nav>
-	<h2><a href="index.html">Home</a></h2><h3>Actions</h3><ul><li><a href="cloudinary_id.html">cloudinary_id</a></li><li><a href="cloudinary_init_delivery.html">cloudinary_init_delivery</a></li><li><a href="cloudinary_init_settings.html">cloudinary_init_settings</a></li><li><a href="cloudinary_queue_action.html">cloudinary_queue_action</a></li><li><a href="cloudinary_register_sync_types.html">cloudinary_register_sync_types</a></li><li><a href="cloudinary_string_replace.html">cloudinary_string_replace</a></li><li><a href="cloudinary_version_upgrade.html">cloudinary_version_upgrade</a></li><li><a href="shutdown.html">shutdown</a></li></ul><h3>Filters</h3><ul><li><a href="cloudinary_admin_footer.html">cloudinary_admin_footer</a></li><li><a href="cloudinary_admin_header.html">cloudinary_admin_header</a></li><li><a href="cloudinary_admin_images_tab_global_transformations.html">cloudinary_admin_images_tab_global_transformations</a></li><li><a href="cloudinary_admin_pages.html">cloudinary_admin_pages</a></li><li><a href="cloudinary_admin_video_tab_global_transformations.html">cloudinary_admin_video_tab_global_transformations</a></li><li><a href="cloudinary_api_rest_endpoints.html">cloudinary_api_rest_endpoints</a></li><li><a href="cloudinary_apply_default_transformations.html">cloudinary_apply_default_transformations</a></li><li><a href="cloudinary_asset_state.html">cloudinary_asset_state</a></li><li><a href="cloudinary_autosync_threads.html">cloudinary_autosync_threads</a></li><li><a href="cloudinary_beta.html">cloudinary_beta</a></li><li><a href="cloudinary_build_queue_query.html">cloudinary_build_queue_query</a></li><li><a href="cloudinary_bypass_cache.html">cloudinary_bypass_cache</a></li><li><a href="cloudinary_can_sync_asset.html">cloudinary_can_sync_asset</a></li><li><a href="cloudinary_context_options.html">cloudinary_context_options</a></li><li><a href="cloudinary_convert_media_types.html">cloudinary_convert_media_types</a></li><li><a href="cloudinary_converted_url.html">cloudinary_converted_url</a></li><li><a href="cloudinary_cron_frequency.html">cloudinary_cron_frequency</a></li><li><a href="cloudinary_cron_start_offset.html">cloudinary_cron_start_offset</a></li><li><a href="cloudinary_current_post_id.html">cloudinary_current_post_id</a></li><li><a href="cloudinary_default_freeform_transformations_%257B$type%257D.html">cloudinary_default_freeform_transformations_{$type}</a></li><li><a href="cloudinary_default_qf_transformations_%257B$type%257D.html">cloudinary_default_qf_transformations_{$type}</a></li><li><a href="cloudinary_default_transformations.html">cloudinary_default_transformations</a></li><li><a href="cloudinary_delivery_get_id.html">cloudinary_delivery_get_id</a></li><li><a href="cloudinary_doing_upload.html">cloudinary_doing_upload</a></li><li><a href="cloudinary_filter_out_local.html">cloudinary_filter_out_local</a></li><li><a href="cloudinary_gallery_config.html">cloudinary_gallery_config</a></li><li><a href="cloudinary_gallery_html_container.html">cloudinary_gallery_html_container</a></li><li><a href="cloudinary_get_setting_params.html">cloudinary_get_setting_params</a></li><li><a href="cloudinary_get_signature.html">cloudinary_get_signature</a></li><li><a href="cloudinary_is_folder_synced.html">cloudinary_is_folder_synced</a></li><li><a href="cloudinary_is_local_asset_url.html">cloudinary_is_local_asset_url</a></li><li><a href="cloudinary_is_media.html">cloudinary_is_media</a></li><li><a href="cloudinary_is_uploadable_media.html">cloudinary_is_uploadable_media</a></li><li><a href="cloudinary_media_status.html">cloudinary_media_status</a></li><li><a href="cloudinary_media_types.html">cloudinary_media_types</a></li><li><a href="cloudinary_migrate_legacy_meta.html">cloudinary_migrate_legacy_meta</a></li><li><a href="cloudinary_on_demand_sync_limit.html">cloudinary_on_demand_sync_limit</a></li><li><a href="cloudinary_plugin_asset_cache_filters.html">cloudinary_plugin_asset_cache_filters</a></li><li><a href="cloudinary_plugin_asset_cache_inline_types.html">cloudinary_plugin_asset_cache_inline_types</a></li><li><a href="cloudinary_pre_image_tag.html">cloudinary_pre_image_tag</a></li><li><a href="cloudinary_prepare_size.html">cloudinary_prepare_size</a></li><li><a href="cloudinary_preview_types.html">cloudinary_preview_types</a></li><li><a href="cloudinary_queue_threads.html">cloudinary_queue_threads</a></li><li><a href="cloudinary_resource_type.html">cloudinary_resource_type</a></li><li><a href="cloudinary_setting_get_value.html">cloudinary_setting_get_value</a></li><li><a href="cloudinary_settings_enabled_%257B$sub_setting-_get_slug()%257D.html">cloudinary_settings_enabled_{$sub_setting->get_slug()}</a></li><li><a href="cloudinary_settings_save_setting.html">cloudinary_settings_save_setting</a></li><li><a href="cloudinary_settings_save_setting_%257B$slug%257D.html">cloudinary_settings_save_setting_{$slug}</a></li><li><a href="cloudinary_setup_component_parts.html">cloudinary_setup_component_parts</a></li><li><a href="cloudinary_sync_base.html">cloudinary_sync_base</a></li><li><a href="cloudinary_sync_base_struct.html">cloudinary_sync_base_struct</a></li><li><a href="cloudinary_syncable_delivery_types.html">cloudinary_syncable_delivery_types</a></li><li><a href="cloudinary_task_capability.html">cloudinary_task_capability</a></li><li><a href="cloudinary_task_capability_%257Btask%257D.html">cloudinary_task_capability_{task}</a></li><li><a href="cloudinary_thread_queue_details_query.html">cloudinary_thread_queue_details_query</a></li><li><a href="cloudinary_transformations.html">cloudinary_transformations</a></li><li><a href="cloudinary_upload_options.html">cloudinary_upload_options</a></li><li><a href="cloudinary_validate_cloudinary_id.html">cloudinary_validate_cloudinary_id</a></li><li><a href="delete_post_metadata.html">delete_post_metadata</a></li><li><a href="get_attached_file.html">get_attached_file</a></li><li><a href="get_post_metadata.html">get_post_metadata</a></li><li><a href="intermediate_image_sizes_advanced.html">intermediate_image_sizes_advanced</a></li><li><a href="wp_update_attachment_metadata.html">wp_update_attachment_metadata</a></li></ul>
+	<h2><a href="index.html">Home</a></h2><h3>Actions</h3><ul><li><a href="cloudinary_connected.html">cloudinary_connected</a></li><li><a href="cloudinary_flush_cache.html">cloudinary_flush_cache</a></li><li><a href="cloudinary_id.html">cloudinary_id</a></li><li><a href="cloudinary_init_delivery.html">cloudinary_init_delivery</a></li><li><a href="cloudinary_init_settings.html">cloudinary_init_settings</a></li><li><a href="cloudinary_queue_action.html">cloudinary_queue_action</a></li><li><a href="cloudinary_ready.html">cloudinary_ready</a></li><li><a href="cloudinary_register_sync_types.html">cloudinary_register_sync_types</a></li><li><a href="cloudinary_string_replace.html">cloudinary_string_replace</a></li><li><a href="cloudinary_unsync_asset.html">cloudinary_unsync_asset</a></li><li><a href="cloudinary_version_upgrade.html">cloudinary_version_upgrade</a></li></ul><h3>Filters</h3><ul><li><a href="cloudinary_admin_image_settings.html">cloudinary_admin_image_settings</a></li><li><a href="cloudinary_admin_pages.html">cloudinary_admin_pages</a></li><li><a href="cloudinary_admin_video_settings.html">cloudinary_admin_video_settings</a></li><li><a href="cloudinary_allowed_extensions.html">cloudinary_allowed_extensions</a></li><li><a href="cloudinary_api_rest_endpoints.html">cloudinary_api_rest_endpoints</a></li><li><a href="cloudinary_apply_breakpoints.html">cloudinary_apply_breakpoints</a></li><li><a href="cloudinary_apply_default_transformations.html">cloudinary_apply_default_transformations</a></li><li><a href="cloudinary_asset_state.html">cloudinary_asset_state</a></li><li><a href="cloudinary_autosync_threads.html">cloudinary_autosync_threads</a></li><li><a href="cloudinary_build_queue_query.html">cloudinary_build_queue_query</a></li><li><a href="cloudinary_bypass_cache.html">cloudinary_bypass_cache</a></li><li><a href="cloudinary_can_sync_asset.html">cloudinary_can_sync_asset</a></li><li><a href="cloudinary_context_options.html">cloudinary_context_options</a></li><li><a href="cloudinary_convert_media_types.html">cloudinary_convert_media_types</a></li><li><a href="cloudinary_converted_url.html">cloudinary_converted_url</a></li><li><a href="cloudinary_cron_frequency.html">cloudinary_cron_frequency</a></li><li><a href="cloudinary_cron_start_offset.html">cloudinary_cron_start_offset</a></li><li><a href="cloudinary_current_post_id.html">cloudinary_current_post_id</a></li><li><a href="cloudinary_default_freeform_transformations_%257B$type%257D.html">cloudinary_default_freeform_transformations_{$type}</a></li><li><a href="cloudinary_default_qf_transformations_%257B$type%257D.html">cloudinary_default_qf_transformations_{$type}</a></li><li><a href="cloudinary_default_transformations.html">cloudinary_default_transformations</a></li><li><a href="cloudinary_delivery_get_id.html">cloudinary_delivery_get_id</a></li><li><a href="cloudinary_doing_upload.html">cloudinary_doing_upload</a></li><li><a href="cloudinary_filter_out_local.html">cloudinary_filter_out_local</a></li><li><a href="cloudinary_gallery_config.html">cloudinary_gallery_config</a></li><li><a href="cloudinary_gallery_html_container.html">cloudinary_gallery_html_container</a></li><li><a href="cloudinary_get_signature.html">cloudinary_get_signature</a></li><li><a href="cloudinary_is_content_dir.html">cloudinary_is_content_dir</a></li><li><a href="cloudinary_is_deliverable.html">cloudinary_is_deliverable</a></li><li><a href="cloudinary_is_folder_synced.html">cloudinary_is_folder_synced</a></li><li><a href="cloudinary_is_media.html">cloudinary_is_media</a></li><li><a href="cloudinary_is_uploadable_media.html">cloudinary_is_uploadable_media</a></li><li><a href="cloudinary_lazy_load_bypass_formats.html">cloudinary_lazy_load_bypass_formats</a></li><li><a href="cloudinary_local_url.html">cloudinary_local_url</a></li><li><a href="cloudinary_media_filters.html">cloudinary_media_filters</a></li><li><a href="cloudinary_media_status.html">cloudinary_media_status</a></li><li><a href="cloudinary_media_types.html">cloudinary_media_types</a></li><li><a href="cloudinary_migrate_legacy_meta.html">cloudinary_migrate_legacy_meta</a></li><li><a href="cloudinary_on_demand_sync_limit.html">cloudinary_on_demand_sync_limit</a></li><li><a href="cloudinary_plugin_asset_cache_filters.html">cloudinary_plugin_asset_cache_filters</a></li><li><a href="cloudinary_plugin_asset_cache_inline_types.html">cloudinary_plugin_asset_cache_inline_types</a></li><li><a href="cloudinary_prepare_size.html">cloudinary_prepare_size</a></li><li><a href="cloudinary_preview_types.html">cloudinary_preview_types</a></li><li><a href="cloudinary_queue_threads.html">cloudinary_queue_threads</a></li><li><a href="cloudinary_raw_url.html">cloudinary_raw_url</a></li><li><a href="cloudinary_register_extensions.html">cloudinary_register_extensions</a></li><li><a href="cloudinary_resource_type.html">cloudinary_resource_type</a></li><li><a href="cloudinary_setting_get_value.html">cloudinary_setting_get_value</a></li><li><a href="cloudinary_settings_save_setting.html">cloudinary_settings_save_setting</a></li><li><a href="cloudinary_setup_component_parts.html">cloudinary_setup_component_parts</a></li><li><a href="cloudinary_sync_base.html">cloudinary_sync_base</a></li><li><a href="cloudinary_sync_base_struct.html">cloudinary_sync_base_struct</a></li><li><a href="cloudinary_syncable_delivery_types.html">cloudinary_syncable_delivery_types</a></li><li><a href="cloudinary_task_capability.html">cloudinary_task_capability</a></li><li><a href="cloudinary_task_capability_%257Btask%257D.html">cloudinary_task_capability_{task}</a></li><li><a href="cloudinary_thread_queue_details_query.html">cloudinary_thread_queue_details_query</a></li><li><a href="cloudinary_transformations.html">cloudinary_transformations</a></li><li><a href="cloudinary_upload_options.html">cloudinary_upload_options</a></li><li><a href="cloudinary_validate_cloudinary_id.html">cloudinary_validate_cloudinary_id</a></li></ul>
 </nav>
 
 <br class="clear">
