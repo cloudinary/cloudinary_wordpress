@@ -1,0 +1,67 @@
+// Non-media library assets.
+
+&-pagenav {
+	margin-top: 5px;
+	line-height: 2.4em;
+	color: #555;
+
+	&-text {
+		margin: 0 2em;
+	}
+}
+
+&-delete {
+	color: $color-red;
+	cursor: pointer;
+	float: right;
+}
+
+&-apply {
+	&-action {
+		float: right;
+	}
+}
+
+&-table {
+	thead {
+		tr {
+			th.cld-table-th {
+				line-height: 1.8em;
+			}
+		}
+	}
+
+}
+
+&-asset {
+	.cld-input-on-off {
+		display: inline-block;
+	}
+
+	.cld-input-label {
+		display: inline-block;
+		margin-bottom: 0;
+	}
+
+	&-edit {
+		display: flex;
+		align-items: flex-end;
+
+		&-button.button.button-primary {
+			padding: 3px 14px 4px;
+		}
+	}
+
+	&-preview {
+		&-label {
+			font-weight: bolder;
+			width: 100%;
+			margin-right: 10px;
+		}
+
+		&-input {
+			width: 100%;
+			margin-top: 6px;
+		}
+	}
+}

@@ -8,6 +8,8 @@
 namespace Cloudinary\Connect;
 
 use function Cloudinary\get_plugin_instance;
+use Cloudinary\Plugin;
+use Cloudinary\Media;
 
 /**
  * Class API.
@@ -43,6 +45,13 @@ class Api {
 	 * @var string
 	 */
 	public $plugin_version;
+
+	/**
+	 * Holds the media instance.
+	 *
+	 * @var Media
+	 */
+	protected $media;
 
 	/**
 	 * List of cloudinary transformations.
@@ -140,6 +149,16 @@ class Api {
 		if ( ! empty( $this->credentials['cname'] ) ) {
 			$this->asset_url = $this->credentials['cname'];
 		}
+		add_action( 'cloudinary_ready', array( $this, 'setup' ) );
+	}
+
+	/**
+	 * Setup the API
+	 *
+	 * @param Plugin $plugin The plugin instance.
+	 */
+	public function setup( Plugin $plugin ) {
+		$this->media = $plugin->get_component( 'media' );
 	}
 
 	/**
@@ -254,7 +273,7 @@ class Api {
 		$base      = pathinfo( $public_id );
 		// Only do dynamic naming and sizes if upload type.
 		if ( 'image' === $args['resource_type'] && 'upload' === $args['delivery_type'] ) {
-			$new_path  = $base['filename'] . '/' . $base['basename'];
+			$new_path  = $base['filename'] . '/' . str_replace( '.', '-', $base['basename'] );
 			$public_id = str_replace( $base['basename'], $new_path, $public_id );
 		}
 
@@ -351,7 +370,7 @@ class Api {
 				'X-Unique-Upload-Id' => $upload_id,
 			);
 			$args['file'] = $temp_file_name;
-			$result       = $this->upload( $temp_file_name, $args, $headers );
+			$result       = $this->upload( $attachment_id, $args, $headers );
 			if ( is_wp_error( $result ) ) {
 				break;
 			}
@@ -365,6 +384,27 @@ class Api {
 
 		return $result;
 
+	}
+
+	/**
+	 * Copy an asset from one Cloudinary location to another.
+	 *
+	 * @param int   $attachment_id Attachment ID to upload.
+	 * @param array $args          Array of upload options.
+	 *
+	 * @return array|\WP_Error
+	 */
+	public function copy( $attachment_id, $args ) {
+		$resource     = ! empty( $args['resource_type'] ) ? $args['resource_type'] : 'image';
+		$url          = $this->url( $resource, 'upload', true );
+		$args         = $this->clean_args( $args );
+		$args['file'] = $this->media->raw_cloudinary_url( $attachment_id );
+		$call_args    = array(
+			'headers' => array(),
+			'body'    => $args,
+		);
+
+		return $this->call( $url, $call_args, 'post' );
 	}
 
 	/**
@@ -383,33 +423,32 @@ class Api {
 		$url                 = $this->url( $resource, 'upload', true );
 		$args                = $this->clean_args( $args );
 		$disable_https_fetch = get_transient( '_cld_disable_http_upload' );
-		if (
-			function_exists( 'wp_get_original_image_url' ) &&
-			wp_attachment_is_image( $attachment_id )
-		) {
+
+		if ( function_exists( 'wp_get_original_image_url' ) && wp_attachment_is_image( $attachment_id ) ) {
 			$file_url = wp_get_original_image_url( $attachment_id );
 		} else {
 			$file_url = wp_get_attachment_url( $attachment_id );
 		}
+
 		if ( empty( $file_url ) ) {
 			$disable_https_fetch = true;
 		}
-		$media    = get_plugin_instance()->get_component( 'media' );
-		if ( ! $media->is_uploadable_media( $attachment_id ) ) {
+
+		if ( ! $this->media->is_uploadable_media( $attachment_id ) ) {
 			$disable_https_fetch = false; // Remote can upload via url.
 			// translators: variable is thread name and queue size.
 			$action_message = sprintf( __( 'Uploading remote url:  %1$s.', 'cloudinary' ), $file_url );
 			do_action( '_cloudinary_queue_action', $action_message );
 		}
 		$tempfile = false;
-		if ( $media && $media->is_cloudinary_url( $file_url ) ) {
+		if ( $this->media && $this->media->is_cloudinary_url( $file_url ) ) {
 			// If this is a Cloudinary URL, then we can use it to fetch from that location.
 			$disable_https_fetch = false;
 		}
 		// Check if we can try http file upload.
-		if ( ( empty( $headers ) && empty( $disable_https_fetch ) && true === $try_remote ) || ! $media->is_uploadable_media( $attachment_id ) ) {
+		if ( ( empty( $headers ) && empty( $disable_https_fetch ) && true === $try_remote ) || ! $this->media->is_uploadable_media( $attachment_id ) ) {
 			$args['file'] = $file_url;
-		} elseif ( ! $media->is_local_media( $attachment_id ) ) {
+		} elseif ( ! $this->media->is_local_media( $attachment_id ) ) {
 			$args['file'] = $file_url;
 		} else {
 			// We should have the file in args at this point, but if the transient was set, it will be defaulting here.
@@ -422,7 +461,7 @@ class Api {
 				}
 			}
 			// Headers indicate chunked upload.
-			if ( empty( $headers ) ) {
+			if ( empty( $headers ) && file_exists( $args['file'] ) ) {
 				$size = filesize( $args['file'] );
 				if ( 'video' === $resource || $size > 100000000 ) {
 					return $this->upload_large( $attachment_id, $args );

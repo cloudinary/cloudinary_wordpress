@@ -10,6 +10,7 @@ namespace Cloudinary;
 namespace Cloudinary\Sync;
 
 use Cloudinary\Component\Notice;
+use Cloudinary\Delivery;
 use Cloudinary\Sync;
 
 /**
@@ -84,8 +85,6 @@ class Storage implements Notice {
 	public function __construct( \Cloudinary\Plugin $plugin ) {
 		$this->plugin = $plugin;
 		add_action( 'cloudinary_register_sync_types', array( $this, 'setup' ), 20 );
-		// Add File validation sync.
-		add_filter( 'cloudinary_sync_base_struct', array( $this, 'add_file_folder_validators' ) );
 		// Add sync storage checks.
 		add_filter( 'cloudinary_render_field', array( $this, 'maybe_disable_connect' ), 10, 2 );
 	}
@@ -121,44 +120,6 @@ class Storage implements Notice {
 	}
 
 	/**
-	 * Add a validators for the file and folder sync type to allow skipping the upload if of-storage is on.
-	 *
-	 * @param array $sync_types The array of sync types.
-	 *
-	 * @return array
-	 */
-	public function add_file_folder_validators( $sync_types ) {
-
-		if ( isset( $sync_types['file'] ) && ! isset( $sync_types['file']['validate'] ) ) {
-			$sync_types['file']['validate'] = array( $this, 'validate_file_folder_sync' );
-		}
-		if ( isset( $sync_types['folder'] ) && ! isset( $sync_types['folder']['validate'] ) ) {
-			$sync_types['folder']['required'] = array( $this, 'validate_file_folder_sync' );
-		}
-
-		return $sync_types;
-	}
-
-	/**
-	 * Validator and Required check to skip file and folder required for of-storage.
-	 *
-	 * @param int $attachment_id The attachment ID.
-	 *
-	 * @return bool
-	 */
-	public function validate_file_folder_sync( $attachment_id ) {
-
-		$return = true;
-		// Check if this is not a Cloudinary URL.
-		if ( 'cld' === $this->settings['offload'] ) {
-			$file   = get_post_meta( $attachment_id, '_wp_attached_file', true );
-			$return = ! $this->media->is_cloudinary_url( $file );
-		}
-
-		return $return;
-	}
-
-	/**
 	 * Generate a signature for this sync type.
 	 *
 	 * @param int $attachment_id The attachment ID.
@@ -188,9 +149,6 @@ class Storage implements Notice {
 					return;
 				}
 				$this->remove_local_assets( $attachment_id );
-				$cloudinary_url = $this->media->cloudinary_url( $attachment_id, false );
-				$cloudinary_url = remove_query_arg( '_i', $cloudinary_url );
-				update_post_meta( $attachment_id, '_wp_attached_file', $cloudinary_url );
 				break;
 			case 'dual_low':
 				$transformations = $this->media->get_transformation_from_meta( $attachment_id );
@@ -199,14 +157,12 @@ class Storage implements Notice {
 					// Add low quality transformations.
 					$transformations[] = array( 'quality' => 'auto:low' );
 				}
-				$url = $this->media->cloudinary_url( $attachment_id, '', $transformations );
+				$url = $this->media->cloudinary_url( $attachment_id, array(), $transformations, null, true );
 				break;
 			case 'dual_full':
 				$exists = get_attached_file( $attachment_id );
 				if ( ! empty( $previous_state ) && ! file_exists( $exists ) ) {
-					// Only do this is it's changing a state.
-					$transformations = $this->media->get_transformation_from_meta( $attachment_id );
-					$url             = $this->media->cloudinary_url( $attachment_id, '', $transformations );
+					$url = $this->media->raw_cloudinary_url( $attachment_id );
 				}
 				break;
 		}
@@ -231,10 +187,6 @@ class Storage implements Notice {
 		$this->sync->set_signature_item( $attachment_id, 'storage' );
 		$this->sync->set_signature_item( $attachment_id, 'breakpoints' );
 		$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['storage'], $this->settings['offload'] ); // Save the state.
-		// If bringing media back to WordPress, we need to trigger content update to allow unfiltered Cloudinary URL's to be filtered.
-		if ( ! empty( $previous_state ) && 'cld' !== $this->settings['offload'] ) {
-			$this->sync->managers['upload']->update_content( $attachment_id );
-		}
 	}
 
 	/**
@@ -244,7 +196,7 @@ class Storage implements Notice {
 	 *
 	 * @return bool
 	 */
-	protected function remove_local_assets( $attachment_id ) {
+	public function remove_local_assets( $attachment_id ) {
 		// Delete local versions of images.
 		$meta         = wp_get_attachment_metadata( $attachment_id );
 		$backup_sizes = '';
@@ -326,23 +278,6 @@ class Storage implements Notice {
 	}
 
 	/**
-	 * Add a deactivate class to the deactivate link to trigger a warning if storage is only on Cloudinary.
-	 *
-	 * @param array $actions The actions for the plugin.
-	 *
-	 * @return array
-	 */
-	public function tag_deactivate_link( $actions ) {
-		if ( 'cld' === $this->settings['offload'] ) {
-			$actions['deactivate'] = str_replace( '<a ', '<a class="cld-deactivate" ', $actions['deactivate'] );
-		} else {
-			$actions['deactivate'] = str_replace( '<a ', '<a class="cld-deactivate-link" ', $actions['deactivate'] );
-		}
-
-		return $actions;
-	}
-
-	/**
 	 * Check if component is ready to run.
 	 *
 	 * @return bool
@@ -367,11 +302,15 @@ class Storage implements Notice {
 			$now     = time();
 			if ( empty( $delayed ) ) {
 				update_post_meta( $attachment_id, Sync::META_KEYS['delay'], $now );
+				$file = get_post_meta( $attachment_id, '_wp_attached_file', true );
+				update_post_meta( $attachment_id, '_' . md5( $file ), $file );
 			}
 			$valid = file_exists( get_attached_file( $attachment_id ) );
 		} else {
 			// Remove the delay meta.
 			delete_post_meta( $attachment_id, Sync::META_KEYS['delay'] );
+			$file = get_post_meta( $attachment_id, '_wp_attached_file', true );
+			delete_post_meta( $attachment_id, '_' . md5( $file ), $file );
 		}
 
 		return $valid;
@@ -393,6 +332,128 @@ class Storage implements Notice {
 		}
 
 		return $can;
+	}
+
+	/**
+	 * Generate the signature for the size.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return false|string
+	 */
+	public function size_signature( $attachment_id ) {
+		$fields                  = array(
+			'image_optimization',
+			'image_format',
+			'image_quality',
+			'image_freeform',
+			'video_optimization',
+			'video_format',
+			'video_quality',
+			'video_freeform',
+		);
+		$settings                = $this->plugin->settings->get_value( $fields );
+		$settings['local_size']  = get_post_meta( $attachment_id, Sync::META_KEYS['local_size'], true );
+		$settings['remote_size'] = get_post_meta( $attachment_id, Sync::META_KEYS['remote_format'], true );
+
+		return empty( $settings['local_size'] ) ? false : wp_json_encode( $settings );
+	}
+
+	/**
+	 * Sync the file size differences.
+	 *
+	 * @param int    $attachment_id The attachment ID.
+	 * @param string $public_id     Optional public ID.
+	 */
+	public function size_sync( $attachment_id, $public_id = null ) {
+		$args      = array(
+			/** This filter is documented in wp-includes/class-wp-http-streams.php */
+			'sslverify' => apply_filters( 'https_local_ssl_verify', false ),
+			'headers'   => array(
+				'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+			),
+		);
+		$url       = $this->media->cloudinary_url( $attachment_id, null, null, $public_id );
+		$request   = wp_remote_head( $url, $args );
+		$has_error = wp_remote_retrieve_header( $request, 'X-Cld-Error' );
+		if ( ! empty( $has_error ) && false !== strpos( $has_error, 'deny' ) ) {
+			// Deny failure. Log and exit.
+			update_post_meta( $attachment_id, Sync::META_KEYS['sync_error'], __( 'Restricted file type', 'cloudinary' ) );
+
+			return;
+		}
+		$remote_size   = wp_remote_retrieve_header( $request, 'Content-Length' );
+		$remote_format = wp_remote_retrieve_header( $request, 'Content-Type' );
+		$local_size    = get_post_meta( $attachment_id, Sync::META_KEYS['local_size'], true );
+		if ( empty( $local_size ) ) {
+			$url        = $this->media->cloudinary_url( $attachment_id, null, null, $public_id, true );
+			$request    = wp_remote_head( $url, $args );
+			$local_size = wp_remote_retrieve_header( $request, 'Content-Length' );
+
+			update_post_meta( $attachment_id, Sync::META_KEYS['local_size'], $local_size );
+		}
+		update_post_meta( $attachment_id, Sync::META_KEYS['remote_size'], $remote_size );
+		update_post_meta( $attachment_id, Sync::META_KEYS['remote_format'], $remote_format );
+
+		$this->sync->set_signature_item( $attachment_id, 'size' );
+	}
+
+	/**
+	 * Create a unique file name based on file hash meta entry.
+	 *
+	 * @param string $filename The proposed file name.
+	 * @param string $ext      The file extension.
+	 * @param string $dir      The file directory.
+	 *
+	 * @return string
+	 */
+	public function unique_filename( $filename, $ext, $dir ) {
+		$dirs = wp_get_upload_dir();
+
+		$path     = str_replace( $dirs['basedir'] . '/', '', $dir );
+		$base     = array(
+			'base'  => pathinfo( $filename, PATHINFO_FILENAME ),
+			'count' => null,
+			'ext'   => $ext,
+		);
+		$count    = 1;
+		$unique   = false;
+		$filename = path_join( $path, implode( '', $base ) );
+
+		while ( 20 > $count ) {
+			$exists = $this->media->get_id_from_sync_key( $filename );
+			if ( empty( $exists ) ) {
+				$exists = $this->media->get_id_from_sync_key( Delivery::make_scaled_url( $filename ) );
+				if ( empty( $exists ) ) {
+					$filename = basename( $filename );
+					break;
+				}
+			}
+
+			$base['count'] = '-' . $count;
+			$filename      = path_join( $path, implode( '', $base ) );
+			$count ++;
+		}
+
+		return $filename;
+	}
+
+	/**
+	 * Ensure metadata for CLD only.
+	 *
+	 * @param array $data          The meta data array.
+	 * @param int   $attachment_id The attachment ID.
+	 *
+	 * @return array
+	 */
+	public function ensure_metadata( $data, $attachment_id ) {
+		if ( defined( 'REST_REQUEST' ) && true === REST_REQUEST ) {
+			if ( isset( $data['sizes'] ) && 'cld' === $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['storage'], true ) ) {
+				unset( $data['original_image'] );
+			}
+		}
+
+		return $data;
 	}
 
 	/**
@@ -421,10 +482,19 @@ class Storage implements Notice {
 			);
 			$this->sync->register_sync_type( 'storage', $structure );
 
-			// Tag the deactivate button.
-			$plugin_file = pathinfo( dirname( CLDN_CORE ), PATHINFO_BASENAME ) . '/' . basename( CLDN_CORE );
-			add_filter( 'plugin_action_links_' . $plugin_file, array( $this, 'tag_deactivate_link' ) );
+			$structure = array(
+				'generate' => array( $this, 'size_signature' ),
+				'priority' => 16,
+				'sync'     => array( $this, 'size_sync' ),
+				'state'    => 'info syncing',
+				'note'     => __( 'Calculating stats', 'cloudinary' ),
+				'required' => false,
+			);
+			$this->sync->register_sync_type( 'size', $structure );
+
 			add_filter( 'cloudinary_can_sync_asset', array( $this, 'delay_cld_only' ), 10, 3 );
+			add_filter( 'wp_unique_filename', array( $this, 'unique_filename' ), 10, 3 );
+			add_filter( 'wp_get_attachment_metadata', array( $this, 'ensure_metadata' ), 10, 2 );
 		}
 	}
 }

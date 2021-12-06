@@ -2,7 +2,11 @@
 
 const Deactivate = {
 	// The link that triggers the ThickBox
-	tbLink: document.getElementById( 'cld-deactivation-link' ),
+	modal: document.getElementById( 'cloudinary-deactivation' ),
+	modalBody: document.getElementById( 'modal-body' ),
+	modalFooter: document.getElementById( 'modal-footer' ),
+	modalUninstall: document.getElementById( 'modal-uninstall' ),
+	modalClose: document.querySelectorAll( 'button[data-action="cancel"], button[data-action="close"]' ),
 	// The different links to deactivate the plugin.
 	pluginListLinks: document.querySelectorAll(
 		'.cld-deactivate-link, .cld-deactivate'
@@ -11,119 +15,168 @@ const Deactivate = {
 	triggers: document.getElementsByClassName( 'cld-deactivate' ),
 	// The reasons.
 	options: document.querySelectorAll(
-		'.cloudinary-deactivation input[type="radio"]'
+		'.cloudinary-deactivation .reasons input[type="radio"]'
 	),
 	report: document.getElementById( 'cld-report' ),
-	contact: document.getElementById( 'cld-contact' ).parentNode,
+	contact: document.getElementById( 'cld-contact' ),
 	// The feedback submit button.
-	submitButton: document.querySelector(
-		'.cloudinary-deactivation .button-primary'
+	submitButton: document.querySelectorAll(
+		'.cloudinary-deactivation button[data-action="submit"]'
 	),
-	// The skip button.
-	skipButton: document.querySelector(
-		'.cloudinary-deactivation .button-link'
+	// The contact me button.
+	contactButton: document.querySelectorAll(
+		'.cloudinary-deactivation button[data-action="contact"]'
 	),
+	// The deactivate button.
+	deactivateButton: document.querySelectorAll(
+		'.cloudinary-deactivation button[data-action="deactivate"]'
+	),
+	// The email field.
+	emailField: document.getElementById( 'email' ),
 	// Selected reason.
 	reason: '',
 	// The more details .
 	more: null,
 	// The deactivation link for the plugin.
 	deactivationUrl: '',
+	// The contact me email.
+	email: '',
+	// Is Cloudinary Only
+	isCloudinaryOnly: false,
 
 	addEvents() {
 		const context = this;
 
+		[...context.modalClose].forEach( ( button ) => {
+			button.addEventListener( 'click', ( ev ) => {
+				context.closeModal();
+			} );
+		} );
+
+		window.addEventListener( 'keyup', ( ev ) => {
+			if ( 'visible' === context.modal.style.visibility && 'Escape' === ev.key ) {
+				context.modal.style.visibility = 'hidden';
+				context.modal.style.opacity = '0';
+			}
+		} );
+
+		context.modal.addEventListener( 'click', ( ev ) => {
+			ev.stopPropagation();
+			if ( ev.target === context.modal ) {
+				context.closeModal();
+			}
+		} );
+
 		// Add event listener to deactivation links to add the pop up.
 		[ ...context.pluginListLinks ].forEach( ( link ) => {
-			link.addEventListener( 'click', function ( ev ) {
+			link.addEventListener( 'click', function( ev ) {
 				ev.preventDefault();
 				context.deactivationUrl = ev.target.getAttribute( 'href' );
-				context.tbLink.click();
-				document
-					.getElementById( 'TB_window' )
-					.setAttribute(
-						'style',
-						'bottom: 0;' +
-							'height: 600px;' +
-							'left: 0;' +
-							'margin: auto;' +
-							'right: 0;' +
-							'top: 0;' +
-							'visibility: visible;' +
-							'width: 550px;'
-					);
+				context.openModal();
 			} );
 		} );
 
-		// Add it a trigger watch to stop deactivation.
-		[ ...context.triggers ].forEach( ( trigger ) => {
-			trigger.addEventListener( 'click', function ( ev ) {
-				if (
-					! confirm(
-						wp.i18n.__(
-							'Caution: Your storage setting is currently set to "Cloudinary only", disabling the plugin will result in broken links to media assets. Are you sure you want to continue?',
-							'cloudinary'
-						)
-					)
-				) {
-					ev.preventDefault();
-					// Close the feedback form.
-					document.getElementById( 'TB_closeWindowButton' ).click();
+
+		[ ...context.contactButton ].forEach( ( button ) => {
+			button.addEventListener( 'click', function () {
+				if ( context.emailField ) {
+					context.email = context.emailField.value;
 				}
+				context.submit();
 			} );
 		} );
 
-		// Add event listener to skip feedback.
-		context.skipButton.addEventListener( 'click', function () {
-			window.location.href = context.deactivationUrl;
+		[ ...context.deactivateButton ].forEach( ( button ) => {
+			button.addEventListener( 'click', function () {
+				window.location.href = context.deactivationUrl;
+			} );
 		} );
 
 		// Add event listener to update reason and more container.
 		[ ...context.options ].forEach( ( option ) => {
-			option.addEventListener( 'change', function ( ev ) {
-				context.submitButton.removeAttribute( 'disabled' );
+			option.addEventListener( 'change', function( ev ) {
 				context.reason = ev.target.value;
 				context.more = ev.target.parentNode.querySelector( 'textarea' );
 			} );
 		} );
 
 		// Allowing Cloudinary contact should include the System Report.
-		context.report.addEventListener( 'change', function () {
-			if ( context.report.checked ) {
-				context.contact.removeAttribute( 'style' );
-			} else {
-				context.contact.style.display = 'none';
-			}
-		} );
+		if ( context.contact ) {
+			context.report.addEventListener( 'change', function () {
+				if ( context.report.checked ) {
+					context.contact.parentNode.removeAttribute( 'style' );
+				} else {
+					context.contact.parentNode.style.display = 'none';
+				}
+			} );
+		}
 
 		// Add event listener to submit the feedback.
-		context.submitButton.addEventListener( 'click', function () {
-			wp.ajax
-				.send( {
-					url: CLD_Deactivate.endpoint,
-					data: {
-						reason: context.reason,
-						more: context.more?.value,
-						report: context.report.checked,
-						contact: context.contact.checked,
-					},
-					beforeSend( request ) {
-						request.setRequestHeader(
-							'X-WP-Nonce',
-							CLD_Deactivate.nonce
-						);
-					},
-				} )
-				.always( function () {
-					window.location.href = context.deactivationUrl;
-				} );
-		} );
-	},
+		[ ...context.submitButton ].forEach( ( button ) => {
+			button.addEventListener( 'click', function() {
+				const option = document.querySelector(
+					'.cloudinary-deactivation .data input[name="option"]:checked' );
+				let value = '';
 
+				if ( option ) {
+					value = option.value;
+				}
+
+				if ( 'uninstall' === value ) {
+					context.modalBody.style.display = 'none';
+					context.modalFooter.style.display = 'none';
+					context.modalUninstall.style.display = 'block';
+				}
+
+				context.submit( value );
+			} );
+		} );
+
+		if ( this.isCloudinaryOnly ) {
+			const bypass = document.getElementById( 'cld-bypass-cloudinary-only' );
+			bypass.addEventListener( 'change', function ( ev ) {
+				this.modal.dataset.cloudinaryOnly = ! bypass.checked;
+			}.bind( this ) );
+		}
+	},
+	closeModal() {
+		document.body.style.removeProperty('overflow');
+		this.modal.style.visibility = 'hidden';
+		this.modal.style.opacity = '0';
+	},
+	openModal() {
+		document.body.style.overflow = 'hidden';
+		this.modal.style.visibility = 'visible';
+		this.modal.style.opacity = '1';
+	},
+	submit( dataHandling = '' ) {
+		wp.ajax
+			.send( {
+				url: CLD_Deactivate.endpoint,
+				data: {
+					reason: this.reason,
+					more: this.more?.value,
+					report: this.report?.checked,
+					contact: this.contact?.checked,
+					email: this.email,
+					dataHandling
+				},
+				beforeSend( request ) {
+					request.setRequestHeader(
+						'X-WP-Nonce',
+						CLD_Deactivate.nonce
+					);
+				},
+			} )
+			.always( function() {
+				window.location.reload();
+			} );
+	},
 	/**
 	 * Init method.
 	 */
 	init() {
+		this.isCloudinaryOnly = !! this.modal.dataset.cloudinaryOnly;
 		this.addEvents();
 	},
 };

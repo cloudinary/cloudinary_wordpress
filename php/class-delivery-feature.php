@@ -34,6 +34,13 @@ abstract class Delivery_Feature implements Assets {
 	protected $media;
 
 	/**
+	 * Holds the Delivery instance.
+	 *
+	 * @var Delivery
+	 */
+	protected $delivery;
+
+	/**
 	 * Holds the settings slug.
 	 *
 	 * @var string
@@ -69,15 +76,24 @@ abstract class Delivery_Feature implements Assets {
 	protected $priority = 10;
 
 	/**
+	 * Holds the delivery type.
+	 *
+	 * @var string
+	 */
+	protected $type = 'image';
+
+	/**
 	 * Delivery_Feature constructor.
 	 *
 	 * @param Plugin $plugin Instance of the plugin.
 	 */
 	public function __construct( Plugin $plugin ) {
 
-		$this->plugin = $plugin;
-		$this->media  = $plugin->get_component( 'media' );
+		$this->plugin   = $plugin;
+		$this->media    = $plugin->get_component( 'media' );
+		$this->delivery = $plugin->get_component( 'delivery' );
 
+		add_action( 'cloudinary_admin_pages', array( $this, 'register_settings' ) );
 		add_action( 'cloudinary_init_settings', array( $this, 'setup' ) );
 	}
 
@@ -85,9 +101,9 @@ abstract class Delivery_Feature implements Assets {
 	 * Register hooks.
 	 */
 	public function init() {
-		$this->config = $this->settings->get_value();
+		$this->config = $this->settings->get_value( $this->settings_slug );
 		if ( $this->is_active() ) {
-			add_action( 'wp_enqueue_scripts', array( $this, 'maybe_enqueue_assets' ) );
+			add_action( 'wp_print_scripts', array( $this, 'maybe_enqueue_assets' ) );
 		}
 		if ( $this->is_enabled() ) {
 			$this->setup_hooks();
@@ -98,7 +114,6 @@ abstract class Delivery_Feature implements Assets {
 	 * Setup hooks used when enabled.
 	 */
 	protected function setup_hooks() {
-
 	}
 
 	/**
@@ -107,7 +122,7 @@ abstract class Delivery_Feature implements Assets {
 	public function maybe_enqueue_assets() {
 		if ( $this->is_enabled() ) {
 			// Add filter to add features.
-			add_filter( 'cloudinary_pre_image_tag', array( $this, 'add_features' ), $this->priority, 3 );
+			add_filter( "cloudinary_pre_{$this->type}_tag", array( $this, 'add_features' ), $this->priority );
 			$this->enqueue_assets();
 		}
 	}
@@ -115,13 +130,11 @@ abstract class Delivery_Feature implements Assets {
 	/**
 	 * Add features to a tag element set.
 	 *
-	 * @param array  $tag_element   The tag element set.
-	 * @param int    $attachment_id The attachment id.
-	 * @param string $original_tag  The original html tag.
+	 * @param array $tag_element The tag element set.
 	 *
 	 * @return array
 	 */
-	public function add_features( $tag_element, $attachment_id, $original_tag ) {
+	public function add_features( $tag_element ) {
 		return $tag_element;
 	}
 
@@ -144,6 +157,7 @@ abstract class Delivery_Feature implements Assets {
 	 * Enqueue Assets.
 	 */
 	public function enqueue_assets() {
+
 	}
 
 	/**
@@ -152,37 +166,25 @@ abstract class Delivery_Feature implements Assets {
 	 * @return bool
 	 */
 	public function is_enabled() {
-		return isset( $this->config[ $this->enable_slug ] ) && 'on' === $this->config[ $this->enable_slug ];
+		return 'on' === $this->config[ $this->enable_slug ];
 	}
 
 	/**
-	 * Create the settings.
+	 * Add the settings.
+	 *
+	 * @param array $pages The pages to add to.
+	 *
+	 * @return array
 	 */
-	protected function create_settings() {
-		$this->settings = $this->plugin->settings->create_setting( $this->settings_slug, $this->settings() );
+	public function register_settings( $pages ) {
+		return $pages;
 	}
 
 	/**
 	 * Setup the class.
 	 */
 	public function setup() {
-		$this->create_settings();
-		$this->register_settings();
+		$this->settings = $this->plugin->settings;
 		$this->init();
-	}
-
-	/**
-	 * Define the settings.
-	 *
-	 * @return array
-	 */
-	public function settings() {
-		return array();
-	}
-
-	/**
-	 * Register the setting under media.
-	 */
-	protected function register_settings() {
 	}
 }

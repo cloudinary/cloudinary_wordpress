@@ -1,0 +1,21 @@
+// excluded types.
+&-excluded-types {
+	div{
+		display: flex;
+	}
+	.type{
+		display: flex;
+		border: 1px solid $color-cld-grey-blue;
+		padding: 3px 6px;
+		border-radius: 20px;
+		min-width: 50px;
+		margin-right: 8px;
+		justify-content: space-between;
+	}
+	.dashicons{
+		cursor: pointer;
+		&:hover{
+			color: $color-red;
+		}
+	}
+}

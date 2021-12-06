@@ -3,7 +3,10 @@
 import tippy from 'tippy.js';
 import 'tippy.js/dist/tippy.css';
 import OnOff from './onoff';
-import CacheManage from './cache-manage';
+import Progress from './progress';
+import States from './states';
+import RestrictedTypes from './restricted-types';
+import TagsInput from './tags-input';
 
 const UI = {
 	bindings: {},
@@ -15,14 +18,17 @@ const UI = {
 		const aliases = context.querySelectorAll( '[data-for]' );
 		const tooltips = context.querySelectorAll( '[data-tooltip]' );
 		const triggers = context.querySelectorAll( '[data-bind-trigger]' );
-		const masters = context.querySelectorAll( '[data-master]' );
+		const mains = context.querySelectorAll( '[data-main]' );
 		const files = context.querySelectorAll( '[data-file]' );
 		const autoSuffix = context.querySelectorAll( '[data-auto-suffix]' );
+		const confirms = context.querySelectorAll( '[data-confirm]' );
 		const self = this;
 		const compilerDebounce = {};
+		// Init states.
+		States.init();
 
 		// Bind on offs.
-		OnOff.bind( masters );
+		OnOff.bind( mains );
 		autoSuffix.forEach( ( input ) => this._autoSuffix( input ) );
 		triggers.forEach( ( input ) => this._trigger( input ) );
 		toggles.forEach( ( toggle ) => this._toggle( toggle ) );
@@ -44,8 +50,18 @@ const UI = {
 			input.dispatchEvent( new Event( 'input' ) );
 		} );
 
+		confirms.forEach( ( item ) => {
+			item.addEventListener( 'click', ( ev ) => {
+				if ( ! confirm( item.dataset.confirm ) ) {
+					ev.preventDefault();
+					ev.stopPropagation();
+				}
+			} );
+		} );
 		// Start cache manager.
-		CacheManage.init( context );
+		Progress.init( context );
+		RestrictedTypes.init( context );
+		TagsInput.init( context );
 	},
 	_autoSuffix( input ) {
 		const suffixes = input.dataset.autoSuffix;
@@ -150,16 +166,23 @@ const UI = {
 	},
 	_toggle( element ) {
 		const self = this;
+		const wrap = document.querySelector(
+			'[data-wrap="' + element.dataset.toggle + '"]'
+		);
+		if ( ! wrap ) {
+			return;
+		}
+		const state = States.get( element.id );
 		element.addEventListener( 'click', function ( ev ) {
 			ev.stopPropagation();
-			const wrap = document.querySelector(
-				'[data-wrap="' + element.dataset.toggle + '"]'
-			);
 			const action = wrap.classList.contains( 'open' )
 				? 'closed'
 				: 'open';
 			self.toggle( wrap, element, action );
 		} );
+		if ( state !== element.dataset.state ) {
+			this.toggle( wrap, element, state );
+		}
 	},
 	toggle( element, trigger, action ) {
 		if ( ! action ) {
@@ -175,28 +198,37 @@ const UI = {
 				}
 			}
 		}
-		const inputs = element.getElementsByClassName( 'cld-ui-input' );
+
 		if ( 'closed' === action ) {
-			element.classList.remove( 'open' );
-			element.classList.add( 'closed' );
-			if ( trigger && trigger.classList.contains( 'dashicons' ) ) {
-				trigger.classList.remove( 'dashicons-arrow-up-alt2' );
-				trigger.classList.add( 'dashicons-arrow-down-alt2' );
-			}
-			[ ...inputs ].forEach( function ( input ) {
-				input.dataset.disabled = true;
-			} );
+			this.close( element, trigger );
 		} else {
-			element.classList.remove( 'closed' );
-			element.classList.add( 'open' );
-			if ( trigger && trigger.classList.contains( 'dashicons' ) ) {
-				trigger.classList.remove( 'dashicons-arrow-down-alt2' );
-				trigger.classList.add( 'dashicons-arrow-up-alt2' );
-			}
-			[ ...inputs ].forEach( function ( input ) {
-				input.dataset.disabled = false;
-			} );
+			this.open( element, trigger );
 		}
+		States.set( trigger.id, action );
+	},
+	open( element, trigger ) {
+		const inputs = element.getElementsByClassName( 'cld-ui-input' );
+		element.classList.remove( 'closed' );
+		element.classList.add( 'open' );
+		if ( trigger && trigger.classList.contains( 'dashicons' ) ) {
+			trigger.classList.remove( 'dashicons-arrow-down-alt2' );
+			trigger.classList.add( 'dashicons-arrow-up-alt2' );
+		}
+		[ ...inputs ].forEach( function ( input ) {
+			input.dataset.disabled = false;
+		} );
+	},
+	close( element, trigger ) {
+		const inputs = element.getElementsByClassName( 'cld-ui-input' );
+		element.classList.remove( 'open' );
+		element.classList.add( 'closed' );
+		if ( trigger && trigger.classList.contains( 'dashicons' ) ) {
+			trigger.classList.remove( 'dashicons-arrow-up-alt2' );
+			trigger.classList.add( 'dashicons-arrow-down-alt2' );
+		}
+		[ ...inputs ].forEach( function ( input ) {
+			input.dataset.disabled = true;
+		} );
 	},
 };
 

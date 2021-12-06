@@ -1,0 +1,128 @@
+// TAbles (for non-media assets)
+@at-root {
+
+	table .cld-input {
+		margin-bottom: 0;
+	}
+
+	tr .file-size.small {
+		font-size: 0.8em;
+		font-style: italic;
+		letter-spacing: .4px;
+		color: #a8a8a8;
+		margin-left: 6px;
+		margin-right: 6px;
+	}
+
+
+	td.tree {
+		position: relative;
+		line-height: 1.5;
+		color: #212529;
+		padding-top: 0;
+
+		ul.striped > :nth-child(odd) {
+			background-color: #f6f7f7;
+		}
+
+		ul.striped > :nth-child(even) {
+			background-color: #fff;
+		}
+
+		.success {
+			color: $color-notification-success;
+		}
+
+		td + & {
+			padding-top: 0;
+		}
+
+
+		.cld-input {
+			margin-bottom: 0;
+			vertical-align: text-bottom;
+		}
+
+		.cld-search {
+			vertical-align: initial;
+			min-height: 20px;
+			height: 26px;
+			padding: 4px 6px;
+			font-size: 0.9em;
+			margin-right: 12px;
+			width: 300px;
+		}
+
+		.file-size {
+			font-size: 0.8em;
+			font-style: italic;
+			letter-spacing: .4px;
+			color: #a8a8a8;
+			margin-left: 6px;
+		}
+
+		.fa-folder-open, .fa-folder {
+			color: #007bff;
+		}
+
+		.fa-html5 {
+			color: #f21f10;
+		}
+
+		ul {
+			padding-left: 5px;
+			list-style: none;
+			margin: 0;
+
+			li {
+				position: relative;
+				padding-top: 5px;
+				padding-bottom: 5px;
+				padding-left: 25px;
+				-webkit-box-sizing: border-box;
+				-moz-box-sizing: border-box;
+				box-sizing: border-box;
+				margin-bottom: 0;
+
+				&:before {
+					position: absolute;
+					top: 14px;
+					left: 0;
+					width: 20px;
+					height: 1px;
+					margin: auto;
+					content: '';
+					background-color: #666;
+				}
+
+				&:after {
+					position: absolute;
+					top: 0;
+					bottom: 0;
+					left: 0;
+					width: 1px;
+					height: 100%;
+					content: '';
+					background-color: #666;
+
+					&:nth-of-type(odd) {
+						background-color: #666;
+					}
+				}
+
+				&:last-child:after {
+					height: 14px;
+				}
+
+			}
+
+			a {
+				cursor: pointer;
+
+				&:hover {
+					text-decoration: none;
+				}
+			}
+		}
+	}
+}

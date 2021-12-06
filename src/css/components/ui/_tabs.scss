@@ -1,0 +1,39 @@
+// Tabs.
+&-tabs {
+	background-color: #fff;
+	display: none;
+	border-bottom: 1px solid #e5e5e5;
+	padding: 0 !important;
+	margin: -20px -18px 20px;
+	justify-content: center;
+	flex-wrap: nowrap;
+	@media only screen and (max-width: $size-large) {
+		display: flex;
+	}
+
+	&-tab {
+
+		list-style: none;
+		text-indent: 0;
+		margin-bottom: 0;
+		width: 100%;
+
+		button {
+			display: block;
+			padding: 1rem 2rem;
+			font-weight: 500;
+			color: #000001;
+			text-align: center;
+			white-space: nowrap;
+			width: 100%;
+			background: transparent;
+			border: 0;
+			cursor: pointer;
+
+			&.is-active {
+				color: $color-cld-blue;
+				border-bottom: 2px solid $color-cld-blue;
+			}
+		}
+	}
+}
