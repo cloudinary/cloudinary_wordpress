@@ -284,7 +284,6 @@
 	&__toggle {
 		cursor: pointer;
 		display: flex;
-		justify-content: space-between;
 
 		h2 {
 			margin: 0 !important;
@@ -292,11 +291,26 @@
 
 		button {
 			border: none;
-			margin: 0;
+			margin: 0 0 0 auto;
 			padding: 0;
 			width: auto;
 			background-color: inherit;
 			cursor: pointer;
+		}
+
+		.cld-ui-icon {
+			width: 24px;
+			margin-right: 6px;
+		}
+	}
+
+	&__content {
+		.cld-ui-title {
+			margin: 3em 0 1em;
+		}
+
+		.cld-more-details {
+			margin-top: 2em;
 		}
 	}
 }

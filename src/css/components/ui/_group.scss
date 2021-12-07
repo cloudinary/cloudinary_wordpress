@@ -1,13 +1,8 @@
 // Group component.
 &-group {
+
 	.cld-group .cld-group {
 		padding-left: 4px;
-	}
-
-	hr {
-		border-top: 1px solid $color-light-grey;
-		margin: 1.5rem 0;
-		clear: both;
 	}
 
 	.cld-group .cld-group hr {
@@ -29,4 +24,7 @@
 		}
 	}
 
+	.cld-ui-title-head {
+		margin-bottom: 1em;
+	}
 }

@@ -1,20 +1,32 @@
 // Inputs for forms etc.
 @mixin input {
-
-	margin: 1.8rem 0;
+	margin: 0 0 23px;
 	display: block;
-	font-size: 9.5px;
+	max-width: $size-settings-max-width;
 	&-label {
-		font-weight: 700;
+		.cld-ui-title {
+			font-size: $size-setting-label;
+			font-weight: 700;
+		}
+
 		display: block;
 		margin-bottom: 8px;
-		&-link{
-			font-size: 9.5px;
+
+		&-link {
+			font-size: $size-panel-description;
 			margin-left: 8px;
 			color: $color-cld-blue;
-			&:hover{
+
+			&:hover {
 				color: $color-cld-dark-blue;
 			}
+		}
+	}
+	&-radio-label{
+		display: block;
+
+		&:not(:first-of-type) {
+			padding-top: 8px;
 		}
 	}
 }
@@ -26,6 +38,8 @@
 	@import "controls/select";
 	@import "controls/on-off";
 	@import "controls/icon-toggle";
+	@import "controls/excluded_types";
+	@import "controls/input-tags";
 
 	.prefixed {
 		width: 40%;
@@ -35,5 +49,9 @@
 	.suffixed {
 		width: 40%;
 		margin-right: 6px;
+	}
+
+	input::placeholder{
+		color: $color-disabled-grey;
 	}
 }

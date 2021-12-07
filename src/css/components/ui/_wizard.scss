@@ -1,0 +1,31 @@
+// Wizard.
+
+&-wizard {
+	@import "wizard/tabs";
+	@import "wizard/intro";
+	@import "wizard/connect";
+	@import "wizard/optimize";
+	@import "wizard/complete";
+
+	max-width: 1100px;
+	margin-right: auto;
+	margin-left: auto;
+
+	// overrides.
+	.cld-panel-heading {
+		align-items: center;
+	}
+	.cld-ui-title{
+		text-transform: initial;
+	}
+	.cld-submit {
+
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+
+		.button {
+			margin-left: 10px;
+		}
+	}
+}

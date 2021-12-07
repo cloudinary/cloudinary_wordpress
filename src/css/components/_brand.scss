@@ -30,6 +30,16 @@
 			content: "\e900";
 		}
 
+		&-media::before {
+			font-family: cloudinary, monospace !important;
+			content: "\e905";
+		}
+
+		&-dam::before {
+			font-family: cloudinary, monospace !important;
+			content: "\e906";
+		}
+
 		&.success {
 			color: $color-green;
 		}
@@ -67,6 +77,19 @@
 				content: "\e904";
 			}
 		}
+
+		&.media {
+
+			&::before {
+				content: "\e905";
+			}
+		}
+
+		&.dam {
+			&::before {
+				content: "\e906";
+			}
+		}
 	}
 }
 
@@ -76,7 +99,7 @@
 
 	.dashicons {
 
-		&-cloudinary {
+		&-cloudinary, &-cloudinary-dam {
 			display: inline-block;
 
 			&::before {

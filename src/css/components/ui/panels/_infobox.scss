@@ -4,9 +4,11 @@
 	@extend .cld-panel;
 	display: flex;
 	padding: 0;
-	margin: 0;
+	margin: 0 0 19px;
 	border-radius: 4px;
 	align-items: stretch;
+	max-width: 500px;
+
 	@media only screen and (min-width: $size-small) {
 		flex-direction: row;
 	}
@@ -14,8 +16,7 @@
 	.cld-ui-title {
 		h2 {
 			margin: 0 0 6px;
-			font-size: 10.5px;
-
+			font-size: $size-panel-title;
 		}
 	}
 
@@ -27,6 +28,10 @@
 		vertical-align: center;
 		justify-content: center;
 		border-radius: 4px 0 0 4px;
+
+		img{
+			width: 24px;
+		}
 	}
 
 	img,
@@ -40,10 +45,11 @@
 		padding: 12px 9px;
 		display: inline-block;
 		width: 100%;
-		font-size: 10.5px;
+		font-size: $size-panel-content;
 	}
 
 	&-text{
 		color: $color-cld-description;
+		font-size: $size-panel-description;
 	}
 }

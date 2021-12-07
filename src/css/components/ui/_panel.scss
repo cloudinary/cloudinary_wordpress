@@ -8,11 +8,7 @@
 	}
 
 	margin-top: 13px;
-	padding: 0.88rem 1.15rem;
-
-	&.full-width {
-		max-width: 100%;
-	}
+	padding: $size-padding-panel;
 
 	&.has-heading {
 		margin-top: 0;
@@ -21,7 +17,7 @@
 
 	&-heading {
 		display: flex;
-		padding: 0.47em 1.09em;
+		padding: $size-padding-panel-title;
 		position: relative;
 		justify-content: space-between;
 
@@ -50,10 +46,51 @@
 		}
 	}
 
+	hr {
+		border-top: 1px solid $color-light-grey;
+		margin: 19px 0 20px;
+		clear: both;
+	}
 	// Include the legacy styles that might not be needed anymore.
 	@import "panels/legacy";
+
+	.help-wrap{
+		display: flex;
+		flex-direction: row;
+		justify-content: flex-start;
+		flex-grow: 1;
+		align-items: stretch;
+		.help-box{
+			.large-button {
+				background: rgb(255, 255, 255);
+				border-radius: 4px;
+				box-shadow: 0px 1px 8px 0px rgba(0, 0, 0, 0.3);
+				display: block;
+				border-radius: 4px;
+				color: initial;
+				text-decoration: none;
+				height: 100%;
+				&:hover {
+					background-color: $color-cld-light-grey;
+					box-shadow: 0px 1px 8px 0px rgba(0, 0, 0, 0.5);
+				}
+				.cld-ui-wrap {
+					padding-bottom: .5em;
+				}
+			}
+			img{
+				width: 100%;
+				border-radius: 4px 4px 0 0;
+			}
+			h4, div{
+				padding: 0 12px;
+			}
+		}
+	}
+
 }
 // Include other types of panels.
 @import "panels/panel-short";
 @import "panels/infobox";
 @import "panels/submit-switch-cloud";
+@import "panels/optimize";

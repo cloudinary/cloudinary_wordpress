@@ -1,6 +1,9 @@
-// Media styles : Images videos and previews
+// Media styles : Images, breakpoints ,and videos previews
 &-image,
-&-video {
+&-video,
+&-breakpoints,
+&-lazyload{
+
 
 	&-preview {
 		padding: 9px;
@@ -15,8 +18,10 @@
 			margin: 5px 0 12px 0;
 			font-weight: bold;
 		}
+
 		img {
 			width: 100%;
+			height: 100%;
 			border-radius: 4px;
 		}
 	}
@@ -24,4 +29,74 @@
 
 &.cld-ui-preview {
 	max-width: 322px;
+}
+
+&-breakpoints, &-lazyload {
+	&-preview {
+		.cld-image-preview-wrapper:hover{
+			.preview-image {
+				opacity: 0;
+			}
+			.main-image{
+				opacity: 1;
+				img, span{
+					opacity: 0.4;
+				}
+
+			}
+		}
+		.preview-image {
+			display: flex;
+			border-radius: 4px;
+			position: absolute;
+			left: 0;
+			bottom: 0;
+			background-color: #222222;
+			box-shadow: 2px -2px 3px rgb(0 0 0 / 90%);
+			&:hover{
+				opacity: 1 !important;
+				img, span{
+					opacity: 1 !important;
+				}
+			}
+			&.main-image{
+				position: relative;
+				box-shadow: none;
+			}
+		}
+
+		.preview-text {
+			color: $color-white;
+			text-shadow: 0 0 3px black;
+			background-color: $color-cld-blue;
+			position: absolute;
+			top: 0;
+			right: 0;
+			padding: 3px;
+		}
+
+		.global-transformations-url-link:hover{
+			text-decoration: none;
+			color: $color-white;
+		}
+	}
+}
+&-lazyload{
+	&-preview {
+		.progress-bar{
+			height: 2px;
+			width: 0%;
+			background-color: $color-cld-blue;
+			transition: width 1s;
+		}
+		.preview-image {
+			background-color: $color-white;
+		}
+		img{
+			transition: opacity 1s;
+		}
+		.global-transformations-url-link {
+			background-color: transparent;
+		}
+	}
 }

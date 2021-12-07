@@ -9,6 +9,7 @@ namespace Cloudinary\Delivery;
 
 use Cloudinary\Delivery_Feature;
 use Cloudinary\Connect\Api;
+use Cloudinary\Utils;
 
 /**
  * Class Responsive_Breakpoints
@@ -29,7 +30,7 @@ class Responsive_Breakpoints extends Delivery_Feature {
 	 *
 	 * @var string
 	 */
-	protected $settings_slug = 'responsive_breakpoints';
+	protected $settings_slug = 'media_display';
 
 	/**
 	 * Holds the enabler slug.
@@ -43,39 +44,74 @@ class Responsive_Breakpoints extends Delivery_Feature {
 	 */
 	protected function setup_hooks() {
 		add_action( 'cloudinary_init_delivery', array( $this, 'remove_srcset_filter' ) );
+		add_filter( 'cloudinary_apply_breakpoints', '__return_false' );
 	}
 
 	/**
 	 * Add features to a tag element set.
 	 *
-	 * @param array  $tag_element   The tag element set.
-	 * @param int    $attachment_id The attachment id.
-	 * @param string $original_tag  The original html tag.
+	 * @param array $tag_element The tag element set.
 	 *
 	 * @return array
 	 */
-	public function add_features( $tag_element, $attachment_id, $original_tag ) {
+	public function add_features( $tag_element ) {
+		if ( 'upload' !== $this->media->get_media_delivery( $tag_element['id'] ) ) {
+			return $tag_element;
+		}
+		if ( Utils::is_amp() ) {
+			$tag_element['atts']['layout'] = 'responsive';
+		} else {
+			$tag_element['atts']['data-responsive'] = true;
+		}
+		unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 
-		if ( ! $this->media->is_cloudinary_url( $tag_element['atts']['src'] ) ) {
-			$tag_element['atts']['src'] = $this->media->cloudinary_url( $attachment_id, array(), array(), null, $tag_element['cld-overwrite'] );
-		}
-		$transformations = $this->media->get_transformations_from_string( $tag_element['atts']['src'] );
-		$original_string = Api::generate_transformation_string( $transformations );
+		$lazy = $this->plugin->get_component( 'lazy_load' );
 
-		// Check if first is a size.
-		if ( isset( $transformations[0] ) && isset( $transformations[0]['width'] ) || isset( $transformations[0]['height'] ) ) {
-			// remove the size.
-			array_shift( $transformations );
+		if ( is_null( $lazy ) || ! $lazy->is_enabled() || Utils::is_amp() ) {
+			$tag_element = $this->apply_breakpoints( $tag_element );
 		}
-		$size_str = '--size--';
-		if ( ! empty( $transformations ) ) {
-			$size_str .= '/' . Api::generate_transformation_string( $transformations );
+
+		return $tag_element;
+	}
+
+	/**
+	 * Apply srcset breakpoints if lazy loading is off.
+	 *
+	 * @param array $tag_element The tag element array.
+	 *
+	 * @return array
+	 */
+	protected function apply_breakpoints( $tag_element ) {
+
+		$settings            = $this->settings->get_value( 'media_display' );
+		$max                 = $settings['max_width'];
+		$min                 = $settings['min_width'];
+		$width               = $tag_element['width'];
+		$height              = $tag_element['height'];
+		$size_tag            = '-' . $width . 'x' . $height . '.';
+		$step                = $settings['pixel_step'];
+		$ratio               = $width / $height;
+		$src                 = $tag_element['atts']['src'];
+		$size_transformation = $this->media->get_crop_from_transformation( $this->media->get_transformations_from_string( $src ) );
+		$size_string         = Api::generate_transformation_string( array( $size_transformation ) );
+		$breakpoints         = array();
+		while ( $max > $min ) {
+			if ( $width >= $max ) {
+				$size_transformation['width']  = $max;
+				$size_transformation['height'] = floor( $max / $ratio );
+				$new_size_tag                  = '-' . $size_transformation['width'] . 'x' . $size_transformation['height'] . '.';
+				$new_size                      = Api::generate_transformation_string( array( $size_transformation ) );
+				$new_url                       = str_replace( $size_string, $new_size, $src );
+				$new_url                       = str_replace( $size_tag, $new_size_tag, $new_url );
+				$breakpoints[]                 = $new_url . ' ' . $max . 'w';
+			}
+			$max -= $step;
 		}
-		$tag_element['atts']['src'] = str_replace( $original_string, $size_str, $tag_element['atts']['src'] );
-		if ( isset( $tag_element['atts']['srcset'] ) ) {
-			unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
+
+		if ( ! empty( $breakpoints ) ) {
+			$tag_element['atts']['srcset'] = implode( ', ', $breakpoints );
+			$tag_element['atts']['sizes']  = '(max-width: ' . $width . 'px) 100vw ' . $width . 'px';
 		}
-		$tag_element['delivery'] = 'cld';
 
 		return $tag_element;
 	}
@@ -91,18 +127,6 @@ class Responsive_Breakpoints extends Delivery_Feature {
 		unset( $structs['breakpoints'] );
 
 		return $structs;
-	}
-
-	/**
-	 * Check to see if Breakpoints are enabled.
-	 *
-	 * @return bool
-	 */
-	public function is_enabled() {
-		$lazy         = $this->plugin->get_component( 'lazy_load' );
-		$lazy_enabled = $lazy->is_enabled();
-
-		return ! is_null( $lazy ) && $lazy->is_enabled() && parent::is_enabled();
 	}
 
 	/**
@@ -125,56 +149,5 @@ class Responsive_Breakpoints extends Delivery_Feature {
 	 */
 	protected function create_settings() {
 		$this->settings = $this->media->get_settings()->get_setting( 'image_display' );
-	}
-
-	/**
-	 * Register the setting under media.
-	 */
-	protected function register_settings() {
-
-		$image_breakpoints = $this->settings->get_setting( 'image_breakpoints' );
-		// Add pixel step.
-		$params = array(
-			'type'         => 'number',
-			'slug'         => 'pixel_step',
-			'priority'     => 9,
-			'title'        => __( 'Breakpoints distance', 'cloudinary' ),
-			'tooltip_text' => __( 'The distance from the original image for responsive breakpoints generation.', 'cloudinary' ),
-			'suffix'       => __( 'px', 'cloudinary' ),
-			'default'      => 100,
-			'condition'    => array(
-				'use_lazy_loading' => true,
-			),
-		);
-		$image_breakpoints->create_setting( 'pixel_step', $params, $image_breakpoints );
-
-		$self = $this;
-		// Add density.
-		$params = array(
-			'type'         => 'select',
-			'slug'         => 'dpr',
-			'priority'     => 8,
-			'title'        => __( 'DPR settings', 'cloudinary' ),
-			'tooltip_text' => __( 'The distance from the original image for responsive breakpoints generation.', 'cloudinary' ),
-			'default'      => 'auto',
-			'condition'    => array(
-				'use_lazy_loading' => true,
-			),
-			'enabled'      => function () use ( $self ) {
-				$settings = $self->settings->get_value();
-
-				return ! isset( $settings['dpr_precise'] );
-			},
-			'options'      => array(
-				'off'  => __( 'None', 'cloudinary' ),
-				'auto' => __( 'Auto', 'cloudinary' ),
-				'2'    => __( '2X', 'cloudinary' ),
-				'3'    => __( '3X', 'cloudinary' ),
-				'4'    => __( '4X', 'cloudinary' ),
-			),
-		);
-		$image_breakpoints->create_setting( 'dpr', $params, $image_breakpoints )->get_value();
-		// Reset the option parent.
-		$this->settings->get_option_parent()->set_value( null );
 	}
 }

@@ -1,18 +1,35 @@
 // On/Off toggle.
+
 &-on-off {
-	display: inline-flex;
-	align-items: center;
-	margin: 0;
 
 	.description {
 		margin: 0;
-		font-size: 10.5px;
+		font-size: $size-setting-field;
 		color: inherit;
 		font-weight: 600;
+
 		&.left {
 			margin-left: 0;
 			margin-right: 0.4rem;
 		}
+	}
+
+	input[type=checkbox] ~ .spinner {
+		transition: right 0.2s;
+		visibility: visible;
+		margin: 2px;
+		float: none;
+		position: absolute;
+		top: 0;
+		right: 14px;
+		background-size: 12px 12px;
+		width: 12px;;
+		height: 12px;
+		opacity: 1;
+	}
+
+	input[type=checkbox]:checked ~ .spinner {
+		right: 0;
 	}
 
 	$mini-control-width: 20px;
@@ -21,8 +38,8 @@
 	$mini-slider-size: $mini-control-height - $mini-slider-pad - $mini-slider-pad;
 
 	&-control {
-		$control-width: 24px;
-		$control-height: 14px;
+		$control-width: 30px;
+		$control-height: 16px;
 		$slider-pad: 2px;
 		$slider-size: $control-height - $slider-pad - $slider-pad;
 		position: relative;
@@ -31,11 +48,7 @@
 		height: $control-height;
 		margin-right: 0.4rem;
 
-		&.disabled {
-			opacity: 0.4;
-		}
-
-		input {
+		input, input:disabled {
 			opacity: 0;
 			width: 0;
 			height: 0;
@@ -51,7 +64,11 @@
 			bottom: 0;
 			background-color: $color-disabled-grey;
 			transition: background-color 0.3s;
-			border-radius: 8px;
+			border-radius: 10px;
+
+			input:disabled + & {
+				opacity: 0.4;
+			}
 
 			input:checked + & {
 				background-color: $color-cld-blue !important;

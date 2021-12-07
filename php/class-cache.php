@@ -263,7 +263,7 @@ class Cache extends Settings_Component implements Setup {
 		 *
 		 * @param $bypass {bool} True to bypass, false to not.
 		 *
-		 * @return {bool}
+		 * @return  {bool}
 		 */
 		return apply_filters( 'cloudinary_bypass_cache', ! is_null( $bypass ) );
 	}
@@ -486,7 +486,7 @@ class Cache extends Settings_Component implements Setup {
 		 *
 		 * @param $inline_types {array} The types of files to be encoded inline.
 		 *
-		 * @return {array}
+		 * @return  {array}
 		 */
 		return apply_filters( 'cloudinary_plugin_asset_cache_inline_types', $inline_types );
 	}
@@ -577,7 +577,7 @@ class Cache extends Settings_Component implements Setup {
 		 *
 		 * @param $default_filters {array} The types of files to be filtered.
 		 *
-		 * @return {array}
+		 * @return  {array}
 		 */
 		return apply_filters( 'cloudinary_plugin_asset_cache_filters', $default_filters );
 	}
@@ -808,7 +808,7 @@ class Cache extends Settings_Component implements Setup {
 				'slug'        => 'cache_all_plugins',
 				'description' => __( 'Deliver assets from all plugin folders', 'cloudinary' ),
 				'default'     => 'off',
-				'master'      => array(
+				'main'        => array(
 					'enable_full_site_cache',
 				),
 			),
@@ -859,7 +859,7 @@ class Cache extends Settings_Component implements Setup {
 				'slug'        => 'cache_all_themes',
 				'description' => __( 'Deliver all assets from active theme.', 'cloudinary' ),
 				'default'     => 'off',
-				'master'      => array(
+				'main'        => array(
 					'enable_full_site_cache',
 				),
 			),
@@ -911,7 +911,7 @@ class Cache extends Settings_Component implements Setup {
 				'slug'        => 'cache_all_wp',
 				'description' => __( 'Deliver all assets from WordPress core.', 'cloudinary' ),
 				'default'     => 'off',
-				'master'      => array(
+				'main'        => array(
 					'enable_full_site_cache',
 				),
 			),
@@ -963,7 +963,7 @@ class Cache extends Settings_Component implements Setup {
 				'slug'        => 'cache_all_content',
 				'description' => __( 'Deliver all content assets from WordPress Media Library.', 'cloudinary' ),
 				'default'     => 'off',
-				'master'      => array(
+				'main'        => array(
 					'enable_full_site_cache',
 				),
 			),

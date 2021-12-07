@@ -8,13 +8,12 @@
 		line-height: 1.7em;
 		margin-left: 13px;
 		border-radius: 4px;
-		font-size: 8px;
-
+		font-size: $size-panel-description;
+		font-family: "Courier New", Courier, monospace;
+		font-weight: bold;
 	}
 
-	&-sidebar, &-preview {
-		width: 600px;
-
+	&-preview {
 		.cld-ui-header {
 			margin-top: -1px;
 		}
@@ -31,15 +30,12 @@
 	}
 
 	&-title {
-		text-transform: capitalize;
-		font-size: 10.5px;
+		font-size: $size-panel-subtitle;
 
 		h2 {
-			font-size: 13px;
+			font-size: $size-panel-title;
 			font-weight: bold;
-			&.has-description {
-				margin: 0;
-			}
+			margin: 6px 0 1px;
 		}
 
 
@@ -58,14 +54,58 @@
 	&-wrap {
 		.description {
 			color: $color-cld-description;
+			font-size: $size-panel-description;
 		}
 
-		.button, .button:hover {
+		.button:not(.wp-color-result) {
 			background-color: $color-cld-blue;
-			font-size: 9.5px;
+			color: #fff;
+			text-decoration: none;
+			padding: 5px 14px;
+			border: 0;
+			min-height: 28px;
+			border-radius: 4px;
 			font-weight: bold;
-			padding: 0 14px;
+			font-size: $size-button;
+			margin: 0;
+			display: inline-block;
 		}
 
+		.button:hover, .button:active {
+			background-color: $color-cld-dark-blue;
+		}
+
+		.button:focus {
+			background-color: $color-cld-blue;
+			border-color: $color-cld-blue;
+			box-shadow: 0 0 0 1px $color-white, 0 0 0 3px $color-cld-blue;
+		}
+
+		.button.button-small, .button.button-small:hover {
+			min-height: 26px;
+			line-height: 2.18181818;
+			padding: 0 8px;
+			font-size: 11px;
+		}
+
+		.button.wp-color-result {
+			border-color: #d0d0d0;
+		}
+	}
+
+	&-error {
+		color: $color-red;
+	}
+}
+
+&-referrer {
+	&-link {
+		margin: 12px 0 0;
+		display: inline-block;
+		text-decoration: none;
+
+		span {
+			margin-right: 5px;
+		}
 	}
 }

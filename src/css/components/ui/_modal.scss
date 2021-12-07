@@ -1,7 +1,7 @@
 &-modal {
 	visibility: hidden;
 	background-color: rgba(0, 0, 0, 0.8);
-	position: absolute;
+	position: fixed;
 	left: 0;
 	right: 0;
 	bottom: 0;
@@ -15,12 +15,33 @@
 	opacity: 0;
 	transition: opacity 0.1s;
 
+	&[data-cloudinary-only="1"],
+	&[data-cloudinary-only="true"] {
+		.modal-body {
+			display: none;
+		}
+
+		[data-action="submit"] {
+			pointer-events: none;
+			cursor: not-allowed;
+			opacity: .5;
+		}
+	}
+
+	.warning {
+		color: $color-red;
+	}
+
+	.modal-header {
+		margin-bottom: 2em;
+	}
+
 	.modal-uninstall{
 		display: none;
 	}
+
 	&-box {
 		background-color: #fff;
-		width: 263px;
 		position: relative;
 		margin: 0 auto;
 		display: flex;
@@ -31,6 +52,9 @@
 		font-weight: 600;
 		box-shadow: 0 2px 14px 0 rgba(0, 0, 0, 0.5);
 		transition: height 1s;
+		width: 500px;
+		max-width: 80%;
+
 		.modal-footer {
 			display: flex;
 			flex-direction: row;
@@ -81,6 +105,10 @@
 			margin-left: .25em;
 		}
 
+		input[type="email"] {
+			width: 100%;
+		}
+
 		textarea {
 			resize: none;
 			width: 100%;
@@ -92,7 +120,6 @@
 		}
 
 		p {
-			display: flex;
 			margin: 0 0 12px;
 			font-size: 10.5px;
 		}
