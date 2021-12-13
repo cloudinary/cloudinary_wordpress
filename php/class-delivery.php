@@ -146,6 +146,29 @@ class Delivery implements Setup {
 
 		// Add Bypass options.
 		$this->bypass = new Bypass( $this->plugin );
+
+		// Add relation checking on front.
+		if ( ! is_admin() ) {
+			add_filter( 'wp_get_attachment_url', array( $this, 'ensure_relation' ), 10, 2 );
+		}
+	}
+
+	/**
+	 * Ensure that an asset has a relation on front end.
+	 *
+	 * @param string $url           The URL of the asset.
+	 * @param int    $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function ensure_relation( $url, $attachment_id ) {
+		static $urls = array();
+		if ( empty( $urls[ $attachment_id ] ) && ! $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['relationship'], true ) ) {
+			$urls[ $attachment_id ] = true;
+			$this->sync->get_sync_type( $attachment_id );
+		}
+
+		return $url;
 	}
 
 	/**
@@ -435,6 +458,7 @@ class Delivery implements Setup {
 		$created   = $wpdb->replace( Utils::get_relationship_table(), $data ); // phpcs:ignore WordPress.DB
 		if ( 0 < $created ) {
 			$insert_id = $wpdb->insert_id;
+			$media->update_post_meta( $attachment_id, Sync::META_KEYS['relationship'], $insert_id );
 		}
 
 		return $insert_id;
