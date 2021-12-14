@@ -758,6 +758,20 @@ class Delivery implements Setup {
 				$replacements[ $set['original'] ] = $this->rebuild_tag( $set );
 			}
 			$this->current_post_id = null;
+
+			// Check for src aliases.
+			if ( isset( $this->found_urls[ $set['base_url'] ] ) ) {
+				$base = dirname( $set['atts']['src'] );
+				foreach ( $this->found_urls[ $set['base_url'] ] as $size => $file_name ) {
+					$local_url = path_join( $base, $file_name );
+					if ( isset( $cached[ $local_url ] ) ) {
+						$replacements[ $local_url ] = $cached[ $local_url ];
+						continue;
+					}
+					$cloudinary_url             = $this->media->cloudinary_url( $set['id'], explode( 'x', $size ), $set['transformations'], $set['atts']['data-public-id'], $set['overwrite_transformations'] );
+					$replacements[ $local_url ] = $cloudinary_url;
+				}
+			}
 		}
 
 		// Update the post meta cache.
@@ -972,6 +986,7 @@ class Delivery implements Setup {
 			'transformations'           => array(),
 			'width'                     => 0,
 			'height'                    => 0,
+			'base_url'                  => '',
 		);
 		// Cleanup element.
 		$element = trim( $element, '</>' );
@@ -998,8 +1013,8 @@ class Delivery implements Setup {
 				}
 			}
 		}
-		$url = self::maybe_unsize_url( self::clean_url( $raw_url ) );
-
+		$url                     = $this->maybe_unsize_url( self::clean_url( $raw_url ) );
+		$tag_element['base_url'] = $url;
 		// Track back the found URL.
 		if ( $this->media->is_cloudinary_url( $raw_url ) ) {
 			$public_id = $this->media->get_public_id_from_url( $raw_url );
@@ -1279,12 +1294,16 @@ class Delivery implements Setup {
 	 *
 	 * @return string
 	 */
-	public static function maybe_unsize_url( $url ) {
+	public function maybe_unsize_url( $url ) {
 		$file = pathinfo( $url, PATHINFO_FILENAME );
-		$dash = strrchr( $file, '-' );
+		$dash = ltrim( strrchr( $file, '-' ), '-' );
 		if ( false !== $dash && 1 === substr_count( $dash, 'x' ) ) {
-			if ( is_numeric( str_replace( 'x', '', ltrim( $dash, '-' ) ) ) ) {
-				$url = str_replace( $dash, '', $url );
+			if ( is_numeric( str_replace( 'x', '', $dash ) ) ) {
+				$sized                                = basename( $url );
+				$url                                  = str_replace( '-' . $dash, '', $url );
+				$scaled                               = self::make_scaled_url( $url );
+				$this->found_urls[ $url ][ $dash ]    = $sized;
+				$this->found_urls[ $scaled ][ $dash ] = $sized;
 			}
 		}
 
@@ -1346,11 +1365,11 @@ class Delivery implements Setup {
 
 		// clean out empty urls.
 		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
-		if ( empty( $urls ) && empty( $cloudinary_urls ) ) {
-			return; // Bail since theres nothing.
-		}
 		// Clean URLS for search.
 		$public_ids = array_filter( array_map( array( $this->media, 'get_public_id_from_url' ), $cloudinary_urls ) );
+		if ( empty( $urls ) && empty( $public_ids ) ) {
+			return; // Bail since theres nothing.
+		}
 
 		$wheres = array();
 		if ( ! empty( $urls ) ) {
