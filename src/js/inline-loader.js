@@ -26,6 +26,7 @@ const CloudinaryLoader = {
 			}
 			image.addEventListener( 'error', ( ev ) => {
 				// If load error, set a broken image and remove from images list to prevent infinite load loop.
+				image.srcset = ''; // Remove srcset to stop browser from trying again.
 				image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="rgba(0,0,0,0.1)"/><text x="50%" y="50%" fill="red" text-anchor="middle" dominant-baseline="middle">%26%23x26A0%3B︎</text></svg>';
 				this.rObserver.unobserve( image );
 			} );
