@@ -224,13 +224,13 @@ class Utils {
 		$sql = "CREATE TABLE $table_name (
 	  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 	  post_id bigint(20) DEFAULT NULL,
-	  public_id varchar(255) DEFAULT NULL,
-	  parent_path varchar(255) DEFAULT NULL,
-	  sized_url varchar(255) DEFAULT NULL,
+	  public_id varchar(500) DEFAULT NULL,
+	  parent_path varchar(500) DEFAULT NULL,
+	  sized_url varchar(500) DEFAULT NULL,
 	  width int(11) DEFAULT NULL,
 	  height int(11) DEFAULT NULL,
 	  format varchar(12) DEFAULT NULL,
-	  sync_type varchar(45) DEFAULT NULL,
+	  sync_type varchar(10) DEFAULT NULL,
 	  post_state varchar(12) DEFAULT NULL,
 	  transformations text DEFAULT NULL,
 	  signature varchar(45) DEFAULT NULL,	  
@@ -240,7 +240,7 @@ class Utils {
 	  KEY parent_path (parent_path),
 	  KEY public_id (public_id),
 	  KEY sync_type (sync_type)
-	) $charset_collate";
+	) ENGINE=InnoDB $charset_collate";
 
 		return $sql;
 	}
