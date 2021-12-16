@@ -790,7 +790,7 @@ class Media extends Settings_Component implements Setup {
 		} else {
 			$file     = pathinfo( $url );
 			$end_part = substr( strrchr( $file['filename'], '-' ), 1 );
-			if ( false !== $end_part || false !== strpos( $end_part, 'x' ) ) {
+			if ( false !== $end_part && 1 === substr_count( $end_part, 'x' ) && is_numeric( str_replace( 'x', '', $end_part ) ) ) {
 
 				$size_parts = explode( 'x', $end_part );
 				$size_int   = array_map( 'intval', $size_parts );
