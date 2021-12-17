@@ -160,6 +160,7 @@ class Assets extends Settings_Component {
 		add_action( 'shutdown', array( $this, 'meta_updates' ) );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_cache' ), 100 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		add_action( 'cloudinary_delete_asset', array( $this, 'purge_parent' ) );
 	}
 
 	/**
@@ -499,9 +500,6 @@ class Assets extends Settings_Component {
 				break;
 			}
 		} while ( $query->have_posts() );
-
-		// Clear out excludes.
-		wp_delete_post( $parent_id );
 	}
 
 	/**
@@ -569,10 +567,9 @@ class Assets extends Settings_Component {
 	public function upload( $asset_id ) {
 		$connect = $this->plugin->get_component( 'connect' );
 		$options = array(
-			'use_filename'    => true,
-			'unique_filename' => true,
-			'overwrite'       => false,
-			'resource_type'   => $this->media->get_resource_type( $asset_id ),
+			'use_filename'  => true,
+			'overwrite'     => false,
+			'resource_type' => $this->media->get_resource_type( $asset_id ),
 		);
 		if ( self::is_asset_type( $asset_id ) ) {
 			$asset = get_post( $asset_id );
@@ -585,10 +582,9 @@ class Assets extends Settings_Component {
 		$parent = $this->get_asset_parent( $url );
 		if ( ! empty( $parent ) ) {
 			// Parent based asset "cache point".
-			$path                       = trim( wp_normalize_path( str_replace( home_url(), '', $url ) ), '/' );
-			$folder                     = pathinfo( $path );
-			$options['unique_filename'] = false;
-			$options['overwrite']       = true;
+			$path                 = trim( wp_normalize_path( str_replace( home_url(), '', $url ) ), '/' );
+			$folder               = pathinfo( $path );
+			$options['overwrite'] = true;
 		}
 		// Add folder.
 		$options['folder'] = $folder;
@@ -1077,6 +1073,8 @@ class Assets extends Settings_Component {
 				continue;
 			}
 			$this->purge_parent( $parent->ID );
+			// Remove parent.
+			wp_delete_post( $parent->ID );
 		}
 	}
 
