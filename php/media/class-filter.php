@@ -7,7 +7,9 @@
 
 namespace Cloudinary\Media;
 
+use Cloudinary\Assets;
 use Cloudinary\Connect\Api;
+use Cloudinary\Delivery;
 use Cloudinary\Media;
 use Cloudinary\Utils;
 use WP_Post;
@@ -31,12 +33,20 @@ class Filter {
 	private $media;
 
 	/**
+	 * Holds the Delivery instance.
+	 *
+	 * @var     Delivery Instance of the plugin.
+	 */
+	private $delivery;
+
+	/**
 	 * Filter constructor.
 	 *
 	 * @param Media $media The plugin.
 	 */
 	public function __construct( Media $media ) {
-		$this->media = $media;
+		$this->media    = $media;
+		$this->delivery = $media->plugin->get_component( 'delivery' );
 		$this->setup_hooks();
 	}
 
@@ -92,6 +102,7 @@ class Filter {
 	 *
 	 * @param string $asset The media tag.
 	 * @param string $type  The type.
+	 *
 	 * @return int|false
 	 */
 	public function get_id_from_tag( $asset, $type = 'wp-image-|wp-video-' ) {
@@ -279,7 +290,10 @@ class Filter {
 		$assets  = $this->get_media_tags( $content );
 
 		foreach ( $assets as $asset ) {
-			$url           = $this->get_url_from_tag( $asset );
+			$url = $this->get_url_from_tag( $asset );
+			if ( ! $this->media->is_cloudinary_url( $url ) ) {
+				continue;
+			}
 			$attachment_id = $this->get_id_from_tag( $asset );
 			if ( false === $attachment_id ) {
 				$attachment_id = $this->media->get_id_from_url( $url );
@@ -296,6 +310,18 @@ class Filter {
 			// Skip since there is no local available.
 			if ( $this->media->is_cloudinary_url( $local_url ) ) {
 				continue;
+			}
+
+			// Check for cropped.
+			$path = wp_parse_url( $local_url, PHP_URL_PATH );
+			if ( false !== strpos( $url, dirname( $path ) ) ) {
+				// Content based public_id.
+				$public_id  = $this->media->get_public_id( $attachment_id );
+				$compare_id = $this->media->get_public_id_from_url( $url );
+				if ( ! empty( $compare_id ) && $compare_id !== $public_id ) {
+					$compare_id .= '.' . pathinfo( $local_url, PATHINFO_EXTENSION );
+					$local_url  = path_join( dirname( $local_url ), basename( $compare_id ) );
+				}
 			}
 			// Replace old tag.
 			$content = str_replace( $url, $local_url, $content );
@@ -361,8 +387,8 @@ class Filter {
 			// Get a cloudinary URL.
 			$classes                   = $this->get_classes( $asset ); // check if this is a transformation overwrite.
 			$overwrite_transformations = false !== strpos( $classes, 'cld-overwrite' );
-
-			$cloudinary_url = $this->media->cloudinary_url( $attachment_id, $wp_size, $transformations, null, $overwrite_transformations );
+			$asset_id                  = $this->maybe_alternate_id( $attachment_id, $url );
+			$cloudinary_url            = $this->media->cloudinary_url( $asset_id, $wp_size, $transformations, null, $overwrite_transformations );
 
 			if ( $url === $cloudinary_url ) {
 				continue;
@@ -399,6 +425,30 @@ class Filter {
 		}
 
 		return $this->filter_video_shortcodes( $content );
+	}
+
+	/**
+	 * Maybe get an alternate ID if this url is from an edited image.
+	 *
+	 * @param int    $attachment_id The attachment ID.
+	 * @param string $url           The attachment URL.
+	 *
+	 * @return int
+	 */
+	public function maybe_alternate_id( $attachment_id, $url ) {
+		$unsized       = $this->delivery->maybe_unsize_url( $url );
+		$cleaned       = Delivery::clean_url( $unsized );
+		$linked_assets = $this->media->get_post_meta( $attachment_id, Assets::META_KEYS['edits'], true );
+		$asset_id      = $attachment_id;
+		if ( isset( $linked_assets[ $cleaned ] ) ) {
+			$asset_id = $linked_assets[ $cleaned ];
+		}
+		$scaled = Delivery::make_scaled_url( $cleaned );
+		if ( isset( $linked_assets[ $scaled ] ) ) {
+			$asset_id = $linked_assets[ $scaled ];
+		}
+
+		return $asset_id;
 	}
 
 	/**
