@@ -40,7 +40,7 @@ And with a full Digital Asset Management platform embedded in the plugin, you wo
 
 == Getting Started ==
 
-To use the Cloudinary Plugin and all the functionality that comes with it, you will need to have a Cloudinary Account. If you don’t have an account yet, [sign up](https://cloudinary.com/signup) now for a free plan. You’ll start with generous usage limits and when your requirements grow, you can easily upgrade to a plan that best fits your needs. Upon account creation you can plug in your account credentials and customize your configurations as desired. That’s it.
+To use the Cloudinary Plugin and all the functionality that comes with it, you will need to have a Cloudinary Account. **If you don’t have an account yet, [sign up](https://cloudinary.com/signup?source=wp&utm_source=wp&utm_medium=wporgmarketplace&utm_campaign=wporgmarketplace) now for a free Cloudinary Programmable Media account**. You’ll start with generous usage limits and when your requirements grow, you can easily upgrade to a plan that best fits your needs. Upon account creation you can plug in your account credentials and customize your configurations as desired. That’s it.
 
 **Upgrade Messaging**
 
