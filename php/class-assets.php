@@ -98,6 +98,7 @@ class Assets extends Settings_Component {
 	const META_KEYS = array(
 		'excludes' => '_excluded_urls',
 		'lock'     => '_asset_lock',
+		'edits'    => '_edited_assets',
 	);
 
 	/**
@@ -545,6 +546,20 @@ class Assets extends Settings_Component {
 	}
 
 	/**
+	 * Generate the signature for sync.
+	 *
+	 * @param int $attachment_id The attachment/asset ID.
+	 *
+	 * @return string
+	 */
+	public function generate_edit_signature( $attachment_id ) {
+		$sig  = wp_json_encode( (array) get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true ) );
+		$file = get_attached_file( $attachment_id );
+
+		return $sig . $file;
+	}
+
+	/**
 	 * Upload an asset.
 	 *
 	 * @param int $asset_id The asset ID to upload.
@@ -605,6 +620,25 @@ class Assets extends Settings_Component {
 	}
 
 	/**
+	 * Validate if sync type is valid as an edited asset..
+	 *
+	 * @param int $attachment_id The attachment id to validate.
+	 *
+	 * @return bool
+	 */
+	public function validate_edited_asset_sync( $attachment_id ) {
+		$valid = false;
+		if ( ! self::is_asset_type( $attachment_id ) ) {
+			$sizes = get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true );
+			if ( ! empty( $sizes ) ) {
+				$valid = true;
+			}
+		}
+
+		return $valid;
+	}
+
+	/**
 	 * Register our sync type.
 	 *
 	 * @hook  cloudinary_sync_base_struct
@@ -625,7 +659,64 @@ class Assets extends Settings_Component {
 			'asset_state' => 0,
 		);
 
+		$structs['edited_asset'] = array(
+			'generate' => array( $this, 'generate_edit_signature' ),
+			'priority' => 5.3,
+			'sync'     => array( $this, 'create_edited_asset' ),
+			'validate' => array( $this, 'validate_edited_asset_sync' ),
+			'state'    => 'disabled',
+			'note'     => __( 'Creating shadow assets', 'cloudinary' ),
+			'required' => false,
+			'realtime' => true,
+		);
+
 		return $structs;
+	}
+
+	/**
+	 * Create an edited asset which acts as a shadow media item for edits.
+	 *
+	 * @param int $attachment_id The attachment to create from.
+	 *
+	 * @return array
+	 */
+	public function create_edited_asset( $attachment_id ) {
+		$sizes   = get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true );
+		$assets  = $this->media->get_post_meta( $attachment_id, self::META_KEYS['edits'], true );
+		$current = basename( get_attached_file( $attachment_id, true ) );
+
+		if ( empty( $assets ) ) {
+			$assets = array();
+		}
+		if ( ! empty( $sizes ) ) {
+			$base = dirname( $this->media->local_url( $attachment_id ) );
+			foreach ( $sizes as $size => $data ) {
+
+				if ( 'full-' !== substr( $size, 0, 5 ) ) {
+					continue;
+				}
+
+				$url = Delivery::clean_url( path_join( $base, $data['file'] ) );
+				if ( basename( $url ) === $current ) {
+					// Currently the original.
+					if ( isset( $assets[ $url ] ) ) {
+						// Restored from a crop.
+						wp_delete_post( $assets[ $url ] );
+						unset( $assets[ $url ] );
+						$this->media->delete_post_meta( $attachment_id, Sync::META_KEYS['relationship'] );
+					}
+					continue;
+				}
+				if ( ! isset( $assets[ $url ] ) ) {
+					$asset          = $this->create_asset( $url, $attachment_id );
+					$assets[ $url ] = $asset;
+				}
+			}
+			$this->media->update_post_meta( $attachment_id, self::META_KEYS['edits'], $assets );
+		}
+		$this->media->sync->set_signature_item( $attachment_id, 'edited_asset' );
+
+		return $assets;
 	}
 
 	/**
