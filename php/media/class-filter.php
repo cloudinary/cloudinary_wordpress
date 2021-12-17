@@ -312,16 +312,12 @@ class Filter {
 				continue;
 			}
 
-			// Check for cropped.
-			$path = wp_parse_url( $local_url, PHP_URL_PATH );
-			if ( false !== strpos( $url, dirname( $path ) ) ) {
-				// Content based public_id.
-				$public_id  = $this->media->get_public_id( $attachment_id );
-				$compare_id = $this->media->get_public_id_from_url( $url );
-				if ( ! empty( $compare_id ) && $compare_id !== $public_id ) {
-					$compare_id .= '.' . pathinfo( $local_url, PATHINFO_EXTENSION );
-					$local_url  = path_join( dirname( $local_url ), basename( $compare_id ) );
-				}
+			// Check that the file isin't an edited version by comparing the public ID.
+			$public_id  = $this->media->get_public_id( $attachment_id );
+			$compare_id = $this->media->get_public_id_from_url( $url );
+			if ( ! empty( $compare_id ) && $compare_id !== $public_id ) {
+				$compare_id .= '.' . pathinfo( $local_url, PATHINFO_EXTENSION );
+				$local_url  = path_join( dirname( $local_url ), basename( $compare_id ) );
 			}
 			// Replace old tag.
 			$content = str_replace( $url, $local_url, $content );
@@ -637,25 +633,6 @@ class Filter {
 	}
 
 	/**
-	 * Conditionally remove editors in post context to prevent users editing images in WP.
-	 *
-	 * @param array $editors List of available editors.
-	 *
-	 * @return array
-	 */
-	public function disable_editors_maybe( $editors ) {
-
-		if ( function_exists( 'get_current_screen' ) ) {
-			$screen = get_current_screen();
-			if ( is_object( $screen ) && 'post' === $screen->base ) {
-				$editors = array();
-			}
-		}
-
-		return $editors;
-	}
-
-	/**
 	 * Returns the overwrite template for the insert media panel.
 	 *
 	 * @return string
@@ -821,9 +798,6 @@ class Filter {
 
 		// Enable Rest filters.
 		add_action( 'rest_api_init', array( $this, 'init_rest_filters' ) );
-
-		// Remove editors to prevent users from manually editing images in WP.
-		add_filter( 'wp_image_editors', array( $this, 'disable_editors_maybe' ) );
 
 		// Add checkbox to media modal template.
 		add_action( 'admin_footer', array( $this, 'catch_media_templates_maybe' ), 9 );
