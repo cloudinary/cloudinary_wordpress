@@ -568,29 +568,38 @@ class Assets extends Settings_Component {
 	 */
 	public function upload( $asset_id ) {
 		$connect = $this->plugin->get_component( 'connect' );
-
+		$options = array(
+			'use_filename'    => true,
+			'unique_filename' => true,
+			'overwrite'       => false,
+			'resource_type'   => $this->media->get_resource_type( $asset_id ),
+		);
 		if ( self::is_asset_type( $asset_id ) ) {
 			$asset = get_post( $asset_id );
 			$url   = $asset->post_title;
 		} else {
 			$url = Delivery::clean_url( $this->media->local_url( $asset_id ) );
 		}
-		$path      = trim( wp_normalize_path( str_replace( home_url(), '', $url ) ), '/' );
-		$info      = pathinfo( $path );
-		$public_id = $info['dirname'] . '/' . $info['filename'];
-		$options   = array(
-			'unique_filename' => false,
-			'overwrite'       => true,
-			'resource_type'   => $this->media->get_resource_type( $asset_id ),
-			'public_id'       => $public_id,
-		);
-		$result    = $connect->api->upload( $asset_id, $options, array() );
+		$folder = untrailingslashit( $this->media->get_cloudinary_folder() );
+
+		$parent = $this->get_asset_parent( $url );
+		if ( ! empty( $parent ) ) {
+			// Parent based asset "cache point".
+			$path                       = trim( wp_normalize_path( str_replace( home_url(), '', $url ) ), '/' );
+			$folder                     = pathinfo( $path );
+			$options['unique_filename'] = false;
+			$options['overwrite']       = true;
+		}
+		// Add folder.
+		$options['folder'] = $folder;
+		$result            = $connect->api->upload( $asset_id, $options, array() );
 		if ( ! is_wp_error( $result ) && isset( $result['public_id'] ) ) {
-			Delivery::update_size_relations_public_id( $asset_id, $public_id );
+			$this->media->update_post_meta( $asset_id, Sync::META_KEYS['public_id'], $result['public_id'] );
+			Delivery::update_size_relations_public_id( $asset_id, $result['public_id'] );
 			Delivery::update_size_relations_state( $asset_id, 'enable' );
 			$this->media->sync->set_signature_item( $asset_id, 'file' );
 			$this->media->sync->set_signature_item( $asset_id, 'cld_asset' );
-			$this->plugin->get_component( 'storage' )->size_sync( $asset_id, $public_id );
+			$this->plugin->get_component( 'storage' )->size_sync( $asset_id, $result['public_id'] );
 		}
 
 		return $result;
@@ -872,6 +881,9 @@ class Assets extends Settings_Component {
 	public function find_parent( $asset_id ) {
 		$path   = $this->clean_path( $this->media->local_url( $asset_id ) );
 		$parent = $this->get_param( $path );
+		if ( empty( $parent ) ) {
+			$parent = get_post_parent( $asset_id );
+		}
 
 		return $parent instanceof \WP_Post ? $parent : null;
 	}
