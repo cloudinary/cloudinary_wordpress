@@ -132,7 +132,12 @@ class Extensions extends Settings_Component implements Setup {
 		$internal = array(
 			'media-library' => array(
 				'name'        => __( 'Cloudinary DAM', 'cloudinary' ),
-				'description' => __( "Cloudinary's digital asset management solution bridges the gap between asset management and delivery, enabling creative.", 'cloudinary' ),
+				'description' => sprintf(
+					// translators: The Link for Learn more.
+					__( 'Cloudinary’s Digital Asset Management solutions is designed to meet the unique needs of today focusing on flexibility, intelligent automation features, and delivery at scale. %1$sLearn More%2$s.', 'cloudinary' ),
+					'<br><a href="https://cloudinary.com/products/digital_asset_management" target="_blank">',
+					'</a>'
+				),
 				'icon'        => $this->plugin->dir_url . 'css/images/dam-icon.svg',
 				'handler'     => '\\Cloudinary\\Media_Library',
 				'default'     => 'off',
