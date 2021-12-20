@@ -210,8 +210,12 @@ class Api {
 			return '';
 		}
 		$transformation_index = self::$transformation_index[ $type ];
+
 		$transformations      = array_map(
 			function ( $item ) use ( $transformation_index ) {
+				$singles = array(
+					'f' => 0,
+				);
 				$transform = array();
 				if ( is_string( $item ) ) {
 					return $item;
@@ -220,6 +224,12 @@ class Api {
 				foreach ( $item as $type => $value ) { // phpcs:ignore
 					$key = array_search( $type, $transformation_index, true );
 					if ( false !== $key ) {
+						if( isset( $singles[$key])){
+							if( 0< $singles[$key]){
+								continue;
+							}
+							$singles[$key]++;
+						}
 						$transform[] = $key . '_' . $value;
 					} elseif ( '$' === $type[0] ) {
 						$transform[] = $type . '_' . $value;
@@ -288,6 +298,7 @@ class Api {
 		if ( ! empty( $args['transformation'] ) ) {
 			$url_parts[] = self::generate_transformation_string( $args['transformation'], $args['resource_type'] );
 		}
+
 
 		$url_parts[] = $args['version'];
 		$url_parts[] = $public_id;

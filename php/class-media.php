@@ -1116,6 +1116,10 @@ class Media extends Settings_Component implements Setup {
 			 */
 			$default                   = apply_filters( "cloudinary_default_qf_transformations_{$type}", array(), $transformations );
 			$default                   = array_filter( $default ); // Clear out empty settings.
+			$format = $this->get_transformation( $transformations, 'fetch_format' );
+			if( false !== $format ){
+				unset( $default['fetch_format'] );
+			}
 			$new_transformations['qf'] = Api::generate_transformation_string( array( $default ), $type );
 
 			if ( empty( $freeform[ $type ] ) ) {

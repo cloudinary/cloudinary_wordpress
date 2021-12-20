@@ -744,7 +744,7 @@ class Delivery implements Setup {
 			$type = 'amp';
 		}
 		if ( ! empty( $has_cache[ $type ] ) ) {
-			$cached = $has_cache[ $type ];
+			//$cached = $has_cache[ $type ];
 		}
 
 		$tags = $this->get_media_tags( $content, 'img|video|article' );

@@ -530,7 +530,7 @@ class Cache extends Settings_Component implements Setup {
 		);
 
 		if ( 'image' === $type ) {
-			$options['eager'] = 'f_auto,q_auto:eco';
+			$options['eager'] = 'fl_sanitize';
 		}
 		$data = $this->connect->api->upload_cache( $options );
 

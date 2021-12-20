@@ -72,6 +72,8 @@ class Storage implements Notice {
 	 */
 	protected $settings;
 
+	protected $svgs = array();
+
 	/**
 	 * The delay in seconds before local assets get deleted if Cloudinary only storage.
 	 */
@@ -112,7 +114,7 @@ class Storage implements Notice {
 					),
 					'</a>'
 				);
-				$field['disabled'] = true;
+				$field['disabled']    = true;
 			}
 		}
 
@@ -495,6 +497,90 @@ class Storage implements Notice {
 			add_filter( 'cloudinary_can_sync_asset', array( $this, 'delay_cld_only' ), 10, 3 );
 			add_filter( 'wp_unique_filename', array( $this, 'unique_filename' ), 10, 3 );
 			add_filter( 'wp_get_attachment_metadata', array( $this, 'ensure_metadata' ), 10, 2 );
+			add_filter( 'upload_mimes', function ( $types ) {
+				$types['svg'] = 'image/svg+xml';
+
+				return $types;
+			} );
+
+			add_filter( 'wp_handle_upload', function ( $data ) {
+				if ( 'image/svg+xml' === $data['type'] ) {
+					$folder    = $this->media->get_cloudinary_folder();
+					$public_id = '';
+					if ( ! empty( $folder ) ) {
+						$public_id = $folder . '/';
+					}
+					$public_id .= pathinfo( $data['file'], PATHINFO_FILENAME );
+
+					if ( function_exists( 'curl_file_create' ) ) {
+						$upload_file = curl_file_create( $data['file'] ); // phpcs:ignore
+						$upload_file->setPostFilename( $data['file'] );
+					} else {
+						$upload_file = '@' . $data['file'];
+					}
+
+					$options = array(
+						'file'          => $upload_file,
+						'resource_type' => 'auto',
+						'public_id'     => wp_normalize_path( $public_id ),
+						'eager'         => 'fl_sanitize',
+					);
+					$result  = $this->connect->api->upload_cache( $options );
+
+					if ( ! is_wp_error( $result ) ) {
+						$this->svgs[ $data['file'] ] = $result;
+						// Stream file to primed file.
+						$response = wp_safe_remote_get(
+							$result['eager'][0]['secure_url'],
+							array(
+								'timeout'  => 300, // phpcs:ignore
+								'stream'   => true,
+								'filename' => $data['file'],
+							)
+						);
+					}
+				}
+
+				return $data;
+			} );
+
+			add_filter( 'wp_check_filetype_and_ext', function ( $wp_check_filetype_and_ext, $file, $filename, $mimes, $real_mime = null ) {
+				if ( false === $mimes && 'svg' === pathinfo( $filename, PATHINFO_EXTENSION ) ) {
+					libxml_use_internal_errors();
+					$data = simplexml_load_file( $file );
+					if ( 'svg' === $data->getName() ) {
+						$wp_check_filetype_and_ext['ext']  = 'svg';
+						$wp_check_filetype_and_ext['type'] = 'image/svg+xml';
+					}
+
+				}
+
+				return $wp_check_filetype_and_ext;
+			},          10, 5 );
+
+			add_filter( 'wp_generate_attachment_metadata', function ( $metadata, $attachment_id ) {
+				$file = get_attached_file( $attachment_id );
+				if ( isset( $this->svgs[ $file ] ) ) {
+					$data = $this->svgs[ $file ];
+					$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $data['public_id'] );
+					$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['version'], $data['version'] );
+					$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], array( array( 'fetch_format' => 'svg' ) ) );
+					$this->sync->set_signature_item( $attachment_id, 'file' );
+					$this->sync->set_signature_item( $attachment_id, 'cloud_name' );
+					$paths              = wp_get_upload_dir();
+					$metadata['file']   = str_replace( trailingslashit( $paths['basedir'] ), '', $file );
+					$metadata['width']  = $data['width'];
+					$metadata['height'] = $data['height'];
+				}
+
+				return $metadata;
+			},          10, 2 );
+
+			add_filter( 'cloudinary_allowed_extensions', function ( $types ) {
+				$types[] = 'svg';
+
+				return $types;
+			} );
 		}
 	}
 }
