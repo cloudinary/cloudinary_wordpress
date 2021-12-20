@@ -224,9 +224,9 @@ class Utils {
 		$sql = "CREATE TABLE $table_name (
 	  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 	  post_id bigint(20) DEFAULT NULL,
-	  public_id varchar(500) DEFAULT NULL,
-	  parent_path varchar(500) DEFAULT NULL,
-	  sized_url varchar(500) DEFAULT NULL,
+	  public_id varchar(1000) DEFAULT NULL,
+	  parent_path varchar(1000) DEFAULT NULL,
+	  sized_url varchar(1000) DEFAULT NULL,
 	  width int(11) DEFAULT NULL,
 	  height int(11) DEFAULT NULL,
 	  format varchar(12) DEFAULT NULL,
