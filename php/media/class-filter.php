@@ -312,7 +312,7 @@ class Filter {
 				continue;
 			}
 
-			// Check that the file isin't an edited version by comparing the public ID.
+			// Check that the file isn't an edited version by comparing the public ID.
 			$public_id  = $this->media->get_public_id( $attachment_id );
 			$compare_id = $this->media->get_public_id_from_url( $url );
 			if ( ! empty( $compare_id ) && $compare_id !== $public_id ) {

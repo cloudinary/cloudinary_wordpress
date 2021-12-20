@@ -625,7 +625,7 @@ class Assets extends Settings_Component {
 	}
 
 	/**
-	 * Validate if sync type is valid as an edited asset..
+	 * Validate if sync type is valid as an edited asset.
 	 *
 	 * @param int $attachment_id The attachment id to validate.
 	 *

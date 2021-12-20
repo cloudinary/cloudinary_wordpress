@@ -232,7 +232,7 @@ class Upload_Sync {
 		$backup_sizes = get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true );
 		if ( ! empty( $backup_sizes ) && ! empty( $backup_sizes['full-orig'] ) ) {
 			// wp_get_original_image_path will always return the original.
-			// So wee need to determine the the current file is an edit or not.
+			// So we need to determine the the current file is an edit or not.
 			$attached_file = get_attached_file( $attachment_id, true );
 			// The original will never be a -scaled.
 			// If we scale the attached file and the original, they should match. Meaning the attached file is not an edit.
