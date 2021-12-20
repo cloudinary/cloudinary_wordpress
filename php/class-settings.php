@@ -338,13 +338,14 @@ class Settings {
 	/**
 	 * Get a setting value.
 	 *
-	 * @param string|null $slug     The slug to get.
-	 * @param string      ...$slugs Additional slugs to get settings for.
+	 * @param [string] ...$slugs Additional slugs to get settings for.
 	 *
 	 * @return mixed
 	 */
-	public function get_value( $slug = null, ...$slugs ) {
-		$slugs  = array_merge( (array) $slug, $slugs );
+	public function get_value( ...$slugs ) {
+		if ( empty( $slugs ) ) {
+			$slugs = array( '' );
+		}
 		$return = array();
 		foreach ( $slugs as $slug ) {
 			$key = self::META_KEYS['data'];
