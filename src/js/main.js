@@ -47,6 +47,7 @@ import '../css/images/report.jpg';
 import '../css/images/confetti.png';
 import '../css/images/circular-loader.svg';
 import '../css/images/dam-icon.svg';
+import '../css/images/svglogo.svg';
 
 
 // jQuery, because reasons.

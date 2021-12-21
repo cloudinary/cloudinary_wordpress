@@ -142,6 +142,13 @@ class Extensions extends Settings_Component implements Setup {
 				'handler'     => '\\Cloudinary\\Media_Library',
 				'default'     => 'off',
 			),
+			'svg-support' => array(
+				'name'        => __( 'SVG Support', 'cloudinary' ),
+				'description' => __( 'Cloudinary’s SVG Support, allows safe uploading of SVG assets.', 'cloudinary' ),
+				'icon'        => $this->plugin->dir_url . 'css/images/svglogo.svg',
+				'handler'     => '\\Cloudinary\\SVG',
+				'default'     => 'off',
+			),
 		);
 
 		return $internal;
@@ -182,10 +189,8 @@ class Extensions extends Settings_Component implements Setup {
 
 			$instance = null;
 			if ( isset( $extension['handler'] ) ) {
-				$try = array( $extension['handler'], 'get_instance' );
-				if ( is_callable( $try ) ) {
-					$instance = call_user_func( $try );
-				}
+
+				$instance = new $extension['handler']( $this->plugin );
 
 				// Add to plugin components.
 				$this->plugin->components[ 'extension_' . $slug ] = $instance;

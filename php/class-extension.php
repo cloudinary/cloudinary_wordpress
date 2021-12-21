@@ -15,7 +15,26 @@ use Cloudinary\Traits\Singleton_Trait;
  */
 abstract class Extension implements Component\Assets {
 
-	use Singleton_Trait;
+	/**
+	 * Holds the singleton instance.
+	 *
+	 * @var self
+	 */
+	protected static $instance;
+
+	/**
+	 * Get an instance of this class.
+	 *
+	 * @return self
+	 */
+	public static function get_instance() {
+		if ( ! self::$instance ) {
+			$called         = get_called_class();
+			self::$instance = new $called( get_plugin_instance() );
+		}
+
+		return self::$instance;
+	}
 
 	/**
 	 * Holds the plugin instance.
