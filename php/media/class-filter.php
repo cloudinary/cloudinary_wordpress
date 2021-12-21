@@ -779,6 +779,26 @@ class Filter {
 	}
 
 	/**
+	 * Match the Cloudinary URL src to the attachment when editing an image in Gutenberg.
+	 *
+	 * @param bool   $match          Flag indicating a match.
+	 * @param string $image_location The image URL.
+	 * @param array  $image_meta     The unused image meta.
+	 * @param int    $attachment_id  The attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function edit_match_src( $match, $image_location, $image_meta, $attachment_id ) {
+		if ( $this->media->is_cloudinary_url( $image_location ) ) {
+			$test_id   = $this->media->get_public_id_from_url( $image_location );
+			$public_id = $this->media->get_public_id( $attachment_id );
+			$match     = $test_id === $public_id;
+		}
+
+		return $match;
+	}
+
+	/**
 	 * Setup hooks for the filters.
 	 */
 	public function setup_hooks() {
@@ -814,5 +834,8 @@ class Filter {
 			add_filter( 'the_editor_content', array( $this, 'filter_out_local' ) );
 			add_filter( 'the_content', array( $this, 'filter_out_local' ), 100 );
 		}
+
+		// Add filter to match src when editing in block.
+		add_filter( 'wp_image_file_matches_image_meta', array( $this, 'edit_match_src' ), 10, 4 );
 	}
 }
