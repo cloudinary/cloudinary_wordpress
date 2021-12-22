@@ -345,11 +345,13 @@ class Filter {
 			$attachment_id = $this->get_id_from_tag( $asset );
 
 			// Check if this is not already a cloudinary url and if is not in the sync folder, for Cloudinary only storage cases.
-			if ( $this->media->is_cloudinary_url( $url ) && ! $this->media->is_cloudinary_sync_folder( $url ) ) {
-				// Is a content based ID. If has a cloudinary ID, it's from an older plugin version.
-				// Check if has an ID, and push update to reset.
-				if ( ! empty( $attachment_id ) && ! $this->media->plugin->components['sync']->is_synced( $attachment_id ) ) {
-					$this->media->cloudinary_id( $attachment_id ); // Start an on-demand sync.
+			if ( $this->media->is_cloudinary_url( $url ) ) {
+				if ( ! $this->media->is_cloudinary_sync_folder( $url ) ) {
+					// Is a content based ID. If has a cloudinary ID, it's from an older plugin version.
+					// Check if has an ID, and push update to reset.
+					if ( ! empty( $attachment_id ) && ! $this->media->plugin->components['sync']->is_synced( $attachment_id ) ) {
+						$this->media->cloudinary_id( $attachment_id ); // Start an on-demand sync.
+					}
 				}
 
 				continue; // Already a cloudinary URL. Possibly from a previous version. Will correct on post update after synced.
@@ -432,6 +434,22 @@ class Filter {
 	 * @return int
 	 */
 	public function maybe_alternate_id( $attachment_id, $url ) {
+		$meta = wp_get_attachment_metadata( $attachment_id );
+		$base = basename( $url );
+		if ( basename( $meta['file'] ) === $base ) {
+			// Full image meta matching the current URL, indicates is the current edit. We can use this ID.
+			return $attachment_id;
+		}
+		// Check if the sized url is in the current meta.
+		if ( ! empty( $meta['sizes'] ) ) {
+			foreach ( $meta['sizes'] as $size ) {
+				if ( $size['file'] === $base ) {
+					// This is a current size, we can use this ID.
+					return $attachment_id;
+				}
+			}
+		}
+		// If we are here, we are using a URL for the attachment from previous edit. Try find the new ID.
 		$unsized       = $this->delivery->maybe_unsize_url( $url );
 		$cleaned       = Delivery::clean_url( $unsized );
 		$linked_assets = $this->media->get_post_meta( $attachment_id, Assets::META_KEYS['edits'], true );
