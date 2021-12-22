@@ -434,6 +434,22 @@ class Filter {
 	 * @return int
 	 */
 	public function maybe_alternate_id( $attachment_id, $url ) {
+		$meta = wp_get_attachment_metadata( $attachment_id );
+		$base = basename( $url );
+		if ( basename( $meta['file'] ) === $base ) {
+			// Full image meta matching the current URL, indicates is the current edit. We can use this ID.
+			return $attachment_id;
+		}
+		// Check if the sized url is in the current meta.
+		if ( ! empty( $meta['sizes'] ) ) {
+			foreach ( $meta['sizes'] as $size ) {
+				if ( $size['file'] === $base ) {
+					// This is a current size, we can use this ID.
+					return $attachment_id;
+				}
+			}
+		}
+		// If we are here, we are using a URL for the attachment from previous edit. Try find the new ID.
 		$unsized       = $this->delivery->maybe_unsize_url( $url );
 		$cleaned       = Delivery::clean_url( $unsized );
 		$linked_assets = $this->media->get_post_meta( $attachment_id, Assets::META_KEYS['edits'], true );
