@@ -508,6 +508,24 @@ class Sync implements Setup, Assets {
 				'note'        => __( 'Uploading to Cloudinary', 'cloudinary' ),
 				'required'    => true, // Required to complete URL render flag.
 			),
+			'edit'         => array(
+				'generate' => array( $this, 'generate_edit_signature' ),
+				'priority' => 5.2,
+				'sync'     => array( $this->managers['upload'], 'edit_upload' ),
+				'validate' => function ( $attachment_id ) {
+					$valid  = false;
+					$backup = get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true );
+					if ( ! empty( $backup ) ) {
+						$valid = true;
+					}
+
+					return $valid;
+				},
+				'state'    => 'uploading',
+				'note'     => __( 'Uploading to Cloudinary', 'cloudinary' ),
+				'required' => false, // Required to complete URL render flag.
+				'realtime' => true,
+			),
 			'folder'       => array(
 				'generate' => array( $this->managers['media'], 'get_cloudinary_folder' ),
 				'validate' => array( $this->managers['media'], 'is_folder_synced' ),
@@ -1210,5 +1228,23 @@ class Sync implements Setup, Assets {
 		$str  = ! $this->managers['media']->is_oversize_media( $attachment_id ) ? basename( $path ) : $attachment_id;
 
 		return $str . $this->is_auto_sync_enabled();
+	}
+
+	/**
+	 * Generate a signature for a file edit.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function generate_edit_signature( $attachment_id ) {
+		$backup_sizes = get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true );
+		$path         = get_attached_file( $attachment_id );
+		$str          = basename( $path );
+		if ( ! empty( $backup_sizes ) ) {
+			$str .= wp_json_encode( $backup_sizes );
+		}
+
+		return $str;
 	}
 }

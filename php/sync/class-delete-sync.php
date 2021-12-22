@@ -113,6 +113,13 @@ class Delete_Sync {
 				// using the public_id directly in a background call, would make validation complicated since there is no longer a post to validate against.
 				$this->plugin->components['connect']->api->destroy( $type, $options );
 			}
+			/**
+			 * Action fired when deleting a synced asset.
+			 *
+			 * @hook   cloudinary_delete_asset
+			 * @since  3.0.1
+			 */
+			do_action( 'cloudinary_delete_asset', $post_id );
 		}
 	}
 

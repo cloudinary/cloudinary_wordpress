@@ -32,7 +32,7 @@ final class Plugin {
 	 *
 	 * @since   0.1
 	 *
-	 * @var     Media[]|Sync[]|Admin[]|REST_API[]|Connect[]
+	 * @var     Media[]|Sync[]|Admin[]|REST_API[]|Connect[]|Delivery[]
 	 */
 	public $components;
 	/**

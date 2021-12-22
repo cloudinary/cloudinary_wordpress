@@ -186,8 +186,9 @@ class Delivery implements Setup {
 		$sizes              = $this->get_sized( $attachment_id );
 		$public_id          = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
 		$settings_signature = self::get_settings_signature();
+		$relation_signature = $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['relationship'], true );
 
-		return wp_json_encode( $sizes ) . $public_id . $sql . $settings_signature;
+		return wp_json_encode( $sizes ) . $public_id . $sql . $settings_signature . $relation_signature;
 	}
 
 	/**
@@ -366,6 +367,7 @@ class Delivery implements Setup {
 		$data = array(
 			'public_id'   => $public_id,
 			'public_hash' => md5( $public_id ),
+			'signature'   => self::get_settings_signature(),
 		);
 		$wpdb->update( Utils::get_relationship_table(), $data, array( 'post_id' => $attachment_id ), array( '%s' ), array( '%d' ) );// phpcs:ignore WordPress.DB
 
@@ -461,7 +463,7 @@ class Delivery implements Setup {
 		$created   = $wpdb->replace( Utils::get_relationship_table(), $data ); // phpcs:ignore WordPress.DB
 		if ( 0 < $created ) {
 			$insert_id = $wpdb->insert_id;
-			$media->update_post_meta( $attachment_id, Sync::META_KEYS['relationship'], $insert_id );
+			$media->update_post_meta( $attachment_id, Sync::META_KEYS['relationship'], self::get_settings_signature() );
 		}
 
 		return $insert_id;
