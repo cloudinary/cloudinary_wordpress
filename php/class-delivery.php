@@ -787,7 +787,7 @@ class Delivery implements Setup {
 
 			// Check for src aliases.
 			if ( isset( $this->found_urls[ $set['base_url'] ] ) ) {
-				$base = dirname( $set['atts']['src'] );
+				$base = dirname( $set['base_url'] );
 				foreach ( $this->found_urls[ $set['base_url'] ] as $size => $file_name ) {
 					$local_url = path_join( $base, $file_name );
 					if ( isset( $cached[ $local_url ] ) ) {
