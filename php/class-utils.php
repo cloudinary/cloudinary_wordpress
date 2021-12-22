@@ -243,7 +243,7 @@ class Utils {
 	  KEY parent_hash (parent_hash),
 	  KEY public_hash (public_hash),
 	  KEY sync_type (sync_type)
-	) $charset_collate";
+	) ENGINE=InnoDB $charset_collate";
 
 		return $sql;
 	}
@@ -345,9 +345,11 @@ class Utils {
 		$wpdb->query( "ALTER TABLE {$tablename} ADD INDEX public_hash (public_hash)" ); // phpcs:ignore WordPress.DB
 		$wpdb->query( "ALTER TABLE {$tablename} ADD INDEX parent_hash (parent_hash)" ); // phpcs:ignore WordPress.DB
 		// Alter sizes.
-		$wpdb->query( "ALTER TABLE {$tablename}  CHANGE public_id public_id varchar(1000) DEFAULT NULL" ); // phpcs:ignore WordPress.DB
-		$wpdb->query( "ALTER TABLE {$tablename}  CHANGE parent_path parent_path varchar(1000) DEFAULT NULL" ); // phpcs:ignore WordPress.DB
-		$wpdb->query( "ALTER TABLE {$tablename}  CHANGE sized_url sized_url varchar(1000) DEFAULT NULL" ); // phpcs:ignore WordPress.DB
+		$wpdb->query( "ALTER TABLE {$tablename} CHANGE public_id public_id varchar(1000) DEFAULT NULL" ); // phpcs:ignore WordPress.DB
+		$wpdb->query( "ALTER TABLE {$tablename} CHANGE parent_path parent_path varchar(1000) DEFAULT NULL" ); // phpcs:ignore WordPress.DB
+		$wpdb->query( "ALTER TABLE {$tablename} CHANGE sized_url sized_url varchar(1000) DEFAULT NULL" ); // phpcs:ignore WordPress.DB
+		// Alter engine.
+		$wpdb->query( "ALTER TABLE {$tablename} ENGINE=InnoDB;" );// phpcs:ignore WordPress.DB
 
 		// Set DB Version.
 		update_option( Sync::META_KEYS['db_version'], get_plugin_instance()->version );
