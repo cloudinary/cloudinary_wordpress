@@ -312,7 +312,17 @@ class Utils {
 			}
 		}
 
-		return $sequence; // Perhaps a filter here?
+		/**
+		 * Filter the upgrade sequence.
+		 *
+		 * @hook  cloudinary_upgrade_sequence
+		 * @since 3.1.0
+		 *
+		 * @param $sequence {array} The default sequence.
+		 *
+		 * @return {array}
+		 */
+		return apply_filters( 'cloudinary_upgrade_sequence', $sequence );
 	}
 
 	/**
