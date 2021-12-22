@@ -316,7 +316,7 @@ class Utils {
 		 * Filter the upgrade sequence.
 		 *
 		 * @hook  cloudinary_upgrade_sequence
-		 * @since 3.1.0
+		 * @since 3.0.1
 		 *
 		 * @param $sequence {array} The default sequence.
 		 *
