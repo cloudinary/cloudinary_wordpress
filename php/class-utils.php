@@ -224,25 +224,45 @@ class Utils {
 		$sql = "CREATE TABLE $table_name (
 	  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 	  post_id bigint(20) DEFAULT NULL,
-	  public_id varchar(255) DEFAULT NULL,
-	  parent_path varchar(255) DEFAULT NULL,
-	  sized_url varchar(255) DEFAULT NULL,
+	  public_id varchar(1000) DEFAULT NULL,
+	  parent_path varchar(1000) DEFAULT NULL,
+	  sized_url varchar(1000) DEFAULT NULL,
 	  width int(11) DEFAULT NULL,
 	  height int(11) DEFAULT NULL,
 	  format varchar(12) DEFAULT NULL,
 	  sync_type varchar(45) DEFAULT NULL,
 	  post_state varchar(12) DEFAULT NULL,
 	  transformations text DEFAULT NULL,
-	  signature varchar(45) DEFAULT NULL,	  
+	  signature varchar(45) DEFAULT NULL,
+	  public_hash varchar(45) DEFAULT NULL,
+	  url_hash varchar(45) DEFAULT NULL,
+	  parent_hash varchar(45) DEFAULT NULL,
 	  PRIMARY KEY (id),
-	  UNIQUE KEY sized_url (sized_url),
+	  UNIQUE KEY url_hash (url_hash),
 	  KEY post_id (post_id),
-	  KEY parent_path (parent_path),
-	  KEY public_id (public_id),
+	  KEY parent_hash (parent_hash),
+	  KEY public_hash (public_hash),
 	  KEY sync_type (sync_type)
 	) $charset_collate";
 
 		return $sql;
+	}
+
+	/**
+	 * Check if table exists.
+	 *
+	 * @return bool
+	 */
+	protected static function table_installed() {
+		global $wpdb;
+		$exists     = false;
+		$table_name = self::get_relationship_table();
+		$name       = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_name ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		if ( $table_name === $name ) {
+			$exists = true;
+		}
+
+		return $exists;
 	}
 
 	/**
@@ -252,9 +272,86 @@ class Utils {
 
 		$sql = self::get_table_sql();
 
-		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-		// @todo: get VIP approval.
-		dbDelta( $sql ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.dbDelta_dbdelta
+		if ( false === self::table_installed() ) {
+			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+			dbDelta( $sql ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.dbDelta_dbdelta
+		} else {
+			self::upgrade_install();
+		}
+	}
+
+	/**
+	 * Upgrade the installation.
+	 */
+	protected static function upgrade_install() {
+		$sequence = self::get_upgrade_sequence();
+		foreach ( $sequence as $callable ) {
+			if ( is_callable( $callable ) ) {
+				call_user_func( $callable );
+			}
+		}
+	}
+
+	/**
+	 * Get the DB upgrade sequence.
+	 *
+	 * @return array
+	 */
+	protected static function get_upgrade_sequence() {
+		$sequence         = array();
+		$sequences        = array(
+			'3.0.0' => array( 'Cloudinary\Utils', 'upgrade_3_0_1' ),
+		);
+		$upgrade_versions = array_keys( $sequences );
+		$previous_version = get_option( Sync::META_KEYS['db_version'], '3.0.0' );
+		$current_version  = get_plugin_instance()->version;
+		if ( version_compare( $current_version, $previous_version, '>' ) ) {
+			$index = array_search( $previous_version, $upgrade_versions, true );
+			if ( false !== $index ) {
+				$sequence = array_slice( $sequences, $index );
+			}
+		}
+
+		/**
+		 * Filter the upgrade sequence.
+		 *
+		 * @hook  cloudinary_upgrade_sequence
+		 * @since 3.1.0
+		 *
+		 * @param $sequence {array} The default sequence.
+		 *
+		 * @return {array}
+		 */
+		return apply_filters( 'cloudinary_upgrade_sequence', $sequence );
+	}
+
+	/**
+	 * Upgrade DB from v3.0.0 to v3.0.1.
+	 */
+	public static function upgrade_3_0_1() {
+		global $wpdb;
+		$tablename = self::get_relationship_table();
+
+		// Drop old indexes.
+		$wpdb->query( "ALTER TABLE {$tablename} DROP INDEX sized_url" ); // phpcs:ignore WordPress.DB
+		$wpdb->query( "ALTER TABLE {$tablename} DROP INDEX parent_path" ); // phpcs:ignore WordPress.DB
+		$wpdb->query( "ALTER TABLE {$tablename} DROP INDEX public_id" ); // phpcs:ignore WordPress.DB
+		// Add new columns.
+		$wpdb->query( "ALTER TABLE {$tablename} ADD `public_hash` VARCHAR(45)  NULL  DEFAULT NULL" ); // phpcs:ignore WordPress.DB
+		$wpdb->query( "ALTER TABLE {$tablename} ADD `url_hash` VARCHAR(45)  NULL  DEFAULT NULL" ); // phpcs:ignore WordPress.DB
+		$wpdb->query( "ALTER TABLE {$tablename} ADD `parent_hash` VARCHAR(45)  NULL  DEFAULT NULL" ); // phpcs:ignore WordPress.DB
+		// Add new indexes.
+		$wpdb->query( "ALTER TABLE {$tablename} ADD UNIQUE INDEX url_hash (url_hash)" ); // phpcs:ignore WordPress.DB
+		$wpdb->query( "ALTER TABLE {$tablename} ADD INDEX public_hash (public_hash)" ); // phpcs:ignore WordPress.DB
+		$wpdb->query( "ALTER TABLE {$tablename} ADD INDEX parent_hash (parent_hash)" ); // phpcs:ignore WordPress.DB
+		// Alter sizes.
+		$wpdb->query( "ALTER TABLE {$tablename}  CHANGE public_id public_id varchar(1000) DEFAULT NULL" ); // phpcs:ignore WordPress.DB
+		$wpdb->query( "ALTER TABLE {$tablename}  CHANGE parent_path parent_path varchar(1000) DEFAULT NULL" ); // phpcs:ignore WordPress.DB
+		$wpdb->query( "ALTER TABLE {$tablename}  CHANGE sized_url sized_url varchar(1000) DEFAULT NULL" ); // phpcs:ignore WordPress.DB
+
+		// Set DB Version.
+		update_option( Sync::META_KEYS['db_version'], get_plugin_instance()->version );
+
 	}
 
 	/**
