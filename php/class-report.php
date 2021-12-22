@@ -60,7 +60,7 @@ class Report extends Settings_Component implements Setup {
 	 * Init component on connection.
 	 */
 	public function init() {
-		add_action( 'cloudinary_settings_save_setting_enable_report', array( $this, 'init_reporting' ), 10, 3 );
+		add_action( 'cloudinary_settings_save_setting_reporting.enable_report', array( $this, 'init_reporting' ), 10, 3 );
 		add_filter( 'media_row_actions', array( $this, 'add_inline_action' ), 50, 2 );
 		add_filter( 'post_row_actions', array( $this, 'add_inline_action' ), 50, 2 );
 		add_filter( 'page_row_actions', array( $this, 'add_inline_action' ), 50, 2 );
