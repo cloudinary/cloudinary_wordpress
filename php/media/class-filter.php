@@ -345,11 +345,13 @@ class Filter {
 			$attachment_id = $this->get_id_from_tag( $asset );
 
 			// Check if this is not already a cloudinary url and if is not in the sync folder, for Cloudinary only storage cases.
-			if ( $this->media->is_cloudinary_url( $url ) && ! $this->media->is_cloudinary_sync_folder( $url ) ) {
-				// Is a content based ID. If has a cloudinary ID, it's from an older plugin version.
-				// Check if has an ID, and push update to reset.
-				if ( ! empty( $attachment_id ) && ! $this->media->plugin->components['sync']->is_synced( $attachment_id ) ) {
-					$this->media->cloudinary_id( $attachment_id ); // Start an on-demand sync.
+			if ( $this->media->is_cloudinary_url( $url ) ) {
+				if ( ! $this->media->is_cloudinary_sync_folder( $url ) ) {
+					// Is a content based ID. If has a cloudinary ID, it's from an older plugin version.
+					// Check if has an ID, and push update to reset.
+					if ( ! empty( $attachment_id ) && ! $this->media->plugin->components['sync']->is_synced( $attachment_id ) ) {
+						$this->media->cloudinary_id( $attachment_id ); // Start an on-demand sync.
+					}
 				}
 
 				continue; // Already a cloudinary URL. Possibly from a previous version. Will correct on post update after synced.
