@@ -501,4 +501,14 @@ class Report extends Settings_Component implements Setup {
 			exit;
 		}
 	}
+
+	/**
+	 * Enqueue scripts this component may use.
+	 */
+	public function enqueue_scripts() {
+		$plugin = get_plugin_instance();
+		wp_enqueue_script( 'cloudinary-syntax-highlight', $plugin->dir_url . 'js/syntax-highlight.js', array(), $plugin->version, true );
+		wp_add_inline_script( 'cloudinary-syntax-highlight', 'var CLD_METADATA = ' . wp_json_encode( $this->get_attachment_data() ) );
+		wp_enqueue_style( 'cloudinary-syntax-highlight', $this->plugin->dir_url . 'css/syntax-highlight.css', array(), $this->plugin->version );
+	}
 }
