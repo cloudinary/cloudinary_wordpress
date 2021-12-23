@@ -234,7 +234,7 @@ const CloudinaryLoader = {
 		return parts.filter( this.empty ).join( '/' );
 	},
 	empty( thing ) {
-		return 0 !== thing.length;
+		return 'undefined' !== typeof thing && 0 !== thing.length;
 	}
 };
 window.CLDBind = ( image )=>{

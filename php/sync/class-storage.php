@@ -352,7 +352,7 @@ class Storage implements Notice {
 			'video_quality',
 			'video_freeform',
 		);
-		$settings                = $this->plugin->settings->get_value( $fields );
+		$settings                = $this->plugin->settings->get_value( ...$fields );
 		$settings['local_size']  = get_post_meta( $attachment_id, Sync::META_KEYS['local_size'], true );
 		$settings['remote_size'] = get_post_meta( $attachment_id, Sync::META_KEYS['remote_format'], true );
 

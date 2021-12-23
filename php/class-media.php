@@ -2250,7 +2250,7 @@ class Media extends Settings_Component implements Setup {
 	 * Gets the process logs for the attachment.
 	 *
 	 * @param int  $attachment_id The attachment ID.
-	 * @param bool $raw           The errors expanded.
+	 * @param bool $raw           The errors expanded and no readable time.
 	 *
 	 * @return array|mixed|null
 	 */
@@ -2270,15 +2270,42 @@ class Media extends Settings_Component implements Setup {
 				continue;
 			}
 			foreach ( $log as $time => $entry ) {
-				$readable_time                        = gmdate( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), (int) trim( $time, '_' ) );
-				$logs[ $signature ][ $readable_time ] = $entry;
-				unset( $logs[ $signature ][ $time ] );
+				$time = ltrim( $time, '_' );
+
+				// Cleanup 0'd logs.
+				if ( 0 === (int) $time ) {
+					unset( $logs[ $signature ][ "_{$time}" ] );
+					continue;
+				}
+
+				$to_unset = null;
+
+				// If timestamped request.
+				if ( $raw ) {
+					// Fix stored expanded time.
+					if ( ! is_numeric( $time ) ) {
+						$to_unset = $time;
+						$time = strtotime( $time );
+					}
+					$time = "_{$time}";
+				} else { // Readable request.
+					$to_unset = "_{$time}";
+					$time = gmdate( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $time );
+				}
+
+				// Maybe cleanup log entries.
+				if ( $to_unset ) {
+					unset( $logs[ $signature ][ $to_unset ] );
+				}
+
+				$logs[ $signature ][ $time ] = $entry;
+
 				if (
 					is_array( $entry )
 					&& ! empty( $entry['code'] )
 					&& ! empty( $entry['message'] )
 				) {
-					$logs[ $signature ][ $readable_time ] = $raw ? $entry : new WP_Error( $entry['code'], $entry['message'] );
+					$logs[ $signature ][ $time ] = $raw ? $entry : new WP_Error( $entry['code'], $entry['message'] );
 				}
 			}
 		}
