@@ -60,7 +60,7 @@ class Report extends Settings_Component implements Setup {
 	 * Init component on connection.
 	 */
 	public function init() {
-		add_action( 'cloudinary_settings_save_setting_enable_report', array( $this, 'init_reporting' ), 10, 3 );
+		add_action( 'cloudinary_settings_save_setting_reporting.enable_report', array( $this, 'init_reporting' ), 10, 3 );
 		add_filter( 'media_row_actions', array( $this, 'add_inline_action' ), 50, 2 );
 		add_filter( 'post_row_actions', array( $this, 'add_inline_action' ), 50, 2 );
 		add_filter( 'page_row_actions', array( $this, 'add_inline_action' ), 50, 2 );
@@ -182,21 +182,54 @@ class Report extends Settings_Component implements Setup {
 	 */
 	public function render( $post ) {
 		if ( 'attachment' === $post->post_type ) {
-			$media      = $this->plugin->get_component( 'media' );
-			$meta       = get_post_meta( $post->ID );
-			$cld        = (array) get_post_meta( $post->ID, Sync::META_KEYS['cloudinary'], true );
-			$logs       = array( Sync::META_KEYS['process_log_legacy'] => $media->get_process_logs( $post->ID ) );
-			$attachment = (array) wp_get_attachment_metadata( $post->ID );
-
-			unset( $meta[ Sync::META_KEYS['cloudinary'] ], $meta[ Sync::META_KEYS['process_log'] ], $meta['_wp_attachment_metadata'] );
-
-			ksort( $attachment );
-			ksort( $meta );
-
-			$data  = array_merge( $cld, $logs, $attachment, $meta );
-
-			highlight_string( var_export( $data, true ) );
+			// Add scripts.
+			$this->enqueue_scripts();
+			?>
+			<div id="meta-data"></div>
+			<?php
 		}
+	}
+
+	/**
+	 * Get the attachment data.
+	 *
+	 * @param null|int $post_id The post ID.
+	 *
+	 * @return array
+	 */
+	public function get_attachment_data( $post_id = null ) {
+		global $wpdb;
+
+		$post       = get_post( $post_id );
+		$media      = $this->plugin->get_component( 'media' );
+		$meta       = get_post_meta( $post->ID );
+		$cld        = (array) get_post_meta( $post->ID, Sync::META_KEYS['cloudinary'], true );
+		$logs       = (array) $media->get_process_logs( $post->ID );
+		$attachment = (array) wp_get_attachment_metadata( $post->ID );
+		$guid       = get_the_guid( $post->ID );
+
+		unset( $meta[ Sync::META_KEYS['cloudinary'] ], $meta[ Sync::META_KEYS['process_log'] ], $meta['_wp_attachment_metadata'] );
+
+		$meta = array_map( 'maybe_unserialize', array_map( 'reset', $meta ) );
+
+		$wpdb->cld_table = Utils::get_relationship_table();
+		$prepare         = $wpdb->prepare(
+			"SELECT * FROM {$wpdb->cld_table} WHERE post_id = %d;",
+			$post->ID
+		);
+		$relationship    = $wpdb->get_row( $prepare ); // phpcs:ignore WordPress.DB.PreparedSQL
+
+		ksort( $attachment );
+		ksort( $meta );
+
+		return array_merge(
+			array( Sync::META_KEYS['cloudinary'] => $cld ),
+			array( 'relationship' => $relationship ),
+			array( Sync::META_KEYS['process_log_legacy'] => $logs ),
+			array( 'attachment_metadata' => $attachment ),
+			array( 'metadata' => $meta ),
+			array( 'guid' => $guid )
+		);
 	}
 
 	/**
@@ -413,17 +446,7 @@ class Report extends Settings_Component implements Setup {
 			foreach ( $report_items as $post_id ) {
 				$post_type = get_post_type( $post_id );
 				if ( 'attachment' === $post_type ) {
-					$data               = wp_get_attachment_metadata( $post_id );
-					$all_meta           = get_post_meta( $post_id );
-					$data['attachment'] = get_post( $post_id );
-
-					foreach ( $all_meta as $key => $meta ) {
-						$data['all_meta'][ $key ] = array_map( 'maybe_unserialize', $meta );
-					}
-
-					$data['all_meta'][ Sync::META_KEYS['process_log'] ] = $media->get_process_logs( $post_id );
-
-					$media_data[ $post_id ] = $data;
+					$media_data[ $post_id ] = $this->get_attachment_data( $post_id );
 				} else {
 					$data      = get_post( $post_id, ARRAY_A );
 					$post_meta = get_post_meta( $post_id );
@@ -477,5 +500,15 @@ class Report extends Settings_Component implements Setup {
 			echo wp_json_encode( $report['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
 			exit;
 		}
+	}
+
+	/**
+	 * Enqueue scripts this component may use.
+	 */
+	public function enqueue_scripts() {
+		$plugin = get_plugin_instance();
+		wp_enqueue_script( 'cloudinary-syntax-highlight', $plugin->dir_url . 'js/syntax-highlight.js', array(), $plugin->version, true );
+		wp_add_inline_script( 'cloudinary-syntax-highlight', 'var CLD_METADATA = ' . wp_json_encode( $this->get_attachment_data() ) );
+		wp_enqueue_style( 'cloudinary-syntax-highlight', $this->plugin->dir_url . 'css/syntax-highlight.css', array(), $this->plugin->version );
 	}
 }

@@ -150,6 +150,8 @@ class Rest_Assets {
 			$tracker['current_parent'] = $asset_parent;
 			set_transient( $transient_key, $tracker, MINUTE_IN_SECONDS );
 			$this->assets->purge_parent( $parent->ID );
+			// Remove parent.
+			wp_delete_post( $parent->ID );
 		}
 		delete_transient( $transient_key );
 
