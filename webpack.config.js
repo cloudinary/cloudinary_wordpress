@@ -197,6 +197,7 @@ const cldInlineLoader = {
 	...defaultConfig,
 	entry: {
 		'inline-loader': './src/js/inline-loader.js',
+		'image-editor': './src/js/components/image-editor.js',
 	},
 	output: {
 		path: path.resolve( process.cwd(), 'js' ),

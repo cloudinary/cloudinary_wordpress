@@ -1803,6 +1803,8 @@ class Media extends Settings_Component implements Setup {
 		$this->plugin->register_assets(); // Ensure assets are registered.
 		// External assets.
 		wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, array(), $this->plugin->version, true );
+		wp_enqueue_script( 'cloudinary-media-editor', 'https://media-editor.cloudinary.com/all.js', array(), $this->plugin->version, true );
+
 		wp_enqueue_script( 'cloudinary' );
 		wp_enqueue_style( 'cloudinary' );
 		$params = array(
