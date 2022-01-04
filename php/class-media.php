@@ -915,11 +915,7 @@ class Media extends Settings_Component implements Setup {
 		if ( false === $overwrite_transformations ) {
 			$overwrite_transformations = $this->maybe_overwrite_featured_image( $attachment_id );
 		}
-		$delivery_format = $this->get_post_meta( $attachment_id, Sync::META_KEYS['delivery_format'], true );
-		if ( ! empty( $delivery_format ) ) {
-			// Some assets like SVG, have a hard set delivery format.
-			$this->set_transformation( $transformations, 'fetch_format', $delivery_format );
-		}
+
 		// Defaults are only to be added on front, main images ( not breakpoints, since these are adapted down), and videos.
 		if ( false === $overwrite_transformations && ! is_admin() ) {
 			$transformations = $this->apply_default_transformations( $transformations, $attachment_id );
@@ -1162,27 +1158,22 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Apply default  quality anf format image transformations.
 	 *
-	 * @param array $default         The current default transformations.
-	 * @param array $transformations Transformations saved or applied to asset.
+	 * @param array $default The current default transformations.
 	 *
 	 * @return array
 	 */
-	public function default_image_transformations( $default, $transformations ) {
+	public function default_image_transformations( $default ) {
 
 		$config = $this->settings->get_value( 'image_settings' );
 
 		if ( 'on' === $config['image_optimization'] ) {
-			$format  = $this->get_transformation( $transformations, 'fetch_format' );
-			$quality = $this->get_transformation( $transformations, 'quality' );
-			if ( false === $format && ! empty( $config['image_format'] ) && 'none' !== $config['image_format'] ) {
+			if ( ! empty( $config['image_format'] ) && 'none' !== $config['image_format'] ) {
 				$default['fetch_format'] = $config['image_format'];
 			}
-			if ( false === $quality ) {
-				if ( isset( $config['image_quality'] ) ) {
-					$default['quality'] = 'none' !== $config['image_quality'] ? $config['image_quality'] : null;
-				} else {
-					$default['quality'] = 'auto';
-				}
+			if ( isset( $config['image_quality'] ) ) {
+				$default['quality'] = 'none' !== $config['image_quality'] ? $config['image_quality'] : null;
+			} else {
+				$default['quality'] = 'auto';
 			}
 		}
 
@@ -2793,7 +2784,7 @@ class Media extends Settings_Component implements Setup {
 				add_filter( 'post_thumbnail_html', array( $this, 'maybe_srcset_post_thumbnail' ), 10, 3 );
 			}
 			// Filter default image Quality and Format transformations.
-			add_filter( 'cloudinary_default_qf_transformations_image', array( $this, 'default_image_transformations' ), 10, 2 );
+			add_filter( 'cloudinary_default_qf_transformations_image', array( $this, 'default_image_transformations' ), 10 );
 			add_filter( 'cloudinary_default_freeform_transformations_image', array( $this, 'default_image_freeform_transformations' ), 10 );
 
 			// Filter and action the custom column.
