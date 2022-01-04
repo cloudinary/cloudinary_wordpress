@@ -96,7 +96,7 @@ class SVG extends Delivery_Feature {
 				if ( ! empty( $viewbox ) ) {
 					$viewbox = explode( ' ', $viewbox );
 				}
-				if ( ! empty( $width ) && ! empty( $height ) || ! empty( $viewbox[2] ) && ! empty( $viewbox[3] ) ) {
+				if ( ( ! empty( $width ) && ! empty( $height ) ) || ( ! empty( $viewbox[2] ) && ! empty( $viewbox[3] ) ) ) {
 					$valid = true;
 				}
 			}
