@@ -192,6 +192,8 @@ class SVG extends Delivery_Feature {
 		add_filter( 'wp_check_filetype_and_ext', array( $this, 'check_svg_type' ), 10, 4 );
 		add_filter( 'cloudinary_allowed_extensions', array( $this, 'allow_svg_for_cloudinary' ) );
 		add_filter( 'cloudinary_upload_options', array( $this, 'remove_svg_eagers' ), 10, 2 );
-		add_action( 'cloudinary_asset_uploaded', array( $this, 'maybe_setup_metadata' ), 10, 2 );
+
+		// Add actions.
+		add_action( 'cloudinary_uploaded_asset', array( $this, 'maybe_setup_metadata' ), 10, 2 );
 	}
 }
