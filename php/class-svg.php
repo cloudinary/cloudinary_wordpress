@@ -8,20 +8,14 @@
 namespace Cloudinary;
 
 use Cloudinary\Component\Setup;
+use Cloudinary\Connect\Api;
 use Cloudinary\Sync;
 use WP_Post;
 
 /**
  * Class extension
  */
-class SVG implements Setup {
-
-	/**
-	 * Holds the plugin instance.
-	 *
-	 * @var     Plugin Instance of the global plugin.
-	 */
-	protected $plugin;
+class SVG extends Delivery_Feature {
 
 	/**
 	 * Holds the connect instance.
@@ -31,27 +25,18 @@ class SVG implements Setup {
 	protected $connect;
 
 	/**
-	 * Holds the Media instance.
+	 * Holds the enabler slug.
 	 *
-	 * @var \Cloudinary\Media
+	 * @var string
 	 */
-	protected $media;
+	protected $enable_slug = 'svg_support';
 
 	/**
-	 * Holds the sync instance.
+	 * Holds the settings slug.
 	 *
-	 * @var \Cloudinary\Sync
+	 * @var string
 	 */
-	protected $sync;
-
-	/**
-	 * Initiate the plugin resources.
-	 *
-	 * @param \Cloudinary\Plugin $plugin Instance of the plugin.
-	 */
-	public function __construct( Plugin $plugin ) {
-		$this->plugin = $plugin;
-	}
+	protected $settings_slug = 'media_display';
 
 	/**
 	 * Add the correct mime type to WordPress.
@@ -64,6 +49,26 @@ class SVG implements Setup {
 		$types['svg'] = 'image/svg+xml';
 
 		return $types;
+	}
+
+	/**
+	 * Add features to a tag element set.
+	 *
+	 * @param array $tag_element The tag element set.
+	 *
+	 * @return array
+	 */
+	public function add_features( $tag_element ) {
+
+		if ( 'svg' === $tag_element['format'] ) {
+			$transformation = $this->media->get_transformations_from_string( $tag_element['atts']['data-transformations'] );
+			$this->media->set_transformation( $transformation, 'fetch_format', 'svg' );
+			$this->media->set_transformation( $transformation, 'flags', 'sanitize' );
+			$tag_element['atts']['data-transformations'] = Api::generate_transformation_string( $transformation );
+			$tag_element['atts']['src']                  = $this->media->cloudinary_url( $tag_element['id'], 'raw', $transformation, $tag_element['atts']['data-public-id'], true );
+		}
+
+		return $tag_element;
 	}
 
 	/**
@@ -172,7 +177,6 @@ class SVG implements Setup {
 			$meta['width']  = $sanitized['width'];
 			$meta['height'] = $sanitized['height'];
 			update_post_meta( $attachment_id, '_wp_attachment_metadata', $meta );
-			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['delivery_format'], 'svg' );
 		}
 		$this->sync->set_signature_item( $attachment_id, 'sanitize_svg' );
 
@@ -252,19 +256,19 @@ class SVG implements Setup {
 	/**
 	 * Setup the component
 	 */
-	public function setup() {
-		if ( 'on' === $this->plugin->settings->get_value( 'svg_support' ) ) {
-			// Init instances.
-			$this->connect = $this->plugin->get_component( 'connect' );
-			$this->media   = $this->plugin->get_component( 'media' );
-			$this->sync    = $this->plugin->get_component( 'sync' );
+	public function setup_hooks() {
 
-			// Add filters.
-			add_filter( 'upload_mimes', array( $this, 'add_svg_mime' ) ); // phpcs:ignore WordPressVIPMinimum.Hooks.RestrictedHooks.upload_mimes
-			add_filter( 'wp_check_filetype_and_ext', array( $this, 'check_svg_type' ), 10, 4 );
-			add_filter( 'cloudinary_allowed_extensions', array( $this, 'allow_svg_for_cloudinary' ) );
-			add_filter( 'cloudinary_upload_options', array( $this, 'remove_svg_eagers' ), 10, 2 );
-			$this->register_sync_type();
-		}
+		// Init instances.
+		$this->connect = $this->plugin->get_component( 'connect' );
+		$this->media   = $this->plugin->get_component( 'media' );
+		$this->sync    = $this->plugin->get_component( 'sync' );
+
+		// Add filters.
+		add_filter( 'upload_mimes', array( $this, 'add_svg_mime' ) ); // phpcs:ignore WordPressVIPMinimum.Hooks.RestrictedHooks.upload_mimes
+		add_filter( 'wp_check_filetype_and_ext', array( $this, 'check_svg_type' ), 10, 4 );
+		add_filter( 'cloudinary_allowed_extensions', array( $this, 'allow_svg_for_cloudinary' ) );
+		add_filter( 'cloudinary_upload_options', array( $this, 'remove_svg_eagers' ), 10, 2 );
+		$this->register_sync_type();
+
 	}
 }
