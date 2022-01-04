@@ -105,85 +105,6 @@ class SVG extends Delivery_Feature {
 	}
 
 	/**
-	 * Sanitize an SVG file with Cloudinary.
-	 *
-	 * @param string $file The file to sanitize.
-	 *
-	 * @return array|\WP_Error
-	 */
-	public function sanitize_svg( $file ) {
-		$folder    = $this->media->get_cloudinary_folder();
-		$public_id = '';
-		if ( ! empty( $folder ) ) {
-			$public_id = $folder . '/';
-		}
-		$public_id .= uniqid( 'tmp-svg' ) . pathinfo( $file, PATHINFO_FILENAME );
-
-		if ( function_exists( 'curl_file_create' ) ) {
-			$upload_file = curl_file_create( $file ); // phpcs:ignore
-			$upload_file->setPostFilename( $file );
-		} else {
-			$upload_file = '@' . $file;
-		}
-
-		$public_id = wp_normalize_path( $public_id );
-
-		$options = array(
-			'file'          => $upload_file,
-			'resource_type' => 'auto',
-			'public_id'     => $public_id,
-			'eager'         => 'fl_sanitize',
-		);
-		$result  = $this->connect->api->upload_cache( $options );
-
-		if ( ! is_wp_error( $result ) ) {
-			// stream sanitized data to file..
-			wp_safe_remote_get(
-				$result['eager'][0]['secure_url'],
-				array(
-					'timeout'  => 300, // phpcs:ignore
-					'stream'   => true,
-					'filename' => $file,
-				)
-			);
-
-			$options = array(
-				'public_id'  => $public_id,
-				'invalidate' => true, // clear from CDN cache as well.
-			);
-			$this->connect->api->destroy( 'image', $options );
-		}
-
-		return $result;
-	}
-
-	/**
-	 * The sanitize sync method.
-	 *
-	 * @param int $attachment_id The attachment ID.
-	 *
-	 * @return array|\WP_Error
-	 */
-	public function sanitize_sync( $attachment_id ) {
-		$file      = get_attached_file( $attachment_id );
-		$file_path = get_post_meta( $attachment_id, '_wp_attached_file', true );
-		$sanitized = $this->sanitize_svg( $file );
-		if ( ! is_wp_error( $sanitized ) ) {
-			$meta = wp_get_attachment_metadata( $attachment_id );
-			if ( empty( $meta ) ) {
-				$meta = array();
-			}
-			$meta['file']   = $file_path;
-			$meta['width']  = $sanitized['width'];
-			$meta['height'] = $sanitized['height'];
-			update_post_meta( $attachment_id, '_wp_attachment_metadata', $meta );
-		}
-		$this->sync->set_signature_item( $attachment_id, 'sanitize_svg' );
-
-		return $sanitized;
-	}
-
-	/**
 	 * Check that the file is in fact an SVG.
 	 *
 	 * @param array  $wp_check_filetype_and_ext The ext and type from WordPress.
@@ -216,25 +137,6 @@ class SVG extends Delivery_Feature {
 		$types[] = 'svg';
 
 		return $types;
-	}
-
-	/**
-	 * Register the sanitize sync type.
-	 */
-	protected function register_sync_type() {
-		$structure = array(
-			'asset_state' => 0,
-			'generate'    => '__return_false',
-			'priority'    => 0.1,
-			'sync'        => array( $this, 'sanitize_sync' ),
-			'validate'    => function ( $attachment_id ) {
-				return $this->validate_svg_file( get_attached_file( $attachment_id ) );
-			},
-			'state'       => 'info',
-			'note'        => __( 'Sanitizing SVG', 'cloudinary' ),
-			'realtime'    => true,
-		);
-		$this->sync->register_sync_type( 'sanitize_svg', $structure );
 	}
 
 	/**
