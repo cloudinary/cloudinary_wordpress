@@ -489,6 +489,17 @@ class Api {
 			'body'    => $args,
 		);
 
+		/**
+		 * Filter Cloudinary upload args.
+		 *
+		 * @hook cloudinary_upload_args
+		 * @since 3.0.1
+		 *
+		 * @param $call_args     {array} The default args.
+		 * @param $attachment_id {int}   The attachment ID.
+		 */
+		$call_args = apply_filters( 'cloudinary_upload_args', $call_args, $attachment_id );
+
 		$result = $this->call( $url, $call_args, 'post' );
 		// Hook in flag to allow for non accessible URLS.
 		if ( is_wp_error( $result ) ) {
