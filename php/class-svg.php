@@ -10,6 +10,7 @@ namespace Cloudinary;
 use Cloudinary\Component\Setup;
 use Cloudinary\Connect\Api;
 use Cloudinary\Sync;
+use WP_Error;
 use WP_Post;
 
 /**
@@ -156,6 +157,27 @@ class SVG extends Delivery_Feature {
 	}
 
 	/**
+	 * Maybe setup SVG metadata.
+	 *
+	 * @param int            $attachment_id The attachment ID.
+	 * @param array|WP_Error $result        The upload result.
+	 */
+	public function maybe_setup_metadata( $attachment_id, $result ) {
+
+		if ( is_array( $result ) && 'image/svg+xml' === get_post_mime_type( $attachment_id ) ) {
+			$file_path = get_post_meta( $attachment_id, '_wp_attached_file', true );
+			$meta      = wp_get_attachment_metadata( $attachment_id );
+			if ( empty( $meta ) ) {
+				$meta = array();
+			}
+			$meta['file']   = $file_path;
+			$meta['width']  = $result['width'];
+			$meta['height'] = $result['height'];
+			update_post_meta( $attachment_id, '_wp_attachment_metadata', $meta );
+		}
+	}
+
+	/**
 	 * Setup the component
 	 */
 	public function setup_hooks() {
@@ -170,7 +192,6 @@ class SVG extends Delivery_Feature {
 		add_filter( 'wp_check_filetype_and_ext', array( $this, 'check_svg_type' ), 10, 4 );
 		add_filter( 'cloudinary_allowed_extensions', array( $this, 'allow_svg_for_cloudinary' ) );
 		add_filter( 'cloudinary_upload_options', array( $this, 'remove_svg_eagers' ), 10, 2 );
-		$this->register_sync_type();
-
+		add_action( 'cloudinary_asset_uploaded', array( $this, 'maybe_setup_metadata' ), 10, 2 );
 	}
 }

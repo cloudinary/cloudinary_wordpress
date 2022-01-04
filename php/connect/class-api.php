@@ -512,6 +512,17 @@ class Api {
 			unlink( $args['file'] ); //phpcs:ignore
 		}
 
+		/**
+		 * Action after uploaded asset.
+		 *
+		 * @hook  cloudinary_asset_uploaded
+		 * @since 3.0.1
+		 *
+		 * @param $attachment_id {int}            The attachment ID.
+		 * @param $result        {array|WP_Error} The upload result.
+		 */
+		do_action( 'cloudinary_asset_uploaded', $attachment_id, $result );
+
 		return $result;
 	}
 
