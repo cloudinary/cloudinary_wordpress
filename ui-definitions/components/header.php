@@ -11,7 +11,7 @@ $cloudinary = get_plugin_instance();
 ?>
 <header class="cld-ui-wrap cld-page-header" id="cloudinary-header">
 	<span class="cld-page-header-logo">
-		<img src="<?php echo esc_url( $cloudinary->dir_url . 'css/images/logo.svg' ); ?>" alt="<?php esc_html_e( "Cloudinary's logo", 'cloudinary' ); ?>"/>
+		<img src="<?php echo esc_url( $cloudinary->dir_url . 'css/images/logo.svg' ); ?>" alt="<?php esc_attr_e( "Cloudinary's logo", 'cloudinary' ); ?>"/>
 		<span class="version"><?php echo esc_html( $cloudinary->version ); ?></span>
 	</span>
 	<p>
