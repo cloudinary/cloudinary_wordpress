@@ -608,7 +608,7 @@ class Delivery implements Setup {
 	/**
 	 * Add classes to the featured image tag.
 	 *
-	 * @param string $html          The image tah HTML to add to.
+	 * @param string $html          The image the HTML to add to.
 	 * @param int    $post_id       Ignored.
 	 * @param int    $attachment_id The attachment_id.
 	 *
@@ -619,18 +619,23 @@ class Delivery implements Setup {
 		if ( empty( $html ) ) {
 			return $html; // Ignore empty tags.
 		}
-		// Get tag element.
-		$tag_element                    = $this->parse_element( $html );
-		$tag_element['id']              = $attachment_id;
-		$tag_element['context']         = $post_id;
-		$tag_element['atts']['class'][] = 'wp-image-' . $attachment_id;
-		$tag_element['atts']['class'][] = 'wp-post-' . $post_id;
+		$tags = $this->get_media_tags( $html, 'img' );
+		$tags = array_map( array( $this, 'parse_element' ), $tags );
+		foreach ( $tags as $tag_element ) {
+			// Get tag element.
+			$tag_element['id']              = $attachment_id;
+			$tag_element['context']         = $post_id;
+			$tag_element['atts']['class'][] = 'wp-image-' . $attachment_id;
+			$tag_element['atts']['class'][] = 'wp-post-' . $post_id;
 
-		if ( true === (bool) get_post_meta( $post_id, Global_Transformations::META_FEATURED_IMAGE_KEY, true ) ) {
-			$tag_element['atts']['class'][] = 'cld-overwrite';
+			if ( true === (bool) get_post_meta( $post_id, Global_Transformations::META_FEATURED_IMAGE_KEY, true ) ) {
+				$tag_element['atts']['class'][] = 'cld-overwrite';
+			}
+
+			$new_tag = HTML::build_tag( $tag_element['tag'], $tag_element['atts'] );
+			$html    = str_replace( $tag_element['original'], $new_tag, $html );
 		}
-
-		return HTML::build_tag( $tag_element['tag'], $tag_element['atts'] );
+		return $html;
 	}
 
 	/**

@@ -149,6 +149,7 @@ final class Plugin {
 		$this->components['assets']                 = new CLD_Assets( $this );
 		$this->components['dashboard']              = new Dashboard( $this );
 		$this->components['extensions']             = new Extensions( $this );
+		$this->components['svg']                    = new SVG( $this );
 		$this->components['editor']                 = new Editor( $this );
 	}
 
