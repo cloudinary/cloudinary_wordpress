@@ -206,7 +206,7 @@ class Editor implements Setup {
 	 * @param \WP_Post $attachment The attachment post.
 	 */
 	public function edit_form_image_editor( $attachment ) {
-		if ( 'attachment' !== $attachment->post_type ) {
+		if ( 'attachment' !== $attachment->post_type || ! $this->media->has_public_id( $attachment->ID ) ) {
 			return;
 		}
 		$struct = array(
