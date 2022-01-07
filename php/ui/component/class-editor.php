@@ -64,6 +64,7 @@ class Editor extends Component {
 	 */
 	protected function wrap( $struct ) {
 		$struct['attributes']['id'] = 'cloudinary-media-editor';
+		$struct['attributes']['style'] = 'margin-top:10px;border:solid 1px; border-color: rgb(218, 225, 233);background-color:#fff;';
 
 		return $struct;
 	}
@@ -131,7 +132,7 @@ class Editor extends Component {
 
 		$struct['element']             = 'div';
 		$struct['attributes']['id']    = 'edit-start-wrap';
-		$struct['attributes']['style'] = 'padding-top:6px;';
+		$struct['attributes']['style'] = 'padding:6px 6px 8px 6px;';
 		$struct['attributes']['class'] = array(
 			'cld-row',
 		);
@@ -168,7 +169,7 @@ class Editor extends Component {
 		$struct['attributes']['class'] = array(
 			'cld-row',
 		);
-		$struct['attributes']['style'] = 'justify-content: space-between;display:none;padding-top:6px';
+		$struct['attributes']['style'] = 'justify-content: space-between;display:none;padding:6px 6px 8px 6px;';
 
 		return $struct;
 	}
@@ -251,7 +252,9 @@ class Editor extends Component {
 	public function enqueue_scripts() {
 
 		$attachment_id = $this->attachment->ID;
-		wp_enqueue_script( 'image-editor', $this->media->plugin->dir_url . 'js/image-editor.js', array(), $this->media->plugin->version, true );
+		$asset = require $this->media->plugin->dir_path . 'js/image-editor.asset.php';
+
+		wp_enqueue_script( 'image-editor', $this->media->plugin->dir_url . 'js/image-editor.js', $asset['dependencies'], $asset['version'], true );
 
 		$data = array(
 			'assetID'        => $attachment_id,

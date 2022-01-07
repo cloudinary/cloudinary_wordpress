@@ -41,6 +41,35 @@ const ImageEditor = {
 		} );
 
 		this.restoreMaybe();
+		// Setup editor.
+		this.editor = cloudinary.mediaEditor( { appendTo: this.container } );
+		const events = [
+			'interactivecropresize',
+			'interactivecropmove',
+			'flipvertically',
+			'fliphorizontally',
+			'rotateclockwise',
+			'rotatecounterclockwise',
+			'aspectratioclick',
+			'cropclick',
+		];
+
+		events.forEach( ( event ) => {
+			this.editor.on( event, ( ev ) => {
+				console.log( ev );
+				this.enableSave();
+			} );
+		} );
+	},
+	disableSave() {
+		if ( 'image' === this.config.resourceType ) {
+			this.saveButton.disabled = true;
+		}
+	},
+	enableSave() {
+		if ( 'image' === this.config.resourceType ) {
+			this.saveButton.disabled = false;
+		}
 	},
 	restoreMaybe() {
 		if ( this.config.original ) {
@@ -51,9 +80,6 @@ const ImageEditor = {
 		}
 	},
 	openEditor() {
-		// Setup editor.
-		this.editor = cloudinary.mediaEditor( { appendTo: this.container } );
-
 		// Setup preview.
 		// @todo: check video/audio events.
 		this.mediaPreview.addEventListener( 'load', () => {
@@ -99,6 +125,7 @@ const ImageEditor = {
 				},
 			},
 		} );
+		this.disableSave();
 	},
 	hide( element ) {
 		element.style.display = 'none';
@@ -121,10 +148,10 @@ const ImageEditor = {
 		this.hide( this.editControls );
 		this.show( this.mediaPreview );
 		this.hide( this.container );
-		this.editor.destroy();
-		this.editor = null;
+		this.editor.hide();
 	},
 	save( data ) {
+		this.disableSave();
 		this.container.style.opacity = 0.5;
 		apiFetch( {
 			url: this.config.saveUrl,
@@ -133,10 +160,9 @@ const ImageEditor = {
 		} ).then( ( result ) => {
 			this.config.publicId = result.publicId;
 			this.config.original = result.original;
-			this.editor.destroy();
-			this.openEditor();
+			//this.editor.hide();
+			this.updateEditor();
 			this.mediaPreview.src = result.previewUrl;
-			this.saveButton.disabled = false;
 			this.container.style.opacity = 1;
 			this.restoreMaybe();
 		} );
@@ -150,10 +176,8 @@ const ImageEditor = {
 		} ).then( ( result ) => {
 			this.config.publicId = result.publicId;
 			this.config.original = result.original;
-			this.editor.destroy();
-			this.openEditor();
+			this.updateEditor();
 			this.mediaPreview.src = result.previewUrl;
-			this.saveButton.disabled = false;
 			this.container.style.opacity = 1;
 			this.restoreMaybe();
 		} );

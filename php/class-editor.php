@@ -73,6 +73,17 @@ class Editor implements Setup {
 				'storage' => 'transient',
 			);
 			$this->editor  = new Settings( self::EDITOR_SLUG, $editor_params );
+			add_action( 'current_screen', array( $this, 'init_editor' ) );
+		}
+	}
+
+	/**
+	 * Initialize the editor when needed.
+	 */
+	public function init_editor() {
+		$screen = get_current_screen();
+		if ( $screen && 'attachment' === $screen->id ) {
+			wp_enqueue_media();
 		}
 	}
 
@@ -167,7 +178,7 @@ class Editor implements Setup {
 			$attachment_transformations = Api::generate_transformation_string( $attachment_transformations );
 			$download_url               = str_replace( trailingslashit( $attachment_transformations ), '', $download_url );
 		}
-		$_REQUEST['history'] = wp_json_encode( array( true ) );
+		$_REQUEST['history'] = wp_json_encode( array( 'none' => true ) );
 		$_REQUEST['target']  = 'all'; // @todo: Make selection for which to edit.
 
 		$file                   = get_attached_file( $attachment_id );
