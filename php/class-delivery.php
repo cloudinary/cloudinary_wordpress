@@ -635,6 +635,7 @@ class Delivery implements Setup {
 			$new_tag = HTML::build_tag( $tag_element['tag'], $tag_element['atts'] );
 			$html    = str_replace( $tag_element['original'], $new_tag, $html );
 		}
+
 		return $html;
 	}
 
@@ -762,6 +763,7 @@ class Delivery implements Setup {
 		$tags = array_filter( $tags );
 
 		$replacements = array();
+		$aliases      = array();
 		foreach ( $tags as $set ) {
 
 			// Check cache and skip if needed.
@@ -795,19 +797,23 @@ class Delivery implements Setup {
 
 			// Check for src aliases.
 			if ( isset( $this->found_urls[ $set['base_url'] ] ) ) {
-				$base = dirname( $set['base_url'] );
-				foreach ( $this->found_urls[ $set['base_url'] ] as $size => $file_name ) {
-					$local_url = path_join( $base, $file_name );
-					if ( isset( $cached[ $local_url ] ) ) {
-						$replacements[ $local_url ] = $cached[ $local_url ];
-						continue;
-					}
-					$cloudinary_url             = $this->media->cloudinary_url( $set['id'], explode( 'x', $size ), $set['transformations'], $set['atts']['data-public-id'], $set['overwrite_transformations'] );
-					$replacements[ $local_url ] = $cloudinary_url;
-				}
+				$aliases[] = $set;
 			}
 		}
 
+		// Handle aliases.
+		foreach ( $aliases as $set ) {
+			$base = dirname( $set['base_url'] );
+			foreach ( $this->found_urls[ $set['base_url'] ] as $size => $file_name ) {
+				$local_url = path_join( $base, $file_name );
+				if ( isset( $cached[ $local_url ] ) ) {
+					$replacements[ $local_url ] = $cached[ $local_url ];
+					continue;
+				}
+				$cloudinary_url             = $this->media->cloudinary_url( $set['id'], explode( 'x', $size ), $set['transformations'], $set['atts']['data-public-id'], $set['overwrite_transformations'] );
+				$replacements[ $local_url ] = $cloudinary_url;
+			}
+		}
 		// Update the post meta cache.
 		if ( is_singular() ) {
 			$has_cache          = array();
@@ -1074,6 +1080,20 @@ class Delivery implements Setup {
 			$tag_element['height']        = $item['height'];
 			$attributes['data-public-id'] = $public_id;
 			$tag_element['format']        = $item['format'];
+
+			// Check if this is a crop or a scale.
+			$original_filename = basename( $raw_url );
+			if ( isset( $this->found_urls[ $url ] ) ) {
+				$flipped = array_flip( $this->found_urls[ $url ] );
+				if ( isset( $flipped[ $original_filename ] ) ) {
+					$size           = explode( 'x', $flipped[ $original_filename ] );
+					$file_ratio     = round( $size[0] / $size[1], 2 );
+					$original_ratio = round( $item['width'] / $item['height'], 2 );
+					if ( $file_ratio !== $original_ratio ) {
+						$attributes['data-crop'] = $file_ratio;
+					}
+				}
+			}
 		}
 
 		if ( ! empty( $attributes['class'] ) ) {
