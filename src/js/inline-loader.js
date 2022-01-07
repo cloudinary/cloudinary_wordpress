@@ -18,9 +18,9 @@ const CloudinaryLoader = {
 		image.originalWidth = size[ 0 ];
 		image.originalHeight = size[ 1 ];
 		if ( this.pObserver ) {
-			if( this.aboveFold && this.inInitialView( image ) ){
+			if ( this.aboveFold && this.inInitialView( image ) ) {
 				this.buildImage( image );
-			}else {
+			} else {
 				this.pObserver.observe( image );
 				this.iObserver.observe( image );
 			}
@@ -34,18 +34,18 @@ const CloudinaryLoader = {
 			this.setupFallback( image );
 		}
 	},
-	buildImage( image ){
+	buildImage( image ) {
 		if ( image.dataset.srcset ) {
 			image.cld_loaded = true;
 			image.srcset = image.dataset.srcset;
 		} else {
 			image.src = this.getSizeURL( image );
-			if( image.dataset.responsive ) {
+			if ( image.dataset.responsive ) {
 				this.rObserver.observe( image );
 			}
 		}
 	},
-	inInitialView( image ){
+	inInitialView( image ) {
 		const rect = image.getBoundingClientRect();
 		this.aboveFold = rect.top < window.innerHeight + this.lazyThreshold;
 		return this.aboveFold;
@@ -53,15 +53,15 @@ const CloudinaryLoader = {
 	setupFallback( image ) {
 		const srcSet = [];
 		this.sizeBands.forEach( ( size ) => {
-			if( size <= image.originalWidth ) {
+			if ( size <= image.originalWidth ) {
 				let newURL = this.getSizeURL( image, size, true ) + ` ${ size }w`;
 				if ( -1 === srcSet.indexOf( newURL ) ) {
 					srcSet.push( newURL );
 				}
 			}
 		} );
-		image.srcset = srcSet.join(',' );
-		image.sizes = `(max-width: ${image.originalWidth}px) 100vw, ${image.originalWidth}px`;
+		image.srcset = srcSet.join( ',' );
+		image.sizes = `(max-width: ${ image.originalWidth }px) 100vw, ${ image.originalWidth }px`;
 	},
 	_init() {
 		this.enabled = true;
@@ -180,15 +180,17 @@ const CloudinaryLoader = {
 		return width;
 	},
 	scaleSize( image, width, dpr ) {
-		const ratio = ( image.originalWidth / image.originalHeight ).toFixed( 3 );
+
+		const ratio = image.dataset.crop ? parseFloat( image.dataset.crop ) : ( image.originalWidth / image.originalHeight ).toFixed( 3 );
 		const renderedRatio = ( image.width / image.height ).toFixed( 3 );
 		const scaledWidth = this.scaleWidth( image, width );
 		const newSize = [];
+
 		if ( image.width !== image.originalWidth ) {
 			// We know it's a different size.
-			newSize.push( ratio === renderedRatio ? 'c_scale' : 'c_fill,g_auto' );
+			newSize.push( ratio === renderedRatio ? 'c_scale' : 'c_fill' );
 		}
-		const scaledHeight = Math.round( scaledWidth / renderedRatio );
+		const scaledHeight = Math.round( scaledWidth / ratio );
 
 		newSize.push( 'w_' + scaledWidth );
 		newSize.push( 'h_' + scaledHeight );
@@ -237,8 +239,8 @@ const CloudinaryLoader = {
 		return 'undefined' !== typeof thing && 0 !== thing.length;
 	}
 };
-window.CLDBind = ( image )=>{
-	if( ! image.CLDbound ){
+window.CLDBind = ( image ) => {
+	if ( ! image.CLDbound ) {
 		CloudinaryLoader.bind( image );
 	}
 };
