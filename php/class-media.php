@@ -2263,7 +2263,7 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		foreach ( $logs as $signature => $log ) {
-			if ( empty( $log ) ) {
+			if ( empty( $log ) || !is_array($log)) {
 				$logs[ $signature ] = array();
 				continue;
 			}
