@@ -83,7 +83,7 @@ const cldCore = {
 		'asset-edit': './src/js/asset-edit.js',
 		'syntax-highlight': './src/js/syntax-highlight.js',
 		'gallery-ui': './src/css/gallery-ui.scss',
-		'classic-editor': './src/js/components/classic-editor.js',
+		'classic-editor': './src/js/classic-editor.js',
 	},
 	module: {
 		rules: [
