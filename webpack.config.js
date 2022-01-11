@@ -82,6 +82,7 @@ const cldCore = {
 		'asset-manager': './src/js/asset-manager.js',
 		'asset-edit': './src/js/asset-edit.js',
 		'syntax-highlight': './src/js/syntax-highlight.js',
+		'gallery-ui': './src/css/gallery-ui.scss',
 		'classic-editor': './src/js/components/classic-editor.js',
 	},
 	module: {
@@ -132,90 +133,19 @@ const cldCore = {
 	},
 };
 
-const cldBlockEditor = {
+const cldExtras = {
 	...defaultConfig,
 	...sharedConfig,
 	entry: {
 		'block-editor': './src/js/blocks.js',
-	},
-};
-
-const cldGalleryBlock = {
-	...defaultConfig,
-	...sharedConfig,
-	entry: {
 		'gallery-block': './src/js/gallery-block/index.js',
-	},
-};
-
-const cldGalleryInit = {
-	...defaultConfig,
-	...sharedConfig,
-	entry: {
 		'gallery-init': './src/js/components/gallery-init.js',
-	},
-};
-
-const cldSettingsGallery = {
-	...defaultConfig,
-	...sharedConfig,
-	entry: {
 		gallery: './src/js/components/settings-gallery.js',
-	},
-};
-
-const cldGalleryUI = {
-	...cldCore,
-	entry: {
-		'gallery-ui': './src/css/gallery-ui.scss',
-	},
-};
-
-const cldDeactivate = {
-	...defaultConfig,
-	...sharedConfig,
-	entry: {
 		deactivate: './src/js/deactivate.js',
-	},
-};
-
-const cldVideoInit = {
-	...defaultConfig,
-	...sharedConfig,
-	entry: {
 		'video-init': './src/js/video-init.js',
-	},
-};
-
-const cldLazyLoad = {
-	...defaultConfig,
-	...sharedConfig,
-	entry: {
 		'lazy-load': './src/js/lazy-load.js',
-	},
-};
-
-const cldInlineLoader = {
-	...defaultConfig,
-	entry: {
 		'inline-loader': './src/js/inline-loader.js',
 	},
-	output: {
-		path: path.resolve( process.cwd(), 'js' ),
-		filename: '[name].js',
-		chunkFilename: '[name].js',
-	},
 };
 
-module.exports = [
-	cldBlockEditor,
-	cldCore,
-	cldGalleryBlock,
-	cldGalleryInit,
-	cldDeactivate,
-	cldVideoInit,
-	cldSettingsGallery,
-	cldGalleryUI,
-	cldLazyLoad,
-	cldInlineLoader,
-];
+module.exports = [ cldCore, cldExtras ];
