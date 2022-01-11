@@ -464,6 +464,9 @@ class Global_Transformations {
 		}
 
 		$out[] = '</div>';
+		if ( ! function_exists( 'use_block_editor_for_post' ) || ! use_block_editor_for_post( $post ) ) {
+			wp_enqueue_script( 'term-ordering', $this->media->plugin->dir_url . '/js/classic-editor.js', array(), $this->media->plugin->version, true );
+		}
 
 		return implode( $out );
 	}

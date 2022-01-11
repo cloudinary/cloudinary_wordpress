@@ -2,6 +2,7 @@
  * WordPress dependencies
  */
 import { select, subscribe } from '@wordpress/data';
+import Sortable from 'sortablejs';
 
 const Terms = {
 	wrapper: null,
@@ -25,6 +26,11 @@ const Terms = {
 		setTimeout( () => {
 			this._init_listeners();
 		}, 3000 );
+
+		new Sortable( this.wrapper, {
+			handle: '.dashicons-menu', // handle's class
+			animation: 150,
+		} );
 	},
 	_init_listeners() {
 		const taxonomies = select( 'core' ).getTaxonomies();

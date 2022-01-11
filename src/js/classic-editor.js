@@ -1,6 +1,6 @@
 /* global wpAjax */
 
-const TermsOrder = {
+const ClassicEditor = {
 	template: '',
 	tags: jQuery( '#cld-tax-items' ),
 	tagDelimiter:
@@ -167,7 +167,7 @@ const TermsOrder = {
 };
 
 if ( typeof window.CLDN !== 'undefined' ) {
-	TermsOrder._init();
+	ClassicEditor._init();
 	// Init checked categories.
 	jQuery( '[data-wp-lists] .selectit input[checked]' ).each(
 		( ord, check ) => {
@@ -176,4 +176,4 @@ if ( typeof window.CLDN !== 'undefined' ) {
 	);
 }
 
-export default TermsOrder;
+export default ClassicEditor;
