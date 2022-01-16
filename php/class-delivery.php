@@ -803,7 +803,7 @@ class Delivery implements Setup {
 						continue;
 					}
 					$cloudinary_url             = $this->media->cloudinary_url( $set['id'], explode( 'x', $size ), $set['transformations'], $set['atts']['data-public-id'], $set['overwrite_transformations'] );
-					$replacements[ $local_url ] = $cloudinary_url;
+					$replacements[ $type . ':' . $local_url ] = $cloudinary_url;
 				}
 			}
 		}
