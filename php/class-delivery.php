@@ -1453,10 +1453,12 @@ class Delivery implements Setup {
 			$this->find_attachment_size_urls();
 		}
 
+		// First replace tags and only then the missing URLs.
+		ksort( $known );
+
 		// Replace the knowns.
 		foreach ( $known as $src => $replace ) {
 			String_Replace::replace( $src, $replace );
 		}
-
 	}
 }
