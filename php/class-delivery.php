@@ -762,6 +762,7 @@ class Delivery implements Setup {
 		$tags = array_filter( $tags );
 
 		$replacements = array();
+		$aliases      = array();
 		foreach ( $tags as $set ) {
 
 			// Check cache and skip if needed.
@@ -797,15 +798,19 @@ class Delivery implements Setup {
 			if ( isset( $this->found_urls[ $set['base_url'] ] ) ) {
 				$base = dirname( $set['base_url'] );
 				foreach ( $this->found_urls[ $set['base_url'] ] as $size => $file_name ) {
-					$local_url = path_join( $base, $file_name );
+					$local_url = $type . ':' . path_join( $base, $file_name );
 					if ( isset( $cached[ $local_url ] ) ) {
-						$replacements[ $local_url ] = $cached[ $local_url ];
+						$aliases[ $local_url ] = $cached[ $local_url ];
 						continue;
 					}
-					$cloudinary_url             = $this->media->cloudinary_url( $set['id'], explode( 'x', $size ), $set['transformations'], $set['atts']['data-public-id'], $set['overwrite_transformations'] );
-					$replacements[ $local_url ] = $cloudinary_url;
+					$cloudinary_url        = $this->media->cloudinary_url( $set['id'], explode( 'x', $size ), $set['transformations'], $set['atts']['data-public-id'], $set['overwrite_transformations'] );
+					$aliases[ $local_url ] = $cloudinary_url;
 				}
 			}
+		}
+		// Move aliases to the end of the run, after images.
+		if ( ! empty( $aliases ) ) {
+			$replacements = array_merge( $replacements, $aliases );
 		}
 
 		// Update the post meta cache.
