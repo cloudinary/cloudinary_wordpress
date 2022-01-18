@@ -89,6 +89,8 @@ class Line_Stat extends Component {
 		$used  = $this->limit * $this->used_percent / 100;
 		$avail = $this->limit - $used;
 		if ( $this->setting->get_param( 'format_size' ) ) {
+			$used                  = empty( $used ) ? 0 : $used;
+			$avail                 = empty( $avail ) ? 0 : $avail;
 			$this->limit_formatted = size_format( $this->limit );
 			$this->used            = size_format( $used, 1 );
 			$this->avail           = size_format( $avail, 2 );
