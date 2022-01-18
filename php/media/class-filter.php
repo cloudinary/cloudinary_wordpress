@@ -7,7 +7,9 @@
 
 namespace Cloudinary\Media;
 
+use Cloudinary\Assets;
 use Cloudinary\Connect\Api;
+use Cloudinary\Delivery;
 use Cloudinary\Media;
 use Cloudinary\Utils;
 use WP_Post;
@@ -31,12 +33,20 @@ class Filter {
 	private $media;
 
 	/**
+	 * Holds the Delivery instance.
+	 *
+	 * @var     Delivery Instance of the plugin.
+	 */
+	private $delivery;
+
+	/**
 	 * Filter constructor.
 	 *
 	 * @param Media $media The plugin.
 	 */
 	public function __construct( Media $media ) {
-		$this->media = $media;
+		$this->media    = $media;
+		$this->delivery = $media->plugin->get_component( 'delivery' );
 		$this->setup_hooks();
 	}
 
@@ -92,6 +102,7 @@ class Filter {
 	 *
 	 * @param string $asset The media tag.
 	 * @param string $type  The type.
+	 *
 	 * @return int|false
 	 */
 	public function get_id_from_tag( $asset, $type = 'wp-image-|wp-video-' ) {
@@ -279,7 +290,10 @@ class Filter {
 		$assets  = $this->get_media_tags( $content );
 
 		foreach ( $assets as $asset ) {
-			$url           = $this->get_url_from_tag( $asset );
+			$url = $this->get_url_from_tag( $asset );
+			if ( ! $this->media->is_cloudinary_url( $url ) ) {
+				continue;
+			}
 			$attachment_id = $this->get_id_from_tag( $asset );
 			if ( false === $attachment_id ) {
 				$attachment_id = $this->media->get_id_from_url( $url );
@@ -296,6 +310,14 @@ class Filter {
 			// Skip since there is no local available.
 			if ( $this->media->is_cloudinary_url( $local_url ) ) {
 				continue;
+			}
+
+			// Check that the file isn't an edited version by comparing the public ID.
+			$public_id  = $this->media->get_public_id( $attachment_id );
+			$compare_id = $this->media->get_public_id_from_url( $url );
+			if ( ! empty( $compare_id ) && $compare_id !== $public_id ) {
+				$compare_id .= '.' . pathinfo( $local_url, PATHINFO_EXTENSION );
+				$local_url  = path_join( dirname( $local_url ), basename( $compare_id ) );
 			}
 			// Replace old tag.
 			$content = str_replace( $url, $local_url, $content );
@@ -323,11 +345,13 @@ class Filter {
 			$attachment_id = $this->get_id_from_tag( $asset );
 
 			// Check if this is not already a cloudinary url and if is not in the sync folder, for Cloudinary only storage cases.
-			if ( $this->media->is_cloudinary_url( $url ) && ! $this->media->is_cloudinary_sync_folder( $url ) ) {
-				// Is a content based ID. If has a cloudinary ID, it's from an older plugin version.
-				// Check if has an ID, and push update to reset.
-				if ( ! empty( $attachment_id ) && ! $this->media->plugin->components['sync']->is_synced( $attachment_id ) ) {
-					$this->media->cloudinary_id( $attachment_id ); // Start an on-demand sync.
+			if ( $this->media->is_cloudinary_url( $url ) ) {
+				if ( ! $this->media->is_cloudinary_sync_folder( $url ) ) {
+					// Is a content based ID. If has a cloudinary ID, it's from an older plugin version.
+					// Check if has an ID, and push update to reset.
+					if ( ! empty( $attachment_id ) && ! $this->media->plugin->components['sync']->is_synced( $attachment_id ) ) {
+						$this->media->cloudinary_id( $attachment_id ); // Start an on-demand sync.
+					}
 				}
 
 				continue; // Already a cloudinary URL. Possibly from a previous version. Will correct on post update after synced.
@@ -361,8 +385,8 @@ class Filter {
 			// Get a cloudinary URL.
 			$classes                   = $this->get_classes( $asset ); // check if this is a transformation overwrite.
 			$overwrite_transformations = false !== strpos( $classes, 'cld-overwrite' );
-
-			$cloudinary_url = $this->media->cloudinary_url( $attachment_id, $wp_size, $transformations, null, $overwrite_transformations );
+			$asset_id                  = $this->maybe_alternate_id( $attachment_id, $url );
+			$cloudinary_url            = $this->media->cloudinary_url( $asset_id, $wp_size, $transformations, null, $overwrite_transformations );
 
 			if ( $url === $cloudinary_url ) {
 				continue;
@@ -399,6 +423,46 @@ class Filter {
 		}
 
 		return $this->filter_video_shortcodes( $content );
+	}
+
+	/**
+	 * Maybe get an alternate ID if this url is from an edited image.
+	 *
+	 * @param int    $attachment_id The attachment ID.
+	 * @param string $url           The attachment URL.
+	 *
+	 * @return int
+	 */
+	public function maybe_alternate_id( $attachment_id, $url ) {
+		$meta = wp_get_attachment_metadata( $attachment_id );
+		$base = basename( $url );
+		if ( basename( $meta['file'] ) === $base ) {
+			// Full image meta matching the current URL, indicates is the current edit. We can use this ID.
+			return $attachment_id;
+		}
+		// Check if the sized url is in the current meta.
+		if ( ! empty( $meta['sizes'] ) ) {
+			foreach ( $meta['sizes'] as $size ) {
+				if ( $size['file'] === $base ) {
+					// This is a current size, we can use this ID.
+					return $attachment_id;
+				}
+			}
+		}
+		// If we are here, we are using a URL for the attachment from previous edit. Try find the new ID.
+		$unsized       = $this->delivery->maybe_unsize_url( $url );
+		$cleaned       = Delivery::clean_url( $unsized );
+		$linked_assets = $this->media->get_post_meta( $attachment_id, Assets::META_KEYS['edits'], true );
+		$asset_id      = $attachment_id;
+		if ( isset( $linked_assets[ $cleaned ] ) ) {
+			$asset_id = $linked_assets[ $cleaned ];
+		}
+		$scaled = Delivery::make_scaled_url( $cleaned );
+		if ( isset( $linked_assets[ $scaled ] ) ) {
+			$asset_id = $linked_assets[ $scaled ];
+		}
+
+		return $asset_id;
 	}
 
 	/**
@@ -587,25 +651,6 @@ class Filter {
 	}
 
 	/**
-	 * Conditionally remove editors in post context to prevent users editing images in WP.
-	 *
-	 * @param array $editors List of available editors.
-	 *
-	 * @return array
-	 */
-	public function disable_editors_maybe( $editors ) {
-
-		if ( function_exists( 'get_current_screen' ) ) {
-			$screen = get_current_screen();
-			if ( is_object( $screen ) && 'post' === $screen->base ) {
-				$editors = array();
-			}
-		}
-
-		return $editors;
-	}
-
-	/**
 	 * Returns the overwrite template for the insert media panel.
 	 *
 	 * @return string
@@ -752,6 +797,26 @@ class Filter {
 	}
 
 	/**
+	 * Match the Cloudinary URL src to the attachment when editing an image in Gutenberg.
+	 *
+	 * @param bool   $match          Flag indicating a match.
+	 * @param string $image_location The image URL.
+	 * @param array  $image_meta     The unused image meta.
+	 * @param int    $attachment_id  The attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function edit_match_src( $match, $image_location, $image_meta, $attachment_id ) {
+		if ( $this->media->is_cloudinary_url( $image_location ) ) {
+			$test_id   = $this->media->get_public_id_from_url( $image_location );
+			$public_id = $this->media->get_public_id( $attachment_id );
+			$match     = $test_id === $public_id;
+		}
+
+		return $match;
+	}
+
+	/**
 	 * Setup hooks for the filters.
 	 */
 	public function setup_hooks() {
@@ -772,9 +837,6 @@ class Filter {
 		// Enable Rest filters.
 		add_action( 'rest_api_init', array( $this, 'init_rest_filters' ) );
 
-		// Remove editors to prevent users from manually editing images in WP.
-		add_filter( 'wp_image_editors', array( $this, 'disable_editors_maybe' ) );
-
 		// Add checkbox to media modal template.
 		add_action( 'admin_footer', array( $this, 'catch_media_templates_maybe' ), 9 );
 
@@ -790,5 +852,8 @@ class Filter {
 			add_filter( 'the_editor_content', array( $this, 'filter_out_local' ) );
 			add_filter( 'the_content', array( $this, 'filter_out_local' ), 100 );
 		}
+
+		// Add filter to match src when editing in block.
+		add_filter( 'wp_image_file_matches_image_meta', array( $this, 'edit_match_src' ), 10, 4 );
 	}
 }

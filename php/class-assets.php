@@ -98,6 +98,7 @@ class Assets extends Settings_Component {
 	const META_KEYS = array(
 		'excludes' => '_excluded_urls',
 		'lock'     => '_asset_lock',
+		'edits'    => '_edited_assets',
 	);
 
 	/**
@@ -159,6 +160,7 @@ class Assets extends Settings_Component {
 		add_action( 'shutdown', array( $this, 'meta_updates' ) );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_cache' ), 100 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		add_action( 'cloudinary_delete_asset', array( $this, 'purge_parent' ) );
 	}
 
 	/**
@@ -490,9 +492,6 @@ class Assets extends Settings_Component {
 				break;
 			}
 		} while ( $query->have_posts() );
-
-		// Clear out excludes.
-		wp_delete_post( $parent_id );
 	}
 
 	/**
@@ -537,6 +536,20 @@ class Assets extends Settings_Component {
 	}
 
 	/**
+	 * Generate the signature for sync.
+	 *
+	 * @param int $attachment_id The attachment/asset ID.
+	 *
+	 * @return string
+	 */
+	public function generate_edit_signature( $attachment_id ) {
+		$sig  = wp_json_encode( (array) get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true ) );
+		$file = get_attached_file( $attachment_id );
+
+		return $sig . $file;
+	}
+
+	/**
 	 * Upload an asset.
 	 *
 	 * @param int $asset_id The asset ID to upload.
@@ -545,29 +558,36 @@ class Assets extends Settings_Component {
 	 */
 	public function upload( $asset_id ) {
 		$connect = $this->plugin->get_component( 'connect' );
-
+		$options = array(
+			'use_filename'  => true,
+			'overwrite'     => false,
+			'resource_type' => $this->media->get_resource_type( $asset_id ),
+		);
 		if ( self::is_asset_type( $asset_id ) ) {
 			$asset = get_post( $asset_id );
 			$url   = $asset->post_title;
 		} else {
 			$url = Delivery::clean_url( $this->media->local_url( $asset_id ) );
 		}
-		$path      = trim( wp_normalize_path( str_replace( home_url(), '', $url ) ), '/' );
-		$info      = pathinfo( $path );
-		$public_id = $info['dirname'] . '/' . $info['filename'];
-		$options   = array(
-			'unique_filename' => false,
-			'overwrite'       => true,
-			'resource_type'   => $this->media->get_resource_type( $asset_id ),
-			'public_id'       => $public_id,
-		);
-		$result    = $connect->api->upload( $asset_id, $options, array() );
+		$folder = untrailingslashit( $this->media->get_cloudinary_folder() );
+
+		$parent = $this->get_asset_parent( $url );
+		if ( ! empty( $parent ) ) {
+			// Parent based asset "cache point".
+			$path                 = trim( wp_normalize_path( str_replace( home_url(), '', $url ) ), '/' );
+			$folder               = pathinfo( $path );
+			$options['overwrite'] = true;
+		}
+		// Add folder.
+		$options['folder'] = $folder;
+		$result            = $connect->api->upload( $asset_id, $options, array() );
 		if ( ! is_wp_error( $result ) && isset( $result['public_id'] ) ) {
-			Delivery::update_size_relations_public_id( $asset_id, $public_id );
+			$this->media->update_post_meta( $asset_id, Sync::META_KEYS['public_id'], $result['public_id'] );
+			Delivery::update_size_relations_public_id( $asset_id, $result['public_id'] );
 			Delivery::update_size_relations_state( $asset_id, 'enable' );
 			$this->media->sync->set_signature_item( $asset_id, 'file' );
 			$this->media->sync->set_signature_item( $asset_id, 'cld_asset' );
-			$this->plugin->get_component( 'storage' )->size_sync( $asset_id, $public_id );
+			$this->plugin->get_component( 'storage' )->size_sync( $asset_id, $result['public_id'] );
 		}
 
 		return $result;
@@ -597,6 +617,25 @@ class Assets extends Settings_Component {
 	}
 
 	/**
+	 * Validate if sync type is valid as an edited asset.
+	 *
+	 * @param int $attachment_id The attachment id to validate.
+	 *
+	 * @return bool
+	 */
+	public function validate_edited_asset_sync( $attachment_id ) {
+		$valid = false;
+		if ( ! self::is_asset_type( $attachment_id ) ) {
+			$sizes = get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true );
+			if ( ! empty( $sizes ) ) {
+				$valid = true;
+			}
+		}
+
+		return $valid;
+	}
+
+	/**
 	 * Register our sync type.
 	 *
 	 * @param array $structs The structure of all sync types.
@@ -615,7 +654,64 @@ class Assets extends Settings_Component {
 			'asset_state' => 0,
 		);
 
+		$structs['edited_asset'] = array(
+			'generate' => array( $this, 'generate_edit_signature' ),
+			'priority' => 5.3,
+			'sync'     => array( $this, 'create_edited_asset' ),
+			'validate' => array( $this, 'validate_edited_asset_sync' ),
+			'state'    => 'disabled',
+			'note'     => __( 'Creating shadow assets', 'cloudinary' ),
+			'required' => false,
+			'realtime' => true,
+		);
+
 		return $structs;
+	}
+
+	/**
+	 * Create an edited asset which acts as a shadow media item for edits.
+	 *
+	 * @param int $attachment_id The attachment to create from.
+	 *
+	 * @return array
+	 */
+	public function create_edited_asset( $attachment_id ) {
+		$sizes   = get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true );
+		$assets  = $this->media->get_post_meta( $attachment_id, self::META_KEYS['edits'], true );
+		$current = basename( get_attached_file( $attachment_id, true ) );
+
+		if ( empty( $assets ) ) {
+			$assets = array();
+		}
+		if ( ! empty( $sizes ) ) {
+			$base = dirname( $this->media->local_url( $attachment_id ) );
+			foreach ( $sizes as $size => $data ) {
+
+				if ( 'full-' !== substr( $size, 0, 5 ) ) {
+					continue;
+				}
+
+				$url = Delivery::clean_url( path_join( $base, $data['file'] ) );
+				if ( basename( $url ) === $current ) {
+					// Currently the original.
+					if ( isset( $assets[ $url ] ) ) {
+						// Restored from a crop.
+						wp_delete_post( $assets[ $url ] );
+						unset( $assets[ $url ] );
+						$this->media->delete_post_meta( $attachment_id, Sync::META_KEYS['relationship'] );
+					}
+					continue;
+				}
+				if ( ! isset( $assets[ $url ] ) ) {
+					$asset          = $this->create_asset( $url, $attachment_id );
+					$assets[ $url ] = $asset;
+				}
+			}
+			$this->media->update_post_meta( $attachment_id, self::META_KEYS['edits'], $assets );
+		}
+		$this->media->sync->set_signature_item( $attachment_id, 'edited_asset' );
+
+		return $assets;
 	}
 
 	/**
@@ -767,6 +863,9 @@ class Assets extends Settings_Component {
 	public function find_parent( $asset_id ) {
 		$path   = $this->clean_path( $this->media->local_url( $asset_id ) );
 		$parent = $this->get_param( $path );
+		if ( empty( $parent ) ) {
+			$parent = get_post_parent( $asset_id );
+		}
 
 		return $parent instanceof \WP_Post ? $parent : null;
 	}
@@ -958,6 +1057,8 @@ class Assets extends Settings_Component {
 				continue;
 			}
 			$this->purge_parent( $parent->ID );
+			// Remove parent.
+			wp_delete_post( $parent->ID );
 		}
 	}
 

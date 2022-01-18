@@ -1,8 +1,8 @@
 === Cloudinary – Image and Video Optimization, Manipulation, and Delivery ===
 Contributors: Cloudinary, XWP, Automattic
-Tags: image, video, DAM, optimization, CDN
+Tags: images, videos, DAM, optimization, CDN
 Requires at least: 4.7
-Tested up to: 5.8.1
+Tested up to: 5.8.3
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -11,61 +11,96 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Use Cloudinary's plugin to efficiently create, manage and deliver images, videos, and other media, personalized and optimized for every device and channel.
 
 == Description ==
-Cloudinary's [award-winning plugin](https://www.businesswire.com/news/home/20200923005566/en/Cloudinary-Wins-2020-MarTech-Breakthrough-Award-for-Best-WordPress-Plugin) makes automating your image, video, and rich media workflow easy, offering a variety of features. From media upload to image optimization, video transcoding and transformations through delivery via global CDNs, everything is offered from within the plugin.
+
+Cloudinary’s [award-winning plugin](https://www.businesswire.com/news/home/20200923005566/en/Cloudinary-Wins-2020-MarTech-Breakthrough-Award-for-Best-WordPress-Plugin) makes automating your image, video, and visual media workflows easy, offering a variety of features. From image and video upload through management, transformation, optimization, and global CDN delivery, all features are offered within the plugin. Users can get started in minutes with a true plug-and-play solution paired with an intuitive onboarding wizard helping deliver optimized and responsive media out-of-the-box.
 
 https://youtu.be/B1Jx5hB1Ijk
 
-Optimize your site performance and user experience with faster page load times, advanced auto-responsive delivery, and better visual experience. Automate image quality and video encoding settings, scale and crop images using AI to focus on the most important region, apply comprehensive video and image transformations and effects, display assets via an interactive media gallery, and deliver optimized media experiences to any device in any resolution or pixel density.
+On top of that, users can also leverage a dashboard giving insights into optimization metrics and data usage so there are never any surprises. No matter if your use case is for personal use or business needs, the Cloudinary plugin offers enterprise quality and architecture for all.
 
-And with advanced digital asset management capabilities available in the plugin, you won’t need to leave your WordPress environment. Take full advantage of advanced search, AI-based tagging, rich media editing, collections, structured metadata, and an intuitive UI as well as our Video and Image APIs for headless DAM functionality, making it much easier to manage all of your media in WordPress.
+Optimize your site performance and user experience with faster page load times and advanced auto-responsive delivery, allowing you to improve your Google page rankings, Core Web Vitals, and Lighthouse scores. Publish faster while consistently delivering positive user experiences via an array of automated features such as video and image optimization, advanced responsive design, customizable lazy loading, and fast CDN delivery of assets. Display engaging visual experiences with automated quality and encoding settings, video and image resizing and cropping via AI, comprehensive transformations and effects, and delivery to any device in any resolution or pixel density.
 
-If you’re interested in gaining early access to our v3.0 plugin features - please fill this [form](https://forms.gle/bDyuYo3Zc3qMwHKq9) - We would love to have you as one of our beta testers!
+And with a full Digital Asset Management platform embedded in the plugin, you won’t need to leave your WordPress environment. Take full advantage of advanced search, AI-based tagging, rich media editing, collections, structured metadata, and an intuitive UI as well as our Video and Image APIs for headless DAM functionality, making it much easier to manage all of your media in WordPress.
 
 
-= Requirements =
+== Highlights ==
 
-* All you need to get started is to register for a free [Cloudinary account](https://cloudinary.com/users/register/free?utm_source=wp&utm_medium=wpmarketplace&utm_campaign=wpmarketplace) to use the plugin and start uploading your media to the cloud.
-* As your site’s media management needs grow, you have the choice to easily upgrade to higher usage plans with practically limitless scale.
-
-= Highlights =
-
-* Automatically optimize and apply specified global transformations to pre-existing media upon plugin installation as well as all future uploads.
-* Search and browse your media with AI-powered tagging and attributes including file type, size, format, and many other parameters all within the media library.
-* Automatic responsive images for delivery on various devices in different resolutions.
-* Taxonomy level transformations allow users to set transformations by “category” or “tag” and apply these in real time.
-* Transcode, AI crop, apply filters, generate thumbnails, and more with our video transformation capabilities.
+* End-to-end support for the popular WooCommerce plugin along with the ability to replace the WooCommerce gallery with a responsive and customizable product gallery.
+* Compatibility with popular page builders helping with tasks such as building forms, fine-tuning SEO, establishing communities, managing multi language setups, and more.
+* Automatically optimize videos and images and apply specified global transformations to pre-existing media upon plugin installation as well as all future uploads.
+* Automatic responsive images for delivery on various devices in different resolutions with exact pixel accuracy.
+* Automatically lazy load images and videos with customizable placeholder settings.
+* Automatic image and video optimization of assets located outside of the media library in themes, plugins, and more.
+* Ability to display videos using Cloudinary’s video player giving additional features such as bitrate limit, autoplay, analytics, monetization, and more.
 * The most comprehensive array of image and video transformation capabilities, powered by AI.
-* Ability to display videos using Cloudinary’s video player giving additional features such as bitrate limit, analytics, monetization, and more.
-* Display images and videos via a customizable interactive media gallery (beta).
+* Set transformations by “category” or “tag” in real time with taxonomy level transformations.
+* Transcode, AI crop, apply filters, generate thumbnails, and more with our video transformation capabilities.
+* Search and browse your media with AI-powered tagging and attributes including file type, size, format, and many other parameters all within the media library.
+* Utilize developer friendly documentation allowing users to further extend the plugin with advanced capabilities and features.
 
+== Getting Started ==
 
-= Simple Integration =
+To use the Cloudinary Plugin and all the functionality that comes with it, you will need to have a Cloudinary Account. **If you don’t have an account yet, [sign up](https://cloudinary.com/signup?source=wp&utm_source=wp&utm_medium=wporgmarketplace&utm_campaign=wporgmarketplace) now for a free Cloudinary Programmable Media account**. You’ll start with generous usage limits and when your requirements grow, you can easily upgrade to a plan that best fits your needs. Upon account creation you can plug in your account credentials and customize your configurations as desired. That’s it.
 
-* Upload and manage your assets with Cloudinary directly from your WordPress interface.
-* Migrate all your locally hosted assets to Cloudinary.
-* Move your existing posts’ images and videos to Cloudinary with a single click.
+**Upgrade Messaging**
 
+Enjoy a seamless upgrade to experience the completely new look and feel of our plugin. Boasting many new features including our digital asset management platform, video player offering advanced capabilities, auto-responsive images, customizable lazy loading, responsive and interactive product gallery, automatic optimizations and transformations, and much more.
 
-= About Cloudinary =
+== Frequently Asked Questions ==
 
-* [Our website](http://cloudinary.com?utm_source=wp&utm_medium=wpmarketplace&utm_campaign=wpmarketplace)
-* [Blog](http://cloudinary.com/blog?utm_source=wp&utm_medium=wpmarketplace&utm_campaign=wpmarketplace)
-* [Features overview](http://cloudinary.com/features?utm_source=wp&utm_medium=wpmarketplace&utm_campaign=wpmarketplace)
-* [DAM solution](https://cloudinary.com/solutions/digital_asset_management?utm_source=wp&utm_medium=wpmarketplace&utm_campaign=wpmarketplace)
-* [Detailed documentation](http://cloudinary.com/documentation?utm_source=wp&utm_medium=wpmarketplace&utm_campaign=wpmarketplace)
-* [Image transformations documentation](http://cloudinary.com/documentation/image_transformations?utm_source=wp&utm_medium=wpmarketplace&utm_campaign=wpmarketplace)
-* [Video transformations documentation](https://cloudinary.com/documentation/video_manipulation_and_delivery?utm_source=wp&utm_medium=wpmarketplace&utm_campaign=wpmarketplace)
-* [FAQ](http://cloudinary.com/faq?utm_source=wp&utm_medium=wpmarketplace&utm_campaign=wpmarketplace)
+**I’ve installed the plugin, what happens now?**
 
-= Contributors & Developers =
-“Cloudinary – Image and Video Optimization, Manipulation, and Delivery” is an open source software. The following people have contributed to this plugin:
+If you left all the settings as default, all your current media will begin syncing to Cloudinary and will start to be optimized and delivered by fast CDN on your website using Cloudinary URLs. Once the syncing is complete, you should start seeing improvements in performance across your site.
+
+**Which file types are supported?**
+
+Most common media files are supported for optimization and delivery by Cloudinary. For free accounts, you will not be able to deliver PDF or ZIP files by default for security reasons. If this is a requirement, please [contact our support team](https://support.cloudinary.com/hc/en-us/requests/new) who can help activate this for you.
+
+To deliver additional file types via Cloudinary, you can extend the functionality of the plugin using the [actions and filters](https://cloudinary.com/documentation/wordpress_integration#actions_and_filters) the plugin exposes for developers.
+
+**I have various other plugins installed, will the Cloudinary Plugin still work?**
+
+**I’m having an incompatibility issue with a theme, plugin, or hosting environment, what can I do?**
+
+We’re compatible with most other plugins so we expect it to work absolutely fine. If you do have any issues, please [contact our support team](https://support.cloudinary.com/hc/en-us/requests/new) who will help resolve your issue.
+
+**Why are my images loading locally and not from Cloudinary?**
+
+Your images may be loading locally for a number of reasons:
+
+* The asset has been selected to be delivered from WordPress. You can update this for each asset via the WordPress Media Library.
+* Your asset is stored outside of your WordPress storage.
+* The asset is not properly synced with Cloudinary. You can find the sync status of your assets in the WordPress Media Library.
+
+== About Cloudinary ==
+
+Read more about Cloudinary:
+
+* [Our website](http://cloudinary.com/)
+* [Blog](http://cloudinary.com/blog)
+* [Feature guides](https://cloudinary.com/documentation/cloudinary_guides)
+* [DAM solution](https://cloudinary.com/products/digital_asset_management)
+* [Detailed documentation](http://cloudinary.com/documentation)
+* [Image transformations documentation](http://cloudinary.com/documentation/image_transformations)
+* [Video transformations documentation](https://cloudinary.com/documentation/video_manipulation_and_delivery)
+* [Cloudinary FAQ](http://cloudinary.com/faq)
+
+== Customer Case Studies ==
+
+* [Complex Networks](https://cloudinary-res.cloudinary.com/image/upload/v1606310155/website/resources/case-study/cloudinary_case_study_complex_networks_0720_v2.pdf)
+* [StubHub](https://cloudinary-res.cloudinary.com/image/upload/v1599569503/website/resources/case-study/cloudinary_case_study_stubHub_0820_fnl.pdf)
+* [Fairfax Media](https://cloudinary-res.cloudinary.com/image/upload/v1599569441/website/resources/case-study/cloudinary_case_study_Fairfax_Media_0720_fnl.pdf)
+
+== Contributors & Developers ==
+
+“Cloudinary – Dynamic Image and Video Management” is an open source software. The following people have contributed to this plugin:
 [Cloudinary](https://profiles.wordpress.org/cloudinary/)
 [XWP](https://profiles.wordpress.org/xwp/)
 [Automattic](https://profiles.wordpress.org/automattic/)
 
 
 == Installation ==
-= Install from within wordpress =
+= Install from within WordPress =
 * Visit the plugins page within your dashboard and select `Add New`.
 * Search for `Cloudinary`.
 * Select "Cloudinary – Image and Video Optimization, Manipulation, and Delivery" from the list.
@@ -88,49 +123,55 @@ If you have two factor authentication configured for your account, you will need
 Your site is now setup to start using Cloudinary.
 
 
-== Frequently Asked Questions ==
-= Upgrade from v1=
-
-Once installing the new version of the plugin, the plugin will automatically upgrade all of your assets to work with the new plugin.
-Upgrade is seamless and requires no action from your side.
-
-= Can I continue using v1? =
-The legacy WordPress Plugin version (v1.x) will be deprecated as of February 1st, 2021, after which support, updates and bug fixes for the legacy plugin will continue in limited fashion. 
-The legacy plugin will be made obsolete on August 1st, 2021 (end-of-life date) and will no longer function after that date.
-
-= Does the plugin sync all of my media to Cloudinary? =
-
-The plugin will automatically sync all of your WordPress media to your Cloudinary account and start delivering assets from Cloudinary.
-You will be able to select whether the original files will remain in WordPress storage, or only in Cloudinary. 
-
-= Where can I find more info? =
-
-You can read the plugin [documentation](https://cloudinary.com/documentation/wordpress_integration?utm_source=wp&utm_medium=wpmarketplace&utm_campaign=wpmarketplace)
-
-= Compatibility with other Plugins/Themes =
-
-The following plugins/themes/page-builders might not be fully compatible with the Cloudinary plugin and advised to be tested side-by-side before enabling in production.
-
-* Divi
-* Elementor
-* WPBakery
-* Goodlayers
-* Leopard
-* Cube Portfolio
-
-
 == Screenshots ==
 1. Streamline Your Creative Workflow
-2. Media Editor
-3. Media Library
-4. Easy Generation of Asset Derivatives
-5. Global Image Transformation Settings
-6. Global Video Transformation Settings
-7. Folder and Syncing Settings
-8. Track Your Cloudinary Account Status
-9. Use Interactive Media Gallery 
+1. Media Editor
+1. DAM-Powered Media Library
+1. Easy Generation of Asset Derivatives
+1. Automatically Deliver Responsive Images
+1. Global Image Transformation Settings
+1. Global Video Transformation Settings
+1. Improve web performance with Lazy Loading assets
+1. Display assets in a customizable and responsive product gallery
+1. Folder and Syncing Settings
+1. Additional Syncing Settings
+1. Gain insight into how your assets are performing
+1. Easily Configure Your Account
+1. Configure your assets to be automatically optimized out-of-the-box
+1. Need help? We’ve got you covered
 
 == Changelog ==
+
+3.0.1 (18 January 2021)
+
+Fixes and Improvements:
+
+* Added SVG support (beta)
+* Improved custom HTML for Featured images
+* Fixed extra request handling on faulty 'srcset'
+* Improved how the plugin handles image cropping functionality
+* Fixed the URL where in some cases the delivery URL was wrong
+* Fixed db errors related to wp_cloudinary_relationships table
+* Fixed "Uncaught TypeError: Cannot read properties of undefined (reading 'length')" error
+* Fixed System report missing data
+
+= 3.0.0 (06 December 2021) =
+
+Release of a new major version of the plugin
+
+* Entire new look and feel
+* New set-up wizard for a quick and simple configuration
+* New Dashboard displaying the optimization level of your site’s assets
+* New improved section of the dashboard displaying your Cloudinary’s plan details
+* New levels of optimization settings across the plugin screens
+* New asset sync settings which allows to sync additional media files such as themes & plugins
+* New External Asset Sync settings from specific external sources with Cloudinary
+* Cloudinary DAM as a new extension of the plugin
+* New lazy loading controls with built in simulation!
+* Added a preview to the Responsive images settings which now includes new DPR control
+* Granular control of asset transformations within the WordPress media library
+* New Cloudinary status as an extra information overlay on the frontend - images only
+* Brand new Help Centre screen
 
 = 2.7.7 (11 October 2021) =
 
@@ -184,7 +225,7 @@ Fixes and Improvements:
 * Fixed the display of the “Uninitialized string offset: 0” notice
 
 
-= 2.7.2 (11 May 2021) = 
+= 2.7.2 (11 May 2021) =
 
 Fixes and Improvements:
 
@@ -201,7 +242,7 @@ Fixes and Improvements:
 * Fixed manual sync of a single asset
 * Fixed issues related to "Cloudinary only storage" option
 * Fixed delivery of fetched/other special image types from Cloudinary
-* Fixed an error when using the "Twenty Twenty" theme 
+* Fixed an error when using the "Twenty Twenty" theme
 
 
 = 2.7.0 (15 Mar 2021) =
@@ -220,7 +261,7 @@ Fixes and Improvements:
 * Updated Cloudinary video player to version 1.5.1
 * Fixed product gallery in case of adding unsynced asset
 * Fixed WordPress Media Library error when editing an asset already synced to Cloudinary
-* Fixed sync failure for media added as an external URL by other plugins  
+* Fixed sync failure for media added as an external URL by other plugins
 
 
 = 2.6.0 (01 Feb 2021) =
@@ -232,11 +273,11 @@ New Features:
 
 Fixes and improvements:
 
-* Sync process improvements 
+* Sync process improvements
 * Sync process 1000 asset limitation was removed
 * Folder path now supports forward slashes
 * Deleting media on the WordPress media library will now delete them on Cloudinary
-* Fixed an infinite loading issue when using videos 
+* Fixed an infinite loading issue when using videos
 * Fixed compatibility issues with Smush plugin
 * Fixed compatibility issues with using the Cloudinary tab in ACF plugin
 * Minor cosmetic updates
@@ -250,7 +291,7 @@ New Features:
 * Introducing the Cloudinary Product Gallery (beta feature):
     - We added a new 'Cloudinary Gallery' block to the Gutenberg Editor
     - When using WooCommerce, you can now use the 'Cloudinary Gallery' as your default product gallery
-* Added a rate-us link. Please rate us! ;-) 
+* Added a rate-us link. Please rate us! ;-)
 * Added support for conditional transformations
 
 Fixes and improvements:

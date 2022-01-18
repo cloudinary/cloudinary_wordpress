@@ -81,6 +81,7 @@ const cldCore = {
 		'lazyload-preview': './src/js/lazyload-preview.js',
 		'asset-manager': './src/js/asset-manager.js',
 		'asset-edit': './src/js/asset-edit.js',
+		'syntax-highlight': './src/js/syntax-highlight.js',
 	},
 	module: {
 		rules: [

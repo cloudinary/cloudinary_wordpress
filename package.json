@@ -86,6 +86,7 @@
     "browserslist": "^4.14.6",
     "chart.js": "^3.5.0",
     "classnames": "^2.3.1",
+    "codemirror": "^5.65.0",
     "coveralls": "^3.1.0",
     "cross-env": "^7.0.2",
     "css-loader": "^5.0.1",
@@ -151,5 +152,5 @@
     "webpackbar": "^4.0.0",
     "wp-hookdoc": "^0.2.0"
   },
-  "version": "2.7.7"
+  "version": "3.0.1"
 }
