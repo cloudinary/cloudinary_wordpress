@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: images, videos, DAM, optimization, CDN
 Requires at least: 4.7
-Tested up to: 5.8.2
+Tested up to: 5.8.3
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -40,7 +40,7 @@ And with a full Digital Asset Management platform embedded in the plugin, you wo
 
 == Getting Started ==
 
-To use the Cloudinary Plugin and all the functionality that comes with it, you will need to have a Cloudinary Account. If you don’t have an account yet, [sign up](https://cloudinary.com/signup) now for a free plan. You’ll start with generous usage limits and when your requirements grow, you can easily upgrade to a plan that best fits your needs. Upon account creation you can plug in your account credentials and customize your configurations as desired. That’s it.
+To use the Cloudinary Plugin and all the functionality that comes with it, you will need to have a Cloudinary Account. **If you don’t have an account yet, [sign up](https://cloudinary.com/signup?source=wp&utm_source=wp&utm_medium=wporgmarketplace&utm_campaign=wporgmarketplace) now for a free Cloudinary Programmable Media account**. You’ll start with generous usage limits and when your requirements grow, you can easily upgrade to a plan that best fits your needs. Upon account creation you can plug in your account credentials and customize your configurations as desired. That’s it.
 
 **Upgrade Messaging**
 
@@ -141,6 +141,19 @@ Your site is now setup to start using Cloudinary.
 1. Need help? We’ve got you covered
 
 == Changelog ==
+
+3.0.1 (18 January 2021)
+
+Fixes and Improvements:
+
+* Added SVG support (beta)
+* Improved custom HTML for Featured images
+* Fixed extra request handling on faulty 'srcset'
+* Improved how the plugin handles image cropping functionality
+* Fixed the URL where in some cases the delivery URL was wrong
+* Fixed db errors related to wp_cloudinary_relationships table
+* Fixed "Uncaught TypeError: Cannot read properties of undefined (reading 'length')" error
+* Fixed System report missing data
 
 = 3.0.0 (06 December 2021) =
 

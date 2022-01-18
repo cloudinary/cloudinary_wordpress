@@ -352,7 +352,7 @@ class Storage implements Notice {
 			'video_quality',
 			'video_freeform',
 		);
-		$settings                = $this->plugin->settings->get_value( $fields );
+		$settings                = $this->plugin->settings->get_value( ...$fields );
 		$settings['local_size']  = get_post_meta( $attachment_id, Sync::META_KEYS['local_size'], true );
 		$settings['remote_size'] = get_post_meta( $attachment_id, Sync::META_KEYS['remote_format'], true );
 
@@ -457,6 +457,25 @@ class Storage implements Notice {
 	}
 
 	/**
+	 * Conditionally remove editors in post context to prevent users editing images in WP.
+	 *
+	 * @param array $editors List of available editors.
+	 *
+	 * @return array
+	 */
+	public function disable_editors_maybe( $editors ) {
+
+		if ( function_exists( 'get_current_screen' ) ) {
+			$screen = get_current_screen();
+			if ( is_object( $screen ) && 'post' === $screen->base ) {
+				$editors = array();
+			}
+		}
+
+		return $editors;
+	}
+
+	/**
 	 * Setup hooks for the filters.
 	 */
 	public function setup() {
@@ -495,6 +514,11 @@ class Storage implements Notice {
 			add_filter( 'cloudinary_can_sync_asset', array( $this, 'delay_cld_only' ), 10, 3 );
 			add_filter( 'wp_unique_filename', array( $this, 'unique_filename' ), 10, 3 );
 			add_filter( 'wp_get_attachment_metadata', array( $this, 'ensure_metadata' ), 10, 2 );
+
+			// Remove editors to prevent users from manually editing images in WP when CLD only (since files don't exist).
+			if ( 'cld' === $this->settings['offload'] ) {
+				add_filter( 'wp_image_editors', array( $this, 'disable_editors_maybe' ) );
+			}
 		}
 	}
 }

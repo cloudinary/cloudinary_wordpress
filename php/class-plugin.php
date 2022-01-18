@@ -32,7 +32,7 @@ final class Plugin {
 	 *
 	 * @since   0.1
 	 *
-	 * @var     Media[]|Sync[]|Admin[]|REST_API[]|Connect[]
+	 * @var     Media[]|Sync[]|Admin[]|REST_API[]|Connect[]|Delivery[]
 	 */
 	public $components;
 	/**
@@ -149,6 +149,7 @@ final class Plugin {
 		$this->components['assets']                 = new CLD_Assets( $this );
 		$this->components['dashboard']              = new Dashboard( $this );
 		$this->components['extensions']             = new Extensions( $this );
+		$this->components['svg']                    = new SVG( $this );
 	}
 
 	/**
