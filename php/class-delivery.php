@@ -851,11 +851,16 @@ class Delivery implements Setup {
 			$tag_element['atts']['class'][] = 'wp-' . $tag_element['type'] . '-' . $tag_element['id'];
 		}
 
+		$size = array();
+
 		// Get size.
-		$size = array(
-			$tag_element['atts']['width'],
-			$tag_element['atts']['height'],
-		);
+		if ( 'video' !== $tag_element['tag'] ) {
+			$size = array(
+				$tag_element['atts']['width'],
+				$tag_element['atts']['height'],
+			);
+		}
+
 		if ( ! empty( $tag_element['atts']['src'] ) ) {
 			$has_wp_size = $this->media->get_crop( $tag_element['atts']['src'], $tag_element['id'] );
 			if ( ! empty( $has_wp_size ) ) {
