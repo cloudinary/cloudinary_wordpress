@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Filter: cloudinary_bypass_cache - Cloudinary Docs</title>
+	<title>Action: cloudinary_delete_asset - Cloudinary Docs</title>
 
 	<script src="scripts/prettify/prettify.js"></script>
 	<script src="scripts/prettify/lang-css.js"></script>
@@ -22,7 +22,7 @@
 <div id="main">
 
 	
-	<h1 class="page-title">Filter: cloudinary_bypass_cache</h1>
+	<h1 class="page-title">Action: cloudinary_delete_asset</h1>
 	
 
 	
@@ -44,69 +44,20 @@
 
     
 
-    <h4 class="name" id="cloudinary_bypass_cache">apply_filters( 'cloudinary_bypass_cache', <span class="signature">$bypass )</span><span class="type-signature"> &rarr; {bool}</span></h4>
+    <h4 class="name" id="cloudinary_delete_asset">do_action( 'cloudinary_delete_asset' )</h4>
 
     
 
 
 
 <div class="description">
-    Filter to allow bypassing the cache.
+    Action fired when deleting a synced asset.
 </div>
 
 
 
 
 
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>$bypass</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">bool</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">True to bypass, false to not.</td>
-        </tr>
-
-    
-    </tbody>
-</table>
 
 
 
@@ -118,7 +69,8 @@
     
 
     
-
+    <dt class="tag-since">Since:</dt>
+    <dd class="tag-since"><ul class="dummy"><li>3.0.1</li></ul></dd>
     
 
     
@@ -138,16 +90,13 @@
     
 
     
-    <dt class="tag-default">Default Value:</dt>
-    <dd class="tag-default"><ul class="dummy">
-            <li>false</li>
-        </ul></dd>
+
     
 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="php_class-cache.php.html">php/class-cache.php</a>, <a href="php_class-cache.php.html#line258">line 258</a>
+        <a href="php_sync_class-delete-sync.php.html">php/sync/class-delete-sync.php</a>, <a href="php_sync_class-delete-sync.php.html#line116">line 116</a>
     </li></ul></dd>
     
 
@@ -170,24 +119,6 @@
 
 
 
-<h5>Returns:</h5>
-
-        
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">bool</span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
