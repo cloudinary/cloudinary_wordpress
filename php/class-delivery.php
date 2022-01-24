@@ -1149,39 +1149,19 @@ class Delivery implements Setup {
 	 */
 	protected function is_content_dir( $url ) {
 		static $base = '';
-		static $use_year_month = null;
 
 		if ( empty( $base ) ) {
-			$dirs           = wp_upload_dir();
-			$base           = wp_parse_url( $dirs['baseurl'], PHP_URL_PATH );
-			$use_year_month = ! empty( $dirs['subdir'] );
+			$dirs = wp_upload_dir();
+			$base = wp_parse_url( $dirs['baseurl'], PHP_URL_PATH );
 		}
 
-		$path     = wp_parse_url( $url, PHP_URL_PATH );
+		$path     = wp_parse_url( dirname( $url ), PHP_URL_PATH );
 		$is_local = 0 === strpos( $path, $base );
 
 		if ( $is_local ) {
-			$dirname = trim(
-				pathinfo(
-					str_replace( $base, '', $path ),
-					PATHINFO_DIRNAME
-				),
-				DIRECTORY_SEPARATOR . '.'
-			);
-
-			if ( $use_year_month ) {
-				$dirname = explode( DIRECTORY_SEPARATOR, $dirname );
-				if (
-					2 !== count( $dirname ) ||
-					! (
-						4 === strlen( $dirname[0] ) &&
-						is_numeric( $dirname[0] ) &&
-						2 === strlen( $dirname[1] ) &&
-						is_numeric( $dirname[1] )
-					)
-				) {
-					$is_local = false;
-				}
+			$dirname = trim( substr( $path, strlen( $base ), 8 ), DIRECTORY_SEPARATOR );
+			if ( empty( $dirname ) || preg_match( '/\d{4}\/\d{2}/', $dirname ) ) {
+				$is_local = true;
 			} elseif ( ! empty( $dirname ) ) {
 				$is_local = false;
 			}
