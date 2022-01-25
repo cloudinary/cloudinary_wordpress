@@ -10,7 +10,12 @@ namespace Cloudinary;
 use Cloudinary\Component\Setup;
 use Cloudinary\Connect\Api;
 use Cloudinary\Settings\Setting;
-use \Cloudinary\Media;
+use WP_Error;
+use WP_HTTP_Response;
+use WP_Post;
+use WP_REST_Request;
+use WP_REST_Response;
+use WP_REST_Server;
 
 /**
  * Class Editor
@@ -97,13 +102,13 @@ class Editor implements Setup {
 	public function rest_endpoints( $endpoints ) {
 
 		$endpoints['edit_asset']    = array(
-			'method'              => \WP_REST_Server::CREATABLE,
+			'method'              => WP_REST_Server::CREATABLE,
 			'callback'            => array( $this, 'rest_edit_asset' ),
 			'permission_callback' => array( '\Cloudinary\REST_API', 'rest_can_manage_options' ),
 			'args'                => array(),
 		);
 		$endpoints['restore_asset'] = array(
-			'method'              => \WP_REST_Server::CREATABLE,
+			'method'              => WP_REST_Server::CREATABLE,
 			'callback'            => array( $this, 'rest_restore_asset' ),
 			'permission_callback' => array( '\Cloudinary\REST_API', 'rest_can_manage_options' ),
 			'args'                => array(),
@@ -132,9 +137,9 @@ class Editor implements Setup {
 	/**
 	 * Edit an asset.
 	 *
-	 * @param \WP_REST_Request $request The request object.
+	 * @param WP_REST_Request $request The request object.
 	 *
-	 * @return \WP_Error|\WP_HTTP_Response|\WP_REST_Response
+	 * @return WP_Error|WP_HTTP_Response|WP_REST_Response
 	 */
 	public function rest_restore_asset( $request ) {
 
@@ -160,9 +165,9 @@ class Editor implements Setup {
 	/**
 	 * Edit an asset.
 	 *
-	 * @param \WP_REST_Request $request The request object.
+	 * @param WP_REST_Request $request The request object.
 	 *
-	 * @return \WP_Error|\WP_HTTP_Response|\WP_REST_Response
+	 * @return WP_Error|WP_HTTP_Response|WP_REST_Response
 	 */
 	public function rest_edit_asset( $request ) {
 
@@ -203,7 +208,7 @@ class Editor implements Setup {
 	/**
 	 * Embed the Cloudinary Editor.
 	 *
-	 * @param \WP_Post $attachment The attachment post.
+	 * @param WP_Post $attachment The attachment post.
 	 */
 	public function edit_form_image_editor( $attachment ) {
 		if ( 'attachment' !== $attachment->post_type || ! $this->media->has_public_id( $attachment->ID ) ) {

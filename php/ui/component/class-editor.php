@@ -8,10 +8,12 @@
 namespace Cloudinary\UI\Component;
 
 use Cloudinary;
+use Cloudinary\Media;
 use Cloudinary\REST_API;
 use Cloudinary\Settings\Setting;
 use Cloudinary\UI\Component;
 use Cloudinary\Editor as MediaEditor;
+use WP_Post;
 use function Cloudinary\get_plugin_instance;
 
 /**
@@ -32,14 +34,14 @@ class Editor extends Component {
 	/**
 	 * Holds the current attachment.
 	 *
-	 * @var \WP_Post
+	 * @var WP_Post
 	 */
 	protected $attachment;
 
 	/**
 	 * Holds the media instance.
 	 *
-	 * @var \Cloudinary\Media
+	 * @var Media
 	 */
 	protected $media;
 
