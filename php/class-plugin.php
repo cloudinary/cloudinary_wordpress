@@ -544,6 +544,12 @@ final class Plugin {
 		}
 
 		/**
+		 * The Cloudinary endpoint for the Media Editor.
+		 */
+		if ( ! defined( 'CLOUDINARY_ENDPOINTS_MEDIA_EDITOR' ) ) {
+			define( 'CLOUDINARY_ENDPOINTS_MEDIA_EDITOR', 'https://media-editor.cloudinary.com/all.js' );
+		}
+		/**
 		 * The Cloudinary endpoint for the Preview Image.
 		 */
 		if ( ! defined( 'CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE' ) ) {
