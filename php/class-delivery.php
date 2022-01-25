@@ -1159,12 +1159,23 @@ class Delivery implements Setup {
 	 */
 	protected function is_content_dir( $url ) {
 		static $base = '';
+
 		if ( empty( $base ) ) {
 			$dirs = wp_upload_dir();
 			$base = wp_parse_url( $dirs['baseurl'], PHP_URL_PATH );
 		}
-		$path     = wp_parse_url( $url, PHP_URL_PATH );
-		$is_local = substr( $path, 0, strlen( $base ) ) === $base;
+
+		$path     = wp_parse_url( dirname( $url ), PHP_URL_PATH );
+		$is_local = 0 === strpos( $path, $base );
+
+		if ( $is_local ) {
+			$dirname = trim( substr( $path, strlen( $base ), 8 ), DIRECTORY_SEPARATOR );
+			if ( empty( $dirname ) || preg_match( '/\d{4}\/\d{2}/', $dirname ) ) {
+				$is_local = true;
+			} elseif ( ! empty( $dirname ) ) {
+				$is_local = false;
+			}
+		}
 
 		/**
 		 * Filter if the url is a local asset.
