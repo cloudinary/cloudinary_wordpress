@@ -312,7 +312,8 @@ const GlobalTransformations = {
 			}
 
 			// Lets clone the send method.
-			XMLHttpRequest.prototype.xhrSend = XMLHttpRequest.prototype.send;
+			XMLHttpRequest.prototype.xhrCloudinarySend =
+				XMLHttpRequest.prototype.send;
 			// Redefine the send method to be able to set an event listener to the instance.
 			XMLHttpRequest.prototype.send = function ( content ) {
 				if ( content.indexOf( 'action=add-tag' ) !== -1 ) {
@@ -332,7 +333,7 @@ const GlobalTransformations = {
 					} );
 				}
 				// Send the original.
-				this.xhrSend( content );
+				this.xhrCloudinarySend( content );
 			};
 		}
 	},
