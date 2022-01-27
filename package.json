@@ -148,7 +148,8 @@
     "webpack": "^4.44.2",
     "webpack-cli": "^4.2.0",
     "webpackbar": "^4.0.0",
-    "sortablejs": "^1.14.0"
+    "sortablejs": "^1.14.0",
+    "a-color-picker": "^1.2.1"
   },
   "version": "3.0.0"
 }

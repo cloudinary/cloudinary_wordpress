@@ -1,0 +1,18 @@
+// Color
+&-color{
+	&-picker{
+		position: absolute;
+		z-index: 100;
+	}
+	&-preview{
+		display: inline-block;
+		height: 40px;
+		width: 70px;
+		border: 3px solid $color-cld-grey-blue;
+		box-shadow: 0 0 3px rgba(0,0,0,0.5) inset;
+		cursor: pointer;
+		vertical-align: middle;
+		margin: 0 0 6px;
+		border-radius: 4px;
+	}
+}

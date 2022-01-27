@@ -7,6 +7,7 @@ import Progress from './progress';
 import States from './states';
 import RestrictedTypes from './restricted-types';
 import TagsInput from './tags-input';
+import ColorPicker from './color-picker';
 
 const UI = {
 	bindings: {},
@@ -62,6 +63,7 @@ const UI = {
 		Progress.init( context );
 		RestrictedTypes.init( context );
 		TagsInput.init( context );
+		ColorPicker._init( context );
 	},
 	_autoSuffix( input ) {
 		const suffixes = input.dataset.autoSuffix;
