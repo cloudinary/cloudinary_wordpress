@@ -1,18 +1,77 @@
-// Color
-&-color{
-	&-picker{
+// Color picker.
+&-color {
+	input {
+		display: none;
+		font-size: 12px;
+		font-family: monospace;
+		line-height: 2.33333333;
+		margin: 0;
+		padding: 0 5px;
+		vertical-align: top;
+		min-height: 30px;
+		width: 194px;
+	}
+
+	.button.button-small {
+		display: none;
+		margin: 2px 0 0 6px;
+	}
+
+	&.focus {
+		input {
+			display: inline-block;
+		}
+
+		.button.button-small {
+			display: inline-block;
+		}
+	}
+
+	&-picker {
 		position: absolute;
 		z-index: 100;
+		border-radius: 3px;
+		border: 1px solid #dcdcdc;
 	}
-	&-preview{
+
+	&-grid {
+		vertical-align: top;
+		margin: 0 6px 6px 0;
+		border-radius: 3px;
+		min-height: 28px;
+		border: 1px solid $color-wp-borders;
 		display: inline-block;
-		height: 40px;
-		width: 70px;
-		border: 3px solid $color-cld-grey-blue;
-		box-shadow: 0 0 3px rgba(0,0,0,0.5) inset;
+		background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAAHnlligAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAHJJREFUeNpi+P///4EDBxiAGMgCCCAGFB5AADGCRBgYDh48CCRZIJS9vT2QBAggFBkmBiSAogxFBiCAoHogAKIKAlBUYTELAiAmEtABEECk20G6BOmuIl0CIMBQ/IEMkO0myiSSraaaBhZcbkUOs0HuBwDplz5uFJ3Z4gAAAABJRU5ErkJggg==");
+		padding: 0 0 0 30px;
+		text-align: center;
+		position: relative;
+
+		&:focus {
+			box-shadow: 0 0 0 1px #fff, 0 0 0 3px #3448c5;
+			outline: 2px solid transparent;
+			outline-offset: 0;
+		}
+	}
+
+	&-preview {
+		border-radius: 3px 0 0 3px;
+		display: inline-block;
+		height: 100%;
 		cursor: pointer;
-		vertical-align: middle;
-		margin: 0 0 6px;
-		border-radius: 4px;
+		position: absolute;
+		width: 30px;
+		left: 0;
+		top: 0;
+	}
+
+	&-text {
+		border-radius: 0 2px 2px 0;
+		display: inline-block;
+		font-size: 11px;
+		cursor: pointer;
+		padding: 0 6px;
+		background-color: $color-wp-grey;
+		line-height: 2.54545455;
+		border-left: 1px solid $color-wp-borders;
 	}
 }

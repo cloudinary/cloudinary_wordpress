@@ -7,51 +7,58 @@ const ColorPicker = {
 		this.pickers = context.getElementsByClassName( 'cld-input-color-picker' );
 		[ ...this.pickers ].forEach( ( picker ) => {
 			const input = document.getElementById( picker.dataset.id );
+			const container = document.getElementById( picker.dataset.id + '_container' );
 			const preview = document.getElementById( picker.dataset.id + '_preview' );
+			const defaultButton = document.getElementById( picker.dataset.id + '_default' );
+			const options = {
+				attachTo: preview,
+			};
 
-			const pickerInstance = AColorPicker.createPicker( picker, { attachTo: preview } );
+			const pickerInstance = AColorPicker.createPicker( picker, options );
 			pickerInstance.on( 'change', ( { color } ) => {
-				preview.value = color;
-				preview.style.backgroundColor = color;
-				input.value = color;
+				const rgba = AColorPicker.parseColor( color, "rgbcss4")
+				preview.style.backgroundColor = rgba;
+				input.value = rgba;
 				input.dispatchEvent( new Event( 'input' ) );
 			} );
 			pickerInstance.hide();
 
-			preview.addEventListener( 'click', () => {
-				if ( 'hidden' === input.type ) {
-					this.showPicker( pickerInstance, input );
-				} else {
-					this.hidePicker( pickerInstance, input );
-				}
+			container.addEventListener( 'click', () => {
+				this.togglePicker( pickerInstance, container );
 			} );
 			input.addEventListener( 'input', ( ev ) => {
+				preview.style.backgroundColor = ev.target.value;
 				pickerInstance.setColor( ev.target.value, true );
 			} );
+			defaultButton.addEventListener( 'click', () => {
+				pickerInstance.setColor( defaultButton.dataset.defaultColor );
+			} );
 			document.addEventListener( 'mousedown', ( ev ) => {
-				if ( -1 === ev.path.indexOf( picker ) && -1 === ev.path.indexOf( preview ) && ev.path.indexOf( input ) ) {
-					this.hidePicker( pickerInstance, input );
+				if ( -1 === ev.path.indexOf( picker ) && -1 === ev.path.indexOf( container ) && -1 === ev.path.indexOf( input ) && -1 === ev.path.indexOf( defaultButton ) ) {
+					this.hidePicker( pickerInstance, container );
 				}
 			} );
 			window.addEventListener( 'keydown', ( ev ) => {
 				if ( 'Escape' === ev.key ) {
-					this.hidePicker( pickerInstance, input );
+					this.hidePicker( pickerInstance, container );
 				}
 			} );
 		} );
-
 	},
-	showPicker( pickerInstance, input ) {
-		if ( 'text' !== input.type ) {
-			input.type = 'text';
-			pickerInstance.show();
+	togglePicker( pickerInstance, container ) {
+		if ( ! container.parentNode.classList.contains( 'focus' ) ) {
+			this.showPicker( pickerInstance, container );
+		} else {
+			this.hidePicker( pickerInstance, container );
 		}
 	},
-	hidePicker( pickerInstance, input ) {
-		if ( 'hidden' !== input.type ) {
-			input.type = 'hidden';
-			pickerInstance.hide();
-		}
+	showPicker( pickerInstance, container ) {
+		container.parentNode.classList.add( 'focus' );
+		pickerInstance.show();
+	},
+	hidePicker( pickerInstance, container ) {
+		container.parentNode.classList.remove( 'focus' );
+		pickerInstance.hide();
 	},
 	setColor( color ) {
 		this.color.value = color;
