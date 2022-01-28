@@ -1,5 +1,4 @@
-/* global wpAjax */
-import Sortable from 'sortablejs';
+/* global */
 import TermsInspector from './components/terms-inspector';
 
 const ClassicEditor = {
