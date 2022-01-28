@@ -468,6 +468,37 @@ class Global_Transformations {
 			wp_enqueue_script( 'term-ordering', $this->media->plugin->dir_url . '/js/classic-editor.js', array(), $this->media->plugin->version, true );
 		}
 
+		$taxonomies = get_object_taxonomies( $post, 'objects' );
+		$data       = array();
+		foreach ( $taxonomies as $taxonomy ) {
+
+			$args  = array(
+				'taxonomy' => $taxonomy->name,
+				'hide_empty' => false,
+			);
+			$terms = get_terms( $args );
+
+			$data[] = array(
+				'slug'         => $taxonomy->name,
+				'hierarchical' => $taxonomy->hierarchical,
+				'rest_base'    => $taxonomy->rest_base,
+				'visibility'   => array(
+					'public' => $taxonomy->public,
+				),
+				'terms'        => array_map(
+					function ( $item ) {
+						return array(
+							'id'       => $item->term_id,
+							'name'     => $item->name,
+							'taxonomy' => $item->taxonomy,
+						);
+					},
+					$terms
+				),
+			);
+		}
+		$this->media->plugin->add_script_data( 'taxonomies', $data );
+
 		return implode( $out );
 	}
 
