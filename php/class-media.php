@@ -2270,6 +2270,14 @@ class Media extends Settings_Component implements Setup {
 				$logs[ $signature ] = array();
 				continue;
 			}
+			if ( is_wp_error( $log ) ) {
+				$logs[ $signature ] = array();
+				$logs[ $signature ][ '_' . time() ] = array(
+					'code' => $log->get_error_code(),
+					'message' => $log->get_error_message(),
+				);
+				continue;
+			}
 			foreach ( $log as $time => $entry ) {
 				$time = ltrim( $time, '_' );
 

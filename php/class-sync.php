@@ -224,9 +224,13 @@ class Sync implements Setup, Assets {
 	 */
 	public function log_sync_result( $attachment_id, $type, $result ) {
 		$log  = $this->managers['media']->get_process_logs( $attachment_id, true );
-		$keys = array_keys( $this->sync_base_struct );
+		$keys = $this->sync_base_struct;
 		if ( empty( $log ) || count( $log ) !== count( $keys ) ) {
-			$log = array_fill_keys( $keys, array() );
+			$missing_keys = array_diff_key( $keys, $log );
+			$log = array_merge(
+				$log,
+				array_fill_keys( array_keys( $missing_keys ), array() )
+			);
 		}
 		if ( isset( $log[ $type ] ) ) {
 			if ( is_wp_error( $result ) ) {
