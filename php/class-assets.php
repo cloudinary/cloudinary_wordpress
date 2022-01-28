@@ -588,6 +588,10 @@ class Assets extends Settings_Component {
 		}
 		// Add folder.
 		$options['folder'] = $folder;
+
+		// Add asset GUID hash.
+		$options['context'] = 'guid=' . md5( $url );
+
 		$result            = $connect->api->upload( $asset_id, $options, array() );
 		if ( ! is_wp_error( $result ) && isset( $result['public_id'] ) ) {
 			$this->media->update_post_meta( $asset_id, Sync::META_KEYS['public_id'], $result['public_id'] );
