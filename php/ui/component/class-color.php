@@ -37,7 +37,7 @@ class Color extends Text {
 		$struct['attributes']['acp-show-hsl']   = 'no';
 		$struct['attributes']['acp-show-hex']   = 'no';
 		$struct['attributes']['acp-show-alpha'] = 'yes';
-		$struct['attributes']['data-id']             = $this->get_id();
+		$struct['attributes']['data-id']        = $this->get_id();
 		$struct['render']                       = true;
 
 		return $struct;
