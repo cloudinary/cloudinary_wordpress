@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: images, videos, DAM, optimization, CDN
 Requires at least: 4.7
-Tested up to: 5.8.2
+Tested up to: 5.8.3
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -141,6 +141,19 @@ Your site is now setup to start using Cloudinary.
 1. Need help? We’ve got you covered
 
 == Changelog ==
+
+3.0.1 (18 January 2021)
+
+Fixes and Improvements:
+
+* Added SVG support (beta)
+* Improved custom HTML for Featured images
+* Fixed extra request handling on faulty 'srcset'
+* Improved how the plugin handles image cropping functionality
+* Fixed the URL where in some cases the delivery URL was wrong
+* Fixed db errors related to wp_cloudinary_relationships table
+* Fixed "Uncaught TypeError: Cannot read properties of undefined (reading 'length')" error
+* Fixed System report missing data
 
 = 3.0.0 (06 December 2021) =
 

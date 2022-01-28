@@ -53,6 +53,19 @@ class SVG extends Delivery_Feature {
 	}
 
 	/**
+	 * Add the ext for SVG to the ext2type.
+	 *
+	 * @param array $types List of file types.
+	 *
+	 * @return array
+	 */
+	public function add_svg_ext_type( $types ) {
+		$types['image'][] = 'svg';
+
+		return $types;
+	}
+
+	/**
 	 * Add features to a tag element set.
 	 *
 	 * @param array $tag_element The tag element set.
@@ -206,6 +219,7 @@ class SVG extends Delivery_Feature {
 
 		// Add filters.
 		add_filter( 'upload_mimes', array( $this, 'add_svg_mime' ) ); // phpcs:ignore WordPressVIPMinimum.Hooks.RestrictedHooks.upload_mimes
+		add_filter( 'ext2type', array( $this, 'add_svg_ext_type' ) );
 		add_filter( 'wp_check_filetype_and_ext', array( $this, 'check_svg_type' ), 10, 4 );
 		add_filter( 'cloudinary_allowed_extensions', array( $this, 'allow_svg_for_cloudinary' ) );
 		add_filter( 'cloudinary_upload_options', array( $this, 'remove_svg_eagers' ), 10, 2 );

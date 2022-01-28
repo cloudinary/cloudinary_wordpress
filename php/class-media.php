@@ -514,11 +514,14 @@ class Media extends Settings_Component implements Setup {
 
 		$conversion_types = $this->get_convertible_extensions();
 		$info             = pathinfo( $filename );
-		$extension        = strtolower( $info['extension'] );
 		$convert          = 'jpg'; // Default handler.
 
-		if ( ! empty( $conversion_types[ $extension ] ) ) {
-			$convert = $conversion_types[ $extension ];
+		if ( ! empty( $info['extension'] ) ) {
+			$extension = strtolower( $info['extension'] );
+
+			if ( ! empty( $conversion_types[ $extension ] ) ) {
+				$convert = $conversion_types[ $extension ];
+			}
 		}
 
 		$filename = trailingslashit( $info['dirname'] ) . $info['filename'] . '.' . $convert;
