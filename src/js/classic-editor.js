@@ -49,38 +49,6 @@ const ClassicEditor = {
 		return this.selection[ taxonomy.slug ];
 	}
 };
-
-// Setup ajax overrides.
-if ( typeof wpAjax !== 'undefined' ) {
-	wpAjax.procesParseAjaxResponse = wpAjax.parseAjaxResponse;
-	wpAjax.parseAjaxResponse = function(
-		response,
-		settingsResponse,
-		element
-	) {
-		const newResponse = wpAjax.procesParseAjaxResponse(
-			response,
-			settingsResponse,
-			element
-		);
-		if ( ! newResponse.errors && newResponse.responses[ 0 ] ) {
-			console.log( newResponse );
-			/*if (
-			 jQuery(
-			 '[data-taxonomy="' +
-			 newResponse.responses[ 0 ].what +
-			 '"]'
-			 ).length
-			 ) {
-			 const data = jQuery( newResponse.responses[ 0 ].data );
-			 const text = data.find( 'label' ).last().text().trim();
-			 self._pushItem( newResponse.responses[ 0 ].what, text );
-			 }*/
-		}
-
-		return newResponse;
-	};
-}
 if ( typeof window.CLDN !== 'undefined' ) {
 	ClassicEditor._init();
 }
