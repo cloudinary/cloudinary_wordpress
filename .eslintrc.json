@@ -4,8 +4,6 @@
   },
   "globals": {
     "cloudinary": "readonly",
-    "jQuery": "readonly",
-    "$": "readonly",
     "CLDN": "readonly",
     "CLDLB": "readonly",
     "CLD_GLOBAL_TRANSFORMATIONS": "readonly",
