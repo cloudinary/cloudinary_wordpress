@@ -7,8 +7,6 @@
 
 namespace Cloudinary\UI\Component;
 
-use function Cloudinary\get_plugin_instance;
-
 /**
  * Class Color Component
  *
@@ -17,13 +15,61 @@ use function Cloudinary\get_plugin_instance;
 class Color extends Text {
 
 	/**
-	 * Enqueue scripts.
+	 * Holds the components build blueprint.
+	 *
+	 * @var string
 	 */
-	public function enqueue_scripts() {
-		parent::enqueue_scripts();
-		$instance = get_plugin_instance();
-		wp_enqueue_style( 'wp-color-picker' );
-		wp_enqueue_script( 'wp-color-picker-alpha', $instance->dir_url . 'js/wp-color-picker-alpha.js', array( 'wp-color-picker' ), $instance->version, true );
+	protected $blueprint = 'wrap|icon/|div|label|title|link/|/title|extra_title/|/label|/div|prefix/|preview/|input/|reset/|picker/|suffix/|description/|tooltip/|/wrap';
+
+	/**
+	 * Filter the picker parts structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function picker( $struct ) {
+		$struct['element']               = 'div';
+		$struct['attributes']['class'][] = 'cld-input-color-picker';
+
+		$struct['attributes']['acp-color']      = $this->setting->get_value();
+		$struct['attributes']['acp-show-rgb']   = 'no';
+		$struct['attributes']['acp-show-hsl']   = 'no';
+		$struct['attributes']['acp-show-hex']   = 'no';
+		$struct['attributes']['acp-show-alpha'] = 'yes';
+		$struct['attributes']['data-id']        = $this->get_id();
+		$struct['render']                       = true;
+
+		return $struct;
+	}
+
+	/**
+	 * Filter the preview parts structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function preview( $struct ) {
+		$struct['element']               = 'button';
+		$struct['attributes']['class'][] = 'cld-input-color-grid';
+		$struct['attributes']['type']    = 'button';
+		$struct['attributes']['id']      = $this->get_id() . '_container';
+
+		$preview                          = $this->get_part( 'span' );
+		$preview['attributes']['class'][] = 'cld-input-color-preview';
+
+		$preview['attributes']['style'] = 'background-color:' . $this->setting->get_value();
+		$preview['attributes']['id']    = $this->get_id() . '_preview';
+		$preview['render']              = true;
+
+		$text                          = $this->get_part( 'span' );
+		$text['attributes']['class'][] = 'cld-input-color-text';
+		$text['content']               = __( 'Select Color', 'cloudinary' );
+		$struct['children']['text']    = $text;
+		$struct['children']['preview'] = $preview;
+
+		return $struct;
 	}
 
 	/**
@@ -34,9 +80,10 @@ class Color extends Text {
 	 * @return array
 	 */
 	protected function input( $struct ) {
+
 		$struct                                     = parent::input( $struct );
 		$struct['attributes']['type']               = 'text';
-		$struct['attributes']['class'][]            = str_replace( '.', '-', $this->get_id() );
+		$struct['attributes']['class'][]            = 'cld-input-color';
 		$struct['attributes']['data-alpha-enabled'] = true;
 		$struct['attributes']['data-default-color'] = $this->setting->get_param( 'default' );
 
@@ -44,30 +91,24 @@ class Color extends Text {
 	}
 
 	/**
-	 * Render the component.
+	 * Filter the input reset parts structure.
 	 *
-	 * @param false $echo Flag to echo out or return.
+	 * @param array $struct The array structure.
 	 *
-	 * @return string|null
+	 * @return array
 	 */
-	public function render( $echo = false ) {
-		$return = parent::render( $echo );
-		?>
-		<script>
-			( function( $ ) {
-				// Add Color Picker init script.
-				$( function() {
-					$( '.<?php echo esc_attr( str_replace( '.', '-', $this->get_id() ) ); ?>' ).wpColorPicker( {
-						change: function( event ) {
-							event.target.dispatchEvent( new Event( 'input' ) );
-						}
-					} );
-				} );
-			} )( jQuery );
-		</script>
-		<?php
+	protected function reset( $struct ) {
 
-		return $return;
+		$struct['element']                          = 'button';
+		$struct['attributes']['type']               = 'button';
+		$struct['attributes']['id']                 = $this->get_id() . '_default';
+		$struct['attributes']['class'][]            = 'button';
+		$struct['attributes']['class'][]            = 'button-small';
+		$struct['attributes']['data-default-color'] = $this->setting->get_param( 'default' );
+
+		$struct['content'] = __( 'Default', 'cloudinary' );
+
+		return $struct;
 	}
 
 	/**
@@ -80,6 +121,7 @@ class Color extends Text {
 	protected function description( $struct ) {
 		$struct            = parent::description( $struct );
 		$struct['element'] = 'div';
+
 		return $struct;
 	}
 }

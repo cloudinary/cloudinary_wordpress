@@ -2,8 +2,10 @@
  * WordPress dependencies
  */
 import { select, subscribe } from '@wordpress/data';
+import Sortable from 'sortablejs';
 
-const Terms = {
+const TermsInspector = {
+	initTimeout: 3000,
 	wrapper: null,
 	/**
 	 * Leverage the existing Gutenberg query to get the taxonomies.
@@ -24,37 +26,59 @@ const Terms = {
 		// At the given time, not enough options are available to detect when core requests are ready.
 		setTimeout( () => {
 			this._init_listeners();
-		}, 3000 );
+		}, this.initTimeout );
+
+		new Sortable( this.wrapper, {
+			handle: '.dashicons-menu', // handle's class
+			animation: 150,
+		} );
 	},
 	_init_listeners() {
-		const taxonomies = select( 'core' ).getTaxonomies();
+		const taxonomies = this.getTaxonomies();
+
 		taxonomies.forEach( ( taxonomy ) => {
 			if ( ! taxonomy.rest_base || ! taxonomy.visibility.public ) {
 				return;
 			}
-			subscribe( () => {
-				const slug = taxonomy.slug;
-				const hierarchical = taxonomy.hierarchical;
-				const { isResolving } = select( 'core/data' );
-				const args = [ 'taxonomy', slug, this.query ];
-				this.available[ slug ] = null;
-				if ( hierarchical ) {
-					this.available[ slug ] = select( 'core' ).getEntityRecords(
-						'taxonomy',
-						slug,
-						this.query
-					);
-				}
-				if ( ! isResolving( 'core', 'getEntityRecords', args ) ) {
-					this.event( taxonomy );
-				}
-			} );
+			this.addTaxonomyListener( taxonomy );
 		} );
 	},
-	event( taxonomy ) {
-		const hasSelection = select( 'core/editor' ).getEditedPostAttribute(
+	getTaxonomies() {
+		return select( 'core' ).getTaxonomies();
+	},
+	addTaxonomyListener( taxonomy ) {
+		subscribe( () => {
+			const slug = taxonomy.slug;
+			const hierarchical = taxonomy.hierarchical;
+			const { isResolving } = select( 'core/data' );
+			const args = [ 'taxonomy', slug, this.query ];
+			this.available[ slug ] = null;
+			if ( hierarchical ) {
+				this.available[ slug ] = select( 'core' ).getEntityRecords(
+					'taxonomy',
+					slug,
+					this.query
+				);
+			}
+			if ( ! isResolving( 'core', 'getEntityRecords', args ) ) {
+				this.event( taxonomy );
+			}
+		} );
+	},
+	getSelection( taxonomy ) {
+		return select( 'core/editor' ).getEditedPostAttribute(
 			taxonomy.rest_base
 		);
+	},
+	getTerm( taxonomy, id ) {
+		return select( 'core' ).getEntityRecord(
+			'taxonomy',
+			taxonomy.slug,
+			id
+		);
+	},
+	event( taxonomy ) {
+		const hasSelection = this.getSelection( taxonomy );
 		if ( ! hasSelection ) {
 			return;
 		}
@@ -63,12 +87,12 @@ const Terms = {
 		const selected = Array.from(
 			this.wrapper.querySelectorAll( `[data-item*="${ taxonomy.slug }"]` )
 		);
-
 		// Go over the selection and add new items it doesn't have.
 		[ ...selection ].forEach( ( item ) => {
 			const element = this.wrapper.querySelector(
 				`[data-item="${ taxonomy.slug }:${ item }"]`
 			);
+
 			// Remove the items out of the selected list.
 			selected.splice( selected.indexOf( element ), 1 );
 			if ( null === element ) {
@@ -109,14 +133,14 @@ const Terms = {
 		this.wrapper.appendChild( li );
 	},
 	getItem( taxonomy, id ) {
-		let term = {};
+		let term = {
+			id,
+			name: id,
+			taxonomy: taxonomy.slug,
+		};
 		if ( null === this.available[ taxonomy.slug ] ) {
 			// Get term from data.
-			term = select( 'core' ).getEntityRecord(
-				'taxonomy',
-				taxonomy.slug,
-				id
-			);
+			term = this.getTerm( taxonomy, id );
 		} else {
 			for ( const item of this.available[ taxonomy.slug ] ) {
 				if ( item.id === id ) {
@@ -130,6 +154,4 @@ const Terms = {
 	},
 };
 
-window.addEventListener( 'load', () => Terms._init() );
-
-export default Terms;
+export default TermsInspector;

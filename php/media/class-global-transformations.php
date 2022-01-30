@@ -443,7 +443,8 @@ class Global_Transformations {
 	private function init_taxonomy_manager( $post ) {
 		wp_enqueue_script( 'wp-api' );
 
-		$terms = $this->get_terms( $post->ID );
+		$taxonomies = get_object_taxonomies( $post, 'objects' );
+		$terms      = $this->get_terms( $post->ID );
 
 		$out   = array();
 		$out[] = '<div class="cld-tax-order">';
@@ -452,7 +453,11 @@ class Global_Transformations {
 		$out[] = '<li class="cld-tax-order-list-item no-items">' . esc_html__( 'No terms added', 'cloudinary' ) . '</li>';
 		if ( ! empty( $terms ) ) {
 			foreach ( (array) $terms as $item ) {
-				$out[] = $this->make_term_sort_item( $item['value'], $item['term']->name );
+				$value = $item['value'];
+				if ( $taxonomies[ $item['term']->taxonomy ] && false === $taxonomies[ $item['term']->taxonomy ]->hierarchical ) {
+					$value = $item['term']->taxonomy . ':' . $item['term']->name;
+				}
+				$out[] = $this->make_term_sort_item( $value, $item['term']->name );
 			}
 		}
 		$out[] = '</ul>';
@@ -464,6 +469,23 @@ class Global_Transformations {
 		}
 
 		$out[] = '</div>';
+		if ( ! function_exists( 'use_block_editor_for_post' ) || ! use_block_editor_for_post( $post ) ) {
+			wp_enqueue_script( 'cld-classic-editor', $this->media->plugin->dir_url . '/js/classic-editor.js', array(), $this->media->plugin->version, true );
+		}
+
+		$data = array();
+		foreach ( $taxonomies as $taxonomy ) {
+
+			$data[] = array(
+				'slug'         => $taxonomy->name,
+				'hierarchical' => $taxonomy->hierarchical,
+				'rest_base'    => $taxonomy->rest_base,
+				'visibility'   => array(
+					'public' => $taxonomy->public,
+				),
+			);
+		}
+		$this->media->plugin->add_script_data( 'taxonomies', $data );
 
 		return implode( $out );
 	}

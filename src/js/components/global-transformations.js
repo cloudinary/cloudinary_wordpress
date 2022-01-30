@@ -304,19 +304,37 @@ const GlobalTransformations = {
 					self._refresh( null, type );
 				}
 			} );
-			// listen to AJAX add-tag complete
-			jQuery( document ).ajaxComplete( function ( event, xhr, settings ) {
-				// bail early if is other ajax call
-				if ( settings.data.indexOf( 'action=add-tag' ) === -1 ) {
-					return;
-				}
 
-				// bail early if response contains error
-				if ( xhr.responseText.indexOf( 'wp_error' ) !== -1 ) {
-					return;
+			if ( this.form ) {
+				this.form.addEventListener( 'submit', () => {
+					this.pendingClear = true;
+				} );
+			}
+
+			// Lets clone the send method.
+			XMLHttpRequest.prototype.xhrCloudinarySend =
+				XMLHttpRequest.prototype.send;
+			// Redefine the send method to be able to set an event listener to the instance.
+			XMLHttpRequest.prototype.send = function ( content ) {
+				if ( content.indexOf( 'action=add-tag' ) !== -1 ) {
+					this.addEventListener( 'load', ( ev ) => {
+						const parser = new DOMParser();
+						const html = parser.parseFromString(
+							this.response,
+							'text/html'
+						);
+						const res = wpAjax.parseAjaxResponse(
+							html,
+							'ajax-response'
+						);
+						if ( ! res.errors ) {
+							self._reset();
+						}
+					} );
 				}
-				self._reset();
-			} );
+				// Send the original.
+				this.xhrCloudinarySend( content );
+			};
 		}
 	},
 };

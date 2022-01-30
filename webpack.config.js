@@ -75,7 +75,6 @@ const cldCore = {
 	entry: {
 		cloudinary: './src/js/main.js',
 		video: './src/css/video.scss',
-		'wp-color-picker-alpha': './src/js/wp-color-picker-alpha.js',
 		'front-overlay': './src/js/front-overlay.js',
 		'breakpoints-preview': './src/js/breakpoints-preview.js',
 		'lazyload-preview': './src/js/lazyload-preview.js',
@@ -83,6 +82,7 @@ const cldCore = {
 		'asset-edit': './src/js/asset-edit.js',
 		'syntax-highlight': './src/js/syntax-highlight.js',
 		'gallery-ui': './src/css/gallery-ui.scss',
+		'classic-editor': './src/js/classic-editor.js',
 	},
 	module: {
 		rules: [
