@@ -10,7 +10,8 @@
     "samplePlayer": "readonly",
     "CLDCACHE": "readonly",
     "cldData": "readonly",
-    "CLD_METADATA": "readonly"
+    "CLD_METADATA": "readonly",
+    "wpAjax": "readonly"
   },
   "extends": [
     "plugin:@wordpress/eslint-plugin/recommended"
