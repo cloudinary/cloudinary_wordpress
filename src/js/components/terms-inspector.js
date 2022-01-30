@@ -5,6 +5,7 @@ import { select, subscribe } from '@wordpress/data';
 import Sortable from 'sortablejs';
 
 const TermsInspector = {
+	initTimeout: 3000,
 	wrapper: null,
 	/**
 	 * Leverage the existing Gutenberg query to get the taxonomies.
@@ -25,7 +26,7 @@ const TermsInspector = {
 		// At the given time, not enough options are available to detect when core requests are ready.
 		setTimeout( () => {
 			this._init_listeners();
-		}, 3000 );
+		}, this.initTimeout );
 
 		new Sortable( this.wrapper, {
 			handle: '.dashicons-menu', // handle's class
@@ -91,6 +92,7 @@ const TermsInspector = {
 			const element = this.wrapper.querySelector(
 				`[data-item="${ taxonomy.slug }:${ item }"]`
 			);
+
 			// Remove the items out of the selected list.
 			selected.splice( selected.indexOf( element ), 1 );
 			if ( null === element ) {
@@ -131,7 +133,11 @@ const TermsInspector = {
 		this.wrapper.appendChild( li );
 	},
 	getItem( taxonomy, id ) {
-		let term = {};
+		let term = {
+			id,
+			name: id,
+			taxonomy: taxonomy.slug,
+		};
 		if ( null === this.available[ taxonomy.slug ] ) {
 			// Get term from data.
 			term = this.getTerm( taxonomy, id );
