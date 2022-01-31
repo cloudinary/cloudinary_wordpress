@@ -579,11 +579,11 @@ class Assets extends Settings_Component {
 		}
 		$folder = untrailingslashit( $this->media->get_cloudinary_folder() );
 
-		$parent = $this->get_asset_parent( $url );
+		$parent = $this->discover_asset_parent( $url );
 		if ( ! empty( $parent ) ) {
 			// Parent based asset "cache point".
 			$path                 = trim( wp_normalize_path( str_replace( home_url(), '', $url ) ), '/' );
-			$folder               = pathinfo( $path );
+			$folder               = pathinfo( $path, PATHINFO_DIRNAME );
 			$options['overwrite'] = true;
 		}
 		// Add folder.
@@ -768,15 +768,7 @@ class Assets extends Settings_Component {
 			return $is_local;
 		}
 
-		$found = null;
-		$try   = $this->clean_path( $url );
-		while ( false !== strpos( $try, $this->separator ) ) {
-			$try = substr( $try, 0, strripos( $try, $this->separator ) );
-			if ( ! empty( $try ) && $this->has_param( $try ) ) {
-				$found = $this->get_param( $try );
-				break;
-			}
-		}
+		$found = $this->discover_asset_parent( $url );
 		if ( $found instanceof \WP_Post ) {
 			$is_local                = true;
 			$this->to_create[ $url ] = $found->ID;
@@ -896,6 +888,27 @@ class Assets extends Settings_Component {
 		$parent = null;
 		if ( isset( $this->asset_parents[ $url ] ) ) {
 			$parent = $this->asset_parents[ $url ];
+		}
+
+		return $parent;
+	}
+
+	/**
+	 * Find an asset parent by URL.
+	 *
+	 * @param string $url The asset url.
+	 *
+	 * @return \WP_Post|null
+	 */
+	public function discover_asset_parent( $url ) {
+		$parent = null;
+		$try    = $this->clean_path( $url );
+		while ( false !== strpos( $try, $this->separator ) ) {
+			$try = substr( $try, 0, strripos( $try, $this->separator ) );
+			if ( ! empty( $try ) && $this->has_param( $try ) ) {
+				$parent = $this->get_param( $try );
+				break;
+			}
 		}
 
 		return $parent;
