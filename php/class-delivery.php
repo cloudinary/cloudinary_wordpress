@@ -1082,16 +1082,12 @@ class Delivery implements Setup {
 			$tag_element['format']        = $item['format'];
 
 			// Check if this is a crop or a scale.
-			$original_filename = basename( $raw_url );
-			if ( isset( $this->found_urls[ $url ] ) ) {
-				$flipped = array_flip( $this->found_urls[ $url ] );
-				if ( isset( $flipped[ $original_filename ] ) ) {
-					$size           = explode( 'x', $flipped[ $original_filename ] );
-					$file_ratio     = round( $size[0] / $size[1], 2 );
-					$original_ratio = round( $item['width'] / $item['height'], 2 );
-					if ( $file_ratio !== $original_ratio ) {
-						$attributes['data-crop'] = $file_ratio;
-					}
+			$has_size = $this->media->get_size_from_url( $this->sanitize_url( $raw_url ) );
+			if ( ! empty( $has_size ) ) {
+				$file_ratio     = round( $has_size[0] / $has_size[1], 2 );
+				$original_ratio = round( $item['width'] / $item['height'], 2 );
+				if ( $file_ratio !== $original_ratio ) {
+					$attributes['data-crop'] = $file_ratio;
 				}
 			}
 		}
