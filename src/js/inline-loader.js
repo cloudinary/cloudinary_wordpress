@@ -163,12 +163,15 @@ const CloudinaryLoader = {
 
 		this.density = deviceDensity;
 	},
-	scaleWidth( image, width ) {
+	scaleWidth( image, width, ratio ) {
 		const maxSize = parseInt( this.config.max_width );
 		if ( ! width ) {
 			width = image.width;
-			while ( -1 === this.sizeBands.indexOf( width ) && width < maxSize ) {
+			let height = Math.round( width / ratio );
+
+			while ( -1 === this.sizeBands.indexOf( width ) || height < image.height && width < maxSize ) {
 				width++;
+				height = Math.round( width / ratio );
 			}
 		}
 		if ( width > maxSize ) {
@@ -182,15 +185,15 @@ const CloudinaryLoader = {
 	scaleSize( image, width, dpr ) {
 
 		const ratio = image.dataset.crop ? parseFloat( image.dataset.crop ) : ( image.originalWidth / image.originalHeight ).toFixed( 3 );
-		const renderedRatio = ( image.width / image.height ).toFixed( 3 );
-		const scaledWidth = this.scaleWidth( image, width );
+		const scaledWidth = this.scaleWidth( image, width, ratio );
+		const scaledHeight = Math.round( scaledWidth / ratio );
 		const newSize = [];
 
-		if ( image.width !== image.originalWidth ) {
-			// We know it's a different size.
-			newSize.push( ratio === renderedRatio ? 'c_scale' : 'c_fill' );
+		// Set crop if needed, else just scale it.
+		newSize.push( image.dataset.crop ? 'c_fill' : 'c_scale' );
+		if ( image.dataset.crop ) {
+			newSize.push( 'g_auto' );
 		}
-		const scaledHeight = Math.round( scaledWidth / ratio );
 
 		newSize.push( 'w_' + scaledWidth );
 		newSize.push( 'h_' + scaledHeight );
