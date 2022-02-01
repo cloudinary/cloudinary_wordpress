@@ -1043,17 +1043,17 @@ class Delivery implements Setup {
 			return null;
 		}
 		$tag_element['type'] = 'img' === $tag_element['tag'] ? 'image' : $tag_element['tag'];
-		$raw_url             = isset( $attributes['src'] ) ? $this->sanitize_url( $attributes['src'] ) : '';
+		$raw_url             = isset( $attributes['src'] ) ? $attributes['src'] : '';
 		if ( empty( $raw_url ) ) {
 			foreach ( $attributes as $attribute ) {
 				// Attempt to find a src.
 				if ( $this->validate_url( $attribute ) ) {
-					$raw_url = $this->sanitize_url( $attribute );
+					$raw_url = $attribute;
 					break;
 				}
 			}
 		}
-		$url                     = $this->maybe_unsize_url( self::clean_url( $raw_url ) );
+		$url                     = $this->maybe_unsize_url( self::clean_url( $this->sanitize_url( $raw_url ) ) );
 		$tag_element['base_url'] = $url;
 		// Track back the found URL.
 		if ( $this->media->is_cloudinary_url( $raw_url ) ) {
