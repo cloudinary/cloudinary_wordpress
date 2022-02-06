@@ -201,7 +201,10 @@ class Lazy_Load extends Delivery_Feature {
 			if ( empty( $tag_element['atts']['onload'] ) ) {
 				$tag_element['atts']['onload'] = '';
 			}
-			$tag_element['atts']['onload'] .= ';CLDBind(this);';
+			// Since we're appending to the onload, check it isn't already in, as it may run twice i.e full page caching.
+			if ( false === strpos( $tag_element['atts']['onload'], 'CLDBind' ) ) {
+				$tag_element['atts']['onload'] .= ';window.CLDBind?CLDBind(this):null;';
+			}
 		}
 
 		return $tag_element;
