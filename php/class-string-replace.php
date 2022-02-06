@@ -78,7 +78,7 @@ class String_Replace implements Setup {
 	 * Init the buffer capture and set the output callback.
 	 */
 	public function init() {
-		if ( ! defined( 'WP_DEBUG' ) || false === WP_DEBUG ) {
+		if ( ! defined( 'CLD_DEBUG' ) || false === CLD_DEBUG ) {
 			ob_start( array( $this, 'replace_strings' ) );
 		}
 	}
@@ -91,7 +91,7 @@ class String_Replace implements Setup {
 	 * @return null|string
 	 */
 	public function init_debug( $template ) {
-		if ( defined( 'WP_DEBUG' ) && true === WP_DEBUG && ! filter_input( INPUT_GET, '_bypass', FILTER_SANITIZE_STRING ) ) {
+		if ( defined( 'CLD_DEBUG' ) && true === CLD_DEBUG && ! filter_input( INPUT_GET, '_bypass', FILTER_SANITIZE_STRING ) ) {
 			ob_start();
 			include $template;
 			$html = ob_get_clean();
