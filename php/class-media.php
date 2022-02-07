@@ -1637,6 +1637,27 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * At the point of running wp_get_attachment_image_srcset, the $image_src is already a Cloudinary URL.
+	 * This will fix the $image_meta so that the there's a match $src_matched on wp_calculate_image_srcset.
+	 *
+	 * @param array  $image_meta    The image meta data as returned by 'wp_get_attachment_metadata()'.
+	 * @param int[]  $size_array    {
+	 *     An array of width and height values.
+	 *
+	 *     @type int $0 The width in pixels.
+	 *     @type int $1 The height in pixels.
+	 * }
+	 * @param string $image_src     The 'src' of the image.
+	 *
+	 * @return array
+	 */
+	public function calculate_image_srcset_meta( $image_meta, $size_array, $image_src ) {
+		$image_meta['file'] = parse_url( $image_src, PHP_URL_PATH );
+
+		return $image_meta;
+	}
+
+	/**
 	 * Convert an attachment URL to a Cloudinary one.
 	 *
 	 * @param string      $url                       Url to convert.
