@@ -12,6 +12,7 @@ use Cloudinary\Connect\Api;
 use Cloudinary\Sync;
 use Cloudinary\Traits\Params_Trait;
 use Cloudinary\Utils;
+use \WP_Error;
 
 /**
  * Class Assets
@@ -152,6 +153,7 @@ class Assets extends Settings_Component {
 		add_filter( 'cloudinary_local_url', array( $this, 'local_url' ), 10, 2 );
 		add_filter( 'cloudinary_is_folder_synced', array( $this, 'filter_folder_sync' ), 10, 2 );
 		add_filter( 'cloudinary_asset_state', array( $this, 'filter_asset_state' ), 10, 2 );
+		add_filter( 'cloudinary_set_usable_asset', array( $this, 'check_usable_asset' ) );
 		// Actions.
 		add_action( 'cloudinary_init_settings', array( $this, 'setup' ) );
 		add_action( 'cloudinary_thread_queue_details_query', array( $this, 'connect_post_type' ) );
@@ -544,6 +546,17 @@ class Assets extends Settings_Component {
 	}
 
 	/**
+	 * Generate the signature for sync storage.
+	 *
+	 * @param int $asset_id The attachment/asset ID.
+	 *
+	 * @return string
+	 */
+	public function generate_storage_signature( $asset_id ) {
+		return $this->get_asset_storage_folder( $asset_id );
+	}
+
+	/**
 	 * Generate the signature for sync.
 	 *
 	 * @param int $attachment_id The attachment/asset ID.
@@ -571,20 +584,12 @@ class Assets extends Settings_Component {
 			'overwrite'     => false,
 			'resource_type' => $this->media->get_resource_type( $asset_id ),
 		);
-		if ( self::is_asset_type( $asset_id ) ) {
-			$asset = get_post( $asset_id );
-			$url   = $asset->post_title;
-		} else {
-			$url = Delivery::clean_url( $this->media->local_url( $asset_id ) );
-		}
-		$folder = untrailingslashit( $this->media->get_cloudinary_folder() );
 
-		$parent = $this->get_asset_parent( $url );
-		if ( ! empty( $parent ) ) {
-			// Parent based asset "cache point".
-			$path                 = trim( wp_normalize_path( str_replace( home_url(), '', $url ) ), '/' );
-			$folder               = pathinfo( $path );
-			$options['overwrite'] = true;
+		$folder       = untrailingslashit( $this->media->get_cloudinary_folder() );
+		$asset_parent = self::POST_TYPE_SLUG === get_post_parent( $asset_id )->post_type ? true : false;
+		if ( ! empty( $asset_parent ) ) {
+			$folder               = $this->get_asset_storage_folder( get_the_title( $asset_id ) );
+			$options['overwrite'] = true; // Ensure we maintain this path and filename.
 		}
 		// Add folder.
 		$options['folder'] = $folder;
@@ -595,10 +600,32 @@ class Assets extends Settings_Component {
 			Delivery::update_size_relations_state( $asset_id, 'enable' );
 			$this->media->sync->set_signature_item( $asset_id, 'file' );
 			$this->media->sync->set_signature_item( $asset_id, 'cld_asset' );
+			$this->media->sync->set_signature_item( $asset_id, 'asset_storage' );
 			$this->plugin->get_component( 'storage' )->size_sync( $asset_id, $result['public_id'] );
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Get the storage location on Cloudinary, for an asset.
+	 *
+	 * @param int|string $url_id The url or asset ID.
+	 *
+	 * @return string
+	 */
+	public function get_asset_storage_folder( $url_id ) {
+		if ( is_numeric( $url_id ) ) {
+			$url_id = $this->media->local_url( $url_id );
+		}
+		$url               = $this->clean_path( $url_id );
+		$cloudinary_folder = $this->media->get_cloudinary_folder( false );
+		$folder            = wp_normalize_path( dirname( trim( $url, './' ) ) );
+		if ( ! empty( $cloudinary_folder ) ) {
+			$folder = path_join( $cloudinary_folder, $folder );
+		}
+
+		return $folder;
 	}
 
 	/**
@@ -675,7 +702,87 @@ class Assets extends Settings_Component {
 			'realtime' => true,
 		);
 
+		$structs['asset_storage'] = array(
+			'generate'    => array( $this, 'generate_storage_signature' ),
+			'priority'    => 19,
+			'sync'        => array( $this, 'relocate_asset' ),
+			'validate'    => array( $this, 'validate_asset_storage' ),
+			'state'       => 'disabled',
+			'note'        => __( 'Updating asset storage', 'cloudinary' ),
+			'required'    => false,
+			'asset_state' => 0,
+		);
+
 		return $structs;
+	}
+
+	/**
+	 * Validate that the asset Storage matches the Public_id.
+	 *
+	 * @param int $asset_id The asset ID.
+	 *
+	 * @return bool
+	 */
+	public function validate_asset_storage( $asset_id ) {
+		$valid = false;
+		if ( $this->media->has_public_id( $asset_id ) ) {
+			$location  = $this->generate_storage_signature( $asset_id );
+			$public_id = $this->media->get_public_id( $asset_id );
+			$valid     = dirname( $public_id ) !== $location;
+		}
+
+		return $valid;
+	}
+
+	/**
+	 * Generate a public_id for a cloudinary_asset.
+	 *
+	 * @param string $public_id     Initial Public ID.
+	 * @param int    $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function generate_asset_public_id( $public_id, $attachment_id ) {
+		if ( $this->is_asset_type( $attachment_id ) ) {
+			$url    = get_the_title( $attachment_id );
+			$parent = $this->discover_asset_parent( $url );
+			if ( ! empty( $parent ) ) {
+				$cloudinary_folder = $this->media->get_cloudinary_folder( false );
+				$path              = trim( wp_normalize_path( str_replace( home_url(), '', $url ) ), '/' );
+				$folder            = path_join( $cloudinary_folder, pathinfo( $path, PATHINFO_DIRNAME ) );
+				$public_id         = trim( path_join( $folder, basename( $public_id ) ), '/.' );
+			}
+		}
+
+		return $public_id;
+	}
+
+	/**
+	 * Relocate an non-media library asset.
+	 *
+	 * @param int $asset_id The asset to relocate.
+	 *
+	 * @return array|WP_Error
+	 */
+	public function relocate_asset( $asset_id ) {
+		$connect       = $this->plugin->get_component( 'connect' );
+		$local_url     = $this->media->local_url( $asset_id );
+		$filename      = pathinfo( $local_url, PATHINFO_FILENAME );
+		$new_public_id = $this->get_asset_storage_folder( $local_url );
+		$type          = $this->media->get_resource_type( $asset_id );
+		$params        = array(
+			'from_public_id' => $this->media->get_public_id( $asset_id ),
+			'to_public_id'   => path_join( $new_public_id, $filename ),
+			'overwrite'      => true,
+		);
+		$result        = $connect->api->rename( $type, $params );
+		if ( ! is_wp_error( $result ) && isset( $result['public_id'] ) ) {
+			$this->media->update_post_meta( $asset_id, Sync::META_KEYS['public_id'], $result['public_id'] );
+			Delivery::update_size_relations_public_id( $asset_id, $result['public_id'] );
+			$this->media->sync->set_signature_item( $asset_id, 'asset_storage' );
+		}
+
+		return $result;
 	}
 
 	/**
@@ -783,6 +890,24 @@ class Assets extends Settings_Component {
 		}
 
 		return $is_local;
+	}
+
+	/**
+	 * Check the status of a Cloudinary Asset.
+	 *
+	 * @param array $asset The asset array.
+	 *
+	 * @return array
+	 */
+	public function check_usable_asset( $asset ) {
+		if ( 'asset' === $asset['sync_type'] && ! empty( $asset['public_id'] ) ) {
+			$storage_path = $this->get_asset_storage_folder( $asset['sized_url'] );
+			if ( dirname( $asset['public_id'] ) !== $storage_path ) {
+				$this->media->sync->add_to_sync( $asset['post_id'] ); // Add to sync.
+			}
+		}
+
+		return $asset;
 	}
 
 	/**

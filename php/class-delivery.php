@@ -1285,6 +1285,18 @@ class Delivery implements Setup {
 	 */
 	protected function set_usability( $item, $auto_sync = null ) {
 
+		/**
+		 * Filter the found item to allow usability to be altered.
+		 *
+		 * @hook   cloudinary_set_usable_asset
+		 * @since  3.0.2
+		 *
+		 * @param $item     {array} The found asset array.
+		 *
+		 * @return {array}
+		 */
+		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
+
 		$this->known[ $item['public_id'] ] = $item;
 		$scaled                            = self::make_scaled_url( $item['sized_url'] );
 		$descaled                          = self::descaled_url( $item['sized_url'] );
