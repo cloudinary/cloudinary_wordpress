@@ -2767,6 +2767,22 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Filter live URLS.
+	 * Used in admin and in the REST API.
+	 */
+	public function add_live_url_filters() {
+		add_filter( 'wp_calculate_image_srcset', array( $this, 'image_srcset' ), 10, 5 );
+		add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
+		add_filter( 'wp_get_original_image_url', array( $this, 'original_attachment_url' ), 10, 2 );
+		add_filter( 'image_downsize', array( $this, 'filter_downsize' ), 10, 3 );
+		add_filter( 'wp_calculate_image_srcset_meta', array( $this, 'calculate_image_srcset_meta' ), 10, 3 );
+
+		// Hook into Featured Image cycle.
+		add_action( 'begin_fetch_post_thumbnail_html', array( $this, 'set_doing_featured' ), 10, 2 );
+		add_filter( 'post_thumbnail_html', array( $this, 'maybe_srcset_post_thumbnail' ), 10, 3 );
+	}
+
+	/**
 	 * Setup the hooks and base_url if configured.
 	 */
 	public function setup() {
@@ -2792,20 +2808,14 @@ class Media extends Settings_Component implements Setup {
 			add_action( 'print_media_templates', array( $this, 'media_template' ) );
 			add_action( 'wp_enqueue_media', array( $this, 'editor_assets' ) );
 			add_action( 'wp_ajax_cloudinary-down-sync', array( $this, 'down_sync_asset' ) );
+			add_action( 'rest_api_init', array( $this, 'add_live_url_filters' ) );
 
 			// Filter to add cloudinary folder.
 			add_filter( 'upload_dir', array( $this, 'upload_dir' ) );
 
 			// Filter live URLS. (functions that return a URL).
 			if ( is_admin() ) {
-				add_filter( 'wp_calculate_image_srcset', array( $this, 'image_srcset' ), 10, 5 );
-				add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
-				add_filter( 'wp_get_original_image_url', array( $this, 'original_attachment_url' ), 10, 2 );
-
-				add_filter( 'image_downsize', array( $this, 'filter_downsize' ), 10, 3 );
-				// Hook into Featured Image cycle.
-				add_action( 'begin_fetch_post_thumbnail_html', array( $this, 'set_doing_featured' ), 10, 2 );
-				add_filter( 'post_thumbnail_html', array( $this, 'maybe_srcset_post_thumbnail' ), 10, 3 );
+				$this->add_live_url_filters();
 			}
 			// Filter default image Quality and Format transformations.
 			add_filter( 'cloudinary_default_qf_transformations_image', array( $this, 'default_image_transformations' ), 10 );
