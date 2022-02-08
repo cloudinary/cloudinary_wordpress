@@ -570,16 +570,18 @@ class Sync implements Setup, Assets {
 				'note'     => __( 'Updating breakpoints', 'cloudinary' ),
 			),
 			'options'      => array(
-				'generate' => function ( $attachment_id ) {
+				'asset_state' => 0,
+				'generate'    => function ( $attachment_id ) {
 					$options = $this->managers['media']->get_upload_options( $attachment_id );
 					unset( $options['eager'], $options['eager_async'] );
 
 					return $options;
 				},
-				'priority' => 30,
-				'sync'     => array( $this->managers['upload'], 'context_update' ),
-				'state'    => 'info syncing',
-				'note'     => __( 'Updating metadata', 'cloudinary' ),
+				'validate'    => array( $this, 'been_synced' ),
+				'priority'    => 30,
+				'sync'        => array( $this->managers['upload'], 'context_update' ),
+				'state'       => 'info syncing',
+				'note'        => __( 'Updating metadata', 'cloudinary' ),
 			),
 			'cloud_name'   => array(
 				'generate' => array( $this->managers['connect'], 'get_cloud_name' ),

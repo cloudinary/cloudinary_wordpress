@@ -2443,9 +2443,10 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		$context_options = array(
-			'caption' => esc_attr( $caption ),
-			'alt'     => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
-			'guid'    => md5( get_the_guid( $attachment_id ) ),
+			'caption'       => esc_attr( $caption ),
+			'alt'           => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
+			'guid'          => md5( get_the_guid( $attachment_id ) ),
+			'cld_wp_plugin' => 1,
 		);
 
 		// Check if this asset is a folder sync.

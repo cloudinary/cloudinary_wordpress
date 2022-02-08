@@ -191,7 +191,6 @@ class Download_Sync {
 			}
 
 			// Generate signatures.
-			$this->sync->set_signature_item( $attachment_id, 'options' );
 			$this->sync->set_signature_item( $attachment_id, 'cloud_name' );
 			$this->sync->set_signature_item( $attachment_id, 'download' );
 			$this->sync->set_signature_item( $attachment_id, 'file' );
