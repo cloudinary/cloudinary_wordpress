@@ -618,11 +618,11 @@ class Assets extends Settings_Component {
 		if ( is_numeric( $url_id ) ) {
 			$url_id = $this->media->local_url( $url_id );
 		}
-		$url               = $this->clean_path( $url_id );
-		$cloudinary_folder = $this->media->get_cloudinary_folder( false );
-		$folder            = wp_normalize_path( dirname( trim( $url, './' ) ) );
-		if ( ! empty( $cloudinary_folder ) ) {
-			$folder = path_join( $cloudinary_folder, $folder );
+		$url    = $this->clean_path( $url_id );
+		$domain = wp_parse_url( home_url(), PHP_URL_HOST );
+		$folder = wp_normalize_path( dirname( trim( $url, './' ) ) );
+		if ( ! empty( $domain ) ) {
+			$folder = path_join( $domain, $folder );
 		}
 
 		return $folder;
@@ -732,29 +732,6 @@ class Assets extends Settings_Component {
 		}
 
 		return $valid;
-	}
-
-	/**
-	 * Generate a public_id for a cloudinary_asset.
-	 *
-	 * @param string $public_id     Initial Public ID.
-	 * @param int    $attachment_id The attachment ID.
-	 *
-	 * @return string
-	 */
-	public function generate_asset_public_id( $public_id, $attachment_id ) {
-		if ( $this->is_asset_type( $attachment_id ) ) {
-			$url    = get_the_title( $attachment_id );
-			$parent = $this->discover_asset_parent( $url );
-			if ( ! empty( $parent ) ) {
-				$cloudinary_folder = $this->media->get_cloudinary_folder( false );
-				$path              = trim( wp_normalize_path( str_replace( home_url(), '', $url ) ), '/' );
-				$folder            = path_join( $cloudinary_folder, pathinfo( $path, PATHINFO_DIRNAME ) );
-				$public_id         = trim( path_join( $folder, basename( $public_id ) ), '/.' );
-			}
-		}
-
-		return $public_id;
 	}
 
 	/**
