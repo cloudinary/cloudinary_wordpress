@@ -10,6 +10,7 @@ namespace Cloudinary\UI\Component;
 use Cloudinary\Connect;
 use Cloudinary\Settings;
 use Cloudinary\Settings\Setting;
+use Cloudinary\Sync\Sync_Queue;
 use Cloudinary\UI\Component;
 use function Cloudinary\get_plugin_instance;
 
@@ -79,7 +80,7 @@ class Plan_Details extends Component {
 		}
 
 		$struct['children']['requests'] = $this->make_item( __( 'Total Requests', 'cloudinary' ), number_format_i18n( $data['requests'] ), $this->dir_url . 'css/images/requests.svg' );
-		$struct['children']['assets']   = $this->make_item( __( 'Optimized assets', 'cloudinary' ), $data['resources'], $this->dir_url . 'css/images/image.svg' );
+		$struct['children']['assets']   = $this->make_item( __( 'Optimized assets', 'cloudinary' ), number_format_i18n( Sync_Queue::get_optimized_assets() ), $this->dir_url . 'css/images/image.svg' );
 
 		return $struct;
 	}
