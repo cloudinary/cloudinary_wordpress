@@ -2441,13 +2441,17 @@ class Media extends Settings_Component implements Setup {
 		if ( empty( $caption ) ) {
 			$caption = get_the_title( $attachment_id );
 		}
-
-		$context_options = array(
-			'caption'       => esc_attr( $caption ),
-			'alt'           => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
-			'guid'          => md5( get_the_guid( $attachment_id ) ),
+		$media_library_context = array(
+			'caption' => esc_attr( $caption ),
+			'alt'     => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
+			'guid'    => md5( get_the_guid( $attachment_id ) ),
+		);
+		$context_options       = array(
 			'cld_wp_plugin' => 1,
 		);
+		if ( $this->is_folder_synced( $attachment_id ) ) {
+			$context_options = wp_parse_args( $media_library_context, $context_options );
+		}
 
 		// Check if this asset is a folder sync.
 		$folder_sync = $this->get_post_meta( $attachment_id, Sync::META_KEYS['folder_sync'], true );
