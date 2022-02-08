@@ -277,7 +277,7 @@ class Delivery implements Setup {
 		$this->sync->register_sync_type( 'delivery', $structure );
 
 		$structure = array(
-			'asset_state' => 1,
+			'asset_state' => 0,
 			'generate'    => array( $this, 'generate_signature' ), // Method to generate a signature.
 			'priority'    => 50,
 			'sync'        => array( $this, 'update_relation' ),
