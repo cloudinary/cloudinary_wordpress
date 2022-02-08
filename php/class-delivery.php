@@ -1321,7 +1321,14 @@ class Delivery implements Setup {
 			// Most likely an asset with a public ID.
 			$this->usable[ $item['sized_url'] ] = $item['sized_url'];
 			if ( self::get_settings_signature() !== $item['signature'] ) {
-				$this->sync->add_to_sync( $item['post_id'] );
+				$sync_type = $this->sync->get_sync_type( $item['post_id'] );
+				if ( $sync_type ) {
+					$this->sync->add_to_sync( $item['post_id'] );
+					if ( $this->sync->is_required( $sync_type, $item['post_id'] ) ) {
+						// Can't render this, so lets remove it from usable list.
+						unset( $this->usable[ $item['sized_url'] ] );
+					}
+				}
 			}
 		} else {
 			// This is an asset or media without a public id.
