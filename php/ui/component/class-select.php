@@ -30,6 +30,7 @@ class Select extends Text {
 	 */
 	protected function input( $struct ) {
 
+		$struct                          = parent::input( $struct );
 		$struct['element']               = 'select';
 		$struct['attributes']['name']    = $this->get_name();
 		$struct['attributes']['id']      = $this->setting->get_slug();
