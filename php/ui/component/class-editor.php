@@ -8,10 +8,12 @@
 namespace Cloudinary\UI\Component;
 
 use Cloudinary;
+use Cloudinary\Media;
 use Cloudinary\REST_API;
 use Cloudinary\Settings\Setting;
 use Cloudinary\UI\Component;
 use Cloudinary\Editor as MediaEditor;
+use WP_Post;
 use function Cloudinary\get_plugin_instance;
 
 /**
@@ -32,14 +34,14 @@ class Editor extends Component {
 	/**
 	 * Holds the current attachment.
 	 *
-	 * @var \WP_Post
+	 * @var WP_Post
 	 */
 	protected $attachment;
 
 	/**
 	 * Holds the media instance.
 	 *
-	 * @var \Cloudinary\Media
+	 * @var Media
 	 */
 	protected $media;
 
@@ -63,7 +65,7 @@ class Editor extends Component {
 	 * @return array
 	 */
 	protected function wrap( $struct ) {
-		$struct['attributes']['id'] = 'cloudinary-media-editor';
+		$struct['attributes']['id']    = 'cloudinary-media-editor';
 		$struct['attributes']['style'] = 'margin-top:10px;border:solid 1px; border-color: rgb(218, 225, 233);background-color:#fff;';
 
 		return $struct;
@@ -252,7 +254,7 @@ class Editor extends Component {
 	public function enqueue_scripts() {
 
 		$attachment_id = $this->attachment->ID;
-		$asset = require $this->media->plugin->dir_path . 'js/image-editor.asset.php';
+		$asset         = require $this->media->plugin->dir_path . 'js/image-editor.asset.php';
 
 		wp_enqueue_script( 'image-editor', $this->media->plugin->dir_url . 'js/image-editor.js', $asset['dependencies'], $asset['version'], true );
 
@@ -278,8 +280,8 @@ class Editor extends Component {
 		parent::pre_render();
 		?>
 		<style>
-			.wp_attachment_holder{
-				display : none;
+			.wp_attachment_holder {
+				display: none;
 			}
 		</style>
 		<?php

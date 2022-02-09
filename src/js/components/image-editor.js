@@ -1,4 +1,3 @@
-import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
 const ImageEditor = {
@@ -56,7 +55,6 @@ const ImageEditor = {
 
 		events.forEach( ( event ) => {
 			this.editor.on( event, ( ev ) => {
-				console.log( ev );
 				this.enableSave();
 			} );
 		} );
