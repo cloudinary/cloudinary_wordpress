@@ -490,7 +490,7 @@ abstract class Component {
 	 * @return bool
 	 */
 	public function has_content( $name, $struct = array() ) {
-		$return = ! empty( $struct['content'] ) || ! empty( $this->setting->get_param( $name ) ) || ! empty( $struct['render'] );
+		$return = isset( $struct['content'] ) || ! empty( $this->setting->get_param( $name ) ) || ! empty( $struct['render'] );
 		if ( false === $return && ! empty( $struct['children'] ) ) {
 			foreach ( $struct['children'] as $child => $child_struct ) {
 				if ( true === $this->has_content( $child, $child_struct ) ) {
@@ -772,7 +772,12 @@ abstract class Component {
 	 * @return string
 	 */
 	public static function compile_html( $html ) {
-		$html = array_filter( $html );
+		$html = array_filter(
+			$html,
+			function ( $item ) {
+				return ! is_null( $item );
+			}
+		);
 
 		return implode( '', $html );
 	}
