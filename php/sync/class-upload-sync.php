@@ -363,13 +363,12 @@ class Upload_Sync {
 	 * @return array|\WP_Error
 	 */
 	public function context_update( $attachment_id ) {
-		// dynamic sync type..
-		$type    = $this->sync->get_sync_type( $attachment_id );
+
 		$options = $this->media->get_upload_options( $attachment_id );
 		$result  = $this->connect->api->context( $options );
 
 		if ( ! is_wp_error( $result ) ) {
-			$this->sync->set_signature_item( $attachment_id, $type );
+			$this->sync->set_signature_item( $attachment_id, 'options' );
 			update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $options['public_id'] );
 		}
 

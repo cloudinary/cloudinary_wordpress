@@ -10,6 +10,7 @@ namespace Cloudinary\Delivery;
 use Cloudinary\Connect\Api;
 use Cloudinary\Delivery_Feature;
 use Cloudinary\Plugin;
+use Cloudinary\String_Replace;
 use Cloudinary\UI\Component\HTML;
 use Cloudinary\Utils;
 
@@ -197,7 +198,13 @@ class Lazy_Load extends Delivery_Feature {
 		}
 		if ( ! is_admin() ) {
 			$tag_element['atts']['data-delivery'] = $this->media->get_media_delivery( $tag_element['id'] );
-			$tag_element['atts']['onload']        = 'CLDBind(this)';
+			if ( empty( $tag_element['atts']['onload'] ) ) {
+				$tag_element['atts']['onload'] = '';
+			}
+			// Since we're appending to the onload, check it isn't already in, as it may run twice i.e full page caching.
+			if ( false === strpos( $tag_element['atts']['onload'], 'CLDBind' ) ) {
+				$tag_element['atts']['onload'] .= ';window.CLDBind?CLDBind(this):null;';
+			}
 		}
 
 		return $tag_element;
@@ -220,7 +227,18 @@ class Lazy_Load extends Delivery_Feature {
 			$config['placeholder'] = API::generate_transformation_string( $this->get_placeholder_transformations( $config['lazy_placeholder'] ) );
 		}
 		$config['base_url'] = $this->media->base_url;
+
+		ob_start();
 		Utils::print_inline_tag( 'var CLDLB = ' . wp_json_encode( $config ) . ';' . file_get_contents( $this->plugin->dir_path . 'js/inline-loader.js' ) );
+		$script        = ob_get_clean();
+		$script_holder = '<meta name="cld-loader">';
+		$allow         = array(
+			'meta' => array(
+				'name' => true,
+			),
+		);
+		echo wp_kses( $script_holder, $allow );
+		String_Replace::replace( $script_holder, $script );
 	}
 
 	/**

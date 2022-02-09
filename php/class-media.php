@@ -514,11 +514,14 @@ class Media extends Settings_Component implements Setup {
 
 		$conversion_types = $this->get_convertible_extensions();
 		$info             = pathinfo( $filename );
-		$extension        = strtolower( $info['extension'] );
 		$convert          = 'jpg'; // Default handler.
 
-		if ( ! empty( $conversion_types[ $extension ] ) ) {
-			$convert = $conversion_types[ $extension ];
+		if ( ! empty( $info['extension'] ) ) {
+			$extension = strtolower( $info['extension'] );
+
+			if ( ! empty( $conversion_types[ $extension ] ) ) {
+				$convert = $conversion_types[ $extension ];
+			}
 		}
 
 		$filename = trailingslashit( $info['dirname'] ) . $info['filename'] . '.' . $convert;
@@ -658,7 +661,12 @@ class Media extends Settings_Component implements Setup {
 		$file      = implode( '/', $parts );
 		$path_info = pathinfo( $file );
 
-		$public_id = isset( $path_info['dirname'] ) && '.' !== $path_info['dirname'] ? $path_info['dirname'] : $path_info['filename'];
+		// Is SEO friendly URL.
+		if ( 0 === strpos( $path, '/images/' ) ) {
+			$public_id = $path_info['dirname'];
+		} else {
+			$public_id = isset( $path_info['dirname'] ) && '.' !== $path_info['dirname'] ? $path_info['dirname'] . DIRECTORY_SEPARATOR . $path_info['filename'] : $path_info['filename'];
+		}
 		$public_id = trim( $public_id, './' );
 
 		if ( $as_sync_key ) {
@@ -1634,6 +1642,27 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * At the point of running wp_get_attachment_image_srcset, the $image_src is already a Cloudinary URL.
+	 * This will fix the $image_meta so that the there's a match $src_matched on wp_calculate_image_srcset.
+	 *
+	 * @param array  $image_meta    The image meta data as returned by 'wp_get_attachment_metadata()'.
+	 * @param int[]  $size_array    {
+	 *     An array of width and height values.
+	 *
+	 *     @type int $0 The width in pixels.
+	 *     @type int $1 The height in pixels.
+	 * }
+	 * @param string $image_src     The 'src' of the image.
+	 *
+	 * @return array
+	 */
+	public function calculate_image_srcset_meta( $image_meta, $size_array, $image_src ) {
+		$image_meta['file'] = parse_url( $image_src, PHP_URL_PATH );
+
+		return $image_meta;
+	}
+
+	/**
 	 * Convert an attachment URL to a Cloudinary one.
 	 *
 	 * @param string      $url                       Url to convert.
@@ -2267,6 +2296,14 @@ class Media extends Settings_Component implements Setup {
 				$logs[ $signature ] = array();
 				continue;
 			}
+			if ( is_wp_error( $log ) ) {
+				$logs[ $signature ] = array();
+				$logs[ $signature ][ '_' . time() ] = array(
+					'code' => $log->get_error_code(),
+					'message' => $log->get_error_message(),
+				);
+				continue;
+			}
 			foreach ( $log as $time => $entry ) {
 				$time = ltrim( $time, '_' );
 
@@ -2430,12 +2467,17 @@ class Media extends Settings_Component implements Setup {
 		if ( empty( $caption ) ) {
 			$caption = get_the_title( $attachment_id );
 		}
-
-		$context_options = array(
+		$media_library_context = array(
 			'caption' => esc_attr( $caption ),
 			'alt'     => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
 			'guid'    => md5( get_the_guid( $attachment_id ) ),
 		);
+		$context_options       = array(
+			'cld_wp_plugin' => 1,
+		);
+		if ( $this->is_folder_synced( $attachment_id ) ) {
+			$context_options = wp_parse_args( $media_library_context, $context_options );
+		}
 
 		// Check if this asset is a folder sync.
 		$folder_sync = $this->get_post_meta( $attachment_id, Sync::META_KEYS['folder_sync'], true );
@@ -2743,6 +2785,22 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Filter live URLS.
+	 * Used in admin and in the REST API.
+	 */
+	public function add_live_url_filters() {
+		add_filter( 'wp_calculate_image_srcset', array( $this, 'image_srcset' ), 10, 5 );
+		add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
+		add_filter( 'wp_get_original_image_url', array( $this, 'original_attachment_url' ), 10, 2 );
+		add_filter( 'image_downsize', array( $this, 'filter_downsize' ), 10, 3 );
+		add_filter( 'wp_calculate_image_srcset_meta', array( $this, 'calculate_image_srcset_meta' ), 10, 3 );
+
+		// Hook into Featured Image cycle.
+		add_action( 'begin_fetch_post_thumbnail_html', array( $this, 'set_doing_featured' ), 10, 2 );
+		add_filter( 'post_thumbnail_html', array( $this, 'maybe_srcset_post_thumbnail' ), 10, 3 );
+	}
+
+	/**
 	 * Setup the hooks and base_url if configured.
 	 */
 	public function setup() {
@@ -2768,20 +2826,14 @@ class Media extends Settings_Component implements Setup {
 			add_action( 'print_media_templates', array( $this, 'media_template' ) );
 			add_action( 'wp_enqueue_media', array( $this, 'editor_assets' ) );
 			add_action( 'wp_ajax_cloudinary-down-sync', array( $this, 'down_sync_asset' ) );
+			add_action( 'rest_api_init', array( $this, 'add_live_url_filters' ) );
 
 			// Filter to add cloudinary folder.
 			add_filter( 'upload_dir', array( $this, 'upload_dir' ) );
 
 			// Filter live URLS. (functions that return a URL).
 			if ( is_admin() ) {
-				add_filter( 'wp_calculate_image_srcset', array( $this, 'image_srcset' ), 10, 5 );
-				add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
-				add_filter( 'wp_get_original_image_url', array( $this, 'original_attachment_url' ), 10, 2 );
-
-				add_filter( 'image_downsize', array( $this, 'filter_downsize' ), 10, 3 );
-				// Hook into Featured Image cycle.
-				add_action( 'begin_fetch_post_thumbnail_html', array( $this, 'set_doing_featured' ), 10, 2 );
-				add_filter( 'post_thumbnail_html', array( $this, 'maybe_srcset_post_thumbnail' ), 10, 3 );
+				$this->add_live_url_filters();
 			}
 			// Filter default image Quality and Format transformations.
 			add_filter( 'cloudinary_default_qf_transformations_image', array( $this, 'default_image_transformations' ), 10 );

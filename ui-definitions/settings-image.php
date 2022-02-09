@@ -67,7 +67,7 @@ $settings = array(
 							'gif'  => __( 'GIF', 'cloudinary' ),
 							'webp' => __( 'WebP', 'cloudinary' ),
 						),
-						'suffix'       => 'f_auto',
+						'suffix'       => 'f_@value',
 						'attributes'   => array(
 							'data-context' => 'image',
 							'data-meta'    => 'f',
@@ -82,7 +82,7 @@ $settings = array(
 							'cloudinary'
 						),
 						'default'      => 'auto',
-						'suffix'       => 'q_auto',
+						'suffix'       => 'q_@value',
 						'options'      => array(
 							'none'      => __( 'Not set', 'cloudinary' ),
 							'auto'      => __( 'Auto', 'cloudinary' ),

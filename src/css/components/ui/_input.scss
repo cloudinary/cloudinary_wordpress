@@ -54,4 +54,8 @@
 	input::placeholder{
 		color: $color-disabled-grey;
 	}
+
+	.hidden{
+		visibility: hidden;
+	}
 }
