@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <ruleset name="WordPress coding standards">
 	<!-- Check for cross-version support for PHP 5.6 and higher. -->
-	<config name="testVersion" value="5.6-"/>
+	<!--<config name="testVersion" value="5.6-"/>-->
 
 	<config name="ignore_warnings_on_exit" value="1" /><!-- Ignore warnings for now. -->
 
@@ -17,7 +17,9 @@
 
 	<rule ref="WordPress.WP.I18n">
 		<properties>
-			<property name="text_domain" type="array" value="cloudinary" />
+			<property name="text_domain" type="array">
+				<element value="cloudinary"/>
+			</property>
 		</properties>
 	</rule>
 
@@ -28,7 +30,6 @@
 
 	<!-- Include WP VIP coding standard checks -->
 	<rule ref="WordPress-VIP-Go" />
-	<rule ref="WordPressVIPMinimum" />
 
 	<exclude-pattern>/node_modules/</exclude-pattern>
 	<exclude-pattern>/vendor/</exclude-pattern>
