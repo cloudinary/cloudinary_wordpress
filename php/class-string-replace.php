@@ -41,6 +41,7 @@ class String_Replace implements Setup {
 	 * Setup the object.
 	 */
 	public function setup() {
+		add_action( 'the_content', array( $this, 'replace_strings' ), 1 );
 		add_action( 'template_redirect', array( $this, 'init' ), -1000 ); // Not crazy low, but low enough to catch most cases, but not too low that it may break AMP.
 		add_action( 'template_include', array( $this, 'init_debug' ), PHP_INT_MAX );
 		$types = get_post_types_by_support( 'editor' );
@@ -78,6 +79,7 @@ class String_Replace implements Setup {
 	 * Init the buffer capture and set the output callback.
 	 */
 	public function init() {
+		remove_action( 'the_content', array( $this, 'replace_strings' ), 1 ); // Remove the content filter.
 		if ( ! defined( 'CLD_DEBUG' ) || false === CLD_DEBUG ) {
 			ob_start( array( $this, 'replace_strings' ) );
 		}
