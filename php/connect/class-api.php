@@ -605,6 +605,21 @@ class Api {
 	}
 
 	/**
+	 * Rename an asset.
+	 *
+	 * @param string $type    The resource type to rename.
+	 * @param array  $options Array of options.
+	 *
+	 * @return array|\WP_Error
+	 */
+	public function rename( $type, $options ) {
+
+		$url = $this->url( $type, 'rename', true );
+
+		return $this->call( $url, array( 'body' => $options ), 'post' );
+	}
+
+	/**
 	 * Context update of an asset.
 	 *
 	 * @param array $args Array of options to update.

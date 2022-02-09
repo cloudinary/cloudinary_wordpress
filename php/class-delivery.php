@@ -277,7 +277,7 @@ class Delivery implements Setup {
 		$this->sync->register_sync_type( 'delivery', $structure );
 
 		$structure = array(
-			'asset_state' => 1,
+			'asset_state' => 0,
 			'generate'    => array( $this, 'generate_signature' ), // Method to generate a signature.
 			'priority'    => 50,
 			'sync'        => array( $this, 'update_relation' ),
@@ -1285,6 +1285,18 @@ class Delivery implements Setup {
 	 */
 	protected function set_usability( $item, $auto_sync = null ) {
 
+		/**
+		 * Filter the found item to allow usability to be altered.
+		 *
+		 * @hook   cloudinary_set_usable_asset
+		 * @since  3.0.2
+		 *
+		 * @param $item     {array} The found asset array.
+		 *
+		 * @return {array}
+		 */
+		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
+
 		$this->known[ $item['public_id'] ] = $item;
 		$scaled                            = self::make_scaled_url( $item['sized_url'] );
 		$descaled                          = self::descaled_url( $item['sized_url'] );
@@ -1309,7 +1321,14 @@ class Delivery implements Setup {
 			// Most likely an asset with a public ID.
 			$this->usable[ $item['sized_url'] ] = $item['sized_url'];
 			if ( self::get_settings_signature() !== $item['signature'] ) {
-				$this->sync->add_to_sync( $item['post_id'] );
+				$sync_type = $this->sync->get_sync_type( $item['post_id'] );
+				if ( $sync_type ) {
+					$this->sync->add_to_sync( $item['post_id'] );
+					if ( $this->sync->is_required( $sync_type, $item['post_id'] ) ) {
+						// Can't render this, so lets remove it from usable list.
+						unset( $this->usable[ $item['sized_url'] ] );
+					}
+				}
 			}
 		} else {
 			// This is an asset or media without a public id.
