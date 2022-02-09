@@ -588,8 +588,9 @@ class Assets extends Settings_Component {
 		$folder       = untrailingslashit( $this->media->get_cloudinary_folder() );
 		$asset_parent = self::POST_TYPE_SLUG === get_post_parent( $asset_id )->post_type ? true : false;
 		if ( ! empty( $asset_parent ) ) {
-			$folder               = $this->get_asset_storage_folder( get_the_title( $asset_id ) );
-			$options['overwrite'] = true; // Ensure we maintain this path and filename.
+			$folder                     = $this->get_asset_storage_folder( get_the_title( $asset_id ) );
+			$options['overwrite']       = true; // Ensure we maintain this path and filename.
+			$options['unique_filename'] = false; // Ensure we don't append a suffix.
 		}
 		// Add folder.
 		$options['folder'] = $folder;
