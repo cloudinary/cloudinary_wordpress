@@ -726,7 +726,7 @@ class Assets extends Settings_Component {
 	 */
 	public function validate_asset_storage( $asset_id ) {
 		$valid = false;
-		if ( $this->media->has_public_id( $asset_id ) ) {
+		if ( self::is_asset_type( $asset_id ) && $this->media->has_public_id( $asset_id ) ) {
 			$location  = $this->get_asset_storage_folder( $asset_id );
 			$public_id = $this->media->get_public_id( $asset_id );
 			$valid     = dirname( $public_id ) !== $location;
