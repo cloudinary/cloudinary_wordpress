@@ -273,7 +273,7 @@ class Api {
 		$base      = pathinfo( $public_id );
 		// Only do dynamic naming and sizes if upload type.
 		if ( 'image' === $args['resource_type'] && 'upload' === $args['delivery_type'] ) {
-			$new_path  = $base['filename'] . '/' . str_replace( '.', '-', $base['basename'] );
+			$new_path  = $base['filename'] . '/' . $base['basename'];
 			$public_id = str_replace( $base['basename'], $new_path, $public_id );
 		}
 
@@ -600,6 +600,21 @@ class Api {
 	public function destroy( $type, $options ) {
 
 		$url = $this->url( $type, 'destroy', true );
+
+		return $this->call( $url, array( 'body' => $options ), 'post' );
+	}
+
+	/**
+	 * Rename an asset.
+	 *
+	 * @param string $type    The resource type to rename.
+	 * @param array  $options Array of options.
+	 *
+	 * @return array|\WP_Error
+	 */
+	public function rename( $type, $options ) {
+
+		$url = $this->url( $type, 'rename', true );
 
 		return $this->call( $url, array( 'body' => $options ), 'post' );
 	}
