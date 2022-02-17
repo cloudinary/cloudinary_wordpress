@@ -14,6 +14,10 @@ const CloudinaryLoader = {
 		if ( ! this.enabled ) {
 			this._init();
 		}
+		// SVGs don't have Delivery features.
+		if ( 'svg' === image.dataset.format ) {
+			return;
+		}
 		const size = image.dataset.size.split( ' ' );
 		image.originalWidth = size[ 0 ];
 		image.originalHeight = size[ 1 ];
