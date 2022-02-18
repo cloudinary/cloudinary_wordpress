@@ -14,10 +14,6 @@ const CloudinaryLoader = {
 		if ( ! this.enabled ) {
 			this._init();
 		}
-		// SVGs don't have Delivery features.
-		if ( 'svg' === image.dataset.format ) {
-			return;
-		}
 		const size = image.dataset.size.split( ' ' );
 		image.originalWidth = size[ 0 ];
 		image.originalHeight = size[ 1 ];
@@ -248,7 +244,7 @@ window.CLDBind = ( image )=>{
 };
 // Fallback.
 window.addEventListener( 'load', () => {
-	[...document.querySelectorAll('img[data-public-id]')].forEach( ( image )=>{
+	[...document.querySelectorAll('img[data-public-id][onload]')].forEach( ( image )=>{
 		CLDBind( image );
 	})
 } );
