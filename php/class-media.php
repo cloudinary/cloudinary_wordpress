@@ -270,7 +270,7 @@ class Media extends Settings_Component implements Setup {
 
 		$types        = $this->get_compatible_media_types();
 		$file         = wp_parse_url( $file, PHP_URL_PATH );
-		$filename     = pathinfo( $file, PATHINFO_BASENAME );
+		$filename     = Utils::pathinfo( $file, PATHINFO_BASENAME );
 		$mime         = wp_check_filetype( $filename );
 		$type         = strstr( $mime['type'], '/', true );
 		$conversions  = $this->get_convertible_extensions();
@@ -513,7 +513,7 @@ class Media extends Settings_Component implements Setup {
 	public function convert_media_extension( $filename ) {
 
 		$conversion_types = $this->get_convertible_extensions();
-		$info             = pathinfo( $filename );
+		$info             = Utils::pathinfo( $filename );
 		$convert          = 'jpg'; // Default handler.
 
 		if ( ! empty( $info['extension'] ) ) {
@@ -562,7 +562,7 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function get_file_type( $file ) {
 		$file = wp_parse_url( $file, PHP_URL_PATH );
-		$file = pathinfo( $file, PATHINFO_BASENAME );
+		$file = Utils::pathinfo( $file, PATHINFO_BASENAME );
 		$mime = wp_check_filetype( $file );
 
 		return strstr( $mime['type'], '/', true );
@@ -624,7 +624,7 @@ class Media extends Settings_Component implements Setup {
 	public function uncropped_url( $url ) {
 		$cropped = $this->get_size_from_url( $url );
 		if ( false !== $cropped ) {
-			$file             = pathinfo( $url );
+			$file             = Utils::pathinfo( $url );
 			$crop             = '-' . implode( 'x', $cropped );
 			$file['filename'] = substr( $file['filename'], 0, strlen( $file['filename'] ) - strlen( $crop ) );
 			$url              = $file['dirname'] . '/' . $file['filename'] . '.' . $file['extension'];
@@ -659,7 +659,7 @@ class Media extends Settings_Component implements Setup {
 
 		// The remaining items should be the file.
 		$file      = implode( '/', $parts );
-		$path_info = pathinfo( $file );
+		$path_info = Utils::pathinfo( $file );
 
 		// Is SEO friendly URL.
 		if ( 0 === strpos( $path, '/images/' ) ) {
@@ -796,7 +796,7 @@ class Media extends Settings_Component implements Setup {
 				}
 			}
 		} else {
-			$file     = pathinfo( $url );
+			$file     = Utils::pathinfo( $url );
 			$end_part = substr( strrchr( $file['filename'], '-' ), 1 );
 			if ( false !== $end_part && 1 === substr_count( $end_part, 'x' ) && is_numeric( str_replace( 'x', '', $end_part ) ) ) {
 
@@ -1518,7 +1518,7 @@ class Media extends Settings_Component implements Setup {
 			// Get the file, and use the same extension.
 			$file = get_attached_file( $attachment_id );
 			// @todo: Make this use the globals, overrides, and application conversion.
-			$extension     = pathinfo( $file, PATHINFO_EXTENSION );
+			$extension     = Utils::pathinfo( $file, PATHINFO_EXTENSION );
 			$cloudinary_id = $public_id;
 			$type          = $this->get_resource_type( $attachment_id );
 			if ( in_array( $type, array( 'image', 'video' ), true ) ) {
@@ -1529,7 +1529,7 @@ class Media extends Settings_Component implements Setup {
 				if ( 'fetch' !== $this->get_media_delivery( $attachment_id ) ) {
 					$cloudinary_id = $public_id . '.' . $extension;
 				}
-			} elseif ( empty( pathinfo( $public_id, PATHINFO_EXTENSION ) ) ) {
+			} elseif ( empty( Utils::pathinfo( $public_id, PATHINFO_EXTENSION ) ) ) {
 				$cloudinary_id = $public_id . '.' . $extension;
 			}
 		}
@@ -1874,9 +1874,9 @@ class Media extends Settings_Component implements Setup {
 
 		// Create an attachment post.
 		$file_path        = $asset['url'];
-		$file_name        = basename( $file_path );
+		$file_name        = Utils::basename( $file_path );
 		$file_type        = wp_check_filetype( $file_name, null );
-		$attachment_title = sanitize_file_name( pathinfo( $file_name, PATHINFO_FILENAME ) );
+		$attachment_title = sanitize_file_name( Utils::pathinfo( $file_name, PATHINFO_FILENAME ) );
 		$post_args        = array(
 			'post_mime_type' => $file_type['type'],
 			'post_title'     => $attachment_title,
@@ -1997,7 +1997,7 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		// Check Format.
-		$url_format = pathinfo( $asset['url'], PATHINFO_EXTENSION );
+		$url_format = Utils::pathinfo( $asset['url'], PATHINFO_EXTENSION );
 		if ( strtolower( $url_format ) !== strtolower( $asset['format'] ) ) {
 			$asset['format']    = $url_format;
 			$asset['sync_key'] .= $url_format;
@@ -2023,7 +2023,7 @@ class Media extends Settings_Component implements Setup {
 				'uploading'     => true,
 				'src'           => $asset['src'],
 				'url'           => $asset['url'],
-				'filename'      => basename( $asset['src'] ),
+				'filename'      => Utils::basename( $asset['src'] ),
 				'attachment_id' => $asset['attachment_id'],
 				'public_id'     => $asset['public_id'],
 			);
@@ -2547,7 +2547,7 @@ class Media extends Settings_Component implements Setup {
 			'unique_filename' => true,
 			'overwrite'       => false,
 			'resource_type'   => $this->get_resource_type( $attachment_id ),
-			'public_id'       => basename( $public_id ),
+			'public_id'       => Utils::basename( $public_id ),
 			'context'         => $this->get_context_options( $attachment_id ),
 		);
 
@@ -2567,10 +2567,10 @@ class Media extends Settings_Component implements Setup {
 		$options = apply_filters( 'cloudinary_upload_options', $options, get_post( $attachment_id ), $this );
 		// Add folder to prevent folder contamination.
 		if ( $this->is_folder_synced( $attachment_id ) ) {
-			$options['public_id'] = $this->get_cloudinary_folder() . basename( $options['public_id'] );
+			$options['public_id'] = $this->get_cloudinary_folder() . Utils::basename( $options['public_id'] );
 		} elseif ( ! empty( $folder ) ) {
 			// add in folder if not empty (not in root).
-			$options['public_id'] = trailingslashit( $folder ) . basename( $options['public_id'] );
+			$options['public_id'] = trailingslashit( $folder ) . Utils::basename( $options['public_id'] );
 		}
 		$options['public_id'] = trim( $options['public_id'], '/.' );
 
@@ -2637,7 +2637,7 @@ class Media extends Settings_Component implements Setup {
 	public function apply_srcset( $content, $attachment_id, $overwrite_transformations = false ) {
 		$cloudinary_id                           = $this->get_cloudinary_id( $attachment_id );
 		$image_meta                              = wp_get_attachment_metadata( $attachment_id );
-		$image_meta['file']                      = pathinfo( $cloudinary_id, PATHINFO_FILENAME ) . '/' . pathinfo( $cloudinary_id, PATHINFO_BASENAME );
+		$image_meta['file']                      = Utils::pathinfo( $cloudinary_id, PATHINFO_FILENAME ) . '/' . Utils::pathinfo( $cloudinary_id, PATHINFO_BASENAME );
 		$image_meta['overwrite_transformations'] = $overwrite_transformations;
 
 		return wp_image_add_srcset_and_sizes( $content, $image_meta, $attachment_id );

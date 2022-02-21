@@ -9,6 +9,7 @@ namespace Cloudinary\UI\Component;
 
 use Cloudinary\Cache;
 use Cloudinary\Cache\Cache_Point;
+use Cloudinary\Utils;
 
 /**
  * Cache Status Component to render plan status.
@@ -57,7 +58,7 @@ class Cache_Status extends media_status {
 			$items                             = $this->cache->get_cache_point_cache( $cache_point->ID );
 			$table['rows'][ $cache_point->ID ] = array(
 				'cache_point'  => array(
-					'content' => basename( untrailingslashit( $cache_point->post_title ) ),
+					'content' => Utils::basename( untrailingslashit( $cache_point->post_title ) ),
 				),
 				'cached_items' => array(
 					'content'    => ' ' . $items['total'] . ' ',

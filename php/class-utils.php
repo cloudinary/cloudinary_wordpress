@@ -408,4 +408,42 @@ class Utils {
 
 		echo sprintf( "<script type='text/javascript'>%s</script>\n", $javascript ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
+
+	/**
+	 * Returns information about a file path by normalizing the locale.
+	 *
+	 * @param string $path  The path to be parsed.
+	 * @param int    $flags Specifies a specific element to be returned.
+	 *
+	 * @return array|string|string[]
+	 */
+	public static function pathinfo( $path, $flags = PATHINFO_ALL ) {
+		$temp = setlocale( LC_ALL, 0 );
+		setlocale( LC_ALL, 'en', 'en_US.UTF-8' );
+
+		$pathinfo = pathinfo( $path, $flags );
+
+		setlocale( LC_ALL, $temp );
+
+		return $pathinfo;
+	}
+
+	/**
+	 * Returns trailing name component of path
+	 *
+	 * @param string $path   A path.
+	 * @param string $suffix If the name component ends in suffix this will also be cut off.
+	 *
+	 * @return string
+	 */
+	public static function basename( $path, $suffix = '' ) {
+		$temp = setlocale( LC_ALL, 0 );
+		setlocale( LC_ALL, 'en', 'en_US.UTF-8' );
+
+		$basename = basename( $path, $suffix );
+
+		setlocale( LC_ALL, $temp );
+
+		return $basename;
+	}
 }

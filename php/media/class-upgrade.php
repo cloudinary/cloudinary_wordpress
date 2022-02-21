@@ -8,6 +8,7 @@
 namespace Cloudinary\Media;
 
 use Cloudinary\Sync;
+use Cloudinary\Utils;
 
 /**
  * Class Filter.
@@ -94,9 +95,9 @@ class Upgrade {
 				}
 
 				// Filter out file name.
-				$path = pathinfo( $val, PATHINFO_FILENAME );
+				$path = Utils::pathinfo( $val, PATHINFO_FILENAME );
 				if ( ! in_array( $path, $id_parts, true ) ) {
-					$id_parts[] = pathinfo( $val, PATHINFO_FILENAME );
+					$id_parts[] = Utils::pathinfo( $val, PATHINFO_FILENAME );
 				}
 			}
 			// Build public_id.
@@ -211,7 +212,7 @@ class Upgrade {
 				if ( ! empty( $v3_meta[ Sync::META_KEYS['storage'] ] ) && 'cld' === $v3_meta[ Sync::META_KEYS['storage'] ] ) {
 					$file = get_post_meta( $attachment_id, '_wp_attached_file', true );
 					if ( $this->media->is_cloudinary_url( $file ) ) {
-						$file = path_join( dirname( $old_meta['file'] ), basename( $file ) );
+						$file = path_join( dirname( $old_meta['file'] ), Utils::basename( $file ) );
 						update_post_meta( $attachment_id, '_wp_attached_file', $file );
 						update_post_meta( $attachment_id, '_' . md5( $file ), $file );
 					}

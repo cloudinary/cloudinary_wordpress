@@ -101,7 +101,7 @@ class Delete_Sync {
 				return;
 			}
 			// Next we need to check that the file is in the cloudinary folder.
-			$path              = trim( pathinfo( $public_id, PATHINFO_DIRNAME ), '.' );
+			$path              = trim( Utils::pathinfo( $public_id, PATHINFO_DIRNAME ), '.' );
 			$cloudinary_folder = $this->plugin->settings->get_value( 'cloudinary_folder' );
 			if ( $cloudinary_folder === $path ) {
 				$type    = $this->plugin->components['media']->get_resource_type( $post_id );

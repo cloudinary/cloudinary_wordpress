@@ -8,6 +8,7 @@
 namespace Cloudinary\UI;
 
 use Cloudinary\UI;
+use Cloudinary\Utils;
 
 /**
  *  Component.
@@ -86,7 +87,7 @@ class Branch {
 	 * @param string $name The name for this branch.
 	 */
 	public function __construct( $name = 'root' ) {
-		$this->name = basename( $name );
+		$this->name = Utils::basename( $name );
 		$this->id   = $name;
 	}
 

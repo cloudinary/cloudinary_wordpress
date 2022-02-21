@@ -12,6 +12,7 @@ namespace Cloudinary\Sync;
 use Cloudinary\Component\Notice;
 use Cloudinary\Delivery;
 use Cloudinary\Sync;
+use Cloudinary\Utils;
 
 /**
  * Class Filter.
@@ -412,7 +413,7 @@ class Storage implements Notice {
 
 		$path      = str_replace( $dirs['basedir'] . '/', '', $dir );
 		$base      = array(
-			'base'  => substr( $filename, 0, strrpos( $filename, '.' ) ),
+			'base'  => Utils::pathinfo( $filename, PATHINFO_FILENAME ),
 			'count' => null,
 			'ext'   => $ext,
 		);

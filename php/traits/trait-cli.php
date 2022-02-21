@@ -8,6 +8,7 @@
 namespace Cloudinary\Traits;
 
 use Cloudinary\Plugin;
+use Cloudinary\Utils;
 
 /**
  * CLI class.
@@ -196,7 +197,7 @@ trait CLI_Trait {
 		foreach ( $posts as $index => $asset ) {
 			$done ++; // Set $done early to not show 0 of x.
 			$file     = get_attached_file( $asset );
-			$filename = self::pad_name( basename( $file ), 20, ' ', '*' );
+			$filename = self::pad_name( Utils::basename( $file ), 20, ' ', '*' );
 			$bar->tick( 1, 'Syncing (' . ( $done ) . ' of ' . $total . ') : ' . $filename );
 			if (
 				! $this->plugin->get_component( 'sync' )->is_synced( $asset, true )
