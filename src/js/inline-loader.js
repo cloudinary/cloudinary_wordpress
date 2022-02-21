@@ -228,6 +228,7 @@ const CloudinaryLoader = {
 			this.config.base_url,
 			'image',
 			image.dataset.delivery,
+			newSize.transformation,
 			this.config.placeholder,
 			image.dataset.publicId
 		];
