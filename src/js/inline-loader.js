@@ -104,14 +104,11 @@ const CloudinaryLoader = {
 				}
 			} );
 		}, iOptions );
-
 		this.pObserver = new IntersectionObserver( ( entries, observer ) => {
 			entries.forEach( entry => {
+
 				if ( entry.isIntersecting ) {
-					if ( entry.intersectionRatio < 0.5 ) {
-						// Low so that it doesn't show partly.
-						entry.target.src = this.getPlaceholderURL( entry.target );
-					}
+					entry.target.src = this.getPlaceholderURL( entry.target );
 					observer.unobserve( entry.target );
 				}
 			} );
