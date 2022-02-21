@@ -100,6 +100,7 @@ const CloudinaryLoader = {
 				if ( entry.isIntersecting ) {
 					this.buildImage( entry.target );
 					observer.unobserve( entry.target );
+					this.pObserver.unobserve( entry.target );
 				}
 			} );
 		}, iOptions );
