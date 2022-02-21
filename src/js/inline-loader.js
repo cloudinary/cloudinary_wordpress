@@ -9,6 +9,7 @@ const CloudinaryLoader = {
 	pObserver: null,
 	rObserver: null,
 	aboveFold: true,
+	minPlaceholderThreshold: 500,
 	bind( image ) {
 		image.CLDbound = true;
 		if ( ! this.enabled ) {
@@ -85,8 +86,10 @@ const CloudinaryLoader = {
 		const iOptions = {
 			rootMargin: this.lazyThreshold + 'px 0px ' + this.lazyThreshold + 'px 0px',
 		};
+
+		const placeholderThreshold = this.minPlaceholderThreshold < this.lazyThreshold * 2 ? this.lazyThreshold * 2 : this.minPlaceholderThreshold;
 		const pOptions = {
-			rootMargin: this.lazyThreshold * 2 + 'px 0px ' + this.lazyThreshold * 2 + 'px 0px',
+			rootMargin: placeholderThreshold + 'px 0px ' + placeholderThreshold + 'px 0px',
 		};
 		this.rObserver = new ResizeObserver( ( entries, observer ) => {
 			entries.forEach( entry => {
