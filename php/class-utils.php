@@ -414,16 +414,17 @@ class Utils {
 	 *
 	 * @param string $path  The path to be parsed.
 	 * @param int    $flags Specifies a specific element to be returned.
+	 *                      Defaults to 15 which stands for PATHINFO_ALL.
 	 *
 	 * @return array|string|string[]
 	 */
-	public static function pathinfo( $path, $flags = PATHINFO_ALL ) {
-		$temp = setlocale( LC_ALL, 0 );
-		setlocale( LC_ALL, 'en', 'en_US.UTF-8' );
+	public static function pathinfo( $path, $flags = 15 ) {
+		$temp = setlocale( LC_CTYPE, 0 );
+		setlocale( LC_CTYPE, 'C.UTF-8' );
 
 		$pathinfo = pathinfo( $path, $flags );
 
-		setlocale( LC_ALL, $temp );
+		setlocale( LC_CTYPE, $temp );
 
 		return $pathinfo;
 	}
@@ -437,12 +438,12 @@ class Utils {
 	 * @return string
 	 */
 	public static function basename( $path, $suffix = '' ) {
-		$temp = setlocale( LC_ALL, 0 );
-		setlocale( LC_ALL, 'en', 'en_US.UTF-8' );
+		$temp = setlocale( LC_CTYPE, 0 );
+		setlocale( LC_CTYPE, 'C.UTF-8' );
 
 		$basename = basename( $path, $suffix );
 
-		setlocale( LC_ALL, $temp );
+		setlocale( LC_CTYPE, $temp );
 
 		return $basename;
 	}
