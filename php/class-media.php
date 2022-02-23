@@ -1357,7 +1357,7 @@ class Media extends Settings_Component implements Setup {
 				)
 			);
 
-			$url             = implode( '/', array_filter( $parts ) );
+			$url = implode( '/', array_filter( $parts ) );
 			$this->update_post_meta( $attachment_id, Sync::META_KEYS['raw_url'], $url );
 		}
 
@@ -2297,9 +2297,9 @@ class Media extends Settings_Component implements Setup {
 				continue;
 			}
 			if ( is_wp_error( $log ) ) {
-				$logs[ $signature ] = array();
+				$logs[ $signature ]                 = array();
 				$logs[ $signature ][ '_' . time() ] = array(
-					'code' => $log->get_error_code(),
+					'code'    => $log->get_error_code(),
 					'message' => $log->get_error_message(),
 				);
 				continue;
@@ -2320,12 +2320,12 @@ class Media extends Settings_Component implements Setup {
 					// Fix stored expanded time.
 					if ( ! is_numeric( $time ) ) {
 						$to_unset = $time;
-						$time = strtotime( $time );
+						$time     = strtotime( $time );
 					}
 					$time = "_{$time}";
 				} else { // Readable request.
 					$to_unset = "_{$time}";
-					$time = gmdate( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $time );
+					$time     = gmdate( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $time );
 				}
 
 				// Maybe cleanup log entries.

@@ -227,7 +227,7 @@ class Sync implements Setup, Assets {
 		$keys = $this->sync_base_struct;
 		if ( empty( $log ) || count( $log ) !== count( $keys ) ) {
 			$missing_keys = array_diff_key( $keys, $log );
-			$log = array_merge(
+			$log          = array_merge(
 				$log,
 				array_fill_keys( array_keys( $missing_keys ), array() )
 			);
