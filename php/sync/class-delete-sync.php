@@ -8,6 +8,7 @@
 namespace Cloudinary\Sync;
 
 use Cloudinary\Sync;
+use Cloudinary\Utils;
 
 /**
  * Class Delete_Sync.
