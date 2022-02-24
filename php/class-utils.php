@@ -315,8 +315,8 @@ class Utils {
 		/**
 		 * Filter the upgrade sequence.
 		 *
-		 * @hook  cloudinary_upgrade_sequence
-		 * @since 3.0.1
+		 * @hook   cloudinary_upgrade_sequence
+		 * @since  3.0.1
 		 *
 		 * @param $sequence {array} The default sequence.
 		 *
@@ -375,7 +375,7 @@ class Utils {
 
 		if ( empty( $subject ) ) {
 			$subject = sprintf(
-				// translators: The plugin version.
+			// translators: The plugin version.
 				__( 'I need help with Cloudinary WordPress plugin version %s', 'cloudinary' ),
 				$plugin->version
 			);
@@ -401,6 +401,7 @@ class Utils {
 	public static function print_inline_tag( $javascript ) {
 		if ( function_exists( 'wp_print_inline_script_tag' ) ) {
 			wp_print_inline_script_tag( $javascript );
+
 			return;
 		}
 
@@ -419,32 +420,16 @@ class Utils {
 	 * @return array|string|string[]
 	 */
 	public static function pathinfo( $path, $flags = 15 ) {
-		$temp = setlocale( LC_CTYPE, 0 );
-		setlocale( LC_CTYPE, 'C.UTF-8' );
+
+		/**
+		 * Approach based on wp_basename.
+		 *
+		 * @see wp-includes/formatting.php
+		 */
+		$path = str_replace( array( '%2F', '%5C' ), '/', urlencode( $path ) );
 
 		$pathinfo = pathinfo( $path, $flags );
 
-		setlocale( LC_CTYPE, $temp );
-
-		return $pathinfo;
-	}
-
-	/**
-	 * Returns trailing name component of path
-	 *
-	 * @param string $path   A path.
-	 * @param string $suffix If the name component ends in suffix this will also be cut off.
-	 *
-	 * @return string
-	 */
-	public static function basename( $path, $suffix = '' ) {
-		$temp = setlocale( LC_CTYPE, 0 );
-		setlocale( LC_CTYPE, 'C.UTF-8' );
-
-		$basename = basename( $path, $suffix );
-
-		setlocale( LC_CTYPE, $temp );
-
-		return $basename;
+		return is_array( $pathinfo ) ? array_map( 'urldecode', $pathinfo ) : urldecode( $pathinfo );
 	}
 }

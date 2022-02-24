@@ -593,8 +593,8 @@ class Cache extends Settings_Component implements Setup {
 		$active  = wp_get_active_and_valid_plugins();
 		$rows    = array();
 		foreach ( $active as $plugin_path ) {
-			$dir    = Utils::basename( dirname( $plugin_path ) );
-			$plugin = $dir . '/' . Utils::basename( $plugin_path );
+			$dir    = wp_basename( dirname( $plugin_path ) );
+			$plugin = $dir . '/' . wp_basename( $plugin_path );
 			if ( ! isset( $plugins[ $plugin ] ) ) {
 				continue;
 			}
@@ -636,7 +636,7 @@ class Cache extends Settings_Component implements Setup {
 		// Active Theme.
 		foreach ( $themes as $theme ) {
 			$theme_location = $theme->get_stylesheet_directory();
-			$theme_slug     = Utils::basename( dirname( $theme_location ) ) . '/' . Utils::basename( $theme_location );
+			$theme_slug     = wp_basename( dirname( $theme_location ) ) . '/' . wp_basename( $theme_location );
 			$slug           = sanitize_file_name( $theme_slug );
 			$rows[ $slug ]  = array(
 				'title'    => $theme->get( 'Name' ),

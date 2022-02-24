@@ -1874,7 +1874,7 @@ class Media extends Settings_Component implements Setup {
 
 		// Create an attachment post.
 		$file_path        = $asset['url'];
-		$file_name        = Utils::basename( $file_path );
+		$file_name        = wp_basename( $file_path );
 		$file_type        = wp_check_filetype( $file_name, null );
 		$attachment_title = sanitize_file_name( Utils::pathinfo( $file_name, PATHINFO_FILENAME ) );
 		$post_args        = array(
@@ -2023,7 +2023,7 @@ class Media extends Settings_Component implements Setup {
 				'uploading'     => true,
 				'src'           => $asset['src'],
 				'url'           => $asset['url'],
-				'filename'      => Utils::basename( $asset['src'] ),
+				'filename'      => wp_basename( $asset['src'] ),
 				'attachment_id' => $asset['attachment_id'],
 				'public_id'     => $asset['public_id'],
 			);
@@ -2547,7 +2547,7 @@ class Media extends Settings_Component implements Setup {
 			'unique_filename' => true,
 			'overwrite'       => false,
 			'resource_type'   => $this->get_resource_type( $attachment_id ),
-			'public_id'       => Utils::basename( $public_id ),
+			'public_id'       => wp_basename( $public_id ),
 			'context'         => $this->get_context_options( $attachment_id ),
 		);
 
@@ -2567,10 +2567,10 @@ class Media extends Settings_Component implements Setup {
 		$options = apply_filters( 'cloudinary_upload_options', $options, get_post( $attachment_id ), $this );
 		// Add folder to prevent folder contamination.
 		if ( $this->is_folder_synced( $attachment_id ) ) {
-			$options['public_id'] = $this->get_cloudinary_folder() . Utils::basename( $options['public_id'] );
+			$options['public_id'] = $this->get_cloudinary_folder() . wp_basename( $options['public_id'] );
 		} elseif ( ! empty( $folder ) ) {
 			// add in folder if not empty (not in root).
-			$options['public_id'] = trailingslashit( $folder ) . Utils::basename( $options['public_id'] );
+			$options['public_id'] = trailingslashit( $folder ) . wp_basename( $options['public_id'] );
 		}
 		$options['public_id'] = trim( $options['public_id'], '/.' );
 

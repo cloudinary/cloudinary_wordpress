@@ -144,9 +144,9 @@ class Download_Sync {
 
 		$meta = wp_get_attachment_metadata( $attachment_id );
 		if ( ! empty( $meta['file'] ) ) {
-			$file_name = isset( $meta['original_image'] ) ? Utils::basename( $meta['original_image'] ) : Utils::basename( $meta['file'] );
+			$file_name = isset( $meta['original_image'] ) ? wp_basename( $meta['original_image'] ) : wp_basename( $meta['file'] );
 		} else {
-			$file_name = Utils::basename( strtok( $source, '?' ) );
+			$file_name = wp_basename( strtok( $source, '?' ) );
 		}
 		try {
 			// Prime a file to stream to.

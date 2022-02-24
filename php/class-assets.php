@@ -773,7 +773,7 @@ class Assets extends Settings_Component {
 	public function create_edited_asset( $attachment_id ) {
 		$sizes   = get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true );
 		$assets  = $this->media->get_post_meta( $attachment_id, self::META_KEYS['edits'], true );
-		$current = Utils::basename( get_attached_file( $attachment_id, true ) );
+		$current = wp_basename( get_attached_file( $attachment_id, true ) );
 
 		if ( empty( $assets ) ) {
 			$assets = array();
@@ -787,7 +787,7 @@ class Assets extends Settings_Component {
 				}
 
 				$url = Delivery::clean_url( path_join( $base, $data['file'] ) );
-				if ( Utils::basename( $url ) === $current ) {
+				if ( wp_basename( $url ) === $current ) {
 					// Currently the original.
 					if ( isset( $assets[ $url ] ) ) {
 						// Restored from a crop.
@@ -1068,7 +1068,7 @@ class Assets extends Settings_Component {
 			'preview'         => $preview,
 			'data'            => $item,
 			'base'            => $parts[0],
-			'file'            => ! empty( $parts[1] ) ? $parts[1] : Utils::basename( $item['sized_url'] ),
+			'file'            => ! empty( $parts[1] ) ? $parts[1] : wp_basename( $item['sized_url'] ),
 			'size'            => $break,
 			'transformations' => $item['transformations'] ? $item['transformations'] : null,
 			'edit_url'        => admin_url( add_query_arg( $args, 'admin.php' ) ),
@@ -1090,7 +1090,7 @@ class Assets extends Settings_Component {
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 
 		$full_url  = home_url() . wp_parse_url( $url, PHP_URL_PATH );
-		$file_path = str_replace( home_url(), untrailingslashit( ABSPATH ), $full_url );
+		$file_path = str_replace( home_url(), untrailingslashit( ABSPATH ), rawurldecode( $full_url ) );
 		if ( ! file_exists( $file_path ) ) {
 			return false;
 		}
@@ -1098,7 +1098,7 @@ class Assets extends Settings_Component {
 		$size        = getimagesize( $file_path );
 		$size        = $size[0] . 'x' . $size[1];
 		$hash_name   = md5( $url );
-		$wp_filetype = wp_check_filetype( Utils::basename( $url ), wp_get_mime_types() );
+		$wp_filetype = wp_check_filetype( wp_basename( $url ), wp_get_mime_types() );
 		$args        = array(
 			'post_title'     => $url,
 			'post_content'   => '',
@@ -1283,8 +1283,8 @@ class Assets extends Settings_Component {
 			),
 		);
 		foreach ( $active as $plugin_path ) {
-			$dir    = Utils::basename( dirname( $plugin_path ) );
-			$plugin = $dir . '/' . Utils::basename( $plugin_path );
+			$dir    = wp_basename( dirname( $plugin_path ) );
+			$plugin = $dir . '/' . wp_basename( $plugin_path );
 			if ( ! isset( $plugins[ $plugin ] ) ) {
 				continue;
 			}
@@ -1372,7 +1372,7 @@ class Assets extends Settings_Component {
 		// Active Theme.
 		foreach ( $themes as $theme ) {
 			$theme_location = $theme->get_stylesheet_directory();
-			$theme_slug     = Utils::basename( dirname( $theme_location ) ) . '/' . Utils::basename( $theme_location );
+			$theme_slug     = wp_basename( dirname( $theme_location ) ) . '/' . wp_basename( $theme_location );
 			$slug           = sanitize_file_name( Utils::pathinfo( $theme_slug, PATHINFO_FILENAME ) );
 			$rows[]         = array(
 				'slug'    => $slug,

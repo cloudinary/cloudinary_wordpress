@@ -563,7 +563,7 @@ class Api {
 	 * @return string|\WP_Error
 	 */
 	public function create_local_copy( $file ) {
-		$file_copy = wp_tempnam( Utils::basename( $file ) );
+		$file_copy = wp_tempnam( wp_basename( $file ) );
 		$content   = file_get_contents( $file ); //phpcs:ignore
 
 		if ( file_put_contents( $file_copy, $content ) ) { //phpcs:ignore
