@@ -1373,7 +1373,7 @@ class Delivery implements Setup {
 		$dash = ltrim( strrchr( $file, '-' ), '-' );
 		if ( false !== $dash && 1 === substr_count( $dash, 'x' ) ) {
 			if ( is_numeric( str_replace( 'x', '', $dash ) ) ) {
-				$sized                                = Utils::basename( $url );
+				$sized                                = wp_basename( $url );
 				$url                                  = str_replace( '-' . $dash, '', $url );
 				$scaled                               = self::make_scaled_url( $url );
 				$this->found_urls[ $url ][ $dash ]    = $sized;

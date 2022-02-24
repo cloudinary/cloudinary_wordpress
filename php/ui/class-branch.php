@@ -87,7 +87,7 @@ class Branch {
 	 * @param string $name The name for this branch.
 	 */
 	public function __construct( $name = 'root' ) {
-		$this->name = Utils::basename( $name );
+		$this->name = wp_basename( $name );
 		$this->id   = $name;
 	}
 

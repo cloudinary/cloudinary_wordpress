@@ -1231,7 +1231,7 @@ class Sync implements Setup, Assets {
 	 */
 	public function generate_file_signature( $attachment_id ) {
 		$path = get_attached_file( $attachment_id );
-		$str  = ! $this->managers['media']->is_oversize_media( $attachment_id ) ? Utils::basename( $path ) : $attachment_id;
+		$str  = ! $this->managers['media']->is_oversize_media( $attachment_id ) ? wp_basename( $path ) : $attachment_id;
 
 		return $str . $this->is_auto_sync_enabled();
 	}
@@ -1246,7 +1246,7 @@ class Sync implements Setup, Assets {
 	public function generate_edit_signature( $attachment_id ) {
 		$backup_sizes = get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true );
 		$path         = get_attached_file( $attachment_id );
-		$str          = Utils::basename( $path );
+		$str          = wp_basename( $path );
 		if ( ! empty( $backup_sizes ) ) {
 			$str .= wp_json_encode( $backup_sizes );
 		}
