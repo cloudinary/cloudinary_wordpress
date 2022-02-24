@@ -1090,7 +1090,7 @@ class Assets extends Settings_Component {
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 
 		$full_url  = home_url() . wp_parse_url( $url, PHP_URL_PATH );
-		$file_path = str_replace( home_url(), untrailingslashit( ABSPATH ), rawurldecode( $full_url ) );
+		$file_path = str_replace( home_url(), untrailingslashit( ABSPATH ), $full_url );
 		if ( ! file_exists( $file_path ) ) {
 			return false;
 		}
