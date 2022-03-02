@@ -269,7 +269,7 @@ class Admin {
 
 			$page = $this->get_param( $name );
 			$this->settings->set_param( 'active_setting', $page['slug'] );
-			$section = filter_input( INPUT_GET, 'section', FILTER_SANITIZE_STRING );
+			$section = htmlspecialchars( ! empty( $_GET['section'] ) ? $_GET['section'] : '' );
 			if ( $section && $this->has_param( $section ) ) {
 				$this->section = $section;
 				$this->set_param( 'current_section', $this->get_param( $section ) );
@@ -395,13 +395,13 @@ class Admin {
 	 */
 	public function init_setting_save() {
 
-		$submission = filter_input( INPUT_POST, 'cloudinary-active-slug', FILTER_SANITIZE_STRING );
-		if ( ! $submission ) {
+		$submission = htmlspecialchars( ! empty( $_POST['cloudinary-active-slug'] ) ? $_POST['cloudinary-active-slug'] : '' ); // phpcs:ignore WordPress.Security.NonceVerification
+		if ( empty( $submission ) ) {
 			return; // Bail.
 		}
 
 		$args = array(
-			'_cld_nonce'       => FILTER_SANITIZE_STRING,
+			'_cld_nonce'       => FILTER_UNSAFE_RAW,
 			'_wp_http_referer' => FILTER_SANITIZE_URL,
 			$submission        => array(
 				'flags' => FILTER_REQUIRE_ARRAY,

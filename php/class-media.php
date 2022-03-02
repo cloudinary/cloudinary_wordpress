@@ -1960,9 +1960,9 @@ class Media extends Settings_Component implements Setup {
 		$data  = filter_input_array( INPUT_POST, $args );
 		$asset = array(
 			'version'         => (int) filter_var( $data['asset']['version'], FILTER_SANITIZE_NUMBER_INT ),
-			'public_id'       => filter_var( $data['asset']['public_id'], FILTER_SANITIZE_STRING ),
-			'type'            => filter_var( $data['asset']['type'], FILTER_SANITIZE_STRING ),
-			'format'          => filter_var( $data['asset']['format'], FILTER_SANITIZE_STRING ),
+			'public_id'       => htmlspecialchars( ! empty( $data['asset']['public_id'] ) ? $data['asset']['public_id'] : '' ),
+			'type'            => htmlspecialchars( ! empty( $data['asset']['type'] ) ? $data['asset']['type'] : '' ),
+			'format'          => htmlspecialchars( ! empty( $data['asset']['format'] ) ? $data['asset']['format'] : '' ),
 			'src'             => filter_var( $data['asset']['secure_url'], FILTER_SANITIZE_URL ),
 			'url'             => filter_var( $data['asset']['secure_url'], FILTER_SANITIZE_URL ),
 			'transformations' => array(),
@@ -1984,7 +1984,7 @@ class Media extends Settings_Component implements Setup {
 			array_walk_recursive(
 				$data['asset']['context'],
 				function ( $value, $key ) use ( &$asset ) {
-					$asset['meta'][ $key ] = filter_var( $value, FILTER_SANITIZE_STRING );
+					$asset['meta'][ $key ] = htmlspecialchars( $value );
 				}
 			);
 		}
@@ -2013,7 +2013,7 @@ class Media extends Settings_Component implements Setup {
 	 * Create and prepare a down sync asset from Cloudinary.
 	 */
 	public function down_sync_asset() {
-		$nonce = filter_input( INPUT_POST, 'nonce', FILTER_SANITIZE_STRING );
+		$nonce = filter_input( INPUT_POST, 'nonce', FILTER_UNSAFE_RAW );
 		if ( wp_verify_nonce( $nonce, 'wp_rest' ) ) {
 
 			$asset = $this->get_asset_payload();
@@ -2744,7 +2744,7 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function apply_media_library_filters( $query ) {
 		if ( is_admin() && $query->is_main_query() ) {
-			$request = filter_input( INPUT_GET, 'cloudinary-filter', FILTER_SANITIZE_STRING );
+			$request = htmlspecialchars( ! empty( $_GET['cloudinary-filter'] ) ? $_GET['cloudinary-filter'] : '' );
 
 			if ( $request && 'none' !== $request ) {
 				$meta_query = $query->get( 'meta_query' );
@@ -2772,7 +2772,7 @@ class Media extends Settings_Component implements Setup {
 		$current_screen = get_current_screen();
 
 		if ( $current_screen instanceof WP_Screen && $current_screen->post_type === $post_type ) {
-			$request = filter_input( INPUT_GET, 'cloudinary-filter', FILTER_SANITIZE_STRING );
+			$request = htmlspecialchars( ! empty( $_GET['cloudinary-filter'] ) ? $_GET['cloudinary-filter'] : '' );
 			?>
 			<select name="cloudinary-filter" id="cloudinary-filter">
 				<option value="none"><?php esc_html_e( 'No Cloudinary filters', 'cloudinary' ); ?></option>

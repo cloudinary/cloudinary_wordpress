@@ -10,7 +10,6 @@ namespace Cloudinary\Sync;
 use Cloudinary\Plugin;
 use Cloudinary\Sync;
 use Cloudinary\Media;
-use Cloudinary\Sync\Storage;
 use WP_Post;
 
 /**

@@ -474,17 +474,8 @@ class Global_Transformations {
 	 * @param int $post_id The post ID.
 	 */
 	public function save_taxonomy_ordering( $post_id ) {
-		$args = array(
-			'cld_tax_order'  => array(
-				'filter' => FILTER_SANITIZE_STRING,
-				'flags'  => FILTER_REQUIRE_ARRAY,
-			),
-			'cld_apply_type' => array(
-				'filter' => FILTER_SANITIZE_STRING,
-			),
-		);
-
-		$taxonomy_order = filter_input_array( INPUT_POST, $args );
+		$taxonomy_order['cld_tax_order']  = array_map( 'htmlspecialchars', ! empty( $_POST['cld_tax_order'] ) ? $_POST['cld_tax_order'] : array() ); // phpcs:ignore WordPress.Security.NonceVerification
+		$taxonomy_order['cld_apply_type'] = htmlspecialchars( ! empty( $_POST['cld_apply_type'] ) ? $_POST['cld_apply_type'] : '' ); // phpcs:ignore WordPress.Security.NonceVerification
 
 		if ( ! empty( $taxonomy_order['cld_tax_order'] ) ) {
 			// Map to ID's where needed.
