@@ -892,6 +892,7 @@ class Delivery implements Setup {
 			foreach ( $parts as &$part ) {
 				if ( $this->validate_url( $part ) ) {
 					$has_wp_size = $this->media->get_crop( $part, $tag_element['id'] );
+					$size = array();
 					if ( ! empty( $has_wp_size ) ) {
 						$size = $has_wp_size;
 					}
