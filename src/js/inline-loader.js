@@ -244,7 +244,7 @@ window.CLDBind = ( image )=>{
 };
 // Fallback.
 window.addEventListener( 'load', () => {
-	[...document.querySelectorAll('img[data-public-id][onload]')].forEach( ( image )=>{
+	[...document.querySelectorAll('img[data-cloudinary=lazy]')].forEach( ( image )=>{
 		CLDBind( image );
 	})
 } );
