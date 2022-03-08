@@ -31,7 +31,7 @@ class Api {
 	 *
 	 * @var string
 	 */
-	public $asset_url = 'res.cloudinary.com';
+	public $asset_url;
 
 	/**
 	 * Cloudinary API Version.
@@ -146,6 +146,7 @@ class Api {
 	public function __construct( $connect, $version ) {
 		$this->credentials    = $connect->get_credentials();
 		$this->plugin_version = $version;
+		$this->asset_url      = Utils::CLOUDINARY_HOST;
 		// Use CNAME.
 		if ( ! empty( $this->credentials['cname'] ) ) {
 			$this->asset_url = $this->credentials['cname'];

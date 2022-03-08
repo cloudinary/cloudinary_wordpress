@@ -585,6 +585,63 @@ final class Plugin {
 		if ( ! defined( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION' ) ) {
 			define( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION', '1.5.1' );
 		}
+
+		/**
+		 * The Cloudinary URL public ID.
+		 */
+		if ( ! defined( 'PHP_URL_PUBLIC_ID' ) ) {
+			define( 'PHP_URL_PUBLIC_ID', 8 );
+		}
+
+		/**
+		 * The Cloudinary URL version.
+		 */
+		if ( ! defined( 'PHP_URL_VERSION' ) ) {
+			define( 'PHP_URL_VERSION', 9 );
+		}
+
+		/**
+		 * The Cloudinary URL transformations.
+		 */
+		if ( ! defined( 'PHP_URL_TRANSFORMATIONS' ) ) {
+			define( 'PHP_URL_TRANSFORMATIONS', 10 );
+		}
+
+		/**
+		 * The Cloudinary URL parsed transformations.
+		 */
+		if ( ! defined( 'PHP_URL_TRANSFORMATIONS_PARSED' ) ) {
+			define( 'PHP_URL_TRANSFORMATIONS_PARSED', 11 );
+		}
+
+		/**
+		 * The Cloudinary URL asset type.
+		 */
+		if ( ! defined( 'PHP_URL_ASSET_TYPE' ) ) {
+			define( 'PHP_URL_ASSET_TYPE', 12 );
+		}
+
+		/**
+		 * The Cloudinary URL delivery.
+		 */
+		if ( ! defined( 'PHP_URL_DELIVERY' ) ) {
+			define( 'PHP_URL_DELIVERY', 13 );
+		}
+
+		/**
+		 * The Cloudinary URL format.
+		 */
+		if ( ! defined( 'PHP_URL_FORMAT' ) ) {
+			define( 'PHP_URL_FORMAT', 14 );
+		}
+
+		/**
+		 * The Cloudinary URL query parsed.
+		 */
+		if ( ! defined( 'PHP_URL_QUERY_PARSED' ) ) {
+			define( 'PHP_URL_QUERY_PARSED', 15 );
+		}
+
 	}
 
 	/**

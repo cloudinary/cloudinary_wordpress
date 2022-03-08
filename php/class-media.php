@@ -646,31 +646,9 @@ class Media extends Settings_Component implements Setup {
 			return null;
 		}
 
-		$path  = wp_parse_url( $url, PHP_URL_PATH );
-		$parts = explode( '/', ltrim( $path, '/' ) );
-
-		// Need to find the version part as anything after this is the public id.
-		foreach ( $parts as $part ) {
-			array_shift( $parts ); // Get rid of the first element.
-			if ( 'v' === substr( $part, 0, 1 ) && is_numeric( substr( $part, 1 ) ) ) {
-				break; // Stop removing elements.
-			}
-		}
-
-		// The remaining items should be the file.
-		$file      = implode( '/', $parts );
-		$path_info = Utils::pathinfo( $file );
-
-		// Is SEO friendly URL.
-		if ( 0 === strpos( $path, '/images/' ) ) {
-			$public_id = $path_info['dirname'];
-		} else {
-			$public_id = isset( $path_info['dirname'] ) && '.' !== $path_info['dirname'] ? $path_info['dirname'] . DIRECTORY_SEPARATOR . $path_info['filename'] : $path_info['filename'];
-		}
-		$public_id = trim( $public_id, './' );
-
+		$public_id = Utils::parse_url( $url, PHP_URL_PUBLIC_ID );
 		if ( $as_sync_key ) {
-			$transformations = $this->get_transformations_from_string( $url );
+			$transformations = Utils::parse_url( $url, PHP_URL_TRANSFORMATIONS_PARSED );
 			$public_id      .= ! empty( $transformations ) ? wp_json_encode( $transformations ) : '';
 		}
 

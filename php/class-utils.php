@@ -7,6 +7,7 @@
 
 namespace Cloudinary;
 
+use Cloudinary\Connect\Api;
 use Cloudinary\Settings\Setting;
 use Google\Web_Stories\Story_Post_Type;
 
@@ -16,6 +17,11 @@ use Google\Web_Stories\Story_Post_Type;
  * @package Cloudinary
  */
 class Utils {
+
+	/**
+	 * Holds the default/public Cloudinary host.
+	 */
+	const CLOUDINARY_HOST = 'res.cloudinary.com';
 
 	/**
 	 * Filter an array recursively
@@ -431,5 +437,158 @@ class Utils {
 		$pathinfo = pathinfo( $path, $flags );
 
 		return is_array( $pathinfo ) ? array_map( 'urldecode', $pathinfo ) : urldecode( $pathinfo );
+	}
+
+	/**
+	 * Check if a delivery type is Cloudinary supported.
+	 *
+	 * @param string $type The type to check.
+	 *
+	 * @return bool
+	 */
+	public static function is_delivery_type( $type ) {
+		$types = array(
+			'upload',
+			'private',
+			'authenticated',
+			'list',
+			'fetch',
+			'facebook',
+			'twitter',
+			'twitter_name',
+			'gravatar',
+			'youtube',
+			'hulu',
+			'vimeo',
+			'animoto',
+			'worldstarhiphop',
+			'dailymotion',
+			'multi	',
+			'text',
+			'sprite',
+		);
+
+		return in_array( $type, $types, true );
+	}
+
+	/**
+	 * Parse a Cloudinary URL into components.
+	 *
+	 * @param string $url       The URL to parse.
+	 * @param int    $component The flag of a single component to get.
+	 *
+	 * @return array|mixed|object|null
+	 */
+	public static function parse_url( $url, $component = - 1 ) {
+		static $api, $media, $ext_types, $urls;
+
+		$defaults = array(
+			'scheme'                 => null,
+			'host'                   => null,
+			'port'                   => null,
+			'user'                   => null,
+			'pass'                   => null,
+			'path'                   => null,
+			'query'                  => null,
+			'fragment'               => null,
+			'public_id'              => null,
+			'version'                => 1,
+			'transformations'        => null,
+			'transformations_parsed' => array(),
+			'asset_type'             => null,
+			'delivery'               => null,
+			'format'                 => null,
+			'query_parsed'           => array(),
+		);
+
+		if ( ! isset( $urls[ $url ] ) ) {
+			if ( ! $api ) {
+				$media     = get_plugin_instance()->get_component( 'media' );
+				$connect   = get_plugin_instance()->get_component( 'connect' );
+				$api       = $connect->api;
+				$types     = wp_get_ext_types();
+				$ext_types = array_merge( $types['image'], $types['audio'], $types['video'] );
+			}
+			$is_seo     = false;
+			$components = wp_parse_args( wp_parse_url( $url ), $defaults );
+
+			if ( ! $api || ! $media->is_cloudinary_url( $url ) ) {
+				// Not connected. Return as per normal.
+				return $components;
+			}
+			$parts = explode( '/', trim( $components['path'], '/' ) );
+
+			/**
+			 * Allocate the parts according to the Cloudinary URL structure.
+			 *
+			 * @see https://cloudinary.com/documentation/image_transformations#transformation_url_structure
+			 */
+			if ( self::CLOUDINARY_HOST === $components['host'] ) {
+				array_shift( $parts );
+			}
+
+			// Type and Delivery.
+			$components['asset_type'] = array_shift( $parts );
+			if ( 'images' === $components['asset_type'] ) {
+				$components['asset_type'] = 'image';
+				$components['delivery']   = 'upload';
+				$is_seo                   = true;
+			} else {
+				$maybe_delivery_type = array_shift( $parts );
+				if ( self::is_delivery_type( $maybe_delivery_type ) ) {
+					$components['delivery'] = $maybe_delivery_type;
+				}
+			}
+
+			// If we don't have a delivery type at this point, the URL is not a proper constructed Cloudinary URL.
+			if ( $components['delivery'] ) {
+				// Transformations.
+				$has_transformations = $media->get_transformations_from_string( ltrim( $components['path'], '/' ), $components['asset_type'] );
+				// Remove transformations string if we have any.
+				if ( ! empty( $has_transformations ) ) {
+					$components['transformations']        = Api::generate_transformation_string( $has_transformations, $components['asset_type'] );
+					$components['transformations_parsed'] = $has_transformations;
+					$transformation_parts                 = explode( '/', $components['transformations'] );
+					$new_parts                            = array_diff( $parts, $transformation_parts );
+					$parts                                = array_values( $new_parts ); // Reset the keys since array_diff keeps the indexes.
+				}
+
+				// Version.
+				if ( 'v' === substr( $parts[0], 0, 1 ) && is_numeric( substr( $parts[0], 1 ) ) ) {
+					$components['version'] = array_shift( $parts );
+				}
+
+				// Get public_id.
+				$cloudinary_id           = implode( '/', $parts ); // Cloudinary ID includes the extension.
+				$components['public_id'] = $cloudinary_id;
+				$ext_pos                 = strrpos( $cloudinary_id, '.' );
+				if ( $ext_pos ) {
+					$format_maybe = substr( $cloudinary_id, $ext_pos + 1 );
+					if ( in_array( $format_maybe, $ext_types, true ) ) {
+						$components['format']    = $format_maybe;
+						$components['public_id'] = substr( $cloudinary_id, 0, $ext_pos );
+					}
+				}
+				if ( true === $is_seo ) {
+					$components['public_id'] = dirname( $components['public_id'] );
+				}
+			}
+
+			if ( ! empty( $components['query'] ) ) {
+				wp_parse_str( $components['query'], $components['query_parsed'] );
+			}
+			$urls[ $url ] = array_filter( $components );
+		}
+
+		$components = $urls[ $url ];
+
+		// Return the single component if one is specified.
+		if ( 0 <= $component ) {
+			$keys       = array_keys( $defaults );
+			$key        = $keys[ $component ];
+			$components = isset( $urls[ $url ][ $key ] ) ? $urls[ $url ][ $key ] : null;
+		}
+
+		return $components;
 	}
 }
