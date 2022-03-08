@@ -9,6 +9,7 @@ namespace Cloudinary\Sync;
 
 use Cloudinary\Delivery;
 use Cloudinary\Sync;
+use Cloudinary\Utils;
 
 /**
  * Class Upload_Sync.
@@ -300,7 +301,7 @@ class Upload_Sync {
 				break;
 			case 'edit':
 				$file                 = get_attached_file( $attachment_id, true );
-				$options['public_id'] = ltrim( path_join( dirname( $options['public_id'] ), pathinfo( $file, PATHINFO_FILENAME ) ), './' ) . $suffix;
+				$options['public_id'] = ltrim( path_join( dirname( $options['public_id'] ), Utils::pathinfo( $file, PATHINFO_FILENAME ) ), './' ) . $suffix;
 				add_filter( 'wp_get_original_image_path', array( $this, 'filter_backup_original' ), 10, 2 );
 				$options['overwrite'] = true; // It's safe to do this, since an edited file will be massively unique due to the -e{timestamp} suffix.
 				$result               = $this->connect->api->upload( $attachment_id, $options, array(), false );
@@ -363,13 +364,12 @@ class Upload_Sync {
 	 * @return array|\WP_Error
 	 */
 	public function context_update( $attachment_id ) {
-		// dynamic sync type..
-		$type    = $this->sync->get_sync_type( $attachment_id );
+
 		$options = $this->media->get_upload_options( $attachment_id );
 		$result  = $this->connect->api->context( $options );
 
 		if ( ! is_wp_error( $result ) ) {
-			$this->sync->set_signature_item( $attachment_id, $type );
+			$this->sync->set_signature_item( $attachment_id, 'options' );
 			update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $options['public_id'] );
 		}
 

@@ -277,7 +277,7 @@ class Delivery implements Setup {
 		$this->sync->register_sync_type( 'delivery', $structure );
 
 		$structure = array(
-			'asset_state' => 1,
+			'asset_state' => 0,
 			'generate'    => array( $this, 'generate_signature' ), // Method to generate a signature.
 			'priority'    => 50,
 			'sync'        => array( $this, 'update_relation' ),
@@ -450,7 +450,7 @@ class Delivery implements Setup {
 			'sized_url'       => $sized_url,
 			'width'           => $width_height[0] ? $width_height[0] : 0,
 			'height'          => $width_height[1] ? $width_height[1] : 0,
-			'format'          => pathinfo( $sized_url, PATHINFO_EXTENSION ),
+			'format'          => Utils::pathinfo( $sized_url, PATHINFO_EXTENSION ),
 			'sync_type'       => $type,
 			'post_state'      => 'inherit',
 			'transformations' => ! empty( $transformations ) ? Api::generate_transformation_string( $transformations, $resource ) : null,
@@ -851,11 +851,16 @@ class Delivery implements Setup {
 			$tag_element['atts']['class'][] = 'wp-' . $tag_element['type'] . '-' . $tag_element['id'];
 		}
 
+		$size = array();
+
 		// Get size.
-		$size = array(
-			$tag_element['atts']['width'],
-			$tag_element['atts']['height'],
-		);
+		if ( 'video' !== $tag_element['tag'] ) {
+			$size = array(
+				$tag_element['atts']['width'],
+				$tag_element['atts']['height'],
+			);
+		}
+
 		if ( ! empty( $tag_element['atts']['src'] ) ) {
 			$has_wp_size = $this->media->get_crop( $tag_element['atts']['src'], $tag_element['id'] );
 			if ( ! empty( $has_wp_size ) ) {
@@ -1114,7 +1119,7 @@ class Delivery implements Setup {
 					$tag_element['width']                  = ! empty( $meta['width'] ) ? $meta['width'] : 0;
 					$tag_element['height']                 = ! empty( $meta['height'] ) ? $meta['height'] : 0;
 					$tag_element['atts']['data-public-id'] = $cloudinary_id_maybe;
-					$tag_element['format']                 = pathinfo( $cloudinary_id_maybe, PATHINFO_EXTENSION );
+					$tag_element['format']                 = Utils::pathinfo( $cloudinary_id_maybe, PATHINFO_EXTENSION );
 				}
 			}
 		}
@@ -1154,12 +1159,23 @@ class Delivery implements Setup {
 	 */
 	protected function is_content_dir( $url ) {
 		static $base = '';
+
 		if ( empty( $base ) ) {
 			$dirs = wp_upload_dir();
 			$base = wp_parse_url( $dirs['baseurl'], PHP_URL_PATH );
 		}
-		$path     = wp_parse_url( $url, PHP_URL_PATH );
-		$is_local = substr( $path, 0, strlen( $base ) ) === $base;
+
+		$path     = wp_parse_url( dirname( $url ), PHP_URL_PATH );
+		$is_local = 0 === strpos( $path, $base );
+
+		if ( $is_local ) {
+			$dirname = trim( substr( $path, strlen( $base ), 8 ), DIRECTORY_SEPARATOR );
+			if ( empty( $dirname ) || preg_match( '/\d{4}\/\d{2}/', $dirname ) ) {
+				$is_local = true;
+			} elseif ( ! empty( $dirname ) ) {
+				$is_local = false;
+			}
+		}
 
 		/**
 		 * Filter if the url is a local asset.
@@ -1253,7 +1269,7 @@ class Delivery implements Setup {
 		if ( empty( $parts['path'] ) || '/' === $parts['path'] ) {
 			return false; // exclude base domains.
 		}
-		$ext = pathinfo( $parts['path'], PATHINFO_EXTENSION );
+		$ext = Utils::pathinfo( $parts['path'], PATHINFO_EXTENSION );
 		if ( empty( $ext ) || ! $this->is_allowed_type( $ext ) ) {
 			return false;
 		}
@@ -1268,6 +1284,18 @@ class Delivery implements Setup {
 	 * @param null|bool $auto_sync If auto_sync is on.
 	 */
 	protected function set_usability( $item, $auto_sync = null ) {
+
+		/**
+		 * Filter the found item to allow usability to be altered.
+		 *
+		 * @hook   cloudinary_set_usable_asset
+		 * @since  3.0.2
+		 *
+		 * @param $item     {array} The found asset array.
+		 *
+		 * @return {array}
+		 */
+		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
 
 		$this->known[ $item['public_id'] ] = $item;
 		$scaled                            = self::make_scaled_url( $item['sized_url'] );
@@ -1293,7 +1321,14 @@ class Delivery implements Setup {
 			// Most likely an asset with a public ID.
 			$this->usable[ $item['sized_url'] ] = $item['sized_url'];
 			if ( self::get_settings_signature() !== $item['signature'] ) {
-				$this->sync->add_to_sync( $item['post_id'] );
+				$sync_type = $this->sync->get_sync_type( $item['post_id'] );
+				if ( $sync_type ) {
+					$this->sync->add_to_sync( $item['post_id'] );
+					if ( $this->sync->is_required( $sync_type, $item['post_id'] ) ) {
+						// Can't render this, so lets remove it from usable list.
+						unset( $this->usable[ $item['sized_url'] ] );
+					}
+				}
 			}
 		} else {
 			// This is an asset or media without a public id.
@@ -1334,11 +1369,11 @@ class Delivery implements Setup {
 	 * @return string
 	 */
 	public function maybe_unsize_url( $url ) {
-		$file = pathinfo( $url, PATHINFO_FILENAME );
+		$file = Utils::pathinfo( $url, PATHINFO_FILENAME );
 		$dash = ltrim( strrchr( $file, '-' ), '-' );
 		if ( false !== $dash && 1 === substr_count( $dash, 'x' ) ) {
 			if ( is_numeric( str_replace( 'x', '', $dash ) ) ) {
-				$sized                                = basename( $url );
+				$sized                                = wp_basename( $url );
 				$url                                  = str_replace( '-' . $dash, '', $url );
 				$scaled                               = self::make_scaled_url( $url );
 				$this->found_urls[ $url ][ $dash ]    = $sized;
@@ -1357,7 +1392,7 @@ class Delivery implements Setup {
 	 * @return string
 	 */
 	public static function make_scaled_url( $url ) {
-		$file = pathinfo( $url );
+		$file = Utils::pathinfo( $url );
 		$dash = strrchr( $file['filename'], '-' );
 		if ( '-scaled' === $dash ) {
 			return $url;
@@ -1374,7 +1409,7 @@ class Delivery implements Setup {
 	 * @return string
 	 */
 	public static function descaled_url( $url ) {
-		$file = pathinfo( $url );
+		$file = Utils::pathinfo( $url );
 		$dash = strrchr( $file['filename'], '-' );
 		if ( '-scaled' === $dash ) {
 			$file['basename'] = str_replace( '-scaled.', '.', $file['basename'] );

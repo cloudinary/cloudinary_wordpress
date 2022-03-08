@@ -224,9 +224,13 @@ class Sync implements Setup, Assets {
 	 */
 	public function log_sync_result( $attachment_id, $type, $result ) {
 		$log  = $this->managers['media']->get_process_logs( $attachment_id, true );
-		$keys = array_keys( $this->sync_base_struct );
+		$keys = $this->sync_base_struct;
 		if ( empty( $log ) || count( $log ) !== count( $keys ) ) {
-			$log = array_fill_keys( $keys, array() );
+			$missing_keys = array_diff_key( $keys, $log );
+			$log = array_merge(
+				$log,
+				array_fill_keys( array_keys( $missing_keys ), array() )
+			);
 		}
 		if ( isset( $log[ $type ] ) ) {
 			if ( is_wp_error( $result ) ) {
@@ -394,7 +398,7 @@ class Sync implements Setup, Assets {
 		} else {
 			$file = get_attached_file( $attachment_id );
 		}
-		$filename  = pathinfo( $file, PATHINFO_FILENAME );
+		$filename  = Utils::pathinfo( $file, PATHINFO_FILENAME );
 		$public_id = $cld_folder . $filename;
 
 		return ltrim( $public_id, '/' );
@@ -566,16 +570,18 @@ class Sync implements Setup, Assets {
 				'note'     => __( 'Updating breakpoints', 'cloudinary' ),
 			),
 			'options'      => array(
-				'generate' => function ( $attachment_id ) {
+				'asset_state' => 0,
+				'generate'    => function ( $attachment_id ) {
 					$options = $this->managers['media']->get_upload_options( $attachment_id );
 					unset( $options['eager'], $options['eager_async'] );
 
 					return $options;
 				},
-				'priority' => 30,
-				'sync'     => array( $this->managers['upload'], 'context_update' ),
-				'state'    => 'info syncing',
-				'note'     => __( 'Updating metadata', 'cloudinary' ),
+				'validate'    => array( $this, 'been_synced' ),
+				'priority'    => 30,
+				'sync'        => array( $this->managers['upload'], 'context_update' ),
+				'state'       => 'info syncing',
+				'note'        => __( 'Updating metadata', 'cloudinary' ),
 			),
 			'cloud_name'   => array(
 				'generate' => array( $this->managers['connect'], 'get_cloud_name' ),
@@ -1225,7 +1231,7 @@ class Sync implements Setup, Assets {
 	 */
 	public function generate_file_signature( $attachment_id ) {
 		$path = get_attached_file( $attachment_id );
-		$str  = ! $this->managers['media']->is_oversize_media( $attachment_id ) ? basename( $path ) : $attachment_id;
+		$str  = ! $this->managers['media']->is_oversize_media( $attachment_id ) ? wp_basename( $path ) : $attachment_id;
 
 		return $str . $this->is_auto_sync_enabled();
 	}
@@ -1240,7 +1246,7 @@ class Sync implements Setup, Assets {
 	public function generate_edit_signature( $attachment_id ) {
 		$backup_sizes = get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true );
 		$path         = get_attached_file( $attachment_id );
-		$str          = basename( $path );
+		$str          = wp_basename( $path );
 		if ( ! empty( $backup_sizes ) ) {
 			$str .= wp_json_encode( $backup_sizes );
 		}

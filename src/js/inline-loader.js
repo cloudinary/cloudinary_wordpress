@@ -242,3 +242,9 @@ window.CLDBind = ( image )=>{
 		CloudinaryLoader.bind( image );
 	}
 };
+// Fallback.
+window.addEventListener( 'load', () => {
+	[...document.querySelectorAll('img[data-cloudinary="lazy"]')].forEach( ( image )=>{
+		CLDBind( image );
+	})
+} );

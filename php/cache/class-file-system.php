@@ -215,7 +215,7 @@ class File_System {
 	 */
 	public function get_file_urls( $path, $files = array(), $version = null ) {
 
-		$location_point = basename( $path );
+		$location_point = wp_basename( $path );
 		$type           = $this->get_location( $path );
 		switch ( $type ) {
 			case 'plugin':
