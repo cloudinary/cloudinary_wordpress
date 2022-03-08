@@ -649,9 +649,11 @@ class Media extends Settings_Component implements Setup {
 		$path  = wp_parse_url( $url, PHP_URL_PATH );
 		$parts = explode( '/', ltrim( $path, '/' ) );
 
+		$maybe_seo = array();
+
 		// Need to find the version part as anything after this is the public id.
 		foreach ( $parts as $part ) {
-			array_shift( $parts ); // Get rid of the first element.
+			$maybe_seo[] = array_shift( $parts ); // Get rid of the first element.
 			if ( 'v' === substr( $part, 0, 1 ) && is_numeric( substr( $part, 1 ) ) ) {
 				break; // Stop removing elements.
 			}
@@ -662,7 +664,7 @@ class Media extends Settings_Component implements Setup {
 		$path_info = Utils::pathinfo( $file );
 
 		// Is SEO friendly URL.
-		if ( 0 === strpos( $path, '/images/' ) ) {
+		if ( in_array( 'images', $maybe_seo, true ) ) {
 			$public_id = $path_info['dirname'];
 		} else {
 			$public_id = isset( $path_info['dirname'] ) && '.' !== $path_info['dirname'] ? $path_info['dirname'] . DIRECTORY_SEPARATOR . $path_info['filename'] : $path_info['filename'];
