@@ -316,8 +316,8 @@ class Filter {
 			$public_id  = $this->media->get_public_id( $attachment_id );
 			$compare_id = $this->media->get_public_id_from_url( $url );
 			if ( ! empty( $compare_id ) && $compare_id !== $public_id ) {
-				$compare_id .= '.' . pathinfo( $local_url, PATHINFO_EXTENSION );
-				$local_url   = path_join( dirname( $local_url ), basename( $compare_id ) );
+				$compare_id .= '.' . Utils::pathinfo( $local_url, PATHINFO_EXTENSION );
+				$local_url   = path_join( dirname( $local_url ), wp_basename( $compare_id ) );
 			}
 			// Replace old tag.
 			$content = str_replace( $url, $local_url, $content );
@@ -435,8 +435,8 @@ class Filter {
 	 */
 	public function maybe_alternate_id( $attachment_id, $url ) {
 		$meta = wp_get_attachment_metadata( $attachment_id );
-		$base = basename( $url );
-		if ( basename( $meta['file'] ) === $base ) {
+		$base = wp_basename( $url );
+		if ( wp_basename( $meta['file'] ) === $base ) {
 			// Full image meta matching the current URL, indicates is the current edit. We can use this ID.
 			return $attachment_id;
 		}

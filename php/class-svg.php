@@ -98,7 +98,7 @@ class SVG extends Delivery_Feature {
 		if ( empty( $original_filename ) ) {
 			$original_filename = $file;
 		}
-		$ext = pathinfo( $original_filename, PATHINFO_EXTENSION );
+		$ext = Utils::pathinfo( $original_filename, PATHINFO_EXTENSION );
 		if ( $ext && 'svg' === strtolower( $ext ) ) {
 			libxml_use_internal_errors();
 			$data = simplexml_load_file( $file );
@@ -128,7 +128,7 @@ class SVG extends Delivery_Feature {
 	 * @return array
 	 */
 	public function check_svg_type( $wp_check_filetype_and_ext, $file, $filename ) {
-		if ( 'svg' === pathinfo( $filename, PATHINFO_EXTENSION ) ) {
+		if ( 'svg' === Utils::pathinfo( $filename, PATHINFO_EXTENSION ) ) {
 			$wp_check_filetype_and_ext['ext']  = false;
 			$wp_check_filetype_and_ext['type'] = false;
 			if ( true === $this->validate_svg_file( $file, $filename ) ) {

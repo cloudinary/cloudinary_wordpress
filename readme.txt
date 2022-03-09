@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: images, videos, DAM, optimization, CDN
 Requires at least: 4.7
-Tested up to: 5.8.3
+Tested up to: 5.9.1
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -142,7 +142,21 @@ Your site is now setup to start using Cloudinary.
 
 == Changelog ==
 
-3.0.1 (18 January 2021)
+= 3.0.2 (08 March 2022) =
+
+Fixes and Improvements:
+
+* Improved system report error handling
+* Fixed compatibility issue with the FooGallery plugin
+* Fixed video dimensions attributes for imported video assets
+* Fixed the `CLDBind not defined` error message
+* Fixed WooCommerce gallery links
+* Fixed support for images with double extensions
+* Added support for the Brizy page builder
+* Added support for Querying raw HTML content with WPGraphQL - content only
+* Better handling UTF-8 characters
+
+= 3.0.1 (18 January 2022) =
 
 Fixes and Improvements:
 
