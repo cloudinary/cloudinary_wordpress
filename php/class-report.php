@@ -484,8 +484,8 @@ class Report extends Settings_Component implements Setup {
 	 * Maybe generate the report.
 	 */
 	public function maybe_generate_report() {
-		$page     = filter_input( INPUT_GET, 'page', FILTER_SANITIZE_STRING );
-		$section  = filter_input( INPUT_GET, 'section', FILTER_SANITIZE_STRING );
+		$page     = filter_input( INPUT_GET, 'page', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+		$section  = filter_input( INPUT_GET, 'section', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
 		$download = filter_input( INPUT_GET, self::REPORT_DOWNLOAD_KEY, FILTER_VALIDATE_BOOLEAN );
 		if ( $download && 'cloudinary_help' === $page && 'system-report' === $section && current_user_can( 'manage_options' ) ) {
 			$report = $this->get_report_data();

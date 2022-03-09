@@ -93,7 +93,7 @@ class String_Replace implements Setup {
 	 * @return null|string
 	 */
 	public function init_debug( $template ) {
-		if ( defined( 'CLD_DEBUG' ) && true === CLD_DEBUG && ! filter_input( INPUT_GET, '_bypass', FILTER_SANITIZE_STRING ) ) {
+		if ( defined( 'CLD_DEBUG' ) && true === CLD_DEBUG && ! filter_input( INPUT_GET, '_bypass', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) ) ) {
 			ob_start();
 			include $template;
 			$html = ob_get_clean();

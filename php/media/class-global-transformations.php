@@ -476,11 +476,15 @@ class Global_Transformations {
 	public function save_taxonomy_ordering( $post_id ) {
 		$args = array(
 			'cld_tax_order'  => array(
-				'filter' => FILTER_SANITIZE_STRING,
-				'flags'  => FILTER_REQUIRE_ARRAY,
+				'filter'  => FILTER_CALLBACK,
+				'flags'   => FILTER_REQUIRE_ARRAY,
+				'options' => function( $value ) {
+					return sanitize_text_field( $value );
+				},
 			),
 			'cld_apply_type' => array(
-				'filter' => FILTER_SANITIZE_STRING,
+				'filter'  => FILTER_CALLBACK,
+				'options' => 'sanitize_text_field',
 			),
 		);
 
