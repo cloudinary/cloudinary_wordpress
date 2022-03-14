@@ -170,6 +170,7 @@ class Media extends Settings_Component implements Setup {
 			'cloudinary_media_filters',
 			array(
 				SYNC::META_KEYS['sync_error'] => __( 'Error', 'cloudinary' ),
+				SYNC::META_KEYS['unsynced']   => __( 'Unsynced', 'cloudinary' ),
 			)
 		);
 
@@ -2761,6 +2762,16 @@ class Media extends Settings_Component implements Setup {
 					'compare' => 'EXISTS',
 				);
 				$query->set( 'meta_query', $meta_query );
+			}
+
+			if ( SYNC::META_KEYS['unsynced'] === $request ) {
+				global $wpdb;
+				$wpdb->cld_table = Utils::get_relationship_table();
+				$result          = $wpdb->get_col( "SELECT post_id FROM $wpdb->cld_table WHERE public_id IS NULL" );
+
+				if ( ! empty( $result ) ) {
+					$query->set( 'post__in', $result );
+				}
 			}
 		}
 	}
