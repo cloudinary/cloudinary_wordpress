@@ -2782,9 +2782,7 @@ class Media extends Settings_Component implements Setup {
 	 * @param string $post_type The post type slug.
 	 */
 	public function filter_media_library( $post_type ) {
-		$current_screen = get_current_screen();
-
-		if ( $current_screen instanceof WP_Screen && $current_screen->post_type === $post_type ) {
+		if ( 'attachment' === $post_type ) {
 			$request = filter_input( INPUT_GET, 'cloudinary-filter', FILTER_SANITIZE_STRING );
 			?>
 			<select name="cloudinary-filter" id="cloudinary-filter">
