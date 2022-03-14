@@ -2749,7 +2749,7 @@ class Media extends Settings_Component implements Setup {
 		if ( is_admin() && $query->is_main_query() ) {
 			$request = filter_input( INPUT_GET, 'cloudinary-filter', FILTER_SANITIZE_STRING );
 
-			if ( $request && 'none' !== $request ) {
+			if ( SYNC::META_KEYS['sync_error'] === $request ) {
 				$meta_query = $query->get( 'meta_query' );
 				if ( ! is_array( $meta_query ) ) {
 					$meta_query = array();
