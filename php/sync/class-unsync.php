@@ -228,8 +228,10 @@ class Unsync {
 
 			$file_maybe = get_attached_file( $attachment_id );
 			if ( ! file_exists( $file_maybe ) ) {
+				remove_filter( 'wp_unique_filename', array( $this->storage, 'unique_filename' ), 10 );
 				$date     = get_post_datetime( $attachment_id );
 				$download = $this->sync->managers['download']->download_asset( $attachment_id, $url, $date->format( 'Y/m' ) );
+				add_filter( 'wp_unique_filename', array( $this->storage, 'unique_filename' ), 10, 3 );
 				if ( is_wp_error( $download ) ) {
 					wp_die( esc_html( $download->get_error_message() ) );
 				}
