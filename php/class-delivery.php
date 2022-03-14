@@ -450,7 +450,7 @@ class Delivery implements Setup {
 			'sized_url'       => $sized_url,
 			'width'           => $width_height[0] ? $width_height[0] : 0,
 			'height'          => $width_height[1] ? $width_height[1] : 0,
-			'format'          => pathinfo( $sized_url, PATHINFO_EXTENSION ),
+			'format'          => Utils::pathinfo( $sized_url, PATHINFO_EXTENSION ),
 			'sync_type'       => $type,
 			'post_state'      => 'inherit',
 			'transformations' => ! empty( $transformations ) ? Api::generate_transformation_string( $transformations, $resource ) : null,
@@ -892,6 +892,7 @@ class Delivery implements Setup {
 			foreach ( $parts as &$part ) {
 				if ( $this->validate_url( $part ) ) {
 					$has_wp_size = $this->media->get_crop( $part, $tag_element['id'] );
+					$size = array();
 					if ( ! empty( $has_wp_size ) ) {
 						$size = $has_wp_size;
 					}
@@ -1119,7 +1120,7 @@ class Delivery implements Setup {
 					$tag_element['width']                  = ! empty( $meta['width'] ) ? $meta['width'] : 0;
 					$tag_element['height']                 = ! empty( $meta['height'] ) ? $meta['height'] : 0;
 					$tag_element['atts']['data-public-id'] = $cloudinary_id_maybe;
-					$tag_element['format']                 = pathinfo( $cloudinary_id_maybe, PATHINFO_EXTENSION );
+					$tag_element['format']                 = Utils::pathinfo( $cloudinary_id_maybe, PATHINFO_EXTENSION );
 				}
 			}
 		}
@@ -1269,7 +1270,7 @@ class Delivery implements Setup {
 		if ( empty( $parts['path'] ) || '/' === $parts['path'] ) {
 			return false; // exclude base domains.
 		}
-		$ext = pathinfo( $parts['path'], PATHINFO_EXTENSION );
+		$ext = Utils::pathinfo( $parts['path'], PATHINFO_EXTENSION );
 		if ( empty( $ext ) || ! $this->is_allowed_type( $ext ) ) {
 			return false;
 		}
@@ -1369,11 +1370,11 @@ class Delivery implements Setup {
 	 * @return string
 	 */
 	public function maybe_unsize_url( $url ) {
-		$file = pathinfo( $url, PATHINFO_FILENAME );
+		$file = Utils::pathinfo( $url, PATHINFO_FILENAME );
 		$dash = ltrim( strrchr( $file, '-' ), '-' );
 		if ( false !== $dash && 1 === substr_count( $dash, 'x' ) ) {
 			if ( is_numeric( str_replace( 'x', '', $dash ) ) ) {
-				$sized                                = basename( $url );
+				$sized                                = wp_basename( $url );
 				$url                                  = str_replace( '-' . $dash, '', $url );
 				$scaled                               = self::make_scaled_url( $url );
 				$this->found_urls[ $url ][ $dash ]    = $sized;
@@ -1392,7 +1393,7 @@ class Delivery implements Setup {
 	 * @return string
 	 */
 	public static function make_scaled_url( $url ) {
-		$file = pathinfo( $url );
+		$file = Utils::pathinfo( $url );
 		$dash = strrchr( $file['filename'], '-' );
 		if ( '-scaled' === $dash ) {
 			return $url;
@@ -1409,7 +1410,7 @@ class Delivery implements Setup {
 	 * @return string
 	 */
 	public static function descaled_url( $url ) {
-		$file = pathinfo( $url );
+		$file = Utils::pathinfo( $url );
 		$dash = strrchr( $file['filename'], '-' );
 		if ( '-scaled' === $dash ) {
 			$file['basename'] = str_replace( '-scaled.', '.', $file['basename'] );

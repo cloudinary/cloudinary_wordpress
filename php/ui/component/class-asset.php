@@ -102,8 +102,8 @@ class Asset extends Panel {
 		$control      = new On_Off( $item );
 		$panel_toggle = $item->find_setting( 'toggle_' . $item->get_param( 'slug' ) );
 		$panel_toggle->set_param( 'title', $item->get_param( 'title' ) );
-		$panel_toggle->set_param( 'on', 'dashicons-arrow-down' );
-		$panel_toggle->set_param( 'off', 'dashicons-arrow-up' );
+		$panel_toggle->set_param( 'on', 'dashicons-arrow-up' );
+		$panel_toggle->set_param( 'off', 'dashicons-arrow-down' );
 		$panel_toggle->set_param( 'condition', array( $item->get_slug() => true ) );
 		$panel_toggle->set_value( 'open' === $state ? 'on' : 'off' );
 		$title_toggle = new Icon_Toggle( $panel_toggle );
