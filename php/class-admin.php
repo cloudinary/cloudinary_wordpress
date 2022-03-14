@@ -269,7 +269,7 @@ class Admin {
 
 			$page = $this->get_param( $name );
 			$this->settings->set_param( 'active_setting', $page['slug'] );
-			$section = filter_input( INPUT_GET, 'section', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+			$section = Utils::get_sanitized_text( 'section' );
 			if ( $section && $this->has_param( $section ) ) {
 				$this->section = $section;
 				$this->set_param( 'current_section', $this->get_param( $section ) );
@@ -395,7 +395,7 @@ class Admin {
 	 */
 	public function init_setting_save() {
 
-		$submission = filter_input( INPUT_POST, 'cloudinary-active-slug', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+		$submission = Utils::get_sanitized_text( 'cloudinary-active-slug', INPUT_POST );
 		if ( ! $submission ) {
 			return; // Bail.
 		}

@@ -411,6 +411,18 @@ class Utils {
 	}
 
 	/**
+	 * Get a sanitized input text field.
+	 *
+	 * @param string $var  The value to get.
+	 * @param int    $type The type to get.
+	 *
+	 * @return mixed
+	 */
+	public static function get_sanitized_text( $var, $type = INPUT_GET ) {
+		return filter_input( $type, $var, FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+	}
+
+	/**
 	 * Returns information about a file path by normalizing the locale.
 	 *
 	 * @param string $path  The path to be parsed.
