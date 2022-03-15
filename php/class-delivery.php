@@ -137,6 +137,7 @@ class Delivery implements Setup {
 		add_action( 'before_delete_post', array( $this, 'delete_size_relationship' ) );
 		add_action( 'delete_attachment', array( $this, 'delete_size_relationship' ) );
 		add_action( 'cloudinary_register_sync_types', array( $this, 'register_sync_type' ), 30 );
+		add_filter( 'content_save_pre', array( $this, 'filter_out_cloudinary' ) );
 		add_action(
 			'the_post',
 			function ( $post ) {
@@ -151,6 +152,66 @@ class Delivery implements Setup {
 		if ( ! is_admin() ) {
 			add_filter( 'wp_get_attachment_url', array( $this, 'ensure_relation' ), 10, 2 );
 		}
+	}
+
+	/**
+	 * Filter out Cloudinary URLS and replace with local.
+	 *
+	 * @param string $content The content to filter.
+	 *
+	 * @return string
+	 */
+	public function filter_out_cloudinary( $content ) {
+
+		$unslash_maybe = wp_unslash( $content );
+		$unslashed     = $unslash_maybe !== $content;
+		if ( $unslashed ) {
+			$content = $unslash_maybe;
+		}
+		$base_urls       = array_unique( wp_extract_urls( $content ) );
+		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
+		$urls            = array();
+		if ( empty( $cloudinary_urls ) ) {
+			return $content;
+		}
+		foreach ( $cloudinary_urls as $url ) {
+			$public_id          = $this->media->get_public_id_from_url( $url );
+			$urls[ $public_id ] = $url;
+		}
+
+		$results = $this->query_relations( array_keys( $urls ) );
+		String_Replace::reset();
+		foreach ( $results as $result ) {
+			if ( ! isset( $urls[ $result['public_id'] ] ) ) {
+				continue;
+			}
+
+			$original_url    = $urls[ $result['public_id'] ];
+			$size            = $this->media->get_size_from_url( $original_url );
+			$transformations = $this->media->get_transformations_from_string( $original_url );
+			$attachment_url  = wp_get_attachment_image_url( $result['post_id'], $size );
+			if ( ! empty( $transformations ) ) {
+				$transformations = array_filter(
+					$transformations,
+					function ( $item ) {
+						return ! isset( $item['crop'] ) && ! isset( $item['width'] ) && ! isset( $item['height'] );
+					}
+				);
+				$transformations = Api::generate_transformation_string( $transformations );
+				if ( ! empty( $transformations ) ) {
+					$attachment_url = add_query_arg( 'cld_params', $transformations, $attachment_url );
+				}
+			}
+
+			String_Replace::replace( $original_url, $attachment_url );
+		}
+
+		$content = String_Replace::do_replace( $content );
+		if ( $unslashed ) {
+			$content = wp_slash( $content );
+		}
+
+		return $content;
 	}
 
 	/**
