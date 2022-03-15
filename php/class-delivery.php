@@ -163,6 +163,17 @@ class Delivery implements Setup {
 	 */
 	public function filter_out_cloudinary( $content ) {
 
+		static $globals;
+
+		if ( ! $globals ) {
+			$image   = $this->media->apply_default_transformations( array(), 'image' );
+			$video   = $this->media->apply_default_transformations( array(), 'video' );
+			$globals = array(
+				'image' => Api::generate_transformation_string( $image, 'image' ),
+				'video' => Api::generate_transformation_string( $video, 'video' ),
+			);
+		}
+
 		$unslash_maybe = wp_unslash( $content );
 		$unslashed     = $unslash_maybe !== $content;
 		if ( $unslashed ) {
@@ -198,7 +209,7 @@ class Delivery implements Setup {
 					}
 				);
 				$transformations = Api::generate_transformation_string( $transformations );
-				if ( ! empty( $transformations ) ) {
+				if ( ! empty( $transformations ) && ! in_array( $transformations, $globals, true ) ) {
 					$attachment_url = add_query_arg( 'cld_params', $transformations, $attachment_url );
 				}
 			}
@@ -696,6 +707,7 @@ class Delivery implements Setup {
 			$new_tag = HTML::build_tag( $tag_element['tag'], $tag_element['atts'] );
 			$html    = str_replace( $tag_element['original'], $new_tag, $html );
 		}
+
 		return $html;
 	}
 
