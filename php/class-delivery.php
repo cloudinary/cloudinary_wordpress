@@ -1108,7 +1108,7 @@ class Delivery implements Setup {
 			return null;
 		}
 		$tag_element['type'] = 'img' === $tag_element['tag'] ? 'image' : $tag_element['tag'];
-		$raw_url             = isset( $attributes['src'] ) ? $this->sanitize_url( $attributes['src'] ) : '';
+		$raw_url             = isset( $attributes['src'] ) ? $attributes['src'] : '';
 		if ( empty( $raw_url ) ) {
 			foreach ( $attributes as $attribute ) {
 				// Attempt to find a src.
@@ -1118,7 +1118,7 @@ class Delivery implements Setup {
 				}
 			}
 		}
-		$url                     = $this->maybe_unsize_url( self::clean_url( $raw_url ) );
+		$url                     = $this->maybe_unsize_url( self::clean_url( $this->sanitize_url( $raw_url ) ) );
 		$tag_element['base_url'] = $url;
 		// Track back the found URL.
 		if ( $this->media->is_cloudinary_url( $raw_url ) ) {
@@ -1163,7 +1163,7 @@ class Delivery implements Setup {
 			);
 		}
 
-		$inline_transformations = $this->get_transformations_maybe( $url );
+		$inline_transformations = $this->get_transformations_maybe( $raw_url );
 		if ( $inline_transformations ) {
 			$tag_element['transformations'] = array_merge( $tag_element['transformations'], $inline_transformations );
 		}
