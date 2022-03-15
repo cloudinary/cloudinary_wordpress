@@ -645,7 +645,7 @@ class Media extends Settings_Component implements Setup {
 		if ( ! $this->is_cloudinary_url( $url ) ) {
 			return null;
 		}
-
+		
 		$public_id = Utils::parse_url( $url, CLOUDINARY_URL_PUBLIC_ID );
 		if ( $as_sync_key ) {
 			$transformations = Utils::parse_url( $url, CLOUDINARY_URL_TRANSFORMATIONS_PARSED );
@@ -1335,7 +1335,7 @@ class Media extends Settings_Component implements Setup {
 				)
 			);
 
-			$url             = implode( '/', array_filter( $parts ) );
+			$url = implode( '/', array_filter( $parts ) );
 			$this->update_post_meta( $attachment_id, Sync::META_KEYS['raw_url'], $url );
 		}
 
@@ -1810,9 +1810,10 @@ class Media extends Settings_Component implements Setup {
 	 * Setup and include cloudinary assets for DAM widget.
 	 */
 	public function editor_assets() {
+		$deps = wp_script_is( 'cld-core', 'registered' ) ? array( 'cld-core' ) : array();
 		$this->plugin->register_assets(); // Ensure assets are registered.
 		// External assets.
-		wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, array(), $this->plugin->version, true );
+		wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, $deps, $this->plugin->version, true );
 		wp_enqueue_script( 'cloudinary' );
 		wp_enqueue_style( 'cloudinary' );
 		$params = array(
@@ -2278,9 +2279,9 @@ class Media extends Settings_Component implements Setup {
 				continue;
 			}
 			if ( is_wp_error( $log ) ) {
-				$logs[ $signature ] = array();
+				$logs[ $signature ]                 = array();
 				$logs[ $signature ][ '_' . time() ] = array(
-					'code' => $log->get_error_code(),
+					'code'    => $log->get_error_code(),
 					'message' => $log->get_error_message(),
 				);
 				continue;
@@ -2301,12 +2302,12 @@ class Media extends Settings_Component implements Setup {
 					// Fix stored expanded time.
 					if ( ! is_numeric( $time ) ) {
 						$to_unset = $time;
-						$time = strtotime( $time );
+						$time     = strtotime( $time );
 					}
 					$time = "_{$time}";
 				} else { // Readable request.
 					$to_unset = "_{$time}";
-					$time = gmdate( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $time );
+					$time     = gmdate( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $time );
 				}
 
 				// Maybe cleanup log entries.

@@ -317,7 +317,7 @@ class Filter {
 			$compare_id = $this->media->get_public_id_from_url( $url );
 			if ( ! empty( $compare_id ) && $compare_id !== $public_id ) {
 				$compare_id .= '.' . Utils::pathinfo( $local_url, PATHINFO_EXTENSION );
-				$local_url  = path_join( dirname( $local_url ), wp_basename( $compare_id ) );
+				$local_url   = path_join( dirname( $local_url ), wp_basename( $compare_id ) );
 			}
 			// Replace old tag.
 			$content = str_replace( $url, $local_url, $content );

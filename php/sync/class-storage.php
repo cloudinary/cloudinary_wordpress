@@ -421,10 +421,13 @@ class Storage implements Notice {
 		$file_path = path_join( $path, implode( '', $base ) );
 
 		while ( 20 > $count ) {
+			// Full size check.
 			$exists = $this->media->get_id_from_sync_key( $file_path );
 			if ( empty( $exists ) ) {
+				// Scaled size check.
 				$exists = $this->media->get_id_from_sync_key( Delivery::make_scaled_url( $file_path ) );
-				if ( empty( $exists ) ) {
+				// Check for not synced items.
+				if ( empty( $exists ) && ! file_exists( $dir . DIRECTORY_SEPARATOR . $filename ) ) {
 					break;
 				}
 			}
