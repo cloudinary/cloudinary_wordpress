@@ -1352,7 +1352,7 @@ class Delivery implements Setup {
 		 * @hook   cloudinary_set_usable_asset
 		 * @since  3.0.2
 		 *
-		 * @param $item     {array} The found asset array.
+		 * @param $item {array} The found asset array.
 		 *
 		 * @return {array}
 		 */
@@ -1481,12 +1481,14 @@ class Delivery implements Setup {
 	}
 
 	/**
-	 * Get urls from HTML.
+	 * Prepare the delivery for filtering URLS.
 	 *
 	 * @param string $content The content html.
+	 *
+	 * @return string
 	 */
-	protected function get_urls( $content ) {
-		global $wpdb;
+	public function prepare_delivery( $content ) {
+
 		$all_urls   = array_unique( wp_extract_urls( $content ) );
 		$base_urls  = array_filter( array_map( array( $this, 'sanitize_url' ), $all_urls ) );
 		$clean_urls = array_map( array( $this, 'clean_url' ), $base_urls );
@@ -1502,9 +1504,31 @@ class Delivery implements Setup {
 		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
 		// Clean URLS for search.
 		$public_ids = array_filter( array_map( array( $this->media, 'get_public_id_from_url' ), $cloudinary_urls ) );
+
 		if ( empty( $urls ) && empty( $public_ids ) ) {
 			return; // Bail since theres nothing.
 		}
+
+		$results = $this->query_relations( $public_ids, $urls );
+
+		$auto_sync = $this->sync->is_auto_sync_enabled();
+		foreach ( $results as $result ) {
+			$this->set_usability( $result, $auto_sync );
+		}
+		// Set unknowns.
+		$this->unknown = array_diff( $urls, array_keys( $this->known ) );
+	}
+
+	/**
+	 * Run a query with Public_id's and or local urls.
+	 *
+	 * @param array $public_ids List of Public_IDs qo query.
+	 * @param array $urls       List of URLS to query.
+	 *
+	 * @return array
+	 */
+	public function query_relations( $public_ids, $urls = array() ) {
+		global $wpdb;
 
 		$wheres = array();
 		if ( ! empty( $urls ) ) {
@@ -1524,18 +1548,12 @@ class Delivery implements Setup {
 		$prepared  = $wpdb->prepare( $sql, array_map( 'md5', $urls ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$cache_key = md5( $prepared );
 		$results   = wp_cache_get( $cache_key, 'cld_delivery' );
-
 		if ( empty( $results ) ) {
 			$results = $wpdb->get_results( $prepared, ARRAY_A );// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
 			wp_cache_add( $cache_key, $results, 'cld_delivery' );
 		}
 
-		$auto_sync = $this->sync->is_auto_sync_enabled();
-		foreach ( $results as $result ) {
-			$this->set_usability( $result, $auto_sync );
-		}
-		// Set unknowns.
-		$this->unknown = array_diff( $urls, array_keys( $this->known ) );
+		return $results;
 	}
 
 	/**
@@ -1546,7 +1564,7 @@ class Delivery implements Setup {
 	public function catch_urls( $content ) {
 
 		$this->init_delivery();
-		$this->get_urls( $content );
+		$this->prepare_delivery( $content );
 		$known = $this->convert_tags( $content );
 
 		// Attempt to get the unknowns.
