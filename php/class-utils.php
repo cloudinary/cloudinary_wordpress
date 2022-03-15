@@ -480,7 +480,8 @@ class Utils {
 	 * @return array|mixed|object|null
 	 */
 	public static function parse_url( $url, $component = - 1 ) {
-		static $api, $media, $ext_types, $urls;
+
+		static $api, $media, $ext_types, $urls, $globals;
 
 		$defaults = array(
 			'scheme'                 => null,
@@ -499,6 +500,8 @@ class Utils {
 			'delivery'               => null,
 			'format'                 => null,
 			'query_parsed'           => array(),
+			'attachment_id'          => 0,
+			'attachment'             => null,
 		);
 
 		if ( ! isset( $urls[ $url ] ) ) {
@@ -508,6 +511,10 @@ class Utils {
 				$api       = $connect->api;
 				$types     = wp_get_ext_types();
 				$ext_types = array_merge( $types['image'], $types['audio'], $types['video'] );
+				$globals   = array(
+					'image' => $media->apply_default_transformations( array(), 'image' ),
+					'video' => $media->apply_default_transformations( array(), 'video' ),
+				);
 			}
 			$is_seo     = false;
 			$components = wp_parse_args( wp_parse_url( $url ), $defaults );
@@ -546,11 +553,23 @@ class Utils {
 				$has_transformations = $media->get_transformations_from_string( ltrim( $components['path'], '/' ), $components['asset_type'] );
 				// Remove transformations string if we have any.
 				if ( ! empty( $has_transformations ) ) {
-					$components['transformations']        = Api::generate_transformation_string( $has_transformations, $components['asset_type'] );
-					$components['transformations_parsed'] = $has_transformations;
-					$transformation_parts                 = explode( '/', $components['transformations'] );
-					$new_parts                            = array_diff( $parts, $transformation_parts );
-					$parts                                = array_values( $new_parts ); // Reset the keys since array_diff keeps the indexes.
+					$type_global          = $globals[ $components['asset_type'] ];
+					$transformations      = Api::generate_transformation_string( $has_transformations, $components['asset_type'] );
+					$transformation_parts = explode( '/', $transformations );
+					$new_parts            = array_diff( $parts, $transformation_parts );
+					$parts                = array_values( $new_parts ); // Reset the keys since array_diff keeps the indexes.
+					$type_global['size']  = $media->get_crop_from_transformation( $has_transformations );
+					$has_transformations  = array_filter(
+						$has_transformations,
+						function ( $item ) use ( $type_global ) {
+
+							return ! in_array( $item, $type_global, true );
+						}
+					);
+					if ( ! empty( $has_transformations ) ) {
+						$components['transformations']        = Api::generate_transformation_string( $has_transformations, $components['asset_type'] );
+						$components['transformations_parsed'] = $has_transformations;
+					}
 				}
 
 				// Version.
@@ -570,6 +589,10 @@ class Utils {
 					}
 				}
 				if ( true === $is_seo ) {
+					// Check if we have a wp-image-{id}-.
+					if ( preg_match( '/:wp-image-(\d+):/', '/' . basename( $components['public_id'] ), $match ) ) {
+						$components['attachment_id'] = intval( $match[1] );
+					}
 					$components['public_id'] = dirname( $components['public_id'] );
 				}
 			}
@@ -587,6 +610,10 @@ class Utils {
 			$keys       = array_keys( $defaults );
 			$key        = $keys[ $component ];
 			$components = isset( $urls[ $url ][ $key ] ) ? $urls[ $url ][ $key ] : null;
+			// Get the post if requested.
+			if ( 17 === $component && isset( $urls[ $url ]['attachment_id'] ) ) {
+				$components = get_post( $urls[ $url ]['attachment_id'] );
+			}
 		}
 
 		return $components;

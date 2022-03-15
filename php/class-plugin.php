@@ -589,57 +589,71 @@ final class Plugin {
 		/**
 		 * The Cloudinary URL public ID.
 		 */
-		if ( ! defined( 'PHP_URL_PUBLIC_ID' ) ) {
-			define( 'PHP_URL_PUBLIC_ID', 8 );
+		if ( ! defined( 'CLOUDINARY_URL_PUBLIC_ID' ) ) {
+			define( 'CLOUDINARY_URL_PUBLIC_ID', 8 );
 		}
 
 		/**
 		 * The Cloudinary URL version.
 		 */
-		if ( ! defined( 'PHP_URL_VERSION' ) ) {
-			define( 'PHP_URL_VERSION', 9 );
+		if ( ! defined( 'CLOUDINARY_URL_VERSION' ) ) {
+			define( 'CLOUDINARY_URL_VERSION', 9 );
 		}
 
 		/**
 		 * The Cloudinary URL transformations.
 		 */
-		if ( ! defined( 'PHP_URL_TRANSFORMATIONS' ) ) {
-			define( 'PHP_URL_TRANSFORMATIONS', 10 );
+		if ( ! defined( 'CLOUDINARY_URL_TRANSFORMATIONS' ) ) {
+			define( 'CLOUDINARY_URL_TRANSFORMATIONS', 10 );
 		}
 
 		/**
 		 * The Cloudinary URL parsed transformations.
 		 */
-		if ( ! defined( 'PHP_URL_TRANSFORMATIONS_PARSED' ) ) {
-			define( 'PHP_URL_TRANSFORMATIONS_PARSED', 11 );
+		if ( ! defined( 'CLOUDINARY_URL_TRANSFORMATIONS_PARSED' ) ) {
+			define( 'CLOUDINARY_URL_TRANSFORMATIONS_PARSED', 11 );
 		}
 
 		/**
 		 * The Cloudinary URL asset type.
 		 */
-		if ( ! defined( 'PHP_URL_ASSET_TYPE' ) ) {
-			define( 'PHP_URL_ASSET_TYPE', 12 );
+		if ( ! defined( 'CLOUDINARY_URL_ASSET_TYPE' ) ) {
+			define( 'CLOUDINARY_URL_ASSET_TYPE', 12 );
 		}
 
 		/**
 		 * The Cloudinary URL delivery.
 		 */
-		if ( ! defined( 'PHP_URL_DELIVERY' ) ) {
-			define( 'PHP_URL_DELIVERY', 13 );
+		if ( ! defined( 'CLOUDINARY_URL_DELIVERY' ) ) {
+			define( 'CLOUDINARY_URL_DELIVERY', 13 );
 		}
 
 		/**
 		 * The Cloudinary URL format.
 		 */
-		if ( ! defined( 'PHP_URL_FORMAT' ) ) {
-			define( 'PHP_URL_FORMAT', 14 );
+		if ( ! defined( 'CLOUDINARY_URL_FORMAT' ) ) {
+			define( 'CLOUDINARY_URL_FORMAT', 14 );
 		}
 
 		/**
 		 * The Cloudinary URL query parsed.
 		 */
-		if ( ! defined( 'PHP_URL_QUERY_PARSED' ) ) {
-			define( 'PHP_URL_QUERY_PARSED', 15 );
+		if ( ! defined( 'CLOUDINARY_URL_QUERY_PARSED' ) ) {
+			define( 'CLOUDINARY_URL_QUERY_PARSED', 15 );
+		}
+
+		/**
+		 * The WordPress attachment ID.
+		 */
+		if ( ! defined( 'CLOUDINARY_URL_ATTACHMENT_ID' ) ) {
+			define( 'CLOUDINARY_URL_ATTACHMENT_ID', 16 );
+		}
+
+		/**
+		 * The WordPress attachment object.
+		 */
+		if ( ! defined( 'CLOUDINARY_URL_ATTACHMENT' ) ) {
+			define( 'CLOUDINARY_URL_ATTACHMENT', 17 );
 		}
 
 	}

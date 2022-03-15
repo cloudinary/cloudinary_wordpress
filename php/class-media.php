@@ -646,9 +646,9 @@ class Media extends Settings_Component implements Setup {
 			return null;
 		}
 
-		$public_id = Utils::parse_url( $url, PHP_URL_PUBLIC_ID );
+		$public_id = Utils::parse_url( $url, CLOUDINARY_URL_PUBLIC_ID );
 		if ( $as_sync_key ) {
-			$transformations = Utils::parse_url( $url, PHP_URL_TRANSFORMATIONS_PARSED );
+			$transformations = Utils::parse_url( $url, CLOUDINARY_URL_TRANSFORMATIONS_PARSED );
 			$public_id      .= ! empty( $transformations ) ? wp_json_encode( $transformations ) : '';
 		}
 
@@ -1239,7 +1239,7 @@ class Media extends Settings_Component implements Setup {
 
 		// Make a copy as not to destroy the options in \Cloudinary::cloudinary_url().
 		$args = $pre_args;
-		$url  = $this->plugin->components['connect']->api->cloudinary_url( $cloudinary_id, $args, $set_size );
+		$url  = $this->plugin->components['connect']->api->cloudinary_url( $cloudinary_id, $args, $set_size, $attachment_id );
 
 		// Check if this type is a preview only type. i.e PDF.
 		if ( ! empty( $set_size ) && $this->is_preview_only( $attachment_id ) ) {
@@ -1758,10 +1758,13 @@ class Media extends Settings_Component implements Setup {
 		if ( ! filter_var( utf8_uri_encode( $url ), FILTER_VALIDATE_URL ) ) {
 			return false;
 		}
-		$test_parts = wp_parse_url( $url );
-		$cld_url    = $this->plugin->components['connect']->api->asset_url;
+		$test_parts       = wp_parse_url( $url );
+		$cloudinary_hosts = array(
+			$this->plugin->components['connect']->api->asset_url,
+			Utils::CLOUDINARY_HOST,
+		);
 
-		return isset( $test_parts['path'] ) && $test_parts['host'] === $cld_url;
+		return isset( $test_parts['path'] ) && in_array( $test_parts['host'], $cloudinary_hosts, true );
 	}
 
 	/**

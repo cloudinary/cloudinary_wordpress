@@ -242,13 +242,16 @@ class Api {
 	/**
 	 * Generate a Cloudinary URL.
 	 *
-	 * @param string|null $public_id The Public ID to get a url for.
-	 * @param array       $args      Additional args.
-	 * @param array       $size      The WP Size array.
+	 * @since 3.0.4 The $attachment_id param is added.
+	 *
+	 * @param string|null $public_id     The Public ID to get a url for.
+	 * @param array       $args          Additional args.
+	 * @param array       $size          The WP Size array.
+	 * @param null|int    $attachment_id The attachment ID if present.
 	 *
 	 * @return string
 	 */
-	public function cloudinary_url( $public_id = null, $args = array(), $size = array() ) {
+	public function cloudinary_url( $public_id = null, $args = array(), $size = array(), $attachment_id = null ) {
 
 		if ( null === $public_id ) {
 			return 'https://' . $this->url( null, null );
@@ -275,7 +278,11 @@ class Api {
 		$base      = Utils::pathinfo( $public_id );
 		// Only do dynamic naming and sizes if upload type.
 		if ( 'image' === $args['resource_type'] && 'upload' === $args['delivery_type'] ) {
-			$new_path  = $base['filename'] . '/' . $base['basename'];
+			$basename = $base['basename'];
+			if ( ! empty( $attachment_id ) ) {
+				$basename = ':wp-image-' . $attachment_id . ':' . $basename;
+			}
+			$new_path  = $base['filename'] . '/' . $basename;
 			$public_id = str_replace( $base['basename'], $new_path, $public_id );
 		}
 
@@ -494,7 +501,7 @@ class Api {
 		/**
 		 * Filter Cloudinary upload args.
 		 *
-		 * @hook cloudinary_upload_args
+		 * @hook  cloudinary_upload_args
 		 * @since 3.0.1
 		 *
 		 * @param $call_args     {array} The default args.
