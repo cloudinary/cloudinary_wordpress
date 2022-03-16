@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+
+contact_links:
+
+  - name: Cloudinary Support
+    url: https://support.cloudinary.com/hc/en-us/requests/new
+    about: If you’re encountering an issue or struggling to get the plugin to work, open a ticket to contact our support team.
+
+  - name: WordPress Plugin Support
+    url: https://wordpress.org/support/plugin/cloudinary-image-management-and-manipulation-in-the-cloud-cdn/
+    about: Please ask and answer questions here.
