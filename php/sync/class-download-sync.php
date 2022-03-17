@@ -8,6 +8,7 @@
 namespace Cloudinary\Sync;
 
 use Cloudinary\Sync;
+use Cloudinary\Utils;
 
 /**
  * Class Download_Sync.
@@ -143,9 +144,9 @@ class Download_Sync {
 
 		$meta = wp_get_attachment_metadata( $attachment_id );
 		if ( ! empty( $meta['file'] ) ) {
-			$file_name = isset( $meta['original_image'] ) ? basename( $meta['original_image'] ) : basename( $meta['file'] );
+			$file_name = isset( $meta['original_image'] ) ? wp_basename( $meta['original_image'] ) : wp_basename( $meta['file'] );
 		} else {
-			$file_name = basename( strtok( $source, '?' ) );
+			$file_name = wp_basename( strtok( $source, '?' ) );
 		}
 		try {
 			// Prime a file to stream to.
@@ -191,7 +192,6 @@ class Download_Sync {
 			}
 
 			// Generate signatures.
-			$this->sync->set_signature_item( $attachment_id, 'options' );
 			$this->sync->set_signature_item( $attachment_id, 'cloud_name' );
 			$this->sync->set_signature_item( $attachment_id, 'download' );
 			$this->sync->set_signature_item( $attachment_id, 'file' );
@@ -218,7 +218,12 @@ class Download_Sync {
 	public function import_asset( $attachment_id, $file_path, $transformations = null ) {
 
 		// Get the image and update the attachment.
-		require_once ABSPATH . WPINC . '/class-http.php';
+		$http_class = ABSPATH . WPINC . '/class-http.php';
+		// Since WP 5.9.
+		if ( file_exists( ABSPATH . WPINC . '/class-wp-http.php' ) ) {
+			$http_class = ABSPATH . WPINC . '/class-wp-http.php';
+		}
+		require_once $http_class;
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 		require_once ABSPATH . 'wp-admin/includes/media.php';

@@ -53,6 +53,19 @@ class SVG extends Delivery_Feature {
 	}
 
 	/**
+	 * Add the ext for SVG to the ext2type.
+	 *
+	 * @param array $types List of file types.
+	 *
+	 * @return array
+	 */
+	public function add_svg_ext_type( $types ) {
+		$types['image'][] = 'svg';
+
+		return $types;
+	}
+
+	/**
 	 * Add features to a tag element set.
 	 *
 	 * @param array $tag_element The tag element set.
@@ -85,7 +98,7 @@ class SVG extends Delivery_Feature {
 		if ( empty( $original_filename ) ) {
 			$original_filename = $file;
 		}
-		$ext = pathinfo( $original_filename, PATHINFO_EXTENSION );
+		$ext = Utils::pathinfo( $original_filename, PATHINFO_EXTENSION );
 		if ( $ext && 'svg' === strtolower( $ext ) ) {
 			libxml_use_internal_errors();
 			$data = simplexml_load_file( $file );
@@ -115,7 +128,7 @@ class SVG extends Delivery_Feature {
 	 * @return array
 	 */
 	public function check_svg_type( $wp_check_filetype_and_ext, $file, $filename ) {
-		if ( 'svg' === pathinfo( $filename, PATHINFO_EXTENSION ) ) {
+		if ( 'svg' === Utils::pathinfo( $filename, PATHINFO_EXTENSION ) ) {
 			$wp_check_filetype_and_ext['ext']  = false;
 			$wp_check_filetype_and_ext['type'] = false;
 			if ( true === $this->validate_svg_file( $file, $filename ) ) {
@@ -206,6 +219,7 @@ class SVG extends Delivery_Feature {
 
 		// Add filters.
 		add_filter( 'upload_mimes', array( $this, 'add_svg_mime' ) ); // phpcs:ignore WordPressVIPMinimum.Hooks.RestrictedHooks.upload_mimes
+		add_filter( 'ext2type', array( $this, 'add_svg_ext_type' ) );
 		add_filter( 'wp_check_filetype_and_ext', array( $this, 'check_svg_type' ), 10, 4 );
 		add_filter( 'cloudinary_allowed_extensions', array( $this, 'allow_svg_for_cloudinary' ) );
 		add_filter( 'cloudinary_upload_options', array( $this, 'remove_svg_eagers' ), 10, 2 );

@@ -270,7 +270,7 @@ class Media extends Settings_Component implements Setup {
 
 		$types        = $this->get_compatible_media_types();
 		$file         = wp_parse_url( $file, PHP_URL_PATH );
-		$filename     = pathinfo( $file, PATHINFO_BASENAME );
+		$filename     = Utils::pathinfo( $file, PATHINFO_BASENAME );
 		$mime         = wp_check_filetype( $filename );
 		$type         = strstr( $mime['type'], '/', true );
 		$conversions  = $this->get_convertible_extensions();
@@ -513,12 +513,15 @@ class Media extends Settings_Component implements Setup {
 	public function convert_media_extension( $filename ) {
 
 		$conversion_types = $this->get_convertible_extensions();
-		$info             = pathinfo( $filename );
-		$extension        = strtolower( $info['extension'] );
+		$info             = Utils::pathinfo( $filename );
 		$convert          = 'jpg'; // Default handler.
 
-		if ( ! empty( $conversion_types[ $extension ] ) ) {
-			$convert = $conversion_types[ $extension ];
+		if ( ! empty( $info['extension'] ) ) {
+			$extension = strtolower( $info['extension'] );
+
+			if ( ! empty( $conversion_types[ $extension ] ) ) {
+				$convert = $conversion_types[ $extension ];
+			}
 		}
 
 		$filename = trailingslashit( $info['dirname'] ) . $info['filename'] . '.' . $convert;
@@ -559,7 +562,7 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function get_file_type( $file ) {
 		$file = wp_parse_url( $file, PHP_URL_PATH );
-		$file = pathinfo( $file, PATHINFO_BASENAME );
+		$file = Utils::pathinfo( $file, PATHINFO_BASENAME );
 		$mime = wp_check_filetype( $file );
 
 		return strstr( $mime['type'], '/', true );
@@ -621,7 +624,7 @@ class Media extends Settings_Component implements Setup {
 	public function uncropped_url( $url ) {
 		$cropped = $this->get_size_from_url( $url );
 		if ( false !== $cropped ) {
-			$file             = pathinfo( $url );
+			$file             = Utils::pathinfo( $url );
 			$crop             = '-' . implode( 'x', $cropped );
 			$file['filename'] = substr( $file['filename'], 0, strlen( $file['filename'] ) - strlen( $crop ) );
 			$url              = $file['dirname'] . '/' . $file['filename'] . '.' . $file['extension'];
@@ -646,9 +649,11 @@ class Media extends Settings_Component implements Setup {
 		$path  = wp_parse_url( $url, PHP_URL_PATH );
 		$parts = explode( '/', ltrim( $path, '/' ) );
 
+		$maybe_seo = array();
+
 		// Need to find the version part as anything after this is the public id.
 		foreach ( $parts as $part ) {
-			array_shift( $parts ); // Get rid of the first element.
+			$maybe_seo[] = array_shift( $parts ); // Get rid of the first element.
 			if ( 'v' === substr( $part, 0, 1 ) && is_numeric( substr( $part, 1 ) ) ) {
 				break; // Stop removing elements.
 			}
@@ -656,9 +661,14 @@ class Media extends Settings_Component implements Setup {
 
 		// The remaining items should be the file.
 		$file      = implode( '/', $parts );
-		$path_info = pathinfo( $file );
+		$path_info = Utils::pathinfo( $file );
 
-		$public_id = isset( $path_info['dirname'] ) && '.' !== $path_info['dirname'] ? $path_info['dirname'] : $path_info['filename'];
+		// Is SEO friendly URL.
+		if ( in_array( 'images', $maybe_seo, true ) ) {
+			$public_id = $path_info['dirname'];
+		} else {
+			$public_id = isset( $path_info['dirname'] ) && '.' !== $path_info['dirname'] ? $path_info['dirname'] . DIRECTORY_SEPARATOR . $path_info['filename'] : $path_info['filename'];
+		}
 		$public_id = trim( $public_id, './' );
 
 		if ( $as_sync_key ) {
@@ -788,7 +798,7 @@ class Media extends Settings_Component implements Setup {
 				}
 			}
 		} else {
-			$file     = pathinfo( $url );
+			$file     = Utils::pathinfo( $url );
 			$end_part = substr( strrchr( $file['filename'], '-' ), 1 );
 			if ( false !== $end_part && 1 === substr_count( $end_part, 'x' ) && is_numeric( str_replace( 'x', '', $end_part ) ) ) {
 
@@ -1349,7 +1359,7 @@ class Media extends Settings_Component implements Setup {
 				)
 			);
 
-			$url             = implode( '/', array_filter( $parts ) );
+			$url = implode( '/', array_filter( $parts ) );
 			$this->update_post_meta( $attachment_id, Sync::META_KEYS['raw_url'], $url );
 		}
 
@@ -1510,7 +1520,7 @@ class Media extends Settings_Component implements Setup {
 			// Get the file, and use the same extension.
 			$file = get_attached_file( $attachment_id );
 			// @todo: Make this use the globals, overrides, and application conversion.
-			$extension     = pathinfo( $file, PATHINFO_EXTENSION );
+			$extension     = Utils::pathinfo( $file, PATHINFO_EXTENSION );
 			$cloudinary_id = $public_id;
 			$type          = $this->get_resource_type( $attachment_id );
 			if ( in_array( $type, array( 'image', 'video' ), true ) ) {
@@ -1521,7 +1531,7 @@ class Media extends Settings_Component implements Setup {
 				if ( 'fetch' !== $this->get_media_delivery( $attachment_id ) ) {
 					$cloudinary_id = $public_id . '.' . $extension;
 				}
-			} elseif ( empty( pathinfo( $public_id, PATHINFO_EXTENSION ) ) ) {
+			} elseif ( empty( Utils::pathinfo( $public_id, PATHINFO_EXTENSION ) ) ) {
 				$cloudinary_id = $public_id . '.' . $extension;
 			}
 		}
@@ -1631,6 +1641,27 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		return $image;
+	}
+
+	/**
+	 * At the point of running wp_get_attachment_image_srcset, the $image_src is already a Cloudinary URL.
+	 * This will fix the $image_meta so that the there's a match $src_matched on wp_calculate_image_srcset.
+	 *
+	 * @param array  $image_meta    The image meta data as returned by 'wp_get_attachment_metadata()'.
+	 * @param int[]  $size_array    {
+	 *     An array of width and height values.
+	 *
+	 *     @type int $0 The width in pixels.
+	 *     @type int $1 The height in pixels.
+	 * }
+	 * @param string $image_src     The 'src' of the image.
+	 *
+	 * @return array
+	 */
+	public function calculate_image_srcset_meta( $image_meta, $size_array, $image_src ) {
+		$image_meta['file'] = parse_url( $image_src, PHP_URL_PATH );
+
+		return $image_meta;
 	}
 
 	/**
@@ -1800,9 +1831,10 @@ class Media extends Settings_Component implements Setup {
 	 * Setup and include cloudinary assets for DAM widget.
 	 */
 	public function editor_assets() {
+		$deps = wp_script_is( 'cld-core', 'registered' ) ? array( 'cld-core' ) : array();
 		$this->plugin->register_assets(); // Ensure assets are registered.
 		// External assets.
-		wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, array(), $this->plugin->version, true );
+		wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, $deps, $this->plugin->version, true );
 		wp_enqueue_script( 'cloudinary' );
 		wp_enqueue_style( 'cloudinary' );
 		$params = array(
@@ -1845,9 +1877,9 @@ class Media extends Settings_Component implements Setup {
 
 		// Create an attachment post.
 		$file_path        = $asset['url'];
-		$file_name        = basename( $file_path );
+		$file_name        = wp_basename( $file_path );
 		$file_type        = wp_check_filetype( $file_name, null );
-		$attachment_title = sanitize_file_name( pathinfo( $file_name, PATHINFO_FILENAME ) );
+		$attachment_title = sanitize_file_name( Utils::pathinfo( $file_name, PATHINFO_FILENAME ) );
 		$post_args        = array(
 			'post_mime_type' => $file_type['type'],
 			'post_title'     => $attachment_title,
@@ -1968,7 +2000,7 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		// Check Format.
-		$url_format = pathinfo( $asset['url'], PATHINFO_EXTENSION );
+		$url_format = Utils::pathinfo( $asset['url'], PATHINFO_EXTENSION );
 		if ( strtolower( $url_format ) !== strtolower( $asset['format'] ) ) {
 			$asset['format']    = $url_format;
 			$asset['sync_key'] .= $url_format;
@@ -1994,7 +2026,7 @@ class Media extends Settings_Component implements Setup {
 				'uploading'     => true,
 				'src'           => $asset['src'],
 				'url'           => $asset['url'],
-				'filename'      => basename( $asset['src'] ),
+				'filename'      => wp_basename( $asset['src'] ),
 				'attachment_id' => $asset['attachment_id'],
 				'public_id'     => $asset['public_id'],
 			);
@@ -2267,6 +2299,14 @@ class Media extends Settings_Component implements Setup {
 				$logs[ $signature ] = array();
 				continue;
 			}
+			if ( is_wp_error( $log ) ) {
+				$logs[ $signature ]                 = array();
+				$logs[ $signature ][ '_' . time() ] = array(
+					'code'    => $log->get_error_code(),
+					'message' => $log->get_error_message(),
+				);
+				continue;
+			}
 			foreach ( $log as $time => $entry ) {
 				$time = ltrim( $time, '_' );
 
@@ -2283,12 +2323,12 @@ class Media extends Settings_Component implements Setup {
 					// Fix stored expanded time.
 					if ( ! is_numeric( $time ) ) {
 						$to_unset = $time;
-						$time = strtotime( $time );
+						$time     = strtotime( $time );
 					}
 					$time = "_{$time}";
 				} else { // Readable request.
 					$to_unset = "_{$time}";
-					$time = gmdate( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $time );
+					$time     = gmdate( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $time );
 				}
 
 				// Maybe cleanup log entries.
@@ -2430,12 +2470,17 @@ class Media extends Settings_Component implements Setup {
 		if ( empty( $caption ) ) {
 			$caption = get_the_title( $attachment_id );
 		}
-
-		$context_options = array(
+		$media_library_context = array(
 			'caption' => esc_attr( $caption ),
 			'alt'     => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
 			'guid'    => md5( get_the_guid( $attachment_id ) ),
 		);
+		$context_options       = array(
+			'cld_wp_plugin' => 1,
+		);
+		if ( $this->is_folder_synced( $attachment_id ) ) {
+			$context_options = wp_parse_args( $media_library_context, $context_options );
+		}
 
 		// Check if this asset is a folder sync.
 		$folder_sync = $this->get_post_meta( $attachment_id, Sync::META_KEYS['folder_sync'], true );
@@ -2505,7 +2550,7 @@ class Media extends Settings_Component implements Setup {
 			'unique_filename' => true,
 			'overwrite'       => false,
 			'resource_type'   => $this->get_resource_type( $attachment_id ),
-			'public_id'       => basename( $public_id ),
+			'public_id'       => wp_basename( $public_id ),
 			'context'         => $this->get_context_options( $attachment_id ),
 		);
 
@@ -2525,10 +2570,10 @@ class Media extends Settings_Component implements Setup {
 		$options = apply_filters( 'cloudinary_upload_options', $options, get_post( $attachment_id ), $this );
 		// Add folder to prevent folder contamination.
 		if ( $this->is_folder_synced( $attachment_id ) ) {
-			$options['public_id'] = $this->get_cloudinary_folder() . basename( $options['public_id'] );
+			$options['public_id'] = $this->get_cloudinary_folder() . wp_basename( $options['public_id'] );
 		} elseif ( ! empty( $folder ) ) {
 			// add in folder if not empty (not in root).
-			$options['public_id'] = trailingslashit( $folder ) . basename( $options['public_id'] );
+			$options['public_id'] = trailingslashit( $folder ) . wp_basename( $options['public_id'] );
 		}
 		$options['public_id'] = trim( $options['public_id'], '/.' );
 
@@ -2595,7 +2640,7 @@ class Media extends Settings_Component implements Setup {
 	public function apply_srcset( $content, $attachment_id, $overwrite_transformations = false ) {
 		$cloudinary_id                           = $this->get_cloudinary_id( $attachment_id );
 		$image_meta                              = wp_get_attachment_metadata( $attachment_id );
-		$image_meta['file']                      = pathinfo( $cloudinary_id, PATHINFO_FILENAME ) . '/' . pathinfo( $cloudinary_id, PATHINFO_BASENAME );
+		$image_meta['file']                      = Utils::pathinfo( $cloudinary_id, PATHINFO_FILENAME ) . '/' . Utils::pathinfo( $cloudinary_id, PATHINFO_BASENAME );
 		$image_meta['overwrite_transformations'] = $overwrite_transformations;
 
 		return wp_image_add_srcset_and_sizes( $content, $image_meta, $attachment_id );
@@ -2743,6 +2788,22 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Filter live URLS.
+	 * Used in admin and in the REST API.
+	 */
+	public function add_live_url_filters() {
+		add_filter( 'wp_calculate_image_srcset', array( $this, 'image_srcset' ), 10, 5 );
+		add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
+		add_filter( 'wp_get_original_image_url', array( $this, 'original_attachment_url' ), 10, 2 );
+		add_filter( 'image_downsize', array( $this, 'filter_downsize' ), 10, 3 );
+		add_filter( 'wp_calculate_image_srcset_meta', array( $this, 'calculate_image_srcset_meta' ), 10, 3 );
+
+		// Hook into Featured Image cycle.
+		add_action( 'begin_fetch_post_thumbnail_html', array( $this, 'set_doing_featured' ), 10, 2 );
+		add_filter( 'post_thumbnail_html', array( $this, 'maybe_srcset_post_thumbnail' ), 10, 3 );
+	}
+
+	/**
 	 * Setup the hooks and base_url if configured.
 	 */
 	public function setup() {
@@ -2768,20 +2829,14 @@ class Media extends Settings_Component implements Setup {
 			add_action( 'print_media_templates', array( $this, 'media_template' ) );
 			add_action( 'wp_enqueue_media', array( $this, 'editor_assets' ) );
 			add_action( 'wp_ajax_cloudinary-down-sync', array( $this, 'down_sync_asset' ) );
+			add_action( 'rest_api_init', array( $this, 'add_live_url_filters' ) );
 
 			// Filter to add cloudinary folder.
 			add_filter( 'upload_dir', array( $this, 'upload_dir' ) );
 
 			// Filter live URLS. (functions that return a URL).
 			if ( is_admin() ) {
-				add_filter( 'wp_calculate_image_srcset', array( $this, 'image_srcset' ), 10, 5 );
-				add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
-				add_filter( 'wp_get_original_image_url', array( $this, 'original_attachment_url' ), 10, 2 );
-
-				add_filter( 'image_downsize', array( $this, 'filter_downsize' ), 10, 3 );
-				// Hook into Featured Image cycle.
-				add_action( 'begin_fetch_post_thumbnail_html', array( $this, 'set_doing_featured' ), 10, 2 );
-				add_filter( 'post_thumbnail_html', array( $this, 'maybe_srcset_post_thumbnail' ), 10, 3 );
+				$this->add_live_url_filters();
 			}
 			// Filter default image Quality and Format transformations.
 			add_filter( 'cloudinary_default_qf_transformations_image', array( $this, 'default_image_transformations' ), 10 );

@@ -9,6 +9,7 @@ const CloudinaryLoader = {
 	pObserver: null,
 	rObserver: null,
 	aboveFold: true,
+	minPlaceholderThreshold: 500,
 	bind( image ) {
 		image.CLDbound = true;
 		if ( ! this.enabled ) {
@@ -85,8 +86,10 @@ const CloudinaryLoader = {
 		const iOptions = {
 			rootMargin: this.lazyThreshold + 'px 0px ' + this.lazyThreshold + 'px 0px',
 		};
+
+		const placeholderThreshold = this.minPlaceholderThreshold < this.lazyThreshold * 2 ? this.lazyThreshold * 2 : this.minPlaceholderThreshold;
 		const pOptions = {
-			rootMargin: this.lazyThreshold * 2 + 'px 0px ' + this.lazyThreshold * 2 + 'px 0px',
+			rootMargin: placeholderThreshold + 'px 0px ' + placeholderThreshold + 'px 0px',
 		};
 		this.rObserver = new ResizeObserver( ( entries, observer ) => {
 			entries.forEach( entry => {
@@ -100,17 +103,15 @@ const CloudinaryLoader = {
 				if ( entry.isIntersecting ) {
 					this.buildImage( entry.target );
 					observer.unobserve( entry.target );
+					this.pObserver.unobserve( entry.target );
 				}
 			} );
 		}, iOptions );
-
 		this.pObserver = new IntersectionObserver( ( entries, observer ) => {
 			entries.forEach( entry => {
+
 				if ( entry.isIntersecting ) {
-					if ( entry.intersectionRatio < 0.5 ) {
-						// Low so that it doesn't show partly.
-						entry.target.src = this.getPlaceholderURL( entry.target );
-					}
+					entry.target.src = this.getPlaceholderURL( entry.target );
 					observer.unobserve( entry.target );
 				}
 			} );
@@ -232,6 +233,7 @@ const CloudinaryLoader = {
 			this.config.base_url,
 			'image',
 			image.dataset.delivery,
+			newSize.transformation,
 			this.config.placeholder,
 			image.dataset.publicId
 		];
@@ -247,3 +249,9 @@ window.CLDBind = ( image ) => {
 		CloudinaryLoader.bind( image );
 	}
 };
+// Fallback.
+window.addEventListener( 'load', () => {
+	[...document.querySelectorAll('img[data-cloudinary="lazy"]')].forEach( ( image )=>{
+		CLDBind( image );
+	})
+} );

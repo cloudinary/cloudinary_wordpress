@@ -7,6 +7,7 @@ import Progress from './progress';
 import States from './states';
 import RestrictedTypes from './restricted-types';
 import TagsInput from './tags-input';
+import SuffixValue from './suffix-value';
 
 const UI = {
 	bindings: {},
@@ -62,6 +63,7 @@ const UI = {
 		Progress.init( context );
 		RestrictedTypes.init( context );
 		TagsInput.init( context );
+		SuffixValue.init( context );
 	},
 	_autoSuffix( input ) {
 		const suffixes = input.dataset.autoSuffix;

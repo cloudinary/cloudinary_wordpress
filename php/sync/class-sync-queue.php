@@ -295,6 +295,21 @@ class Sync_Queue {
 		return $queue['running'];
 	}
 
+
+	/**
+	 * The number of optimized media assets.
+	 *
+	 * @return int
+	 */
+	public static function get_optimized_assets() {
+		global $wpdb;
+
+		$wpdb->cld_table = Utils::get_relationship_table();
+
+		return (int) $wpdb->get_var( "SELECT COUNT( DISTINCT post_id ) as total FROM {$wpdb->cld_table} WHERE sync_type = 'media';" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	}
+
+
 	/**
 	 * Get the data from _cloudinary_relationships. We need to get a count of all assets, which have public_id's, group by type etc.
 	 *
