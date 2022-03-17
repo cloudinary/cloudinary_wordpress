@@ -797,7 +797,16 @@ class Delivery implements Setup {
 
 			// Check for src aliases.
 			if ( isset( $this->found_urls[ $set['base_url'] ] ) ) {
-				$aliases[] = $set;
+				$base = dirname( $set['base_url'] );
+				foreach ( $this->found_urls[ $set['base_url'] ] as $size => $file_name ) {
+					$local_url = $type . ':' . path_join( $base, $file_name );
+					if ( isset( $cached[ $local_url ] ) ) {
+						$aliases[ $local_url ] = $cached[ $local_url ];
+						continue;
+					}
+					$cloudinary_url        = $this->media->cloudinary_url( $set['id'], explode( 'x', $size ), $set['transformations'], $set['atts']['data-public-id'], $set['overwrite_transformations'] );
+					$aliases[ $local_url ] = $cloudinary_url;
+				}
 			}
 		}
 		// Move aliases to the end of the run, after images.
@@ -805,19 +814,6 @@ class Delivery implements Setup {
 			$replacements = array_merge( $replacements, $aliases );
 		}
 
-		// Handle aliases.
-		foreach ( $aliases as $set ) {
-			$base = dirname( $set['base_url'] );
-			foreach ( $this->found_urls[ $set['base_url'] ] as $size => $file_name ) {
-				$local_url = path_join( $base, $file_name );
-				if ( isset( $cached[ $local_url ] ) ) {
-					$replacements[ $local_url ] = $cached[ $local_url ];
-					continue;
-				}
-				$cloudinary_url             = $this->media->cloudinary_url( $set['id'], explode( 'x', $size ), $set['transformations'], $set['atts']['data-public-id'], $set['overwrite_transformations'] );
-				$replacements[ $local_url ] = $cloudinary_url;
-			}
-		}
 		// Update the post meta cache.
 		if ( is_singular() ) {
 			$has_cache          = array();
@@ -897,7 +893,7 @@ class Delivery implements Setup {
 			foreach ( $parts as &$part ) {
 				if ( $this->validate_url( $part ) ) {
 					$has_wp_size = $this->media->get_crop( $part, $tag_element['id'] );
-					$size = array();
+					$size        = array();
 					if ( ! empty( $has_wp_size ) ) {
 						$size = $has_wp_size;
 					}
@@ -1307,7 +1303,7 @@ class Delivery implements Setup {
 		 * @hook   cloudinary_set_usable_asset
 		 * @since  3.0.2
 		 *
-		 * @param $item     {array} The found asset array.
+		 * @param $item {array} The found asset array.
 		 *
 		 * @return {array}
 		 */
