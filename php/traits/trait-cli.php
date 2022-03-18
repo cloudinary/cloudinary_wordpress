@@ -204,7 +204,7 @@ trait CLI_Trait {
 				&& $this->plugin->get_component( 'media' )->is_uploadable_media( $asset )
 				&& $this->plugin->get_component( 'sync' )->is_syncable( $asset )
 			) {
-				$this->plugin->get_component( 'sync' )->managers['push']->process_assets( $asset, $bar );
+				$this->plugin->get_component( 'sync' )->managers['push']->process_assets( $asset );
 			}
 			delete_post_meta( $asset, '_cld_unsynced', true );
 		}
