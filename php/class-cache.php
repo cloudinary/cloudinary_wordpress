@@ -132,7 +132,7 @@ class Cache extends Settings_Component implements Setup {
 	 * @return string
 	 */
 	public function frontend_rewrite( $template ) {
-		$bypass = filter_input( INPUT_GET, 'bypass_cache', FILTER_SANITIZE_STRING );
+		$bypass = Utils::get_sanitized_text( 'bypass_cache' );
 
 		if ( ! empty( $bypass ) ) {
 			return $template;
