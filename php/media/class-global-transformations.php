@@ -478,9 +478,7 @@ class Global_Transformations {
 			'cld_tax_order'  => array(
 				'filter'  => FILTER_CALLBACK,
 				'flags'   => FILTER_REQUIRE_ARRAY,
-				'options' => function( $value ) {
-					return sanitize_text_field( $value );
-				},
+				'options' => 'sanitize_text_field',
 			),
 			'cld_apply_type' => array(
 				'filter'  => FILTER_CALLBACK,
