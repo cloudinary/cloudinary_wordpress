@@ -170,6 +170,7 @@ class Media extends Settings_Component implements Setup {
 			'cloudinary_media_filters',
 			array(
 				SYNC::META_KEYS['sync_error'] => __( 'Error', 'cloudinary' ),
+				SYNC::META_KEYS['unsynced']   => __( 'Unsynced', 'cloudinary' ),
 			)
 		);
 
@@ -2749,7 +2750,7 @@ class Media extends Settings_Component implements Setup {
 		if ( is_admin() && $query->is_main_query() ) {
 			$request = filter_input( INPUT_GET, 'cloudinary-filter', FILTER_SANITIZE_STRING );
 
-			if ( $request && 'none' !== $request ) {
+			if ( SYNC::META_KEYS['sync_error'] === $request ) {
 				$meta_query = $query->get( 'meta_query' );
 				if ( ! is_array( $meta_query ) ) {
 					$meta_query = array();
@@ -2763,6 +2764,16 @@ class Media extends Settings_Component implements Setup {
 				);
 				$query->set( 'meta_query', $meta_query );
 			}
+
+			if ( SYNC::META_KEYS['unsynced'] === $request ) {
+				global $wpdb;
+				$wpdb->cld_table = Utils::get_relationship_table();
+				$result          = $wpdb->get_col( "SELECT post_id FROM $wpdb->cld_table WHERE public_id IS NULL" );
+
+				if ( ! empty( $result ) ) {
+					$query->set( 'post__in', $result );
+				}
+			}
 		}
 	}
 
@@ -2772,9 +2783,7 @@ class Media extends Settings_Component implements Setup {
 	 * @param string $post_type The post type slug.
 	 */
 	public function filter_media_library( $post_type ) {
-		$current_screen = get_current_screen();
-
-		if ( $current_screen instanceof WP_Screen && $current_screen->post_type === $post_type ) {
+		if ( 'attachment' === $post_type ) {
 			$request = filter_input( INPUT_GET, 'cloudinary-filter', FILTER_SANITIZE_STRING );
 			?>
 			<select name="cloudinary-filter" id="cloudinary-filter">
