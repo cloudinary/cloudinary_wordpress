@@ -170,7 +170,7 @@ const CloudinaryLoader = {
 			width = image.width;
 			let height = Math.round( width / ratio );
 
-			while ( -1 === this.sizeBands.indexOf( width ) || height < image.height && width < maxSize ) {
+			while ( -1 === this.sizeBands.indexOf( width ) || ( height < image.height && width < maxSize ) ) {
 				width++;
 				height = Math.round( width / ratio );
 			}
@@ -185,7 +185,7 @@ const CloudinaryLoader = {
 	},
 	scaleSize( image, width, dpr ) {
 
-		const ratio = image.dataset.crop ? parseFloat( image.dataset.crop ) : ( image.originalWidth / image.originalHeight ).toFixed( 3 );
+		const ratio = image.dataset.crop ? parseFloat( image.dataset.crop ) : ( image.originalWidth / image.originalHeight ).toFixed( 2 );
 		const scaledWidth = this.scaleWidth( image, width, ratio );
 		const scaledHeight = Math.round( scaledWidth / ratio );
 		const newSize = [];
