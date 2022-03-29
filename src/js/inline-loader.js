@@ -19,9 +19,9 @@ const CloudinaryLoader = {
 		image.originalWidth = size[ 0 ];
 		image.originalHeight = size[ 1 ];
 		if ( this.pObserver ) {
-			if( this.aboveFold && this.inInitialView( image ) ){
+			if ( this.aboveFold && this.inInitialView( image ) ) {
 				this.buildImage( image );
-			}else {
+			} else {
 				this.pObserver.observe( image );
 				this.iObserver.observe( image );
 			}
@@ -35,18 +35,18 @@ const CloudinaryLoader = {
 			this.setupFallback( image );
 		}
 	},
-	buildImage( image ){
+	buildImage( image ) {
 		if ( image.dataset.srcset ) {
 			image.cld_loaded = true;
 			image.srcset = image.dataset.srcset;
 		} else {
 			image.src = this.getSizeURL( image );
-			if( image.dataset.responsive ) {
+			if ( image.dataset.responsive ) {
 				this.rObserver.observe( image );
 			}
 		}
 	},
-	inInitialView( image ){
+	inInitialView( image ) {
 		const rect = image.getBoundingClientRect();
 		this.aboveFold = rect.top < window.innerHeight + this.lazyThreshold;
 		return this.aboveFold;
@@ -54,15 +54,15 @@ const CloudinaryLoader = {
 	setupFallback( image ) {
 		const srcSet = [];
 		this.sizeBands.forEach( ( size ) => {
-			if( size <= image.originalWidth ) {
+			if ( size <= image.originalWidth ) {
 				let newURL = this.getSizeURL( image, size, true ) + ` ${ size }w`;
 				if ( -1 === srcSet.indexOf( newURL ) ) {
 					srcSet.push( newURL );
 				}
 			}
 		} );
-		image.srcset = srcSet.join(',' );
-		image.sizes = `(max-width: ${image.originalWidth}px) 100vw, ${image.originalWidth}px`;
+		image.srcset = srcSet.join( ',' );
+		image.sizes = `(max-width: ${ image.originalWidth }px) 100vw, ${ image.originalWidth }px`;
 	},
 	_init() {
 		this.enabled = true;
@@ -164,12 +164,15 @@ const CloudinaryLoader = {
 
 		this.density = deviceDensity;
 	},
-	scaleWidth( image, width ) {
+	scaleWidth( image, width, ratio ) {
 		const maxSize = parseInt( this.config.max_width );
 		if ( ! width ) {
 			width = image.width;
-			while ( -1 === this.sizeBands.indexOf( width ) && width < maxSize ) {
+			let height = Math.round( width / ratio );
+
+			while ( -1 === this.sizeBands.indexOf( width ) || ( height < image.height && width < maxSize ) ) {
 				width++;
+				height = Math.round( width / ratio );
 			}
 		}
 		if ( width > maxSize ) {
@@ -181,15 +184,17 @@ const CloudinaryLoader = {
 		return width;
 	},
 	scaleSize( image, width, dpr ) {
-		const ratio = ( image.originalWidth / image.originalHeight ).toFixed( 3 );
-		const renderedRatio = ( image.width / image.height ).toFixed( 3 );
-		const scaledWidth = this.scaleWidth( image, width );
+
+		const ratio = image.dataset.crop ? parseFloat( image.dataset.crop ) : ( image.originalWidth / image.originalHeight ).toFixed( 2 );
+		const scaledWidth = this.scaleWidth( image, width, ratio );
+		const scaledHeight = Math.round( scaledWidth / ratio );
 		const newSize = [];
-		if ( image.width !== image.originalWidth ) {
-			// We know it's a different size.
-			newSize.push( ratio === renderedRatio ? 'c_scale' : 'c_fill,g_auto' );
+
+		// Set crop if needed, else just scale it.
+		newSize.push( image.dataset.crop ? 'c_fill' : 'c_scale' );
+		if ( image.dataset.crop ) {
+			newSize.push( 'g_auto' );
 		}
-		const scaledHeight = Math.round( scaledWidth / renderedRatio );
 
 		newSize.push( 'w_' + scaledWidth );
 		newSize.push( 'h_' + scaledHeight );
@@ -239,8 +244,8 @@ const CloudinaryLoader = {
 		return 'undefined' !== typeof thing && 0 !== thing.length;
 	}
 };
-window.CLDBind = ( image )=>{
-	if( ! image.CLDbound ){
+window.CLDBind = ( image ) => {
+	if ( ! image.CLDbound ) {
 		CloudinaryLoader.bind( image );
 	}
 };

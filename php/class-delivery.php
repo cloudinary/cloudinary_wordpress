@@ -635,6 +635,7 @@ class Delivery implements Setup {
 			$new_tag = HTML::build_tag( $tag_element['tag'], $tag_element['atts'] );
 			$html    = str_replace( $tag_element['original'], $new_tag, $html );
 		}
+
 		return $html;
 	}
 
@@ -892,7 +893,7 @@ class Delivery implements Setup {
 			foreach ( $parts as &$part ) {
 				if ( $this->validate_url( $part ) ) {
 					$has_wp_size = $this->media->get_crop( $part, $tag_element['id'] );
-					$size = array();
+					$size        = array();
 					if ( ! empty( $has_wp_size ) ) {
 						$size = $has_wp_size;
 					}
@@ -1048,17 +1049,17 @@ class Delivery implements Setup {
 			return null;
 		}
 		$tag_element['type'] = 'img' === $tag_element['tag'] ? 'image' : $tag_element['tag'];
-		$raw_url             = isset( $attributes['src'] ) ? $this->sanitize_url( $attributes['src'] ) : '';
+		$raw_url             = isset( $attributes['src'] ) ? $attributes['src'] : '';
 		if ( empty( $raw_url ) ) {
 			foreach ( $attributes as $attribute ) {
 				// Attempt to find a src.
 				if ( $this->validate_url( $attribute ) ) {
-					$raw_url = $this->sanitize_url( $attribute );
+					$raw_url = $attribute;
 					break;
 				}
 			}
 		}
-		$url                     = $this->maybe_unsize_url( self::clean_url( $raw_url ) );
+		$url                     = $this->maybe_unsize_url( self::clean_url( $this->sanitize_url( $raw_url ) ) );
 		$tag_element['base_url'] = $url;
 		// Track back the found URL.
 		if ( $this->media->is_cloudinary_url( $raw_url ) ) {
@@ -1085,6 +1086,16 @@ class Delivery implements Setup {
 			$tag_element['height']        = $item['height'];
 			$attributes['data-public-id'] = $public_id;
 			$tag_element['format']        = $item['format'];
+
+			// Check if this is a crop or a scale.
+			$has_size = $this->media->get_size_from_url( $this->sanitize_url( $raw_url ) );
+			if ( ! empty( $has_size ) ) {
+				$file_ratio     = round( $has_size[0] / $has_size[1], 2 );
+				$original_ratio = round( $item['width'] / $item['height'], 2 );
+				if ( $file_ratio !== $original_ratio ) {
+					$attributes['data-crop'] = $file_ratio;
+				}
+			}
 		}
 
 		if ( ! empty( $attributes['class'] ) ) {
@@ -1103,7 +1114,7 @@ class Delivery implements Setup {
 			);
 		}
 
-		$inline_transformations = $this->get_transformations_maybe( $url );
+		$inline_transformations = $this->get_transformations_maybe( $raw_url );
 		if ( $inline_transformations ) {
 			$tag_element['transformations'] = array_merge( $tag_element['transformations'], $inline_transformations );
 		}
@@ -1292,7 +1303,7 @@ class Delivery implements Setup {
 		 * @hook   cloudinary_set_usable_asset
 		 * @since  3.0.2
 		 *
-		 * @param $item     {array} The found asset array.
+		 * @param $item {array} The found asset array.
 		 *
 		 * @return {array}
 		 */
