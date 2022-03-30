@@ -1500,7 +1500,7 @@ class Delivery implements Setup {
 	 * @return string
 	 */
 	public function prepare_delivery( $content ) {
-
+		$content    = wp_unslash( $content );
 		$all_urls   = array_unique( wp_extract_urls( $content ) );
 		$base_urls  = array_filter( array_map( array( $this, 'sanitize_url' ), $all_urls ) );
 		$clean_urls = array_map( array( $this, 'clean_url' ), $base_urls );
