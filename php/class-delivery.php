@@ -1496,8 +1496,6 @@ class Delivery implements Setup {
 	 * Prepare the delivery for filtering URLS.
 	 *
 	 * @param string $content The content html.
-	 *
-	 * @return string
 	 */
 	public function prepare_delivery( $content ) {
 		$content    = wp_unslash( $content );
