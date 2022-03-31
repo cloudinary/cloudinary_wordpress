@@ -185,6 +185,10 @@ class Api {
 			$parts[] = $this->credentials['cloud_name'];
 		}
 
+		if ( 'false' === $this->credentials['private_cdn'] ) {
+			$parts[] = $this->credentials['cloud_name'];
+		}
+
 		if ( false === $endpoint && 'image' === $resource && 'upload' === $function ) {
 			$parts[] = 'images';
 		} else {
