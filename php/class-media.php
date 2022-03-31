@@ -1041,7 +1041,7 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		if (
-			! doing_action( 'wp_insert_post_data' )
+			! doing_filter( 'content_save_pre' )
 			&& false === $this->in_downsize
 			/**
 			 * Filter doing upload.
@@ -1610,7 +1610,7 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function filter_downsize( $image, $attachment_id, $size ) {
 		// Don't do this while saving.
-		if ( true === $this->in_downsize || doing_action( 'wp_insert_post_data' ) || wp_attachment_is( 'video', $attachment_id ) ) {
+		if ( true === $this->in_downsize || doing_filter( 'content_save_pre' ) || wp_attachment_is( 'video', $attachment_id ) ) {
 			return $image;
 		}
 

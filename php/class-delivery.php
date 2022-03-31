@@ -137,6 +137,7 @@ class Delivery implements Setup {
 		add_action( 'before_delete_post', array( $this, 'delete_size_relationship' ) );
 		add_action( 'delete_attachment', array( $this, 'delete_size_relationship' ) );
 		add_action( 'cloudinary_register_sync_types', array( $this, 'register_sync_type' ), 30 );
+		add_filter( 'content_save_pre', array( $this, 'filter_out_cloudinary' ) );
 		add_action(
 			'the_post',
 			function ( $post ) {
@@ -151,6 +152,77 @@ class Delivery implements Setup {
 		if ( ! is_admin() ) {
 			add_filter( 'wp_get_attachment_url', array( $this, 'ensure_relation' ), 10, 2 );
 		}
+	}
+
+	/**
+	 * Filter out Cloudinary URLS and replace with local.
+	 *
+	 * @param string $content The content to filter.
+	 *
+	 * @return string
+	 */
+	public function filter_out_cloudinary( $content ) {
+
+		static $globals;
+
+		if ( ! $globals ) {
+			$image   = $this->media->apply_default_transformations( array(), 'image' );
+			$video   = $this->media->apply_default_transformations( array(), 'video' );
+			$globals = array(
+				'image' => Api::generate_transformation_string( $image, 'image' ),
+				'video' => Api::generate_transformation_string( $video, 'video' ),
+			);
+		}
+
+		$unslash_maybe = wp_unslash( $content );
+		$unslashed     = $unslash_maybe !== $content;
+		if ( $unslashed ) {
+			$content = $unslash_maybe;
+		}
+		$base_urls       = array_unique( wp_extract_urls( $content ) );
+		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
+		$urls            = array();
+		if ( empty( $cloudinary_urls ) ) {
+			return $content;
+		}
+		foreach ( $cloudinary_urls as $url ) {
+			$public_id          = $this->media->get_public_id_from_url( $url );
+			$urls[ $public_id ] = $url;
+		}
+
+		$results = $this->query_relations( array_keys( $urls ) );
+		String_Replace::reset();
+		foreach ( $results as $result ) {
+			if ( ! isset( $urls[ $result['public_id'] ] ) ) {
+				continue;
+			}
+
+			$original_url    = $urls[ $result['public_id'] ];
+			$size            = $this->media->get_size_from_url( $original_url );
+			$transformations = $this->media->get_transformations_from_string( $original_url );
+			$attachment_url  = wp_get_attachment_image_url( $result['post_id'], $size );
+			if ( ! empty( $transformations ) ) {
+				$transformations = array_filter(
+					$transformations,
+					function ( $item ) {
+						return ! isset( $item['crop'] ) && ! isset( $item['width'] ) && ! isset( $item['height'] );
+					}
+				);
+				$transformations = Api::generate_transformation_string( $transformations );
+				if ( ! empty( $transformations ) && ! in_array( $transformations, $globals, true ) ) {
+					$attachment_url = add_query_arg( 'cld_params', $transformations, $attachment_url );
+				}
+			}
+
+			String_Replace::replace( $original_url, $attachment_url );
+		}
+
+		$content = String_Replace::do_replace( $content );
+		if ( $unslashed ) {
+			$content = wp_slash( $content );
+		}
+
+		return $content;
 	}
 
 	/**
@@ -1432,12 +1504,12 @@ class Delivery implements Setup {
 	}
 
 	/**
-	 * Get urls from HTML.
+	 * Prepare the delivery for filtering URLS.
 	 *
 	 * @param string $content The content html.
 	 */
-	protected function get_urls( $content ) {
-		global $wpdb;
+	public function prepare_delivery( $content ) {
+		$content    = wp_unslash( $content );
 		$all_urls   = array_unique( wp_extract_urls( $content ) );
 		$base_urls  = array_filter( array_map( array( $this, 'sanitize_url' ), $all_urls ) );
 		$clean_urls = array_map( array( $this, 'clean_url' ), $base_urls );
@@ -1453,9 +1525,31 @@ class Delivery implements Setup {
 		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
 		// Clean URLS for search.
 		$public_ids = array_filter( array_map( array( $this->media, 'get_public_id_from_url' ), $cloudinary_urls ) );
+
 		if ( empty( $urls ) && empty( $public_ids ) ) {
 			return; // Bail since theres nothing.
 		}
+
+		$results = $this->query_relations( $public_ids, $urls );
+
+		$auto_sync = $this->sync->is_auto_sync_enabled();
+		foreach ( $results as $result ) {
+			$this->set_usability( $result, $auto_sync );
+		}
+		// Set unknowns.
+		$this->unknown = array_diff( $urls, array_keys( $this->known ) );
+	}
+
+	/**
+	 * Run a query with Public_id's and or local urls.
+	 *
+	 * @param array $public_ids List of Public_IDs qo query.
+	 * @param array $urls       List of URLS to query.
+	 *
+	 * @return array
+	 */
+	public function query_relations( $public_ids, $urls = array() ) {
+		global $wpdb;
 
 		$wheres = array();
 		if ( ! empty( $urls ) ) {
@@ -1475,18 +1569,12 @@ class Delivery implements Setup {
 		$prepared  = $wpdb->prepare( $sql, array_map( 'md5', $urls ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$cache_key = md5( $prepared );
 		$results   = wp_cache_get( $cache_key, 'cld_delivery' );
-
 		if ( empty( $results ) ) {
 			$results = $wpdb->get_results( $prepared, ARRAY_A );// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
 			wp_cache_add( $cache_key, $results, 'cld_delivery' );
 		}
 
-		$auto_sync = $this->sync->is_auto_sync_enabled();
-		foreach ( $results as $result ) {
-			$this->set_usability( $result, $auto_sync );
-		}
-		// Set unknowns.
-		$this->unknown = array_diff( $urls, array_keys( $this->known ) );
+		return $results;
 	}
 
 	/**
@@ -1497,7 +1585,7 @@ class Delivery implements Setup {
 	public function catch_urls( $content ) {
 
 		$this->init_delivery();
-		$this->get_urls( $content );
+		$this->prepare_delivery( $content );
 		$known = $this->convert_tags( $content );
 
 		// Attempt to get the unknowns.
