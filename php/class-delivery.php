@@ -137,7 +137,6 @@ class Delivery implements Setup {
 		add_action( 'before_delete_post', array( $this, 'delete_size_relationship' ) );
 		add_action( 'delete_attachment', array( $this, 'delete_size_relationship' ) );
 		add_action( 'cloudinary_register_sync_types', array( $this, 'register_sync_type' ), 30 );
-		add_filter( 'content_save_pre', array( $this, 'filter_out_cloudinary' ) );
 		add_action(
 			'the_post',
 			function ( $post ) {
@@ -561,6 +560,7 @@ class Delivery implements Setup {
 	 */
 	protected function setup_hooks() {
 		// Add filters.
+		add_filter( 'content_save_pre', array( $this, 'filter_out_cloudinary' ) );
 		add_action( 'save_post', array( $this, 'remove_replace_cache' ) );
 		add_action( 'cloudinary_string_replace', array( $this, 'catch_urls' ) );
 		add_filter( 'post_thumbnail_html', array( $this, 'process_featured_image' ), 100, 3 );
