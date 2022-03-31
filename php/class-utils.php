@@ -275,6 +275,7 @@ class Utils {
 		if ( false === self::table_installed() ) {
 			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 			dbDelta( $sql ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.dbDelta_dbdelta
+			update_option( Sync::META_KEYS['db_version'], get_plugin_instance()->version );
 		} else {
 			self::upgrade_install();
 		}
