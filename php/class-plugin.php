@@ -585,6 +585,77 @@ final class Plugin {
 		if ( ! defined( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION' ) ) {
 			define( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION', '1.5.1' );
 		}
+
+		/**
+		 * The Cloudinary URL public ID.
+		 */
+		if ( ! defined( 'CLOUDINARY_URL_PUBLIC_ID' ) ) {
+			define( 'CLOUDINARY_URL_PUBLIC_ID', 8 );
+		}
+
+		/**
+		 * The Cloudinary URL version.
+		 */
+		if ( ! defined( 'CLOUDINARY_URL_VERSION' ) ) {
+			define( 'CLOUDINARY_URL_VERSION', 9 );
+		}
+
+		/**
+		 * The Cloudinary URL transformations.
+		 */
+		if ( ! defined( 'CLOUDINARY_URL_TRANSFORMATIONS' ) ) {
+			define( 'CLOUDINARY_URL_TRANSFORMATIONS', 10 );
+		}
+
+		/**
+		 * The Cloudinary URL parsed transformations.
+		 */
+		if ( ! defined( 'CLOUDINARY_URL_TRANSFORMATIONS_PARSED' ) ) {
+			define( 'CLOUDINARY_URL_TRANSFORMATIONS_PARSED', 11 );
+		}
+
+		/**
+		 * The Cloudinary URL asset type.
+		 */
+		if ( ! defined( 'CLOUDINARY_URL_ASSET_TYPE' ) ) {
+			define( 'CLOUDINARY_URL_ASSET_TYPE', 12 );
+		}
+
+		/**
+		 * The Cloudinary URL delivery.
+		 */
+		if ( ! defined( 'CLOUDINARY_URL_DELIVERY' ) ) {
+			define( 'CLOUDINARY_URL_DELIVERY', 13 );
+		}
+
+		/**
+		 * The Cloudinary URL format.
+		 */
+		if ( ! defined( 'CLOUDINARY_URL_FORMAT' ) ) {
+			define( 'CLOUDINARY_URL_FORMAT', 14 );
+		}
+
+		/**
+		 * The Cloudinary URL query parsed.
+		 */
+		if ( ! defined( 'CLOUDINARY_URL_QUERY_PARSED' ) ) {
+			define( 'CLOUDINARY_URL_QUERY_PARSED', 15 );
+		}
+
+		/**
+		 * The WordPress attachment ID.
+		 */
+		if ( ! defined( 'CLOUDINARY_URL_ATTACHMENT_ID' ) ) {
+			define( 'CLOUDINARY_URL_ATTACHMENT_ID', 16 );
+		}
+
+		/**
+		 * The WordPress attachment object.
+		 */
+		if ( ! defined( 'CLOUDINARY_URL_ATTACHMENT' ) ) {
+			define( 'CLOUDINARY_URL_ATTACHMENT', 17 );
+		}
+
 	}
 
 	/**

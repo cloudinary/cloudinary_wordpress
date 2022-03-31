@@ -646,34 +646,10 @@ class Media extends Settings_Component implements Setup {
 		if ( ! $this->is_cloudinary_url( $url ) ) {
 			return null;
 		}
-
-		$path  = wp_parse_url( $url, PHP_URL_PATH );
-		$parts = explode( '/', ltrim( $path, '/' ) );
-
-		$maybe_seo = array();
-
-		// Need to find the version part as anything after this is the public id.
-		foreach ( $parts as $part ) {
-			$maybe_seo[] = array_shift( $parts ); // Get rid of the first element.
-			if ( 'v' === substr( $part, 0, 1 ) && is_numeric( substr( $part, 1 ) ) ) {
-				break; // Stop removing elements.
-			}
-		}
-
-		// The remaining items should be the file.
-		$file      = implode( '/', $parts );
-		$path_info = Utils::pathinfo( $file );
-
-		// Is SEO friendly URL.
-		if ( in_array( 'images', $maybe_seo, true ) ) {
-			$public_id = $path_info['dirname'];
-		} else {
-			$public_id = isset( $path_info['dirname'] ) && '.' !== $path_info['dirname'] ? $path_info['dirname'] . DIRECTORY_SEPARATOR . $path_info['filename'] : $path_info['filename'];
-		}
-		$public_id = trim( $public_id, './' );
-
+		
+		$public_id = Utils::parse_url( $url, CLOUDINARY_URL_PUBLIC_ID );
 		if ( $as_sync_key ) {
-			$transformations = $this->get_transformations_from_string( $url );
+			$transformations = Utils::parse_url( $url, CLOUDINARY_URL_TRANSFORMATIONS_PARSED );
 			$public_id      .= ! empty( $transformations ) ? wp_json_encode( $transformations ) : '';
 		}
 
@@ -1264,7 +1240,7 @@ class Media extends Settings_Component implements Setup {
 
 		// Make a copy as not to destroy the options in \Cloudinary::cloudinary_url().
 		$args = $pre_args;
-		$url  = $this->plugin->components['connect']->api->cloudinary_url( $cloudinary_id, $args, $set_size );
+		$url  = $this->plugin->components['connect']->api->cloudinary_url( $cloudinary_id, $args, $set_size, $attachment_id );
 
 		// Check if this type is a preview only type. i.e PDF.
 		if ( ! empty( $set_size ) && $this->is_preview_only( $attachment_id ) ) {
@@ -1783,10 +1759,13 @@ class Media extends Settings_Component implements Setup {
 		if ( ! filter_var( utf8_uri_encode( $url ), FILTER_VALIDATE_URL ) ) {
 			return false;
 		}
-		$test_parts = wp_parse_url( $url );
-		$cld_url    = $this->plugin->components['connect']->api->asset_url;
+		$test_parts       = wp_parse_url( $url );
+		$cloudinary_hosts = array(
+			$this->plugin->components['connect']->api->asset_url,
+			Utils::CLOUDINARY_HOST,
+		);
 
-		return isset( $test_parts['path'] ) && $test_parts['host'] === $cld_url;
+		return isset( $test_parts['path'] ) && in_array( $test_parts['host'], $cloudinary_hosts, true );
 	}
 
 	/**
