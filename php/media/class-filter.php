@@ -274,61 +274,6 @@ class Filter {
 	}
 
 	/**
-	 * Filter out Cloudinary URL when saving to the DB.
-	 *
-	 * @param array $data The post data array to save.
-	 *
-	 * @return array
-	 */
-	public function filter_out_cloudinary( $data ) {
-		// Check whether this page is powered by AMP or is a web story. Bail if that's the case.
-		if ( Utils::is_webstory_post_type( $data['post_type'] ) || Utils::is_amp( $data['post_content'] ) ) {
-			return $data;
-		}
-
-		$content = trim( wp_unslash( $data['post_content'] ) );
-		$assets  = $this->get_media_tags( $content );
-
-		foreach ( $assets as $asset ) {
-			$url = $this->get_url_from_tag( $asset );
-			if ( ! $this->media->is_cloudinary_url( $url ) ) {
-				continue;
-			}
-			$attachment_id = $this->get_id_from_tag( $asset );
-			if ( false === $attachment_id ) {
-				$attachment_id = $this->media->get_id_from_url( $url );
-				if ( empty( $attachment_id ) ) {
-					continue;
-				}
-			}
-			if ( wp_attachment_is_image( $attachment_id ) ) {
-				$size      = $this->get_size_from_image_tag( $asset );
-				$local_url = wp_get_attachment_image_url( $attachment_id, $size );
-			} else {
-				$local_url = wp_get_attachment_url( $attachment_id );
-			}
-			// Skip since there is no local available.
-			if ( $this->media->is_cloudinary_url( $local_url ) ) {
-				continue;
-			}
-
-			// Check that the file isn't an edited version by comparing the public ID.
-			$public_id  = $this->media->get_public_id( $attachment_id );
-			$compare_id = $this->media->get_public_id_from_url( $url );
-			if ( ! empty( $compare_id ) && $compare_id !== $public_id ) {
-				$compare_id .= '.' . Utils::pathinfo( $local_url, PATHINFO_EXTENSION );
-				$local_url  = path_join( dirname( $local_url ), wp_basename( $compare_id ) );
-			}
-			// Replace old tag.
-			$content = str_replace( $url, $local_url, $content );
-
-		}
-		$data['post_content'] = wp_slash( $this->filter_video_shortcodes( $content ) );
-
-		return $data;
-	}
-
-	/**
 	 * Filter content to replace local src urls with Cloudinary urls.
 	 *
 	 * @param string $content The content to filter urls.
@@ -821,7 +766,6 @@ class Filter {
 	 */
 	public function setup_hooks() {
 		// Filter URLS within content.
-		add_filter( 'wp_insert_post_data', array( $this, 'filter_out_cloudinary' ) );
 		add_filter( 'wp_insert_post_data', array( $this, 'prepare_amp_posts' ), 11 );
 		add_filter( 'wp_prepare_attachment_for_js', array( $this, 'filter_attachment_for_js' ), 11 );
 

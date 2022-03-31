@@ -170,6 +170,7 @@ class Media extends Settings_Component implements Setup {
 			'cloudinary_media_filters',
 			array(
 				SYNC::META_KEYS['sync_error'] => __( 'Error', 'cloudinary' ),
+				SYNC::META_KEYS['unsynced']   => __( 'Unsynced', 'cloudinary' ),
 			)
 		);
 
@@ -1040,7 +1041,7 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		if (
-			! doing_action( 'wp_insert_post_data' )
+			! doing_filter( 'content_save_pre' )
 			&& false === $this->in_downsize
 			/**
 			 * Filter doing upload.
@@ -1359,7 +1360,7 @@ class Media extends Settings_Component implements Setup {
 				)
 			);
 
-			$url             = implode( '/', array_filter( $parts ) );
+			$url = implode( '/', array_filter( $parts ) );
 			$this->update_post_meta( $attachment_id, Sync::META_KEYS['raw_url'], $url );
 		}
 
@@ -1609,7 +1610,7 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function filter_downsize( $image, $attachment_id, $size ) {
 		// Don't do this while saving.
-		if ( true === $this->in_downsize || doing_action( 'wp_insert_post_data' ) || wp_attachment_is( 'video', $attachment_id ) ) {
+		if ( true === $this->in_downsize || doing_filter( 'content_save_pre' ) || wp_attachment_is( 'video', $attachment_id ) ) {
 			return $image;
 		}
 
@@ -1831,9 +1832,10 @@ class Media extends Settings_Component implements Setup {
 	 * Setup and include cloudinary assets for DAM widget.
 	 */
 	public function editor_assets() {
+		$deps = wp_script_is( 'cld-core', 'registered' ) ? array( 'cld-core' ) : array();
 		$this->plugin->register_assets(); // Ensure assets are registered.
 		// External assets.
-		wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, array(), $this->plugin->version, true );
+		wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, $deps, $this->plugin->version, true );
 		wp_enqueue_script( 'cloudinary' );
 		wp_enqueue_style( 'cloudinary' );
 		$params = array(
@@ -1962,9 +1964,9 @@ class Media extends Settings_Component implements Setup {
 		$data  = filter_input_array( INPUT_POST, $args );
 		$asset = array(
 			'version'         => (int) filter_var( $data['asset']['version'], FILTER_SANITIZE_NUMBER_INT ),
-			'public_id'       => filter_var( $data['asset']['public_id'], FILTER_SANITIZE_STRING ),
-			'type'            => filter_var( $data['asset']['type'], FILTER_SANITIZE_STRING ),
-			'format'          => filter_var( $data['asset']['format'], FILTER_SANITIZE_STRING ),
+			'public_id'       => sanitize_text_field( $data['asset']['public_id'] ),
+			'type'            => sanitize_text_field( $data['asset']['type'] ),
+			'format'          => sanitize_text_field( $data['asset']['format'] ),
 			'src'             => filter_var( $data['asset']['secure_url'], FILTER_SANITIZE_URL ),
 			'url'             => filter_var( $data['asset']['secure_url'], FILTER_SANITIZE_URL ),
 			'transformations' => array(),
@@ -1986,7 +1988,7 @@ class Media extends Settings_Component implements Setup {
 			array_walk_recursive(
 				$data['asset']['context'],
 				function ( $value, $key ) use ( &$asset ) {
-					$asset['meta'][ $key ] = filter_var( $value, FILTER_SANITIZE_STRING );
+					$asset['meta'][ $key ] = sanitize_text_field( $value );
 				}
 			);
 		}
@@ -2015,7 +2017,7 @@ class Media extends Settings_Component implements Setup {
 	 * Create and prepare a down sync asset from Cloudinary.
 	 */
 	public function down_sync_asset() {
-		$nonce = filter_input( INPUT_POST, 'nonce', FILTER_SANITIZE_STRING );
+		$nonce = Utils::get_sanitized_text( 'nonce', INPUT_POST );
 		if ( wp_verify_nonce( $nonce, 'wp_rest' ) ) {
 
 			$asset = $this->get_asset_payload();
@@ -2299,9 +2301,9 @@ class Media extends Settings_Component implements Setup {
 				continue;
 			}
 			if ( is_wp_error( $log ) ) {
-				$logs[ $signature ] = array();
+				$logs[ $signature ]                 = array();
 				$logs[ $signature ][ '_' . time() ] = array(
-					'code' => $log->get_error_code(),
+					'code'    => $log->get_error_code(),
 					'message' => $log->get_error_message(),
 				);
 				continue;
@@ -2322,12 +2324,12 @@ class Media extends Settings_Component implements Setup {
 					// Fix stored expanded time.
 					if ( ! is_numeric( $time ) ) {
 						$to_unset = $time;
-						$time = strtotime( $time );
+						$time     = strtotime( $time );
 					}
 					$time = "_{$time}";
 				} else { // Readable request.
 					$to_unset = "_{$time}";
-					$time = gmdate( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $time );
+					$time     = gmdate( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $time );
 				}
 
 				// Maybe cleanup log entries.
@@ -2746,9 +2748,9 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function apply_media_library_filters( $query ) {
 		if ( is_admin() && $query->is_main_query() ) {
-			$request = filter_input( INPUT_GET, 'cloudinary-filter', FILTER_SANITIZE_STRING );
+			$request = Utils::get_sanitized_text( 'cloudinary-filter' );
 
-			if ( $request && 'none' !== $request ) {
+			if ( SYNC::META_KEYS['sync_error'] === $request ) {
 				$meta_query = $query->get( 'meta_query' );
 				if ( ! is_array( $meta_query ) ) {
 					$meta_query = array();
@@ -2762,6 +2764,16 @@ class Media extends Settings_Component implements Setup {
 				);
 				$query->set( 'meta_query', $meta_query );
 			}
+
+			if ( SYNC::META_KEYS['unsynced'] === $request ) {
+				global $wpdb;
+				$wpdb->cld_table = Utils::get_relationship_table();
+				$result          = $wpdb->get_col( "SELECT post_id FROM $wpdb->cld_table WHERE public_id IS NULL" );
+
+				if ( ! empty( $result ) ) {
+					$query->set( 'post__in', $result );
+				}
+			}
 		}
 	}
 
@@ -2771,10 +2783,8 @@ class Media extends Settings_Component implements Setup {
 	 * @param string $post_type The post type slug.
 	 */
 	public function filter_media_library( $post_type ) {
-		$current_screen = get_current_screen();
-
-		if ( $current_screen instanceof WP_Screen && $current_screen->post_type === $post_type ) {
-			$request = filter_input( INPUT_GET, 'cloudinary-filter', FILTER_SANITIZE_STRING );
+		if ( 'attachment' === $post_type ) {
+			$request = Utils::get_sanitized_text( 'cloudinary-filter' );
 			?>
 			<select name="cloudinary-filter" id="cloudinary-filter">
 				<option value="none"><?php esc_html_e( 'No Cloudinary filters', 'cloudinary' ); ?></option>

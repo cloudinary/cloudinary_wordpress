@@ -5,6 +5,7 @@
  * @package Cloudinary
  */
 
+use Cloudinary\Utils;
 use function Cloudinary\get_plugin_instance;
 
 wp_enqueue_style( 'cld-player' );
@@ -12,7 +13,7 @@ wp_enqueue_script( 'cld-player' );
 
 wp_add_inline_script( 'cloudinary', 'var CLD_GLOBAL_TRANSFORMATIONS = CLD_GLOBAL_TRANSFORMATIONS ? CLD_GLOBAL_TRANSFORMATIONS : {};', 'before' );
 
-$tax_slug   = filter_input( INPUT_GET, 'taxonomy', FILTER_SANITIZE_STRING );
+$tax_slug   = Utils::get_sanitized_text( 'taxonomy' );
 $tax_labels = get_taxonomy_labels( get_taxonomy( $tax_slug ) );
 $cloudinary = get_plugin_instance();
 ?>

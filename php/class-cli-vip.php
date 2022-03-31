@@ -24,7 +24,7 @@ class CLI_VIP extends \WPCOM_VIP_CLI_Command {
 	 * @since   2.5.1
 	 * @link    http://patorjk.com/software/taag/#p=display&c=echo&f=Calvin%20S&t=Cloudinary%20CLI
 	 */
-	public function do_intro() {
+	protected function do_intro() {
 		static $intro;
 		if ( ! $intro ) {
 			\WP_CLI::log( '' );

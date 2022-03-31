@@ -17,7 +17,9 @@
 
 	<rule ref="WordPress.WP.I18n">
 		<properties>
-			<property name="text_domain" type="array" value="cloudinary" />
+			<property name="text_domain" type="array">
+				<element value="cloudinary"/>
+			</property>
 		</properties>
 	</rule>
 
@@ -28,7 +30,6 @@
 
 	<!-- Include WP VIP coding standard checks -->
 	<rule ref="WordPress-VIP-Go" />
-	<rule ref="WordPressVIPMinimum" />
 
 	<exclude-pattern>/node_modules/</exclude-pattern>
 	<exclude-pattern>/vendor/</exclude-pattern>
