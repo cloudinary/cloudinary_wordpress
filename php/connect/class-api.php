@@ -181,11 +181,7 @@ class Api {
 			$parts[] = $this->asset_url;
 		}
 
-		if ( empty( $this->credentials['cname'] ) || $endpoint ) {
-			$parts[] = $this->credentials['cloud_name'];
-		}
-
-		if ( 'false' === $this->credentials['private_cdn'] ) {
+		if ( empty( $this->credentials['cname'] ) || $endpoint || 'false' === $this->credentials['private_cdn'] ) {
 			$parts[] = $this->credentials['cloud_name'];
 		}
 
