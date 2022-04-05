@@ -362,6 +362,10 @@ class Video {
 
 		// Add the player version to use.
 		$params['vpv'] = CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION;
+
+		// Add Cloudinary analytics.
+		$params['_i'] = 'AA';
+
 		// Build URL.
 		$params['player'] = wp_parse_args( $attributes, $params['player'] );
 		$url              = add_query_arg( $params, CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_EMBED );
