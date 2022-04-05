@@ -355,6 +355,11 @@ class Video {
 			}
 			unset( $attributes['poster'] );
 		}
+
+		if ( ! empty( $this->config['video_loop'] ) && 'on' === $this->config['video_loop'] ) {
+			$params['player']['loop'] = 'true';
+		}
+
 		// Add the player version to use.
 		$params['vpv'] = CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION;
 		// Build URL.
