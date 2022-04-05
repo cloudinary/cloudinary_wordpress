@@ -262,6 +262,17 @@ class Video {
 					} else {
 						$url     = $this->media->cloudinary_url( $attachment_id );
 						$content = str_replace( $attributes['src'], $url, $content );
+
+						if ( ! empty( $attributes['poster'] ) ) {
+							// Maybe local URL.
+							if ( ! $this->media->is_cloudinary_url( $attributes['poster'] ) ) {
+								$post_id = attachment_url_to_postid( $attributes['poster'] );
+								$url = $this->media->cloudinary_url( $post_id );
+								if ( $url ) {
+									$content = str_replace( $attributes['poster'], $url, $content );
+								}
+							}
+						}
 					}
 				}
 			}
@@ -343,6 +354,13 @@ class Video {
 		// Set the poster.
 		if ( isset( $attributes['poster'] ) ) {
 			$poster_id = $this->media->get_public_id_from_url( $attributes['poster'] );
+
+			// Maybe poster is a local URL.
+			if ( empty( $poster_id ) ) {
+				$post_id   = attachment_url_to_postid( $attributes['poster'] );
+				$poster_id = $this->media->get_public_id( $post_id );
+			}
+
 			if ( $poster_id ) {
 				$params['source']['poster']['public_id']      = $poster_id;
 				$poster_transformation                        = array(
