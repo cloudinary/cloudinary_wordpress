@@ -170,7 +170,7 @@ const CloudinaryLoader = {
 			width = image.width;
 			let height = Math.round( width / ratio );
 
-			while ( -1 === this.sizeBands.indexOf( width ) || ( height < image.height && width < maxSize ) ) {
+			while ( -1 === this.sizeBands.indexOf( width ) && height < image.height && width < maxSize ) {
 				width++;
 				height = Math.round( width / ratio );
 			}

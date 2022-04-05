@@ -199,7 +199,12 @@ class Delivery implements Setup {
 			$original_url    = $urls[ $result['public_id'] ];
 			$size            = $this->media->get_size_from_url( $original_url );
 			$transformations = $this->media->get_transformations_from_string( $original_url );
-			$attachment_url  = wp_get_attachment_image_url( $result['post_id'], $size );
+
+			if ( 'image' === $this->media->get_resource_type( $result['post_id'] ) ) {
+				$attachment_url  = wp_get_attachment_image_url( $result['post_id'], $size );
+			} else {
+				$attachment_url = wp_get_attachment_url( $result['post_id'] );
+			}
 			if ( ! empty( $transformations ) ) {
 				$transformations = array_filter(
 					$transformations,
