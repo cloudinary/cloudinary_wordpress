@@ -2838,7 +2838,6 @@ class Media extends Settings_Component implements Setup {
 			add_action( 'print_media_templates', array( $this, 'media_template' ) );
 			add_action( 'wp_enqueue_media', array( $this, 'editor_assets' ) );
 			add_action( 'wp_ajax_cloudinary-down-sync', array( $this, 'down_sync_asset' ) );
-			add_action( 'rest_api_init', array( $this, 'add_live_url_filters' ) );
 
 			// Filter to add cloudinary folder.
 			add_filter( 'upload_dir', array( $this, 'upload_dir' ) );

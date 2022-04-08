@@ -8,6 +8,7 @@
 namespace Cloudinary;
 
 use Cloudinary\Component\Setup;
+use \Traversable;
 
 /**
  * String replace class.
@@ -20,6 +21,13 @@ class String_Replace implements Setup {
 	 * @var Plugin Instance of the global plugin.
 	 */
 	public $plugin;
+
+	/**
+	 * Holds the context.
+	 *
+	 * @var string
+	 */
+	protected $context;
 
 	/**
 	 * Holds the list of strings and replacements.
@@ -41,10 +49,38 @@ class String_Replace implements Setup {
 	 * Setup the object.
 	 */
 	public function setup() {
-		add_action( 'the_content', array( $this, 'replace_strings' ), 1 );
-		add_action( 'template_redirect', array( $this, 'init' ), -1000 ); // Not crazy low, but low enough to catch most cases, but not too low that it may break AMP.
+		if ( is_admin() ) {
+			$this->admin_filters();
+		} else {
+			$this->public_filters();
+		}
+		$this->add_rest_filters();
+	}
+
+	/**
+	 * Add admin filters.
+	 */
+	protected function admin_filters() {
+		// Admin filters can call String_Replace frequently, which is fine, as performance is not an issue.
+		add_filter( 'media_send_to_editor', array( $this, 'replace_strings' ), 10, 2 );
+		add_filter( 'the_editor_content', array( $this, 'replace_strings' ), 10, 2 );
+		add_filter( 'wp_prepare_attachment_for_js', array( $this, 'replace_strings' ), 11 );
+		add_action( 'admin_init', array( $this, 'start_capture' ) );
+	}
+
+	/**
+	 * Add Public Filters.
+	 */
+	protected function public_filters() {
 		add_action( 'template_include', array( $this, 'init_debug' ), PHP_INT_MAX );
-		$types = get_post_types_by_support( 'editor' );
+		add_action( 'parse_request', array( $this, 'init' ), - 1000 ); // Not crazy low, but low enough to catch most cases, but not too low that it may break AMP.
+	}
+
+	/**
+	 * Add filters for REST API.
+	 */
+	protected function add_rest_filters() {
+		$types = get_post_types_by_support( 'author' );
 		foreach ( $types as $type ) {
 			$post_type = get_post_type_object( $type );
 			// Check if this is a rest supported type.
@@ -66,9 +102,9 @@ class String_Replace implements Setup {
 	 */
 	public function pre_filter_rest_content( $response, $post, $request ) {
 		$context = $request->get_param( 'context' );
-		if ( 'view' === $context ) {
-			$data                        = $response->get_data();
-			$data['content']['rendered'] = $this->replace_strings( $data['content']['rendered'] );
+		if ( 'view' === $context || 'edit' === $context ) {
+			$data = $response->get_data();
+			$data = $this->replace_strings( $data, $context );
 			$response->set_data( $data );
 		}
 
@@ -79,10 +115,18 @@ class String_Replace implements Setup {
 	 * Init the buffer capture and set the output callback.
 	 */
 	public function init() {
-		remove_action( 'the_content', array( $this, 'replace_strings' ), 1 ); // Remove the content filter.
 		if ( ! defined( 'CLD_DEBUG' ) || false === CLD_DEBUG ) {
-			ob_start( array( $this, 'replace_strings' ) );
+			$this->context = 'view';
+			$this->start_capture();
 		}
+	}
+
+	/**
+	 * Stop the buffer capture and set the output callback.
+	 */
+	public function start_capture() {
+		ob_start( array( $this, 'replace_strings' ) );
+		ob_start( array( $this, 'replace_strings' ) );
 	}
 
 	/**
@@ -94,6 +138,7 @@ class String_Replace implements Setup {
 	 */
 	public function init_debug( $template ) {
 		if ( defined( 'CLD_DEBUG' ) && true === CLD_DEBUG && ! Utils::get_sanitized_text( '_bypass' ) ) {
+			$this->context = 'view';
 			ob_start();
 			include $template;
 			$html = ob_get_clean();
@@ -137,44 +182,110 @@ class String_Replace implements Setup {
 	}
 
 	/**
-	 * Replace string in HTML.
+	 * Flatten an array into content.
 	 *
-	 * @param string $html The HTML.
+	 * @param array $content The array to flatten.
 	 *
 	 * @return string
 	 */
-	public function replace_strings( $html ) {
+	public function flatten( $content ) {
+		$flat = '';
+		if ( self::is_iterable( $content ) ) {
+			foreach ( $content as $item ) {
+				$flat .= "\r\n" . $this->flatten( $item );
+			}
+		} else {
+			$flat = $content;
+		}
 
+		return $flat;
+	}
+
+	/**
+	 * Check if the item is iterable.
+	 *
+	 * @param mixed $thing Thing to check.
+	 *
+	 * @return bool
+	 */
+	protected static function is_iterable( $thing ) {
+		return is_array( $thing ) || ( is_object( $thing ) && ( $thing instanceof Traversable ) );
+	}
+
+	/**
+	 * Flatten an array into content.
+	 *
+	 * @param mixed  $content The content to prime replacements for.
+	 * @param string $context The context to use.
+	 */
+	protected function prime_replacements( $content, $context = 'view' ) {
+
+		if ( self::is_iterable( $content ) ) {
+			$content = $this->flatten( $content );
+		}
 		/**
 		 * Do replacement action.
 		 *
 		 * @hook cloudinary_string_replace
 		 *
-		 * @param $html {string} The html of the page.
+		 * @param $content {string} The html of the page.
 		 */
-		do_action( 'cloudinary_string_replace', $html );
-		if ( ! empty( self::$replacements ) ) {
-			$html = self::do_replace( $html );
-		}
+		do_action( 'cloudinary_string_replace', $content, $context );
+	}
 
-		return $html;
+	/**
+	 * Replace string in HTML.
+	 *
+	 * @param string|array $content The HTML.
+	 * @param string       $context The context to use.
+	 *
+	 * @return string
+	 */
+	public function replace_strings( $content, $context = 'view' ) {
+		if ( empty( $content ) ) {
+			return $content; // Bail if nothing to replace.
+		}
+		// Captured a front end request, since the $context will be an int.
+		if ( ! empty( $this->context ) ) {
+			$context = $this->context;
+		}
+		if ( Utils::is_json( $content ) ) {
+			$json_maybe = json_decode( $content, true );
+			if ( $json_maybe ) {
+				$content = $json_maybe;
+			}
+		}
+		$this->prime_replacements( $content, $context );
+		if ( ! empty( self::$replacements ) ) {
+			$content = self::do_replace( $content );
+		}
+		self::reset();
+
+		return isset( $json_maybe ) ? wp_json_encode( $content ) : $content;
 	}
 
 	/**
 	 * Do string replacements.
 	 *
-	 * @param string $content The content to do replacements on.
+	 * @param string|array $content The content to do replacements on.
 	 *
-	 * @return string
+	 * @return string|array
 	 */
 	public static function do_replace( $content ) {
-		return str_replace( array_keys( self::$replacements ), array_values( self::$replacements ), $content );
+
+		if ( self::is_iterable( $content ) ) {
+			foreach ( $content as &$item ) {
+				$item = self::do_replace( $item );
+			}
+		} else {
+			$content = str_replace( array_keys( self::$replacements ), array_values( self::$replacements ), $content );
+		}
+
+		return $content;
 	}
 
 	/**
 	 * Reset internal replacements.
-	 *
-	 * @return void
 	 */
 	public static function reset() {
 		self::$replacements = array();
