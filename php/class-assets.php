@@ -355,24 +355,6 @@ class Assets extends Settings_Component {
 			wp_safe_redirect( $referrer );
 			exit;
 		}
-		if ( ! empty( $this->delivery->known ) ) {
-
-			foreach ( $this->delivery->known as $url => $set ) {
-				if ( is_int( $set ) || empty( $set['public_id'] ) ) {
-					continue;
-				}
-				$public_id = $set['public_id'];
-				if ( ! empty( $set['format'] ) ) {
-					$public_id .= '.' . $set['format'];
-				}
-				$cloudinary_url = $this->media->cloudinary_url( $set['post_id'], array( $set['width'], $set['height'] ), null, $public_id );
-				if ( $cloudinary_url ) {
-					// Late replace on unmatched urls (links, inline styles etc..), both http and https.
-					String_Replace::replace( 'http:' . $url, $cloudinary_url );
-					String_Replace::replace( 'https:' . $url, $cloudinary_url );
-				}
-			}
-		}
 	}
 
 	/**
