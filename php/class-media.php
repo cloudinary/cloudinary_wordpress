@@ -1225,7 +1225,7 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @param int          $attachment_id             The id of the attachment.
 	 * @param array|string $size                      The wp size to set for the URL.
-	 * @param array        $transformations           Set of transformations to apply to this url.
+	 * @param array|string $transformations           Set of transformations to apply to this url.
 	 * @param string|null  $cloudinary_id             Optional forced cloudinary ID.
 	 * @param bool         $overwrite_transformations Flag url is a breakpoint URL to stop re-applying default transformations.
 	 *
@@ -1260,6 +1260,9 @@ class Media extends Settings_Component implements Setup {
 			$set_size = $this->prepare_size( $attachment_id, $size );
 		}
 		// Prepare transformations.
+		if ( ! empty( $transformations ) && is_string( $transformations ) ) {
+			$transformations = $this->get_transformations_from_string( $transformations, $resource_type );
+		}
 		$pre_args['transformation'] = $this->get_transformations( $attachment_id, $transformations, $overwrite_transformations );
 
 		// Make a copy as not to destroy the options in \Cloudinary::cloudinary_url().
@@ -2772,6 +2775,8 @@ class Media extends Settings_Component implements Setup {
 
 				if ( ! empty( $result ) ) {
 					$query->set( 'post__in', $result );
+				} else {
+					$query->set( 'post__in', array( 0 ) );
 				}
 			}
 		}
@@ -2838,7 +2843,6 @@ class Media extends Settings_Component implements Setup {
 			add_action( 'print_media_templates', array( $this, 'media_template' ) );
 			add_action( 'wp_enqueue_media', array( $this, 'editor_assets' ) );
 			add_action( 'wp_ajax_cloudinary-down-sync', array( $this, 'down_sync_asset' ) );
-			add_action( 'rest_api_init', array( $this, 'add_live_url_filters' ) );
 
 			// Filter to add cloudinary folder.
 			add_filter( 'upload_dir', array( $this, 'upload_dir' ) );
