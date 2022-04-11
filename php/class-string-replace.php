@@ -126,7 +126,7 @@ class String_Replace implements Setup {
 	 */
 	public function start_capture() {
 		ob_start( array( $this, 'replace_strings' ) );
-		ob_start( array( $this, 'replace_strings' ) );
+		ob_start( array( $this, 'replace_strings' ) ); // Second call to catch early buffer flushing.
 	}
 
 	/**
@@ -208,12 +208,13 @@ class String_Replace implements Setup {
 	 *
 	 * @return bool
 	 */
-	protected static function is_iterable( $thing ) {
-		return is_array( $thing ) || ( is_object( $thing ) && ( $thing instanceof Traversable ) );
+	public static function is_iterable( $thing ) {
+
+		return is_array( $thing ) || is_object( $thing );
 	}
 
 	/**
-	 * Flatten an array into content.
+	 * Prime replacement strings.
 	 *
 	 * @param mixed  $content The content to prime replacements for.
 	 * @param string $context The context to use.
@@ -226,9 +227,11 @@ class String_Replace implements Setup {
 		/**
 		 * Do replacement action.
 		 *
-		 * @hook cloudinary_string_replace
+		 * @hook  cloudinary_string_replace
+		 * @since 3.0.3 Added the `$context` argument.
 		 *
 		 * @param $content {string} The html of the page.
+		 * @param $context {string} The render context.
 		 */
 		do_action( 'cloudinary_string_replace', $content, $context );
 	}
@@ -242,14 +245,15 @@ class String_Replace implements Setup {
 	 * @return string
 	 */
 	public function replace_strings( $content, $context = 'view' ) {
-		if ( empty( $content ) ) {
+		static $last_content;
+		if ( empty( $content ) || $last_content === $content ) {
 			return $content; // Bail if nothing to replace.
 		}
 		// Captured a front end request, since the $context will be an int.
 		if ( ! empty( $this->context ) ) {
 			$context = $this->context;
 		}
-		if ( Utils::is_json( $content ) ) {
+		if ( Utils::looks_like_json( $content ) ) {
 			$json_maybe = json_decode( $content, true );
 			if ( $json_maybe ) {
 				$content = $json_maybe;
@@ -260,8 +264,8 @@ class String_Replace implements Setup {
 			$content = self::do_replace( $content );
 		}
 		self::reset();
-
-		return isset( $json_maybe ) ? wp_json_encode( $content ) : $content;
+		$last_content = isset( $json_maybe ) ? wp_json_encode( $content ) : $content;
+		return $last_content;
 	}
 
 	/**

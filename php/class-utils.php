@@ -447,13 +447,13 @@ class Utils {
 	}
 
 	/**
-	 * Check if a thing is a json string.
+	 * Check if a thing looks like a json string.
 	 *
 	 * @param mixed $thing The thing to check.
 	 *
 	 * @return bool
 	 */
-	public static function is_json( $thing ) {
+	public static function looks_like_json( $thing ) {
 		return is_string( $thing ) && in_array( ltrim( $thing )[0], array( '{', '[' ), true );
 	}
 }
