@@ -887,6 +887,9 @@ class Delivery implements Setup {
 		// Create aliases for urls where were found, but not found with an ID in a tag.
 		// Create the Full/Scaled items first.
 		foreach ( $this->known as $url => $relation ) {
+			if ( $url === $relation['public_id'] ) {
+				continue; // We don't need the public_id relation item.
+			}
 			$base             = $type . ':' . $url;
 			$public_id        = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
 			$aliases[ $base ] = $this->media->cloudinary_url( $relation['post_id'], array(), $relation['transformations'], $public_id );
@@ -1550,11 +1553,15 @@ class Delivery implements Setup {
 		$urls    = array_merge( $desized, $scaled );
 		$urls    = array_values( $urls ); // resets the index.
 
-		// clean out empty urls.
-		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
-		// Clean URLS for search.
-		$public_ids = array_filter( array_map( array( $this->media, 'get_public_id_from_url' ), $cloudinary_urls ) );
-
+		$public_ids = array();
+		// Lets only look for Cloudinary URLs on the frontend.
+		if ( ! is_admin() ) {
+			// clean out empty urls.
+			$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
+			// Clean URLS for search.
+			$all_public_ids = array_filter( array_map( array( $this->media, 'get_public_id_from_url' ), $cloudinary_urls ) );
+			$public_ids     = array_unique( $all_public_ids );
+		}
 		if ( empty( $urls ) && empty( $public_ids ) ) {
 			return; // Bail since theres nothing.
 		}
