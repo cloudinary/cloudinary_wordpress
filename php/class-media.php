@@ -1225,7 +1225,7 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @param int          $attachment_id             The id of the attachment.
 	 * @param array|string $size                      The wp size to set for the URL.
-	 * @param array        $transformations           Set of transformations to apply to this url.
+	 * @param array|string $transformations           Set of transformations to apply to this url.
 	 * @param string|null  $cloudinary_id             Optional forced cloudinary ID.
 	 * @param bool         $overwrite_transformations Flag url is a breakpoint URL to stop re-applying default transformations.
 	 *
@@ -1260,6 +1260,9 @@ class Media extends Settings_Component implements Setup {
 			$set_size = $this->prepare_size( $attachment_id, $size );
 		}
 		// Prepare transformations.
+		if ( ! empty( $transformations ) && is_string( $transformations ) ) {
+			$transformations = $this->get_transformations_from_string( $transformations, $resource_type );
+		}
 		$pre_args['transformation'] = $this->get_transformations( $attachment_id, $transformations, $overwrite_transformations );
 
 		// Make a copy as not to destroy the options in \Cloudinary::cloudinary_url().
