@@ -2775,6 +2775,8 @@ class Media extends Settings_Component implements Setup {
 
 				if ( ! empty( $result ) ) {
 					$query->set( 'post__in', $result );
+				} else {
+					$query->set( 'post__in', array( 0 ) );
 				}
 			}
 		}
