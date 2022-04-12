@@ -451,7 +451,7 @@ class Storage implements Notice {
 	 */
 	public function ensure_metadata( $data, $attachment_id ) {
 		if ( defined( 'REST_REQUEST' ) && true === REST_REQUEST ) {
-			if ( isset( $data['sizes'] ) && 'cld' === $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['storage'], true ) ) {
+			if ( isset( $data['sizes'] ) && ! empty( $data['original_image'] ) && 'cld' === $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['storage'], true ) ) {
 				$data['file'] = path_join( dirname( $data['file'] ), $data['original_image'] );
 				unset( $data['original_image'] );
 			}
