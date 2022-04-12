@@ -284,7 +284,7 @@ class String_Replace implements Setup {
 			foreach ( $content as &$item ) {
 				$item = self::do_replace( $item );
 			}
-		} else {
+		} elseif ( is_string( $content ) ) {
 			$content = str_replace( array_keys( self::$replacements ), array_values( self::$replacements ), $content );
 		}
 
