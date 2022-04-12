@@ -73,14 +73,16 @@ class String_Replace implements Setup {
 	 */
 	protected function public_filters() {
 		add_action( 'template_include', array( $this, 'init_debug' ), PHP_INT_MAX );
-		add_action( 'parse_request', array( $this, 'init' ), - 1000 ); // Not crazy low, but low enough to catch most cases, but not too low that it may break AMP.
+		if ( ! defined( 'REST_REQUEST' ) || ! REST_REQUEST ) { // Not needed on REST API.
+			add_action( 'parse_request', array( $this, 'init' ), - 1000 ); // Not crazy low, but low enough to catch most cases, but not too low that it may break AMP.
+		}
 	}
 
 	/**
 	 * Add filters for REST API.
 	 */
 	protected function add_rest_filters() {
-		$types = get_post_types_by_support( 'author' );
+		$types = get_post_types();
 		foreach ( $types as $type ) {
 			$post_type = get_post_type_object( $type );
 			// Check if this is a rest supported type.
@@ -255,7 +257,7 @@ class String_Replace implements Setup {
 		}
 		if ( Utils::looks_like_json( $content ) ) {
 			$json_maybe = json_decode( $content, true );
-			if ( $json_maybe ) {
+			if ( ! empty( $json_maybe ) ) {
 				$content = $json_maybe;
 			}
 		}
@@ -264,7 +266,8 @@ class String_Replace implements Setup {
 			$content = self::do_replace( $content );
 		}
 		self::reset();
-		$last_content = isset( $json_maybe ) ? wp_json_encode( $content ) : $content;
+		$last_content = ! empty( $json_maybe ) ? wp_json_encode( $content ) : $content;
+
 		return $last_content;
 	}
 
