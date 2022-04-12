@@ -887,7 +887,7 @@ class Delivery implements Setup {
 		// Create aliases for urls where were found, but not found with an ID in a tag.
 		// Create the Full/Scaled items first.
 		foreach ( $this->known as $url => $relation ) {
-			if ( $url === $relation['public_id'] ) {
+			if ( empty( $relation['public_id'] || $url === $relation['public_id'] ) ) {
 				continue; // We don't need the public_id relation item.
 			}
 			$base             = $type . ':' . $url;
@@ -897,7 +897,7 @@ class Delivery implements Setup {
 
 		// Create the sized found relations second.
 		foreach ( $this->found_urls as $url => $sizes ) {
-			if ( ! isset( $this->known[ $url ] ) ) {
+			if ( ! isset( $this->known[ $url ] ) || empty( $this->known[ $url ]['public_id'] ) ) {
 				continue;
 			}
 			$base      = $type . ':' . $url;
