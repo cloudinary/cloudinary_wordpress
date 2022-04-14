@@ -208,6 +208,16 @@ class SVG extends Delivery_Feature {
 	}
 
 	/**
+	 * Check if component is active.
+	 *
+	 * @return bool
+	 */
+	public function is_active() {
+		// It's always active if on.
+		return 'on' === $this->config[ $this->enable_slug ];
+	}
+
+	/**
 	 * Setup the component
 	 */
 	public function setup_hooks() {
