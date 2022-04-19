@@ -275,6 +275,7 @@ class Utils {
 		if ( false === self::table_installed() ) {
 			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 			dbDelta( $sql ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.dbDelta_dbdelta
+			update_option( Sync::META_KEYS['db_version'], get_plugin_instance()->version );
 		} else {
 			self::upgrade_install();
 		}
@@ -408,6 +409,18 @@ class Utils {
 		$javascript = "\n" . trim( $javascript, "\n\r " ) . "\n";
 
 		echo sprintf( "<script type='text/javascript'>%s</script>\n", $javascript ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
+
+	/**
+	 * Get a sanitized input text field.
+	 *
+	 * @param string $var  The value to get.
+	 * @param int    $type The type to get.
+	 *
+	 * @return mixed
+	 */
+	public static function get_sanitized_text( $var, $type = INPUT_GET ) {
+		return filter_input( $type, $var, FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
 	}
 
 	/**

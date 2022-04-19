@@ -257,7 +257,7 @@ class Video {
 					$video_tag  = array_shift( $video_tags );
 					$attributes = Utils::get_tag_attributes( $video_tag );
 					if ( $this->player_enabled() ) {
-						unset( $attributes['src'], $attributes['controls'] );
+						unset( $attributes['src'] );
 						$content = $this->build_video_embed( $attachment_id, $attributes, $overwrite_transformations );
 					} else {
 						$url     = $this->media->cloudinary_url( $attachment_id );
@@ -284,11 +284,11 @@ class Video {
 	 */
 	protected function build_video_embed( $attachment_id, $attributes = array(), $overwrite_transformations = false ) {
 		$public_id = $this->media->get_public_id( $attachment_id );
-		$controls  = $this->media->get_settings()->get_value( 'video_controls' );
+		$controls  = ! empty( $attributes['controls'] );
 		$autoplay  = $this->media->get_settings()->get_value( 'video_autoplay_mode' );
 
 		// If we don't show controls, we need to autoplay the video.
-		if ( 'off' === $controls ) {
+		if ( ! $controls ) {
 			$autoplay = 'on-scroll';
 		}
 
@@ -298,7 +298,7 @@ class Video {
 			'cloud_name' => $this->media->plugin->get_component( 'connect' )->get_cloud_name(),
 			'player'     => array(
 				'fluid'    => 'true',
-				'controls' => 'on' === $controls ? 'true' : 'false',
+				'controls' => $controls ? 'true' : 'false',
 			),
 			'source'     => array(
 				'source_types' => array(),
@@ -319,8 +319,12 @@ class Video {
 		if ( ! empty( $this->media->credentials['cname'] ) ) {
 			$params['cloudinary'] = array(
 				'cname'       => $this->media->credentials['cname'],
-				'private_cdn' => 'true',
+				'private_cdn' => $this->media->credentials['private_cdn'],
 			);
+
+			if ( 'false' === $params['cloudinary']['private_cdn'] ) {
+				$params['cloudinary']['secure_distribution'] = $this->media->credentials['cname'];
+			}
 		}
 		// Set the autoplay.
 		// Some browsers require Autoplay to be muted — https://developers.google.com/web/updates/2016/07/autoplay.

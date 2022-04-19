@@ -342,7 +342,7 @@ class Assets extends Settings_Component {
 	 * @hook cloudinary_string_replace
 	 */
 	public function add_url_replacements() {
-		$overlay = filter_input( INPUT_GET, 'cloudinary-cache-overlay', FILTER_SANITIZE_STRING );
+		$overlay = Utils::get_sanitized_text( 'cloudinary-cache-overlay' );
 		$setting = $this->plugin->settings->image_settings->overlay;
 
 		if ( $overlay && wp_verify_nonce( $overlay, 'cloudinary-cache-overlay' ) ) {

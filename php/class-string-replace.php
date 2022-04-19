@@ -93,7 +93,7 @@ class String_Replace implements Setup {
 	 * @return null|string
 	 */
 	public function init_debug( $template ) {
-		if ( defined( 'CLD_DEBUG' ) && true === CLD_DEBUG && ! filter_input( INPUT_GET, '_bypass', FILTER_SANITIZE_STRING ) ) {
+		if ( defined( 'CLD_DEBUG' ) && true === CLD_DEBUG && ! Utils::get_sanitized_text( '_bypass' ) ) {
 			ob_start();
 			include $template;
 			$html = ob_get_clean();
@@ -154,9 +154,29 @@ class String_Replace implements Setup {
 		 */
 		do_action( 'cloudinary_string_replace', $html );
 		if ( ! empty( self::$replacements ) ) {
-			$html = str_replace( array_keys( self::$replacements ), array_values( self::$replacements ), $html );
+			$html = self::do_replace( $html );
 		}
 
 		return $html;
+	}
+
+	/**
+	 * Do string replacements.
+	 *
+	 * @param string $content The content to do replacements on.
+	 *
+	 * @return string
+	 */
+	public static function do_replace( $content ) {
+		return str_replace( array_keys( self::$replacements ), array_values( self::$replacements ), $content );
+	}
+
+	/**
+	 * Reset internal replacements.
+	 *
+	 * @return void
+	 */
+	public static function reset() {
+		self::$replacements = array();
 	}
 }
