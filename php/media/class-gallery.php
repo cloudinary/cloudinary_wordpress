@@ -417,9 +417,12 @@ class Gallery extends Settings_Component {
 
 		$attributes['mediaAssets'] = array();
 		foreach ( $attributes['selectedImages'] as $attachment ) {
-			$transformations = $this->media->get_transformations( $attachment['attachmentId'] );
-			if ( ! empty( $transformations ) ) {
-				$attachment['transformation'] = array( 'transformation' => $transformations );
+			// Since the gallery widget uses public ID's, if an attachment is deleted, it can still remain working in a gallery.
+			if ( wp_get_attachment_url( $attachment['attachmentId'] ) ) {
+				$transformations = $this->media->get_transformations( $attachment['attachmentId'] );
+				if ( ! empty( $transformations ) ) {
+					$attachment['transformation'] = array( 'transformation' => $transformations );
+				}
 			}
 			$attributes['mediaAssets'][] = $attachment;
 		}
@@ -478,8 +481,8 @@ class Gallery extends Settings_Component {
 
 		// Can if front end and have the block.
 		if (
-			function_exists( 'has_block' ) &&
-			has_block( 'cloudinary/gallery' ) &&
+			function_exists( 'has_block' ) && has_block( 'cloudinary/gallery' )
+			&&
 			! is_admin()
 		) {
 			$can = true;
