@@ -890,9 +890,11 @@ class Delivery implements Setup {
 			if ( empty( $relation['public_id'] || $url === $relation['public_id'] ) ) {
 				continue; // We don't need the public_id relation item.
 			}
-			$base             = $type . ':' . $url;
-			$public_id        = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
-			$aliases[ $base ] = $this->media->cloudinary_url( $relation['post_id'], array(), $relation['transformations'], $public_id );
+			$base                   = $type . ':' . $url;
+			$public_id              = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
+			$cloudinary_url         = $this->media->cloudinary_url( $relation['post_id'], array(), $relation['transformations'], $public_id );
+			$aliases[ $base . '?' ] = $cloudinary_url . '&';
+			$aliases[ $base ]       = $cloudinary_url;
 		}
 
 		// Create the sized found relations second.
@@ -909,7 +911,9 @@ class Delivery implements Setup {
 					$aliases[ $local_url ] = $cached[ $local_url ];
 					continue;
 				}
-				$aliases[ $local_url ] = $this->media->cloudinary_url( $relation['post_id'], explode( 'x', $size ), $relation['transformations'], $public_id );
+				$cloudinary_url              = $this->media->cloudinary_url( $relation['post_id'], explode( 'x', $size ), $relation['transformations'], $public_id );
+				$aliases[ $local_url . '?' ] = $cloudinary_url . '&';
+				$aliases[ $local_url ]       = $cloudinary_url;
 			}
 		}
 
