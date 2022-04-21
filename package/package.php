@@ -3,7 +3,7 @@
  * Plugin Name: Cloudinary Update Tester
  * Plugin URI:
  * Description: Test Cloudinary Plugin Update Process (This will deactivate itself, once activated.)
- * Version: 1.1
+ * Version: 1.2
  * Author: XWP
  * Author URI: https://xwp.co
  * Text Domain: cld-update-tester
