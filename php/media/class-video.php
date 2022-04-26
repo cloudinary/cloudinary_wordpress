@@ -257,11 +257,22 @@ class Video {
 					$video_tag  = array_shift( $video_tags );
 					$attributes = Utils::get_tag_attributes( $video_tag );
 					if ( $this->player_enabled() ) {
-						unset( $attributes['src'], $attributes['controls'] );
+						unset( $attributes['src'] );
 						$content = $this->build_video_embed( $attachment_id, $attributes, $overwrite_transformations );
 					} else {
 						$url     = $this->media->cloudinary_url( $attachment_id );
 						$content = str_replace( $attributes['src'], $url, $content );
+
+						if ( ! empty( $attributes['poster'] ) ) {
+							// Maybe local URL.
+							if ( ! $this->media->is_cloudinary_url( $attributes['poster'] ) ) {
+								$post_id = attachment_url_to_postid( $attributes['poster'] );
+								$url = $this->media->cloudinary_url( $post_id );
+								if ( $url ) {
+									$content = str_replace( $attributes['poster'], $url, $content );
+								}
+							}
+						}
 					}
 				}
 			}
@@ -284,11 +295,11 @@ class Video {
 	 */
 	protected function build_video_embed( $attachment_id, $attributes = array(), $overwrite_transformations = false ) {
 		$public_id = $this->media->get_public_id( $attachment_id );
-		$controls  = $this->media->get_settings()->get_value( 'video_controls' );
+		$controls  = ! empty( $attributes['controls'] );
 		$autoplay  = $this->media->get_settings()->get_value( 'video_autoplay_mode' );
 
 		// If we don't show controls, we need to autoplay the video.
-		if ( 'off' === $controls ) {
+		if ( ! $controls ) {
 			$autoplay = 'on-scroll';
 		}
 
@@ -298,7 +309,7 @@ class Video {
 			'cloud_name' => $this->media->plugin->get_component( 'connect' )->get_cloud_name(),
 			'player'     => array(
 				'fluid'    => 'true',
-				'controls' => 'on' === $controls ? 'true' : 'false',
+				'controls' => $controls ? 'true' : 'false',
 			),
 			'source'     => array(
 				'source_types' => array(),
@@ -319,8 +330,12 @@ class Video {
 		if ( ! empty( $this->media->credentials['cname'] ) ) {
 			$params['cloudinary'] = array(
 				'cname'       => $this->media->credentials['cname'],
-				'private_cdn' => 'true',
+				'private_cdn' => $this->media->credentials['private_cdn'],
 			);
+
+			if ( 'false' === $params['cloudinary']['private_cdn'] ) {
+				$params['cloudinary']['secure_distribution'] = $this->media->credentials['cname'];
+			}
 		}
 		// Set the autoplay.
 		// Some browsers require Autoplay to be muted — https://developers.google.com/web/updates/2016/07/autoplay.
@@ -339,6 +354,13 @@ class Video {
 		// Set the poster.
 		if ( isset( $attributes['poster'] ) ) {
 			$poster_id = $this->media->get_public_id_from_url( $attributes['poster'] );
+
+			// Maybe poster is a local URL.
+			if ( empty( $poster_id ) ) {
+				$post_id   = attachment_url_to_postid( $attributes['poster'] );
+				$poster_id = $this->media->get_public_id( $post_id );
+			}
+
 			if ( $poster_id ) {
 				$params['source']['poster']['public_id']      = $poster_id;
 				$poster_transformation                        = array(
@@ -351,8 +373,17 @@ class Video {
 			}
 			unset( $attributes['poster'] );
 		}
+
+		if ( ! empty( $this->config['video_loop'] ) && 'on' === $this->config['video_loop'] ) {
+			$params['player']['loop'] = 'true';
+		}
+
 		// Add the player version to use.
 		$params['vpv'] = CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION;
+
+		// Add Cloudinary analytics.
+		$params['_i'] = 'AA';
+
 		// Build URL.
 		$params['player'] = wp_parse_args( $attributes, $params['player'] );
 		$url              = add_query_arg( $params, CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_EMBED );

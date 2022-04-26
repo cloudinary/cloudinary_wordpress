@@ -154,6 +154,82 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Filter out Cloudinary URLS and replace with local.
+	 *
+	 * @param string $content The content to filter.
+	 *
+	 * @return string
+	 */
+	public function filter_out_cloudinary( $content ) {
+
+		static $globals;
+
+		if ( ! $globals ) {
+			$image   = $this->media->apply_default_transformations( array(), 'image' );
+			$video   = $this->media->apply_default_transformations( array(), 'video' );
+			$globals = array(
+				'image' => Api::generate_transformation_string( $image, 'image' ),
+				'video' => Api::generate_transformation_string( $video, 'video' ),
+			);
+		}
+
+		$unslash_maybe = wp_unslash( $content );
+		$unslashed     = $unslash_maybe !== $content;
+		if ( $unslashed ) {
+			$content = $unslash_maybe;
+		}
+		$base_urls       = array_unique( wp_extract_urls( $content ) );
+		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
+		$urls            = array();
+		if ( empty( $cloudinary_urls ) ) {
+			return $content;
+		}
+		foreach ( $cloudinary_urls as $url ) {
+			$public_id          = $this->media->get_public_id_from_url( $url );
+			$urls[ $public_id ] = $url;
+		}
+
+		$results = $this->query_relations( array_keys( $urls ) );
+		String_Replace::reset();
+		foreach ( $results as $result ) {
+			if ( ! isset( $urls[ $result['public_id'] ] ) ) {
+				continue;
+			}
+
+			$original_url    = $urls[ $result['public_id'] ];
+			$size            = $this->media->get_size_from_url( $original_url );
+			$transformations = $this->media->get_transformations_from_string( $original_url );
+
+			if ( 'image' === $this->media->get_resource_type( $result['post_id'] ) ) {
+				$attachment_url = wp_get_attachment_image_url( $result['post_id'], $size );
+			} else {
+				$attachment_url = wp_get_attachment_url( $result['post_id'] );
+			}
+			if ( ! empty( $transformations ) ) {
+				$transformations = array_filter(
+					$transformations,
+					function ( $item ) {
+						return ! isset( $item['crop'] ) && ! isset( $item['width'] ) && ! isset( $item['height'] );
+					}
+				);
+				$transformations = Api::generate_transformation_string( $transformations );
+				if ( ! empty( $transformations ) && ! in_array( $transformations, $globals, true ) ) {
+					$attachment_url = add_query_arg( 'cld_params', $transformations, $attachment_url );
+				}
+			}
+
+			String_Replace::replace( $original_url, $attachment_url );
+		}
+
+		$content = String_Replace::do_replace( $content );
+		if ( $unslashed ) {
+			$content = wp_slash( $content );
+		}
+
+		return $content;
+	}
+
+	/**
 	 * Ensure that an asset has a relation on front end.
 	 *
 	 * @param string $url           The URL of the asset.
@@ -489,8 +565,9 @@ class Delivery implements Setup {
 	 */
 	protected function setup_hooks() {
 		// Add filters.
+		add_filter( 'content_save_pre', array( $this, 'filter_out_cloudinary' ) );
 		add_action( 'save_post', array( $this, 'remove_replace_cache' ) );
-		add_action( 'cloudinary_string_replace', array( $this, 'catch_urls' ) );
+		add_action( 'cloudinary_string_replace', array( $this, 'catch_urls' ), 10, 2 );
 		add_filter( 'post_thumbnail_html', array( $this, 'process_featured_image' ), 100, 3 );
 
 		add_filter( 'cloudinary_current_post_id', array( $this, 'get_current_post_id' ) );
@@ -592,6 +669,12 @@ class Delivery implements Setup {
 	 */
 	protected function init_delivery() {
 
+		// Reset internals.
+		$this->known      = array();
+		$this->unknown    = array();
+		$this->found_urls = array();
+		$this->unusable   = array();
+
 		add_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ), 10, 5 );
 
 		/**
@@ -635,6 +718,7 @@ class Delivery implements Setup {
 			$new_tag = HTML::build_tag( $tag_element['tag'], $tag_element['atts'] );
 			$html    = str_replace( $tag_element['original'], $new_tag, $html );
 		}
+
 		return $html;
 	}
 
@@ -729,7 +813,6 @@ class Delivery implements Setup {
 	 */
 	public function get_media_tags( $content, $tags = 'img|video' ) {
 		$images = array();
-		$urls   = '';
 		if ( preg_match_all( '#(?P<tags><(' . $tags . ')[^>]*\>){1}#is', $content, $found ) ) {
 			$count = count( $found[0] );
 			for ( $i = 0; $i < $count; $i ++ ) {
@@ -744,16 +827,17 @@ class Delivery implements Setup {
 	 * Convert media tags from Local to Cloudinary, and register with String_Replace.
 	 *
 	 * @param string $content The HTML to find tags and prep replacement in.
+	 * @param string $context The content of the content.
 	 *
 	 * @return array
 	 */
-	public function convert_tags( $content ) {
+	public function convert_tags( $content, $context = 'view' ) {
 		$has_cache = $this->get_context_cache();
 		$type      = is_ssl() ? 'https' : 'http';
 		if ( Utils::is_amp() ) {
 			$type = 'amp';
 		}
-		if ( ! empty( $has_cache[ $type ] ) ) {
+		if ( 'view' === $context && ! empty( $has_cache[ $type ] ) ) {
 			$cached = $has_cache[ $type ];
 		}
 
@@ -785,29 +869,54 @@ class Delivery implements Setup {
 				continue;
 			}
 			$this->current_post_id = $set['context'];
-			// Use cached item if found.
-			if ( isset( $cached[ $set['original'] ] ) ) {
-				$replacements[ $set['original'] ] = $cached[ $set['original'] ];
-			} else {
-				// Register replacement.
-				$replacements[ $set['original'] ] = $this->rebuild_tag( $set );
+
+			// We only rebuild tags in the view context.
+			if ( 'view' === $context ) {
+				// Use cached item if found.
+				if ( isset( $cached[ $set['original'] ] ) ) {
+					$replacements[ $set['original'] ] = $cached[ $set['original'] ];
+				} else {
+					// Register replacement.
+					$replacements[ $set['original'] ] = $this->rebuild_tag( $set );
+				}
 			}
 			$this->current_post_id = null;
 
-			// Check for src aliases.
-			if ( isset( $this->found_urls[ $set['base_url'] ] ) ) {
-				$base = dirname( $set['base_url'] );
-				foreach ( $this->found_urls[ $set['base_url'] ] as $size => $file_name ) {
-					$local_url = $type . ':' . path_join( $base, $file_name );
-					if ( isset( $cached[ $local_url ] ) ) {
-						$aliases[ $local_url ] = $cached[ $local_url ];
-						continue;
-					}
-					$cloudinary_url        = $this->media->cloudinary_url( $set['id'], explode( 'x', $size ), $set['transformations'], $set['atts']['data-public-id'], $set['overwrite_transformations'] );
-					$aliases[ $local_url ] = $cloudinary_url;
+		}
+
+		// Create aliases for urls where were found, but not found with an ID in a tag.
+		// Create the Full/Scaled items first.
+		foreach ( $this->known as $url => $relation ) {
+			if ( empty( $relation['public_id'] || $url === $relation['public_id'] ) ) {
+				continue; // We don't need the public_id relation item.
+			}
+			$base                   = $type . ':' . $url;
+			$public_id              = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
+			$cloudinary_url         = $this->media->cloudinary_url( $relation['post_id'], array(), $relation['transformations'], $public_id );
+			$aliases[ $base . '?' ] = $cloudinary_url . '&';
+			$aliases[ $base ]       = $cloudinary_url;
+		}
+
+		// Create the sized found relations second.
+		foreach ( $this->found_urls as $url => $sizes ) {
+			if ( ! isset( $this->known[ $url ] ) || empty( $this->known[ $url ]['public_id'] ) ) {
+				continue;
+			}
+			$base      = $type . ':' . $url;
+			$relation  = $this->known[ $url ];
+			$public_id = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
+			foreach ( $sizes as $size => $file_name ) {
+				$local_url = path_join( dirname( $base ), $file_name );
+				if ( isset( $cached[ $local_url ] ) ) {
+					$aliases[ $local_url ] = $cached[ $local_url ];
+					continue;
 				}
+				$cloudinary_url              = $this->media->cloudinary_url( $relation['post_id'], explode( 'x', $size ), $relation['transformations'], $public_id );
+				$aliases[ $local_url . '?' ] = $cloudinary_url . '&';
+				$aliases[ $local_url ]       = $cloudinary_url;
 			}
 		}
+
 		// Move aliases to the end of the run, after images.
 		if ( ! empty( $aliases ) ) {
 			$replacements = array_merge( $replacements, $aliases );
@@ -892,6 +1001,7 @@ class Delivery implements Setup {
 			foreach ( $parts as &$part ) {
 				if ( $this->validate_url( $part ) ) {
 					$has_wp_size = $this->media->get_crop( $part, $tag_element['id'] );
+					$size        = array();
 					if ( ! empty( $has_wp_size ) ) {
 						$size = $has_wp_size;
 					}
@@ -1047,17 +1157,17 @@ class Delivery implements Setup {
 			return null;
 		}
 		$tag_element['type'] = 'img' === $tag_element['tag'] ? 'image' : $tag_element['tag'];
-		$raw_url             = isset( $attributes['src'] ) ? $this->sanitize_url( $attributes['src'] ) : '';
+		$raw_url             = isset( $attributes['src'] ) ? $attributes['src'] : '';
 		if ( empty( $raw_url ) ) {
 			foreach ( $attributes as $attribute ) {
 				// Attempt to find a src.
 				if ( $this->validate_url( $attribute ) ) {
-					$raw_url = $this->sanitize_url( $attribute );
+					$raw_url = $attribute;
 					break;
 				}
 			}
 		}
-		$url                     = $this->maybe_unsize_url( self::clean_url( $raw_url ) );
+		$url                     = $this->maybe_unsize_url( self::clean_url( $this->sanitize_url( $raw_url ) ) );
 		$tag_element['base_url'] = $url;
 		// Track back the found URL.
 		if ( $this->media->is_cloudinary_url( $raw_url ) ) {
@@ -1084,6 +1194,16 @@ class Delivery implements Setup {
 			$tag_element['height']        = $item['height'];
 			$attributes['data-public-id'] = $public_id;
 			$tag_element['format']        = $item['format'];
+
+			// Check if this is a crop or a scale.
+			$has_size = $this->media->get_size_from_url( $this->sanitize_url( $raw_url ) );
+			if ( ! empty( $has_size ) ) {
+				$file_ratio     = round( $has_size[0] / $has_size[1], 2 );
+				$original_ratio = round( $item['width'] / $item['height'], 2 );
+				if ( $file_ratio !== $original_ratio ) {
+					$attributes['data-crop'] = $file_ratio;
+				}
+			}
 		}
 
 		if ( ! empty( $attributes['class'] ) ) {
@@ -1102,7 +1222,7 @@ class Delivery implements Setup {
 			);
 		}
 
-		$inline_transformations = $this->get_transformations_maybe( $url );
+		$inline_transformations = $this->get_transformations_maybe( $raw_url );
 		if ( $inline_transformations ) {
 			$tag_element['transformations'] = array_merge( $tag_element['transformations'], $inline_transformations );
 		}
@@ -1291,7 +1411,7 @@ class Delivery implements Setup {
 		 * @hook   cloudinary_set_usable_asset
 		 * @since  3.0.2
 		 *
-		 * @param $item     {array} The found asset array.
+		 * @param $item {array} The found asset array.
 		 *
 		 * @return {array}
 		 */
@@ -1420,12 +1540,12 @@ class Delivery implements Setup {
 	}
 
 	/**
-	 * Get urls from HTML.
+	 * Prepare the delivery for filtering URLS.
 	 *
 	 * @param string $content The content html.
 	 */
-	protected function get_urls( $content ) {
-		global $wpdb;
+	public function prepare_delivery( $content ) {
+		$content    = wp_unslash( $content );
 		$all_urls   = array_unique( wp_extract_urls( $content ) );
 		$base_urls  = array_filter( array_map( array( $this, 'sanitize_url' ), $all_urls ) );
 		$clean_urls = array_map( array( $this, 'clean_url' ), $base_urls );
@@ -1437,13 +1557,39 @@ class Delivery implements Setup {
 		$urls    = array_merge( $desized, $scaled );
 		$urls    = array_values( $urls ); // resets the index.
 
-		// clean out empty urls.
-		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
-		// Clean URLS for search.
-		$public_ids = array_filter( array_map( array( $this->media, 'get_public_id_from_url' ), $cloudinary_urls ) );
+		$public_ids = array();
+		// Lets only look for Cloudinary URLs on the frontend.
+		if ( ! is_admin() ) {
+			// clean out empty urls.
+			$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
+			// Clean URLS for search.
+			$all_public_ids = array_filter( array_map( array( $this->media, 'get_public_id_from_url' ), $cloudinary_urls ) );
+			$public_ids     = array_unique( $all_public_ids );
+		}
 		if ( empty( $urls ) && empty( $public_ids ) ) {
 			return; // Bail since theres nothing.
 		}
+
+		$results = $this->query_relations( $public_ids, $urls );
+
+		$auto_sync = $this->sync->is_auto_sync_enabled();
+		foreach ( $results as $result ) {
+			$this->set_usability( $result, $auto_sync );
+		}
+		// Set unknowns.
+		$this->unknown = array_diff( $urls, array_keys( $this->known ) );
+	}
+
+	/**
+	 * Run a query with Public_id's and or local urls.
+	 *
+	 * @param array $public_ids List of Public_IDs qo query.
+	 * @param array $urls       List of URLS to query.
+	 *
+	 * @return array
+	 */
+	public function query_relations( $public_ids, $urls = array() ) {
+		global $wpdb;
 
 		$wheres = array();
 		if ( ! empty( $urls ) ) {
@@ -1463,39 +1609,35 @@ class Delivery implements Setup {
 		$prepared  = $wpdb->prepare( $sql, array_map( 'md5', $urls ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$cache_key = md5( $prepared );
 		$results   = wp_cache_get( $cache_key, 'cld_delivery' );
-
 		if ( empty( $results ) ) {
 			$results = $wpdb->get_results( $prepared, ARRAY_A );// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
 			wp_cache_add( $cache_key, $results, 'cld_delivery' );
 		}
 
-		$auto_sync = $this->sync->is_auto_sync_enabled();
-		foreach ( $results as $result ) {
-			$this->set_usability( $result, $auto_sync );
-		}
-		// Set unknowns.
-		$this->unknown = array_diff( $urls, array_keys( $this->known ) );
+		return $results;
 	}
 
 	/**
 	 * Catch attachment URLS from HTML content.
 	 *
 	 * @param string $content The HTML to catch URLS from.
+	 * @param string $context The content of the content.
 	 */
-	public function catch_urls( $content ) {
+	public function catch_urls( $content, $context = 'view' ) {
 
 		$this->init_delivery();
-		$this->get_urls( $content );
-		$known = $this->convert_tags( $content );
+		$this->prepare_delivery( $content );
 
+		if ( ! empty( $this->known ) ) {
+			$known = $this->convert_tags( $content, $context );
+			// Replace the knowns.
+			foreach ( $known as $src => $replace ) {
+				String_Replace::replace( $src, $replace );
+			}
+		}
 		// Attempt to get the unknowns.
 		if ( ! empty( $this->unknown ) ) {
 			$this->find_attachment_size_urls();
-		}
-
-		// Replace the knowns.
-		foreach ( $known as $src => $replace ) {
-			String_Replace::replace( $src, $replace );
 		}
 
 	}

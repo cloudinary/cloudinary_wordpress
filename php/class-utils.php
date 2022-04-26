@@ -275,6 +275,7 @@ class Utils {
 		if ( false === self::table_installed() ) {
 			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 			dbDelta( $sql ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.dbDelta_dbdelta
+			update_option( Sync::META_KEYS['db_version'], get_plugin_instance()->version );
 		} else {
 			self::upgrade_install();
 		}
@@ -411,6 +412,18 @@ class Utils {
 	}
 
 	/**
+	 * Get a sanitized input text field.
+	 *
+	 * @param string $var  The value to get.
+	 * @param int    $type The type to get.
+	 *
+	 * @return mixed
+	 */
+	public static function get_sanitized_text( $var, $type = INPUT_GET ) {
+		return filter_input( $type, $var, FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+	}
+
+	/**
 	 * Returns information about a file path by normalizing the locale.
 	 *
 	 * @param string $path  The path to be parsed.
@@ -431,5 +444,16 @@ class Utils {
 		$pathinfo = pathinfo( $path, $flags );
 
 		return is_array( $pathinfo ) ? array_map( 'urldecode', $pathinfo ) : urldecode( $pathinfo );
+	}
+
+	/**
+	 * Check if a thing looks like a json string.
+	 *
+	 * @param mixed $thing The thing to check.
+	 *
+	 * @return bool
+	 */
+	public static function looks_like_json( $thing ) {
+		return is_string( $thing ) && in_array( ltrim( $thing )[0], array( '{', '[' ), true );
 	}
 }

@@ -274,61 +274,6 @@ class Filter {
 	}
 
 	/**
-	 * Filter out Cloudinary URL when saving to the DB.
-	 *
-	 * @param array $data The post data array to save.
-	 *
-	 * @return array
-	 */
-	public function filter_out_cloudinary( $data ) {
-		// Check whether this page is powered by AMP or is a web story. Bail if that's the case.
-		if ( Utils::is_webstory_post_type( $data['post_type'] ) || Utils::is_amp( $data['post_content'] ) ) {
-			return $data;
-		}
-
-		$content = trim( wp_unslash( $data['post_content'] ) );
-		$assets  = $this->get_media_tags( $content );
-
-		foreach ( $assets as $asset ) {
-			$url = $this->get_url_from_tag( $asset );
-			if ( ! $this->media->is_cloudinary_url( $url ) ) {
-				continue;
-			}
-			$attachment_id = $this->get_id_from_tag( $asset );
-			if ( false === $attachment_id ) {
-				$attachment_id = $this->media->get_id_from_url( $url );
-				if ( empty( $attachment_id ) ) {
-					continue;
-				}
-			}
-			if ( wp_attachment_is_image( $attachment_id ) ) {
-				$size      = $this->get_size_from_image_tag( $asset );
-				$local_url = wp_get_attachment_image_url( $attachment_id, $size );
-			} else {
-				$local_url = wp_get_attachment_url( $attachment_id );
-			}
-			// Skip since there is no local available.
-			if ( $this->media->is_cloudinary_url( $local_url ) ) {
-				continue;
-			}
-
-			// Check that the file isn't an edited version by comparing the public ID.
-			$public_id  = $this->media->get_public_id( $attachment_id );
-			$compare_id = $this->media->get_public_id_from_url( $url );
-			if ( ! empty( $compare_id ) && $compare_id !== $public_id ) {
-				$compare_id .= '.' . Utils::pathinfo( $local_url, PATHINFO_EXTENSION );
-				$local_url  = path_join( dirname( $local_url ), wp_basename( $compare_id ) );
-			}
-			// Replace old tag.
-			$content = str_replace( $url, $local_url, $content );
-
-		}
-		$data['post_content'] = wp_slash( $this->filter_video_shortcodes( $content ) );
-
-		return $data;
-	}
-
-	/**
 	 * Filter content to replace local src urls with Cloudinary urls.
 	 *
 	 * @param string $content The content to filter urls.
@@ -628,9 +573,6 @@ class Filter {
 		$context = $request->get_param( 'context' );
 		if ( 'edit' === $context ) {
 			$data                   = $response->get_data();
-			$content                = $data['content']['raw'];
-			$data['content']['raw'] = $this->filter_out_local( $content );
-
 			// Handle meta if missing due to custom-fields not being supported.
 			if ( ! isset( $data['meta'] ) ) {
 				$data['meta'] = $request->get_param( 'meta' );
@@ -821,18 +763,9 @@ class Filter {
 	 */
 	public function setup_hooks() {
 		// Filter URLS within content.
-		add_filter( 'wp_insert_post_data', array( $this, 'filter_out_cloudinary' ) );
 		add_filter( 'wp_insert_post_data', array( $this, 'prepare_amp_posts' ), 11 );
 		add_filter( 'wp_prepare_attachment_for_js', array( $this, 'filter_attachment_for_js' ), 11 );
 
-		// Add support for custom header.
-		add_filter( 'get_header_image_tag', array( $this, 'filter_out_local' ) );
-
-		// Add transformations.
-		add_filter( 'media_send_to_editor', array( $this, 'transform_to_editor' ), 10, 3 );
-
-		// Filter video codes.
-		add_filter( 'media_send_to_editor', array( $this, 'filter_video_embeds' ), 10, 3 );
 
 		// Enable Rest filters.
 		add_action( 'rest_api_init', array( $this, 'init_rest_filters' ) );
@@ -845,13 +778,6 @@ class Filter {
 
 		// Filter to record current meta updating attachment.
 		add_filter( 'wp_update_attachment_metadata', array( $this, 'record_meta_update' ), 10, 2 );
-
-		// Filter out locals and responsive images setup.
-		if ( is_admin() ) {
-			// Filtering out locals.
-			add_filter( 'the_editor_content', array( $this, 'filter_out_local' ) );
-			add_filter( 'the_content', array( $this, 'filter_out_local' ), 100 );
-		}
 
 		// Add filter to match src when editing in block.
 		add_filter( 'wp_image_file_matches_image_meta', array( $this, 'edit_match_src' ), 10, 4 );
