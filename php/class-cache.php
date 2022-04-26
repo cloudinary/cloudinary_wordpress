@@ -132,7 +132,7 @@ class Cache extends Settings_Component implements Setup {
 	 * @return string
 	 */
 	public function frontend_rewrite( $template ) {
-		$bypass = filter_input( INPUT_GET, 'bypass_cache', FILTER_SANITIZE_STRING );
+		$bypass = Utils::get_sanitized_text( 'bypass_cache' );
 
 		if ( ! empty( $bypass ) ) {
 			return $template;
@@ -502,7 +502,7 @@ class Cache extends Settings_Component implements Setup {
 	public function sync_static( $file, $url ) {
 
 		$file_path    = $this->cache_folder . '/' . substr( $file, strlen( ABSPATH ) );
-		$public_id    = dirname( $file_path ) . '/' . pathinfo( $file, PATHINFO_FILENAME );
+		$public_id    = dirname( $file_path ) . '/' . Utils::pathinfo( $file, PATHINFO_FILENAME );
 		$type         = $this->media->get_file_type( $file );
 		$method       = $this->get_upload_method();
 		$upload_file  = $this->cache_point->clean_url( $url );
@@ -593,8 +593,8 @@ class Cache extends Settings_Component implements Setup {
 		$active  = wp_get_active_and_valid_plugins();
 		$rows    = array();
 		foreach ( $active as $plugin_path ) {
-			$dir    = basename( dirname( $plugin_path ) );
-			$plugin = $dir . '/' . basename( $plugin_path );
+			$dir    = wp_basename( dirname( $plugin_path ) );
+			$plugin = $dir . '/' . wp_basename( $plugin_path );
 			if ( ! isset( $plugins[ $plugin ] ) ) {
 				continue;
 			}
@@ -636,7 +636,7 @@ class Cache extends Settings_Component implements Setup {
 		// Active Theme.
 		foreach ( $themes as $theme ) {
 			$theme_location = $theme->get_stylesheet_directory();
-			$theme_slug     = basename( dirname( $theme_location ) ) . '/' . basename( $theme_location );
+			$theme_slug     = wp_basename( dirname( $theme_location ) ) . '/' . wp_basename( $theme_location );
 			$slug           = sanitize_file_name( $theme_slug );
 			$rows[ $slug ]  = array(
 				'title'    => $theme->get( 'Name' ),

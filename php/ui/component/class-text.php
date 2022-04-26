@@ -128,11 +128,38 @@ class Text extends Component {
 
 		if ( $this->setting->has_param( 'suffix' ) ) {
 			$struct['attributes']['class'][] = 'suffixed';
+			$value                           = $this->setting->get_param( 'suffix' );
+			if ( false !== strpos( $value, '@value' ) ) {
+				$struct['attributes']['data-suffix'][] = $this->get_id() . '_suffix';
+			}
 		}
 
 		if ( $this->setting->has_param( 'placeholder' ) ) {
 			$struct['attributes']['placeholder'] = $this->setting->get_param( 'placeholder' );
 		}
+
+		return $struct;
+	}
+
+	/**
+	 * Filter the suffix parts structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function suffix( $struct ) {
+		$value = null;
+
+		if ( $this->setting->has_param( 'suffix' ) ) {
+			$value = $this->setting->get_param( 'suffix' );
+			if ( false !== strpos( $value, '@value' ) ) {
+				$struct['attributes']['data-template'] = $value;
+				$value                                 = str_replace( '@value', $this->get_value(), $value );
+			}
+		}
+		$struct['attributes']['id'] = $this->get_id() . '_suffix';
+		$struct['content']          = $value;
 
 		return $struct;
 	}

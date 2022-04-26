@@ -9,6 +9,7 @@ namespace Cloudinary\UI\Component;
 
 use Cloudinary\Settings\Setting;
 use Cloudinary\UI\Branch;
+use Cloudinary\Utils;
 
 /**
  * Class Color Component
@@ -96,7 +97,7 @@ class File_Folder extends On_Off {
 						$previous->checked = true;
 						$clean_value[]     = $full_path;
 					}
-					$ext = pathinfo( $folder, PATHINFO_EXTENSION );
+					$ext = Utils::pathinfo( $folder, PATHINFO_EXTENSION );
 					if ( isset( $handlers[ $ext ] ) ) {
 						$previous->set_main( $handlers[ $ext ] );
 					}

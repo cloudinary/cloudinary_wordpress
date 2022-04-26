@@ -581,6 +581,10 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		$cname = $this->extract_cname( $parts );
 		if ( ! empty( $cname ) ) {
 			$this->set_credentials( array( 'cname' => $cname ) );
+
+			if ( empty( $this->credentials['private_cdn'] ) ) {
+				$this->set_credentials( array( 'private_cdn' => 'true' ) );
+			}
 		}
 	}
 

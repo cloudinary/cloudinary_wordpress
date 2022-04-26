@@ -12,6 +12,7 @@ namespace Cloudinary\Sync;
 use Cloudinary\Component\Notice;
 use Cloudinary\Delivery;
 use Cloudinary\Sync;
+use Cloudinary\Utils;
 
 /**
  * Class Filter.
@@ -410,28 +411,30 @@ class Storage implements Notice {
 	public function unique_filename( $filename, $ext, $dir ) {
 		$dirs = wp_get_upload_dir();
 
-		$path     = str_replace( $dirs['basedir'] . '/', '', $dir );
-		$base     = array(
-			'base'  => pathinfo( $filename, PATHINFO_FILENAME ),
+		$path      = str_replace( $dirs['basedir'] . '/', '', $dir );
+		$base      = array(
+			'base'  => Utils::pathinfo( $filename, PATHINFO_FILENAME ),
 			'count' => null,
 			'ext'   => $ext,
 		);
-		$count    = 1;
-		$unique   = false;
-		$filename = path_join( $path, implode( '', $base ) );
+		$count     = 1;
+		$file_path = path_join( $path, implode( '', $base ) );
 
 		while ( 20 > $count ) {
-			$exists = $this->media->get_id_from_sync_key( $filename );
+			// Full size check.
+			$exists = $this->media->get_id_from_sync_key( $file_path );
 			if ( empty( $exists ) ) {
-				$exists = $this->media->get_id_from_sync_key( Delivery::make_scaled_url( $filename ) );
-				if ( empty( $exists ) ) {
-					$filename = basename( $filename );
+				// Scaled size check.
+				$exists = $this->media->get_id_from_sync_key( Delivery::make_scaled_url( $file_path ) );
+				// Check for not synced items.
+				if ( empty( $exists ) && ! file_exists( $dir . DIRECTORY_SEPARATOR . $filename ) ) {
 					break;
 				}
 			}
 
 			$base['count'] = '-' . $count;
-			$filename      = path_join( $path, implode( '', $base ) );
+			$file_path     = path_join( $path, implode( '', $base ) );
+			$filename      = implode( '', $base );
 			$count ++;
 		}
 
@@ -449,6 +452,7 @@ class Storage implements Notice {
 	public function ensure_metadata( $data, $attachment_id ) {
 		if ( defined( 'REST_REQUEST' ) && true === REST_REQUEST ) {
 			if ( isset( $data['sizes'] ) && 'cld' === $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['storage'], true ) ) {
+				$data['file'] = path_join( dirname( $data['file'] ), $data['original_image'] );
 				unset( $data['original_image'] );
 			}
 		}

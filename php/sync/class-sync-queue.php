@@ -325,6 +325,21 @@ class Sync_Queue {
 		return $queue['running'];
 	}
 
+
+	/**
+	 * The number of optimized media assets.
+	 *
+	 * @return int
+	 */
+	public static function get_optimized_assets() {
+		global $wpdb;
+
+		$wpdb->cld_table = Utils::get_relationship_table();
+
+		return (int) $wpdb->get_var( "SELECT COUNT( DISTINCT post_id ) as total FROM {$wpdb->cld_table} WHERE sync_type = 'media';" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	}
+
+
 	/**
 	 * Get the data from _cloudinary_relationships. We need to get a count of all assets, which have public_id's, group by type etc.
 	 *
@@ -335,9 +350,11 @@ class Sync_Queue {
 
 		$cached = get_transient( Sync::META_KEYS['dashboard_cache'] );
 		if ( empty( $cached ) ) {
+			$return                       = array();
 			$wpdb->cld_table              = Utils::get_relationship_table();
-			$return['total_assets']       = (int) $wpdb->get_var( "SELECT COUNT( DISTINCT post_id ) as total FROM {$wpdb->cld_table};" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$return['unoptimized_assets'] = (int) $wpdb->get_var( "SELECT COUNT( DISTINCT post_id ) as total FROM {$wpdb->cld_table} WHERE public_id IS NULL;" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$query_string                 = "SELECT COUNT( DISTINCT post_id ) as total FROM {$wpdb->cld_table} JOIN {$wpdb->posts} on( {$wpdb->cld_table}.post_id = {$wpdb->posts}.ID ) WHERE {$wpdb->posts}.post_type = 'attachment'";
+			$return['total_assets']       = (int) $wpdb->get_var( $query_string ); // phpcs:ignore WordPress.DB
+			$return['unoptimized_assets'] = (int) $wpdb->get_var( $query_string . ' AND public_id IS NULL' ); // phpcs:ignore WordPress.DB
 
 			$asset_sizes           = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 				$wpdb->prepare(

@@ -275,6 +275,7 @@ class Utils {
 		if ( false === self::table_installed() ) {
 			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 			dbDelta( $sql ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.dbDelta_dbdelta
+			update_option( Sync::META_KEYS['db_version'], get_plugin_instance()->version );
 		} else {
 			self::upgrade_install();
 		}
@@ -315,8 +316,8 @@ class Utils {
 		/**
 		 * Filter the upgrade sequence.
 		 *
-		 * @hook  cloudinary_upgrade_sequence
-		 * @since 3.0.1
+		 * @hook   cloudinary_upgrade_sequence
+		 * @since  3.0.1
 		 *
 		 * @param $sequence {array} The default sequence.
 		 *
@@ -375,7 +376,7 @@ class Utils {
 
 		if ( empty( $subject ) ) {
 			$subject = sprintf(
-				// translators: The plugin version.
+			// translators: The plugin version.
 				__( 'I need help with Cloudinary WordPress plugin version %s', 'cloudinary' ),
 				$plugin->version
 			);
@@ -401,11 +402,58 @@ class Utils {
 	public static function print_inline_tag( $javascript ) {
 		if ( function_exists( 'wp_print_inline_script_tag' ) ) {
 			wp_print_inline_script_tag( $javascript );
+
 			return;
 		}
 
 		$javascript = "\n" . trim( $javascript, "\n\r " ) . "\n";
 
 		echo sprintf( "<script type='text/javascript'>%s</script>\n", $javascript ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
+
+	/**
+	 * Get a sanitized input text field.
+	 *
+	 * @param string $var  The value to get.
+	 * @param int    $type The type to get.
+	 *
+	 * @return mixed
+	 */
+	public static function get_sanitized_text( $var, $type = INPUT_GET ) {
+		return filter_input( $type, $var, FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+	}
+
+	/**
+	 * Returns information about a file path by normalizing the locale.
+	 *
+	 * @param string $path  The path to be parsed.
+	 * @param int    $flags Specifies a specific element to be returned.
+	 *                      Defaults to 15 which stands for PATHINFO_ALL.
+	 *
+	 * @return array|string|string[]
+	 */
+	public static function pathinfo( $path, $flags = 15 ) {
+
+		/**
+		 * Approach based on wp_basename.
+		 *
+		 * @see wp-includes/formatting.php
+		 */
+		$path = str_replace( array( '%2F', '%5C' ), '/', urlencode( $path ) );
+
+		$pathinfo = pathinfo( $path, $flags );
+
+		return is_array( $pathinfo ) ? array_map( 'urldecode', $pathinfo ) : urldecode( $pathinfo );
+	}
+
+	/**
+	 * Check if a thing looks like a json string.
+	 *
+	 * @param mixed $thing The thing to check.
+	 *
+	 * @return bool
+	 */
+	public static function looks_like_json( $thing ) {
+		return is_string( $thing ) && in_array( ltrim( $thing )[0], array( '{', '[' ), true );
 	}
 }

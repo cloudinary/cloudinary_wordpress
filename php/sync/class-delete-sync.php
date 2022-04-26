@@ -8,6 +8,7 @@
 namespace Cloudinary\Sync;
 
 use Cloudinary\Sync;
+use Cloudinary\Utils;
 
 /**
  * Class Delete_Sync.
@@ -65,7 +66,7 @@ class Delete_Sync {
 					$has_error = get_post_meta( $post_id, Sync::META_KEYS['sync_error'], true );
 					if ( empty( $has_error ) ) {
 						$all_caps['delete_posts'] = false;
-						$action                   = filter_input( INPUT_GET, 'action', FILTER_SANITIZE_STRING );
+						$action                   = Utils::get_sanitized_text( 'action' );
 						if ( ! empty( $action ) && 'delete' === $action ) {
 							wp_die( esc_html__( 'Sorry, you can’t delete an asset until it has fully synced with Cloudinary. Try again once syncing is complete.', 'cloudinary' ) );
 						}
@@ -101,7 +102,7 @@ class Delete_Sync {
 				return;
 			}
 			// Next we need to check that the file is in the cloudinary folder.
-			$path              = trim( pathinfo( $public_id, PATHINFO_DIRNAME ), '.' );
+			$path              = trim( Utils::pathinfo( $public_id, PATHINFO_DIRNAME ), '.' );
 			$cloudinary_folder = $this->plugin->settings->get_value( 'cloudinary_folder' );
 			if ( $cloudinary_folder === $path ) {
 				$type    = $this->plugin->components['media']->get_resource_type( $post_id );

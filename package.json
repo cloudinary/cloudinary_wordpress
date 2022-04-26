@@ -123,7 +123,7 @@
     "load-grunt-tasks": "^5.1.0",
     "loading-attribute-polyfill": "^1.5.4",
     "mini-css-extract-plugin": "^1.6.0",
-    "minimist": "^1.2.5",
+    "minimist": "^1.2.6",
     "npm-run-all": "^4.1.5",
     "null-loader": "^4.0.1",
     "optimize-css-assets-webpack-plugin": "^6.0.0",
@@ -138,7 +138,7 @@
     "puppeteer": "npm:puppeteer-core@^3.0.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
-    "release-it": "^14.6.2",
+    "release-it": "14.6.2",
     "rtlcss": "^2.6.1",
     "rtlcss-webpack-plugin": "^4.0.4",
     "semver": "^7.3.2",
@@ -152,5 +152,5 @@
     "webpackbar": "^4.0.0",
     "wp-hookdoc": "^0.2.0"
   },
-  "version": "3.0.1"
+  "version": "3.0.3"
 }

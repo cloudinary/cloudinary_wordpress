@@ -8,6 +8,7 @@
 namespace Cloudinary\Traits;
 
 use Cloudinary\Plugin;
+use Cloudinary\Sync;
 
 /**
  * CLI class.
@@ -43,6 +44,43 @@ trait CLI_Trait {
 	);
 
 	/**
+	 * Is sync complete.
+	 *
+	 * @since 3.0.3
+	 *
+	 * @var bool
+	 */
+	protected $is_complete = false;
+
+	/**
+	 * Verbose mode flog.
+	 *
+	 * @since 3.0.3
+	 *
+	 * @var bool
+	 */
+	protected $is_verbose = false;
+
+	/**
+	 * Export debug output flag.
+	 *
+	 * @since 3.0.3
+	 *
+	 * @var bool
+	 */
+	protected $is_export = false;
+
+	/**
+	 * Is debug mode on.
+	 * Either verbose or export flags.git
+	 *
+	 * @since 3.0.3
+	 *
+	 * @var bool
+	 */
+	protected $is_debug_enabled = false;
+
+	/**
 	 * CLI Cloudinary Setup.
 	 *
 	 * @since   2.5.1
@@ -59,7 +97,7 @@ trait CLI_Trait {
 	 * @since   2.5.1
 	 * @link    http://patorjk.com/software/taag/#p=display&c=echo&f=Calvin%20S&t=Cloudinary%20CLI
 	 */
-	public function do_intro() {
+	protected function do_intro() {
 		static $intro;
 		if ( ! $intro ) {
 			\WP_CLI::log( '' );
@@ -80,7 +118,7 @@ trait CLI_Trait {
 	 * @since   2.5.1
 	 *
 	 * @param array $args       Ignored.
-	 * @param array $assoc_args Ignored.
+	 * @param array $assoc_args Associative array of associative arguments.
 	 *
 	 * @return void
 	 */
@@ -90,6 +128,11 @@ trait CLI_Trait {
 		if ( empty( get_option( '_cld_cli_analyzed' ) ) ) {
 			$this->analyze();
 		}
+
+		// Warmup flags after the first analyze..
+		$this->is_verbose       = ! empty( $assoc_args['verbose'] );
+		$this->is_export        = ! empty( $assoc_args['export'] );
+		$this->is_debug_enabled = empty( $args ) && ( $this->is_verbose || $this->is_export );
 
 		// Initial Query.
 		$query_args = $this->base_query_args;
@@ -114,6 +157,14 @@ trait CLI_Trait {
 
 	/**
 	 * Analyze assets with Cloudinary.
+	 *
+	 * ## OPTIONS
+	 * [--verbose]
+	 * : Whether to show extra information on unsynced and errored attachments.
+	 *
+	 * [--export]
+	 * : Whether to export CSV files with unsynced and errored attachments.
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     wp cloudinary analyze
@@ -121,9 +172,19 @@ trait CLI_Trait {
 	 * @when    after_wp_load
 	 * @since   2.5.1
 	 *
+	 * @param array $args       Ignored.
+	 * @param array $assoc_args Associative array of associative arguments.
+	 *
 	 * @return void
 	 */
-	public function analyze() {
+	public function analyze( $args = null, $assoc_args = null ) {
+
+		// Warmup flags if called as command.
+		if ( ! is_null( $args ) && ! is_null( $assoc_args ) ) {
+			$this->is_verbose       = ! empty( $assoc_args['verbose'] );
+			$this->is_export        = ! empty( $assoc_args['export'] );
+			$this->is_debug_enabled = empty( $args ) && ( $this->is_verbose || $this->is_export );
+		}
 
 		// Initial query.
 		$query_args = $this->base_query_args;
@@ -155,6 +216,12 @@ trait CLI_Trait {
 
 			return;
 		}
+
+		// Already complete the cycle. If there are non synced items, chances are that we won't be able to sync them.
+		if ( $this->is_complete ) {
+			return;
+		}
+
 		if ( method_exists( $this, $process ) ) {
 			// Setup process.
 			$total   = $query->found_posts;
@@ -196,14 +263,14 @@ trait CLI_Trait {
 		foreach ( $posts as $index => $asset ) {
 			$done ++; // Set $done early to not show 0 of x.
 			$file     = get_attached_file( $asset );
-			$filename = self::pad_name( basename( $file ), 20, ' ', '*' );
+			$filename = self::pad_name( wp_basename( $file ), 20, ' ', '*' );
 			$bar->tick( 1, 'Syncing (' . ( $done ) . ' of ' . $total . ') : ' . $filename );
 			if (
 				! $this->plugin->get_component( 'sync' )->is_synced( $asset, true )
 				&& $this->plugin->get_component( 'media' )->is_uploadable_media( $asset )
 				&& $this->plugin->get_component( 'sync' )->is_syncable( $asset )
 			) {
-				$this->plugin->get_component( 'sync' )->managers['push']->process_assets( $asset, $bar );
+				$this->plugin->get_component( 'sync' )->managers['push']->process_assets( $asset );
 			}
 			delete_post_meta( $asset, '_cld_unsynced', true );
 		}
@@ -214,6 +281,7 @@ trait CLI_Trait {
 			$bar = null;
 			\WP_CLI::line( '' );
 			$this->analyze();
+			$this->is_complete = true;
 			delete_option( '_cld_cli_analyzed' );
 		}
 	}
@@ -239,7 +307,11 @@ trait CLI_Trait {
 				'_cld_unsynced'    => 0,
 			);
 		}
-		foreach ( $posts as $index => $asset ) {
+
+		$unsynced_attachments = array();
+		$errored_attachments  = array();
+
+		foreach ( $posts as $asset ) {
 			$done ++;
 			$key = '_cld_unsupported';
 			if (
@@ -251,6 +323,26 @@ trait CLI_Trait {
 				if ( ! $this->plugin->get_component( 'sync' )->is_synced( $asset, true ) ) {
 					$key = '_cld_unsynced';
 					add_post_meta( $asset, $key, true, true );
+					if ( $this->is_debug_enabled ) {
+						$unsynced_attachments[ $asset ] = array(
+							'attachment_id' => $asset,
+							'edit_url'      => $this->get_edit_link( $asset ),
+						);
+					}
+				}
+
+				if ( $this->is_debug_enabled ) {
+					$maybe_error = get_post_meta( $asset, Sync::META_KEYS['sync_error'], true );
+					if ( ! empty( $maybe_error ) ) {
+						$errored_attachments[ $asset ] = array(
+							'attachment_id' => $asset,
+							'message'       => $maybe_error,
+							'edit_url'      => $this->get_edit_link( $asset ),
+						);
+
+						// Asset is unsynced because it errored.
+						unset( $unsynced_attachments[ $asset ] );
+					}
 				}
 			}
 			$info[ $key ] ++;
@@ -265,6 +357,11 @@ trait CLI_Trait {
 			\WP_CLI::log( \WP_CLI::colorize( '%gSynced%n      :' ) . ' ' . $info['_cld_synced'] );
 			\WP_CLI::log( \WP_CLI::colorize( '%yUn-synced%n   :' ) . ' ' . $info['_cld_unsynced'] );
 			\WP_CLI::log( \WP_CLI::colorize( '%rUnsupported%n :' ) . ' ' . $info['_cld_unsupported'] );
+
+			if ( $this->is_debug_enabled ) {
+				$this->maybe_do_verbose( $unsynced_attachments, $errored_attachments );
+				$this->maybe_do_export( $unsynced_attachments, $errored_attachments );
+			}
 			update_option( '_cld_cli_analyzed', true, false );
 		}
 	}
@@ -299,4 +396,104 @@ trait CLI_Trait {
 		return $out;
 	}
 
+	/**
+	 * Maybe does a verbose output.
+	 *
+	 * @param array $unsynced_attachments The unsynced attachments data.
+	 * @param array $errored_attachments  The errored attachments data.
+	 *
+	 * @return void
+	 */
+	protected function maybe_do_verbose( $unsynced_attachments, $errored_attachments ) {
+		if ( $this->is_verbose ) {
+			if ( ! empty( $unsynced_attachments ) || ! empty( $errored_attachments ) ) {
+				\WP_CLI::log( '' );
+				\WP_CLI::log( \WP_CLI::colorize( '%R-- Verbose report --%n' ) );
+			} else {
+				\WP_CLI::log( '' );
+				\WP_CLI::log( \WP_CLI::colorize( '%G-- Nothing to report --%n' ) );
+			}
+
+			if ( ! empty( $unsynced_attachments ) ) {
+				\WP_CLI::log( '' );
+				\WP_CLI::log( \WP_CLI::colorize( '%yThe following assets are unsynced with Cloudinary:%n' ) );
+				foreach ( $unsynced_attachments as $attachment ) {
+					\WP_CLI::log( '' );
+					\WP_CLI::log( \WP_CLI::colorize( '%yAttachment ID:%n' ) . ' ' . $attachment['attachment_id'] );
+					\WP_CLI::log( \WP_CLI::colorize( '%yEdit page    :%n' ) . ' ' . $attachment['edit_url'] );
+				}
+			}
+
+			if ( ! empty( $errored_attachments ) ) {
+				\WP_CLI::log( '' );
+				\WP_CLI::log( \WP_CLI::colorize( '%yThe following assets:%n' ) );
+				foreach ( $errored_attachments as $attachment ) {
+					\WP_CLI::log( '' );
+					\WP_CLI::log( \WP_CLI::colorize( '%rAttachment ID:%n' ) . ' ' . $attachment['attachment_id'] );
+					\WP_CLI::log( \WP_CLI::colorize( '%rMessage      :%n' ) . ' ' . $attachment['message'] );
+					\WP_CLI::log( \WP_CLI::colorize( '%rEdit page    :%n' ) . ' ' . $attachment['edit_url'] );
+				}
+			}
+		}
+	}
+
+	/**
+	 * Maybe prepares the export.
+	 *
+	 * @param array $unsynced_attachments    The unsynced attachments data.
+	 * @param array $errored_attachments The errored attachments data.
+	 *
+	 * @return void
+	 */
+	protected function maybe_do_export( $unsynced_attachments, $errored_attachments ) {
+		if ( $this->is_export ) {
+			if ( ! empty( $unsynced_attachments ) ) {
+				$this->export_csv( $unsynced_attachments, 'unsynced' );
+			}
+
+			if ( ! empty( $errored_attachments ) ) {
+				$this->export_csv( $errored_attachments, 'errored' );
+			}
+		}
+	}
+
+	/**
+	 * Export a CSV with the contextual data.
+	 *
+	 * @param array  $data The faulty attachments data.
+	 * @param string $type The file content type.
+	 *
+	 * @return void
+	 */
+	protected function export_csv( $data, $type ) {
+		$filename = sanitize_file_name( 'cloudinary-' . $type . '-' . time() . '.csv' );
+		$fp       = fopen( $filename, 'wb+' );
+
+		foreach ( $data as $fields ) {
+			fputcsv( $fp, $fields );
+		}
+
+		fclose( $fp );
+
+		\WP_CLI::log( '' );
+		\WP_CLI::success( sprintf( 'File created: %s', $filename ) );
+	}
+
+	/**
+	 * Get the attachment Edit link without roles verification.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	protected function get_edit_link( $attachment_id ) {
+		$post             = get_post( $attachment_id );
+		$post_type_object = get_post_type_object( $post->post_type );
+		$url              = '';
+		if ( $post_type_object instanceof \WP_Post_Type ) {
+			$url = admin_url( sprintf( $post_type_object->_edit_link . '&action=edit', $post->ID ) );
+		}
+
+		return $url;
+	}
 }

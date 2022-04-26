@@ -119,7 +119,7 @@ final class Plugin {
 		$this->dir_path      = $location['dir_path'];
 		$this->template_path = $this->dir_path . 'php/templates/';
 		$this->dir_url       = $location['dir_url'];
-		$this->plugin_file   = pathinfo( dirname( CLDN_CORE ), PATHINFO_BASENAME ) . '/' . basename( CLDN_CORE );
+		$this->plugin_file   = pathinfo( dirname( CLDN_CORE ), PATHINFO_BASENAME ) . '/' . wp_basename( CLDN_CORE );
 		$this->setup_endpoints();
 		spl_autoload_register( array( $this, 'autoload' ) );
 		$this->register_hooks();
@@ -583,7 +583,7 @@ final class Plugin {
 		 * The Cloudinary Video Player version.
 		 */
 		if ( ! defined( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION' ) ) {
-			define( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION', '1.5.1' );
+			define( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION', '1.9.0' );
 		}
 	}
 
@@ -644,7 +644,7 @@ final class Plugin {
 
 		$dir_url      = plugin_dir_url( CLDN_CORE );
 		$dir_path     = CLDN_PATH;
-		$dir_basename = basename( CLDN_PATH );
+		$dir_basename = wp_basename( CLDN_PATH );
 
 		return compact( 'dir_url', 'dir_path', 'dir_basename' );
 	}

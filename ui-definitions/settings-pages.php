@@ -437,6 +437,12 @@ $settings = array(
 						'</li></ul>'
 					),
 				),
+				array(
+					'type'        => 'panel',
+					'title'       => __( 'How do I handle a CLDBind error which is causing issues with lazy loading?', 'cloudinary' ),
+					'collapsible' => 'closed',
+					'content'     => __( 'The Cloudinary lazy loading scripts must be loaded in the page head. Ensure your site or any 3rd party plugins are not setup to move these scripts.', 'cloudinary' ),
+				),
 			),
 		),
 	),

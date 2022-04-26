@@ -7,6 +7,7 @@
 
 namespace Cloudinary\Connect;
 
+use Cloudinary\Utils;
 use function Cloudinary\get_plugin_instance;
 use Cloudinary\Plugin;
 use Cloudinary\Media;
@@ -180,7 +181,7 @@ class Api {
 			$parts[] = $this->asset_url;
 		}
 
-		if ( empty( $this->credentials['cname'] ) || $endpoint ) {
+		if ( empty( $this->credentials['cname'] ) || $endpoint || 'false' === $this->credentials['private_cdn'] ) {
 			$parts[] = $this->credentials['cloud_name'];
 		}
 
@@ -270,10 +271,10 @@ class Api {
 			'https:/',
 			$this->url( $args['resource_type'], $asset_endpoint ),
 		);
-		$base      = pathinfo( $public_id );
+		$base      = Utils::pathinfo( $public_id );
 		// Only do dynamic naming and sizes if upload type.
 		if ( 'image' === $args['resource_type'] && 'upload' === $args['delivery_type'] ) {
-			$new_path  = $base['filename'] . '/' . str_replace( '.', '-', $base['basename'] );
+			$new_path  = $base['filename'] . '/' . $base['basename'];
 			$public_id = str_replace( $base['basename'], $new_path, $public_id );
 		}
 
@@ -347,7 +348,7 @@ class Api {
 
 		// Since WP_Filesystem doesn't have a fread, we need to do it manually. However we'll still use it for writing.
 		$src            = fopen( $args['file'], 'r' ); // phpcs:ignore
-		$temp_file_name = wp_tempnam( uniqid( time() ) . '.' . pathinfo( $args['file'], PATHINFO_EXTENSION ) );
+		$temp_file_name = wp_tempnam( uniqid( time() ) . '.' . Utils::pathinfo( $args['file'], PATHINFO_EXTENSION ) );
 		$upload_id      = substr( sha1( uniqid( $this->credentials['api_secret'] . wp_rand() ) ), 0, 16 );
 		$chunk_size     = 20000000;
 		$index          = 0;
@@ -562,7 +563,7 @@ class Api {
 	 * @return string|\WP_Error
 	 */
 	public function create_local_copy( $file ) {
-		$file_copy = wp_tempnam( basename( $file ) );
+		$file_copy = wp_tempnam( wp_basename( $file ) );
 		$content   = file_get_contents( $file ); //phpcs:ignore
 
 		if ( file_put_contents( $file_copy, $content ) ) { //phpcs:ignore
@@ -600,6 +601,21 @@ class Api {
 	public function destroy( $type, $options ) {
 
 		$url = $this->url( $type, 'destroy', true );
+
+		return $this->call( $url, array( 'body' => $options ), 'post' );
+	}
+
+	/**
+	 * Rename an asset.
+	 *
+	 * @param string $type    The resource type to rename.
+	 * @param array  $options Array of options.
+	 *
+	 * @return array|\WP_Error
+	 */
+	public function rename( $type, $options ) {
+
+		$url = $this->url( $type, 'rename', true );
 
 		return $this->call( $url, array( 'body' => $options ), 'post' );
 	}
