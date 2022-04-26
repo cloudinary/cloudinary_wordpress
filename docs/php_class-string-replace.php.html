@@ -42,6 +42,7 @@
 namespace Cloudinary;
 
 use Cloudinary\Component\Setup;
+use \Traversable;
 
 /**
  * String replace class.
@@ -54,6 +55,13 @@ class String_Replace implements Setup {
 	 * @var Plugin Instance of the global plugin.
 	 */
 	public $plugin;
+
+	/**
+	 * Holds the context.
+	 *
+	 * @var string
+	 */
+	protected $context;
 
 	/**
 	 * Holds the list of strings and replacements.
@@ -75,9 +83,40 @@ class String_Replace implements Setup {
 	 * Setup the object.
 	 */
 	public function setup() {
-		add_action( 'template_redirect', array( $this, 'init' ), 1 );
+		if ( is_admin() ) {
+			$this->admin_filters();
+		} else {
+			$this->public_filters();
+		}
+		$this->add_rest_filters();
+	}
+
+	/**
+	 * Add admin filters.
+	 */
+	protected function admin_filters() {
+		// Admin filters can call String_Replace frequently, which is fine, as performance is not an issue.
+		add_filter( 'media_send_to_editor', array( $this, 'replace_strings' ), 10, 2 );
+		add_filter( 'the_editor_content', array( $this, 'replace_strings' ), 10, 2 );
+		add_filter( 'wp_prepare_attachment_for_js', array( $this, 'replace_strings' ), 11 );
+		add_action( 'admin_init', array( $this, 'start_capture' ) );
+	}
+
+	/**
+	 * Add Public Filters.
+	 */
+	protected function public_filters() {
 		add_action( 'template_include', array( $this, 'init_debug' ), PHP_INT_MAX );
-		$types = get_post_types_by_support( 'editor' );
+		if ( ! defined( 'REST_REQUEST' ) || ! REST_REQUEST ) { // Not needed on REST API.
+			add_action( 'parse_request', array( $this, 'init' ), - 1000 ); // Not crazy low, but low enough to catch most cases, but not too low that it may break AMP.
+		}
+	}
+
+	/**
+	 * Add filters for REST API.
+	 */
+	protected function add_rest_filters() {
+		$types = get_post_types();
 		foreach ( $types as $type ) {
 			$post_type = get_post_type_object( $type );
 			// Check if this is a rest supported type.
@@ -99,9 +138,9 @@ class String_Replace implements Setup {
 	 */
 	public function pre_filter_rest_content( $response, $post, $request ) {
 		$context = $request->get_param( 'context' );
-		if ( 'view' === $context ) {
-			$data                        = $response->get_data();
-			$data['content']['rendered'] = $this->replace_strings( $data['content']['rendered'] );
+		if ( 'view' === $context || 'edit' === $context ) {
+			$data = $response->get_data();
+			$data = $this->replace_strings( $data, $context );
 			$response->set_data( $data );
 		}
 
@@ -112,9 +151,18 @@ class String_Replace implements Setup {
 	 * Init the buffer capture and set the output callback.
 	 */
 	public function init() {
-		if ( ! defined( 'WP_DEBUG' ) || false === WP_DEBUG ) {
-			ob_start( array( $this, 'replace_strings' ) );
+		if ( ! defined( 'CLD_DEBUG' ) || false === CLD_DEBUG ) {
+			$this->context = 'view';
+			$this->start_capture();
 		}
+	}
+
+	/**
+	 * Stop the buffer capture and set the output callback.
+	 */
+	public function start_capture() {
+		ob_start( array( $this, 'replace_strings' ) );
+		ob_start( array( $this, 'replace_strings' ) ); // Second call to catch early buffer flushing.
 	}
 
 	/**
@@ -125,7 +173,8 @@ class String_Replace implements Setup {
 	 * @return null|string
 	 */
 	public function init_debug( $template ) {
-		if ( defined( 'WP_DEBUG' ) &amp;&amp; true === WP_DEBUG &amp;&amp; ! filter_input( INPUT_GET, '_bypass', FILTER_SANITIZE_STRING ) ) {
+		if ( defined( 'CLD_DEBUG' ) &amp;&amp; true === CLD_DEBUG &amp;&amp; ! Utils::get_sanitized_text( '_bypass' ) ) {
+			$this->context = 'view';
 			ob_start();
 			include $template;
 			$html = ob_get_clean();
@@ -169,27 +218,118 @@ class String_Replace implements Setup {
 	}
 
 	/**
-	 * Replace string in HTML.
+	 * Flatten an array into content.
 	 *
-	 * @param string $html The HTML.
+	 * @param array $content The array to flatten.
 	 *
 	 * @return string
 	 */
-	public function replace_strings( $html ) {
+	public function flatten( $content ) {
+		$flat = '';
+		if ( self::is_iterable( $content ) ) {
+			foreach ( $content as $item ) {
+				$flat .= "\r\n" . $this->flatten( $item );
+			}
+		} else {
+			$flat = $content;
+		}
 
+		return $flat;
+	}
+
+	/**
+	 * Check if the item is iterable.
+	 *
+	 * @param mixed $thing Thing to check.
+	 *
+	 * @return bool
+	 */
+	public static function is_iterable( $thing ) {
+
+		return is_array( $thing ) || is_object( $thing );
+	}
+
+	/**
+	 * Prime replacement strings.
+	 *
+	 * @param mixed  $content The content to prime replacements for.
+	 * @param string $context The context to use.
+	 */
+	protected function prime_replacements( $content, $context = 'view' ) {
+
+		if ( self::is_iterable( $content ) ) {
+			$content = $this->flatten( $content );
+		}
 		/**
 		 * Do replacement action.
 		 *
-		 * @hook cloudinary_string_replace
+		 * @hook  cloudinary_string_replace
+		 * @since 3.0.3 Added the `$context` argument.
 		 *
-		 * @param $html {string} The html of the page.
+		 * @param $content {string} The html of the page.
+		 * @param $context {string} The render context.
 		 */
-		do_action( 'cloudinary_string_replace', $html );
+		do_action( 'cloudinary_string_replace', $content, $context );
+	}
+
+	/**
+	 * Replace string in HTML.
+	 *
+	 * @param string|array $content The HTML.
+	 * @param string       $context The context to use.
+	 *
+	 * @return string
+	 */
+	public function replace_strings( $content, $context = 'view' ) {
+		static $last_content;
+		if ( empty( $content ) || $last_content === $content ) {
+			return $content; // Bail if nothing to replace.
+		}
+		// Captured a front end request, since the $context will be an int.
+		if ( ! empty( $this->context ) ) {
+			$context = $this->context;
+		}
+		if ( Utils::looks_like_json( $content ) ) {
+			$json_maybe = json_decode( $content, true );
+			if ( ! empty( $json_maybe ) ) {
+				$content = $json_maybe;
+			}
+		}
+		$this->prime_replacements( $content, $context );
 		if ( ! empty( self::$replacements ) ) {
-			$html = str_replace( array_keys( self::$replacements ), array_values( self::$replacements ), $html );
+			$content = self::do_replace( $content );
+		}
+		self::reset();
+		$last_content = ! empty( $json_maybe ) ? wp_json_encode( $content ) : $content;
+
+		return $last_content;
+	}
+
+	/**
+	 * Do string replacements.
+	 *
+	 * @param string|array $content The content to do replacements on.
+	 *
+	 * @return string|array
+	 */
+	public static function do_replace( $content ) {
+
+		if ( self::is_iterable( $content ) ) {
+			foreach ( $content as &amp;$item ) {
+				$item = self::do_replace( $item );
+			}
+		} elseif ( is_string( $content ) ) {
+			$content = str_replace( array_keys( self::$replacements ), array_values( self::$replacements ), $content );
 		}
 
-		return $html;
+		return $content;
+	}
+
+	/**
+	 * Reset internal replacements.
+	 */
+	public static function reset() {
+		self::$replacements = array();
 	}
 }
 </code></pre>
@@ -202,7 +342,7 @@ class String_Replace implements Setup {
 </div>
 
 <nav>
-	<h2><a href="index.html">Home</a></h2><h3>Actions</h3><ul><li><a href="cloudinary_connected.html">cloudinary_connected</a></li><li><a href="cloudinary_delete_asset.html">cloudinary_delete_asset</a></li><li><a href="cloudinary_flush_cache.html">cloudinary_flush_cache</a></li><li><a href="cloudinary_id.html">cloudinary_id</a></li><li><a href="cloudinary_init_delivery.html">cloudinary_init_delivery</a></li><li><a href="cloudinary_init_settings.html">cloudinary_init_settings</a></li><li><a href="cloudinary_queue_action.html">cloudinary_queue_action</a></li><li><a href="cloudinary_ready.html">cloudinary_ready</a></li><li><a href="cloudinary_register_sync_types.html">cloudinary_register_sync_types</a></li><li><a href="cloudinary_string_replace.html">cloudinary_string_replace</a></li><li><a href="cloudinary_unsync_asset.html">cloudinary_unsync_asset</a></li><li><a href="cloudinary_upload_args.html">cloudinary_upload_args</a></li><li><a href="cloudinary_uploaded_asset.html">cloudinary_uploaded_asset</a></li><li><a href="cloudinary_version_upgrade.html">cloudinary_version_upgrade</a></li></ul><h3>Filters</h3><ul><li><a href="cloudinary_admin_image_settings.html">cloudinary_admin_image_settings</a></li><li><a href="cloudinary_admin_pages.html">cloudinary_admin_pages</a></li><li><a href="cloudinary_admin_video_settings.html">cloudinary_admin_video_settings</a></li><li><a href="cloudinary_allowed_extensions.html">cloudinary_allowed_extensions</a></li><li><a href="cloudinary_api_rest_endpoints.html">cloudinary_api_rest_endpoints</a></li><li><a href="cloudinary_apply_breakpoints.html">cloudinary_apply_breakpoints</a></li><li><a href="cloudinary_apply_default_transformations.html">cloudinary_apply_default_transformations</a></li><li><a href="cloudinary_asset_state.html">cloudinary_asset_state</a></li><li><a href="cloudinary_autosync_threads.html">cloudinary_autosync_threads</a></li><li><a href="cloudinary_build_queue_query.html">cloudinary_build_queue_query</a></li><li><a href="cloudinary_bypass_cache.html">cloudinary_bypass_cache</a></li><li><a href="cloudinary_can_sync_asset.html">cloudinary_can_sync_asset</a></li><li><a href="cloudinary_context_options.html">cloudinary_context_options</a></li><li><a href="cloudinary_convert_media_types.html">cloudinary_convert_media_types</a></li><li><a href="cloudinary_converted_url.html">cloudinary_converted_url</a></li><li><a href="cloudinary_cron_frequency.html">cloudinary_cron_frequency</a></li><li><a href="cloudinary_cron_start_offset.html">cloudinary_cron_start_offset</a></li><li><a href="cloudinary_current_post_id.html">cloudinary_current_post_id</a></li><li><a href="cloudinary_default_freeform_transformations_%257B$type%257D.html">cloudinary_default_freeform_transformations_{$type}</a></li><li><a href="cloudinary_default_qf_transformations_%257B$type%257D.html">cloudinary_default_qf_transformations_{$type}</a></li><li><a href="cloudinary_default_transformations.html">cloudinary_default_transformations</a></li><li><a href="cloudinary_delivery_get_id.html">cloudinary_delivery_get_id</a></li><li><a href="cloudinary_doing_upload.html">cloudinary_doing_upload</a></li><li><a href="cloudinary_filter_out_local.html">cloudinary_filter_out_local</a></li><li><a href="cloudinary_gallery_config.html">cloudinary_gallery_config</a></li><li><a href="cloudinary_gallery_html_container.html">cloudinary_gallery_html_container</a></li><li><a href="cloudinary_get_signature.html">cloudinary_get_signature</a></li><li><a href="cloudinary_is_content_dir.html">cloudinary_is_content_dir</a></li><li><a href="cloudinary_is_deliverable.html">cloudinary_is_deliverable</a></li><li><a href="cloudinary_is_folder_synced.html">cloudinary_is_folder_synced</a></li><li><a href="cloudinary_is_media.html">cloudinary_is_media</a></li><li><a href="cloudinary_is_uploadable_media.html">cloudinary_is_uploadable_media</a></li><li><a href="cloudinary_lazy_load_bypass_formats.html">cloudinary_lazy_load_bypass_formats</a></li><li><a href="cloudinary_local_url.html">cloudinary_local_url</a></li><li><a href="cloudinary_media_filters.html">cloudinary_media_filters</a></li><li><a href="cloudinary_media_status.html">cloudinary_media_status</a></li><li><a href="cloudinary_media_types.html">cloudinary_media_types</a></li><li><a href="cloudinary_migrate_legacy_meta.html">cloudinary_migrate_legacy_meta</a></li><li><a href="cloudinary_on_demand_sync_limit.html">cloudinary_on_demand_sync_limit</a></li><li><a href="cloudinary_plugin_asset_cache_filters.html">cloudinary_plugin_asset_cache_filters</a></li><li><a href="cloudinary_plugin_asset_cache_inline_types.html">cloudinary_plugin_asset_cache_inline_types</a></li><li><a href="cloudinary_prepare_size.html">cloudinary_prepare_size</a></li><li><a href="cloudinary_preview_types.html">cloudinary_preview_types</a></li><li><a href="cloudinary_queue_threads.html">cloudinary_queue_threads</a></li><li><a href="cloudinary_raw_url.html">cloudinary_raw_url</a></li><li><a href="cloudinary_register_extensions.html">cloudinary_register_extensions</a></li><li><a href="cloudinary_resource_type.html">cloudinary_resource_type</a></li><li><a href="cloudinary_setting_get_value.html">cloudinary_setting_get_value</a></li><li><a href="cloudinary_settings_save_setting.html">cloudinary_settings_save_setting</a></li><li><a href="cloudinary_setup_component_parts.html">cloudinary_setup_component_parts</a></li><li><a href="cloudinary_sync_base.html">cloudinary_sync_base</a></li><li><a href="cloudinary_sync_base_struct.html">cloudinary_sync_base_struct</a></li><li><a href="cloudinary_syncable_delivery_types.html">cloudinary_syncable_delivery_types</a></li><li><a href="cloudinary_task_capability.html">cloudinary_task_capability</a></li><li><a href="cloudinary_task_capability_%257Btask%257D.html">cloudinary_task_capability_{task}</a></li><li><a href="cloudinary_thread_queue_details_query.html">cloudinary_thread_queue_details_query</a></li><li><a href="cloudinary_transformations.html">cloudinary_transformations</a></li><li><a href="cloudinary_upgrade_sequence.html">cloudinary_upgrade_sequence</a></li><li><a href="cloudinary_upload_options.html">cloudinary_upload_options</a></li><li><a href="cloudinary_validate_cloudinary_id.html">cloudinary_validate_cloudinary_id</a></li></ul>
+	<h2><a href="index.html">Home</a></h2><h3>Actions</h3><ul><li><a href="cloudinary_connected.html">cloudinary_connected</a></li><li><a href="cloudinary_delete_asset.html">cloudinary_delete_asset</a></li><li><a href="cloudinary_flush_cache.html">cloudinary_flush_cache</a></li><li><a href="cloudinary_id.html">cloudinary_id</a></li><li><a href="cloudinary_init_delivery.html">cloudinary_init_delivery</a></li><li><a href="cloudinary_init_settings.html">cloudinary_init_settings</a></li><li><a href="cloudinary_queue_action.html">cloudinary_queue_action</a></li><li><a href="cloudinary_ready.html">cloudinary_ready</a></li><li><a href="cloudinary_register_sync_types.html">cloudinary_register_sync_types</a></li><li><a href="cloudinary_string_replace.html">cloudinary_string_replace</a></li><li><a href="cloudinary_unsync_asset.html">cloudinary_unsync_asset</a></li><li><a href="cloudinary_upload_args.html">cloudinary_upload_args</a></li><li><a href="cloudinary_uploaded_asset.html">cloudinary_uploaded_asset</a></li><li><a href="cloudinary_version_upgrade.html">cloudinary_version_upgrade</a></li></ul><h3>Filters</h3><ul><li><a href="cloudinary_admin_image_settings.html">cloudinary_admin_image_settings</a></li><li><a href="cloudinary_admin_pages.html">cloudinary_admin_pages</a></li><li><a href="cloudinary_admin_video_settings.html">cloudinary_admin_video_settings</a></li><li><a href="cloudinary_allowed_extensions.html">cloudinary_allowed_extensions</a></li><li><a href="cloudinary_api_rest_endpoints.html">cloudinary_api_rest_endpoints</a></li><li><a href="cloudinary_apply_breakpoints.html">cloudinary_apply_breakpoints</a></li><li><a href="cloudinary_apply_default_transformations.html">cloudinary_apply_default_transformations</a></li><li><a href="cloudinary_asset_state.html">cloudinary_asset_state</a></li><li><a href="cloudinary_autosync_threads.html">cloudinary_autosync_threads</a></li><li><a href="cloudinary_build_queue_query.html">cloudinary_build_queue_query</a></li><li><a href="cloudinary_bypass_cache.html">cloudinary_bypass_cache</a></li><li><a href="cloudinary_can_sync_asset.html">cloudinary_can_sync_asset</a></li><li><a href="cloudinary_context_options.html">cloudinary_context_options</a></li><li><a href="cloudinary_convert_media_types.html">cloudinary_convert_media_types</a></li><li><a href="cloudinary_converted_url.html">cloudinary_converted_url</a></li><li><a href="cloudinary_cron_frequency.html">cloudinary_cron_frequency</a></li><li><a href="cloudinary_cron_start_offset.html">cloudinary_cron_start_offset</a></li><li><a href="cloudinary_current_post_id.html">cloudinary_current_post_id</a></li><li><a href="cloudinary_default_freeform_transformations_%257B$type%257D.html">cloudinary_default_freeform_transformations_{$type}</a></li><li><a href="cloudinary_default_qf_transformations_%257B$type%257D.html">cloudinary_default_qf_transformations_{$type}</a></li><li><a href="cloudinary_default_transformations.html">cloudinary_default_transformations</a></li><li><a href="cloudinary_delivery_get_id.html">cloudinary_delivery_get_id</a></li><li><a href="cloudinary_doing_upload.html">cloudinary_doing_upload</a></li><li><a href="cloudinary_filter_out_local.html">cloudinary_filter_out_local</a></li><li><a href="cloudinary_gallery_config.html">cloudinary_gallery_config</a></li><li><a href="cloudinary_gallery_html_container.html">cloudinary_gallery_html_container</a></li><li><a href="cloudinary_get_signature.html">cloudinary_get_signature</a></li><li><a href="cloudinary_is_content_dir.html">cloudinary_is_content_dir</a></li><li><a href="cloudinary_is_deliverable.html">cloudinary_is_deliverable</a></li><li><a href="cloudinary_is_folder_synced.html">cloudinary_is_folder_synced</a></li><li><a href="cloudinary_is_media.html">cloudinary_is_media</a></li><li><a href="cloudinary_is_uploadable_media.html">cloudinary_is_uploadable_media</a></li><li><a href="cloudinary_lazy_load_bypass_formats.html">cloudinary_lazy_load_bypass_formats</a></li><li><a href="cloudinary_local_url.html">cloudinary_local_url</a></li><li><a href="cloudinary_media_filters.html">cloudinary_media_filters</a></li><li><a href="cloudinary_media_status.html">cloudinary_media_status</a></li><li><a href="cloudinary_media_types.html">cloudinary_media_types</a></li><li><a href="cloudinary_migrate_legacy_meta.html">cloudinary_migrate_legacy_meta</a></li><li><a href="cloudinary_on_demand_sync_limit.html">cloudinary_on_demand_sync_limit</a></li><li><a href="cloudinary_plugin_asset_cache_filters.html">cloudinary_plugin_asset_cache_filters</a></li><li><a href="cloudinary_plugin_asset_cache_inline_types.html">cloudinary_plugin_asset_cache_inline_types</a></li><li><a href="cloudinary_prepare_size.html">cloudinary_prepare_size</a></li><li><a href="cloudinary_preview_types.html">cloudinary_preview_types</a></li><li><a href="cloudinary_queue_threads.html">cloudinary_queue_threads</a></li><li><a href="cloudinary_raw_url.html">cloudinary_raw_url</a></li><li><a href="cloudinary_register_extensions.html">cloudinary_register_extensions</a></li><li><a href="cloudinary_resource_type.html">cloudinary_resource_type</a></li><li><a href="cloudinary_set_usable_asset.html">cloudinary_set_usable_asset</a></li><li><a href="cloudinary_setting_get_value.html">cloudinary_setting_get_value</a></li><li><a href="cloudinary_settings_save_setting.html">cloudinary_settings_save_setting</a></li><li><a href="cloudinary_setup_component_parts.html">cloudinary_setup_component_parts</a></li><li><a href="cloudinary_sync_base.html">cloudinary_sync_base</a></li><li><a href="cloudinary_sync_base_struct.html">cloudinary_sync_base_struct</a></li><li><a href="cloudinary_syncable_delivery_types.html">cloudinary_syncable_delivery_types</a></li><li><a href="cloudinary_task_capability.html">cloudinary_task_capability</a></li><li><a href="cloudinary_task_capability_%257Btask%257D.html">cloudinary_task_capability_{task}</a></li><li><a href="cloudinary_thread_queue_details_query.html">cloudinary_thread_queue_details_query</a></li><li><a href="cloudinary_transformations.html">cloudinary_transformations</a></li><li><a href="cloudinary_upgrade_sequence.html">cloudinary_upgrade_sequence</a></li><li><a href="cloudinary_upload_options.html">cloudinary_upload_options</a></li><li><a href="cloudinary_validate_cloudinary_id.html">cloudinary_validate_cloudinary_id</a></li></ul>
 </nav>
 
 <br class="clear">
