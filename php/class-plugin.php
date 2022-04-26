@@ -583,7 +583,7 @@ final class Plugin {
 		 * The Cloudinary Video Player version.
 		 */
 		if ( ! defined( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION' ) ) {
-			define( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION', '1.5.1' );
+			define( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION', '1.9.0' );
 		}
 	}
 

@@ -166,7 +166,7 @@ abstract class Delivery_Feature implements Assets {
 	 * @return bool
 	 */
 	public function is_enabled() {
-		return 'on' === $this->config[ $this->enable_slug ];
+		return $this->is_active() && 'on' === $this->config[ $this->enable_slug ];
 	}
 
 	/**

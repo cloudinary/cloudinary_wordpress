@@ -573,9 +573,6 @@ class Filter {
 		$context = $request->get_param( 'context' );
 		if ( 'edit' === $context ) {
 			$data                   = $response->get_data();
-			$content                = $data['content']['raw'];
-			$data['content']['raw'] = $this->filter_out_local( $content );
-
 			// Handle meta if missing due to custom-fields not being supported.
 			if ( ! isset( $data['meta'] ) ) {
 				$data['meta'] = $request->get_param( 'meta' );
@@ -769,14 +766,6 @@ class Filter {
 		add_filter( 'wp_insert_post_data', array( $this, 'prepare_amp_posts' ), 11 );
 		add_filter( 'wp_prepare_attachment_for_js', array( $this, 'filter_attachment_for_js' ), 11 );
 
-		// Add support for custom header.
-		add_filter( 'get_header_image_tag', array( $this, 'filter_out_local' ) );
-
-		// Add transformations.
-		add_filter( 'media_send_to_editor', array( $this, 'transform_to_editor' ), 10, 3 );
-
-		// Filter video codes.
-		add_filter( 'media_send_to_editor', array( $this, 'filter_video_embeds' ), 10, 3 );
 
 		// Enable Rest filters.
 		add_action( 'rest_api_init', array( $this, 'init_rest_filters' ) );
@@ -789,13 +778,6 @@ class Filter {
 
 		// Filter to record current meta updating attachment.
 		add_filter( 'wp_update_attachment_metadata', array( $this, 'record_meta_update' ), 10, 2 );
-
-		// Filter out locals and responsive images setup.
-		if ( is_admin() ) {
-			// Filtering out locals.
-			add_filter( 'the_editor_content', array( $this, 'filter_out_local' ) );
-			add_filter( 'the_content', array( $this, 'filter_out_local' ), 100 );
-		}
 
 		// Add filter to match src when editing in block.
 		add_filter( 'wp_image_file_matches_image_meta', array( $this, 'edit_match_src' ), 10, 4 );

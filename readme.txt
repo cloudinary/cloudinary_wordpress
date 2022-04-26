@@ -142,6 +142,24 @@ Your site is now setup to start using Cloudinary.
 
 == Changelog ==
 
+
+= 3.0.3 (26 April 2022) =
+
+Fixes and Improvements:
+
+* Updated Cloudinary video player to v1.9.0
+* Added a new filter for Unsynced assets in WordPress Media Library
+* Updated WP-CLI with `--verbose` and `--export` flags
+* Updated the Wizard screen with the new Cloudinary developer dashboard
+* Added an i=AA param at the end of a URL when using Cloudinary video player
+* Image nodes is now returning a Cloudinary URL when querying with WPGraphQL
+* Fixed error on a server running PHP 8.1.1
+* Fixed WooCommerce blurred images
+* Fixed referencing Cloudinary images after deleting plugin while using Divi theme
+* Fixed inconsistencies with headers and cover images aspect ratios
+* Fixed Media Library error when adding attributes product images via ACF + WooCommerce
+* Fixed Cloudinary video player fails to work on CNAME based cloud accounts
+
 = 3.0.2 (08 March 2022) =
 
 Fixes and Improvements:
