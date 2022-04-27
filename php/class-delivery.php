@@ -1325,10 +1325,15 @@ class Delivery implements Setup {
 			'scheme' => '',
 			'host'   => '',
 			'path'   => '',
+			'port'   => '',
 		);
 		$parts   = wp_parse_args( wp_parse_url( $url ), $default );
+		$host    = $parts['host'];
+		if ( ! empty( $parts['port'] ) ) {
+			$host .= ':' . $parts['port'];
+		}
+		$url = '//' . $host . $parts['path'];
 
-		$url = '//' . $parts['host'] . $parts['path'];
 		if ( false === $scheme_less ) {
 			$url = $parts['scheme'] . ':' . $url;
 		}
