@@ -1075,6 +1075,7 @@ class Delivery implements Setup {
 				// Check overwrite.
 				$meta['overwrite_transformations'] = $tag_element['overwrite_transformations'];
 				$meta['cloudinary_id']             = $tag_element['atts']['data-public-id'];
+				$meta['transformations']           = $tag_element['transformations'];
 				// Add new srcset.
 				$element = wp_image_add_srcset_and_sizes( $tag_element['original'], $meta, $tag_element['id'] );
 
