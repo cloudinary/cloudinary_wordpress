@@ -199,11 +199,15 @@ class Delivery implements Setup {
 			$original_url    = $urls[ $result['public_id'] ];
 			$size            = $this->media->get_size_from_url( $original_url );
 			$transformations = $this->media->get_transformations_from_string( $original_url );
-
 			if ( 'image' === $this->media->get_resource_type( $result['post_id'] ) ) {
 				$attachment_url = wp_get_attachment_image_url( $result['post_id'], $size );
 			} else {
 				$attachment_url = wp_get_attachment_url( $result['post_id'] );
+			}
+			$query_args = array();
+			wp_parse_str( wp_parse_url( $original_url, PHP_URL_QUERY ), $query_args );
+			if ( ! empty( $query_args['cld_overwrite'] ) ) {
+				$attachment_url = add_query_arg( 'cld_overwrite', true, $attachment_url );
 			}
 			if ( ! empty( $transformations ) ) {
 				$transformations = array_filter(
@@ -1205,7 +1209,6 @@ class Delivery implements Setup {
 				}
 			}
 		}
-
 		if ( ! empty( $attributes['class'] ) ) {
 			if ( preg_match( '/wp-post-(\d+)+/', $attributes['class'], $match ) ) {
 				$tag_element['context'] = (int) $match[1];
@@ -1221,7 +1224,11 @@ class Delivery implements Setup {
 				'wp-post-' . $tag_element['context'],
 			);
 		}
-
+		// Add overwrite transformations class if needed.
+		if ( false !== strpos( $raw_url, 'cld_overwrite' ) ) {
+			$attributes['class'][]                    = 'cld-overwrite';
+			$tag_element['overwrite_transformations'] = true;
+		}
 		$inline_transformations = $this->get_transformations_maybe( $raw_url );
 		if ( $inline_transformations ) {
 			$tag_element['transformations'] = array_merge( $tag_element['transformations'], $inline_transformations );

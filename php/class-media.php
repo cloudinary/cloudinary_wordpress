@@ -1840,8 +1840,8 @@ class Media extends Settings_Component implements Setup {
 		$deps = wp_script_is( 'cld-core', 'registered' ) ? array( 'cld-core' ) : array();
 		$this->plugin->register_assets(); // Ensure assets are registered.
 		// External assets.
+		wp_enqueue_script( 'cloudinary-media-modal', $this->plugin->dir_url . '/js/media-modal.js', null, $this->plugin->version, true );
 		wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, $deps, $this->plugin->version, true );
-		wp_enqueue_script( 'cloudinary' );
 		wp_enqueue_style( 'cloudinary' );
 		$params = array(
 			'nonce'     => wp_create_nonce( 'wp_rest' ),

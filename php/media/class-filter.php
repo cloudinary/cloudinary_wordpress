@@ -658,6 +658,22 @@ class Filter {
 	}
 
 	/**
+	 * Returns the overwrite template for media details.
+	 *
+	 * @return string
+	 */
+	public function template_overwrite_general() {
+		return '<# if( \'image\' === data.type || \'video\' === data.type ) {  #>
+			<div class="setting cld-overwrite">
+				<label>
+					<input type="checkbox" data-setting="cldoverwrite" value="true"/>
+					' . esc_html__( 'Overwrite Global Transformations', 'cloudinary' ) . '
+				</label>
+			</div>
+			<# } #>';
+	}
+
+	/**
 	 * Inject out templates into the media templates.
 	 */
 	public function overwrite_template_inject() {
@@ -669,10 +685,12 @@ class Filter {
 		$str_container  = strpos( $template, $str_div ) !== false ? $str_div : '<fieldset class="setting-group">';
 		$str_vid_edit   = '<# if ( ! _.isEmpty( data.model.poster ) ) { #>';
 		$str_vid_insert = '<# if ( \'undefined\' !== typeof data.sizes ) { #>';
+		$str_gen_edit   = '<h2>' . __( 'Attachment Display Settings' ) . '</h2>'; // phpcs:ignore
 		$template       = str_replace( $str_label, $this->template_overwrite_insert() . $str_label, $template );
 		$template       = str_replace( $str_container, $this->template_overwrite_edit() . $str_container, $template );
 		$template       = str_replace( $str_vid_edit, $this->template_overwrite_video_edit() . $str_vid_edit, $template );
 		$template       = str_replace( $str_vid_insert, $this->template_overwrite_insert_video() . $str_vid_insert, $template );
+		$template       = str_replace( $str_gen_edit, $str_gen_edit . $this->template_overwrite_general(), $template );
 
 		echo $template; // phpcs:ignore XSS ok
 	}
@@ -759,13 +777,30 @@ class Filter {
 	}
 
 	/**
+	 * Add the overwrite transformations if attribute is set.
+	 *
+	 * @param string $html          The html.
+	 * @param int    $attachment_id The attachment ID.
+	 * @param array  $attachment    The attachment array.
+	 *
+	 * @return string
+	 */
+	public function maybe_overwrite_transformations( $html, $attachment_id, $attachment ) {
+		if ( ! empty( $attachment['cldoverwrite'] ) ) {
+			$html = str_replace( 'class="', 'class="cld-overwrite ', $html );
+		}
+
+		return $html;
+	}
+
+	/**
 	 * Setup hooks for the filters.
 	 */
 	public function setup_hooks() {
 		// Filter URLS within content.
 		add_filter( 'wp_insert_post_data', array( $this, 'prepare_amp_posts' ), 11 );
 		add_filter( 'wp_prepare_attachment_for_js', array( $this, 'filter_attachment_for_js' ), 11 );
-
+		add_filter( 'media_send_to_editor', array( $this, 'maybe_overwrite_transformations' ), 10, 3 );
 
 		// Enable Rest filters.
 		add_action( 'rest_api_init', array( $this, 'init_rest_filters' ) );

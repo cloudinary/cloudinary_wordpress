@@ -7,7 +7,6 @@ import './components/taxonomies';
  * Internal dependencies
  */
 import Settings from './components/settings-page';
-import Widget from './components/widget';
 import GlobalTransformations from './components/global-transformations';
 import TermsOrder from './components/terms-order';
 import MediaLibrary from './components/media-library';
@@ -56,7 +55,6 @@ window.$ = window.jQuery;
 export const cloudinary = {
 	UI,
 	Settings,
-	Widget,
 	GlobalTransformations,
 	TermsOrder,
 	MediaLibrary,
