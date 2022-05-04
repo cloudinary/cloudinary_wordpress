@@ -370,6 +370,23 @@ class Lazy_Load extends Delivery_Feature {
 										'off'         => __( 'Off', 'cloudinary' ),
 									),
 								),
+								array(
+									'type'    => 'tag',
+									'element' => 'hr',
+								),
+								array(
+									'type'         => 'select',
+									'slug'         => 'dpr',
+									'priority'     => 8,
+									'title'        => __( 'DPR settings', 'cloudinary' ),
+									'tooltip_text' => __( 'The device pixel ratio to use for your generated images.', 'cloudinary' ),
+									'default'      => '2X',
+									'options'      => array(
+										'off' => __( 'Off', 'cloudinary' ),
+										'2X'  => __( 'Auto (2x)', 'cloudinary' ),
+										'max' => __( 'Max DPR', 'cloudinary' ),
+									),
+								),
 							),
 						),
 						array(
