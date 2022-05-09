@@ -228,13 +228,7 @@ if ( wp.media ) {
 					this.cloudinaryContent,
 					this
 				);
-				this.states.on( 'insert', this.handleInsert, this );
 			},
-
-			handleInsert( selection ) {
-				console.log( selection.models );
-			},
-
 			/**
 			 * Render callback for the router region in the `browse` mode.
 			 *
