@@ -1709,9 +1709,14 @@ class Media extends Settings_Component implements Setup {
 			return $sources; // Return WordPress default sources.
 		}
 		// Get transformations if any.
-		$transformations = $this->get_post_meta( $attachment_id, Sync::META_KEYS['transformation'], true );
-		// Use Cloudinary breakpoints for same ratio.
+		$transformations = (array) $this->get_post_meta( $attachment_id, Sync::META_KEYS['transformation'], true );
 
+		// For cases where transformations are added via cld_params.
+		if ( ! empty( $image_meta['transformations'] ) ) {
+			$transformations = array_filter( array_merge( $transformations, $image_meta['transformations'] ) );
+		}
+
+		// Use Cloudinary breakpoints for same ratio.
 		$image_meta['overwrite_transformations'] = ! empty( $image_meta['overwrite_transformations'] ) ? $image_meta['overwrite_transformations'] : false;
 
 		if ( 'on' === $this->settings->get_setting( 'enable_breakpoints' )->get_value() && wp_image_matches_ratio( $image_meta['width'], $image_meta['height'], $size_array[0], $size_array[1] ) ) {

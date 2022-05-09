@@ -30,6 +30,9 @@ const TagsInput = {
 			input.innerText = null;
 		} );
 		input.addEventListener( 'blur', ( ev ) => {
+			if ( 3 < input.innerText.length ) {
+				this.captureTag( input, input.innerText );
+			}
 			input.innerText = input.dataset.placeholder;
 		} );
 		input.addEventListener( 'keydown', ( ev ) => {
