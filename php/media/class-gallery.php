@@ -418,11 +418,12 @@ class Gallery extends Settings_Component {
 		$attributes['mediaAssets'] = array();
 		foreach ( $attributes['selectedImages'] as $attachment ) {
 			// Since the gallery widget uses public ID's, if an attachment is deleted, it can still remain working in a gallery.
-			if ( wp_get_attachment_url( $attachment['attachmentId'] ) ) {
-				$transformations = $this->media->get_transformations( $attachment['attachmentId'] );
-				if ( ! empty( $transformations ) ) {
-					$attachment['transformation'] = array( 'transformation' => $transformations );
-				}
+			if ( ! wp_get_attachment_url( $attachment['attachmentId'] ) ) {
+				continue;
+			}
+			$transformations = $this->media->get_transformations( $attachment['attachmentId'] );
+			if ( ! empty( $transformations ) ) {
+				$attachment['transformation'] = array( 'transformation' => $transformations );
 			}
 			$attributes['mediaAssets'][] = $attachment;
 		}
