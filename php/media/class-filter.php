@@ -700,7 +700,7 @@ class Filter {
 	 */
 	public function catch_media_templates_maybe() {
 		// Only start output buffer if wp_print_media_templates is queued.
-		if ( has_action( 'admin_footer', 'wp_print_media_templates' ) ) {
+		if ( has_action( 'admin_footer', 'wp_print_media_templates' ) || has_action( 'wp_footer', 'wp_print_media_templates' ) ) {
 
 			ob_start();
 			// Prepare output buffer filtering..
@@ -807,6 +807,7 @@ class Filter {
 
 		// Add checkbox to media modal template.
 		add_action( 'admin_footer', array( $this, 'catch_media_templates_maybe' ), 9 );
+		add_action( 'wp_footer', array( $this, 'catch_media_templates_maybe' ), 9 );
 
 		// Filter for block rendering.
 		add_filter( 'render_block', array( $this, 'filter_image_block_render_block' ), 10, 2 );
