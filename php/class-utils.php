@@ -456,4 +456,35 @@ class Utils {
 	public static function looks_like_json( $thing ) {
 		return is_string( $thing ) && in_array( ltrim( $thing )[0], array( '{', '[' ), true );
 	}
+
+	/**
+	 * Inspected on wp_extract_urls.
+	 * However, there's a shortcoming on some transformations where the core extractor will fail to fully parse such URLs.
+	 *
+	 * @param string $content The content.
+	 *
+	 * @return array
+	 */
+	public static function extract_urls( $content ) {
+		preg_match_all(
+			"#([\"']?)("
+				. '(?:([\w-]+:)?//?)'
+				. '[^\s()<>]+'
+				. '[.]'
+				. '(?:'
+					. '\([\w\d]+\)|'
+					. '(?:'
+						. "[^`!()\[\]{};:'\".,<>«»“”‘’\s]|"
+						. '(?:[:]\w+)?/?'
+					. ')+'
+				. ')'
+			. ")\\1#",
+			$content,
+			$post_links
+		);
+
+		$post_links = array_unique( array_map( 'html_entity_decode', $post_links[2] ) );
+
+		return array_values( $post_links );
+	}
 }

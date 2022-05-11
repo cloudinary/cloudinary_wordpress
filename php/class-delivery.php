@@ -178,7 +178,8 @@ class Delivery implements Setup {
 		if ( $unslashed ) {
 			$content = $unslash_maybe;
 		}
-		$base_urls       = array_unique( wp_extract_urls( $content ) );
+		$content         = str_replace( '&amp;', '&', $content );
+		$base_urls       = array_unique( Utils::extract_urls( $content ) );
 		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
 		$urls            = array();
 		if ( empty( $cloudinary_urls ) ) {
