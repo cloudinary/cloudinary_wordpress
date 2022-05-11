@@ -897,8 +897,13 @@ class Delivery implements Setup {
 			$base                   = $type . ':' . $url;
 			$public_id              = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
 			$cloudinary_url         = $this->media->cloudinary_url( $relation['post_id'], array(), $relation['transformations'], $public_id );
-			$aliases[ $base . '?' ] = $cloudinary_url . '&';
-			$aliases[ $base ]       = $cloudinary_url;
+			if ( ! empty( $relation['slashed'] ) && $relation['slashed'] ) {
+				$aliases[ $base . '?' ] = trim( wp_json_encode( $cloudinary_url . '&' ), '"' );
+				$aliases[ $base ]       = trim( wp_json_encode( $cloudinary_url ), '"' );
+			} else {
+				$aliases[ $base . '?' ] = $cloudinary_url . '&';
+				$aliases[ $base ]       = $cloudinary_url;
+			}
 		}
 
 		// Create the sized found relations second.
@@ -1433,8 +1438,12 @@ class Delivery implements Setup {
 		$this->known[ $item['public_id'] ] = $item;
 		$scaled                            = self::make_scaled_url( $item['sized_url'] );
 		$descaled                          = self::descaled_url( $item['sized_url'] );
+		$scaled_slashed                    = trim( wp_json_encode( $scaled ), '"' );
+		$descaled_slashed                  = trim( wp_json_encode( $descaled ), '"' );
 		$this->known[ $scaled ]            = $item;
 		$this->known[ $descaled ]          = $item;
+		$this->known[ $scaled_slashed ]    = array_merge( $item, array( 'slashed' => true ) );
+		$this->known[ $descaled_slashed ]  = array_merge( $item, array( 'slashed' => true ) );
 
 		if ( 'disable' === $item['post_state'] ) {
 			return;
