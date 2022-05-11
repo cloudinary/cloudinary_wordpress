@@ -103,7 +103,9 @@ abstract class Delivery_Feature implements Assets {
 	public function init() {
 		$this->config = $this->settings->get_value( $this->settings_slug );
 		if ( $this->is_active() ) {
-			add_action( 'wp_print_scripts', array( $this, 'maybe_enqueue_assets' ) );
+			//add_action( 'wp_print_scripts', array( $this, 'maybe_enqueue_assets' ) );
+			//add_action( 'wp', array( $this, 'maybe_enqueue_assets' ) );
+			$this->maybe_enqueue_assets();
 		}
 		if ( $this->is_enabled() ) {
 			$this->setup_hooks();

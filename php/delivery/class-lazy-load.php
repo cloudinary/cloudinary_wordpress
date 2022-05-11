@@ -223,6 +223,9 @@ class Lazy_Load extends Delivery_Feature {
 	 * Apply front end filters on the enqueue_assets hook.
 	 */
 	public function enqueue_assets() {
+		if( wp_doing_ajax() ){
+			return;
+		}
 		$config = $this->config; // Get top most config.
 		if ( 'off' !== $config['lazy_placeholder'] ) {
 			$config['placeholder'] = API::generate_transformation_string( $this->get_placeholder_transformations( $config['lazy_placeholder'] ) );
@@ -258,7 +261,7 @@ class Lazy_Load extends Delivery_Feature {
 	 */
 	public function is_active() {
 
-		return ! is_admin();
+		return ! is_admin() || wp_doing_ajax();
 	}
 
 	/**

@@ -842,7 +842,7 @@ class Delivery implements Setup {
 			$type = 'amp';
 		}
 		if ( 'view' === $context && ! empty( $has_cache[ $type ] ) ) {
-			$cached = $has_cache[ $type ];
+		//	$cached = $has_cache[ $type ];
 		}
 
 		$tags = $this->get_media_tags( $content, 'img|video|article' );
@@ -875,7 +875,7 @@ class Delivery implements Setup {
 			$this->current_post_id = $set['context'];
 
 			// We only rebuild tags in the view context.
-			if ( 'view' === $context ) {
+			if ( 'view' === $context || is_numeric( $context ) ) {
 				// Use cached item if found.
 				if ( isset( $cached[ $set['original'] ] ) ) {
 					$replacements[ $set['original'] ] = $cached[ $set['original'] ];
@@ -1572,7 +1572,7 @@ class Delivery implements Setup {
 
 		$public_ids = array();
 		// Lets only look for Cloudinary URLs on the frontend.
-		if ( ! is_admin() ) {
+		if ( ! is_admin() || wp_doing_ajax() ) {
 			// clean out empty urls.
 			$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
 			// Clean URLS for search.
@@ -1652,6 +1652,5 @@ class Delivery implements Setup {
 		if ( ! empty( $this->unknown ) ) {
 			$this->find_attachment_size_urls();
 		}
-
 	}
 }
