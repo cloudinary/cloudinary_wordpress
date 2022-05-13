@@ -261,7 +261,7 @@ class Lazy_Load extends Delivery_Feature {
 	 */
 	public function is_active() {
 
-		return ! Utils::is_admin() || Utils::is_ajax();
+		return ( ! Utils::is_admin() && ! Utils::is_rest_api() ) || Utils::is_ajax();
 	}
 
 	/**
