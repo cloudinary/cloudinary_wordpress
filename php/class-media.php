@@ -2855,7 +2855,7 @@ class Media extends Settings_Component implements Setup {
 			add_filter( 'upload_dir', array( $this, 'upload_dir' ) );
 
 			// Filter live URLS. (functions that return a URL).
-			if ( is_admin() && ! wp_doing_ajax() ) {
+			if ( Utils::is_admin() ) {
 				$this->add_live_url_filters();
 			}
 			// Filter default image Quality and Format transformations.
