@@ -842,7 +842,7 @@ class Delivery implements Setup {
 			$type = 'amp';
 		}
 		if ( 'view' === $context && ! empty( $has_cache[ $type ] ) ) {
-		//	$cached = $has_cache[ $type ];
+			$cached = $has_cache[ $type ];
 		}
 
 		$tags = $this->get_media_tags( $content, 'img|video|article' );
@@ -875,7 +875,7 @@ class Delivery implements Setup {
 			$this->current_post_id = $set['context'];
 
 			// We only rebuild tags in the view context.
-			if ( 'view' === $context || is_numeric( $context ) ) {
+			if ( 'view' === $context ) {
 				// Use cached item if found.
 				if ( isset( $cached[ $set['original'] ] ) ) {
 					$replacements[ $set['original'] ] = $cached[ $set['original'] ];
