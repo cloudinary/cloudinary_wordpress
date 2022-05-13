@@ -1648,7 +1648,7 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
-	 * At the point of running wp_get_attachment_image_srcset, the $image_src is already a Cloudinary URL.
+	 * At the point of running wp_get_attachment_image_srcset, the $image_src Should be a Cloudinary URL, unless not synced.
 	 * This will fix the $image_meta so that the there's a match $src_matched on wp_calculate_image_srcset.
 	 *
 	 * @param array  $image_meta    The image meta data as returned by 'wp_get_attachment_metadata()'.
@@ -1663,7 +1663,9 @@ class Media extends Settings_Component implements Setup {
 	 * @return array
 	 */
 	public function calculate_image_srcset_meta( $image_meta, $size_array, $image_src ) {
-		$image_meta['file'] = parse_url( $image_src, PHP_URL_PATH );
+		if ( $this->is_cloudinary_url( $image_src ) ) {
+			$image_meta['file'] = wp_parse_url( $image_src, PHP_URL_PATH );
+		}
 
 		return $image_meta;
 	}
@@ -1707,9 +1709,14 @@ class Media extends Settings_Component implements Setup {
 			return $sources; // Return WordPress default sources.
 		}
 		// Get transformations if any.
-		$transformations = $this->get_post_meta( $attachment_id, Sync::META_KEYS['transformation'], true );
-		// Use Cloudinary breakpoints for same ratio.
+		$transformations = (array) $this->get_post_meta( $attachment_id, Sync::META_KEYS['transformation'], true );
 
+		// For cases where transformations are added via cld_params.
+		if ( ! empty( $image_meta['transformations'] ) ) {
+			$transformations = array_filter( array_merge( $transformations, $image_meta['transformations'] ) );
+		}
+
+		// Use Cloudinary breakpoints for same ratio.
 		$image_meta['overwrite_transformations'] = ! empty( $image_meta['overwrite_transformations'] ) ? $image_meta['overwrite_transformations'] : false;
 
 		if ( 'on' === $this->settings->get_setting( 'enable_breakpoints' )->get_value() && wp_image_matches_ratio( $image_meta['width'], $image_meta['height'], $size_array[0], $size_array[1] ) ) {
@@ -1838,8 +1845,8 @@ class Media extends Settings_Component implements Setup {
 		$deps = wp_script_is( 'cld-core', 'registered' ) ? array( 'cld-core' ) : array();
 		$this->plugin->register_assets(); // Ensure assets are registered.
 		// External assets.
+		wp_enqueue_script( 'cloudinary-media-modal', $this->plugin->dir_url . '/js/media-modal.js', null, $this->plugin->version, true );
 		wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, $deps, $this->plugin->version, true );
-		wp_enqueue_script( 'cloudinary' );
 		wp_enqueue_style( 'cloudinary' );
 		$params = array(
 			'nonce'     => wp_create_nonce( 'wp_rest' ),
