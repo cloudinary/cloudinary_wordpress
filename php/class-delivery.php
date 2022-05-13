@@ -1572,7 +1572,7 @@ class Delivery implements Setup {
 
 		$public_ids = array();
 		// Lets only look for Cloudinary URLs on the frontend.
-		if ( ! is_admin() || wp_doing_ajax() ) {
+		if ( ! Utils::is_admin() ) {
 			// clean out empty urls.
 			$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
 			// Clean URLS for search.

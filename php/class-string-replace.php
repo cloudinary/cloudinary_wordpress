@@ -49,8 +49,11 @@ class String_Replace implements Setup {
 	 * Setup the object.
 	 */
 	public function setup() {
-		if ( is_admin() ) {
+		if ( Utils::is_admin() ) {
 			$this->admin_filters();
+		} elseif ( Utils::is_ajax() ) {
+			$this->context = 'view';
+			$this->start_capture();
 		} else {
 			$this->public_filters();
 		}

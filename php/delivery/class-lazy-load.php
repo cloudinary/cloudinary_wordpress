@@ -223,7 +223,7 @@ class Lazy_Load extends Delivery_Feature {
 	 * Apply front end filters on the enqueue_assets hook.
 	 */
 	public function enqueue_assets() {
-		if( wp_doing_ajax() ){
+		if ( Utils::is_ajax() ) {
 			return;
 		}
 		$config = $this->config; // Get top most config.
@@ -261,7 +261,7 @@ class Lazy_Load extends Delivery_Feature {
 	 */
 	public function is_active() {
 
-		return ! is_admin() || wp_doing_ajax();
+		return ! Utils::is_admin() || Utils::is_ajax();
 	}
 
 	/**
