@@ -1308,7 +1308,7 @@ class Delivery implements Setup {
 		/**
 		 * Filter if the url is a local asset.
 		 *
-		 * @hook   cloudinary_pre_image_tag
+		 * @hook   cloudinary_is_content_dir
 		 * @since  2.7.6
 		 *
 		 * @param $is_local {bool}   If the url is a local asset.
