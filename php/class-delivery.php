@@ -898,8 +898,8 @@ class Delivery implements Setup {
 			$public_id              = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
 			$cloudinary_url         = $this->media->cloudinary_url( $relation['post_id'], array(), $relation['transformations'], $public_id );
 			if ( ! empty( $relation['slashed'] ) && $relation['slashed'] ) {
-				$aliases[ $base . '?' ] = trim( wp_json_encode( $cloudinary_url . '&' ), '"' );
-				$aliases[ $base ]       = trim( wp_json_encode( $cloudinary_url ), '"' );
+				$aliases[ $base . '?' ] = addcslashes( $cloudinary_url . '&', '/' );
+				$aliases[ $base ]       = addcslashes( $cloudinary_url, '/' );
 			} else {
 				$aliases[ $base . '?' ] = $cloudinary_url . '&';
 				$aliases[ $base ]       = $cloudinary_url;
@@ -1438,8 +1438,8 @@ class Delivery implements Setup {
 		$this->known[ $item['public_id'] ] = $item;
 		$scaled                            = self::make_scaled_url( $item['sized_url'] );
 		$descaled                          = self::descaled_url( $item['sized_url'] );
-		$scaled_slashed                    = trim( wp_json_encode( $scaled ), '"' );
-		$descaled_slashed                  = trim( wp_json_encode( $descaled ), '"' );
+		$scaled_slashed                    = addcslashes( $scaled, '/' );
+		$descaled_slashed                  = addcslashes( $descaled, '/' );
 		$this->known[ $scaled ]            = $item;
 		$this->known[ $descaled ]          = $item;
 		$this->known[ $scaled_slashed ]    = array_merge( $item, array( 'slashed' => true ) );
