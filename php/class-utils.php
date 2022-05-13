@@ -456,4 +456,22 @@ class Utils {
 	public static function looks_like_json( $thing ) {
 		return is_string( $thing ) && in_array( ltrim( $thing )[0], array( '{', '[' ), true );
 	}
+
+	/**
+	 * Check if we are in WordPress ajax.
+	 *
+	 * @return bool
+	 */
+	public static function is_ajax() {
+		return defined( 'DOING_AJAX' ) && DOING_AJAX;
+	}
+
+	/**
+	 * Check if this is an admin request, but not an ajax one.
+	 *
+	 * @return bool
+	 */
+	public static function is_admin() {
+		return is_admin() && ! self::is_ajax();
+	}
 }
