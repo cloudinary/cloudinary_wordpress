@@ -196,7 +196,7 @@ class Lazy_Load extends Delivery_Feature {
 			$tag_element['atts']['data-sizes']  = $tag_element['atts']['sizes'];
 			unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 		}
-		if ( ! is_admin() ) {
+		if ( ! Utils::is_admin() ) {
 			$tag_element['atts']['data-delivery'] = $this->media->get_media_delivery( $tag_element['id'] );
 			if ( empty( $tag_element['atts']['onload'] ) ) {
 				$tag_element['atts']['onload'] = '';

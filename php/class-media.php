@@ -928,7 +928,7 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		// Defaults are only to be added on front, main images ( not breakpoints, since these are adapted down), and videos.
-		if ( false === $overwrite_transformations && ! is_admin() ) {
+		if ( false === $overwrite_transformations && ! Utils::is_admin() ) {
 			$transformations = $this->apply_default_transformations( $transformations, $attachment_id );
 		}
 

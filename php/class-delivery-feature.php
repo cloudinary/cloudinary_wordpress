@@ -103,7 +103,10 @@ abstract class Delivery_Feature implements Assets {
 	public function init() {
 		$this->config = $this->settings->get_value( $this->settings_slug );
 		if ( $this->filter_is_active() ) {
-			$this->maybe_enqueue_assets();
+			add_action( 'wp_print_scripts', array( $this, 'maybe_enqueue_assets' ) );
+			if ( Utils::is_ajax() ) {
+				$this->maybe_enqueue_assets();
+			}
 		}
 		if ( $this->is_enabled() ) {
 			$this->setup_hooks();
@@ -144,7 +147,7 @@ abstract class Delivery_Feature implements Assets {
 	 * @return bool
 	 */
 	public function is_active() {
-		return ! is_admin();
+		return ! Utils::is_admin();
 	}
 
 	/**
