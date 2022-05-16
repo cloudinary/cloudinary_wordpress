@@ -196,7 +196,7 @@ class Lazy_Load extends Delivery_Feature {
 			$tag_element['atts']['data-sizes']  = $tag_element['atts']['sizes'];
 			unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 		}
-		if ( ! is_admin() ) {
+		if ( ! Utils::is_admin() ) {
 			$tag_element['atts']['data-delivery'] = $this->media->get_media_delivery( $tag_element['id'] );
 			if ( empty( $tag_element['atts']['onload'] ) ) {
 				$tag_element['atts']['onload'] = '';
@@ -223,6 +223,9 @@ class Lazy_Load extends Delivery_Feature {
 	 * Apply front end filters on the enqueue_assets hook.
 	 */
 	public function enqueue_assets() {
+		if ( Utils::is_ajax() ) {
+			return;
+		}
 		$config = $this->config; // Get top most config.
 		if ( 'off' !== $config['lazy_placeholder'] ) {
 			$config['placeholder'] = API::generate_transformation_string( $this->get_placeholder_transformations( $config['lazy_placeholder'] ) );
@@ -258,7 +261,7 @@ class Lazy_Load extends Delivery_Feature {
 	 */
 	public function is_active() {
 
-		return ! is_admin();
+		return ( ! Utils::is_admin() && ! Utils::is_rest_api() ) || Utils::is_ajax();
 	}
 
 	/**

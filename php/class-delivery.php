@@ -1313,7 +1313,7 @@ class Delivery implements Setup {
 		/**
 		 * Filter if the url is a local asset.
 		 *
-		 * @hook   cloudinary_pre_image_tag
+		 * @hook   cloudinary_is_content_dir
 		 * @since  2.7.6
 		 *
 		 * @param $is_local {bool}   If the url is a local asset.
@@ -1581,7 +1581,7 @@ class Delivery implements Setup {
 
 		$public_ids = array();
 		// Lets only look for Cloudinary URLs on the frontend.
-		if ( ! is_admin() ) {
+		if ( ! Utils::is_admin() ) {
 			// clean out empty urls.
 			$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
 			// Clean URLS for search.
@@ -1661,6 +1661,5 @@ class Delivery implements Setup {
 		if ( ! empty( $this->unknown ) ) {
 			$this->find_attachment_size_urls();
 		}
-
 	}
 }

@@ -456,4 +456,42 @@ class Utils {
 	public static function looks_like_json( $thing ) {
 		return is_string( $thing ) && in_array( ltrim( $thing )[0], array( '{', '[' ), true );
 	}
+
+	/**
+	 * Check if we're in a REST API request.
+	 *
+	 * @return bool
+	 */
+	public static function is_rest_api() {
+		$is = defined( 'REST_REQUEST' ) && REST_REQUEST;
+		if ( ! $is ) {
+			$is = ! empty( $GLOBALS['wp']->query_vars['rest_route'] );
+		}
+		if ( ! $is ) {
+			// Fallback if rest engine is not setup yet.
+			$rest_base   = wp_parse_url( rest_url( '/' ), PHP_URL_PATH );
+			$request_uri = filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_SANITIZE_URL );
+			$is          = strpos( $request_uri, $rest_base ) === 0;
+		}
+
+		return $is;
+	}
+
+	/**
+	 * Check if we are in WordPress ajax.
+	 *
+	 * @return bool
+	 */
+	public static function is_ajax() {
+		return defined( 'DOING_AJAX' ) && DOING_AJAX;
+	}
+
+	/**
+	 * Check if this is an admin request, but not an ajax one.
+	 *
+	 * @return bool
+	 */
+	public static function is_admin() {
+		return is_admin() && ! self::is_ajax();
+	}
 }
