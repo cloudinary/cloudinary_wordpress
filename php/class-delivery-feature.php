@@ -103,10 +103,7 @@ abstract class Delivery_Feature implements Assets {
 	public function init() {
 		$this->config = $this->settings->get_value( $this->settings_slug );
 		if ( $this->filter_is_active() ) {
-			add_action( 'wp_print_scripts', array( $this, 'maybe_enqueue_assets' ) );
-			if ( Utils::is_ajax() ) {
-				$this->maybe_enqueue_assets();
-			}
+			$this->maybe_enqueue_assets();
 		}
 		if ( $this->is_enabled() ) {
 			$this->setup_hooks();
@@ -126,7 +123,7 @@ abstract class Delivery_Feature implements Assets {
 		if ( $this->is_enabled() ) {
 			// Add filter to add features.
 			add_filter( "cloudinary_pre_{$this->type}_tag", array( $this, 'add_features' ), $this->priority );
-			$this->enqueue_assets();
+			add_action( 'wp_print_scripts', array( $this, 'enqueue_assets' ) );
 		}
 	}
 
