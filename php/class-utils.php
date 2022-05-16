@@ -494,4 +494,35 @@ class Utils {
 	public static function is_admin() {
 		return is_admin() && ! self::is_ajax();
 	}
+
+	/**
+	 * Inspected on wp_extract_urls.
+	 * However, there's a shortcoming on some transformations where the core extractor will fail to fully parse such URLs.
+	 *
+	 * @param string $content The content.
+	 *
+	 * @return array
+	 */
+	public static function extract_urls( $content ) {
+		preg_match_all(
+			"#([\"']?)("
+				. '(?:([\w-]+:)?//?)'
+				. '[^\s()<>]+'
+				. '[.]'
+				. '(?:'
+					. '\([\w\d]+\)|'
+					. '(?:'
+						. "[^`!()\[\]{};:'\".,<>«»“”‘’\s]|"
+						. '(?:[:]\w+)?/?'
+					. ')+'
+				. ')'
+			. ")\\1#",
+			$content,
+			$post_links
+		);
+
+		$post_links = array_unique( array_map( 'html_entity_decode', $post_links[2] ) );
+
+		return array_values( $post_links );
+	}
 }

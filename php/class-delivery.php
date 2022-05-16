@@ -178,7 +178,8 @@ class Delivery implements Setup {
 		if ( $unslashed ) {
 			$content = $unslash_maybe;
 		}
-		$base_urls       = array_unique( wp_extract_urls( $content ) );
+		$content         = str_replace( '&amp;', '&', $content );
+		$base_urls       = array_unique( Utils::extract_urls( $content ) );
 		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
 		$urls            = array();
 		if ( empty( $cloudinary_urls ) ) {
@@ -1237,7 +1238,8 @@ class Delivery implements Setup {
 		}
 		$inline_transformations = $this->get_transformations_maybe( $raw_url );
 		if ( $inline_transformations ) {
-			$tag_element['transformations'] = array_merge( $tag_element['transformations'], $inline_transformations );
+			// Ensure that we don't get duplicated transformations.
+			$tag_element['transformations'] = array_unique( array_merge( $tag_element['transformations'], $inline_transformations ), SORT_REGULAR );
 		}
 
 		// Check if ID was found, and upgrade if needed.
