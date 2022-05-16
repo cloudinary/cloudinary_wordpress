@@ -898,8 +898,13 @@ class Delivery implements Setup {
 			$base                   = $type . ':' . $url;
 			$public_id              = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
 			$cloudinary_url         = $this->media->cloudinary_url( $relation['post_id'], array(), $relation['transformations'], $public_id );
-			$aliases[ $base . '?' ] = $cloudinary_url . '&';
-			$aliases[ $base ]       = $cloudinary_url;
+			if ( ! empty( $relation['slashed'] ) && $relation['slashed'] ) {
+				$aliases[ $base . '?' ] = addcslashes( $cloudinary_url . '&', '/' );
+				$aliases[ $base ]       = addcslashes( $cloudinary_url, '/' );
+			} else {
+				$aliases[ $base . '?' ] = $cloudinary_url . '&';
+				$aliases[ $base ]       = $cloudinary_url;
+			}
 		}
 
 		// Create the sized found relations second.
@@ -1310,7 +1315,7 @@ class Delivery implements Setup {
 		/**
 		 * Filter if the url is a local asset.
 		 *
-		 * @hook   cloudinary_pre_image_tag
+		 * @hook   cloudinary_is_content_dir
 		 * @since  2.7.6
 		 *
 		 * @param $is_local {bool}   If the url is a local asset.
@@ -1435,8 +1440,12 @@ class Delivery implements Setup {
 		$this->known[ $item['public_id'] ] = $item;
 		$scaled                            = self::make_scaled_url( $item['sized_url'] );
 		$descaled                          = self::descaled_url( $item['sized_url'] );
+		$scaled_slashed                    = addcslashes( $scaled, '/' );
+		$descaled_slashed                  = addcslashes( $descaled, '/' );
 		$this->known[ $scaled ]            = $item;
 		$this->known[ $descaled ]          = $item;
+		$this->known[ $scaled_slashed ]    = array_merge( $item, array( 'slashed' => true ) );
+		$this->known[ $descaled_slashed ]  = array_merge( $item, array( 'slashed' => true ) );
 
 		if ( 'disable' === $item['post_state'] ) {
 			return;
@@ -1574,7 +1583,7 @@ class Delivery implements Setup {
 
 		$public_ids = array();
 		// Lets only look for Cloudinary URLs on the frontend.
-		if ( ! is_admin() ) {
+		if ( ! Utils::is_admin() ) {
 			// clean out empty urls.
 			$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
 			// Clean URLS for search.
@@ -1654,6 +1663,5 @@ class Delivery implements Setup {
 		if ( ! empty( $this->unknown ) ) {
 			$this->find_attachment_size_urls();
 		}
-
 	}
 }

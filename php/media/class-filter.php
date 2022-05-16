@@ -464,16 +464,16 @@ class Filter {
 		if ( ! isset( $attachment->data['id'] ) ) {
 			return $attachment;
 		}
-		$has_transformations = ! empty( $this->media->get_transformation_from_meta( $attachment->data['id'] ) );
-		if ( $has_transformations ) {
-			$attachment->data['transformations'] = $has_transformations;
+		$transformations = $this->media->get_transformation_from_meta( $attachment->data['id'] );
+		if ( ! empty( $transformations ) ) {
+			$attachment->data['transformations'] = $transformations;
 		}
 		$cloudinary_id = $this->media->cloudinary_id( $attachment->data['id'] );
 		if ( $cloudinary_id ) {
 			$attachment->data['source_url'] = $this->media->cloudinary_url( $attachment->data['id'], false );
 			if ( isset( $attachment->data['media_details'] ) ) {
 				foreach ( $attachment->data['media_details']['sizes'] as $size => &$details ) {
-					$details['source_url'] = $this->media->cloudinary_url( $attachment->data['id'], $size, $has_transformations, $cloudinary_id );
+					$details['source_url'] = $this->media->cloudinary_url( $attachment->data['id'], $size, $transformations, $cloudinary_id );
 				}
 			}
 		}

@@ -102,8 +102,8 @@ abstract class Delivery_Feature implements Assets {
 	 */
 	public function init() {
 		$this->config = $this->settings->get_value( $this->settings_slug );
-		if ( $this->is_active() ) {
-			add_action( 'wp_print_scripts', array( $this, 'maybe_enqueue_assets' ) );
+		if ( $this->filter_is_active() ) {
+			$this->maybe_enqueue_assets();
 		}
 		if ( $this->is_enabled() ) {
 			$this->setup_hooks();
@@ -123,7 +123,7 @@ abstract class Delivery_Feature implements Assets {
 		if ( $this->is_enabled() ) {
 			// Add filter to add features.
 			add_filter( "cloudinary_pre_{$this->type}_tag", array( $this, 'add_features' ), $this->priority );
-			$this->enqueue_assets();
+			add_action( 'wp_print_scripts', array( $this, 'enqueue_assets' ) );
 		}
 	}
 
@@ -144,7 +144,7 @@ abstract class Delivery_Feature implements Assets {
 	 * @return bool
 	 */
 	public function is_active() {
-		return ! is_admin();
+		return ! Utils::is_admin();
 	}
 
 	/**
@@ -166,7 +166,7 @@ abstract class Delivery_Feature implements Assets {
 	 * @return bool
 	 */
 	public function is_enabled() {
-		return $this->is_active() && 'on' === $this->config[ $this->enable_slug ];
+		return $this->filter_is_active() && 'on' === $this->config[ $this->enable_slug ];
 	}
 
 	/**
@@ -186,5 +186,26 @@ abstract class Delivery_Feature implements Assets {
 	public function setup() {
 		$this->settings = $this->plugin->settings;
 		$this->init();
+	}
+
+	/**
+	 * Filter is active.
+	 *
+	 * @return bool
+	 */
+	public function filter_is_active() {
+		$parts      = explode( '\\', get_called_class() );
+		$class_name = strtolower( array_pop( $parts ) );
+		$is_active  = $this->is_active();
+
+		/**
+		 * Filter to check if the feature is active.
+		 *
+		 * @hook  cloudinary_is_{$class_name}_active
+		 * @since 3.0.4
+		 *
+		 * @param $is_active {bool} Flag if active.
+		 */
+		return apply_filters( "cloudinary_is_{$class_name}_active", $is_active );
 	}
 }

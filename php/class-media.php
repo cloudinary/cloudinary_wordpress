@@ -928,7 +928,7 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		// Defaults are only to be added on front, main images ( not breakpoints, since these are adapted down), and videos.
-		if ( false === $overwrite_transformations && ! is_admin() ) {
+		if ( false === $overwrite_transformations && ! Utils::is_admin() ) {
 			$transformations = $this->apply_default_transformations( $transformations, $attachment_id );
 		}
 
@@ -2855,7 +2855,7 @@ class Media extends Settings_Component implements Setup {
 			add_filter( 'upload_dir', array( $this, 'upload_dir' ) );
 
 			// Filter live URLS. (functions that return a URL).
-			if ( is_admin() ) {
+			if ( Utils::is_admin() ) {
 				$this->add_live_url_filters();
 			}
 			// Filter default image Quality and Format transformations.
