@@ -482,8 +482,12 @@ class Utils {
 	 *
 	 * @return bool
 	 */
-	public static function is_ajax() {
-		return defined( 'DOING_AJAX' ) && DOING_AJAX;
+	public static function is_frontend_ajax() {
+		$referer    = wp_get_referer();
+		$admin_base = admin_url();
+		$is_admin   = $referer ? 0 === strpos( $referer, $admin_base ) : false;
+
+		return ! $is_admin && defined( 'DOING_AJAX' ) && DOING_AJAX;
 	}
 
 	/**
@@ -492,7 +496,7 @@ class Utils {
 	 * @return bool
 	 */
 	public static function is_admin() {
-		return is_admin() && ! self::is_ajax();
+		return is_admin() && ! self::is_frontend_ajax();
 	}
 
 	/**
