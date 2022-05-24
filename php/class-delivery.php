@@ -226,7 +226,7 @@ class Delivery implements Setup {
 				}
 			}
 
-			String_Replace::replace( $original_url, $attachment_url );
+			String_Replace::replace( $urls[ $result['public_id'] ], $attachment_url );
 		}
 
 		$content = String_Replace::do_replace( $content );
