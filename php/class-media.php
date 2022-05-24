@@ -16,7 +16,6 @@ use Cloudinary\Media\Video;
 use Cloudinary\Media\WooCommerceGallery;
 use WP_Error;
 use WP_Query;
-use WP_Screen;
 
 /**
  * Class Media
