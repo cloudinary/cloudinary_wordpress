@@ -17,6 +17,18 @@ use Google\Web_Stories\Story_Post_Type;
  */
 class Utils {
 
+	const METADATA = array(
+		'actions' => array(
+			'add_{object}_metadata',
+			'update_{object}_metadata',
+		),
+		'objects' => array(
+			'post',
+			'term',
+			'user',
+		),
+	);
+
 	/**
 	 * Filter an array recursively
 	 *
@@ -528,5 +540,27 @@ class Utils {
 		$post_links = array_unique( array_map( 'html_entity_decode', $post_links[2] ) );
 
 		return array_values( $post_links );
+	}
+
+	/**
+	 * Is saving metadata.
+	 *
+	 * @return bool
+	 */
+	public static function is_saving_metadata() {
+		$saving   = false;
+		$metadata = self::METADATA;
+
+		foreach ( $metadata['actions'] as $action ) {
+			foreach ( $metadata['objects'] as $object ) {
+				$inline_action = str_replace( array( '{object}', 'metadata' ), array( $object, 'meta' ), $action );
+				if ( did_action( $inline_action ) ) {
+					$saving = true;
+					break;
+				}
+			}
+		}
+
+		return $saving;
 	}
 }

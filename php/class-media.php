@@ -1041,8 +1041,9 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		if (
-			! doing_filter( 'content_save_pre' )
-			&& false === $this->in_downsize
+			false === $this->in_downsize
+			&& ! doing_filter( 'content_save_pre' )
+			&& ! Utils::is_saving_metadata()
 			/**
 			 * Filter doing upload.
 			 * If so, return the default attachment URL.
@@ -1613,7 +1614,7 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function filter_downsize( $image, $attachment_id, $size ) {
 		// Don't do this while saving.
-		if ( true === $this->in_downsize || doing_filter( 'content_save_pre' ) || wp_attachment_is( 'video', $attachment_id ) ) {
+		if ( true === $this->in_downsize || doing_filter( 'content_save_pre' ) || wp_attachment_is( 'video', $attachment_id ) || Utils::is_saving_metadata() ) {
 			return $image;
 		}
 

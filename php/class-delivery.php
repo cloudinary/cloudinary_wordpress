@@ -154,6 +154,49 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Maybe filter out Cloudinary URLs in post meta.
+	 *
+	 * @param null|bool $check      Whether to allow adding metadata for the given type.
+	 * @param int       $object_id  The ID of the object metadata is for.
+	 * @param string    $meta_key   The Metadata key.
+	 * @param mixed     $meta_value Metadata value.
+	 *
+	 * @return null|bool
+	 */
+	public function maybe_filter_out_metadata( $check, $object_id, $meta_key, $meta_value ) {
+
+		$current       = current_filter();
+		$is_serialized = false;
+		$is_object     = is_object( $meta_value );
+
+		if ( ! is_string( $meta_value ) ) {
+			$is_serialized = true;
+			$meta_value    = wp_json_encode( $meta_value );
+		}
+
+		list( $action, $object ) = explode( '_', $current );
+
+		$process_meta_value = $meta_value;
+
+		remove_filter( $current, array( $this, 'maybe_filter_out_metadata' ) );
+
+		$process_meta_value = $this->filter_out_cloudinary( $process_meta_value );
+
+		if ( $process_meta_value !== $meta_value ) {
+			if ( $is_serialized ) {
+				$meta_value = json_decode( wp_unslash( $process_meta_value ), ! $is_object );
+			} else {
+				$meta_value = $process_meta_value;
+			}
+			$check = call_user_func( "{$action}_{$object}_meta", $object_id, $meta_key, $meta_value );
+		}
+
+		add_filter( $current, array( $this, 'maybe_filter_out_metadata' ), 10, 4 );
+
+		return $check;
+	}
+
+	/**
 	 * Filter out Cloudinary URLS and replace with local.
 	 *
 	 * @param string $content The content to filter.
@@ -578,6 +621,15 @@ class Delivery implements Setup {
 		add_filter( 'cloudinary_current_post_id', array( $this, 'get_current_post_id' ) );
 		add_filter( 'the_content', array( $this, 'add_post_id' ) );
 		add_action( 'wp_resource_hints', array( $this, 'dns_prefetch' ), 10, 2 );
+
+		$metadata = Utils::METADATA;
+
+		foreach ( $metadata['actions'] as $action ) {
+			foreach ( $metadata['objects'] as $object ) {
+				$inline_action = str_replace( '{object}', $object, $action );
+				add_action( $inline_action, array( $this, 'maybe_filter_out_metadata' ), 10, 4 );
+			}
+		}
 
 		// Clear cache on taxonomy update.
 		$taxonomies = get_taxonomies( array( 'show_ui' => true ) );
