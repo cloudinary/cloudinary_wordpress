@@ -198,6 +198,9 @@ class Delivery implements Setup {
 			}
 
 			$original_url    = $urls[ $result['public_id'] ];
+			if ( ! empty( $result['transformations'] ) ) {
+				$original_url = str_replace( $result['transformations'] . '/', '/', $original_url );
+			}
 			$size            = $this->media->get_size_from_url( $original_url );
 			$transformations = $this->media->get_transformations_from_string( $original_url );
 			if ( 'image' === $this->media->get_resource_type( $result['post_id'] ) ) {
@@ -223,7 +226,7 @@ class Delivery implements Setup {
 				}
 			}
 
-			String_Replace::replace( $original_url, $attachment_url );
+			String_Replace::replace( $urls[ $result['public_id'] ], $attachment_url );
 		}
 
 		$content = String_Replace::do_replace( $content );
