@@ -114,6 +114,13 @@ class Delivery implements Setup {
 	protected $post_contexts = array();
 
 	/**
+	 * Flag for doing metadata adds or updates.
+	 *
+	 * @var bool
+	 */
+	protected $doing_metadata = false;
+
+	/**
 	 * Component constructor.
 	 *
 	 * @param Plugin $plugin Global instance of the main plugin.
@@ -165,22 +172,31 @@ class Delivery implements Setup {
 	 */
 	public function maybe_filter_out_metadata( $check, $object_id, $meta_key, $meta_value ) {
 
-		$current       = current_filter();
-		$is_serialized = false;
-		$is_object     = is_object( $meta_value );
+		if ( $this->doing_metadata ) {
+			return $check;
+		}
+
+		$this->doing_metadata = true;
+		$current_filter       = current_filter();
+		$is_serialized        = false;
+		$is_object            = is_object( $meta_value );
 
 		if ( ! is_string( $meta_value ) ) {
 			$is_serialized = true;
-			$meta_value    = wp_json_encode( $meta_value );
+			$maybe_encode = wp_json_encode( $meta_value );
+
+			if ( empty( $maybe_encode ) ) {
+				$this->doing_metadata = false;
+
+				return $check;
+			}
+
+			$meta_value = $maybe_encode;
 		}
 
-		list( $action, $object ) = explode( '_', $current );
+		list( $action, $object ) = explode( '_', $current_filter );
 
-		$process_meta_value = $meta_value;
-
-		remove_filter( $current, array( $this, 'maybe_filter_out_metadata' ) );
-
-		$process_meta_value = $this->filter_out_cloudinary( $process_meta_value );
+		$process_meta_value = $this->filter_out_cloudinary( $meta_value );
 
 		if ( $process_meta_value !== $meta_value ) {
 			if ( $is_serialized ) {
@@ -191,7 +207,7 @@ class Delivery implements Setup {
 			$check = call_user_func( "{$action}_{$object}_meta", $object_id, $meta_key, $meta_value );
 		}
 
-		add_filter( $current, array( $this, 'maybe_filter_out_metadata' ), 10, 4 );
+		$this->doing_metadata = false;
 
 		return $check;
 	}
