@@ -124,7 +124,7 @@ class Lazyload_Preview extends Breakpoints_Preview {
 				'height'     => '400px',
 				'id'         => 'lazyload-image',
 				'data-color' => $this->config['lazy_custom_color'],
-				'data-svg'   => 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600px" height="400px"><rect width="100%" height="100%"><animate attributeName="fill" values="-color-" dur="2s" repeatCount="indefinite" /></rect></svg>',
+				'data-svg'   => 'data:image/svg+xml;utf8,<svg xmlns="//www.w3.org/2000/svg" width="600px" height="400px"><rect width="100%" height="100%"><animate attributeName="fill" values="-color-" dur="2s" repeatCount="indefinite" /></rect></svg>',
 			),
 		);
 
