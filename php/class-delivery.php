@@ -172,6 +172,11 @@ class Delivery implements Setup {
 	 */
 	public function maybe_filter_out_metadata( $check, $object_id, $meta_key, $meta_value ) {
 
+		// Don't filter out metadata if we're dealing with Cloudinary replacements.
+		if ( '_cld_replacements' === $meta_key ) {
+			return $check;
+		}
+
 		if ( $this->doing_metadata ) {
 			return $check;
 		}
