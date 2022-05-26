@@ -172,8 +172,15 @@ class Delivery implements Setup {
 	 */
 	public function maybe_filter_out_metadata( $check, $object_id, $meta_key, $meta_value ) {
 
-		// Don't filter out metadata if we're dealing with Cloudinary replacements.
-		if ( '_cld_replacements' === $meta_key ) {
+		$internal_keys = array_merge(
+			Sync::META_KEYS,
+			array(
+				self::META_CACHE_KEY,
+			)
+		);
+
+		// Don't filter out metadata if we're dealing with Cloudinary internals.
+		if ( in_array( $meta_key, $internal_keys ) ) {
 			return $check;
 		}
 
