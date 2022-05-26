@@ -114,6 +114,13 @@ class Delivery implements Setup {
 	protected $post_contexts = array();
 
 	/**
+	 * Flag for doing metadata adds or updates.
+	 *
+	 * @var bool
+	 */
+	protected $doing_metadata = false;
+
+	/**
 	 * Component constructor.
 	 *
 	 * @param Plugin $plugin Global instance of the main plugin.
@@ -151,6 +158,70 @@ class Delivery implements Setup {
 		if ( ! is_admin() ) {
 			add_filter( 'wp_get_attachment_url', array( $this, 'ensure_relation' ), 10, 2 );
 		}
+	}
+
+	/**
+	 * Maybe filter out Cloudinary URLs in post meta.
+	 *
+	 * @param null|bool $check      Whether to allow adding metadata for the given type.
+	 * @param int       $object_id  The ID of the object metadata is for.
+	 * @param string    $meta_key   The Metadata key.
+	 * @param mixed     $meta_value Metadata value.
+	 *
+	 * @return null|bool
+	 */
+	public function maybe_filter_out_metadata( $check, $object_id, $meta_key, $meta_value ) {
+
+		$internal_keys = array_merge(
+			Sync::META_KEYS,
+			array(
+				self::META_CACHE_KEY,
+			)
+		);
+
+		// Don't filter out metadata if we're dealing with Cloudinary internals.
+		if ( in_array( $meta_key, $internal_keys ) ) {
+			return $check;
+		}
+
+		if ( $this->doing_metadata ) {
+			return $check;
+		}
+
+		$this->doing_metadata = true;
+		$current_filter       = current_filter();
+		$is_serialized        = false;
+		$is_object            = is_object( $meta_value );
+
+		if ( ! is_string( $meta_value ) ) {
+			$is_serialized = true;
+			$maybe_encode = wp_json_encode( $meta_value );
+
+			if ( empty( $maybe_encode ) ) {
+				$this->doing_metadata = false;
+
+				return $check;
+			}
+
+			$meta_value = $maybe_encode;
+		}
+
+		list( $action, $object ) = explode( '_', $current_filter );
+
+		$process_meta_value = $this->filter_out_cloudinary( $meta_value );
+
+		if ( $process_meta_value !== $meta_value ) {
+			if ( $is_serialized ) {
+				$meta_value = json_decode( wp_unslash( $process_meta_value ), ! $is_object );
+			} else {
+				$meta_value = $process_meta_value;
+			}
+			$check = call_user_func( "{$action}_{$object}_meta", $object_id, $meta_key, $meta_value );
+		}
+
+		$this->doing_metadata = false;
+
+		return $check;
 	}
 
 	/**
@@ -581,6 +652,15 @@ class Delivery implements Setup {
 		add_filter( 'cloudinary_current_post_id', array( $this, 'get_current_post_id' ) );
 		add_filter( 'the_content', array( $this, 'add_post_id' ) );
 		add_action( 'wp_resource_hints', array( $this, 'dns_prefetch' ), 10, 2 );
+
+		$metadata = Utils::METADATA;
+
+		foreach ( $metadata['actions'] as $action ) {
+			foreach ( $metadata['objects'] as $object ) {
+				$inline_action = str_replace( '{object}', $object, $action );
+				add_action( $inline_action, array( $this, 'maybe_filter_out_metadata' ), 10, 4 );
+			}
+		}
 
 		// Clear cache on taxonomy update.
 		$taxonomies = get_taxonomies( array( 'show_ui' => true ) );
