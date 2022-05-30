@@ -189,8 +189,7 @@ class Lazy_Load extends Delivery_Feature {
 		$colors = implode( ';', $animation );
 
 		// Add svg placeholder.
-		$svg                        = '<svg xmlns="//www.w3.org/2000/svg" width="' . $tag_element['atts']['width'] . '" height="' . $tag_element['atts']['height'] . '"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $colors . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
-		$tag_element['atts']['src'] = 'data:image/svg+xml;utf8,' . $svg;
+		$tag_element['atts']['src'] = Utils::svg_encoded( $tag_element['atts']['width'], $tag_element['atts']['height'], $colors );
 		if ( isset( $tag_element['atts']['srcset'] ) ) {
 			$tag_element['atts']['data-srcset'] = $tag_element['atts']['srcset'];
 			$tag_element['atts']['data-sizes']  = $tag_element['atts']['sizes'];
