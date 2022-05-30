@@ -563,4 +563,19 @@ class Utils {
 
 		return $saving;
 	}
+
+	/**
+	 * Encode SVG placeholder.
+	 *
+	 * @param string $width  The SVG width.
+	 * @param string $height The SVG height.
+	 * @param string $color  The SVG color.
+	 *
+	 * @return string
+	 */
+	public static function svg_encoded( $width = '600px', $height = '400px', $color = '-color-' ) {
+		$svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $width . '" height="' . $height . '"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $color . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
+
+		return 'data:image/svg+xml;base64,' . base64_encode( $svg );
+	}
 }
