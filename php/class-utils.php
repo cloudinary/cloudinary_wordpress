@@ -17,6 +17,18 @@ use Google\Web_Stories\Story_Post_Type;
  */
 class Utils {
 
+	const METADATA = array(
+		'actions' => array(
+			'add_{object}_metadata',
+			'update_{object}_metadata',
+		),
+		'objects' => array(
+			'post',
+			'term',
+			'user',
+		),
+	);
+
 	/**
 	 * Filter an array recursively
 	 *
@@ -455,5 +467,115 @@ class Utils {
 	 */
 	public static function looks_like_json( $thing ) {
 		return is_string( $thing ) && in_array( ltrim( $thing )[0], array( '{', '[' ), true );
+	}
+
+	/**
+	 * Check if we're in a REST API request.
+	 *
+	 * @return bool
+	 */
+	public static function is_rest_api() {
+		$is = defined( 'REST_REQUEST' ) && REST_REQUEST;
+		if ( ! $is ) {
+			$is = ! empty( $GLOBALS['wp']->query_vars['rest_route'] );
+		}
+		if ( ! $is ) {
+			// Fallback if rest engine is not setup yet.
+			$rest_base   = wp_parse_url( rest_url( '/' ), PHP_URL_PATH );
+			$request_uri = filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_SANITIZE_URL );
+			$is          = strpos( $request_uri, $rest_base ) === 0;
+		}
+
+		return $is;
+	}
+
+	/**
+	 * Check if we are in WordPress ajax.
+	 *
+	 * @return bool
+	 */
+	public static function is_frontend_ajax() {
+		$referer    = wp_get_referer();
+		$admin_base = admin_url();
+		$is_admin   = $referer ? 0 === strpos( $referer, $admin_base ) : false;
+
+		return ! $is_admin && defined( 'DOING_AJAX' ) && DOING_AJAX;
+	}
+
+	/**
+	 * Check if this is an admin request, but not an ajax one.
+	 *
+	 * @return bool
+	 */
+	public static function is_admin() {
+		return is_admin() && ! self::is_frontend_ajax();
+	}
+
+	/**
+	 * Inspected on wp_extract_urls.
+	 * However, there's a shortcoming on some transformations where the core extractor will fail to fully parse such URLs.
+	 *
+	 * @param string $content The content.
+	 *
+	 * @return array
+	 */
+	public static function extract_urls( $content ) {
+		preg_match_all(
+			"#([\"']?)("
+				. '(?:([\w-]+:)?//?)'
+				. '[^\s()<>]+'
+				. '[.]'
+				. '(?:'
+					. '\([\w\d]+\)|'
+					. '(?:'
+						. "[^`!()\[\]{};:'\".,<>«»“”‘’\s]|"
+						. '(?:[:]\w+)?/?'
+					. ')+'
+				. ')'
+			. ")\\1#",
+			$content,
+			$post_links
+		);
+
+		$post_links = array_unique( array_map( 'html_entity_decode', $post_links[2] ) );
+
+		return array_values( $post_links );
+	}
+
+	/**
+	 * Is saving metadata.
+	 *
+	 * @return bool
+	 */
+	public static function is_saving_metadata() {
+		$saving   = false;
+		$metadata = self::METADATA;
+
+		foreach ( $metadata['actions'] as $action ) {
+			foreach ( $metadata['objects'] as $object ) {
+				$inline_action = str_replace( array( '{object}', 'metadata' ), array( $object, 'meta' ), $action );
+				if ( did_action( $inline_action ) ) {
+					$saving = true;
+					break;
+				}
+			}
+		}
+
+		return $saving;
+	}
+
+	/**
+	 * Encode SVG placeholder.
+	 *
+	 * @param string $width  The SVG width.
+	 * @param string $height The SVG height.
+	 * @param string $color  The SVG color.
+	 *
+	 * @return string
+	 */
+	public static function svg_encoded( $width = '600px', $height = '400px', $color = '-color-' ) {
+		$svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $width . '" height="' . $height . '"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $color . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
+
+		return 'data:image/svg+xml;base64,' . base64_encode( $svg );
 	}
 }

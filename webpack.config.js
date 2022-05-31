@@ -144,6 +144,7 @@ const cldExtras = {
 		'video-init': './src/js/video-init.js',
 		'lazy-load': './src/js/lazy-load.js',
 		'inline-loader': './src/js/inline-loader.js',
+		'media-modal': './src/js/components/media-modal.js',
 	},
 };
 

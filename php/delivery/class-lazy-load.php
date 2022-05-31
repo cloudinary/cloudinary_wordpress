@@ -191,14 +191,13 @@ class Lazy_Load extends Delivery_Feature {
 		$colors = implode( ';', $animation );
 
 		// Add svg placeholder.
-		$svg                        = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $tag_element['atts']['width'] . '" height="' . $tag_element['atts']['height'] . '"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $colors . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
-		$tag_element['atts']['src'] = 'data:image/svg+xml;utf8,' . $svg;
+		$tag_element['atts']['src'] = Utils::svg_encoded( $tag_element['atts']['width'], $tag_element['atts']['height'], $colors );
 		if ( isset( $tag_element['atts']['srcset'] ) ) {
 			$tag_element['atts']['data-srcset'] = $tag_element['atts']['srcset'];
 			$tag_element['atts']['data-sizes']  = $tag_element['atts']['sizes'];
 			unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 		}
-		if ( ! is_admin() ) {
+		if ( ! Utils::is_admin() ) {
 			$tag_element['atts']['data-delivery'] = $this->media->get_media_delivery( $tag_element['id'] );
 			if ( empty( $tag_element['atts']['onload'] ) ) {
 				$tag_element['atts']['onload'] = '';
@@ -225,6 +224,9 @@ class Lazy_Load extends Delivery_Feature {
 	 * Apply front end filters on the enqueue_assets hook.
 	 */
 	public function enqueue_assets() {
+		if ( Utils::is_frontend_ajax() ) {
+			return;
+		}
 		$config = $this->config; // Get top most config.
 		if ( 'off' !== $config['lazy_placeholder'] ) {
 			$config['placeholder'] = API::generate_transformation_string( $this->get_placeholder_transformations( $config['lazy_placeholder'] ) );
@@ -260,7 +262,7 @@ class Lazy_Load extends Delivery_Feature {
 	 */
 	public function is_active() {
 
-		return ! is_admin();
+		return ( ! Utils::is_admin() && ! Utils::is_rest_api() ) || Utils::is_frontend_ajax();
 	}
 
 	/**
@@ -370,6 +372,23 @@ class Lazy_Load extends Delivery_Feature {
 										'vectorize'   => __( 'Vectorize', 'cloudinary' ),
 										'predominant' => __( 'Dominant Color', 'cloudinary' ),
 										'off'         => __( 'Off', 'cloudinary' ),
+									),
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'hr',
+								),
+								array(
+									'type'         => 'select',
+									'slug'         => 'dpr',
+									'priority'     => 8,
+									'title'        => __( 'DPR settings', 'cloudinary' ),
+									'tooltip_text' => __( 'The device pixel ratio to use for your generated images.', 'cloudinary' ),
+									'default'      => '2X',
+									'options'      => array(
+										'off' => __( 'Off', 'cloudinary' ),
+										'2X'  => __( 'Auto (2x)', 'cloudinary' ),
+										'max' => __( 'Max DPR', 'cloudinary' ),
 									),
 								),
 							),

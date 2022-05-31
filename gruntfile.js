@@ -14,7 +14,15 @@ module.exports = function ( grunt ) {
 	};
 
 	grunt.initConfig( {
+		pluginVersion,
+
+		plugin_slug: options.plugin_slug,
+
 		dist_dir: 'build',
+
+		package_dir: 'package/dist',
+
+		tester_dir: '<%= package_dir %>/cloudinary-update-tester',
 
 		clean: {
 			build: [ '<%= dist_dir %>' ],
@@ -34,6 +42,12 @@ module.exports = function ( grunt ) {
 				dest: '<%= dist_dir %>',
 				expand: true,
 			},
+			package: {
+				src:
+					'<%= tester_dir %>/cloudinary-wordpress-<%= pluginVersion %>.zip',
+				dest:
+					'<%= package_dir %>/cloudinary-wordpress-<%= pluginVersion %>.zip',
+			},
 		},
 
 		replace: {
@@ -41,6 +55,7 @@ module.exports = function ( grunt ) {
 				src: [
 					'<%= dist_dir %>/readme.txt',
 					'<%= dist_dir %>/cloudinary.php',
+					'<%= tester_dir %>/cloudinary-update-tester.php',
 				],
 				overwrite: true,
 				replacements: [
@@ -53,14 +68,23 @@ module.exports = function ( grunt ) {
 		},
 
 		compress: {
-			release: {
+			dist: {
 				options: {
-					archive: 'cloudinary-wordpress-v3.zip',
+					archive:
+						'<%= tester_dir %>/cloudinary-wordpress-<%= pluginVersion %>.zip',
 				},
 				cwd: '<%= dist_dir %>',
 				expand: true,
-				dest:
-					'cloudinary-image-management-and-manipulation-in-the-cloud-cdn',
+				dest: '<%= plugin_slug %>',
+				src: [ '**/*' ],
+			},
+			package: {
+				options: {
+					archive:
+						'<%= package_dir %>/cloudinary-update-tester-<%= pluginVersion %>.zip',
+				},
+				cwd: '<%= tester_dir %>',
+				expand: true,
 				src: [ '**/*' ],
 			},
 		},
@@ -97,6 +121,7 @@ module.exports = function ( grunt ) {
 					'!tests/**/*',
 					'!build/**/*',
 					'!vendor/**/*',
+					'!package/**/*',
 				],
 			},
 		},
@@ -130,9 +155,21 @@ module.exports = function ( grunt ) {
 
 	grunt.registerTask( 'i18n', [ 'addtextdomain', 'makepot' ] );
 
-	grunt.registerTask( 'package', [ 'clean', 'copy', 'replace', 'compress' ] );
+	grunt.registerTask( 'prepare', [
+		'i18n',
+		'clean',
+		'copy:dist',
+		'replace',
+	] );
 
-	grunt.registerTask( 'deploy', [ 'package', 'wp_deploy:default' ] );
+	grunt.registerTask( 'package', [
+		'prepare',
+		'compress:dist',
+		'copy:package',
+		'compress:package',
+	] );
+
+	grunt.registerTask( 'deploy', [ 'prepare', 'wp_deploy:default' ] );
 
 	grunt.registerTask( 'deploy-assets', [ 'wp_deploy:assets' ] );
 };

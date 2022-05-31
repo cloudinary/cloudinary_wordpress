@@ -329,13 +329,10 @@ class Video {
 		// Add cname if present.
 		if ( ! empty( $this->media->credentials['cname'] ) ) {
 			$params['cloudinary'] = array(
-				'cname'       => $this->media->credentials['cname'],
-				'private_cdn' => $this->media->credentials['private_cdn'],
+				'cname'               => $this->media->credentials['cname'],
+				'private_cdn'         => $this->media->credentials['private_cdn'],
+				'secure_distribution' => $this->media->credentials['cname'],
 			);
-
-			if ( 'false' === $params['cloudinary']['private_cdn'] ) {
-				$params['cloudinary']['secure_distribution'] = $this->media->credentials['cname'];
-			}
 		}
 		// Set the autoplay.
 		// Some browsers require Autoplay to be muted — https://developers.google.com/web/updates/2016/07/autoplay.

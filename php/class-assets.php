@@ -1562,11 +1562,12 @@ class Assets extends Settings_Component {
 					'external_assets' => true,
 				),
 				array(
-					'type'        => 'tags_input',
-					'title'       => __( 'Domains for each external source.', 'cloudinary' ),
-					'slug'        => 'uploadable_domains',
-					'format'      => 'host',
-					'placeholder' => __( 'Enter a domain', 'cloudinary' ),
+					'type'         => 'tags_input',
+					'title'        => __( 'Domains for each external source.', 'cloudinary' ),
+					'slug'         => 'uploadable_domains',
+					'format'       => 'host',
+					'placeholder'  => __( 'Enter a domain', 'cloudinary' ),
+					'tooltip_text' => __( 'Press ENTER or SPACE or type comma or tab to continue.', 'cloudinary' ),
 				),
 			),
 		);

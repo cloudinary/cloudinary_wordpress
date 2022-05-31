@@ -107,22 +107,6 @@ $settings = array(
 					'element' => 'hr',
 				),
 				array(
-					'type'               => 'on_off',
-					'slug'               => 'svg_support',
-					'title'              => __( 'SVG Support (beta)', 'cloudinary' ),
-					'optimisation_title' => __( 'SVG Support (beta)', 'cloudinary' ),
-					'tooltip_text'       => __(
-						'Enable Cloudinary\'s beta SVG Support.',
-						'cloudinary'
-					),
-					'description'        => __( 'Enable SVG support.', 'cloudinary' ),
-					'default'            => 'off',
-				),
-				array(
-					'type'    => 'tag',
-					'element' => 'hr',
-				),
-				array(
 					'type'           => 'text',
 					'slug'           => 'image_freeform',
 					'title'          => __( 'Additional image transformations', 'cloudinary' ),
@@ -156,6 +140,22 @@ $settings = array(
 						'A set of parameters included in a Cloudinary URL to programmatically transform the visual appearance of the assets on your website.',
 						'cloudinary'
 					),
+				),
+				array(
+					'type'    => 'tag',
+					'element' => 'hr',
+				),
+				array(
+					'type'               => 'on_off',
+					'slug'               => 'svg_support',
+					'title'              => __( 'SVG Support (beta)', 'cloudinary' ),
+					'optimisation_title' => __( 'SVG Support (beta)', 'cloudinary' ),
+					'tooltip_text'       => __(
+						'Enable Cloudinary\'s beta SVG Support.',
+						'cloudinary'
+					),
+					'description'        => __( 'Enable SVG support.', 'cloudinary' ),
+					'default'            => 'off',
 				),
 			),
 			array(

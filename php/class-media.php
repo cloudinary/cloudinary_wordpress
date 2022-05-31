@@ -16,7 +16,6 @@ use Cloudinary\Media\Video;
 use Cloudinary\Media\WooCommerceGallery;
 use WP_Error;
 use WP_Query;
-use WP_Screen;
 
 /**
  * Class Media
@@ -949,7 +948,7 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		// Defaults are only to be added on front, main images ( not breakpoints, since these are adapted down), and videos.
-		if ( false === $overwrite_transformations && ! is_admin() ) {
+		if ( false === $overwrite_transformations && ! Utils::is_admin() ) {
 			$transformations = $this->apply_default_transformations( $transformations, $attachment_id );
 		}
 
@@ -1064,8 +1063,9 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		if (
-			! doing_filter( 'content_save_pre' )
-			&& false === $this->in_downsize
+			false === $this->in_downsize
+			&& ! doing_filter( 'content_save_pre' )
+			&& ! Utils::is_saving_metadata()
 			/**
 			 * Filter doing upload.
 			 * If so, return the default attachment URL.
@@ -1660,7 +1660,7 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function filter_downsize( $image, $attachment_id, $size ) {
 		// Don't do this while saving.
-		if ( true === $this->in_downsize || doing_filter( 'content_save_pre' ) || wp_attachment_is( 'video', $attachment_id ) ) {
+		if ( true === $this->in_downsize || doing_filter( 'content_save_pre' ) || wp_attachment_is( 'video', $attachment_id ) || Utils::is_saving_metadata() ) {
 			return $image;
 		}
 
@@ -1695,7 +1695,7 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
-	 * At the point of running wp_get_attachment_image_srcset, the $image_src is already a Cloudinary URL.
+	 * At the point of running wp_get_attachment_image_srcset, the $image_src Should be a Cloudinary URL, unless not synced.
 	 * This will fix the $image_meta so that the there's a match $src_matched on wp_calculate_image_srcset.
 	 *
 	 * @param array  $image_meta    The image meta data as returned by 'wp_get_attachment_metadata()'.
@@ -1710,7 +1710,9 @@ class Media extends Settings_Component implements Setup {
 	 * @return array
 	 */
 	public function calculate_image_srcset_meta( $image_meta, $size_array, $image_src ) {
-		$image_meta['file'] = parse_url( $image_src, PHP_URL_PATH );
+		if ( $this->is_cloudinary_url( $image_src ) ) {
+			$image_meta['file'] = wp_parse_url( $image_src, PHP_URL_PATH );
+		}
 
 		return $image_meta;
 	}
@@ -1754,9 +1756,14 @@ class Media extends Settings_Component implements Setup {
 			return $sources; // Return WordPress default sources.
 		}
 		// Get transformations if any.
-		$transformations = $this->get_post_meta( $attachment_id, Sync::META_KEYS['transformation'], true );
-		// Use Cloudinary breakpoints for same ratio.
+		$transformations = (array) $this->get_post_meta( $attachment_id, Sync::META_KEYS['transformation'], true );
 
+		// For cases where transformations are added via cld_params.
+		if ( ! empty( $image_meta['transformations'] ) ) {
+			$transformations = array_filter( array_merge( $transformations, $image_meta['transformations'] ) );
+		}
+
+		// Use Cloudinary breakpoints for same ratio.
 		$image_meta['overwrite_transformations'] = ! empty( $image_meta['overwrite_transformations'] ) ? $image_meta['overwrite_transformations'] : false;
 
 		if ( 'on' === $this->settings->get_setting( 'enable_breakpoints' )->get_value() && wp_image_matches_ratio( $image_meta['width'], $image_meta['height'], $size_array[0], $size_array[1] ) ) {
@@ -1885,8 +1892,8 @@ class Media extends Settings_Component implements Setup {
 		$deps = wp_script_is( 'cld-core', 'registered' ) ? array( 'cld-core' ) : array();
 		$this->plugin->register_assets(); // Ensure assets are registered.
 		// External assets.
+		wp_enqueue_script( 'cloudinary-media-modal', $this->plugin->dir_url . '/js/media-modal.js', null, $this->plugin->version, true );
 		wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, $deps, $this->plugin->version, true );
-		wp_enqueue_script( 'cloudinary' );
 		wp_enqueue_style( 'cloudinary' );
 		$params = array(
 			'nonce'     => wp_create_nonce( 'wp_rest' ),
@@ -2904,7 +2911,7 @@ class Media extends Settings_Component implements Setup {
 			add_filter( 'upload_dir', array( $this, 'upload_dir' ) );
 
 			// Filter live URLS. (functions that return a URL).
-			if ( is_admin() ) {
+			if ( Utils::is_admin() ) {
 				$this->add_live_url_filters();
 			}
 			// Filter default image Quality and Format transformations.
