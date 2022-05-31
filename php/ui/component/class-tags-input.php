@@ -21,7 +21,7 @@ class Tags_Input extends Text {
 	 *
 	 * @var string
 	 */
-	protected $blueprint = 'wrap|title/|input/|selection|capture/|/selection|suffix/|description/|/wrap';
+	protected $blueprint = 'wrap|title/|input/|selection|capture/|/selection|suffix/|description/|tooltip/|/wrap';
 
 	/**
 	 * Filter the wrap parts structure.

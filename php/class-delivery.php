@@ -114,6 +114,13 @@ class Delivery implements Setup {
 	protected $post_contexts = array();
 
 	/**
+	 * Flag for doing metadata adds or updates.
+	 *
+	 * @var bool
+	 */
+	protected $doing_metadata = false;
+
+	/**
 	 * Component constructor.
 	 *
 	 * @param Plugin $plugin Global instance of the main plugin.
@@ -154,6 +161,70 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Maybe filter out Cloudinary URLs in post meta.
+	 *
+	 * @param null|bool $check      Whether to allow adding metadata for the given type.
+	 * @param int       $object_id  The ID of the object metadata is for.
+	 * @param string    $meta_key   The Metadata key.
+	 * @param mixed     $meta_value Metadata value.
+	 *
+	 * @return null|bool
+	 */
+	public function maybe_filter_out_metadata( $check, $object_id, $meta_key, $meta_value ) {
+
+		$internal_keys = array_merge(
+			Sync::META_KEYS,
+			array(
+				self::META_CACHE_KEY,
+			)
+		);
+
+		// Don't filter out metadata if we're dealing with Cloudinary internals.
+		if ( in_array( $meta_key, $internal_keys ) ) {
+			return $check;
+		}
+
+		if ( $this->doing_metadata ) {
+			return $check;
+		}
+
+		$this->doing_metadata = true;
+		$current_filter       = current_filter();
+		$is_serialized        = false;
+		$is_object            = is_object( $meta_value );
+
+		if ( ! is_string( $meta_value ) ) {
+			$is_serialized = true;
+			$maybe_encode = wp_json_encode( $meta_value );
+
+			if ( empty( $maybe_encode ) ) {
+				$this->doing_metadata = false;
+
+				return $check;
+			}
+
+			$meta_value = $maybe_encode;
+		}
+
+		list( $action, $object ) = explode( '_', $current_filter );
+
+		$process_meta_value = $this->filter_out_cloudinary( $meta_value );
+
+		if ( $process_meta_value !== $meta_value ) {
+			if ( $is_serialized ) {
+				$meta_value = json_decode( wp_unslash( $process_meta_value ), ! $is_object );
+			} else {
+				$meta_value = $process_meta_value;
+			}
+			$check = call_user_func( "{$action}_{$object}_meta", $object_id, $meta_key, $meta_value );
+		}
+
+		$this->doing_metadata = false;
+
+		return $check;
+	}
+
+	/**
 	 * Filter out Cloudinary URLS and replace with local.
 	 *
 	 * @param string $content The content to filter.
@@ -178,7 +249,8 @@ class Delivery implements Setup {
 		if ( $unslashed ) {
 			$content = $unslash_maybe;
 		}
-		$base_urls       = array_unique( wp_extract_urls( $content ) );
+		$content         = str_replace( '&amp;', '&', $content );
+		$base_urls       = array_unique( Utils::extract_urls( $content ) );
 		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
 		$urls            = array();
 		if ( empty( $cloudinary_urls ) ) {
@@ -197,13 +269,20 @@ class Delivery implements Setup {
 			}
 
 			$original_url    = $urls[ $result['public_id'] ];
+			if ( ! empty( $result['transformations'] ) ) {
+				$original_url = str_replace( $result['transformations'] . '/', '/', $original_url );
+			}
 			$size            = $this->media->get_size_from_url( $original_url );
 			$transformations = $this->media->get_transformations_from_string( $original_url );
-
 			if ( 'image' === $this->media->get_resource_type( $result['post_id'] ) ) {
 				$attachment_url = wp_get_attachment_image_url( $result['post_id'], $size );
 			} else {
 				$attachment_url = wp_get_attachment_url( $result['post_id'] );
+			}
+			$query_args = array();
+			wp_parse_str( wp_parse_url( $original_url, PHP_URL_QUERY ), $query_args );
+			if ( ! empty( $query_args['cld_overwrite'] ) ) {
+				$attachment_url = add_query_arg( 'cld_overwrite', true, $attachment_url );
 			}
 			if ( ! empty( $transformations ) ) {
 				$transformations = array_filter(
@@ -218,7 +297,7 @@ class Delivery implements Setup {
 				}
 			}
 
-			String_Replace::replace( $original_url, $attachment_url );
+			String_Replace::replace( $urls[ $result['public_id'] ], $attachment_url );
 		}
 
 		$content = String_Replace::do_replace( $content );
@@ -574,6 +653,15 @@ class Delivery implements Setup {
 		add_filter( 'the_content', array( $this, 'add_post_id' ) );
 		add_action( 'wp_resource_hints', array( $this, 'dns_prefetch' ), 10, 2 );
 
+		$metadata = Utils::METADATA;
+
+		foreach ( $metadata['actions'] as $action ) {
+			foreach ( $metadata['objects'] as $object ) {
+				$inline_action = str_replace( '{object}', $object, $action );
+				add_action( $inline_action, array( $this, 'maybe_filter_out_metadata' ), 10, 4 );
+			}
+		}
+
 		// Clear cache on taxonomy update.
 		$taxonomies = get_taxonomies( array( 'show_ui' => true ) );
 		foreach ( $taxonomies as $taxonomy ) {
@@ -893,8 +981,13 @@ class Delivery implements Setup {
 			$base                   = $type . ':' . $url;
 			$public_id              = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
 			$cloudinary_url         = $this->media->cloudinary_url( $relation['post_id'], array(), $relation['transformations'], $public_id );
-			$aliases[ $base . '?' ] = $cloudinary_url . '&';
-			$aliases[ $base ]       = $cloudinary_url;
+			if ( ! empty( $relation['slashed'] ) && $relation['slashed'] ) {
+				$aliases[ $base . '?' ] = addcslashes( $cloudinary_url . '&', '/' );
+				$aliases[ $base ]       = addcslashes( $cloudinary_url, '/' );
+			} else {
+				$aliases[ $base . '?' ] = $cloudinary_url . '&';
+				$aliases[ $base ]       = $cloudinary_url;
+			}
 		}
 
 		// Create the sized found relations second.
@@ -1075,6 +1168,7 @@ class Delivery implements Setup {
 				// Check overwrite.
 				$meta['overwrite_transformations'] = $tag_element['overwrite_transformations'];
 				$meta['cloudinary_id']             = $tag_element['atts']['data-public-id'];
+				$meta['transformations']           = $tag_element['transformations'];
 				// Add new srcset.
 				$element = wp_image_add_srcset_and_sizes( $tag_element['original'], $meta, $tag_element['id'] );
 
@@ -1205,7 +1299,6 @@ class Delivery implements Setup {
 				}
 			}
 		}
-
 		if ( ! empty( $attributes['class'] ) ) {
 			if ( preg_match( '/wp-post-(\d+)+/', $attributes['class'], $match ) ) {
 				$tag_element['context'] = (int) $match[1];
@@ -1221,10 +1314,15 @@ class Delivery implements Setup {
 				'wp-post-' . $tag_element['context'],
 			);
 		}
-
+		// Add overwrite transformations class if needed.
+		if ( false !== strpos( $raw_url, 'cld_overwrite' ) ) {
+			$attributes['class'][]                    = 'cld-overwrite';
+			$tag_element['overwrite_transformations'] = true;
+		}
 		$inline_transformations = $this->get_transformations_maybe( $raw_url );
 		if ( $inline_transformations ) {
-			$tag_element['transformations'] = array_merge( $tag_element['transformations'], $inline_transformations );
+			// Ensure that we don't get duplicated transformations.
+			$tag_element['transformations'] = array_unique( array_merge( $tag_element['transformations'], $inline_transformations ), SORT_REGULAR );
 		}
 
 		// Check if ID was found, and upgrade if needed.
@@ -1300,7 +1398,7 @@ class Delivery implements Setup {
 		/**
 		 * Filter if the url is a local asset.
 		 *
-		 * @hook   cloudinary_pre_image_tag
+		 * @hook   cloudinary_is_content_dir
 		 * @since  2.7.6
 		 *
 		 * @param $is_local {bool}   If the url is a local asset.
@@ -1325,10 +1423,15 @@ class Delivery implements Setup {
 			'scheme' => '',
 			'host'   => '',
 			'path'   => '',
+			'port'   => '',
 		);
 		$parts   = wp_parse_args( wp_parse_url( $url ), $default );
+		$host    = $parts['host'];
+		if ( ! empty( $parts['port'] ) ) {
+			$host .= ':' . $parts['port'];
+		}
+		$url = '//' . $host . $parts['path'];
 
-		$url = '//' . $parts['host'] . $parts['path'];
 		if ( false === $scheme_less ) {
 			$url = $parts['scheme'] . ':' . $url;
 		}
@@ -1420,8 +1523,12 @@ class Delivery implements Setup {
 		$this->known[ $item['public_id'] ] = $item;
 		$scaled                            = self::make_scaled_url( $item['sized_url'] );
 		$descaled                          = self::descaled_url( $item['sized_url'] );
+		$scaled_slashed                    = addcslashes( $scaled, '/' );
+		$descaled_slashed                  = addcslashes( $descaled, '/' );
 		$this->known[ $scaled ]            = $item;
 		$this->known[ $descaled ]          = $item;
+		$this->known[ $scaled_slashed ]    = array_merge( $item, array( 'slashed' => true ) );
+		$this->known[ $descaled_slashed ]  = array_merge( $item, array( 'slashed' => true ) );
 
 		if ( 'disable' === $item['post_state'] ) {
 			return;
@@ -1559,7 +1666,7 @@ class Delivery implements Setup {
 
 		$public_ids = array();
 		// Lets only look for Cloudinary URLs on the frontend.
-		if ( ! is_admin() ) {
+		if ( ! Utils::is_admin() ) {
 			// clean out empty urls.
 			$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
 			// Clean URLS for search.
@@ -1639,6 +1746,5 @@ class Delivery implements Setup {
 		if ( ! empty( $this->unknown ) ) {
 			$this->find_attachment_size_urls();
 		}
-
 	}
 }

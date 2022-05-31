@@ -447,6 +447,10 @@ class Deactivation {
 	 * @return array
 	 */
 	public function tag_deactivate( $actions ) {
+		if ( empty( $actions['deactivate'] ) ) {
+			return $actions;
+		}
+
 		if ( 'cld' === $this->settings->get_value( 'offload' ) ) {
 			$actions['deactivate'] = str_replace( '<a ', '<a class="cld-deactivate" ', $actions['deactivate'] );
 		} else {

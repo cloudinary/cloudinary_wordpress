@@ -285,14 +285,12 @@ final class Plugin {
 	public function register_hooks() {
 		add_action( 'plugins_loaded', array( $this, 'init' ), 9 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'register_enqueue_styles' ), 11 );
-
 		// Move to 100 and 200 to allow other plugins/systems to add cloudinary filters and actions that are fired within the init hooks.
 		add_action( 'init', array( $this, 'setup' ), 100 );
 		add_action( 'init', array( $this, 'register_assets' ), 200 );
 
 		add_action( 'admin_notices', array( $this, 'admin_notices' ) );
 		add_filter( 'plugin_row_meta', array( $this, 'force_visit_plugin_site_link' ), 10, 4 );
-		add_action( 'wp_enqueue_editor', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_print_footer_scripts', array( $this, 'print_script_data' ), 1 );
 		add_action( 'wp_print_footer_scripts', array( $this, 'print_script_data' ), 1 );
 

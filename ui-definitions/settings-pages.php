@@ -91,7 +91,7 @@ $settings = array(
 		'settings'            => array(
 			array(
 				'type'        => 'panel',
-				'title'       => __( 'Image breakpoints', 'cloudinary' ),
+				'title'       => __( 'Responsive images', 'cloudinary' ),
 				'option_name' => 'media_display',
 				array(
 					'type' => 'tabs',
@@ -179,23 +179,6 @@ $settings = array(
 								'default'    => 200,
 								'attributes' => array(
 									'step' => 50,
-								),
-							),
-							array(
-								'type'    => 'tag',
-								'element' => 'hr',
-							),
-							array(
-								'type'         => 'select',
-								'slug'         => 'dpr',
-								'priority'     => 8,
-								'title'        => __( 'DPR settings', 'cloudinary' ),
-								'tooltip_text' => __( 'The device pixel ratio to use for your generated images.', 'cloudinary' ),
-								'default'      => '2X',
-								'options'      => array(
-									'off' => __( 'Off', 'cloudinary' ),
-									'2X'  => __( 'Auto (2x)', 'cloudinary' ),
-									'max' => __( 'Max DPR', 'cloudinary' ),
 								),
 							),
 						),
