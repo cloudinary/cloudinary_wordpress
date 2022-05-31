@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: images, videos, DAM, optimization, CDN
 Requires at least: 4.7
-Tested up to: 5.9.1
+Tested up to: 6.0
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -141,6 +141,28 @@ Your site is now setup to start using Cloudinary.
 1. Need help? We’ve got you covered
 
 == Changelog ==
+
+= 3.0.4 (31 May 2022) =
+
+Fixes and Improvements:
+
+* Added an Overwrite Global Transformations checkbox on Add media modal, making it compatible with most page builders;
+* Image breakpoints page is now called Responsive images
+* Improved the location for DPR settings now under the Lazy Loading section
+* Improved the location for SVG settings now under the Additional image transformations field
+* Improved the UX when adding a domain for External Asset Sync Settings
+* Fixed Multisite environment PHP warning when plugin network activated
+* Fixed calling wp_calculate_image_srcset() in a multisite environment breaking the srcset
+* Fixed issue with get_the_post_thumbnail_url()
+* Fixed assets URLs stored on metadata
+* Fixed rendering responsive Cloudinary images by attachment id with cld_params on top of the global transformations
+* Fixed duplicate transformations and cld_params applied to URLs
+* Fixed images loaded via AJAX missing lazy-loading/responsive features
+* Fixed warning message when an image is deleted from the WordPress Media Library but still referenced in a Product Gallery Widget block
+* Fixed wp_get_attachment_*() functions returning the local path
+* Fixed header URLs not being replaced
+* Fixed issue with responsive Images when size-* class is not added
+* Fixed Cloudinary video player not working on CNAME cloud accounts
 
 
 = 3.0.3 (26 April 2022) =
