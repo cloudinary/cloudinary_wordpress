@@ -17,6 +17,18 @@ use Google\Web_Stories\Story_Post_Type;
  */
 class Utils {
 
+	const METADATA = array(
+		'actions' => array(
+			'add_{object}_metadata',
+			'update_{object}_metadata',
+		),
+		'objects' => array(
+			'post',
+			'term',
+			'user',
+		),
+	);
+
 	/**
 	 * Filter an array recursively
 	 *
@@ -482,8 +494,12 @@ class Utils {
 	 *
 	 * @return bool
 	 */
-	public static function is_ajax() {
-		return defined( 'DOING_AJAX' ) && DOING_AJAX;
+	public static function is_frontend_ajax() {
+		$referer    = wp_get_referer();
+		$admin_base = admin_url();
+		$is_admin   = $referer ? 0 === strpos( $referer, $admin_base ) : false;
+
+		return ! $is_admin && defined( 'DOING_AJAX' ) && DOING_AJAX;
 	}
 
 	/**
@@ -492,7 +508,7 @@ class Utils {
 	 * @return bool
 	 */
 	public static function is_admin() {
-		return is_admin() && ! self::is_ajax();
+		return is_admin() && ! self::is_frontend_ajax();
 	}
 
 	/**
@@ -524,5 +540,42 @@ class Utils {
 		$post_links = array_unique( array_map( 'html_entity_decode', $post_links[2] ) );
 
 		return array_values( $post_links );
+	}
+
+	/**
+	 * Is saving metadata.
+	 *
+	 * @return bool
+	 */
+	public static function is_saving_metadata() {
+		$saving   = false;
+		$metadata = self::METADATA;
+
+		foreach ( $metadata['actions'] as $action ) {
+			foreach ( $metadata['objects'] as $object ) {
+				$inline_action = str_replace( array( '{object}', 'metadata' ), array( $object, 'meta' ), $action );
+				if ( did_action( $inline_action ) ) {
+					$saving = true;
+					break;
+				}
+			}
+		}
+
+		return $saving;
+	}
+
+	/**
+	 * Encode SVG placeholder.
+	 *
+	 * @param string $width  The SVG width.
+	 * @param string $height The SVG height.
+	 * @param string $color  The SVG color.
+	 *
+	 * @return string
+	 */
+	public static function svg_encoded( $width = '600px', $height = '400px', $color = '-color-' ) {
+		$svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $width . '" height="' . $height . '"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $color . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
+
+		return 'data:image/svg+xml;base64,' . base64_encode( $svg );
 	}
 }

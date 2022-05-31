@@ -51,7 +51,7 @@ class String_Replace implements Setup {
 	public function setup() {
 		if ( Utils::is_admin() ) {
 			$this->admin_filters();
-		} elseif ( Utils::is_ajax() || Utils::is_rest_api() ) {
+		} elseif ( Utils::is_frontend_ajax() || Utils::is_rest_api() ) {
 			$this->context = 'view';
 			$this->start_capture();
 		} else {
