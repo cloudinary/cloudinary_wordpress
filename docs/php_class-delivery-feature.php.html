@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Filter: cloudinary_filter_out_local - Cloudinary Docs</title>
+	<title>Source: php/class-delivery-feature.php - Cloudinary Docs</title>
 
 	<script src="scripts/prettify/prettify.js"></script>
 	<script src="scripts/prettify/lang-css.js"></script>
@@ -22,182 +22,230 @@
 <div id="main">
 
 	
-	<h1 class="page-title">Filter: cloudinary_filter_out_local</h1>
+	<h1 class="page-title">Source: php/class-delivery-feature.php</h1>
 	
 
 	
 
 
 
-
-<section>
-
-<header>
-    <h2></h2>
     
-</header>
-
-<article>
-    <div class="container-overview">
-    
-        
-
-    
-
-    <h4 class="name" id="cloudinary_filter_out_local">apply_filters( 'cloudinary_filter_out_local', <span class="signature">$can )</span><span class="type-signature"> &rarr; {bool}</span></h4>
-
-    
-
-
-
-<div class="description">
-    Filter to allow stopping filtering out local.
-</div>
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>$can</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">bool</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">True as default.</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-default">Default Value:</dt>
-    <dd class="tag-default"><ul class="dummy">
-            <li>true</li>
-        </ul></dd>
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="php_class-media.php.html">php/class-media.php</a>, <a href="php_class-media.php.html#line2750">line 2750</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">bool</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-    
-    </div>
-
-    
-</article>
-
-</section>
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>&lt;?php
+/**
+ * Delivery Feature abstract.
+ *
+ * @package Cloudinary
+ */
+
+namespace Cloudinary;
+
+use Cloudinary\Component\Assets;
+use Cloudinary\Settings\Setting;
+
+/**
+ * Class Delivery_Feature
+ *
+ * @package Cloudinary
+ */
+abstract class Delivery_Feature implements Assets {
+
+	/**
+	 * Holds the plugin instance.
+	 *
+	 * @since   0.1
+	 *
+	 * @var     Plugin Instance of the global plugin.
+	 */
+	public $plugin;
+
+	/**
+	 * Holds the Media instance.
+	 *
+	 * @var Media
+	 */
+	protected $media;
+
+	/**
+	 * Holds the Delivery instance.
+	 *
+	 * @var Delivery
+	 */
+	protected $delivery;
+
+	/**
+	 * Holds the settings slug.
+	 *
+	 * @var string
+	 */
+	protected $settings_slug = 'delivery_feature';
+
+	/**
+	 * Holds the enabler slug.
+	 *
+	 * @var string
+	 */
+	protected $enable_slug = 'use_delivery_feature';
+
+	/**
+	 * Holds the settings.
+	 *
+	 * @var Setting
+	 */
+	protected $settings;
+
+	/**
+	 * Holds the config.
+	 *
+	 * @var array
+	 */
+	protected $config;
+
+	/**
+	 * The feature application priority.
+	 *
+	 * @var int
+	 */
+	protected $priority = 10;
+
+	/**
+	 * Holds the delivery type.
+	 *
+	 * @var string
+	 */
+	protected $type = 'image';
+
+	/**
+	 * Delivery_Feature constructor.
+	 *
+	 * @param Plugin $plugin Instance of the plugin.
+	 */
+	public function __construct( Plugin $plugin ) {
+
+		$this->plugin   = $plugin;
+		$this->media    = $plugin->get_component( 'media' );
+		$this->delivery = $plugin->get_component( 'delivery' );
+
+		add_action( 'cloudinary_admin_pages', array( $this, 'register_settings' ) );
+		add_action( 'cloudinary_init_settings', array( $this, 'setup' ) );
+	}
+
+	/**
+	 * Register hooks.
+	 */
+	public function init() {
+		$this->config = $this->settings->get_value( $this->settings_slug );
+		if ( $this->filter_is_active() ) {
+			$this->maybe_enqueue_assets();
+		}
+		if ( $this->is_enabled() ) {
+			$this->setup_hooks();
+		}
+	}
+
+	/**
+	 * Setup hooks used when enabled.
+	 */
+	protected function setup_hooks() {
+	}
+
+	/**
+	 * Enqueue assets if active and enabled.
+	 */
+	public function maybe_enqueue_assets() {
+		if ( $this->is_enabled() ) {
+			// Add filter to add features.
+			add_filter( "cloudinary_pre_{$this->type}_tag", array( $this, 'add_features' ), $this->priority );
+			add_action( 'wp_print_scripts', array( $this, 'enqueue_assets' ) );
+		}
+	}
+
+	/**
+	 * Add features to a tag element set.
+	 *
+	 * @param array $tag_element The tag element set.
+	 *
+	 * @return array
+	 */
+	public function add_features( $tag_element ) {
+		return $tag_element;
+	}
+
+	/**
+	 * Check if component is active.
+	 *
+	 * @return bool
+	 */
+	public function is_active() {
+		return ! Utils::is_admin();
+	}
+
+	/**
+	 * Register assets to be used for the class.
+	 */
+	public function register_assets() {
+	}
+
+	/**
+	 * Enqueue Assets.
+	 */
+	public function enqueue_assets() {
+
+	}
+
+	/**
+	 * Check to see if Breakpoints are enabled.
+	 *
+	 * @return bool
+	 */
+	public function is_enabled() {
+		return $this->filter_is_active() &amp;&amp; 'on' === $this->config[ $this->enable_slug ];
+	}
+
+	/**
+	 * Add the settings.
+	 *
+	 * @param array $pages The pages to add to.
+	 *
+	 * @return array
+	 */
+	public function register_settings( $pages ) {
+		return $pages;
+	}
+
+	/**
+	 * Setup the class.
+	 */
+	public function setup() {
+		$this->settings = $this->plugin->settings;
+		$this->init();
+	}
+
+	/**
+	 * Filter is active.
+	 *
+	 * @return bool
+	 */
+	public function filter_is_active() {
+		$parts      = explode( '\\', get_called_class() );
+		$class_name = strtolower( array_pop( $parts ) );
+		$is_active  = $this->is_active();
+
+		/**
+		 * Filter to check if the feature is active.
+		 *
+		 * @hook  cloudinary_is_{$class_name}_active
+		 * @since 3.0.4
+		 *
+		 * @param $is_active {bool} Flag if active.
+		 */
+		return apply_filters( "cloudinary_is_{$class_name}_active", $is_active );
+	}
+}
+</code></pre>
+        </article>
+    </section>
 
 
 
