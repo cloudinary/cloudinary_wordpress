@@ -193,19 +193,6 @@ class Delivery implements Setup {
 		$is_serialized        = false;
 		$is_object            = is_object( $meta_value );
 
-		if ( ! is_string( $meta_value ) ) {
-			$is_serialized = true;
-			$maybe_encode = wp_json_encode( $meta_value );
-
-			if ( empty( $maybe_encode ) ) {
-				$this->doing_metadata = false;
-
-				return $check;
-			}
-
-			$meta_value = $maybe_encode;
-		}
-
 		list( $action, $object ) = explode( '_', $current_filter );
 
 		$process_meta_value = $this->filter_out_cloudinary( $meta_value );
@@ -243,14 +230,18 @@ class Delivery implements Setup {
 				'video' => Api::generate_transformation_string( $video, 'video' ),
 			);
 		}
-
-		$unslash_maybe = wp_unslash( $content );
-		$unslashed     = $unslash_maybe !== $content;
-		if ( $unslashed ) {
-			$content = $unslash_maybe;
+		$unslashed = false;
+		$working_content = $content;
+		if ( String_Replace::is_iterable( $working_content ) ) {
+			$working_content = $this->plugin->components['replace']->flatten( $working_content );
+		} else {
+			$unslash_maybe = wp_unslash( $working_content );
+			$unslashed     = $unslash_maybe !== $working_content;
+			if ( $unslashed ) {
+				$working_content = $unslash_maybe;
+			}
 		}
-		$content         = str_replace( '&amp;', '&', $content );
-		$base_urls       = array_unique( Utils::extract_urls( $content ) );
+		$base_urls       = array_unique( Utils::extract_urls( $working_content ) );
 		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
 		$urls            = array();
 		if ( empty( $cloudinary_urls ) ) {
