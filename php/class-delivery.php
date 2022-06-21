@@ -180,7 +180,7 @@ class Delivery implements Setup {
 		);
 
 		// Don't filter out metadata if we're dealing with Cloudinary internals.
-		if ( in_array( $meta_key, $internal_keys ) ) {
+		if ( in_array( $meta_key, $internal_keys, true ) ) {
 			return $check;
 		}
 
@@ -259,7 +259,7 @@ class Delivery implements Setup {
 				continue;
 			}
 
-			$original_url    = $urls[ $result['public_id'] ];
+			$original_url = $urls[ $result['public_id'] ];
 			if ( ! empty( $result['transformations'] ) ) {
 				$original_url = str_replace( $result['transformations'] . '/', '/', $original_url );
 			}
@@ -278,7 +278,7 @@ class Delivery implements Setup {
 			if ( ! empty( $transformations ) ) {
 				$transformations = array_filter(
 					$transformations,
-					function ( $item ) {
+					static function ( $item ) {
 						return ! isset( $item['crop'] ) && ! isset( $item['width'] ) && ! isset( $item['height'] );
 					}
 				);
