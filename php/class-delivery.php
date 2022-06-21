@@ -190,20 +190,14 @@ class Delivery implements Setup {
 
 		$this->doing_metadata = true;
 		$current_filter       = current_filter();
-		$is_serialized        = false;
-		$is_object            = is_object( $meta_value );
 
 		list( $action, $object ) = explode( '_', $current_filter );
 
 		$process_meta_value = $this->filter_out_cloudinary( $meta_value );
 
 		if ( $process_meta_value !== $meta_value ) {
-			if ( $is_serialized ) {
-				$meta_value = json_decode( wp_unslash( $process_meta_value ), ! $is_object );
-			} else {
-				$meta_value = $process_meta_value;
-			}
-			$check = call_user_func( "{$action}_{$object}_meta", $object_id, $meta_key, $meta_value );
+			$meta_value = $process_meta_value;
+			$check      = call_user_func( "{$action}_{$object}_meta", $object_id, $meta_key, $meta_value );
 		}
 
 		$this->doing_metadata = false;
