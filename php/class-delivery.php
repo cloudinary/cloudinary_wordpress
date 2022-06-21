@@ -224,8 +224,14 @@ class Delivery implements Setup {
 				'video' => Api::generate_transformation_string( $video, 'video' ),
 			);
 		}
-		$unslashed = false;
+		$unslashed       = false;
 		$working_content = $content;
+		if ( is_string( $working_content ) && ! is_numeric( $working_content ) ) {
+			$maybe_encoded = json_decode( $working_content, false );
+			if ( ! is_null( $maybe_encoded ) ) {
+				$working_content = $maybe_encoded;
+			}
+		}
 		if ( String_Replace::is_iterable( $working_content ) ) {
 			$working_content = $this->plugin->components['replace']->flatten( $working_content );
 		} else {
