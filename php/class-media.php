@@ -2581,7 +2581,9 @@ class Media extends Settings_Component implements Setup {
 		$options = apply_filters( 'cloudinary_upload_options', $options, get_post( $attachment_id ), $this );
 		// Add folder to prevent folder contamination.
 		if ( $this->is_folder_synced( $attachment_id ) ) {
-			$options['public_id'] = $this->get_cloudinary_folder() . wp_basename( $options['public_id'] );
+			$cld_folder              = $this->get_cloudinary_folder();
+			$options['public_id']    = $cld_folder . wp_basename( $options['public_id'] );
+			$options['asset_folder'] = $cld_folder;
 		} elseif ( ! empty( $folder ) ) {
 			// add in folder if not empty (not in root).
 			$options['public_id'] = trailingslashit( $folder ) . wp_basename( $options['public_id'] );
