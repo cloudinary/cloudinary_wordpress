@@ -2493,12 +2493,6 @@ class Media extends Settings_Component implements Setup {
 			$context_options = wp_parse_args( $media_library_context, $context_options );
 		}
 
-		// Check if this asset is a folder sync.
-		$folder_sync = $this->get_post_meta( $attachment_id, Sync::META_KEYS['folder_sync'], true );
-		if ( ! empty( $folder_sync ) ) {
-			$context_options['wp_id'] = $attachment_id;
-		}
-
 		/**
 		 * Filter the options to allow other plugins to add requested options for uploading.
 		 *
