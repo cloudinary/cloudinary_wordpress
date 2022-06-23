@@ -7,7 +7,7 @@ before_install:
   - nvm use
 
 install:
-  - npm install
+  - npm ci
 
 jobs:
 
