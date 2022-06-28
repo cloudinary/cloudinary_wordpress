@@ -2265,6 +2265,21 @@ class Media extends Settings_Component implements Setup {
 	 * @return mixed
 	 */
 	public function get_post_meta( $post_id, $key = '', $single = false, $default = null ) {
+		/**
+		 * Filter to override getting Cloudinary meta.
+		 * Returning a non-null value will effectively short-circuit the function.
+		 *
+		 * @hook  cloudinary_delete_post_meta
+		 * @since 3.0.5
+		 *
+		 * @param $check   {mixed} The check if override flag.
+		 * @param $key     {string} The key the data is saved under.
+		 * @param $post_id {int} The post_id.
+		 */
+		$check = apply_filters( 'cloudinary_get_post_meta', null, $key, $post_id );
+		if ( ! is_null( $check ) ) {
+			return $check;
+		}
 
 		$meta = get_post_meta( $post_id, Sync::META_KEYS['cloudinary'], true );
 		if ( empty( $meta ) ) {
@@ -2390,7 +2405,22 @@ class Media extends Settings_Component implements Setup {
 	 * @return bool
 	 */
 	public function update_post_meta( $post_id, $key, $data ) {
-
+		/**
+		 * Filter to override updating Cloudinary meta.
+		 * Returning a non-null value will effectively short-circuit the function.
+		 *
+		 * @hook  cloudinary_update_post_meta
+		 * @since 3.0.5
+		 *
+		 * @param $check   {mixed} The check if override flag.
+		 * @param $data    {mixed} The data to be saved.
+		 * @param $key     {string} The key the data is saved under.
+		 * @param $post_id {int} The post_id.
+		 */
+		$check = apply_filters( 'cloudinary_update_post_meta', null, $data, $key, $post_id );
+		if ( ! is_null( $check ) ) {
+			return $check;
+		}
 		$meta = $this->get_post_meta( $post_id );
 		if ( ! isset( $meta[ $key ] ) ) {
 			$meta[ $key ] = '';
@@ -2412,7 +2442,21 @@ class Media extends Settings_Component implements Setup {
 	 * @return bool
 	 */
 	public function delete_post_meta( $post_id, $key ) {
-
+		/**
+		 * Filter to override deleting Cloudinary meta.
+		 * Returning a non-null value will effectively short-circuit the function.
+		 *
+		 * @hook  cloudinary_delete_post_meta
+		 * @since 3.0.5
+		 *
+		 * @param $check   {mixed} The check if override flag.
+		 * @param $key     {string} The key the data is saved under.
+		 * @param $post_id {int} The post_id.
+		 */
+		$check = apply_filters( 'cloudinary_delete_post_meta', null, $key, $post_id );
+		if ( ! is_null( $check ) ) {
+			return $check;
+		}
 		$meta = $this->get_post_meta( $post_id );
 		if ( isset( $meta[ $key ] ) ) {
 			unset( $meta[ $key ] );

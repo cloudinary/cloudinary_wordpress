@@ -456,7 +456,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		$status = $this->test_ping();
 		$this->settings->get_setting( 'status' )->save_value( $status );
 
-		return $status;
+		return is_wp_error( $status ) ? $status->get_error_message() : $status['status'];
 	}
 
 	/**
@@ -609,10 +609,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 * Setup Status cron.
 	 */
 	protected function setup_status_cron() {
-		if ( false === wp_get_schedule( 'cloudinary_status' ) ) {
-			$now = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
-			wp_schedule_event( $now + ( MINUTE_IN_SECONDS ), 'hourly', 'cloudinary_status' );
-		}
+		Cron::register_process( 'cloudinary_status', array( $this, 'check_status' ), HOUR_IN_SECONDS );
 	}
 
 	/**

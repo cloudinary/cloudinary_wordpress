@@ -57,6 +57,18 @@ class Upgrade {
 
 		if ( ! empty( get_post_meta( $attachment_id, Sync::META_KEYS['cloudinary'], true ) ) ) {
 			// V2.5 changed the meta. if it had, theres no upgrades needed.
+			/**
+			 * Action to trigger an upgrade on a synced asset.
+			 *
+			 * @hook  cloudinary_delete_post_meta
+			 * @since 3.0.5
+			 *
+			 * @param $attachment_id {int} The attachment ID.
+			 * @param $version       {string} The current plugin version.
+			 */
+			do_action( 'cloudinary_upgrade_asset', $attachment_id, $this->media->plugin->version );
+
+			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['plugin_version'], $this->media->plugin->version );
 			$this->sync->set_signature_item( $attachment_id, 'upgrade' );
 
 			return $this->media->get_public_id( $attachment_id );

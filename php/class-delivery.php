@@ -552,12 +552,11 @@ class Delivery implements Setup {
 	 * @param string $transformations The transformations to set.
 	 */
 	public static function update_size_relations_transformations( $attachment_id, $transformations ) {
-		global $wpdb;
-		$data = array(
-			'transformations' => $transformations,
-		);
-		$wpdb->update( Utils::get_relationship_table(), $data, array( 'post_id' => $attachment_id ), array( '%s' ), array( '%d' ) );// phpcs:ignore WordPress.DB
-
+		static $media;
+		if ( ! $media ) {
+			$media = get_plugin_instance()->get_component( 'media' );
+		}
+		$media->update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], $transformations );
 		do_action( 'cloudinary_flush_cache' );
 	}
 

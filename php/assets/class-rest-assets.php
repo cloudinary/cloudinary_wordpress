@@ -111,7 +111,6 @@ class Rest_Assets {
 		$type                 = $media->get_resource_type( $attachment_id );
 		$transformation_array = $media->get_transformations_from_string( $transformations, $type );
 		$cleaned              = Api::generate_transformation_string( $transformation_array, $type );
-		$this->assets->delivery->update_size_relations_transformations( $attachment_id, $cleaned );
 		$this->assets->media->update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], $transformation_array );
 
 		$return = array(
