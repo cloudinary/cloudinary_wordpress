@@ -142,6 +142,16 @@ Your site is now setup to start using Cloudinary.
 
 == Changelog ==
 
+= 3.0.5 (29 June 2022) =
+
+Fixes and Improvements:
+
+* Add support for Cloudinary Dynamic Folders mode
+* Fixed Elementor compatibility issue - We’re sorry about that!
+* Fixed UTF-8 in Portuguese using Elementor
+* Fixed ACF encoding issue
+
+
 = 3.0.4 (31 May 2022) =
 
 Fixes and Improvements:
