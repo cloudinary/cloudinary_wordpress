@@ -292,9 +292,6 @@ class Delivery implements Setup {
 		}
 
 		$content = String_Replace::do_replace( $content );
-		if ( $unslashed ) {
-			$content = wp_slash( $content );
-		}
 
 		return $content;
 	}
