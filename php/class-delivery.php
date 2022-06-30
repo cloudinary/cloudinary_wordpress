@@ -180,7 +180,7 @@ class Delivery implements Setup {
 		);
 
 		// Don't filter out metadata if we're dealing with Cloudinary internals.
-		if ( in_array( $meta_key, $internal_keys ) ) {
+		if ( in_array( $meta_key, $internal_keys, true ) ) {
 			return $check;
 		}
 
@@ -190,33 +190,14 @@ class Delivery implements Setup {
 
 		$this->doing_metadata = true;
 		$current_filter       = current_filter();
-		$is_serialized        = false;
-		$is_object            = is_object( $meta_value );
-
-		if ( ! is_string( $meta_value ) ) {
-			$is_serialized = true;
-			$maybe_encode = wp_json_encode( $meta_value );
-
-			if ( empty( $maybe_encode ) ) {
-				$this->doing_metadata = false;
-
-				return $check;
-			}
-
-			$meta_value = $maybe_encode;
-		}
 
 		list( $action, $object ) = explode( '_', $current_filter );
 
 		$process_meta_value = $this->filter_out_cloudinary( $meta_value );
 
 		if ( $process_meta_value !== $meta_value ) {
-			if ( $is_serialized ) {
-				$meta_value = json_decode( wp_unslash( $process_meta_value ), ! $is_object );
-			} else {
-				$meta_value = $process_meta_value;
-			}
-			$check = call_user_func( "{$action}_{$object}_meta", $object_id, $meta_key, $meta_value );
+			$meta_value = $process_meta_value;
+			$check      = call_user_func( "{$action}_{$object}_meta", $object_id, $meta_key, $meta_value );
 		}
 
 		$this->doing_metadata = false;
@@ -243,14 +224,24 @@ class Delivery implements Setup {
 				'video' => Api::generate_transformation_string( $video, 'video' ),
 			);
 		}
-
-		$unslash_maybe = wp_unslash( $content );
-		$unslashed     = $unslash_maybe !== $content;
-		if ( $unslashed ) {
-			$content = $unslash_maybe;
+		$unslashed       = false;
+		$working_content = $content;
+		if ( is_string( $working_content ) && ! is_numeric( $working_content ) ) {
+			$maybe_encoded = json_decode( $working_content, false );
+			if ( ! is_null( $maybe_encoded ) ) {
+				$working_content = $maybe_encoded;
+			}
 		}
-		$content         = str_replace( '&amp;', '&', $content );
-		$base_urls       = array_unique( Utils::extract_urls( $content ) );
+		if ( String_Replace::is_iterable( $working_content ) ) {
+			$working_content = $this->plugin->components['replace']->flatten( $working_content );
+		} else {
+			$unslash_maybe = wp_unslash( $working_content );
+			$unslashed     = $unslash_maybe !== $working_content;
+			if ( $unslashed ) {
+				$working_content = $unslash_maybe;
+			}
+		}
+		$base_urls       = array_unique( Utils::extract_urls( $working_content ) );
 		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
 		$urls            = array();
 		if ( empty( $cloudinary_urls ) ) {
@@ -268,7 +259,7 @@ class Delivery implements Setup {
 				continue;
 			}
 
-			$original_url    = $urls[ $result['public_id'] ];
+			$original_url = $urls[ $result['public_id'] ];
 			if ( ! empty( $result['transformations'] ) ) {
 				$original_url = str_replace( $result['transformations'] . '/', '/', $original_url );
 			}
@@ -287,7 +278,7 @@ class Delivery implements Setup {
 			if ( ! empty( $transformations ) ) {
 				$transformations = array_filter(
 					$transformations,
-					function ( $item ) {
+					static function ( $item ) {
 						return ! isset( $item['crop'] ) && ! isset( $item['width'] ) && ! isset( $item['height'] );
 					}
 				);
@@ -301,9 +292,6 @@ class Delivery implements Setup {
 		}
 
 		$content = String_Replace::do_replace( $content );
-		if ( $unslashed ) {
-			$content = wp_slash( $content );
-		}
 
 		return $content;
 	}

@@ -157,7 +157,7 @@ final class Plugin {
 	 *
 	 * @param mixed $component The component.
 	 *
-	 * @return Report|Connect|Media|REST_API|Admin|Sync|Cache|null
+	 * @return Admin|Connect|Delivery|Media|REST_API|String_Replace|Sync|null
 	 */
 	public function get_component( $component ) {
 		$return = null;

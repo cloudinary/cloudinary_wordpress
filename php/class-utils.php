@@ -522,8 +522,8 @@ class Utils {
 	public static function extract_urls( $content ) {
 		preg_match_all(
 			"#([\"']?)("
-				. '(?:([\w-]+:)?//?)'
-				. '[^\s()<>]+'
+				. '(?:[\w-]+:)?//?'
+				. '[^\s()<>"\']+'
 				. '[.]'
 				. '(?:'
 					. '\([\w\d]+\)|'
