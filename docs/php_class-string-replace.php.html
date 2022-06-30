@@ -223,7 +223,7 @@ class String_Replace implements Setup {
 	/**
 	 * Flatten an array into content.
 	 *
-	 * @param array $content The array to flatten.
+	 * @param array|string $content The array to flatten.
 	 *
 	 * @return string
 	 */
@@ -311,9 +311,9 @@ class String_Replace implements Setup {
 	/**
 	 * Do string replacements.
 	 *
-	 * @param string|array $content The content to do replacements on.
+	 * @param array|string $content The content to do replacements on.
 	 *
-	 * @return string|array
+	 * @return array|string
 	 */
 	public static function do_replace( $content ) {
 
