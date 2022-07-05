@@ -39,6 +39,13 @@ class Cron {
 	const CRON_META_KEY = 'cloudinary_cron_schedule';
 
 	/**
+	 * Holds the cron watcher interval.
+	 *
+	 * @var int
+	 */
+	const DAEMON_WATCHER_INTERVAL = 20;
+
+	/**
 	 * Cron constructor.
 	 */
 	public function __construct() {
@@ -51,8 +58,29 @@ class Cron {
 	 */
 	public function init() {
 		$this->load_schedule();
-		add_action( 'cloudinary_cron_job', array( $this, 'run_queue' ) );
-		add_action( 'shutdown', array( $this, 'process_schedule' ) );
+		//add_action( 'cloudinary_cron_job', array( $this, 'run_queue' ) );
+		//add_action( 'cloudinary_cron_daemon', array( $this, 'daemon_watcher' ) );
+		//		add_action( 'shutdown', array( $this, 'process_schedule' ) );
+		add_action( 'shutdown', array( $this, 'start_daemon' ) );
+		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
+	}
+
+	/**
+	 * Register REST endpoints.
+	 */
+	public function rest_endpoints( $endpoints ) {
+		$endpoints['cron_watch'] = array(
+			'method'             => \WP_REST_Server::READABLE,
+			'callback'            => array( $this, 'daemon_watcher' ),
+			'permission_callback' => '__return_true',
+		);
+		$endpoints['cron_process'] = array(
+			'method'             => \WP_REST_Server::CREATABLE,
+			'callback'            => array( $this, 'run_queue' ),
+			'permission_callback' => '__return_true',
+		);
+
+		return $endpoints;
 	}
 
 	/**
@@ -141,7 +169,7 @@ class Cron {
 				continue;
 			}
 			// Queue the process if it's time to run.
-			if ( empty( $schedule['timeout'] ) && $this->init_time >= $schedule['next_run'] ) {
+			if (  $this->init_time >= $schedule['next_run'] ) {
 				$queue[] = $name;
 				$this->update_schedule( $name );
 				$this->lock_schedule_process( $name );
@@ -155,13 +183,30 @@ class Cron {
 
 	/**
 	 * Push the queue to the cron.
-	 *
-	 * @param array $queue Queue to push.
 	 */
 	protected function push_queue( $queue ) {
+
 		$this->save_schedule();
-		wp_schedule_single_event( $this->init_time, 'cloudinary_cron_job', array( $queue ) );
-		spawn_cron(); // This is a failsafe to trigger the cron on this run, rather than waiting for the next page load.
+		$instance = get_plugin_instance();
+		$rest = $instance->get_component( 'api' );
+		$rest->background_request( 'cron_process', array( 'queue' => $queue ), 'POST' );
+		//wp_schedule_single_event( $this->init_time, 'cloudinary_cron_job', array( $queue ) );
+		//spawn_cron(); // This is a failsafe to trigger the cron on this run, rather than waiting for the next page load.
+	}
+
+	/**
+	 * Start cron daemon.
+	 */
+	public function start_daemon() {
+		$check = get_transient( 'cloudinary_cron_daemon' );
+		if ( ! empty ( $check ) ) {
+			return;
+		}
+
+		set_transient( 'cloudinary_cron_daemon', '1', self::DAEMON_WATCHER_INTERVAL );
+		$instance = get_plugin_instance();
+		$rest = $instance->get_component( 'api' );
+		$rest->background_request( 'cron_watch', array(), 'GET' );
 	}
 
 	/**
@@ -185,26 +230,45 @@ class Cron {
 	/**
 	 * Run the queue.
 	 *
-	 * @param array $queue Queue to run.
+	 * @param WP_REST_Request $request Queue to run.
 	 */
-	public function run_queue( $queue ) {
+	public function run_queue( \WP_REST_Request $request ) {
+		$queue = $request->get_param( 'queue' );
+		//error_log( 'Running queue ' . print_r( $queue, true ) );
 		foreach ( $queue as $name ) {
 			$process = $this->processes[ $name ];
 			// translators: variable is process name.
 			$action_message = sprintf( __( 'Cloudinary Cron Process Start: %s', 'cloudinary' ), $name );
-			do_action( '_cloudinary_cron_action', $action_message );
-			$data   = $process['callback']( $name );
+			//do_action( '_cloudinary_cron_action', $action_message );
+			$data = $process['callback']( $name );
 			if ( ! empty( $data ) ) {
 				// translators: variable is process result.
 				$result = sprintf( __( 'Result: %s', 'cloudinary' ), $data );
-				do_action( '_cloudinary_cron_action', $result );
+				//do_action( '_cloudinary_cron_action', $result );
 			}
 			// translators: variable is process name.
 			$result = sprintf( __( 'Cloudinary Cron Process End: %s', 'cloudinary' ), $name );
-			do_action( '_cloudinary_cron_action', $result );
+			//do_action( '_cloudinary_cron_action', $result );
 			$this->unlock_schedule_process( $name );
 		}
 		$this->save_schedule();
+	}
+
+	/**
+	 * Cron daemon watcher.
+	 */
+	public function daemon_watcher() {
+		$tag = uniqid();
+		//error_log( 'Cloudinary Cron Daemon Watcher start' );
+		$start_time = $this->init_time;
+		while ( $this->init_time < $start_time + self::DAEMON_WATCHER_INTERVAL ) {
+			$this->init_time = time();
+			$this->process_schedule();
+		//	error_log( $tag );
+			sleep( 1 );
+		}
+		//error_log( 'Cloudinary Cron Daemon Watcher end' );
+
 	}
 
 	/**
