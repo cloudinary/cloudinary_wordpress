@@ -748,6 +748,13 @@ class Api {
 		if ( is_null( $endpoint ) ) {
 			$endpoint = CLOUDINARY_ENDPOINTS_API;
 
+			/**
+			 * Ensure that we only use the HOSTNAME for the `upload_prefix`.
+			 */
+			if ( filter_var( $endpoint, FILTER_VALIDATE_URL ) ) {
+				$endpoint = parse_url( $endpoint, PHP_URL_HOST );
+			}
+
 			if ( $this->has_valid_upload_prefix() ) {
 				$endpoint = $this->credentials['upload_prefix'];
 			}
