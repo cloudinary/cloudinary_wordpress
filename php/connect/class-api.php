@@ -762,6 +762,9 @@ class Api {
 	 * @return bool
 	 */
 	protected function has_valid_upload_prefix() {
+		/**
+		 * Cloudinary supported regions to date.
+		 */
 		$endpoints = array(
 			'api.cloudinary.com',
 			'api-eu.cloudinary.com',
