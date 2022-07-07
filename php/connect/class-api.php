@@ -175,7 +175,7 @@ class Api {
 		$parts = array();
 
 		if ( $endpoint ) {
-			$parts[] = CLOUDINARY_ENDPOINTS_API;
+			$parts[] = $this->get_upload_prefix();
 			$parts[] = $this->api_version;
 		} else {
 			$parts[] = $this->asset_url;
@@ -735,6 +735,50 @@ class Api {
 			curl_setopt( $handle, CURLOPT_POSTFIELDS, $request['body'] ); // phpcs:ignore
 			$this->pending_url = null;
 		}
+	}
+
+	/**
+	 * Get Cloudinary upload prefix.
+	 *
+	 * @return string
+	 */
+	public function get_upload_prefix() {
+		static $endpoint;
+
+		if ( is_null( $endpoint ) ) {
+			$endpoint = CLOUDINARY_ENDPOINTS_API;
+
+			if ( $this->has_valid_upload_prefix() ) {
+				$endpoint = $this->credentials['upload_prefix'];
+			}
+		}
+
+		return $endpoint;
+	}
+
+	/**
+	 * Has a valid Cloudinary upload prefix.
+	 *
+	 * @return bool
+	 */
+	protected function has_valid_upload_prefix() {
+		$endpoints = array(
+			'api.cloudinary.com',
+			'api-eu.cloudinary.com',
+			'api-ap.cloudinary.com',
+		);
+
+		$is_valid = false;
+
+		if ( ! empty( $this->credentials['upload_prefix'] ) ) {
+			if ( filter_var( $this->credentials['upload_prefix'], FILTER_VALIDATE_URL ) ) {
+				$this->credentials['upload_prefix'] = parse_url( $this->credentials['upload_prefix'], PHP_URL_HOST );
+			}
+
+			$is_valid = in_array( $this->credentials['upload_prefix'], $endpoints, true );
+		}
+
+		return $is_valid;
 	}
 
 	/**
