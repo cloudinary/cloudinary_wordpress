@@ -135,7 +135,7 @@ class Api {
 	 *
 	 * @var string[]
 	 */
-	protected static $qualified_upload_prefixes = array(
+	public static $qualified_upload_prefixes = array(
 		'api.cloudinary.com',
 		'api-eu.cloudinary.com',
 		'api-ap.cloudinary.com',
@@ -758,7 +758,7 @@ class Api {
 
 		if ( is_null( $upload_prefix ) ) {
 			// Defaults to first hardcoded qualified domain.
-			$upload_prefix = array_shift( self::$qualified_upload_prefixes );
+			$upload_prefix = reset( self::$qualified_upload_prefixes );
 
 			// Maybe use constant.
 			if ( self::is_qualified_upload_prefix( CLOUDINARY_ENDPOINTS_API ) ) {
