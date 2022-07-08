@@ -61,7 +61,7 @@ class Upgrade {
 			/**
 			 * Action to trigger an upgrade on a synced asset.
 			 *
-			 * @hook  cloudinary_delete_post_meta
+			 * @hook  cloudinary_upgrade_asset
 			 * @since 3.0.5
 			 *
 			 * @param $attachment_id {int} The attachment ID.
