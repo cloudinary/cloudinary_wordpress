@@ -36,7 +36,7 @@
 		margin-bottom: 2em;
 	}
 
-	.modal-uninstall{
+	.modal-uninstall {
 		display: none;
 	}
 
@@ -124,10 +124,13 @@
 			font-size: 10.5px;
 		}
 
+		.button:not(.button-link) {
+			background-color: $color-blue-grey;
+		}
+
 		.button {
 			margin: 22px 0 0 10px;
 			padding: 4px 14px;
-			background-color: $color-blue-grey;
 			color: black;
 			font-size: 9.5px;
 			font-weight: bold;
@@ -136,6 +139,15 @@
 			&.button-primary {
 				background-color: $color-cld-blue;
 				color: $color-white;
+			}
+
+			&.button-link {
+				margin-left: 0;
+				margin-right: auto;
+
+				&:hover {
+					background-color: transparent;
+				}
 			}
 		}
 	}
