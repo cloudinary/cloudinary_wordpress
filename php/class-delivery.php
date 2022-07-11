@@ -995,6 +995,10 @@ class Delivery implements Setup {
 				$cloudinary_url              = $this->media->cloudinary_url( $relation['post_id'], explode( 'x', $size ), $relation['transformations'], $public_id );
 				$aliases[ $local_url . '?' ] = $cloudinary_url . '&';
 				$aliases[ $local_url ]       = $cloudinary_url;
+
+				// Some URLs might be slashed, but the found_urls does not have that information.
+				$aliases[ addcslashes( $local_url . '?', '/' ) ] = addcslashes( $cloudinary_url . '&', '/' );
+				$aliases[ addcslashes( $local_url, '/' ) ]       = addcslashes( $cloudinary_url, '/' );
 			}
 		}
 
@@ -1641,7 +1645,7 @@ class Delivery implements Setup {
 	 */
 	public function prepare_delivery( $content ) {
 		$content    = wp_unslash( $content );
-		$all_urls   = array_unique( wp_extract_urls( $content ) );
+		$all_urls   = array_unique( Utils::extract_urls( $content ) );
 		$base_urls  = array_filter( array_map( array( $this, 'sanitize_url' ), $all_urls ) );
 		$clean_urls = array_map( array( $this, 'clean_url' ), $base_urls );
 		$urls       = array_filter( $clean_urls, array( $this, 'validate_url' ) );
