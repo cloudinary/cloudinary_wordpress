@@ -1931,7 +1931,7 @@ class Media extends Settings_Component implements Setup {
 		// Capture the ALT Text.
 		if ( ! empty( $asset['meta']['alt'] ) ) {
 			$alt_text = wp_strip_all_tags( $asset['meta']['alt'] );
-			$this->update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt_text );
+			update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt_text );
 		}
 
 		return $attachment_id;
