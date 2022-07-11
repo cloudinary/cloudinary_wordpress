@@ -122,6 +122,7 @@ module.exports = function ( grunt ) {
 					'!build/**/*',
 					'!vendor/**/*',
 					'!package/**/*',
+					'!php/media/class-filter.php',
 				],
 			},
 		},
@@ -137,6 +138,7 @@ module.exports = function ( grunt ) {
 						'tests/*',
 						'build/*',
 						'vendor/*',
+						'package/*',
 					],
 					mainFile: 'cloudinary.php',
 					potFilename: 'cloudinary.pot',
@@ -147,7 +149,7 @@ module.exports = function ( grunt ) {
 							'https://github.com/cloudinary/cloudinary_wordpress',
 					},
 					type: 'wp-plugin',
-					updateTimestamp: true,
+					updateTimestamp: false,
 				},
 			},
 		},
@@ -155,14 +157,10 @@ module.exports = function ( grunt ) {
 
 	grunt.registerTask( 'i18n', [ 'addtextdomain', 'makepot' ] );
 
-	grunt.registerTask( 'prepare', [
-		'i18n',
-		'clean',
-		'copy:dist',
-		'replace',
-	] );
+	grunt.registerTask( 'prepare', [ 'clean', 'copy:dist', 'replace' ] );
 
 	grunt.registerTask( 'package', [
+		'i18n',
 		'prepare',
 		'compress:dist',
 		'copy:package',
