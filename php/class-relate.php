@@ -70,10 +70,6 @@ class Relate {
 	public function upgrade_relation( $attachment_id, $version ) {
 		$asset_plugin_version = $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['plugin_version'], true );
 		if ( ! empty( $asset_plugin_version ) && version_compare( $asset_plugin_version, $version, '<' ) ) {
-			$transformations = $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['transformation'], true );
-			if ( ! empty( $transformations ) ) {
-				self::update_transformations( $attachment_id, $transformations );
-			}
 			$this->media->delete_post_meta( $attachment_id, Sync::META_KEYS['transformation'] );
 		}
 	}

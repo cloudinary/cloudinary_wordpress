@@ -577,7 +577,10 @@ class Delivery implements Setup {
 		$type            = 'attachment' === get_post_type( $attachment_id ) ? 'media' : 'asset';
 		$resource        = $media->get_resource_type( $attachment_id );
 		$width_height    = explode( 'x', $size );
-		$transformations = $media->get_transformation_from_meta( $attachment_id );
+		$transformations = $media->get_post_meta( $attachment_id, Sync::META_KEYS['transformation'], true );
+		if ( ! is_null( $transformations ) ) {
+			$media->delete_post_meta( $attachment_id, Sync::META_KEYS['transformation'] );
+		}
 		$data            = array(
 			'post_id'         => $attachment_id,
 			'parent_path'     => $parent_path,
