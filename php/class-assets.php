@@ -1270,7 +1270,7 @@ class Assets extends Settings_Component {
 			if ( ! isset( $plugins[ $plugin ] ) ) {
 				continue;
 			}
-			$slug       = sanitize_file_name( Utils::pathinfo( $plugin, PATHINFO_FILENAME ) );
+			$slug       = sanitize_title_with_dashes( Utils::pathinfo( $plugin, PATHINFO_FILENAME ) );
 			$plugin_url = plugins_url( $plugin );
 			$details    = $plugins[ $plugin ];
 			$rows[]     = array(
@@ -1355,7 +1355,7 @@ class Assets extends Settings_Component {
 		foreach ( $themes as $theme ) {
 			$theme_location = $theme->get_stylesheet_directory();
 			$theme_slug     = wp_basename( dirname( $theme_location ) ) . '/' . wp_basename( $theme_location );
-			$slug           = sanitize_file_name( Utils::pathinfo( $theme_slug, PATHINFO_FILENAME ) );
+			$slug           = sanitize_title_with_dashes( Utils::pathinfo( $theme_slug, PATHINFO_FILENAME ) );
 			$rows[]         = array(
 				'slug'    => $slug,
 				'title'   => $theme->get( 'Name' ),
