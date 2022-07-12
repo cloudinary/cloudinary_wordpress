@@ -490,7 +490,7 @@ class Gallery extends Settings_Component {
 		}
 
 		// Can on back end on block editor and gallery settings page.
-		if ( is_admin() ) {
+		if ( is_admin() && function_exists( 'get_current_screen' ) ) {
 			$screen = get_current_screen();
 			if (
 				! is_null( $screen )

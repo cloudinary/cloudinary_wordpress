@@ -195,6 +195,12 @@ class String_Replace implements Setup {
 	 */
 	public function flatten( $content ) {
 		$flat = '';
+		if ( Utils::looks_like_json( $content ) ) {
+			$maybe_content = json_decode( $content, true );
+			if ( ! empty( $maybe_content ) ) {
+				$content = $maybe_content;
+			}
+		}
 		if ( self::is_iterable( $content ) ) {
 			foreach ( $content as $item ) {
 				$flat .= "\r\n" . $this->flatten( $item );
