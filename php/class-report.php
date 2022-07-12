@@ -433,7 +433,7 @@ class Report extends Settings_Component implements Setup {
 	protected function plugins() {
 
 		$plugin_data = array(
-			'must_use' => wp_get_mu_plugins(),
+			'must_use' => array_map( array( $this, 'file_path_to_slug' ), wp_get_mu_plugins() ),
 			'plugins'  => array(),
 		);
 		$active      = wp_get_active_and_valid_plugins();
