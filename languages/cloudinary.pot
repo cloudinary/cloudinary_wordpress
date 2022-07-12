@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cloudinary STABLETAG\n"
 "Report-Msgid-Bugs-To: https://github.com/cloudinary/cloudinary_wordpress\n"
-"POT-Creation-Date: 2022-06-29 09:48:21+00:00\n"
+"POT-Creation-Date: 2022-07-12 11:06:02+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -30,36 +30,36 @@ msgid ""
 "You must be running PHP 5.6 or higher."
 msgstr ""
 
-#: php/assets/class-rest-assets.php:66 php/class-cache.php:339
+#: php/assets/class-rest-assets.php:67 php/class-cache.php:339
 msgid "The list of IDs to update."
 msgstr ""
 
-#: php/assets/class-rest-assets.php:71 php/class-cache.php:344
+#: php/assets/class-rest-assets.php:72 php/class-cache.php:344
 msgid "The state to update."
 msgstr ""
 
-#: php/assets/class-rest-assets.php:122
+#: php/assets/class-rest-assets.php:121
 msgid "Some transformations were invalid and were removed."
 msgstr ""
 
-#: php/assets/class-rest-assets.php:333 php/assets/class-rest-assets.php:361
+#: php/assets/class-rest-assets.php:332 php/assets/class-rest-assets.php:360
 #: php/cache/class-cache-point.php:599
 msgid "No items cached."
 msgstr ""
 
-#: php/assets/class-rest-assets.php:345 php/cache/class-cache-point.php:583
+#: php/assets/class-rest-assets.php:344 php/cache/class-cache-point.php:583
 #. translators: The current page and total pages.
 msgid "Page %1$d of %2$d"
 msgstr ""
 
-#: php/assets/class-rest-assets.php:348 php/cache/class-cache-point.php:586
+#: php/assets/class-rest-assets.php:347 php/cache/class-cache-point.php:586
 #. translators: The number of files.
 msgid "%d cached file"
 msgid_plural "%d cached files"
 msgstr[0] ""
 msgstr[1] ""
 
-#: php/assets/class-rest-assets.php:359 php/cache/class-cache-point.php:597
+#: php/assets/class-rest-assets.php:358 php/cache/class-cache-point.php:597
 msgid "No items found."
 msgstr ""
 
@@ -253,11 +253,11 @@ msgstr ""
 msgid "CNAME is not a valid domain name."
 msgstr ""
 
-#: php/class-connect.php:714
+#: php/class-connect.php:717
 msgid "upgrade your account"
 msgstr ""
 
-#: php/class-connect.php:729
+#: php/class-connect.php:732
 #. translators: %1$s quota size, %2$s amount in percent, %3$s link URL, %4$s
 #. link anchor text.
 msgid ""
@@ -385,47 +385,55 @@ msgstr ""
 msgid "Allow Cloudinary to contact me regarding deactivation of the plugin."
 msgstr ""
 
-#: php/class-deactivation.php:254 php/class-deactivation.php:297
-msgid "Cancel"
+#: php/class-deactivation.php:254
+msgid "Skip and deactivate"
 msgstr ""
 
 #: php/class-deactivation.php:257 php/class-deactivation.php:300
-msgid "Deactivate"
+msgid "Cancel"
 msgstr ""
 
-#: php/class-deactivation.php:260 php/class-deactivation.php:306
+#: php/class-deactivation.php:260
+msgid "Submit and deactivate"
+msgstr ""
+
+#: php/class-deactivation.php:263 php/class-deactivation.php:309
 msgid "Sending…"
 msgstr ""
 
-#: php/class-deactivation.php:265 php/class-deactivation.php:311
+#: php/class-deactivation.php:268 php/class-deactivation.php:314
 msgid ""
 "Uninstall has been started and the plugin will automatically be deactivated "
 "once complete."
 msgstr ""
 
-#: php/class-deactivation.php:268 php/class-deactivation.php:314
+#: php/class-deactivation.php:271 php/class-deactivation.php:317
 msgid "Close"
 msgstr ""
 
-#: php/class-deactivation.php:287
+#: php/class-deactivation.php:290
 msgid "We noticed you didn't connect your account. Maybe we can help?"
 msgstr ""
 
-#: php/class-deactivation.php:288
+#: php/class-deactivation.php:291
 msgid ""
 "Place your email below and our support will get back to you as soon as "
 "possible."
 msgstr ""
 
-#: php/class-deactivation.php:291 php/class-deactivation.php:292
+#: php/class-deactivation.php:294 php/class-deactivation.php:295
 msgid "Your email address"
 msgstr ""
 
 #: php/class-deactivation.php:303
+msgid "Deactivate"
+msgstr ""
+
+#: php/class-deactivation.php:306
 msgid "Contact me"
 msgstr ""
 
-#: php/class-deactivation.php:461
+#: php/class-deactivation.php:464
 msgid "Data clean up. The plugin will self deactivate once complete. "
 msgstr ""
 
@@ -503,19 +511,19 @@ msgstr ""
 msgid "Synced"
 msgstr ""
 
-#: php/class-media.php:2798
+#: php/class-media.php:2793
 msgid "No Cloudinary filters"
 msgstr ""
 
-#: php/class-media.php:2898
+#: php/class-media.php:2893
 msgid "Media Settings"
 msgstr ""
 
-#: php/class-media.php:2901
+#: php/class-media.php:2896
 msgid "Media Display"
 msgstr ""
 
-#: php/class-media.php:2905 php/media/class-global-transformations.php:616
+#: php/class-media.php:2900 php/media/class-global-transformations.php:617
 #: php/ui/component/class-asset-preview.php:73
 #: php/ui/component/class-plan-details.php:119
 #: php/ui/component/class-plan-status.php:128
@@ -523,7 +531,7 @@ msgstr ""
 msgid "Transformations"
 msgstr ""
 
-#: php/class-media.php:2906
+#: php/class-media.php:2901
 msgid ""
 "Cloudinary allows you to easily transform your images on-the-fly to any "
 "required format, style and dimension, and also optimizes images for minimal "
@@ -532,12 +540,12 @@ msgid ""
 "transformation and delivery URLs."
 msgstr ""
 
-#: php/class-media.php:2911 ui-definitions/settings-image.php:123
+#: php/class-media.php:2906 ui-definitions/settings-image.php:123
 #: ui-definitions/settings-video.php:174
 msgid "See examples"
 msgstr ""
 
-#: php/class-plugin.php:746
+#: php/class-plugin.php:747
 msgid "Visit plugin site"
 msgstr ""
 
@@ -706,16 +714,16 @@ msgid ""
 "System Report"
 msgstr ""
 
-#: php/connect/class-api.php:346
+#: php/connect/class-api.php:357
 msgid "No direct access to file system."
 msgstr ""
 
-#: php/connect/class-api.php:441
+#: php/connect/class-api.php:452
 #. translators: variable is thread name and queue size.
 msgid "Uploading remote url:  %1$s."
 msgstr ""
 
-#: php/connect/class-api.php:572
+#: php/connect/class-api.php:583
 msgid "Could not get VIP file content"
 msgstr ""
 
@@ -827,7 +835,7 @@ msgstr ""
 #: php/media/class-filter.php:604 php/media/class-filter.php:620
 #: php/media/class-filter.php:638 php/media/class-filter.php:654
 #: php/media/class-filter.php:670
-#: php/media/class-global-transformations.php:564
+#: php/media/class-global-transformations.php:565
 msgid "Overwrite Global Transformations"
 msgstr ""
 
@@ -864,29 +872,29 @@ msgid ""
 "classic editor."
 msgstr ""
 
-#: php/media/class-global-transformations.php:318
+#: php/media/class-global-transformations.php:319
 msgid "Categories/Tags transformations"
 msgstr ""
 
-#: php/media/class-global-transformations.php:450
+#: php/media/class-global-transformations.php:451
 msgid ""
 "If you placed custom transformations on categories/tags you may order them "
 "below. "
 msgstr ""
 
-#: php/media/class-global-transformations.php:452
+#: php/media/class-global-transformations.php:453
 msgid "No terms added"
 msgstr ""
 
-#: php/media/class-global-transformations.php:463
+#: php/media/class-global-transformations.php:464
 msgid "Disable global transformations"
 msgstr ""
 
-#: php/media/class-global-transformations.php:538
+#: php/media/class-global-transformations.php:539
 msgid "Flag on whether transformation should be overwritten for a featured image."
 msgstr ""
 
-#: php/media/class-global-transformations.php:652
+#: php/media/class-global-transformations.php:653
 msgid "Add transformations"
 msgstr ""
 
