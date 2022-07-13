@@ -499,7 +499,13 @@ class Utils {
 		$admin_base = admin_url();
 		$is_admin   = $referer ? 0 === strpos( $referer, $admin_base ) : false;
 
-		return ! $is_admin && defined( 'DOING_AJAX' ) && DOING_AJAX;
+		$is = ! $is_admin && defined( 'DOING_AJAX' ) && DOING_AJAX;
+		if ( ! $is && ! $is_admin ) {
+			$type = filter_input( INPUT_SERVER, 'CONTENT_TYPE', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+			$is   = false !== strpos( $type, 'json' );
+		}
+
+		return $is;
 	}
 
 	/**
