@@ -87,7 +87,7 @@ class Download_Sync {
 	public function rest_can_upload_files( \WP_REST_Request $request ) {
 
 		// This would have been from an ajax call. Therefore verify based on capability.
-		return current_user_can( 'upload_files' );
+		return Utils::user_can( 'download', 'upload_files' );
 	}
 
 	/**

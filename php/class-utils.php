@@ -176,39 +176,60 @@ class Utils {
 	/**
 	 * Check if the current user can perform a task.
 	 *
-	 * @param string $task The task to check.
+	 * @param string $task       The task to check.
+	 * @param string $capability The default capability.
+	 * @param mixed  ...$args    Optional further parameters.
 	 *
 	 * @return bool
 	 */
-	public static function user_can( $task ) {
+	public static function user_can( $task, $capability = 'manage_options', ...$args ) {
 
 		/**
 		 * Filter the capability required for a specific cloudinary task.
 		 *
 		 * @hook    cloudinary_task_capability_{task}
 		 * @since   2.7.6
+		 * @since   3.0.6 $args added.
+		 *
+		 * @default 'add_gallery'             => 'edit_posts'
+		 *          'clear_cache'             => 'manage_options'
+		 *          'connect'                 => 'manage_options'
+		 *          'deactivate'              => 'activate_plugins'
+		 *          'download'                => 'upload_files'
+		 *          'manage_assets'           => 'manage_options'
+		 *          'manage_cache'            => 'manage_options'
+		 *          'manage_extensions'       => 'manage_options'
+		 *          'override_transformation' => 'edit_posts'
+		 *          'push_sync'               => 'delete_post'
+		 *          'push_sync'               => 'manage_options'
+		 *          'save_settings'           => 'manage_options'
+		 *          'status'                  => 'manage_options'
+		 *          'system_report'           => 'manage_options'
 		 *
 		 * @param $capability {string} The capability.
+		 * @param $args       {mixed}  The optional arguments.
 		 *
 		 * @default 'manage_options'
 		 * @return  {string}
 		 */
-		$capability = apply_filters( "cloudinary_task_capability_{$task}", 'manage_options' );
+		$capability = apply_filters( "cloudinary_task_capability_{$task}", $capability, $args );
 
 		/**
 		 * Filter the capability required for cloudinary tasks.
 		 *
 		 * @hook    cloudinary_task_capability
 		 * @since   2.7.6
+		 * @since   3.0.6 $args added.
 		 *
 		 * @param $capability {string} The current capability for the task.
 		 * @param $task       {string} The task.
+		 * @param $args       {mixed}  The optional arguments.
 		 *
 		 * @return  {string}
 		 */
-		$capability = apply_filters( 'cloudinary_task_capability', $capability, $task );
+		$capability = apply_filters( 'cloudinary_task_capability', $capability, $task, $args );
 
-		return current_user_can( $capability );
+		return current_user_can( $capability, $args );
 	}
 
 	/**

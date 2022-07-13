@@ -239,7 +239,7 @@ class Rest_Assets {
 	 * @return bool
 	 */
 	public function rest_can_manage_options() {
-		return current_user_can( 'manage_options' );
+		return Utils::user_can( 'manage_assets' );
 	}
 
 	/**

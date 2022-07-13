@@ -67,7 +67,7 @@ class REST_API {
 	 * @return bool
 	 */
 	public static function rest_can_manage_options() {
-		return current_user_can( 'manage_options' );
+		return Utils::user_can( 'connect' );
 	}
 
 	/**

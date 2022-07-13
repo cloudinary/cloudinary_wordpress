@@ -8,6 +8,7 @@
 namespace Cloudinary\Sync;
 
 use Cloudinary\Sync;
+use Cloudinary\Utils;
 
 /**
  * Class Push_Sync
@@ -144,7 +145,7 @@ class Push_Sync {
 	 * @return bool
 	 */
 	public function rest_can_manage_options() {
-		return current_user_can( 'manage_options' );
+		return Utils::user_can( 'push_sync' );
 	}
 
 	/**
