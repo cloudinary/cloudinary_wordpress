@@ -178,18 +178,18 @@ class Utils {
 	 *
 	 * @param string $task       The task to check.
 	 * @param string $capability The default capability.
+	 * @param string $context    The context for the task.
 	 * @param mixed  ...$args    Optional further parameters.
 	 *
 	 * @return bool
 	 */
-	public static function user_can( $task, $capability = 'manage_options', ...$args ) {
+	public static function user_can( $task, $capability = 'manage_options', $context = '', ...$args ) {
 
 		/**
-		 * Filter the capability required for a specific cloudinary task.
+		 * Filter the capability required for a specific Cloudinary task.
 		 *
 		 * @hook    cloudinary_task_capability_{task}
-		 * @since   2.7.6
-		 * @since   3.0.6 $args added.
+		 * @since   2.7.6. In 3.0.6 $context and $args added.
 		 *
 		 * @default 'add_gallery'             => 'edit_posts'
 		 *          'clear_cache'             => 'manage_options'
@@ -207,15 +207,16 @@ class Utils {
 		 *          'system_report'           => 'manage_options'
 		 *
 		 * @param $capability {string} The capability.
+		 * @param $context    {string} The context for the task.
 		 * @param $args       {mixed}  The optional arguments.
 		 *
 		 * @default 'manage_options'
 		 * @return  {string}
 		 */
-		$capability = apply_filters( "cloudinary_task_capability_{$task}", $capability, $args );
+		$capability = apply_filters( "cloudinary_task_capability_{$task}", $capability, $context, $args );
 
 		/**
-		 * Filter the capability required for cloudinary tasks.
+		 * Filter the capability required for Cloudinary tasks.
 		 *
 		 * @hook    cloudinary_task_capability
 		 * @since   2.7.6
@@ -223,11 +224,12 @@ class Utils {
 		 *
 		 * @param $capability {string} The current capability for the task.
 		 * @param $task       {string} The task.
+		 * @param $context    {string} The context for the task.
 		 * @param $args       {mixed}  The optional arguments.
 		 *
 		 * @return  {string}
 		 */
-		$capability = apply_filters( 'cloudinary_task_capability', $capability, $task, $args );
+		$capability = apply_filters( 'cloudinary_task_capability', $capability, $task, $context, $args );
 
 		return current_user_can( $capability, $args );
 	}

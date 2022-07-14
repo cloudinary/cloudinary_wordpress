@@ -231,7 +231,7 @@ class Assets extends Settings_Component {
 	 * @param \WP_Admin_Bar $admin_bar The admin bar object.
 	 */
 	public function admin_bar_cache( $admin_bar ) {
-		if ( ! Utils::user_can( 'clear_cache' ) || is_admin() ) {
+		if ( ! Utils::user_can( 'status' ) || is_admin() ) {
 			return;
 		}
 

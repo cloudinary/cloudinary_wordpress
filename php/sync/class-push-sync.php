@@ -145,7 +145,7 @@ class Push_Sync {
 	 * @return bool
 	 */
 	public function rest_can_manage_options() {
-		return Utils::user_can( 'push_sync' );
+		return Utils::user_can( 'manage_assets', 'manage_options', 'push_sync' );
 	}
 
 	/**

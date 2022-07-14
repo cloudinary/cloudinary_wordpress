@@ -108,7 +108,7 @@ class Upload_Sync {
 	 * @return array
 	 */
 	public function add_inline_action( $actions, $post ) {
-		if ( $this->sync->is_syncable( $post->ID ) && $this->media->is_uploadable_media( $post->ID ) && $this->media->is_media( $post->ID ) && Utils::user_can( 'push_sync', 'delete_post', $post->ID ) ) {
+		if ( $this->sync->is_syncable( $post->ID ) && $this->media->is_uploadable_media( $post->ID ) && $this->media->is_media( $post->ID ) && Utils::user_can( 'manage_assets', 'delete_post', 'bulk_actions', $post->ID ) ) {
 			$action_url = add_query_arg(
 				array(
 					'action'   => 'cloudinary-push',
