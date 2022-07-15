@@ -242,6 +242,8 @@ class Delivery implements Setup {
 				$working_content = $unslash_maybe;
 			}
 		}
+		// Sometimes, synced folders contains spaces. For properly extract URLs, we need to replace the spaces with %20.
+		$working_content = str_replace( ' ', '%20', $working_content );
 		$base_urls       = array_unique( Utils::extract_urls( $working_content ) );
 		$cloudinary_urls = array_filter( $base_urls, array( $this->media, 'is_cloudinary_url' ) ); // clean out empty urls.
 		$urls            = array();
@@ -251,6 +253,9 @@ class Delivery implements Setup {
 		foreach ( $cloudinary_urls as $url ) {
 			$public_id          = $this->media->get_public_id_from_url( $url );
 			$urls[ $public_id ] = $url;
+
+			// Ensure that the encoded spaces are reverted back to.
+			$urls[ rawurldecode( $public_id ) ] = rawurldecode( $url );
 		}
 
 		$results = $this->query_relations( array_keys( $urls ) );
