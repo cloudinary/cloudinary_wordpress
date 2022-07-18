@@ -588,7 +588,7 @@ class Utils {
 	public static function log( $message, $key = null ) {
 		$messages         = get_option( Sync::META_KEYS['debug'], array() );
 		$messages[ $key ] = $message;
-		update_option( Sync::META_KEYS['debug'], $messages );
+		update_option( Sync::META_KEYS['debug'], $messages, false );
 	}
 
 	/**
