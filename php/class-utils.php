@@ -578,4 +578,98 @@ class Utils {
 
 		return 'data:image/svg+xml;base64,' . base64_encode( $svg );
 	}
+
+	/**
+	 * Log a debug message.
+	 *
+	 * @param string      $message The message to log.
+	 * @param string|null $key     The key to log the message under.
+	 */
+	public static function log( $message, $key = null ) {
+		$messages         = get_option( Sync::META_KEYS['debug'], array() );
+		$messages[ $key ] = $message;
+		update_option( Sync::META_KEYS['debug'], $messages );
+	}
+
+	/**
+	 * Get the debug messages.
+	 *
+	 * @return array
+	 */
+	public static function get_debug_messages() {
+		return get_option( Sync::META_KEYS['debug'], array( __( 'Debug log is empty', 'cloudinary' ) ) );
+	}
+
+	/**
+	 * Check if the tag attributes contain possible third party manipulated data.
+	 *
+	 * @param array $attributes The tag attributes.
+	 *
+	 * @return bool
+	 */
+	public static function is_third_party_tag( $attributes ) {
+		static $filtered_keys, $filtered_classes;
+		$lazy_keys    = array(
+			'src',
+			'lazyload',
+			'lazy',
+			'loading',
+		);
+		$lazy_classes = array(
+			'lazyload',
+			'lazy',
+			'loading',
+		);
+		if ( ! $filtered_keys ) {
+			/**
+			 * Filter the keywords in data-* attributes on tags to be ignored from lazy-loading.
+			 *
+			 * @hook   cloudinary_ignored_data_keywords
+			 * @since  3.0.7
+			 *
+			 * @param $lazy_keys {array} The built-in ignore data-* keywords.
+			 *
+			 * @return {array}
+			 */
+			$filtered_keys = apply_filters( 'cloudinary_ignored_data_keywords', $lazy_keys );
+
+			/**
+			 * Filter the keywords in classes on tags to be ignored from lazy-loading.
+			 *
+			 * @hook   cloudinary_ignored_class_keywords
+			 * @since  3.0.7
+			 *
+			 * @param $lazy_classes {array} The built-in ignore class keywords.
+			 *
+			 * @return {array}
+			 */
+			$filtered_classes = apply_filters( 'cloudinary_ignored_class_keywords', $lazy_classes );
+		}
+		$is = false;
+		if ( ! isset( $attributes['src'] ) || false !== strpos( $attributes['src'], 'data:image' ) ) {
+			$is = true;
+		} elseif ( isset( $attributes['class'] ) ) {
+
+			$classes = explode( '-', str_replace( ' ', '-', $attributes['class'] ) );
+			if ( ! empty( array_intersect( $filtered_classes, $classes ) ) ) {
+				$is = true;
+			}
+		}
+
+		// If the above didn't find anything, check the data-* attributes.
+		if ( ! $is ) {
+			foreach ( $attributes as $key => $value ) {
+				if ( 'data-' !== substr( $key, 0, 5 ) ) {
+					continue;
+				}
+				$parts = explode( '-', $key );
+				if ( ! empty( array_intersect( $parts, $filtered_keys ) ) ) {
+					$is = true;
+					break;
+				}
+			}
+		}
+
+		return $is;
+	}
 }
