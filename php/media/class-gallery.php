@@ -198,9 +198,7 @@ class Gallery extends Settings_Component {
 		$asset = $this->get_asset();
 		wp_enqueue_script( $script['slug'], $script['src'], $asset['dependencies'], $asset['version'], $script['in_footer'] );
 
-		$color_palette = current( (array) get_theme_support( 'editor-color-palette' ) );
-
-		$color_palette = wp_json_encode( $color_palette );
+		$color_palette = wp_json_encode( current( (array) get_theme_support( 'editor-color-palette' ) ) );
 		wp_add_inline_script( $script['slug'], "var CLD_THEME_COLORS = $color_palette;", 'before' );
 	}
 
