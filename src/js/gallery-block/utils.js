@@ -54,6 +54,22 @@ export const toBlockAttributes = ( object ) => {
 	return blockAttributes;
 };
 
+export const convertColors = ( color ) => {
+	if ( color ) {
+		if ( color.startsWith( 'var(' ) ) {
+			color = color.replace( 'var(', '' ).replace( ')', '' );
+		}
+
+		if ( color.startsWith( '--' ) ) {
+			color = getComputedStyle(
+				document.documentElement
+			).getPropertyValue( color );
+		}
+	}
+
+	return color;
+};
+
 export const setupAttributesForRendering = ( attributes ) => {
 	const dot = new Dot( '_' );
 
@@ -77,6 +93,22 @@ export const setupAttributesForRendering = ( attributes ) => {
 
 	if ( 'pad' !== config?.transformation?.crop ) {
 		delete config.transformation.background;
+	}
+
+	if ( config?.themeProps?.primary ) {
+		config.themeProps.primary = convertColors(
+			config?.themeProps?.primary
+		);
+	}
+
+	if ( config?.themeProps?.onPrimary ) {
+		config.themeProps.onPrimary = convertColors(
+			config?.themeProps?.onPrimary
+		);
+	}
+
+	if ( config?.themeProps?.active ) {
+		config.themeProps.active = convertColors( config?.themeProps?.active );
 	}
 
 	if ( config.customSettings ) {

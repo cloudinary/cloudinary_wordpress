@@ -6,6 +6,7 @@ import { render, useEffect, useState } from '@wordpress/element';
 import GalleryControls from '../gallery-block/controls';
 
 import {
+	convertColors,
 	setupAttributesForRendering,
 	toBlockAttributes,
 } from '../gallery-block/utils';
@@ -55,6 +56,11 @@ const StatefulGalleryControls = () => {
 		} );
 	};
 
+	const colors = CLD_THEME_COLORS.map( ( colorObject ) => ( {
+		...colorObject,
+		color: convertColors( colorObject.color ),
+	} ) ).filter( ( colorObject ) => 0 !== colorObject.color.length );
+
 	useEffect( () => {
 		let gallery;
 
@@ -92,7 +98,7 @@ const StatefulGalleryControls = () => {
 								<GalleryControls
 									attributes={ statefulAttrs }
 									setAttributes={ setAttributes }
-									colors={ CLD_THEME_COLORS }
+									colors={ colors }
 								/>
 							</div>
 						</div>
