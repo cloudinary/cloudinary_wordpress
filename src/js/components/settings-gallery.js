@@ -31,6 +31,20 @@ const galleryWidgetConfig = ( config ) => ( {
 	container: '.gallery-preview',
 } );
 
+const app = document.querySelector( '#cloudinary-settings-page form' );
+
+if ( 'undefined' !== typeof app ) {
+	app.addEventListener( 'submit', function ( event ) {
+		if (
+			! event.submitter.name ||
+			( event.submitter.name &&
+				'cld_submission' !== event.submitter.name )
+		) {
+			event.preventDefault();
+		}
+	} );
+}
+
 const StatefulGalleryControls = () => {
 	const [ statefulAttrs, setStatefulAttrs ] = useState( parsedAttrs );
 
