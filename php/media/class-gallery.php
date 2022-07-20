@@ -200,14 +200,6 @@ class Gallery extends Settings_Component {
 
 		$color_palette = current( (array) get_theme_support( 'editor-color-palette' ) );
 
-		$pattern = '/#[a-zA-Z0-9]{6}|rgb\((?:\s*\d+\s*,){2}\s*[\d]+\)|rgba\((\s*\d+\s*,){3}[\d\.]+\)|hsl\(\s*\d+\s*(\s*\,\s*\d+\%){2}\)|hsla\(\s*\d+(\s*,\s*\d+\s*\%){2}\s*\,\s*[\d\.]+\)/';
-
-		foreach ( $color_palette as $index => $color ) {
-			if ( empty( $color['color'] ) || ! preg_match( $pattern, $color['color'] ) ) {
-				unset( $color_palette[ $index ] );
-			}
-		}
-
 		$color_palette = wp_json_encode( $color_palette );
 		wp_add_inline_script( $script['slug'], "var CLD_THEME_COLORS = $color_palette;", 'before' );
 	}
