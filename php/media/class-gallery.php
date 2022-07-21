@@ -181,6 +181,7 @@ class Gallery extends Settings_Component {
 		}
 
 		$this->block_editor_scripts_styles();
+		do_action( 'enqueue_block_editor_assets' );
 
 		wp_enqueue_style(
 			'cloudinary-gallery-settings-css',

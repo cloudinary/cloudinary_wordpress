@@ -55,19 +55,14 @@ export const toBlockAttributes = ( object ) => {
 };
 
 export const convertColors = ( color ) => {
-	if ( color ) {
-		if ( color.startsWith( 'var(' ) ) {
-			color = color.replace( 'var(', '' ).replace( ')', '' );
-		}
-
-		if ( color.startsWith( '--' ) ) {
-			color = getComputedStyle(
-				document.documentElement
-			).getPropertyValue( color );
-		}
-	}
-
-	return color;
+	const reg = /var\((.*)\)/g;
+	const res = reg.exec( color );
+	const convertedColor = res
+		? getComputedStyle( document.documentElement ).getPropertyValue(
+				res[ 1 ]
+		  )
+		: color;
+	return convertedColor.length ? convertedColor : color;
 };
 
 export const setupAttributesForRendering = ( attributes ) => {
