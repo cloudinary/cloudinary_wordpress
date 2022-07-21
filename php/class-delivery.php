@@ -1237,8 +1237,9 @@ class Delivery implements Setup {
 			return null;
 		}
 		$tag_element['type'] = 'img' === $tag_element['tag'] ? 'image' : $tag_element['tag'];
-		if ( Utils::is_third_party_tag( $attributes ) ) {
-			Utils::log( __( 'Third party loader or lazy-loading detected', 'cloudinary' ), 'third-party-loading' );
+		$third_party_change  = Utils::maybe_get_third_party_changes( $attributes );
+		if ( ! empty( $third_party_change ) ) {
+			Utils::log( $third_party_change, 'third-party-loading' );
 
 			return null;
 		}

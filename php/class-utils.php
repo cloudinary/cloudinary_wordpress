@@ -586,9 +586,16 @@ class Utils {
 	 * @param string|null $key     The key to log the message under.
 	 */
 	public static function log( $message, $key = null ) {
-		$messages         = get_option( Sync::META_KEYS['debug'], array() );
-		$messages[ $key ] = $message;
-		update_option( Sync::META_KEYS['debug'], $messages, false );
+		if ( get_plugin_instance()->get_component( 'report' )->enabled() ) {
+			$messages = get_option( Sync::META_KEYS['debug'], array() );
+			if ( $key ) {
+				$hash                      = md5( $message );
+				$messages[ $key ][ $hash ] = $message;
+			} else {
+				$messages[] = $message;
+			}
+			update_option( Sync::META_KEYS['debug'], $messages, false );
+		}
 	}
 
 	/**
@@ -601,13 +608,13 @@ class Utils {
 	}
 
 	/**
-	 * Check if the tag attributes contain possible third party manipulated data.
+	 * Check if the tag attributes contain possible third party manipulated data, and return found data.
 	 *
 	 * @param array $attributes The tag attributes.
 	 *
-	 * @return bool
+	 * @return string|false
 	 */
-	public static function is_third_party_tag( $attributes ) {
+	public static function maybe_get_third_party_changes( $attributes ) {
 		static $filtered_keys, $filtered_classes;
 		$lazy_keys    = array(
 			'src',
@@ -646,13 +653,14 @@ class Utils {
 			$filtered_classes = apply_filters( 'cloudinary_ignored_class_keywords', $lazy_classes );
 		}
 		$is = false;
-		if ( ! isset( $attributes['src'] ) || false !== strpos( $attributes['src'], 'data:image' ) ) {
-			$is = true;
+		if ( ! isset( $attributes['src'] ) ) {
+			$is = __( 'Missing SRC attribute.', 'cloudinary' );
+		} elseif ( false !== strpos( $attributes['src'], 'data:image' ) ) {
+			$is = $attributes['src'];
 		} elseif ( isset( $attributes['class'] ) ) {
-
 			$classes = explode( '-', str_replace( ' ', '-', $attributes['class'] ) );
 			if ( ! empty( array_intersect( $filtered_classes, $classes ) ) ) {
-				$is = true;
+				$is = $attributes['class'];
 			}
 		}
 
@@ -664,7 +672,7 @@ class Utils {
 				}
 				$parts = explode( '-', $key );
 				if ( ! empty( array_intersect( $parts, $filtered_keys ) ) ) {
-					$is = true;
+					$is = $key;
 					break;
 				}
 			}

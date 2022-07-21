@@ -37,7 +37,18 @@ class Debug extends Component {
 		$struct['element'] = 'pre';
 
 		$messages = Utils::get_debug_messages();
-		$struct['content'] = implode( "\n", $messages );
+		$list     = array();
+		foreach ( $messages as $key => $message ) {
+			if ( is_array( $message ) ) {
+				$list[] = $key . ':';
+				$list[] = implode( "\n", $message );
+				$list[] = '----------';
+
+			} else {
+				$list[] = $message;
+			}
+		}
+		$struct['content'] = implode( "\n", $list );
 
 		return $struct;
 	}

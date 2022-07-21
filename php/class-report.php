@@ -155,6 +155,7 @@ class Report extends Settings_Component implements Setup {
 	 */
 	public function init_reporting( $new_value ) {
 		delete_option( self::REPORT_KEY );
+		delete_option( Sync::META_KEYS['debug'] );
 
 		return $new_value;
 	}
@@ -384,6 +385,8 @@ class Report extends Settings_Component implements Setup {
 		$this->posts();
 		// Add config.
 		$this->config();
+		// Add debug log.
+		$this->degbug_log();
 
 		return $this->report_data;
 	}
@@ -491,6 +494,13 @@ class Report extends Settings_Component implements Setup {
 			$config['gallery'] = $this->plugin->get_component( 'media' )->gallery->get_config();
 		}
 		$this->add_report_block( 'config_report', $config );
+	}
+
+	/**
+	 * Add debug log report.
+	 */
+	protected function degbug_log() {
+		$this->add_report_block( 'debug_log', Utils::get_debug_messages() );
 	}
 
 	/**
