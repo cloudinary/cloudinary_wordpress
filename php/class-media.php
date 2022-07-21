@@ -1298,7 +1298,7 @@ class Media extends Settings_Component implements Setup {
 			$url
 		);
 
-		return $cache[ $key ];
+		return esc_url( $cache[ $key ] );
 	}
 
 	/**
