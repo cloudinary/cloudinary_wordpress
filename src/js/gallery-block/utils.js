@@ -62,7 +62,7 @@ export const convertColors = ( color ) => {
 				res[ 1 ]
 		  )
 		: color;
-	return convertedColor.length ? convertedColor : color;
+	return convertedColor;
 };
 
 export const setupAttributesForRendering = ( attributes ) => {
