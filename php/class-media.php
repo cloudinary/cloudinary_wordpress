@@ -659,6 +659,11 @@ class Media extends Settings_Component implements Setup {
 			}
 		}
 
+		// Bail on incomplete url.
+		if ( empty( $parts ) ) {
+			return null;
+		}
+
 		// The remaining items should be the file.
 		$file      = implode( '/', $parts );
 		$path_info = Utils::pathinfo( $file );
@@ -676,7 +681,7 @@ class Media extends Settings_Component implements Setup {
 			$public_id      .= ! empty( $transformations ) ? wp_json_encode( $transformations ) : '';
 		}
 
-		return $public_id;
+		return rawurldecode( $public_id );
 	}
 
 	/**
@@ -1293,7 +1298,7 @@ class Media extends Settings_Component implements Setup {
 			$url
 		);
 
-		return $cache[ $key ];
+		return esc_url( $cache[ $key ] );
 	}
 
 	/**
