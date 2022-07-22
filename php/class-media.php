@@ -238,6 +238,7 @@ class Media extends Settings_Component implements Setup {
 			'ept'  => 'jpg',
 			'eps3' => 'jpg',
 			'indd' => 'jpg',
+			'webp' => 'gif',
 			'bmp'  => 'jpg',
 			'flif' => 'jpg',
 			'gltf' => 'jpg',
@@ -266,6 +267,7 @@ class Media extends Settings_Component implements Setup {
 	 * @return bool
 	 */
 	public function is_file_compatible( $file ) {
+
 		if ( file_is_displayable_image( $file ) ) {
 			return true;
 		}
