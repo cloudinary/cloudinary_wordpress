@@ -417,17 +417,30 @@ class Report extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Convert a file path to a slug (folder/file.extension).
+	 *
+	 * @param string $path The file path.
+	 *
+	 * @return string
+	 */
+	protected function file_path_to_slug( $path ) {
+		return wp_basename( dirname( $path ) ) . '/' . wp_basename( $path );
+	}
+
+	/**
 	 * Build the plugins report.
 	 */
 	protected function plugins() {
 
 		$plugin_data = array(
-			'must_use' => wp_get_mu_plugins(),
+			'must_use' => array_map( array( $this, 'file_path_to_slug' ), wp_get_mu_plugins() ),
 			'plugins'  => array(),
 		);
 		$active      = wp_get_active_and_valid_plugins();
 		foreach ( $active as $plugin ) {
-			$plugin_data['plugins'][] = get_plugin_data( $plugin );
+			$slug                                    = $this->file_path_to_slug( $plugin );
+			$plugin_data['plugins'][ $slug ]         = get_plugin_data( $plugin, false, false );
+			$plugin_data['plugins'][ $slug ]['slug'] = $slug;
 		}
 		$this->add_report_block( 'plugins_report', $plugin_data );
 	}

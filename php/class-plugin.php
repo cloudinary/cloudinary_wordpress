@@ -150,6 +150,7 @@ final class Plugin {
 		$this->components['dashboard']              = new Dashboard( $this );
 		$this->components['extensions']             = new Extensions( $this );
 		$this->components['svg']                    = new SVG( $this );
+		$this->components['relate']                 = new Relate( $this );
 	}
 
 	/**
