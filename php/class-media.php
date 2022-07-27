@@ -680,6 +680,11 @@ class Media extends Settings_Component implements Setup {
 			}
 		}
 
+		// Bail on incomplete url.
+		if ( empty( $parts ) ) {
+			return null;
+		}
+
 		// The remaining items should be the file.
 		$file      = implode( '/', $parts );
 		$path_info = Utils::pathinfo( $file );
@@ -697,7 +702,7 @@ class Media extends Settings_Component implements Setup {
 			$public_id      .= ! empty( $transformations ) ? wp_json_encode( $transformations ) : '';
 		}
 
-		return $public_id;
+		return rawurldecode( $public_id );
 	}
 
 	/**
@@ -1325,11 +1330,13 @@ class Media extends Settings_Component implements Setup {
 		$url = apply_filters( 'cloudinary_converted_url', $url, $attachment_id, $pre_args );
 
 		// Add Cloudinary analytics.
-		$cache[ $key ] = add_query_arg(
-			array(
-				'_i' => 'AA',
-			),
-			$url
+		$cache[ $key ] = esc_url(
+			add_query_arg(
+				array(
+					'_i' => 'AA',
+				),
+				$url
+			)
 		);
 
 		return $cache[ $key ];
@@ -1756,7 +1763,7 @@ class Media extends Settings_Component implements Setup {
 			return $sources; // Return WordPress default sources.
 		}
 		// Get transformations if any.
-		$transformations = (array) $this->get_post_meta( $attachment_id, Sync::META_KEYS['transformation'], true );
+		$transformations = Relate::get_transformations( $attachment_id );
 
 		// For cases where transformations are added via cld_params.
 		if ( ! empty( $image_meta['transformations'] ) ) {
@@ -1964,7 +1971,7 @@ class Media extends Settings_Component implements Setup {
 		if ( ! empty( $asset['transformations'] ) ) {
 			// Save a combined key.
 			$sync_key .= wp_json_encode( $asset['transformations'] );
-			$this->update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], $asset['transformations'] );
+			Relate::update_transformations( $attachment_id, $asset['transformations'] );
 		}
 
 		// Create a trackable key in post meta to allow getting the attachment id from URL with transformations.
@@ -1978,7 +1985,7 @@ class Media extends Settings_Component implements Setup {
 		// Capture the ALT Text.
 		if ( ! empty( $asset['meta']['alt'] ) ) {
 			$alt_text = wp_strip_all_tags( $asset['meta']['alt'] );
-			$this->update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt_text );
+			update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt_text );
 		}
 
 		return $attachment_id;
@@ -2293,12 +2300,7 @@ class Media extends Settings_Component implements Setup {
 	 * @return array
 	 */
 	public function get_transformation_from_meta( $post_id ) {
-		$transformations = $this->get_post_meta( $post_id, Sync::META_KEYS['transformation'], true );
-		if ( empty( $transformations ) ) {
-			$transformations = array();
-		}
-
-		return $transformations;
+		return Relate::get_transformations( $post_id );
 	}
 
 	/**

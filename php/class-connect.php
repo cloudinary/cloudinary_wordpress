@@ -572,6 +572,9 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		if ( ! empty( $parts['query'] ) ) {
 			$config_params = array();
 			wp_parse_str( $parts['query'], $config_params );
+			if ( empty( $config_params['upload_prefix'] ) ) {
+				$this->set_credentials( array( 'upload_prefix' => reset( Api::$qualified_upload_prefixes ) ) );
+			}
 			if ( ! empty( $config_params ) ) {
 				$this->set_credentials( $config_params );
 			}

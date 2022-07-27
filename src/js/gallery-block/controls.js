@@ -37,6 +37,7 @@ import {
 } from './options';
 
 import Radio from './radio';
+import { convertColors } from './utils';
 
 const ColorPaletteLabel = ( { children, value } ) => (
 	<div className="colorpalette-color-label">
@@ -68,6 +69,12 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 	if ( 'fill' === attributes.transformation_crop ) {
 		delete attributes.transformation_background;
 	}
+
+	const onChangeColor = ( value, key ) => {
+		const newAttrs = { [ key ]: convertColors( value ) };
+
+		setAttributes( newAttrs );
+	};
 
 	return (
 		<>
@@ -104,7 +111,7 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 					colors={ colors }
 					disableCustomColors={ false }
 					onChange={ ( value ) =>
-						setAttributes( { themeProps_primary: value } )
+						onChangeColor( value, 'themeProps_primary' )
 					}
 				/>
 				<ColorPaletteLabel value={ attributes.themeProps_onPrimary }>
@@ -115,7 +122,7 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 					colors={ colors }
 					disableCustomColors={ false }
 					onChange={ ( value ) =>
-						setAttributes( { themeProps_onPrimary: value } )
+						onChangeColor( value, 'themeProps_onPrimary' )
 					}
 				/>
 				<ColorPaletteLabel value={ attributes.themeProps_active }>
@@ -126,7 +133,7 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 					colors={ colors }
 					disableCustomColors={ false }
 					onChange={ ( value ) =>
-						setAttributes( { themeProps_active: value } )
+						onChangeColor( value, 'themeProps_active' )
 					}
 				/>
 			</PanelBody>

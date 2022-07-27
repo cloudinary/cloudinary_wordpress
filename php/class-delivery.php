@@ -15,6 +15,7 @@ use Cloudinary\Sync;
 use Cloudinary\String_Replace;
 use Cloudinary\UI\Component\HTML;
 use Cloudinary\Delivery\Bypass;
+use Cloudinary\Relate\Relationship;
 use WP_Post;
 
 /**
@@ -450,9 +451,8 @@ class Delivery implements Setup {
 	 * @param int $attachment_id The attachment ID.
 	 */
 	public function delete_size_relationship( $attachment_id ) {
-		global $wpdb;
-
-		$wpdb->delete( Utils::get_relationship_table(), array( 'post_id' => $attachment_id ), array( '%d' ) ); // phpcs:ignore WordPress.DB
+		$relationship = Relationship::get_relationship( $attachment_id );
+		$relationship->delete();
 
 		/**
 		 * Action to flush delivery caches.
@@ -518,13 +518,11 @@ class Delivery implements Setup {
 	 * @param string $public_id     The public ID.
 	 */
 	public static function update_size_relations_public_id( $attachment_id, $public_id ) {
-		global $wpdb;
-		$data = array(
-			'public_id'   => $public_id,
-			'public_hash' => md5( $public_id ),
-			'signature'   => self::get_settings_signature(),
-		);
-		$wpdb->update( Utils::get_relationship_table(), $data, array( 'post_id' => $attachment_id ), array( '%s' ), array( '%d' ) );// phpcs:ignore WordPress.DB
+		$relationship              = Relationship::get_relationship( $attachment_id );
+		$relationship->public_id   = $public_id;
+		$relationship->public_hash = md5( $public_id );
+		$relationship->signature   = self::get_settings_signature();
+		$relationship->save();
 
 		/**
 		 * Action to flush delivery caches.
@@ -542,11 +540,9 @@ class Delivery implements Setup {
 	 * @param string $state         The state to set.
 	 */
 	public static function update_size_relations_state( $attachment_id, $state ) {
-		global $wpdb;
-		$data = array(
-			'post_state' => $state,
-		);
-		$wpdb->update( Utils::get_relationship_table(), $data, array( 'post_id' => $attachment_id ), array( '%s' ), array( '%d' ) );// phpcs:ignore WordPress.DB
+		$relationship             = Relationship::get_relationship( $attachment_id );
+		$relationship->post_state = $state;
+		$relationship->save();
 
 		/**
 		 * Action to flush delivery caches.
@@ -564,11 +560,7 @@ class Delivery implements Setup {
 	 * @param string $transformations The transformations to set.
 	 */
 	public static function update_size_relations_transformations( $attachment_id, $transformations ) {
-		global $wpdb;
-		$data = array(
-			'transformations' => $transformations,
-		);
-		$wpdb->update( Utils::get_relationship_table(), $data, array( 'post_id' => $attachment_id ), array( '%s' ), array( '%d' ) );// phpcs:ignore WordPress.DB
+		Relate::update_transformations( $attachment_id, $transformations );
 
 		/**
 		 * Action to flush delivery caches.
@@ -622,7 +614,10 @@ class Delivery implements Setup {
 		$type            = 'attachment' === get_post_type( $attachment_id ) ? 'media' : 'asset';
 		$resource        = $media->get_resource_type( $attachment_id );
 		$width_height    = explode( 'x', $size );
-		$transformations = $media->get_transformation_from_meta( $attachment_id );
+		$transformations = $media->get_post_meta( $attachment_id, Sync::META_KEYS['transformation'], true );
+		if ( ! is_null( $transformations ) ) {
+			$media->delete_post_meta( $attachment_id, Sync::META_KEYS['transformation'] );
+		}
 		$data            = array(
 			'post_id'         => $attachment_id,
 			'parent_path'     => $parent_path,
@@ -1000,9 +995,9 @@ class Delivery implements Setup {
 			if ( empty( $relation['public_id'] || $url === $relation['public_id'] ) ) {
 				continue; // We don't need the public_id relation item.
 			}
-			$base                   = $type . ':' . $url;
-			$public_id              = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
-			$cloudinary_url         = $this->media->cloudinary_url( $relation['post_id'], array(), $relation['transformations'], $public_id );
+			$base           = $type . ':' . $url;
+			$public_id      = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
+			$cloudinary_url = $this->media->cloudinary_url( $relation['post_id'], array(), $relation['transformations'], $public_id );
 			if ( ! empty( $relation['slashed'] ) && $relation['slashed'] ) {
 				$aliases[ $base . '?' ] = addcslashes( $cloudinary_url . '&', '/' );
 				$aliases[ $base ]       = addcslashes( $cloudinary_url, '/' );
@@ -1029,6 +1024,10 @@ class Delivery implements Setup {
 				$cloudinary_url              = $this->media->cloudinary_url( $relation['post_id'], explode( 'x', $size ), $relation['transformations'], $public_id );
 				$aliases[ $local_url . '?' ] = $cloudinary_url . '&';
 				$aliases[ $local_url ]       = $cloudinary_url;
+
+				// Some URLs might be slashed, but the found_urls does not have that information.
+				$aliases[ addcslashes( $local_url . '?', '/' ) ] = addcslashes( $cloudinary_url . '&', '/' );
+				$aliases[ addcslashes( $local_url, '/' ) ]       = addcslashes( $cloudinary_url, '/' );
 			}
 		}
 
@@ -1675,7 +1674,7 @@ class Delivery implements Setup {
 	 */
 	public function prepare_delivery( $content ) {
 		$content    = wp_unslash( $content );
-		$all_urls   = array_unique( wp_extract_urls( $content ) );
+		$all_urls   = array_unique( Utils::extract_urls( $content ) );
 		$base_urls  = array_filter( array_map( array( $this, 'sanitize_url' ), $all_urls ) );
 		$clean_urls = array_map( array( $this, 'clean_url' ), $base_urls );
 		$urls       = array_filter( $clean_urls, array( $this, 'validate_url' ) );
