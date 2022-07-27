@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Filter: cloudinary_sync_base_struct - Cloudinary Docs</title>
+	<title>Action: cloudinary_upgrade_asset - Cloudinary Docs</title>
 
 	<script src="scripts/prettify/prettify.js"></script>
 	<script src="scripts/prettify/lang-css.js"></script>
@@ -22,7 +22,7 @@
 <div id="main">
 
 	
-	<h1 class="page-title">Filter: cloudinary_sync_base_struct</h1>
+	<h1 class="page-title">Action: cloudinary_upgrade_asset</h1>
 	
 
 	
@@ -44,14 +44,14 @@
 
     
 
-    <h4 class="name" id="cloudinary_sync_base_struct">apply_filters( 'cloudinary_sync_base_struct', <span class="signature">$base_struct )</span><span class="type-signature"> &rarr; {array}</span></h4>
+    <h4 class="name" id="cloudinary_upgrade_asset">do_action( 'cloudinary_upgrade_asset', <span class="signature">$attachment_id, $version )</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    Filter the sync base structure to allow other plugins to sync component callbacks.
+    Action to trigger an upgrade on a synced asset.
 </div>
 
 
@@ -85,13 +85,13 @@
 
         <tr>
             
-                <td class="name"><code>$base_struct</code></td>
+                <td class="name"><code>$attachment_id</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">array</span>
+<span class="param-type">int</span>
 
 
             
@@ -101,7 +101,30 @@
 
             
 
-            <td class="description last">The base sync structure.</td>
+            <td class="description last">The attachment ID.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>$version</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The current plugin version.</td>
         </tr>
 
     
@@ -117,6 +140,9 @@
 
     
 
+    
+    <dt class="tag-since">Since:</dt>
+    <dd class="tag-since"><ul class="dummy"><li>3.0.5</li></ul></dd>
     
 
     
@@ -142,7 +168,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="php_class-sync.php.html">php/class-sync.php</a>, <a href="php_class-sync.php.html#line646">line 646</a>
+        <a href="php_media_class-upgrade.php.html">php/media/class-upgrade.php</a>, <a href="php_media_class-upgrade.php.html#line61">line 61</a>
     </li></ul></dd>
     
 
@@ -165,24 +191,6 @@
 
 
 
-<h5>Returns:</h5>
-
-        
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">array</span>
-
-
-    </dd>
-</dl>
-
-    
 
 
 
