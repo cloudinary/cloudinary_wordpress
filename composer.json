@@ -22,10 +22,10 @@
   },
   "scripts": {
     "lint": [
-      "phpcs --ignore=*js/*"
+      "phpcs"
     ],
     "fix": [
-      "phpcbf --ignore=*js/*"
+      "phpcbf"
     ]
   }
 }

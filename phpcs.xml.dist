@@ -31,7 +31,8 @@
 	<!-- Include WP VIP coding standard checks -->
 	<rule ref="WordPress-VIP-Go" />
 
+	<exclude-pattern>/build/</exclude-pattern>
+	<exclude-pattern>/js/</exclude-pattern>
 	<exclude-pattern>/node_modules/</exclude-pattern>
 	<exclude-pattern>/vendor/</exclude-pattern>
-	<exclude-pattern>/build/</exclude-pattern>
 </ruleset>
