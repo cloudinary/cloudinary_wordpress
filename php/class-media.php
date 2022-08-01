@@ -1924,7 +1924,8 @@ class Media extends Settings_Component implements Setup {
 		if ( ! empty( $asset['transformations'] ) ) {
 			// Save a combined key.
 			$sync_key .= wp_json_encode( $asset['transformations'] );
-			Relate::update_transformations( $attachment_id, $asset['transformations'] );
+			// Use post meta temporarily to store the transformations until the attachment gets a sync relationship.
+			$this->update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], $asset['transformations'] );
 		}
 
 		// Create a trackable key in post meta to allow getting the attachment id from URL with transformations.
