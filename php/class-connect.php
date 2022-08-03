@@ -503,7 +503,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		$is_valid = false;
 
 		if ( defined( 'FILTER_VALIDATE_DOMAIN' ) ) { // phpcs:ignore PHPCompatibility.Constants.NewConstants.filter_validate_domainFound
-			$is_valid = filter_var( $domain, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME ); // phpcs:ignore PHPCompatibility.Constants.NewConstants.filter_validate_domainFound
+			$is_valid = filter_var( $domain, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME ); // phpcs:ignore PHPCompatibility.Constants.NewConstants
 		} else {
 			$domain   = 'https://' . $domain;
 			$is_valid = filter_var( $domain, FILTER_VALIDATE_URL );
