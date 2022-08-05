@@ -268,6 +268,9 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function is_file_compatible( $file ) {
 
+		if ( file_is_displayable_image( $file ) ) {
+			return true;
+		}
 		$types        = $this->get_compatible_media_types();
 		$file         = wp_parse_url( $file, PHP_URL_PATH );
 		$filename     = Utils::pathinfo( $file, PATHINFO_BASENAME );
