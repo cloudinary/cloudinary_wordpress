@@ -17,6 +17,13 @@ use Google\Web_Stories\Story_Post_Type;
  */
 class Utils {
 
+	/**
+	 * Holds a list of temp files to be purged.
+	 *
+	 * @var array
+	 */
+	public static $file_fragments = array();
+
 	const METADATA = array(
 		'actions' => array(
 			'add_{object}_metadata',
@@ -577,5 +584,68 @@ class Utils {
 		$svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $width . '" height="' . $height . '"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $color . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
 
 		return 'data:image/svg+xml;base64,' . base64_encode( $svg );
+	}
+
+	/**
+	 * Download a fragment of a file URL to a temp file and return the file URI.
+	 *
+	 * @param string $url  The URL to download.
+	 * @param int    $size The size of the fragment to download.
+	 *
+	 * @return string|false
+	 */
+	public static function download_fragment( $url, $size = 1048576 ) {
+
+		$pointer = tmpfile();
+		$file    = false;
+		if ( $pointer ) {
+			// Prep to purge.
+			$index = count( self::$file_fragments );
+			if ( empty( $index ) ) {
+				add_action( 'shutdown', array( __CLASS__, 'purge_fragments' ) );
+			}
+			self::$file_fragments[ $index ] = $pointer;
+			// Get the metadata of the stream.
+			$data = stream_get_meta_data( $pointer );
+			// Stream the content to the temp file.
+			$response = wp_safe_remote_get(
+				$url,
+				array(
+					'timeout'             => 300, // phpcs:ignore WordPressVIPMinimum.Performance.RemoteRequestTimeout.timeout_timeout
+					'stream'              => true,
+					'filename'            => $data['uri'],
+					'limit_response_size' => $size,
+				)
+			);
+			if ( ! is_wp_error( $response ) ) {
+				$file = $data['uri'];
+			} else {
+				// Clean up if there was an error.
+				self::purge_fragment( $index );
+			}
+		}
+
+		return $file;
+	}
+
+	/**
+	 * Purge fragment temp files on shutdown.
+	 */
+	public static function purge_fragments() {
+		foreach ( array_keys( self::$file_fragments ) as $index ) {
+			self::purge_fragment( $index );
+		}
+	}
+
+	/**
+	 * Purge a fragment temp file.
+	 *
+	 * @param int $index The index of the fragment to purge.
+	 */
+	public static function purge_fragment( $index ) {
+		if ( isset( self::$file_fragments[ $index ] ) ) {
+			fclose( self::$file_fragments[ $index ] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fclose
+			unset( self::$file_fragments[ $index ] );
+		}
 	}
 }

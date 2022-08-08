@@ -267,12 +267,16 @@ class Media extends Settings_Component implements Setup {
 	 * @return bool
 	 */
 	public function is_file_compatible( $file ) {
-
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		$original_file = $file;
+		if ( $this->is_cloudinary_url( $file ) ) {
+			$file = Utils::download_fragment( $file );
+		}
 		if ( file_is_displayable_image( $file ) ) {
 			return true;
 		}
 		$types        = $this->get_compatible_media_types();
-		$file         = wp_parse_url( $file, PHP_URL_PATH );
+		$file         = wp_parse_url( $original_file, PHP_URL_PATH );
 		$filename     = Utils::pathinfo( $file, PATHINFO_BASENAME );
 		$mime         = wp_check_filetype( $filename );
 		$type         = strstr( $mime['type'], '/', true );
@@ -1804,9 +1808,9 @@ class Media extends Settings_Component implements Setup {
 			return false;
 		}
 		$test_parts = wp_parse_url( $url );
-		$cld_url    = $this->plugin->components['connect']->api->asset_url;
+		$cld_url    = wp_parse_url( $this->base_url, PHP_URL_HOST );
 
-		return isset( $test_parts['path'] ) && $test_parts['host'] === $cld_url;
+		return isset( $test_parts['path'] ) && false !== strpos( $test_parts['host'], $cld_url );
 	}
 
 	/**
