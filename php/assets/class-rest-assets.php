@@ -53,12 +53,12 @@ class Rest_Assets {
 		$endpoints['show_cache']          = array(
 			'method'              => \WP_REST_Server::CREATABLE,
 			'callback'            => array( $this, 'rest_get_caches' ),
-			'permission_callback' => array( $this, 'rest_can_manage_options' ),
+			'permission_callback' => array( $this, 'rest_can_manage_assets' ),
 			'args'                => array(),
 		);
 		$endpoints['disable_cache_items'] = array(
 			'method'              => \WP_REST_Server::CREATABLE,
-			'permission_callback' => array( $this, 'rest_can_manage_options' ),
+			'permission_callback' => array( $this, 'rest_can_manage_assets' ),
 			'callback'            => array( $this, 'rest_handle_state' ),
 			'args'                => array(
 				'ids'   => array(
@@ -76,21 +76,21 @@ class Rest_Assets {
 		$endpoints['purge_cache']         = array(
 			'method'              => \WP_REST_Server::CREATABLE,
 			'callback'            => array( $this, 'rest_purge' ),
-			'permission_callback' => array( $this, 'rest_can_manage_options' ),
+			'permission_callback' => array( $this, 'rest_can_manage_assets' ),
 			'args'                => array(),
 		);
 
 		$endpoints['purge_all'] = array(
 			'method'              => \WP_REST_Server::CREATABLE,
 			'callback'            => array( $this, 'rest_purge_all' ),
-			'permission_callback' => array( $this, 'rest_can_manage_options' ),
+			'permission_callback' => array( $this, 'rest_can_manage_assets' ),
 			'args'                => array(),
 		);
 
 		$endpoints['save_asset'] = array(
 			'method'              => \WP_REST_Server::CREATABLE,
 			'callback'            => array( $this, 'rest_save_asset' ),
-			'permission_callback' => array( $this, 'rest_can_manage_options' ),
+			'permission_callback' => array( $this, 'rest_can_manage_assets' ),
 			'args'                => array(),
 		);
 
@@ -238,7 +238,7 @@ class Rest_Assets {
 	 *
 	 * @return bool
 	 */
-	public function rest_can_manage_options() {
+	public function rest_can_manage_assets() {
 		return Utils::user_can( 'manage_assets' );
 	}
 
