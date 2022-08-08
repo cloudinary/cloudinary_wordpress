@@ -1810,7 +1810,7 @@ class Media extends Settings_Component implements Setup {
 		$test_parts = wp_parse_url( $url );
 		$cld_url    = wp_parse_url( $this->base_url, PHP_URL_HOST );
 
-		return isset( $test_parts['path'] ) && $test_parts['host'] === $cld_url;
+		return isset( $test_parts['path'] ) && false !== strpos( $test_parts['host'], $cld_url );
 	}
 
 	/**
