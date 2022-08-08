@@ -600,10 +600,11 @@ class Utils {
 		$file    = false;
 		if ( $pointer ) {
 			// Prep to purge.
-			if ( empty( self::$file_fragments ) ) {
+			$index = count( self::$file_fragments );
+			if ( empty( $index ) ) {
 				add_action( 'shutdown', array( __CLASS__, 'purge_fragments' ) );
 			}
-			self::$file_fragments[] = $pointer;
+			self::$file_fragments[ $index ] = $pointer;
 			// Get the metadata of the stream.
 			$data = stream_get_meta_data( $pointer );
 			// Stream the content to the temp file.
@@ -620,7 +621,7 @@ class Utils {
 				$file = $data['uri'];
 			} else {
 				// Clean up if there was an error.
-				self::purge_fragments();
+				self::purge_fragment( $index );
 			}
 		}
 
