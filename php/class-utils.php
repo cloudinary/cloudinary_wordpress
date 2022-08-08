@@ -611,7 +611,7 @@ class Utils {
 			$response = wp_safe_remote_get(
 				$url,
 				array(
-					'timeout'             => 300, // phpcs:ignore
+					'timeout'             => 300, // phpcs:ignore WordPressVIPMinimum.Performance.RemoteRequestTimeout.timeout_timeout
 					'stream'              => true,
 					'filename'            => $data['uri'],
 					'limit_response_size' => $size,

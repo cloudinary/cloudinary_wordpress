@@ -1808,7 +1808,7 @@ class Media extends Settings_Component implements Setup {
 			return false;
 		}
 		$test_parts = wp_parse_url( $url );
-		$cld_url    = $this->plugin->components['connect']->api->asset_url;
+		$cld_url    = wp_parse_url( $this->base_url, PHP_URL_HOST );
 
 		return isset( $test_parts['path'] ) && $test_parts['host'] === $cld_url;
 	}
