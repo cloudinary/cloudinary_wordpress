@@ -183,39 +183,80 @@ class Utils {
 	/**
 	 * Check if the current user can perform a task.
 	 *
-	 * @param string $task The task to check.
+	 * @param string $task       The task to check.
+	 * @param string $capability The default capability.
+	 * @param string $context    The context for the task.
+	 * @param mixed  ...$args    Optional further parameters.
 	 *
 	 * @return bool
 	 */
-	public static function user_can( $task ) {
+	public static function user_can( $task, $capability = 'manage_options', $context = '', ...$args ) {
 
+		// phpcs:disable WordPress.WhiteSpace.DisallowInlineTabs.NonIndentTabsUsed
 		/**
-		 * Filter the capability required for a specific cloudinary task.
+		 * Filter the capability required for a specific Cloudinary task.
 		 *
 		 * @hook    cloudinary_task_capability_{task}
-		 * @since   2.7.6
+		 * @since   2.7.6. In 3.0.6 $context and $args added.
+		 *
+		 * @example
+		 * <?php
+		 *
+		 * // Enforce `manage_options` to download an asset from Cloudinary.
+		 * add_filter(
+		 * 	'cloudinary_task_capability_manage_assets',
+		 * 	function( $task, $context ) {
+		 * 		if ( 'download' === $context ) {
+		 * 			$capability = 'manage_options';
+		 * 		}
+		 * 		return $capability;
+		 * 	},
+		 * 	10,
+		 * 	2
+		 * );
 		 *
 		 * @param $capability {string} The capability.
+		 * @param $context    {string} The context for the task.
+		 * @param $args       {mixed}  The optional arguments.
 		 *
 		 * @default 'manage_options'
 		 * @return  {string}
 		 */
-		$capability = apply_filters( "cloudinary_task_capability_{$task}", 'manage_options' );
+		$capability = apply_filters( "cloudinary_task_capability_{$task}", $capability, $context, $args );
 
 		/**
-		 * Filter the capability required for cloudinary tasks.
+		 * Filter the capability required for Cloudinary tasks.
 		 *
 		 * @hook    cloudinary_task_capability
-		 * @since   2.7.6
+		 * @since   2.7.6. In 3.0.6 $context and $args added.
+		 *
+		 * @example
+		 * <?php
+		 *
+		 * // Enforce `manage_options` to download an asset from Cloudinary.
+		 * add_filter(
+		 * 	'cloudinary_task_capability',
+		 * 	function( $capability, $task, $context ) {
+		 * 		if ( 'manage_assets' === $task && 'download' === $context ) {
+		 * 			$capability = 'manage_options';
+		 * 		}
+		 * 		return $capability;
+		 * 	},
+		 * 	10,
+		 * 	3
+		 * );
 		 *
 		 * @param $capability {string} The current capability for the task.
 		 * @param $task       {string} The task.
+		 * @param $context    {string} The context for the task.
+		 * @param $args       {mixed}  The optional arguments.
 		 *
 		 * @return  {string}
 		 */
-		$capability = apply_filters( 'cloudinary_task_capability', $capability, $task );
+		$capability = apply_filters( 'cloudinary_task_capability', $capability, $task, $context, $args );
+		// phpcs:enable WordPress.WhiteSpace.DisallowInlineTabs.NonIndentTabsUsed
 
-		return current_user_can( $capability );
+		return current_user_can( $capability, $args );
 	}
 
 	/**

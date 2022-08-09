@@ -118,13 +118,13 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			'method'              => \WP_REST_Server::CREATABLE,
 			'callback'            => array( $this, 'rest_test_connection' ),
 			'args'                => array(),
-			'permission_callback' => array( 'Cloudinary\REST_API', 'rest_can_manage_options' ),
+			'permission_callback' => array( 'Cloudinary\REST_API', 'rest_can_connect' ),
 		);
 		$endpoints['save_wizard']     = array(
 			'method'              => \WP_REST_Server::CREATABLE,
 			'callback'            => array( $this, 'rest_save_wizard' ),
 			'args'                => array(),
-			'permission_callback' => array( 'Cloudinary\REST_API', 'rest_can_manage_options' ),
+			'permission_callback' => array( 'Cloudinary\REST_API', 'rest_can_connect' ),
 		);
 
 		return $endpoints;

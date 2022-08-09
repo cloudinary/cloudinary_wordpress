@@ -510,7 +510,7 @@ class Report extends Settings_Component implements Setup {
 		$page     = Utils::get_sanitized_text( 'page' );
 		$section  = Utils::get_sanitized_text( 'section' );
 		$download = filter_input( INPUT_GET, self::REPORT_DOWNLOAD_KEY, FILTER_VALIDATE_BOOLEAN );
-		if ( $download && 'cloudinary_help' === $page && 'system-report' === $section && current_user_can( 'manage_options' ) ) {
+		if ( $download && 'cloudinary_help' === $page && 'system-report' === $section && Utils::user_can( 'system_report' ) ) {
 			$report = $this->get_report_data();
 			header( 'Content-Description: File Transfer' );
 			header( 'Content-Type: application/octet-stream' );
