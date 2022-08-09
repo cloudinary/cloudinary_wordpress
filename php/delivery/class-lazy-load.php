@@ -59,7 +59,7 @@ class Lazy_Load extends Delivery_Feature {
 
 		$flag = filter_input( INPUT_GET, 'cloudinary_lazy_load_loader', FILTER_SANITIZE_STRING );
 		if ( $flag ) {
-			$expires = 10 * DAY_IN_SECONDS;
+			$expires = HOUR_IN_SECONDS;
 			header( 'Cache-Control: max-age=' . $expires );
 			cache_javascript_headers();
 			echo $this->get_inline_script(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -257,7 +257,7 @@ class Lazy_Load extends Delivery_Feature {
 			// Since we're appending to the onload, check it isn't already in, as it may run twice i.e full page caching.
 			if ( false === strpos( $tag_element['atts']['onload'], 'CLDBind' ) ) {
 				$tag_element['atts']['data-cloudinary'] = 'lazy';
-				$tag_element['atts']['onload']         .= 'window.CLDBind?CLDBind(this):' . $loader;
+				$tag_element['atts']['onload']         .= ';window.CLDBind?CLDBind(this):' . $loader;
 			}
 		}
 
