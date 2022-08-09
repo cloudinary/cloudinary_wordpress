@@ -1202,7 +1202,7 @@ class Delivery implements Setup {
 	 *
 	 * @param string $element The HTML element.
 	 *
-	 * @return array
+	 * @return array|null
 	 */
 	public function parse_element( $element ) {
 		static $post_context = 0;
@@ -1237,16 +1237,13 @@ class Delivery implements Setup {
 			return null;
 		}
 		$tag_element['type'] = 'img' === $tag_element['tag'] ? 'image' : $tag_element['tag'];
-		$raw_url             = isset( $attributes['src'] ) ? $attributes['src'] : '';
-		if ( empty( $raw_url ) ) {
-			foreach ( $attributes as $attribute ) {
-				// Attempt to find a src.
-				if ( $this->validate_url( $attribute ) ) {
-					$raw_url = $attribute;
-					break;
-				}
-			}
+		$third_party_change  = Utils::maybe_get_third_party_changes( $attributes );
+		if ( ! empty( $third_party_change ) ) {
+			Utils::log( $third_party_change, 'third-party-loading' );
+
+			return null;
 		}
+		$raw_url                 = $attributes['src'];
 		$url                     = $this->maybe_unsize_url( self::clean_url( $this->sanitize_url( $raw_url ) ) );
 		$tag_element['base_url'] = $url;
 		// Track back the found URL.

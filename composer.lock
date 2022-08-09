@@ -398,16 +398,16 @@
         },
         {
             "name": "sirbrillig/phpcs-variable-analysis",
-            "version": "v2.11.4",
+            "version": "2.x-dev",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sirbrillig/phpcs-variable-analysis.git",
-                "reference": "e9c99cda31b21ccb4da4c2124b57c8355ddce48e"
+                "reference": "274711644a647844ea19c5ff7f6daa5321aacd04"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sirbrillig/phpcs-variable-analysis/zipball/e9c99cda31b21ccb4da4c2124b57c8355ddce48e",
-                "reference": "e9c99cda31b21ccb4da4c2124b57c8355ddce48e",
+                "url": "https://api.github.com/repos/sirbrillig/phpcs-variable-analysis/zipball/274711644a647844ea19c5ff7f6daa5321aacd04",
+                "reference": "274711644a647844ea19c5ff7f6daa5321aacd04",
                 "shasum": ""
             },
             "require": {
@@ -419,8 +419,10 @@
                 "phpcsstandards/phpcsdevcs": "^1.1",
                 "phpstan/phpstan": "^1.7",
                 "phpunit/phpunit": "^4.8.36 || ^5.7.21 || ^6.5 || ^7.0 || ^8.0 || ^9.0",
-                "sirbrillig/phpcs-import-detection": "^1.1"
+                "sirbrillig/phpcs-import-detection": "^1.1",
+                "vimeo/psalm": "^0.2 || ^0.3 || ^1.1 || ^4.24 || ^5.0@beta"
             },
+            "default-branch": true,
             "type": "phpcodesniffer-standard",
             "autoload": {
                 "psr-4": {
@@ -447,7 +449,7 @@
                 "source": "https://github.com/sirbrillig/phpcs-variable-analysis",
                 "wiki": "https://github.com/sirbrillig/phpcs-variable-analysis/wiki"
             },
-            "time": "2022-06-13T13:49:41+00:00"
+            "time": "2022-07-25T17:19:42+00:00"
         },
         {
             "name": "squizlabs/php_codesniffer",
