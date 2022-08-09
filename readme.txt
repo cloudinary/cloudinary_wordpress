@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: images, videos, DAM, optimization, CDN
 Requires at least: 4.7
-Tested up to: 6.0
+Tested up to: 6.0.1
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -141,6 +141,20 @@ Your site is now setup to start using Cloudinary.
 1. Need help? We’ve got you covered
 
 == Changelog ==
+
+= 3.0.6 (25 July 2022) =
+
+Fixes and Improvements:
+
+* Fixed PHP Illegal string offset warning
+* Fixed Uncaught Error: Call to undefined function Cloudinary\Media\get_current_screen()
+* Fixed[WPGraphQL] Inconsistent media URLs in response
+* Fixed the alt-text on the initial import from Cloudinary
+* Improved Product gallery widget color palette compatibility with various themes
+* Moved asset transformations to relationship table
+* Added Support for upload_prefix in URLs
+* Updated the plugin deactivation screen
+
 
 = 3.0.5 (29 June 2022) =
 

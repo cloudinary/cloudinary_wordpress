@@ -267,9 +267,16 @@ class Media extends Settings_Component implements Setup {
 	 * @return bool
 	 */
 	public function is_file_compatible( $file ) {
-
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		$original_file = $file;
+		if ( $this->is_cloudinary_url( $file ) ) {
+			$file = Utils::download_fragment( $file );
+		}
+		if ( file_is_displayable_image( $file ) ) {
+			return true;
+		}
 		$types        = $this->get_compatible_media_types();
-		$file         = wp_parse_url( $file, PHP_URL_PATH );
+		$file         = wp_parse_url( $original_file, PHP_URL_PATH );
 		$filename     = Utils::pathinfo( $file, PATHINFO_BASENAME );
 		$mime         = wp_check_filetype( $filename );
 		$type         = strstr( $mime['type'], '/', true );
@@ -659,6 +666,11 @@ class Media extends Settings_Component implements Setup {
 			}
 		}
 
+		// Bail on incomplete url.
+		if ( empty( $parts ) ) {
+			return null;
+		}
+
 		// The remaining items should be the file.
 		$file      = implode( '/', $parts );
 		$path_info = Utils::pathinfo( $file );
@@ -676,7 +688,7 @@ class Media extends Settings_Component implements Setup {
 			$public_id      .= ! empty( $transformations ) ? wp_json_encode( $transformations ) : '';
 		}
 
-		return $public_id;
+		return rawurldecode( $public_id );
 	}
 
 	/**
@@ -1240,7 +1252,16 @@ class Media extends Settings_Component implements Setup {
 				return null;
 			}
 		}
-		$key = $this->get_cache_key( func_get_args() );
+
+		$args = array(
+			$attachment_id,
+			$size,
+			$transformations,
+			$cloudinary_id,
+			$overwrite_transformations,
+		);
+
+		$key = $this->get_cache_key( array_filter( $args ) );
 		if ( isset( $cache[ $key ] ) ) {
 			return $cache[ $key ];
 		}
@@ -1286,11 +1307,13 @@ class Media extends Settings_Component implements Setup {
 		$url = apply_filters( 'cloudinary_converted_url', $url, $attachment_id, $pre_args );
 
 		// Add Cloudinary analytics.
-		$cache[ $key ] = add_query_arg(
-			array(
-				'_i' => 'AA',
-			),
-			$url
+		$cache[ $key ] = esc_url(
+			add_query_arg(
+				array(
+					'_i' => 'AA',
+				),
+				$url
+			)
 		);
 
 		return $cache[ $key ];
@@ -1794,9 +1817,9 @@ class Media extends Settings_Component implements Setup {
 			return false;
 		}
 		$test_parts = wp_parse_url( $url );
-		$cld_url    = $this->plugin->components['connect']->api->asset_url;
+		$cld_url    = wp_parse_url( $this->base_url, PHP_URL_HOST );
 
-		return isset( $test_parts['path'] ) && $test_parts['host'] === $cld_url;
+		return isset( $test_parts['path'] ) && false !== strpos( $test_parts['host'], $cld_url );
 	}
 
 	/**
@@ -1917,7 +1940,8 @@ class Media extends Settings_Component implements Setup {
 		if ( ! empty( $asset['transformations'] ) ) {
 			// Save a combined key.
 			$sync_key .= wp_json_encode( $asset['transformations'] );
-			Relate::update_transformations( $attachment_id, $asset['transformations'] );
+			// Use post meta temporarily to store the transformations until the attachment gets a sync relationship.
+			$this->update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], $asset['transformations'] );
 		}
 
 		// Create a trackable key in post meta to allow getting the attachment id from URL with transformations.
