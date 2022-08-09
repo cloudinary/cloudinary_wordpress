@@ -1252,7 +1252,16 @@ class Media extends Settings_Component implements Setup {
 				return null;
 			}
 		}
-		$key = $this->get_cache_key( func_get_args() );
+
+		$args = array(
+			$attachment_id,
+			$size,
+			$transformations,
+			$cloudinary_id,
+			$overwrite_transformations,
+		);
+
+		$key = $this->get_cache_key( array_filter( $args ) );
 		if ( isset( $cache[ $key ] ) ) {
 			return $cache[ $key ];
 		}
