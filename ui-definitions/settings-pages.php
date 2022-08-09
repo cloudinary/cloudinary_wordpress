@@ -433,6 +433,17 @@ $settings = array(
 		'section' => 'wizard',
 		'slug'    => 'wizard',
 	),
+	'debug'         => array(
+		'section' => 'debug',
+		'slug'    => 'debug',
+		array(
+			'type'  => 'panel',
+			'title' => __( 'Debug log', 'cloudinary' ),
+			array(
+				'type'    => 'debug',
+			),
+		),
+	),
 	'edit_asset'     => array(
 		'page_title'          => __( 'Edit asset', 'cloudinary' ),
 		'section'             => 'edit-asset',

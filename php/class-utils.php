@@ -17,6 +17,13 @@ use Google\Web_Stories\Story_Post_Type;
  */
 class Utils {
 
+	/**
+	 * Holds a list of temp files to be purged.
+	 *
+	 * @var array
+	 */
+	public static $file_fragments = array();
+
 	const METADATA = array(
 		'actions' => array(
 			'add_{object}_metadata',
@@ -176,39 +183,80 @@ class Utils {
 	/**
 	 * Check if the current user can perform a task.
 	 *
-	 * @param string $task The task to check.
+	 * @param string $task       The task to check.
+	 * @param string $capability The default capability.
+	 * @param string $context    The context for the task.
+	 * @param mixed  ...$args    Optional further parameters.
 	 *
 	 * @return bool
 	 */
-	public static function user_can( $task ) {
+	public static function user_can( $task, $capability = 'manage_options', $context = '', ...$args ) {
 
+		// phpcs:disable WordPress.WhiteSpace.DisallowInlineTabs.NonIndentTabsUsed
 		/**
-		 * Filter the capability required for a specific cloudinary task.
+		 * Filter the capability required for a specific Cloudinary task.
 		 *
 		 * @hook    cloudinary_task_capability_{task}
-		 * @since   2.7.6
+		 * @since   2.7.6. In 3.0.6 $context and $args added.
+		 *
+		 * @example
+		 * <?php
+		 *
+		 * // Enforce `manage_options` to download an asset from Cloudinary.
+		 * add_filter(
+		 * 	'cloudinary_task_capability_manage_assets',
+		 * 	function( $task, $context ) {
+		 * 		if ( 'download' === $context ) {
+		 * 			$capability = 'manage_options';
+		 * 		}
+		 * 		return $capability;
+		 * 	},
+		 * 	10,
+		 * 	2
+		 * );
 		 *
 		 * @param $capability {string} The capability.
+		 * @param $context    {string} The context for the task.
+		 * @param $args       {mixed}  The optional arguments.
 		 *
 		 * @default 'manage_options'
 		 * @return  {string}
 		 */
-		$capability = apply_filters( "cloudinary_task_capability_{$task}", 'manage_options' );
+		$capability = apply_filters( "cloudinary_task_capability_{$task}", $capability, $context, $args );
 
 		/**
-		 * Filter the capability required for cloudinary tasks.
+		 * Filter the capability required for Cloudinary tasks.
 		 *
 		 * @hook    cloudinary_task_capability
-		 * @since   2.7.6
+		 * @since   2.7.6. In 3.0.6 $context and $args added.
+		 *
+		 * @example
+		 * <?php
+		 *
+		 * // Enforce `manage_options` to download an asset from Cloudinary.
+		 * add_filter(
+		 * 	'cloudinary_task_capability',
+		 * 	function( $capability, $task, $context ) {
+		 * 		if ( 'manage_assets' === $task && 'download' === $context ) {
+		 * 			$capability = 'manage_options';
+		 * 		}
+		 * 		return $capability;
+		 * 	},
+		 * 	10,
+		 * 	3
+		 * );
 		 *
 		 * @param $capability {string} The current capability for the task.
 		 * @param $task       {string} The task.
+		 * @param $context    {string} The context for the task.
+		 * @param $args       {mixed}  The optional arguments.
 		 *
 		 * @return  {string}
 		 */
-		$capability = apply_filters( 'cloudinary_task_capability', $capability, $task );
+		$capability = apply_filters( 'cloudinary_task_capability', $capability, $task, $context, $args );
+		// phpcs:enable WordPress.WhiteSpace.DisallowInlineTabs.NonIndentTabsUsed
 
-		return current_user_can( $capability );
+		return current_user_can( $capability, $args );
 	}
 
 	/**
@@ -585,5 +633,170 @@ class Utils {
 		$svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $width . '" height="' . $height . '"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $color . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
 
 		return 'data:image/svg+xml;base64,' . base64_encode( $svg );
+	}
+
+	/**
+	 * Download a fragment of a file URL to a temp file and return the file URI.
+	 *
+	 * @param string $url  The URL to download.
+	 * @param int    $size The size of the fragment to download.
+	 *
+	 * @return string|false
+	 */
+	public static function download_fragment( $url, $size = 1048576 ) {
+
+		$pointer = tmpfile();
+		$file    = false;
+		if ( $pointer ) {
+			// Prep to purge.
+			$index = count( self::$file_fragments );
+			if ( empty( $index ) ) {
+				add_action( 'shutdown', array( __CLASS__, 'purge_fragments' ) );
+			}
+			self::$file_fragments[ $index ] = $pointer;
+			// Get the metadata of the stream.
+			$data = stream_get_meta_data( $pointer );
+			// Stream the content to the temp file.
+			$response = wp_safe_remote_get(
+				$url,
+				array(
+					'timeout'             => 300, // phpcs:ignore WordPressVIPMinimum.Performance.RemoteRequestTimeout.timeout_timeout
+					'stream'              => true,
+					'filename'            => $data['uri'],
+					'limit_response_size' => $size,
+				)
+			);
+			if ( ! is_wp_error( $response ) ) {
+				$file = $data['uri'];
+			} else {
+				// Clean up if there was an error.
+				self::purge_fragment( $index );
+			}
+		}
+
+		return $file;
+	}
+
+	/**
+	 * Purge fragment temp files on shutdown.
+	 */
+	public static function purge_fragments() {
+		foreach ( array_keys( self::$file_fragments ) as $index ) {
+			self::purge_fragment( $index );
+		}
+	}
+
+	/**
+	 * Purge a fragment temp file.
+	 *
+	 * @param int $index The index of the fragment to purge.
+	 */
+	public static function purge_fragment( $index ) {
+		if ( isset( self::$file_fragments[ $index ] ) ) {
+			fclose( self::$file_fragments[ $index ] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fclose
+			unset( self::$file_fragments[ $index ] );
+		}
+	}
+
+	/**
+	 * Log a debug message.
+	 *
+	 * @param string      $message The message to log.
+	 * @param string|null $key     The key to log the message under.
+	 */
+	public static function log( $message, $key = null ) {
+		if ( get_plugin_instance()->get_component( 'report' )->enabled() ) {
+			$messages = get_option( Sync::META_KEYS['debug'], array() );
+			if ( $key ) {
+				$hash                      = md5( $message );
+				$messages[ $key ][ $hash ] = $message;
+			} else {
+				$messages[] = $message;
+			}
+			update_option( Sync::META_KEYS['debug'], $messages, false );
+		}
+	}
+
+	/**
+	 * Get the debug messages.
+	 *
+	 * @return array
+	 */
+	public static function get_debug_messages() {
+		return get_option( Sync::META_KEYS['debug'], array( __( 'Debug log is empty', 'cloudinary' ) ) );
+	}
+
+	/**
+	 * Check if the tag attributes contain possible third party manipulated data, and return found data.
+	 *
+	 * @param array $attributes The tag attributes.
+	 *
+	 * @return string|false
+	 */
+	public static function maybe_get_third_party_changes( $attributes ) {
+		static $filtered_keys, $filtered_classes;
+		$lazy_keys    = array(
+			'src',
+			'lazyload',
+			'lazy',
+			'loading',
+		);
+		$lazy_classes = array(
+			'lazyload',
+			'lazy',
+			'loading',
+		);
+		if ( ! $filtered_keys ) {
+			/**
+			 * Filter the keywords in data-* attributes on tags to be ignored from lazy-loading.
+			 *
+			 * @hook   cloudinary_ignored_data_keywords
+			 * @since  3.0.8
+			 *
+			 * @param $lazy_keys {array} The built-in ignore data-* keywords.
+			 *
+			 * @return {array}
+			 */
+			$filtered_keys = apply_filters( 'cloudinary_ignored_data_keywords', $lazy_keys );
+
+			/**
+			 * Filter the keywords in classes on tags to be ignored from lazy-loading.
+			 *
+			 * @hook   cloudinary_ignored_class_keywords
+			 * @since  3.0.8
+			 *
+			 * @param $lazy_classes {array} The built-in ignore class keywords.
+			 *
+			 * @return {array}
+			 */
+			$filtered_classes = apply_filters( 'cloudinary_ignored_class_keywords', $lazy_classes );
+		}
+		$is = false;
+		if ( ! isset( $attributes['src'] ) ) {
+			$is = __( 'Missing SRC attribute.', 'cloudinary' );
+		} elseif ( false !== strpos( $attributes['src'], 'data:image' ) ) {
+			$is = $attributes['src'];
+		} elseif ( isset( $attributes['class'] ) ) {
+			$classes = explode( '-', str_replace( ' ', '-', $attributes['class'] ) );
+			if ( ! empty( array_intersect( $filtered_classes, $classes ) ) ) {
+				$is = $attributes['class'];
+			}
+		}
+
+		// If the above didn't find anything, check the data-* attributes.
+		if ( ! $is ) {
+			foreach ( $attributes as $key => $value ) {
+				if ( 'data-' !== substr( $key, 0, 5 ) ) {
+					continue;
+				}
+				$parts = explode( '-', $key );
+				if ( ! empty( array_intersect( $parts, $filtered_keys ) ) ) {
+					$is = $key;
+					break;
+				}
+			}
+		}
+
+		return $is;
 	}
 }

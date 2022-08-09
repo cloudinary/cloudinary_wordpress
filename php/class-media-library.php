@@ -41,7 +41,7 @@ class Media_Library extends Extension {
 		$this->handle = add_menu_page(
 			__( 'Cloudinary Media Library', 'cloudinary' ),
 			__( 'Cloudinary DAM', 'cloudinary' ),
-			'manage_options',
+			Utils::user_can( 'manage_dam' ) ? 'exist' : false,
 			self::MEDIA_LIBRARY_SLUG,
 			array( $this, 'render' ),
 			'dashicons-cloudinary-dam',

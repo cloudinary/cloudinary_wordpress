@@ -46,7 +46,7 @@ class Relate {
 	 */
 	protected function register_hooks() {
 		add_action( 'cloudinary_upgrade_asset', array( $this, 'upgrade_relation' ), 10, 2 );
-		add_action( 'found_posts', array( $this, 'warm_cache' ), 10, 2 );
+		add_filter( 'found_posts', array( $this, 'warm_cache' ), 10, 2 );
 	}
 
 	/**
@@ -54,11 +54,15 @@ class Relate {
 	 *
 	 * @param int      $found_posts The number of posts found.
 	 * @param WP_Query $query       The WP_Query instance (passed by reference).
+	 *
+	 * @return int
 	 */
 	public function warm_cache( $found_posts, $query ) {
 		if ( ! empty( $found_posts ) && 'attachment' === $query->query_vars['post_type'] ) {
 			Relationship::preload( $query->posts );
 		}
+
+		return $found_posts;
 	}
 
 	/**

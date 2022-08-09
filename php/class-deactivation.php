@@ -353,7 +353,7 @@ class Deactivation {
 			'callback'            => array( $this, 'rest_callback' ),
 			'args'                => array(),
 			'permission_callback' => function () {
-				return current_user_can( 'activate_plugins' );
+				return Utils::user_can( 'deactivate', 'activate_plugins' );
 			},
 		);
 

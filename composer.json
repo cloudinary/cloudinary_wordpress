@@ -10,7 +10,8 @@
     "wp-coding-standards/wpcs": "^2.3",
     "automattic/vipwpcs": "^2.2",
     "dealerdirect/phpcodesniffer-composer-installer": "^0.7.0",
-    "phpcompatibility/phpcompatibility-wp": "*"
+    "phpcompatibility/phpcompatibility-wp": "^2.1",
+    "phpcompatibility/php-compatibility": "dev-develop as 9.99.99"
   },
   "config": {
     "platform": {
@@ -22,10 +23,11 @@
   },
   "scripts": {
     "lint": [
-      "phpcs --ignore=*js/*"
+      "phpcs"
     ],
     "fix": [
-      "phpcbf --ignore=*js/*"
+      "phpcbf"
     ]
-  }
+  },
+  "minimum-stability": "dev"
 }
