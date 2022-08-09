@@ -12,6 +12,7 @@ use Cloudinary\Relate;
 use Cloudinary\Settings\Setting;
 use Cloudinary\Sync;
 use Cloudinary\REST_API;
+use Cloudinary\Utils;
 use WP_Post;
 
 /**
@@ -538,7 +539,7 @@ class Global_Transformations {
 				'type'          => 'boolean',
 				'description'   => esc_html__( 'Flag on whether transformation should be overwritten for a featured image.', 'cloudinary' ),
 				'auth_callback' => function () {
-					return current_user_can( 'edit_posts' );
+					return Utils::user_can( 'override_transformation', 'edit_posts' );
 				},
 			)
 		);
