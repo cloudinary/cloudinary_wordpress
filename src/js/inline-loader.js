@@ -166,11 +166,12 @@ const CloudinaryLoader = {
 	},
 	scaleWidth( image, width, ratio ) {
 		const maxSize = parseInt( this.config.max_width );
+		const maxHeight = Math.round( maxSize / ratio );
 		if ( ! width ) {
 			width = image.width;
 			let height = Math.round( width / ratio );
 
-			while ( -1 === this.sizeBands.indexOf( width ) && height < image.height && width < maxSize ) {
+			while ( -1 === this.sizeBands.indexOf( width ) && height < maxHeight && width < maxSize ) {
 				width++;
 				height = Math.round( width / ratio );
 			}
@@ -249,9 +250,16 @@ window.CLDBind = ( image ) => {
 		CloudinaryLoader.bind( image );
 	}
 };
-// Fallback.
-window.addEventListener( 'load', () => {
+window.initFallback = () => {
 	[...document.querySelectorAll('img[data-cloudinary="lazy"]')].forEach( ( image )=>{
 		CLDBind( image );
 	})
+}
+// Window load Fallback.
+window.addEventListener( 'load', () => {
+	initFallback();
 } );
+// Dynamic loaded.
+if( document.querySelector('script[src*="?cloudinary_lazy_load_loader"]') ) {
+	initFallback();
+}
