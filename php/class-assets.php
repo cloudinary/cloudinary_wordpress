@@ -1078,7 +1078,7 @@ class Assets extends Settings_Component {
 		}
 		$base        = get_post( $parent_id )->post_title;
 		$size        = getimagesize( $file_path );
-		$size        = $size[0] . 'x' . $size[1];
+		$size        = ! empty( $size[0] ) && ! empty( $size[1] ) ? $size[0] . 'x' . $size[1] : '0x0'; // phpcs:ignore PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
 		$hash_name   = md5( $url );
 		$wp_filetype = wp_check_filetype( wp_basename( $url ), wp_get_mime_types() );
 		$args        = array(
