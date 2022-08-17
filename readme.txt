@@ -142,6 +142,12 @@ Your site is now setup to start using Cloudinary.
 
 == Changelog ==
 
+= 3.0.7 (01 August 2022) =
+
+Fixes and Improvements:
+
+* Fixed issue of transformations being lost while pulling an asset from Cloudinary
+
 = 3.0.6 (25 July 2022) =
 
 Fixes and Improvements:
