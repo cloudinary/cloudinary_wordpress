@@ -223,7 +223,9 @@ class Download_Sync {
 		if ( file_exists( ABSPATH . WPINC . '/class-wp-http.php' ) ) {
 			$http_class = ABSPATH . WPINC . '/class-wp-http.php';
 		}
-		require_once $http_class;
+		if ( ! class_exists( 'WP_Http' ) ) {
+			require_once $http_class;
+		}
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 		require_once ABSPATH . 'wp-admin/includes/media.php';

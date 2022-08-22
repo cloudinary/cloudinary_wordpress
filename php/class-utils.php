@@ -9,6 +9,7 @@ namespace Cloudinary;
 
 use Cloudinary\Settings\Setting;
 use Google\Web_Stories\Story_Post_Type;
+use WP_Post;
 
 /**
  * Class that includes utility methods.
@@ -577,5 +578,21 @@ class Utils {
 		$svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $width . '" height="' . $height . '"><rect width="100%" height="100%"><animate attributeName="fill" values="' . $color . '" dur="2s" repeatCount="indefinite" /></rect></svg>';
 
 		return 'data:image/svg+xml;base64,' . base64_encode( $svg );
+	}
+
+	/**
+	 * Wrapper for get_post_parent.
+	 *
+	 * @param int|WP_Post|null $post The post.
+	 *
+	 * @return WP_Post|null
+	 */
+	public static function get_post_parent( $post = null ) {
+		if ( is_callable( 'get_post_parent' ) ) {
+			return get_post_parent( $post );
+		}
+
+		$wp_post = get_post( $post );
+		return ! empty( $wp_post->post_parent ) ? get_post( $wp_post->post_parent ) : null;
 	}
 }

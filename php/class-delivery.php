@@ -479,7 +479,7 @@ class Delivery implements Setup {
 	 */
 	public function get_sized( $attachment_id ) {
 		static $sizes = array(), $registered_sizes;
-		if ( ! $registered_sizes ) {
+		if ( ! $registered_sizes && is_callable( 'wp_get_registered_image_subsizes' ) ) {
 			$registered_sizes = wp_get_registered_image_subsizes();
 		}
 		if ( empty( $sizes[ $attachment_id ] ) ) {
