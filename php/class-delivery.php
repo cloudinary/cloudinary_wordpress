@@ -249,8 +249,10 @@ class Delivery implements Setup {
 			return $content;
 		}
 		foreach ( $cloudinary_urls as $url ) {
-			$public_id          = $this->media->get_public_id_from_url( $url );
-			$urls[ $public_id ] = $url;
+			$public_id = $this->media->get_public_id_from_url( $url );
+			if ( ! empty( $public_id ) ) {
+				$urls[ $public_id ] = $url;
+			}
 		}
 
 		$results = $this->query_relations( array_keys( $urls ) );
