@@ -332,7 +332,7 @@ class Gallery extends Settings_Component {
 			'callback'            => array( $this, 'rest_cloudinary_image_data' ),
 			'args'                => array(),
 			'permission_callback' => function () {
-				return current_user_can( 'edit_posts' );
+				return Utils::user_can( 'add_gallery', 'edit_posts' );
 			},
 		);
 
