@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cloudinary STABLETAG\n"
 "Report-Msgid-Bugs-To: https://github.com/cloudinary/cloudinary_wordpress\n"
-"POT-Creation-Date: 2022-08-01 12:10:38+00:00\n"
+"POT-Creation-Date: 2022-08-09 09:51:00+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -350,7 +350,7 @@ msgstr ""
 msgid "Share a %s with Cloudinary to help improve the plugin."
 msgstr ""
 
-#: php/class-deactivation.php:183 php/class-report.php:262
+#: php/class-deactivation.php:183 php/class-report.php:263
 #: ui-definitions/settings-pages.php:338
 #. translators: The System Report link and label.
 msgid "System Report"
@@ -476,14 +476,14 @@ msgstr ""
 msgid "Unsynced"
 msgstr ""
 
-#: php/class-media.php:441
+#: php/class-media.php:448
 #. translators: variable is file size.
 msgid ""
 "File size exceeds the maximum of %s. This media asset will be served from "
 "WordPress."
 msgstr ""
 
-#: php/class-media.php:1864
+#: php/class-media.php:1880
 msgid "Import"
 msgstr ""
 
@@ -491,39 +491,39 @@ msgstr ""
 msgid "Cloudinary"
 msgstr ""
 
-#: php/class-media.php:2141
+#: php/class-media.php:2157
 msgid "Not syncable. This is an external media."
 msgstr ""
 
-#: php/class-media.php:2145
+#: php/class-media.php:2161
 msgid "This media is Fetch type."
 msgstr ""
 
-#: php/class-media.php:2149
+#: php/class-media.php:2165
 msgid "This media is Sprite type."
 msgstr ""
 
-#: php/class-media.php:2159
+#: php/class-media.php:2175
 msgid "Not Synced"
 msgstr ""
 
-#: php/class-media.php:2164
+#: php/class-media.php:2180
 msgid "Synced"
 msgstr ""
 
-#: php/class-media.php:2801
+#: php/class-media.php:2817
 msgid "No Cloudinary filters"
 msgstr ""
 
-#: php/class-media.php:2901
+#: php/class-media.php:2917
 msgid "Media Settings"
 msgstr ""
 
-#: php/class-media.php:2904
+#: php/class-media.php:2920
 msgid "Media Display"
 msgstr ""
 
-#: php/class-media.php:2908 php/media/class-global-transformations.php:617
+#: php/class-media.php:2924 php/media/class-global-transformations.php:618
 #: php/ui/component/class-asset-preview.php:73
 #: php/ui/component/class-plan-details.php:119
 #: php/ui/component/class-plan-status.php:128
@@ -531,7 +531,7 @@ msgstr ""
 msgid "Transformations"
 msgstr ""
 
-#: php/class-media.php:2909
+#: php/class-media.php:2925
 msgid ""
 "Cloudinary allows you to easily transform your images on-the-fly to any "
 "required format, style and dimension, and also optimizes images for minimal "
@@ -540,7 +540,7 @@ msgid ""
 "transformation and delivery URLs."
 msgstr ""
 
-#: php/class-media.php:2914 ui-definitions/settings-image.php:123
+#: php/class-media.php:2930 ui-definitions/settings-image.php:123
 #: ui-definitions/settings-video.php:174
 msgid "See examples"
 msgstr ""
@@ -557,91 +557,91 @@ msgstr ""
 msgid "Add to Cloudinary Report"
 msgstr ""
 
-#: php/class-report.php:173
+#: php/class-report.php:174
 msgid "Cloudinary Metadata viewer"
 msgstr ""
 
-#: php/class-report.php:271
+#: php/class-report.php:272
 msgid "System information report"
 msgstr ""
 
-#: php/class-report.php:274
+#: php/class-report.php:275
 msgid "Enable report"
 msgstr ""
 
-#: php/class-report.php:334
+#: php/class-report.php:335
 msgid ""
 "Enabling system information reporting will allow you to generate and "
 "download a realtime snapshot report. The report will be in JSON format and "
 "will include information about:"
 msgstr ""
 
-#: php/class-report.php:337
+#: php/class-report.php:338
 msgid "Current WordPress and Cloudinary configuration."
 msgstr ""
 
-#: php/class-report.php:338
+#: php/class-report.php:339
 msgid "Currently installed plugins."
 msgstr ""
 
-#: php/class-report.php:339
+#: php/class-report.php:340
 msgid "Any themes that are being used."
 msgstr ""
 
-#: php/class-report.php:340
+#: php/class-report.php:341
 msgid ""
 "Any specifically selected media. These can be added to the report from the "
 "WordPress Media Library."
 msgstr ""
 
-#: php/class-report.php:341
+#: php/class-report.php:342
 msgid ""
 "Any specifically selected posts or pages. These can be added to the report "
 "from the relevant listing pages."
 msgstr ""
 
-#: php/class-sync.php:470
+#: php/class-sync.php:471
 msgid "Synchronizing asset with Cloudinary"
 msgstr ""
 
-#: php/class-sync.php:490
+#: php/class-sync.php:491
 msgid "Upgrading from previous version"
 msgstr ""
 
-#: php/class-sync.php:501
+#: php/class-sync.php:502
 msgid "Downloading from Cloudinary"
 msgstr ""
 
-#: php/class-sync.php:512 php/class-sync.php:529
+#: php/class-sync.php:513 php/class-sync.php:530
 msgid "Uploading to Cloudinary"
 msgstr ""
 
-#: php/class-sync.php:542
+#: php/class-sync.php:543
 #. translators: %s folder name
 msgid "Copying to folder %s."
 msgstr ""
 
-#: php/class-sync.php:557 php/class-sync.php:584
+#: php/class-sync.php:558 php/class-sync.php:585
 msgid "Updating metadata"
 msgstr ""
 
-#: php/class-sync.php:570
+#: php/class-sync.php:571
 msgid "Updating breakpoints"
 msgstr ""
 
-#: php/class-sync.php:605
+#: php/class-sync.php:606
 msgid "Uploading to new cloud name."
 msgstr ""
 
-#: php/class-sync.php:1155
+#: php/class-sync.php:1156
 msgid "Media Library Sync Settings"
 msgstr ""
 
-#: php/class-sync.php:1160
+#: php/class-sync.php:1161
 msgid "Sync method"
 msgstr ""
 
-#: php/class-sync.php:1163
+#: php/class-sync.php:1164
 #. translators: The HTML break line, the link to Cloudinary documentation and
 #. closing tag.
 msgid ""
@@ -650,35 +650,35 @@ msgid ""
 "Media Library.%3$s%4$sLearn more%5$s"
 msgstr ""
 
-#: php/class-sync.php:1174
+#: php/class-sync.php:1175
 msgid "Auto sync"
 msgstr ""
 
-#: php/class-sync.php:1175
+#: php/class-sync.php:1176
 msgid "Manual sync"
 msgstr ""
 
-#: php/class-sync.php:1181
+#: php/class-sync.php:1182
 msgid "Cloudinary folder path"
 msgstr ""
 
-#: php/class-sync.php:1185
+#: php/class-sync.php:1186
 msgid "e.g.: wordpress_assets/"
 msgstr ""
 
-#: php/class-sync.php:1188
+#: php/class-sync.php:1189
 msgid ""
 "The folder in your Cloudinary account that WordPress assets are uploaded "
 "to. Leave blank to use the root of your Cloudinary library."
 msgstr ""
 
-#: php/class-sync.php:1197 php/ui/component/class-plan-details.php:118
+#: php/class-sync.php:1198 php/ui/component/class-plan-details.php:118
 #: php/ui/component/class-plan-status.php:94
 #: ui-definitions/settings-sidebar.php:30
 msgid "Storage"
 msgstr ""
 
-#: php/class-sync.php:1200
+#: php/class-sync.php:1201
 #. translators: the HTML for opening and closing list and its items.
 msgid ""
 "Choose where your assets are stored.%1$sCloudinary and WordPress: Stores "
@@ -691,27 +691,35 @@ msgid ""
 "compatibility.%4$s%5$sLearn more%6$s"
 msgstr ""
 
-#: php/class-sync.php:1213
+#: php/class-sync.php:1214
 msgid "Cloudinary and WordPress"
 msgstr ""
 
-#: php/class-sync.php:1214
+#: php/class-sync.php:1215
 msgid "Cloudinary and WordPress (low resolution)"
 msgstr ""
 
-#: php/class-sync.php:1215
+#: php/class-sync.php:1216
 msgid "Cloudinary only"
 msgstr ""
 
-#: php/class-utils.php:392
+#: php/class-utils.php:440
 #. translators: The plugin version.
 msgid "I need help with Cloudinary WordPress plugin version %s"
 msgstr ""
 
-#: php/class-utils.php:403
+#: php/class-utils.php:451
 msgid ""
 "Please, provide more details on your request, and if possible, attach a "
 "System Report"
+msgstr ""
+
+#: php/class-utils.php:726
+msgid "Debug log is empty"
+msgstr ""
+
+#: php/class-utils.php:776
+msgid "Missing SRC attribute."
 msgstr ""
 
 #: php/connect/class-api.php:357
@@ -731,111 +739,111 @@ msgstr ""
 msgid "Deliver from WordPress"
 msgstr ""
 
-#: php/delivery/class-lazy-load.php:276 php/delivery/class-lazy-load.php:277
-#: php/delivery/class-lazy-load.php:309
+#: php/delivery/class-lazy-load.php:325 php/delivery/class-lazy-load.php:326
+#: php/delivery/class-lazy-load.php:358
 msgid "Lazy loading"
 msgstr ""
 
-#: php/delivery/class-lazy-load.php:284
+#: php/delivery/class-lazy-load.php:333
 msgid "Lazy Loading"
 msgstr ""
 
-#: php/delivery/class-lazy-load.php:291 ui-definitions/settings-image.php:19
+#: php/delivery/class-lazy-load.php:340 ui-definitions/settings-image.php:19
 #: ui-definitions/settings-pages.php:100 ui-definitions/settings-video.php:18
 msgid "Settings"
 msgstr ""
 
-#: php/delivery/class-lazy-load.php:295 php/delivery/class-lazy-load.php:405
+#: php/delivery/class-lazy-load.php:344 php/delivery/class-lazy-load.php:454
 #: ui-definitions/settings-image.php:23 ui-definitions/settings-image.php:169
 #: ui-definitions/settings-pages.php:104 ui-definitions/settings-pages.php:197
 #: ui-definitions/settings-video.php:22
 msgid "Preview"
 msgstr ""
 
-#: php/delivery/class-lazy-load.php:307
+#: php/delivery/class-lazy-load.php:356
 msgid "Enable lazy loading"
 msgstr ""
 
-#: php/delivery/class-lazy-load.php:308
+#: php/delivery/class-lazy-load.php:357
 msgid ""
 "Lazy loading delays the initialization of your web assets to improve page "
 "load times."
 msgstr ""
 
-#: php/delivery/class-lazy-load.php:320
+#: php/delivery/class-lazy-load.php:369
 msgid "Lazy loading threshold"
 msgstr ""
 
-#: php/delivery/class-lazy-load.php:321
+#: php/delivery/class-lazy-load.php:370
 msgid "How far down the page to start lazy loading assets."
 msgstr ""
 
-#: php/delivery/class-lazy-load.php:337
+#: php/delivery/class-lazy-load.php:386
 msgid "Pre-loader color"
 msgstr ""
 
-#: php/delivery/class-lazy-load.php:338
+#: php/delivery/class-lazy-load.php:387
 msgid ""
 "On page load, the pre-loader is used to fill the space while the image is "
 "downloaded, preventing content shift."
 msgstr ""
 
-#: php/delivery/class-lazy-load.php:347
+#: php/delivery/class-lazy-load.php:396
 msgid "Pre-loader animation"
 msgstr ""
 
-#: php/delivery/class-lazy-load.php:357
+#: php/delivery/class-lazy-load.php:406
 msgid "Placeholder generation type"
 msgstr ""
 
-#: php/delivery/class-lazy-load.php:358
+#: php/delivery/class-lazy-load.php:407
 msgid ""
 "Placeholders are low-res representations of the image, that's loaded below "
 "the fold. They are then replaced with the actual image, just before it "
 "comes into view."
 msgstr ""
 
-#: php/delivery/class-lazy-load.php:368
+#: php/delivery/class-lazy-load.php:417
 msgid "Blur"
 msgstr ""
 
-#: php/delivery/class-lazy-load.php:369
+#: php/delivery/class-lazy-load.php:418
 msgid "Pixelate"
 msgstr ""
 
-#: php/delivery/class-lazy-load.php:370
+#: php/delivery/class-lazy-load.php:419
 msgid "Vectorize"
 msgstr ""
 
-#: php/delivery/class-lazy-load.php:371
+#: php/delivery/class-lazy-load.php:420
 msgid "Dominant Color"
 msgstr ""
 
-#: php/delivery/class-lazy-load.php:372 php/delivery/class-lazy-load.php:387
+#: php/delivery/class-lazy-load.php:421 php/delivery/class-lazy-load.php:436
 #: ui-definitions/settings-video.php:66
 msgid "Off"
 msgstr ""
 
-#: php/delivery/class-lazy-load.php:383
+#: php/delivery/class-lazy-load.php:432
 msgid "DPR settings"
 msgstr ""
 
-#: php/delivery/class-lazy-load.php:384
+#: php/delivery/class-lazy-load.php:433
 msgid "The device pixel ratio to use for your generated images."
 msgstr ""
 
-#: php/delivery/class-lazy-load.php:388
+#: php/delivery/class-lazy-load.php:437
 msgid "Auto (2x)"
 msgstr ""
 
-#: php/delivery/class-lazy-load.php:389
+#: php/delivery/class-lazy-load.php:438
 msgid "Max DPR"
 msgstr ""
 
 #: php/media/class-filter.php:604 php/media/class-filter.php:620
 #: php/media/class-filter.php:638 php/media/class-filter.php:654
 #: php/media/class-filter.php:670
-#: php/media/class-global-transformations.php:565
+#: php/media/class-global-transformations.php:566
 msgid "Overwrite Global Transformations"
 msgstr ""
 
@@ -872,29 +880,29 @@ msgid ""
 "classic editor."
 msgstr ""
 
-#: php/media/class-global-transformations.php:319
+#: php/media/class-global-transformations.php:320
 msgid "Categories/Tags transformations"
 msgstr ""
 
-#: php/media/class-global-transformations.php:451
+#: php/media/class-global-transformations.php:452
 msgid ""
 "If you placed custom transformations on categories/tags you may order them "
 "below. "
 msgstr ""
 
-#: php/media/class-global-transformations.php:453
+#: php/media/class-global-transformations.php:454
 msgid "No terms added"
 msgstr ""
 
-#: php/media/class-global-transformations.php:464
+#: php/media/class-global-transformations.php:465
 msgid "Disable global transformations"
 msgstr ""
 
-#: php/media/class-global-transformations.php:539
+#: php/media/class-global-transformations.php:540
 msgid "Flag on whether transformation should be overwritten for a featured image."
 msgstr ""
 
-#: php/media/class-global-transformations.php:653
+#: php/media/class-global-transformations.php:654
 msgid "Add transformations"
 msgstr ""
 
@@ -908,25 +916,25 @@ msgstr ""
 msgid "Could not download the Cloudinary asset."
 msgstr ""
 
-#: php/sync/class-push-sync.php:217
+#: php/sync/class-push-sync.php:218
 #. translators: variable is sync type.
 msgid "Sync type: %s"
 msgstr ""
 
-#: php/sync/class-push-sync.php:252
+#: php/sync/class-push-sync.php:253
 msgid "Starting new thread."
 msgstr ""
 
-#: php/sync/class-push-sync.php:278
+#: php/sync/class-push-sync.php:279
 msgid "Asset in sync loop."
 msgstr ""
 
-#: php/sync/class-push-sync.php:284
+#: php/sync/class-push-sync.php:285
 #. translators: variable is thread name and asset ID.
 msgid "%1$s - cycle %3$s: Syncing asset %2$d"
 msgstr ""
 
-#: php/sync/class-push-sync.php:294
+#: php/sync/class-push-sync.php:295
 #. translators: variable is thread name.
 msgid "Ending thread %s"
 msgstr ""
@@ -1898,7 +1906,11 @@ msgid ""
 "your site or any 3rd party plugins are not setup to move these scripts."
 msgstr ""
 
-#: ui-definitions/settings-pages.php:437
+#: ui-definitions/settings-pages.php:441
+msgid "Debug log"
+msgstr ""
+
+#: ui-definitions/settings-pages.php:448
 msgid "Edit asset"
 msgstr ""
 

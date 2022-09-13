@@ -155,6 +155,7 @@ class Report extends Settings_Component implements Setup {
 	 */
 	public function init_reporting( $new_value ) {
 		delete_option( self::REPORT_KEY );
+		delete_option( Sync::META_KEYS['debug'] );
 
 		return $new_value;
 	}
@@ -384,6 +385,8 @@ class Report extends Settings_Component implements Setup {
 		$this->posts();
 		// Add config.
 		$this->config();
+		// Add debug log.
+		$this->degbug_log();
 
 		return $this->report_data;
 	}
@@ -494,13 +497,20 @@ class Report extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Add debug log report.
+	 */
+	protected function degbug_log() {
+		$this->add_report_block( 'debug_log', Utils::get_debug_messages() );
+	}
+
+	/**
 	 * Maybe generate the report.
 	 */
 	public function maybe_generate_report() {
 		$page     = Utils::get_sanitized_text( 'page' );
 		$section  = Utils::get_sanitized_text( 'section' );
 		$download = filter_input( INPUT_GET, self::REPORT_DOWNLOAD_KEY, FILTER_VALIDATE_BOOLEAN );
-		if ( $download && 'cloudinary_help' === $page && 'system-report' === $section && current_user_can( 'manage_options' ) ) {
+		if ( $download && 'cloudinary_help' === $page && 'system-report' === $section && Utils::user_can( 'system_report' ) ) {
 			$report = $this->get_report_data();
 			header( 'Content-Description: File Transfer' );
 			header( 'Content-Type: application/octet-stream' );

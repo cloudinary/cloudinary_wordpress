@@ -118,7 +118,7 @@ class Admin {
 			'callback'            => array( $this, 'rest_save_settings' ),
 			'args'                => array(),
 			'permission_callback' => function () {
-				return current_user_can( 'manage_options' );
+				return Utils::user_can( 'manage_settings' );
 			},
 		);
 
