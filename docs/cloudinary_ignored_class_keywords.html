@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Filter: cloudinary_apply_breakpoints - Cloudinary Docs</title>
+	<title>Filter: cloudinary_ignored_class_keywords - Cloudinary Docs</title>
 
 	<script src="scripts/prettify/prettify.js"></script>
 	<script src="scripts/prettify/lang-css.js"></script>
@@ -22,7 +22,7 @@
 <div id="main">
 
 	
-	<h1 class="page-title">Filter: cloudinary_apply_breakpoints</h1>
+	<h1 class="page-title">Filter: cloudinary_ignored_class_keywords</h1>
 	
 
 	
@@ -44,14 +44,14 @@
 
     
 
-    <h4 class="name" id="cloudinary_apply_breakpoints">apply_filters( 'cloudinary_apply_breakpoints', <span class="signature">$apply )</span><span class="type-signature"> &rarr; {bool}</span></h4>
+    <h4 class="name" id="cloudinary_ignored_class_keywords">apply_filters( 'cloudinary_ignored_class_keywords', <span class="signature">$lazy_classes )</span><span class="type-signature"> &rarr; {array}</span></h4>
 
     
 
 
 
 <div class="description">
-    Filter to allow stopping default srcset generation.
+    Filter the keywords in classes on tags to be ignored from lazy-loading.
 </div>
 
 
@@ -85,13 +85,13 @@
 
         <tr>
             
-                <td class="name"><code>$apply</code></td>
+                <td class="name"><code>$lazy_classes</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">bool</span>
+<span class="param-type">array</span>
 
 
             
@@ -101,7 +101,7 @@
 
             
 
-            <td class="description last">True to apply, false to skip.</td>
+            <td class="description last">The built-in ignore class keywords.</td>
         </tr>
 
     
@@ -119,7 +119,7 @@
 
     
     <dt class="tag-since">Since:</dt>
-    <dd class="tag-since"><ul class="dummy"><li>3.0.0</li></ul></dd>
+    <dd class="tag-since"><ul class="dummy"><li>3.0.8</li></ul></dd>
     
 
     
@@ -140,17 +140,12 @@
 
     
 
-    
-    <dt class="tag-default">Default Value:</dt>
-    <dd class="tag-default"><ul class="dummy">
-            <li>{true}</li>
-        </ul></dd>
     
 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="php_class-delivery.php.html">php/class-delivery.php</a>, <a href="php_class-delivery.php.html#line1175">line 1175</a>
+        <a href="php_class-utils.php.html">php/class-utils.php</a>, <a href="php_class-utils.php.html#line762">line 762</a>
     </li></ul></dd>
     
 
@@ -184,7 +179,7 @@
     </dt>
     <dd>
         
-<span class="param-type">bool</span>
+<span class="param-type">array</span>
 
 
     </dd>
