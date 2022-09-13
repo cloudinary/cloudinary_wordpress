@@ -657,6 +657,7 @@ class Media extends Settings_Component implements Setup {
 		$parts = explode( '/', ltrim( $path, '/' ) );
 
 		$maybe_seo = array();
+		$public_id = null;
 
 		// Need to find the version part as anything after this is the public id.
 		foreach ( $parts as $part ) {
@@ -678,6 +679,17 @@ class Media extends Settings_Component implements Setup {
 		// Is SEO friendly URL.
 		if ( in_array( 'images', $maybe_seo, true ) ) {
 			$public_id = $path_info['dirname'];
+		} elseif ( false !== strpos( $url, '/image/fetch/' ) ) {
+			// Maybe the $file is already the URL - $url has the version.
+			if ( filter_var( $file, FILTER_VALIDATE_URL ) ) {
+				$public_id = $file;
+			} else {
+				// Capture the url without the version.
+				$parts = explode( '/image/fetch/', $url );
+				if ( 1 < count( $parts ) ) {
+					$public_id = end( $parts );
+				}
+			}
 		} else {
 			$public_id = isset( $path_info['dirname'] ) && '.' !== $path_info['dirname'] ? $path_info['dirname'] . DIRECTORY_SEPARATOR . $path_info['filename'] : $path_info['filename'];
 		}
