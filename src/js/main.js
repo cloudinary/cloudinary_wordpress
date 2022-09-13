@@ -8,7 +8,6 @@ import './components/taxonomies';
  */
 import Settings from './components/settings-page';
 import GlobalTransformations from './components/global-transformations';
-import TermsOrder from './components/terms-order';
 import MediaLibrary from './components/media-library';
 import Notices from './components/notices';
 import UI from './components/ui';
@@ -56,7 +55,6 @@ export const cloudinary = {
 	UI,
 	Settings,
 	GlobalTransformations,
-	TermsOrder,
 	MediaLibrary,
 	Notices,
 	Wizard,
