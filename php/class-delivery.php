@@ -375,7 +375,7 @@ class Delivery implements Setup {
 		$public_id = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
 		$base      = $this->get_content_path();
 		$sized_url = '';
-		$wh        = '0x0'; // phpcs:ignore PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found
+		$wh        = '0x0'; // phpcs:ignore PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found, PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
 		// Some attachments do not have Sizes.
 		if ( ! empty( $size ) ) {
 			$sized_url = $size['sized_url'];
@@ -568,7 +568,7 @@ class Delivery implements Setup {
 	 *
 	 * @return false|int
 	 */
-	public static function create_size_relation( $attachment_id, $sized_url, $size = '0x0', $parent_path = '' ) { // phpcs:ignore PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found
+	public static function create_size_relation( $attachment_id, $sized_url, $size = '0x0', $parent_path = '' ) { // phpcs:ignore PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found, PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
 		global $wpdb;
 		static $media;
 		if ( ! $media ) {
@@ -581,7 +581,8 @@ class Delivery implements Setup {
 		if ( ! is_null( $transformations ) ) {
 			$media->delete_post_meta( $attachment_id, Sync::META_KEYS['transformation'] );
 		}
-		$data            = array(
+
+		$data = array(
 			'post_id'         => $attachment_id,
 			'parent_path'     => $parent_path,
 			'sized_url'       => $sized_url,
