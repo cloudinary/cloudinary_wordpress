@@ -1334,6 +1334,16 @@ class Delivery implements Setup {
 		// Set atts.
 		$tag_element['atts'] = wp_parse_args( $attributes, $tag_element['atts'] );
 
+		/**
+		 * Filter the tag element.
+		 *
+		 * @hook cloudinary_parse_element
+		 * @since 3.0.9
+		 *
+		 * @param $tag_element {array} The tag element.
+		 */
+		$tag_element = apply_filters( 'cloudinary_parse_element', $tag_element );
+
 		return $tag_element;
 	}
 

@@ -67,7 +67,16 @@ class Responsive_Breakpoints extends Delivery_Feature {
 
 		$lazy = $this->plugin->get_component( 'lazy_load' );
 
-		if ( is_null( $lazy ) || ! $lazy->is_enabled() || Utils::is_amp() ) {
+		/**
+		 * Short circuit the lazy load.
+		 *
+		 * @hook  cloudinary_lazy_load_bypass
+		 * @since 3.0.9
+		 *
+		 * @param $short_circuit {bool}  The short circuit value.
+		 * @param $tag_element   {array} The tag element.
+		 */
+		if ( is_null( $lazy ) || ! $lazy->is_enabled() || Utils::is_amp() || apply_filters( 'cloudinary_lazy_load_bypass', false, $tag_element ) ) {
 			$tag_element = $this->apply_breakpoints( $tag_element );
 		}
 
