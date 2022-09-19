@@ -1324,6 +1324,12 @@ class Delivery implements Setup {
 				}
 			}
 		}
+
+		// Check for loading attribute.
+		if ( ! empty( $attributes['loading'] ) ) {
+			$tag_element['loading'] = $attributes['loading'];
+		}
+
 		// Set atts.
 		$tag_element['atts'] = wp_parse_args( $attributes, $tag_element['atts'] );
 
