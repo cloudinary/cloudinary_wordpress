@@ -57,7 +57,7 @@ class Lazy_Load extends Delivery_Feature {
 	 */
 	public function init_lazy_script_maybe() {
 
-		$flag = filter_input( INPUT_GET, 'cloudinary_lazy_load_loader', FILTER_SANITIZE_STRING );
+		$flag = ! empty( $_GET['cloudinary_lazy_load_loader'] ) ? htmlspecialchars( $_GET['cloudinary_lazy_load_loader'] ) : null;
 		if ( $flag ) {
 			$expires = HOUR_IN_SECONDS;
 			header( 'Cache-Control: max-age=' . $expires );
