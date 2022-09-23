@@ -58,6 +58,26 @@ class Responsive_Breakpoints extends Delivery_Feature {
 		if ( 'upload' !== $this->media->get_media_delivery( $tag_element['id'] ) ) {
 			return $tag_element;
 		}
+
+		// Bypass file formats that shouldn't have Responsive Images.
+		if (
+			in_array(
+				$tag_element['format'],
+				/**
+				 * Filter out file formats for Responsive Images.
+				 *
+				 * @hook  cloudinary_responsive_images_bypass_formats
+				 * @since 3.0.9
+				 *
+				 * @param $formats {array) The list of formats to exclude.
+				 */
+				apply_filters( 'cloudinary_responsive_images_bypass_formats', array( 'svg' ) ),
+				true
+			)
+		) {
+			return $tag_element;
+		}
+
 		if ( Utils::is_amp() ) {
 			$tag_element['atts']['layout'] = 'responsive';
 		} else {
