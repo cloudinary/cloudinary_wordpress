@@ -118,13 +118,13 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			'method'              => \WP_REST_Server::CREATABLE,
 			'callback'            => array( $this, 'rest_test_connection' ),
 			'args'                => array(),
-			'permission_callback' => array( 'Cloudinary\REST_API', 'rest_can_manage_options' ),
+			'permission_callback' => array( 'Cloudinary\REST_API', 'rest_can_connect' ),
 		);
 		$endpoints['save_wizard']     = array(
 			'method'              => \WP_REST_Server::CREATABLE,
 			'callback'            => array( $this, 'rest_save_wizard' ),
 			'args'                => array(),
-			'permission_callback' => array( 'Cloudinary\REST_API', 'rest_can_manage_options' ),
+			'permission_callback' => array( 'Cloudinary\REST_API', 'rest_can_connect' ),
 		);
 
 		return $endpoints;
@@ -502,8 +502,8 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	protected function validate_domain( $domain ) {
 		$is_valid = false;
 
-		if ( defined( 'FILTER_VALIDATE_DOMAIN' ) ) {
-			$is_valid = filter_var( $domain, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME );
+		if ( defined( 'FILTER_VALIDATE_DOMAIN' ) ) { // phpcs:ignore PHPCompatibility.Constants.NewConstants.filter_validate_domainFound
+			$is_valid = filter_var( $domain, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME ); // phpcs:ignore PHPCompatibility.Constants.NewConstants
 		} else {
 			$domain   = 'https://' . $domain;
 			$is_valid = filter_var( $domain, FILTER_VALIDATE_URL );

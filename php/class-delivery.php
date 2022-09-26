@@ -249,8 +249,10 @@ class Delivery implements Setup {
 			return $content;
 		}
 		foreach ( $cloudinary_urls as $url ) {
-			$public_id          = $this->media->get_public_id_from_url( $url );
-			$urls[ $public_id ] = $url;
+			$public_id = $this->media->get_public_id_from_url( $url );
+			if ( ! empty( $public_id ) ) {
+				$urls[ $public_id ] = $url;
+			}
 		}
 
 		$results = $this->query_relations( array_keys( $urls ) );
@@ -375,7 +377,7 @@ class Delivery implements Setup {
 		$public_id = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
 		$base      = $this->get_content_path();
 		$sized_url = '';
-		$wh        = '0x0'; // phpcs:ignore PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
+		$wh        = '0x0'; // phpcs:ignore PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found
 		// Some attachments do not have Sizes.
 		if ( ! empty( $size ) ) {
 			$sized_url = $size['sized_url'];
@@ -568,7 +570,7 @@ class Delivery implements Setup {
 	 *
 	 * @return false|int
 	 */
-	public static function create_size_relation( $attachment_id, $sized_url, $size = '0x0', $parent_path = '' ) { // phpcs:ignore PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
+	public static function create_size_relation( $attachment_id, $sized_url, $size = '0x0', $parent_path = '' ) { // phpcs:ignore PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found
 		global $wpdb;
 		static $media;
 		if ( ! $media ) {
@@ -1103,7 +1105,7 @@ class Delivery implements Setup {
 		}
 		$tag_element['atts']['data-transformations'] = API::generate_transformation_string( $transformations, $tag_element['type'] );
 
-		if ( current_user_can( 'manage_options' ) && 'on' === $this->plugin->settings->image_settings->_overlay ) {
+		if ( Utils::user_can( 'status' ) && 'on' === $this->plugin->settings->image_settings->_overlay ) {
 			$local_size = get_post_meta( $tag_element['id'], Sync::META_KEYS['local_size'], true );
 			if ( empty( $local_size ) && file_exists( get_attached_file( $tag_element['id'] ) ) ) {
 				$local_size = filesize( get_attached_file( $tag_element['id'] ) );
@@ -1202,7 +1204,7 @@ class Delivery implements Setup {
 	 *
 	 * @param string $element The HTML element.
 	 *
-	 * @return array
+	 * @return array|null
 	 */
 	public function parse_element( $element ) {
 		static $post_context = 0;
@@ -1237,16 +1239,13 @@ class Delivery implements Setup {
 			return null;
 		}
 		$tag_element['type'] = 'img' === $tag_element['tag'] ? 'image' : $tag_element['tag'];
-		$raw_url             = isset( $attributes['src'] ) ? $attributes['src'] : '';
-		if ( empty( $raw_url ) ) {
-			foreach ( $attributes as $attribute ) {
-				// Attempt to find a src.
-				if ( $this->validate_url( $attribute ) ) {
-					$raw_url = $attribute;
-					break;
-				}
-			}
+		$third_party_change  = Utils::maybe_get_third_party_changes( $attributes );
+		if ( ! empty( $third_party_change ) ) {
+			Utils::log( $third_party_change, 'third-party-loading' );
+
+			return null;
 		}
+		$raw_url                 = $attributes['src'];
 		$url                     = $this->maybe_unsize_url( self::clean_url( $this->sanitize_url( $raw_url ) ) );
 		$tag_element['base_url'] = $url;
 		// Track back the found URL.

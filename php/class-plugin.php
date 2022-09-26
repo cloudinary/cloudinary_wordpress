@@ -158,7 +158,7 @@ final class Plugin {
 	 *
 	 * @param mixed $component The component.
 	 *
-	 * @return Admin|Connect|Delivery|Media|REST_API|String_Replace|Sync|null
+	 * @return Admin|Connect|Delivery|Media|REST_API|String_Replace|Sync|Report|null
 	 */
 	public function get_component( $component ) {
 		$return = null;
@@ -190,7 +190,7 @@ final class Plugin {
 			'version'    => $this->version,
 			'page_title' => __( 'Cloudinary', 'cloudinary' ),
 			'menu_title' => __( 'Cloudinary', 'cloudinary' ),
-			'capability' => 'manage_options',
+			'capability' => Utils::user_can( 'manage_settings' ) ? 'exist' : false,
 			'icon'       => 'dashicons-cloudinary',
 			'slug'       => $this->slug,
 			'settings'   => $parts['pages'],

@@ -267,9 +267,16 @@ class Media extends Settings_Component implements Setup {
 	 * @return bool
 	 */
 	public function is_file_compatible( $file ) {
-
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		$original_file = $file;
+		if ( $this->is_cloudinary_url( $file ) ) {
+			$file = Utils::download_fragment( $file );
+		}
+		if ( file_is_displayable_image( $file ) ) {
+			return true;
+		}
 		$types        = $this->get_compatible_media_types();
-		$file         = wp_parse_url( $file, PHP_URL_PATH );
+		$file         = wp_parse_url( $original_file, PHP_URL_PATH );
 		$filename     = Utils::pathinfo( $file, PATHINFO_BASENAME );
 		$mime         = wp_check_filetype( $filename );
 		$type         = strstr( $mime['type'], '/', true );
@@ -650,6 +657,7 @@ class Media extends Settings_Component implements Setup {
 		$parts = explode( '/', ltrim( $path, '/' ) );
 
 		$maybe_seo = array();
+		$public_id = null;
 
 		// Need to find the version part as anything after this is the public id.
 		foreach ( $parts as $part ) {
@@ -671,6 +679,17 @@ class Media extends Settings_Component implements Setup {
 		// Is SEO friendly URL.
 		if ( in_array( 'images', $maybe_seo, true ) ) {
 			$public_id = $path_info['dirname'];
+		} elseif ( false !== strpos( $url, '/image/fetch/' ) ) {
+			// Maybe the $file is already the URL - $url has the version.
+			if ( filter_var( $file, FILTER_VALIDATE_URL ) ) {
+				$public_id = $file;
+			} else {
+				// Capture the url without the version.
+				$parts = explode( '/image/fetch/', $url );
+				if ( 1 < count( $parts ) ) {
+					$public_id = end( $parts );
+				}
+			}
 		} else {
 			$public_id = isset( $path_info['dirname'] ) && '.' !== $path_info['dirname'] ? $path_info['dirname'] . DIRECTORY_SEPARATOR . $path_info['filename'] : $path_info['filename'];
 		}
@@ -1245,7 +1264,16 @@ class Media extends Settings_Component implements Setup {
 				return null;
 			}
 		}
-		$key = $this->get_cache_key( func_get_args() );
+
+		$args = array(
+			$attachment_id,
+			$size,
+			$transformations,
+			$cloudinary_id,
+			$overwrite_transformations,
+		);
+
+		$key = $this->get_cache_key( array_filter( $args ) );
 		if ( isset( $cache[ $key ] ) ) {
 			return $cache[ $key ];
 		}
@@ -1801,9 +1829,9 @@ class Media extends Settings_Component implements Setup {
 			return false;
 		}
 		$test_parts = wp_parse_url( $url );
-		$cld_url    = $this->plugin->components['connect']->api->asset_url;
+		$cld_url    = wp_parse_url( $this->base_url, PHP_URL_HOST );
 
-		return isset( $test_parts['path'] ) && $test_parts['host'] === $cld_url;
+		return isset( $test_parts['path'] ) && false !== strpos( $test_parts['host'], $cld_url );
 	}
 
 	/**

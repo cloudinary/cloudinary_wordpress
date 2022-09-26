@@ -201,7 +201,7 @@ class Assets extends Settings_Component {
 	 * Enqueue assets.
 	 */
 	public function enqueue_assets() {
-		if ( current_user_can( 'manage_options' ) && 'on' === $this->plugin->settings->image_settings->_overlay ) {
+		if ( Utils::user_can( 'status' ) && 'on' === $this->plugin->settings->image_settings->_overlay ) {
 			wp_enqueue_script( 'front-overlay', $this->plugin->dir_url . 'js/front-overlay.js', array(), $this->plugin->version, true );
 			wp_enqueue_style( 'front-overlay', $this->plugin->dir_url . 'css/front-overlay.css', array(), $this->plugin->version );
 		}
@@ -231,7 +231,7 @@ class Assets extends Settings_Component {
 	 * @param \WP_Admin_Bar $admin_bar The admin bar object.
 	 */
 	public function admin_bar_cache( $admin_bar ) {
-		if ( ! Utils::user_can( 'clear_cache' ) || is_admin() ) {
+		if ( ! Utils::user_can( 'status' ) || is_admin() ) {
 			return;
 		}
 
@@ -1079,7 +1079,7 @@ class Assets extends Settings_Component {
 		}
 		$base        = get_post( $parent_id )->post_title;
 		$size        = getimagesize( $file_path );
-		$size        = $size[0] . 'x' . $size[1];
+		$size        = ! empty( $size[0] ) && ! empty( $size[1] ) ? $size[0] . 'x' . $size[1] : '0x0'; // phpcs:ignore PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound,PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found
 		$hash_name   = md5( $url );
 		$wp_filetype = wp_check_filetype( wp_basename( $url ), wp_get_mime_types() );
 		$args        = array(
