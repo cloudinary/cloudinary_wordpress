@@ -210,8 +210,13 @@ class Report extends Settings_Component implements Setup {
 		$guid       = get_the_guid( $post->ID );
 
 		unset( $meta[ Sync::META_KEYS['cloudinary'] ], $meta[ Sync::META_KEYS['process_log'] ], $meta['_wp_attachment_metadata'] );
-
-		$meta = array_map( 'maybe_unserialize', array_map( 'reset', $meta ) );
+		array_walk(
+			$meta,
+			static function( &$row ) {
+				$row = reset( $row );
+			}
+		);
+		$meta = array_map( 'maybe_unserialize', $meta );
 
 		$wpdb->cld_table = Utils::get_relationship_table();
 		$prepare         = $wpdb->prepare(

@@ -58,6 +58,26 @@ class Responsive_Breakpoints extends Delivery_Feature {
 		if ( 'upload' !== $this->media->get_media_delivery( $tag_element['id'] ) ) {
 			return $tag_element;
 		}
+
+		// Bypass file formats that shouldn't have Responsive Images.
+		if (
+			in_array(
+				$tag_element['format'],
+				/**
+				 * Filter out file formats for Responsive Images.
+				 *
+				 * @hook  cloudinary_responsive_images_bypass_formats
+				 * @since 3.0.9
+				 *
+				 * @param $formats {array) The list of formats to exclude.
+				 */
+				apply_filters( 'cloudinary_responsive_images_bypass_formats', array( 'svg' ) ),
+				true
+			)
+		) {
+			return $tag_element;
+		}
+
 		if ( Utils::is_amp() ) {
 			$tag_element['atts']['layout'] = 'responsive';
 		} else {
@@ -67,7 +87,16 @@ class Responsive_Breakpoints extends Delivery_Feature {
 
 		$lazy = $this->plugin->get_component( 'lazy_load' );
 
-		if ( is_null( $lazy ) || ! $lazy->is_enabled() || Utils::is_amp() ) {
+		/**
+		 * Short circuit the lazy load.
+		 *
+		 * @hook  cloudinary_lazy_load_bypass
+		 * @since 3.0.9
+		 *
+		 * @param $short_circuit {bool}  The short circuit value.
+		 * @param $tag_element   {array} The tag element.
+		 */
+		if ( is_null( $lazy ) || ! $lazy->is_enabled() || Utils::is_amp() || apply_filters( 'cloudinary_lazy_load_bypass', false, $tag_element ) ) {
 			$tag_element = $this->apply_breakpoints( $tag_element );
 		}
 
