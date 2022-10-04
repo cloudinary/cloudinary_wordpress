@@ -777,6 +777,7 @@ class Delivery implements Setup {
 		}
 		$tags = $this->get_media_tags( $html, 'img' );
 		$tags = array_map( array( $this, 'parse_element' ), $tags );
+		$tags = array_filter( $tags );
 		foreach ( $tags as $tag_element ) {
 			// Get tag element.
 			$tag_element['id']              = $attachment_id;
