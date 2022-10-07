@@ -640,6 +640,16 @@ class Assets extends Settings_Component {
 			}
 		}
 
+		if ( $valid && $this->delivery->is_deliverable( $attachment_id ) ) {
+			$valid = false;
+
+			// translators: The attachment ID.
+			$action_message = sprintf( __( 'Clean up sync metadata for %d', 'cloudinary' ), $attachment_id );
+			do_action( '_cloudinary_queue_action', $action_message );
+
+			Utils::clean_up_sync_meta( $attachment_id );
+		}
+
 		return $valid;
 	}
 
