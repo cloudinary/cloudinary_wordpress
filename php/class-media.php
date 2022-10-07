@@ -2164,7 +2164,11 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function media_column_value( $column_name, $attachment_id ) {
 		if ( 'cld_status' === $column_name ) {
-			if ( ! $this->is_uploadable_media( $attachment_id ) ) :
+			if ( ! $this->plugin->get_component( 'delivery' )->is_deliverable( $attachment_id ) ) :
+				?>
+				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'The delivery for this asset is disabled.', 'cloudinary' ); ?>"></span>
+				<?php
+			elseif ( ! $this->is_uploadable_media( $attachment_id ) ) :
 				?>
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'Not syncable. This is an external media.', 'cloudinary' ); ?>"></span>
 				<?php
