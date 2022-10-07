@@ -343,12 +343,24 @@ class Delivery implements Setup {
 	 * @return bool
 	 */
 	public function is_deliverable( $attachment_id ) {
-		$is = wp_attachment_is_image( $attachment_id ) || wp_attachment_is( 'video', $attachment_id );
+		$is = false;
+
+		if ( wp_attachment_is_image( $attachment_id ) && 'on' === $this->plugin->settings->get_value( 'image_delivery' ) ) {
+			$is = true;
+		}
+
+		if ( ! $is && wp_attachment_is( 'video', $attachment_id ) && 'on' === $this->plugin->settings->get_value( 'video_delivery' ) ) {
+			$is = true;
+		}
 
 		// Ensure that the attachment has dimensions to be delivered.
 		if ( $is ) {
 			$meta = wp_get_attachment_metadata( $attachment_id, true );
 			$is   = ! empty( $meta['width'] ) && ! empty( $meta['height'] );
+		}
+
+		if ( ! $is ) {
+			$is = ! wp_attachment_is_image( $attachment_id ) && ! wp_attachment_is( 'video', $attachment_id );
 		}
 
 		/**
@@ -834,6 +846,9 @@ class Delivery implements Setup {
 
 			if ( $results ) {
 				foreach ( $results as $result ) {
+					if ( ! $this->is_deliverable( $result->post_id ) ) {
+						continue;
+					}
 					// If we are here, it means that an attachment in the media library doesn't have a delivery for the url.
 					// Reset the signature for delivery and add to sync, to update it.
 					$this->create_delivery( $result->post_id );
@@ -1664,7 +1679,9 @@ class Delivery implements Setup {
 
 		$auto_sync = $this->sync->is_auto_sync_enabled();
 		foreach ( $results as $result ) {
-			$this->set_usability( $result, $auto_sync );
+			if ( $this->is_deliverable( $result['post_id'] ) ) {
+				$this->set_usability( $result, $auto_sync );
+			}
 		}
 		// Set unknowns.
 		$this->unknown = array_diff( $urls, array_keys( $this->known ) );

@@ -1044,6 +1044,10 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function attachment_url( $url, $attachment_id ) {
 
+		if ( ! $this->plugin->get_component( 'delivery' )->is_deliverable( $attachment_id ) ) {
+			return $url;
+		}
+
 		// Previous v1 and Cloudinary only storage.
 		if ( false !== strpos( $url, 'https://', 5 ) ) {
 			$dirs = wp_get_upload_dir();
@@ -1635,6 +1639,10 @@ class Media extends Settings_Component implements Setup {
 	 * @uses filter:image_downsize
 	 */
 	public function filter_downsize( $image, $attachment_id, $size ) {
+		if ( ! $this->plugin->get_component( 'delivery' )->is_deliverable( $attachment_id ) ) {
+			return $image;
+		}
+
 		// Don't do this while saving.
 		if ( true === $this->in_downsize || doing_filter( 'content_save_pre' ) || wp_attachment_is( 'video', $attachment_id ) || Utils::is_saving_metadata() ) {
 			return $image;
@@ -1726,6 +1734,10 @@ class Media extends Settings_Component implements Setup {
 	 * @return array Altered or same sources array.
 	 */
 	public function image_srcset( $sources, $size_array, $image_src, $image_meta, $attachment_id ) {
+
+		if ( ! $this->plugin->get_component( 'delivery' )->is_deliverable( $attachment_id ) ) {
+			return $sources;
+		}
 
 		$cloudinary_id = isset( $image_meta['cloudinary_id'] ) ? $image_meta['cloudinary_id'] : $this->cloudinary_id( $attachment_id );
 		if ( ! $cloudinary_id ) {
@@ -2644,6 +2656,10 @@ class Media extends Settings_Component implements Setup {
 	 * @return string
 	 */
 	public function maybe_srcset_post_thumbnail( $content, $post_id, $attachment_id ) {
+		if ( ! $this->plugin->get_component( 'delivery' )->is_deliverable( $attachment_id ) ) {
+			return $content;
+		}
+
 		// Check the attachment is synced and does not already have a srcset (some themes do this already).
 		if ( $this->doing_featured_image === $attachment_id ) {
 			$overwrite_transformations  = $this->maybe_overwrite_featured_image( $attachment_id );
