@@ -1518,15 +1518,22 @@ class Delivery implements Setup {
 		 */
 		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
 
-		$this->known[ $item['public_id'] ] = $item;
+		$found[ $item['public_id'] ] = $item;
 		$scaled                            = self::make_scaled_url( $item['sized_url'] );
 		$descaled                          = self::descaled_url( $item['sized_url'] );
 		$scaled_slashed                    = addcslashes( $scaled, '/' );
 		$descaled_slashed                  = addcslashes( $descaled, '/' );
-		$this->known[ $scaled ]            = $item;
-		$this->known[ $descaled ]          = $item;
-		$this->known[ $scaled_slashed ]    = array_merge( $item, array( 'slashed' => true ) );
-		$this->known[ $descaled_slashed ]  = array_merge( $item, array( 'slashed' => true ) );
+		$found[ $scaled ]            = $item;
+		$found[ $descaled ]          = $item;
+		$found[ $scaled_slashed ]    = array_merge( $item, array( 'slashed' => true ) );
+		$found[ $descaled_slashed ]  = array_merge( $item, array( 'slashed' => true ) );
+
+		if ( ! $this->is_deliverable( $item['post_id'] ) ) {
+			$this->unusable = array_merge( $this->unusable, $found );
+			return;
+		}
+
+		$this->known = array_merge( $this->known, $found );
 
 		if ( 'disable' === $item['post_state'] ) {
 			return;
@@ -1679,9 +1686,7 @@ class Delivery implements Setup {
 
 		$auto_sync = $this->sync->is_auto_sync_enabled();
 		foreach ( $results as $result ) {
-			if ( $this->is_deliverable( $result['post_id'] ) ) {
-				$this->set_usability( $result, $auto_sync );
-			}
+			$this->set_usability( $result, $auto_sync );
 		}
 		// Set unknowns.
 		$this->unknown = array_diff( $urls, array_keys( $this->known ) );
