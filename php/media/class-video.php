@@ -311,9 +311,6 @@ class Video {
 				'fluid'    => 'true',
 				'controls' => $controls ? 'true' : 'false',
 			),
-			'source'     => array(
-				'source_types' => array(),
-			),
 		);
 		// Check for transformations.
 		$transformations = $this->media->get_transformations( $attachment_id, array(), $overwrite_transformations );
@@ -322,10 +319,6 @@ class Video {
 		}
 		// Set the source_type.
 		$video = wp_get_attachment_metadata( $attachment_id );
-		if ( ! empty( $video['fileformat'] ) ) {
-			$params['source']['source_types'][] = $video['fileformat'];
-			unset( $attributes[ $video['fileformat'] ] );
-		}
 		// Add cname if present.
 		if ( ! empty( $this->media->credentials['cname'] ) ) {
 			$params['cloudinary'] = array(
