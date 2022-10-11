@@ -318,7 +318,7 @@ class Video {
 		// Check for transformations.
 		$transformations = $this->media->get_transformations( $attachment_id, array(), $overwrite_transformations );
 		if ( ! empty( $transformations ) ) {
-			$params['source']['transformation'] = $transformations;
+			$params['source']['transformation'] = array_merge( ...$transformations );
 		}
 		// Set the source_type.
 		$video = wp_get_attachment_metadata( $attachment_id );
