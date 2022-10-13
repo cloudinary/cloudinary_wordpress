@@ -191,6 +191,16 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 
 		$this->settings->save();
 
+		if ( ! empty( $url ) ) {
+			// Warm the last uploaded items in the media library.
+			wp_remote_get(
+				rest_url( 'wp/v2/media' ),
+				array(
+					'blocking' => false,
+				)
+			);
+		}
+
 		return rest_ensure_response( $this->settings->get_value() );
 	}
 
