@@ -11,6 +11,10 @@ use Cloudinary\Component\Config;
 use Cloudinary\Component\Notice;
 use Cloudinary\Component\Setup;
 use Cloudinary\Connect\Api;
+use WP_Error;
+use WP_REST_Request;
+use WP_REST_Response;
+use WP_REST_Server;
 
 /**
  * Cloudinary connection class.
@@ -81,6 +85,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		'connection' => 'cloudinary_connect',
 		'status'     => 'cloudinary_status',
 		'history'    => '_cloudinary_history',
+		'notices'    => 'rest_api_notices',
 	);
 
 	/**
@@ -139,11 +144,11 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	/**
 	 * Test a connection string.
 	 *
-	 * @param \WP_REST_Request $request The request.
+	 * @param WP_REST_Request $request The request.
 	 *
-	 * @return \WP_REST_Response
+	 * @return WP_REST_Response
 	 */
-	public function rest_test_connection( \WP_REST_Request $request ) {
+	public function rest_test_connection( WP_REST_Request $request ) {
 
 		$url    = $request->get_param( 'cloudinary_url' );
 		$result = $this->test_connection( $url );
@@ -152,13 +157,22 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	}
 
 	/**
+	 * Test the REST API connectivity.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function rest_test_rest_api_connectivity() {
+		return new WP_REST_Response( null, 200 );
+	}
+
+	/**
 	 * Save the wizard setup.
 	 *
-	 * @param \WP_REST_Request $request The request.
+	 * @param WP_REST_Request $request The request.
 	 *
-	 * @return \WP_REST_Response
+	 * @return WP_REST_Response
 	 */
-	public function rest_save_wizard( \WP_REST_Request $request ) {
+	public function rest_save_wizard( WP_REST_Request $request ) {
 
 		$url      = $request->get_param( 'cldString' );
 		$media    = true === $request->get_param( 'mediaLibrary' ) ? 'on' : 'off';
@@ -229,7 +243,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 *
 	 * @param array $data The submitted data to verify.
 	 *
-	 * @return array|\WP_Error The data if cleared.
+	 * @return array|WP_Error The data if cleared.
 	 */
 	public function verify_connection( $data ) {
 		$admin = $this->plugin->get_component( 'admin' );
@@ -355,7 +369,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 *
 	 * @param string $url The url to test.
 	 *
-	 * @return mixed
+	 * @return array
 	 */
 	public function test_connection( $url ) {
 		$result = array(
@@ -456,7 +470,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	/**
 	 * Check the status of Cloudinary.
 	 *
-	 * @return array|\WP_Error
+	 * @return array|WP_Error
 	 */
 	public function check_status() {
 		$status = $this->test_ping();
@@ -468,7 +482,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	/**
 	 * Do a ping test on the API.
 	 *
-	 * @return array|\WP_Error
+	 * @return array|WP_Error
 	 */
 	public function test_ping() {
 		$test      = new Connect\Api( $this, $this->plugin->version );
@@ -771,12 +785,27 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	}
 
 	/**
+	 * Setup the connection notices.
+	 *
+	 * @return void
+	 */
+	public function connectivity_notices() {
+		$plugin  = get_plugin_instance();
+		$notices = get_option( $plugin::KEYS['notices'], array() );
+
+		if ( ! empty( $notices[ self::META_KEYS['notices'] ] ) ) {
+			$this->notices[] = $notices[ self::META_KEYS['notices'] ];
+		}
+	}
+
+	/**
 	 * Get admin notices.
 	 */
 	public function get_notices() {
 		$this->usage_notices();
+		$this->connectivity_notices();
 
-		return $this->notices;
+		return array_filter( $this->notices );
 	}
 
 	/**
