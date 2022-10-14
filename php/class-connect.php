@@ -414,12 +414,20 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	public function history( $days = 1 ) {
 		$return  = array();
 		$history = get_option( self::META_KEYS['history'], array() );
+		$plan    = $this->usage['plan'];
 		for ( $i = 1; $i <= $days; $i ++ ) {
 			$date = date_i18n( 'd-m-Y', strtotime( '- ' . $i . ' days' ) );
-			if ( ! isset( $history[ $date ] ) ) {
-				$history[ $date ] = $this->api->usage( $date );
+			if ( ! isset( $history[ $plan ][ $date ] ) ) {
+				$history[ $plan ][ $date ] = $this->api->usage( $date );
+				uksort(
+					$history[ $plan ],
+					static function ( $a, $b ) {
+						return strtotime( $a ) > strtotime( $b );
+					}
+				);
+				$history[ $plan ] = array_slice( $history[ $plan ], -30 );
 			}
-			$return[ $date ] = $history[ $date ];
+			$return[ $date ] = $history[ $plan ][ $date ];
 		}
 		update_option( self::META_KEYS['history'], $history, false );
 
