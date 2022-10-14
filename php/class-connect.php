@@ -435,6 +435,43 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	}
 
 	/**
+	 * Upgrade method for version changes.
+	 *
+	 * @param string $previous_version The previous version number.
+	 * @param string $new_version      The New version number.
+	 */
+	public function upgrade_settings( $previous_version, $new_version ) {
+		// Check if we need to upgrade the history.
+		if ( version_compare( $previous_version, '3.1.0', '<' ) ) {
+			$history = get_option( self::META_KEYS['history'], array() );
+
+			// Check whether history has migrated.
+			if ( ! empty( $this->usage['plan'] ) && ! empty( $history[ $this->usage['plan'] ] ) ) {
+				return;
+			}
+
+			// Fix history.
+			$new_history = array();
+			foreach ( $history as $date => $data ) {
+				$new_history[ $data['plan'] ][ $date ] = $data;
+			}
+
+			foreach ( $new_history as &$data ) {
+				uksort(
+					$data,
+					static function ( $a, $b ) {
+						return strtotime( $a ) < strtotime( $b );
+					}
+				);
+
+				$data = array_reverse( array_slice( $data, 0, 30 ) );
+			}
+
+			update_option( self::META_KEYS['history'], $new_history, false );
+		}
+	}
+
+	/**
 	 * After updating the cloudinary_connect option, remove flag.
 	 */
 	public function updated_option() {
