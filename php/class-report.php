@@ -155,6 +155,7 @@ class Report extends Settings_Component implements Setup {
 	 */
 	public function init_reporting( $new_value ) {
 		delete_option( self::REPORT_KEY );
+		delete_option( Sync::META_KEYS['debug'] );
 
 		return $new_value;
 	}
@@ -209,8 +210,13 @@ class Report extends Settings_Component implements Setup {
 		$guid       = get_the_guid( $post->ID );
 
 		unset( $meta[ Sync::META_KEYS['cloudinary'] ], $meta[ Sync::META_KEYS['process_log'] ], $meta['_wp_attachment_metadata'] );
-
-		$meta = array_map( 'maybe_unserialize', array_map( 'reset', $meta ) );
+		array_walk(
+			$meta,
+			static function( &$row ) {
+				$row = reset( $row );
+			}
+		);
+		$meta = array_map( 'maybe_unserialize', $meta );
 
 		$wpdb->cld_table = Utils::get_relationship_table();
 		$prepare         = $wpdb->prepare(
@@ -384,6 +390,8 @@ class Report extends Settings_Component implements Setup {
 		$this->posts();
 		// Add config.
 		$this->config();
+		// Add debug log.
+		$this->degbug_log();
 
 		return $this->report_data;
 	}
@@ -417,17 +425,30 @@ class Report extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Convert a file path to a slug (folder/file.extension).
+	 *
+	 * @param string $path The file path.
+	 *
+	 * @return string
+	 */
+	protected function file_path_to_slug( $path ) {
+		return wp_basename( dirname( $path ) ) . '/' . wp_basename( $path );
+	}
+
+	/**
 	 * Build the plugins report.
 	 */
 	protected function plugins() {
 
 		$plugin_data = array(
-			'must_use' => wp_get_mu_plugins(),
+			'must_use' => array_map( array( $this, 'file_path_to_slug' ), wp_get_mu_plugins() ),
 			'plugins'  => array(),
 		);
 		$active      = wp_get_active_and_valid_plugins();
 		foreach ( $active as $plugin ) {
-			$plugin_data['plugins'][] = get_plugin_data( $plugin );
+			$slug                                    = $this->file_path_to_slug( $plugin );
+			$plugin_data['plugins'][ $slug ]         = get_plugin_data( $plugin, false, false );
+			$plugin_data['plugins'][ $slug ]['slug'] = $slug;
 		}
 		$this->add_report_block( 'plugins_report', $plugin_data );
 	}
@@ -481,13 +502,20 @@ class Report extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Add debug log report.
+	 */
+	protected function degbug_log() {
+		$this->add_report_block( 'debug_log', Utils::get_debug_messages() );
+	}
+
+	/**
 	 * Maybe generate the report.
 	 */
 	public function maybe_generate_report() {
 		$page     = Utils::get_sanitized_text( 'page' );
 		$section  = Utils::get_sanitized_text( 'section' );
 		$download = filter_input( INPUT_GET, self::REPORT_DOWNLOAD_KEY, FILTER_VALIDATE_BOOLEAN );
-		if ( $download && 'cloudinary_help' === $page && 'system-report' === $section && current_user_can( 'manage_options' ) ) {
+		if ( $download && 'cloudinary_help' === $page && 'system-report' === $section && Utils::user_can( 'system_report' ) ) {
 			$report = $this->get_report_data();
 			header( 'Content-Description: File Transfer' );
 			header( 'Content-Type: application/octet-stream' );

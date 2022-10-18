@@ -54,6 +54,17 @@ export const toBlockAttributes = ( object ) => {
 	return blockAttributes;
 };
 
+export const convertColors = ( color ) => {
+	const reg = /var\((.*)\)/g;
+	const res = reg.exec( color );
+	const convertedColor = res
+		? getComputedStyle( document.documentElement ).getPropertyValue(
+				res[ 1 ]
+		  )
+		: color;
+	return convertedColor;
+};
+
 export const setupAttributesForRendering = ( attributes ) => {
 	const dot = new Dot( '_' );
 
@@ -77,6 +88,22 @@ export const setupAttributesForRendering = ( attributes ) => {
 
 	if ( 'pad' !== config?.transformation?.crop ) {
 		delete config.transformation.background;
+	}
+
+	if ( config?.themeProps?.primary ) {
+		config.themeProps.primary = convertColors(
+			config?.themeProps?.primary
+		);
+	}
+
+	if ( config?.themeProps?.onPrimary ) {
+		config.themeProps.onPrimary = convertColors(
+			config?.themeProps?.onPrimary
+		);
+	}
+
+	if ( config?.themeProps?.active ) {
+		config.themeProps.active = convertColors( config?.themeProps?.active );
 	}
 
 	if ( config.customSettings ) {

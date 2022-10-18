@@ -87,7 +87,7 @@ class Download_Sync {
 	public function rest_can_upload_files( \WP_REST_Request $request ) {
 
 		// This would have been from an ajax call. Therefore verify based on capability.
-		return current_user_can( 'upload_files' );
+		return Utils::user_can( 'manage_assets', 'upload_files', 'download' );
 	}
 
 	/**
@@ -223,7 +223,9 @@ class Download_Sync {
 		if ( file_exists( ABSPATH . WPINC . '/class-wp-http.php' ) ) {
 			$http_class = ABSPATH . WPINC . '/class-wp-http.php';
 		}
-		require_once $http_class;
+		if ( ! class_exists( 'WP_Http' ) ) {
+			require_once $http_class;
+		}
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 		require_once ABSPATH . 'wp-admin/includes/media.php';

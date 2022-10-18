@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: images, videos, DAM, optimization, CDN
 Requires at least: 4.7
-Tested up to: 6.0
+Tested up to: 6.0.2
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -141,6 +141,50 @@ Your site is now setup to start using Cloudinary.
 1. Need help? We’ve got you covered
 
 == Changelog ==
+
+= 3.0.8 (13 SEPTEMBER 2022) =
+
+Fixes and Improvements:
+
+* Added filters for capabilities checks
+* Fixed WebP being converted to gif when pulling assets from Cloudinary
+* Fixed Conflict with WP Rest API Cache where the plugin is ignoring Cloudinary URL
+* Fixed Lazy Loading breaks loading of images rendered from the headless source - WPGraphQL
+* Fixed PHPCompatibiltyWP missing from PHPCS config file
+* Improved PHP 8.X plugin compatibility
+* Improved Front-end JS compatibility issues originating from other media-related plugins
+* Improved Lazy Loading and general sliders compatibility issues
+
+
+= 3.0.7 (01 August 2022) =
+
+Fixes and Improvements:
+
+* Fixed issue of transformations being lost while pulling an asset from Cloudinary
+
+= 3.0.6 (25 July 2022) =
+
+Fixes and Improvements:
+
+* Fixed PHP Illegal string offset warning
+* Fixed Uncaught Error: Call to undefined function Cloudinary\Media\get_current_screen()
+* Fixed[WPGraphQL] Inconsistent media URLs in response
+* Fixed the alt-text on the initial import from Cloudinary
+* Improved Product gallery widget color palette compatibility with various themes
+* Moved asset transformations to relationship table
+* Added Support for upload_prefix in URLs
+* Updated the plugin deactivation screen
+
+
+= 3.0.5 (29 June 2022) =
+
+Fixes and Improvements:
+
+* Add support for Cloudinary Dynamic Folders mode
+* Fixed Elementor compatibility issue - We’re sorry about that!
+* Fixed UTF-8 in Portuguese using Elementor
+* Fixed ACF encoding issue
+
 
 = 3.0.4 (31 May 2022) =
 

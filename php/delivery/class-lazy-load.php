@@ -46,6 +46,99 @@ class Lazy_Load extends Delivery_Feature {
 	}
 
 	/**
+	 * Setup hooks.
+	 */
+	public function setup_hooks() {
+		add_action( 'wp', array( $this, 'init_lazy_script_maybe' ) );
+		add_filter( 'cloudinary_lazy_load_bypass', array( $this, 'bypass_lazy_load' ), 10, 2 );
+	}
+
+	/**
+	 * Check if the page request is a dynamic lazy load request.
+	 */
+	public function init_lazy_script_maybe() {
+
+		$flag = Utils::get_sanitized_text( 'cloudinary_lazy_load_loader' );
+		if ( $flag ) {
+			$expires = HOUR_IN_SECONDS;
+			header( 'Cache-Control: max-age=' . $expires );
+			cache_javascript_headers();
+			echo $this->get_inline_script(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			exit;
+		}
+	}
+
+	/**
+	 * Maybe bypass the lazy load.
+	 *
+	 * @param bool  $bypass      Whether to bypass lazy load.
+	 * @param array $tag_element The TAG element.
+	 *
+	 * @return bool
+	 */
+	public function bypass_lazy_load( $bypass, $tag_element ) {
+
+		// Bypass if eager loading.
+		if ( ! empty( $tag_element['loading'] ) && 'eager' === $tag_element['loading'] ) {
+			$bypass = true;
+		}
+
+		/**
+		 * Filter the classes that bypass lazy loading.
+		 *
+		 * @hook cloudinary_lazy_load_bypass_classes
+		 * @since 3.0.9
+		 *
+		 * @example
+		 * <?php
+		 *
+		 * // Extend bypass lazy load classes to include `skip-lazy`.
+		 * add_filter(
+		 *  'cloudinary_lazy_load_bypass_classes',
+		 *  function( $classes ) {
+		 *      $classes[] = 'skip-lazy';
+		 *      return $classes;
+		 *  }
+		 * );
+		 *
+		 * @param $classes {array} Classes that bypass the Lazy Load.
+		 */
+		$bypass_classes = apply_filters( 'cloudinary_lazy_load_bypass_classes', array( 'cld-bypass-lazy' ) );
+
+		if ( ! $bypass && ! empty( array_intersect( $bypass_classes, $tag_element['atts']['class'] ) ) ) {
+			$bypass = true;
+		}
+
+		return $bypass;
+	}
+
+	/**
+	 * Get the inline script for lazy load.
+	 *
+	 * @retrun string
+	 */
+	public function get_inline_script() {
+		$config = $this->get_config();
+
+		return 'var CLDLB = ' . wp_json_encode( $config ) . ';' . file_get_contents( $this->plugin->dir_path . 'js/inline-loader.js' );
+	}
+
+	/**
+	 * Get the config for lazy load.
+	 *
+	 * @return array
+	 */
+	public function get_config() {
+		$config = $this->config; // Get top most config.
+		if ( 'off' !== $config['lazy_placeholder'] ) {
+			$config['placeholder'] = API::generate_transformation_string( $this->get_placeholder_transformations( $config['lazy_placeholder'] ) );
+		}
+		$config['base_url'] = $this->media->base_url;
+
+		return $config;
+	}
+
+	/**
 	 * Wrap image tags in noscript to allow no-javascript browsers to get images.
 	 *
 	 * @param string $tag         The original html tag.
@@ -146,7 +239,7 @@ class Lazy_Load extends Delivery_Feature {
 		if ( Utils::is_amp() ) {
 			return $tag_element;
 		}
-
+		static $has_loader = false;
 		// Bypass file formats that shouldn't be lazy loaded.
 		if (
 			in_array(
@@ -163,6 +256,34 @@ class Lazy_Load extends Delivery_Feature {
 				true
 			)
 		) {
+			return $tag_element;
+		}
+
+		/**
+		 * Short circuit the lazy load.
+		 *
+		 * @hook  cloudinary_lazy_load_bypass
+		 *
+		 * @param $short_circuit {bool}  The short circuit value.
+		 * @param $tag_element   {array} The tag element.
+		 *
+		 * @since 3.0.9
+		 *
+		 * @example
+		 * <?php
+		 *
+		 * // Bypass lazy load for images with ID `feature-image`.
+		 * add_filter(
+		 *    'cloudinary_lazy_load_bypass',
+		 *    function( $bypass, $tag_element ) {
+		 *      if ( 'feature-image! === $tag_element['id'] ) {
+		 *          $bypass = true;
+		 *      }
+		 *      return $bypass;
+		 *  }
+		 * );
+		 */
+		if ( apply_filters( 'cloudinary_lazy_load_bypass', false, $tag_element ) ) {
 			return $tag_element;
 		}
 
@@ -200,10 +321,16 @@ class Lazy_Load extends Delivery_Feature {
 			if ( empty( $tag_element['atts']['onload'] ) ) {
 				$tag_element['atts']['onload'] = '';
 			}
+			$loader = 'null;';
+			if ( ! $has_loader && Utils::is_frontend_ajax() ) {
+				$has_loader = true;
+				$url        = add_query_arg( 'cloudinary_lazy_load_loader', true, trailingslashit( home_url() ) );
+				$loader     = 'document.body.appendChild(document.createElement(\'script\')).src=\'' . $url . '\';this.onload=null;';
+			}
 			// Since we're appending to the onload, check it isn't already in, as it may run twice i.e full page caching.
 			if ( false === strpos( $tag_element['atts']['onload'], 'CLDBind' ) ) {
 				$tag_element['atts']['data-cloudinary'] = 'lazy';
-				$tag_element['atts']['onload']         .= ';window.CLDBind?CLDBind(this):null;';
+				$tag_element['atts']['onload']         .= ';window.CLDBind?CLDBind(this):' . $loader;
 			}
 		}
 
@@ -225,14 +352,9 @@ class Lazy_Load extends Delivery_Feature {
 		if ( Utils::is_frontend_ajax() ) {
 			return;
 		}
-		$config = $this->config; // Get top most config.
-		if ( 'off' !== $config['lazy_placeholder'] ) {
-			$config['placeholder'] = API::generate_transformation_string( $this->get_placeholder_transformations( $config['lazy_placeholder'] ) );
-		}
-		$config['base_url'] = $this->media->base_url;
 
 		ob_start();
-		Utils::print_inline_tag( 'var CLDLB = ' . wp_json_encode( $config ) . ';' . file_get_contents( $this->plugin->dir_path . 'js/inline-loader.js' ) );
+		Utils::print_inline_tag( $this->get_inline_script() );
 		$script        = ob_get_clean();
 		$script_holder = '<meta name="cld-loader">';
 		$allow         = array(

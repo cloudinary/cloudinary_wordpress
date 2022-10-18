@@ -250,11 +250,14 @@ class Deactivation {
 					</p>
 				</div>
 				<div class="modal-footer" id="modal-footer">
+					<button class="button button-link deactivate-close" data-action="deactivate">
+						<?php esc_html_e( 'Skip and deactivate', 'cloudinary' ); ?>
+					</button>
 					<button class="button cancel-close" data-action="cancel">
 						<?php esc_html_e( 'Cancel', 'cloudinary' ); ?>
 					</button>
 					<button class="button button-primary" data-action="submit">
-						<?php esc_html_e( 'Deactivate', 'cloudinary' ); ?>
+						<?php esc_html_e( 'Submit and deactivate', 'cloudinary' ); ?>
 					</button>
 					<span class="modal-processing hidden">
 						<?php esc_html_e( 'Sending…', 'cloudinary' ); ?>
@@ -350,7 +353,7 @@ class Deactivation {
 			'callback'            => array( $this, 'rest_callback' ),
 			'args'                => array(),
 			'permission_callback' => function () {
-				return current_user_can( 'activate_plugins' );
+				return Utils::user_can( 'deactivate', 'activate_plugins' );
 			},
 		);
 

@@ -131,6 +131,17 @@ class Api {
 	);
 
 	/**
+	 * Cloudinary qualified upload prefixes to date.
+	 *
+	 * @var string[]
+	 */
+	public static $qualified_upload_prefixes = array(
+		'api.cloudinary.com',
+		'api-eu.cloudinary.com',
+		'api-ap.cloudinary.com',
+	);
+
+	/**
 	 * Current pending url to overide the fields to post.
 	 *
 	 * @var string|null
@@ -175,7 +186,7 @@ class Api {
 		$parts = array();
 
 		if ( $endpoint ) {
-			$parts[] = CLOUDINARY_ENDPOINTS_API;
+			$parts[] = $this->get_upload_prefix();
 			$parts[] = $this->api_version;
 		} else {
 			$parts[] = $this->asset_url;
@@ -520,7 +531,7 @@ class Api {
 				return $this->upload( $attachment_id, $args );
 			}
 		}
-		if ( true === $tempfile ) {
+		if ( true === $tempfile && is_string( $args['file'] ) ) {
 			unlink( $args['file'] ); //phpcs:ignore
 		}
 
@@ -735,6 +746,65 @@ class Api {
 			curl_setopt( $handle, CURLOPT_POSTFIELDS, $request['body'] ); // phpcs:ignore
 			$this->pending_url = null;
 		}
+	}
+
+	/**
+	 * Get Cloudinary upload prefix.
+	 *
+	 * @return string
+	 */
+	public function get_upload_prefix() {
+		static $upload_prefix;
+
+		if ( is_null( $upload_prefix ) ) {
+			// Defaults to first hardcoded qualified domain.
+			$upload_prefix = reset( self::$qualified_upload_prefixes );
+
+			// Maybe use constant.
+			if ( self::is_qualified_upload_prefix( CLOUDINARY_ENDPOINTS_API ) ) {
+				$upload_prefix = self::get_hostname( CLOUDINARY_ENDPOINTS_API );
+			}
+
+			// Maybe use query argument.
+			if (
+				! empty( $this->credentials['upload_prefix'] )
+				&& self::is_qualified_upload_prefix( $this->credentials['upload_prefix'] )
+			) {
+				$upload_prefix = self::get_hostname( $this->credentials['upload_prefix'] );
+			}
+		}
+
+		return $upload_prefix;
+	}
+
+	/**
+	 * Check if a string is a qualified `upload_prefix`.
+	 *
+	 * @param string $upload_prefix Upload prefix to check.
+	 *
+	 * @return bool
+	 */
+	protected static function is_qualified_upload_prefix( $upload_prefix ) {
+		$hostname = self::get_hostname( $upload_prefix );
+
+		return in_array( $hostname, self::$qualified_upload_prefixes, true );
+	}
+
+	/**
+	 * Get the hostname from a string.
+	 *
+	 * @param string $upload_prefix Upload prefix to check.
+	 *
+	 * @return string
+	 */
+	protected static function get_hostname( $upload_prefix ) {
+		$hostname = $upload_prefix;
+
+		if ( filter_var( $upload_prefix, FILTER_VALIDATE_URL ) ) {
+			$hostname = parse_url( $upload_prefix, PHP_URL_HOST );
+		}
+
+		return $hostname;
 	}
 
 	/**

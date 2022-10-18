@@ -9,6 +9,7 @@ namespace Cloudinary\Assets;
 
 use Cloudinary\Assets;
 use Cloudinary\Connect\Api;
+use Cloudinary\Relate;
 use Cloudinary\Sync;
 use Cloudinary\Utils;
 use WP_REST_Request;
@@ -52,12 +53,12 @@ class Rest_Assets {
 		$endpoints['show_cache']          = array(
 			'method'              => \WP_REST_Server::CREATABLE,
 			'callback'            => array( $this, 'rest_get_caches' ),
-			'permission_callback' => array( $this, 'rest_can_manage_options' ),
+			'permission_callback' => array( $this, 'rest_can_manage_assets' ),
 			'args'                => array(),
 		);
 		$endpoints['disable_cache_items'] = array(
 			'method'              => \WP_REST_Server::CREATABLE,
-			'permission_callback' => array( $this, 'rest_can_manage_options' ),
+			'permission_callback' => array( $this, 'rest_can_manage_assets' ),
 			'callback'            => array( $this, 'rest_handle_state' ),
 			'args'                => array(
 				'ids'   => array(
@@ -75,21 +76,21 @@ class Rest_Assets {
 		$endpoints['purge_cache']         = array(
 			'method'              => \WP_REST_Server::CREATABLE,
 			'callback'            => array( $this, 'rest_purge' ),
-			'permission_callback' => array( $this, 'rest_can_manage_options' ),
+			'permission_callback' => array( $this, 'rest_can_manage_assets' ),
 			'args'                => array(),
 		);
 
 		$endpoints['purge_all'] = array(
 			'method'              => \WP_REST_Server::CREATABLE,
 			'callback'            => array( $this, 'rest_purge_all' ),
-			'permission_callback' => array( $this, 'rest_can_manage_options' ),
+			'permission_callback' => array( $this, 'rest_can_manage_assets' ),
 			'args'                => array(),
 		);
 
 		$endpoints['save_asset'] = array(
 			'method'              => \WP_REST_Server::CREATABLE,
 			'callback'            => array( $this, 'rest_save_asset' ),
-			'permission_callback' => array( $this, 'rest_can_manage_options' ),
+			'permission_callback' => array( $this, 'rest_can_manage_assets' ),
 			'args'                => array(),
 		);
 
@@ -111,9 +112,7 @@ class Rest_Assets {
 		$type                 = $media->get_resource_type( $attachment_id );
 		$transformation_array = $media->get_transformations_from_string( $transformations, $type );
 		$cleaned              = Api::generate_transformation_string( $transformation_array, $type );
-		$this->assets->delivery->update_size_relations_transformations( $attachment_id, $cleaned );
-		$this->assets->media->update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], $transformation_array );
-
+		Relate::update_transformations( $attachment_id, $cleaned );
 		$return = array(
 			'transformations' => $cleaned,
 		);
@@ -239,8 +238,8 @@ class Rest_Assets {
 	 *
 	 * @return bool
 	 */
-	public function rest_can_manage_options() {
-		return current_user_can( 'manage_options' );
+	public function rest_can_manage_assets() {
+		return Utils::user_can( 'manage_assets' );
 	}
 
 	/**

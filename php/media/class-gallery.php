@@ -198,7 +198,11 @@ class Gallery extends Settings_Component {
 		$asset = $this->get_asset();
 		wp_enqueue_script( $script['slug'], $script['src'], $asset['dependencies'], $asset['version'], $script['in_footer'] );
 
-		$color_palette = wp_json_encode( current( (array) get_theme_support( 'editor-color-palette' ) ) );
+		$color_palette = array_filter( (array) get_theme_support( 'editor-color-palette' ) );
+		if ( ! empty( $color_palette ) ) {
+			$color_palette = array_shift( $color_palette );
+		}
+		$color_palette = wp_json_encode( $color_palette );
 		wp_add_inline_script( $script['slug'], "var CLD_THEME_COLORS = $color_palette;", 'before' );
 	}
 
@@ -319,7 +323,7 @@ class Gallery extends Settings_Component {
 			'callback'            => array( $this, 'rest_cloudinary_image_data' ),
 			'args'                => array(),
 			'permission_callback' => function () {
-				return current_user_can( 'edit_posts' );
+				return Utils::user_can( 'add_gallery', 'edit_posts' );
 			},
 		);
 
@@ -490,7 +494,7 @@ class Gallery extends Settings_Component {
 		}
 
 		// Can on back end on block editor and gallery settings page.
-		if ( is_admin() ) {
+		if ( is_admin() && function_exists( 'get_current_screen' ) ) {
 			$screen = get_current_screen();
 			if (
 				! is_null( $screen )

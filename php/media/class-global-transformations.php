@@ -8,9 +8,11 @@
 namespace Cloudinary\Media;
 
 use Cloudinary\Connect\Api;
+use Cloudinary\Relate;
 use Cloudinary\Settings\Setting;
 use Cloudinary\Sync;
 use Cloudinary\REST_API;
+use Cloudinary\Utils;
 use WP_Post;
 
 /**
@@ -537,7 +539,7 @@ class Global_Transformations {
 				'type'          => 'boolean',
 				'description'   => esc_html__( 'Flag on whether transformation should be overwritten for a featured image.', 'cloudinary' ),
 				'auth_callback' => function () {
-					return current_user_can( 'edit_posts' );
+					return Utils::user_can( 'override_transformation', 'edit_posts' );
 				},
 			)
 		);
@@ -650,9 +652,9 @@ class Global_Transformations {
 			$item = $this->media->plugin->get_component( 'assets' )->get_asset( $attachment_id, 'dataset' );
 			if ( ! empty( $item['data']['public_id'] ) ) {
 				$text            = __( 'Add transformations', 'cloudinary' );
-				$transformations = $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['transformation'], true );
+				$transformations = Relate::get_transformations( $attachment_id, true );
 				if ( ! empty( $transformations ) ) {
-					$text = Api::generate_transformation_string( $transformations, $this->media->get_resource_type( $attachment_id ) );
+					$text = $transformations;
 				}
 				$args = array(
 					'page'    => 'cloudinary',

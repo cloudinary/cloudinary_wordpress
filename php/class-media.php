@@ -267,9 +267,16 @@ class Media extends Settings_Component implements Setup {
 	 * @return bool
 	 */
 	public function is_file_compatible( $file ) {
-
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		$original_file = $file;
+		if ( $this->is_cloudinary_url( $file ) ) {
+			$file = Utils::download_fragment( $file );
+		}
+		if ( file_is_displayable_image( $file ) ) {
+			return true;
+		}
 		$types        = $this->get_compatible_media_types();
-		$file         = wp_parse_url( $file, PHP_URL_PATH );
+		$file         = wp_parse_url( $original_file, PHP_URL_PATH );
 		$filename     = Utils::pathinfo( $file, PATHINFO_BASENAME );
 		$mime         = wp_check_filetype( $filename );
 		$type         = strstr( $mime['type'], '/', true );
@@ -650,6 +657,7 @@ class Media extends Settings_Component implements Setup {
 		$parts = explode( '/', ltrim( $path, '/' ) );
 
 		$maybe_seo = array();
+		$public_id = null;
 
 		// Need to find the version part as anything after this is the public id.
 		foreach ( $parts as $part ) {
@@ -659,6 +667,11 @@ class Media extends Settings_Component implements Setup {
 			}
 		}
 
+		// Bail on incomplete url.
+		if ( empty( $parts ) ) {
+			return null;
+		}
+
 		// The remaining items should be the file.
 		$file      = implode( '/', $parts );
 		$path_info = Utils::pathinfo( $file );
@@ -666,6 +679,17 @@ class Media extends Settings_Component implements Setup {
 		// Is SEO friendly URL.
 		if ( in_array( 'images', $maybe_seo, true ) ) {
 			$public_id = $path_info['dirname'];
+		} elseif ( false !== strpos( $url, '/image/fetch/' ) ) {
+			// Maybe the $file is already the URL - $url has the version.
+			if ( filter_var( $file, FILTER_VALIDATE_URL ) ) {
+				$public_id = $file;
+			} else {
+				// Capture the url without the version.
+				$parts = explode( '/image/fetch/', $url );
+				if ( 1 < count( $parts ) ) {
+					$public_id = end( $parts );
+				}
+			}
 		} else {
 			$public_id = isset( $path_info['dirname'] ) && '.' !== $path_info['dirname'] ? $path_info['dirname'] . DIRECTORY_SEPARATOR . $path_info['filename'] : $path_info['filename'];
 		}
@@ -676,7 +700,7 @@ class Media extends Settings_Component implements Setup {
 			$public_id      .= ! empty( $transformations ) ? wp_json_encode( $transformations ) : '';
 		}
 
-		return $public_id;
+		return rawurldecode( $public_id );
 	}
 
 	/**
@@ -1240,7 +1264,16 @@ class Media extends Settings_Component implements Setup {
 				return null;
 			}
 		}
-		$key = $this->get_cache_key( func_get_args() );
+
+		$args = array(
+			$attachment_id,
+			$size,
+			$transformations,
+			$cloudinary_id,
+			$overwrite_transformations,
+		);
+
+		$key = $this->get_cache_key( array_filter( $args ) );
 		if ( isset( $cache[ $key ] ) ) {
 			return $cache[ $key ];
 		}
@@ -1286,11 +1319,13 @@ class Media extends Settings_Component implements Setup {
 		$url = apply_filters( 'cloudinary_converted_url', $url, $attachment_id, $pre_args );
 
 		// Add Cloudinary analytics.
-		$cache[ $key ] = add_query_arg(
-			array(
-				'_i' => 'AA',
-			),
-			$url
+		$cache[ $key ] = esc_url(
+			add_query_arg(
+				array(
+					'_i' => 'AA',
+				),
+				$url
+			)
 		);
 
 		return $cache[ $key ];
@@ -1709,7 +1744,7 @@ class Media extends Settings_Component implements Setup {
 			return $sources; // Return WordPress default sources.
 		}
 		// Get transformations if any.
-		$transformations = (array) $this->get_post_meta( $attachment_id, Sync::META_KEYS['transformation'], true );
+		$transformations = Relate::get_transformations( $attachment_id );
 
 		// For cases where transformations are added via cld_params.
 		if ( ! empty( $image_meta['transformations'] ) ) {
@@ -1794,9 +1829,9 @@ class Media extends Settings_Component implements Setup {
 			return false;
 		}
 		$test_parts = wp_parse_url( $url );
-		$cld_url    = $this->plugin->components['connect']->api->asset_url;
+		$cld_url    = wp_parse_url( $this->base_url, PHP_URL_HOST );
 
-		return isset( $test_parts['path'] ) && $test_parts['host'] === $cld_url;
+		return isset( $test_parts['path'] ) && false !== strpos( $test_parts['host'], $cld_url );
 	}
 
 	/**
@@ -1847,6 +1882,7 @@ class Media extends Settings_Component implements Setup {
 		// External assets.
 		wp_enqueue_script( 'cloudinary-media-modal', $this->plugin->dir_url . '/js/media-modal.js', null, $this->plugin->version, true );
 		wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, $deps, $this->plugin->version, true );
+		wp_enqueue_script( 'cloudinary-terms-order', $this->plugin->dir_url . '/js/terms-order.js', array( 'jquery' ), $this->plugin->version, true );
 		wp_enqueue_style( 'cloudinary' );
 		$params = array(
 			'nonce'     => wp_create_nonce( 'wp_rest' ),
@@ -1917,6 +1953,7 @@ class Media extends Settings_Component implements Setup {
 		if ( ! empty( $asset['transformations'] ) ) {
 			// Save a combined key.
 			$sync_key .= wp_json_encode( $asset['transformations'] );
+			// Use post meta temporarily to store the transformations until the attachment gets a sync relationship.
 			$this->update_post_meta( $attachment_id, Sync::META_KEYS['transformation'], $asset['transformations'] );
 		}
 
@@ -1931,7 +1968,7 @@ class Media extends Settings_Component implements Setup {
 		// Capture the ALT Text.
 		if ( ! empty( $asset['meta']['alt'] ) ) {
 			$alt_text = wp_strip_all_tags( $asset['meta']['alt'] );
-			$this->update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt_text );
+			update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt_text );
 		}
 
 		return $attachment_id;
@@ -2246,12 +2283,7 @@ class Media extends Settings_Component implements Setup {
 	 * @return array
 	 */
 	public function get_transformation_from_meta( $post_id ) {
-		$transformations = $this->get_post_meta( $post_id, Sync::META_KEYS['transformation'], true );
-		if ( empty( $transformations ) ) {
-			$transformations = array();
-		}
-
-		return $transformations;
+		return Relate::get_transformations( $post_id );
 	}
 
 	/**
@@ -2491,12 +2523,6 @@ class Media extends Settings_Component implements Setup {
 		);
 		if ( $this->is_folder_synced( $attachment_id ) ) {
 			$context_options = wp_parse_args( $media_library_context, $context_options );
-		}
-
-		// Check if this asset is a folder sync.
-		$folder_sync = $this->get_post_meta( $attachment_id, Sync::META_KEYS['folder_sync'], true );
-		if ( ! empty( $folder_sync ) ) {
-			$context_options['wp_id'] = $attachment_id;
 		}
 
 		/**

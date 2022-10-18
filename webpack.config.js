@@ -145,6 +145,7 @@ const cldExtras = {
 		'lazy-load': './src/js/lazy-load.js',
 		'inline-loader': './src/js/inline-loader.js',
 		'media-modal': './src/js/components/media-modal.js',
+		'terms-order': './src/js/terms-order.js',
 	},
 };
 
