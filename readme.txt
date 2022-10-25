@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: images, videos, DAM, optimization, CDN
 Requires at least: 4.7
-Tested up to: 6.0.2
+Tested up to: 6.0.3
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -40,7 +40,7 @@ And with a full Digital Asset Management platform embedded in the plugin, you wo
 
 == Getting Started ==
 
-To use the Cloudinary Plugin and all the functionality that comes with it, you will need to have a Cloudinary Account. **If you don’t have an account yet, [sign up](https://cloudinary.com/signup?source=wp&utm_source=wp&utm_medium=wporgmarketplace&utm_campaign=wporgmarketplace) now for a free Cloudinary Programmable Media account**. You’ll start with generous usage limits and when your requirements grow, you can easily upgrade to a plan that best fits your needs. Upon account creation you can plug in your account credentials and customize your configurations as desired. That’s it.
+To use the Cloudinary Plugin and all the functionality that comes with it, you will need to have a Cloudinary Account. **If you don’t have an account yet, [sign up](https://cloudinary.com/signup?utm_source=wordpress-plugin-page&utm_medium=affiliate&utm_content=sign-up&utm_campaign=1976) now for a free Cloudinary Programmable Media account**. You’ll start with generous usage limits and when your requirements grow, you can easily upgrade to a plan that best fits your needs. Upon account creation you can plug in your account credentials and customize your configurations as desired. That’s it.
 
 **Upgrade Messaging**
 
@@ -141,6 +141,19 @@ Your site is now setup to start using Cloudinary.
 1. Need help? We’ve got you covered
 
 == Changelog ==
+
+= 3.0.9 (25 OCTOBER 2022) =
+
+Fixes and Improvements:
+
+* Added support to bypass lazy-loading above-the-fold
+* Added flag to easily spot synced/un-synced assets via Media endpoint on REST API
+* Improved SVG support
+* Improved compatibility with older versions of WordPress
+* Fixed a post featured image Lazy-load conflict error
+* Fixed Fetched URLs being switched to URL of unsyncable/broken assets
+* Fixed taxonomy term ordering
+* Fixed deprecated warnings on PHP 8.1
 
 = 3.0.8 (13 SEPTEMBER 2022) =
 
