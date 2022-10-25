@@ -531,7 +531,7 @@ class Api {
 				return $this->upload( $attachment_id, $args );
 			}
 		}
-		if ( true === $tempfile ) {
+		if ( true === $tempfile && is_string( $args['file'] ) ) {
 			unlink( $args['file'] ); //phpcs:ignore
 		}
 
