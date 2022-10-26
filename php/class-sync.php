@@ -1126,6 +1126,27 @@ class Sync implements Setup, Assets {
 	}
 
 	/**
+	 * Register the `is_cloudinary_synced` rest field.
+	 *
+	 * @return void
+	 */
+	public function rest_api_is_synced_field() {
+		register_rest_field(
+			'attachment',
+			'is_cloudinary_synced',
+			array(
+				'get_callback' => function ( $attachment ) {
+					return $this->is_synced( $attachment['id'] );
+				},
+				'schema'       => array(
+					'description' => __( 'Is Cloudinary synced.', 'cloudinary' ),
+					'type'        => 'bool',
+				),
+			)
+		);
+	}
+
+	/**
 	 * Additional component setup.
 	 */
 	public function setup() {
@@ -1153,6 +1174,8 @@ class Sync implements Setup, Assets {
 
 			add_filter( 'cloudinary_setting_get_value', array( $this, 'filter_get_cloudinary_folder' ), 10, 2 );
 			add_filter( 'cloudinary_get_signature', array( $this, 'get_signature_syncable_type' ), 10, 2 );
+
+			add_action( 'rest_api_init', array( $this, 'rest_api_is_synced_field' ) );
 		}
 	}
 

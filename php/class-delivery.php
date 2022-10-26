@@ -249,8 +249,10 @@ class Delivery implements Setup {
 			return $content;
 		}
 		foreach ( $cloudinary_urls as $url ) {
-			$public_id          = $this->media->get_public_id_from_url( $url );
-			$urls[ $public_id ] = $url;
+			$public_id = $this->media->get_public_id_from_url( $url );
+			if ( ! empty( $public_id ) ) {
+				$urls[ $public_id ] = $url;
+			}
 		}
 
 		$results = $this->query_relations( array_keys( $urls ) );
@@ -375,7 +377,7 @@ class Delivery implements Setup {
 		$public_id = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
 		$base      = $this->get_content_path();
 		$sized_url = '';
-		$wh        = '0x0'; // phpcs:ignore PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found
+		$wh        = '0x0'; // phpcs:ignore PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found, PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
 		// Some attachments do not have Sizes.
 		if ( ! empty( $size ) ) {
 			$sized_url = $size['sized_url'];
@@ -491,7 +493,7 @@ class Delivery implements Setup {
 	 */
 	public function get_sized( $attachment_id ) {
 		static $sizes = array(), $registered_sizes;
-		if ( ! $registered_sizes ) {
+		if ( ! $registered_sizes && is_callable( 'wp_get_registered_image_subsizes' ) ) {
 			$registered_sizes = wp_get_registered_image_subsizes();
 		}
 		if ( empty( $sizes[ $attachment_id ] ) ) {
@@ -605,7 +607,7 @@ class Delivery implements Setup {
 	 *
 	 * @return false|int
 	 */
-	public static function create_size_relation( $attachment_id, $sized_url, $size = '0x0', $parent_path = '' ) { // phpcs:ignore PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found
+	public static function create_size_relation( $attachment_id, $sized_url, $size = '0x0', $parent_path = '' ) { // phpcs:ignore PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found, PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
 		global $wpdb;
 		static $media;
 		if ( ! $media ) {
@@ -618,7 +620,8 @@ class Delivery implements Setup {
 		if ( ! is_null( $transformations ) ) {
 			$media->delete_post_meta( $attachment_id, Sync::META_KEYS['transformation'] );
 		}
-		$data            = array(
+
+		$data = array(
 			'post_id'         => $attachment_id,
 			'parent_path'     => $parent_path,
 			'sized_url'       => $sized_url,
@@ -809,6 +812,7 @@ class Delivery implements Setup {
 		}
 		$tags = $this->get_media_tags( $html, 'img' );
 		$tags = array_map( array( $this, 'parse_element' ), $tags );
+		$tags = array_filter( $tags );
 		foreach ( $tags as $tag_element ) {
 			// Get tag element.
 			$tag_element['id']              = $attachment_id;
@@ -1359,8 +1363,24 @@ class Delivery implements Setup {
 				}
 			}
 		}
+
+		// Check for loading attribute.
+		if ( ! empty( $attributes['loading'] ) ) {
+			$tag_element['loading'] = $attributes['loading'];
+		}
+
 		// Set atts.
 		$tag_element['atts'] = wp_parse_args( $attributes, $tag_element['atts'] );
+
+		/**
+		 * Filter the tag element.
+		 *
+		 * @hook cloudinary_parse_element
+		 * @since 3.0.9
+		 *
+		 * @param $tag_element {array} The tag element.
+		 */
+		$tag_element = apply_filters( 'cloudinary_parse_element', $tag_element );
 
 		return $tag_element;
 	}

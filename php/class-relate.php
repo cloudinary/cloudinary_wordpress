@@ -58,7 +58,7 @@ class Relate {
 	 * @return int
 	 */
 	public function warm_cache( $found_posts, $query ) {
-		if ( ! empty( $found_posts ) && 'attachment' === $query->query_vars['post_type'] ) {
+		if ( ! empty( $found_posts ) && 'attachment' === $query->query_vars['post_type'] && ! empty( $query->posts ) ) {
 			Relationship::preload( $query->posts );
 		}
 

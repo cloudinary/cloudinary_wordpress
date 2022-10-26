@@ -54,7 +54,7 @@
     "@babel/core": "^7.12.3",
     "@babel/plugin-proposal-optional-chaining": "^7.12.1",
     "@babel/polyfill": "^7.12.1",
-    "@release-it/bumper": "^2.0.0",
+    "@release-it/bumper": "^4.0.0",
     "@testing-library/react": "^11.1.0",
     "@tippyjs/react": "^4.2.5",
     "@wordpress/api-fetch": "^3.23.1",
@@ -138,7 +138,7 @@
     "puppeteer": "npm:puppeteer-core@^3.0.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
-    "release-it": "14.6.2",
+    "release-it": "15.4.1",
     "rtlcss": "^2.6.1",
     "rtlcss-webpack-plugin": "^4.0.4",
     "semver": "^7.3.2",
@@ -152,5 +152,5 @@
     "webpackbar": "^4.0.0",
     "wp-hookdoc": "^0.2.0"
   },
-  "version": "3.0.8"
+  "version": "3.0.9"
 }

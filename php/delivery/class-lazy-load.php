@@ -50,6 +50,7 @@ class Lazy_Load extends Delivery_Feature {
 	 */
 	public function setup_hooks() {
 		add_action( 'wp', array( $this, 'init_lazy_script_maybe' ) );
+		add_filter( 'cloudinary_lazy_load_bypass', array( $this, 'bypass_lazy_load' ), 10, 2 );
 	}
 
 	/**
@@ -57,7 +58,7 @@ class Lazy_Load extends Delivery_Feature {
 	 */
 	public function init_lazy_script_maybe() {
 
-		$flag = filter_input( INPUT_GET, 'cloudinary_lazy_load_loader', FILTER_SANITIZE_STRING );
+		$flag = Utils::get_sanitized_text( 'cloudinary_lazy_load_loader' );
 		if ( $flag ) {
 			$expires = HOUR_IN_SECONDS;
 			header( 'Cache-Control: max-age=' . $expires );
@@ -65,6 +66,50 @@ class Lazy_Load extends Delivery_Feature {
 			echo $this->get_inline_script(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			exit;
 		}
+	}
+
+	/**
+	 * Maybe bypass the lazy load.
+	 *
+	 * @param bool  $bypass      Whether to bypass lazy load.
+	 * @param array $tag_element The TAG element.
+	 *
+	 * @return bool
+	 */
+	public function bypass_lazy_load( $bypass, $tag_element ) {
+
+		// Bypass if eager loading.
+		if ( ! empty( $tag_element['loading'] ) && 'eager' === $tag_element['loading'] ) {
+			$bypass = true;
+		}
+
+		/**
+		 * Filter the classes that bypass lazy loading.
+		 *
+		 * @hook cloudinary_lazy_load_bypass_classes
+		 * @since 3.0.9
+		 *
+		 * @example
+		 * <?php
+		 *
+		 * // Extend bypass lazy load classes to include `skip-lazy`.
+		 * add_filter(
+		 *  'cloudinary_lazy_load_bypass_classes',
+		 *  function( $classes ) {
+		 *      $classes[] = 'skip-lazy';
+		 *      return $classes;
+		 *  }
+		 * );
+		 *
+		 * @param $classes {array} Classes that bypass the Lazy Load.
+		 */
+		$bypass_classes = apply_filters( 'cloudinary_lazy_load_bypass_classes', array( 'cld-bypass-lazy' ) );
+
+		if ( ! $bypass && ! empty( array_intersect( $bypass_classes, $tag_element['atts']['class'] ) ) ) {
+			$bypass = true;
+		}
+
+		return $bypass;
 	}
 
 	/**
@@ -213,6 +258,34 @@ class Lazy_Load extends Delivery_Feature {
 				true
 			)
 		) {
+			return $tag_element;
+		}
+
+		/**
+		 * Short circuit the lazy load.
+		 *
+		 * @hook  cloudinary_lazy_load_bypass
+		 *
+		 * @param $short_circuit {bool}  The short circuit value.
+		 * @param $tag_element   {array} The tag element.
+		 *
+		 * @since 3.0.9
+		 *
+		 * @example
+		 * <?php
+		 *
+		 * // Bypass lazy load for images with ID `feature-image`.
+		 * add_filter(
+		 *    'cloudinary_lazy_load_bypass',
+		 *    function( $bypass, $tag_element ) {
+		 *      if ( 'feature-image! === $tag_element['id'] ) {
+		 *          $bypass = true;
+		 *      }
+		 *      return $bypass;
+		 *  }
+		 * );
+		 */
+		if ( apply_filters( 'cloudinary_lazy_load_bypass', false, $tag_element ) ) {
 			return $tag_element;
 		}
 

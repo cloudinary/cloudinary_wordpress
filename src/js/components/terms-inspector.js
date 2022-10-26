@@ -19,16 +19,22 @@ const Terms = {
 		context: 'view',
 	},
 	available: {},
+	taxonomies: null,
+	fetchWait: null,
 	_init() {
 		this.wrapper = document.getElementById( 'cld-tax-items' );
+		const { getTaxonomies } = select( 'core' );
 		// At the given time, not enough options are available to detect when core requests are ready.
-		setTimeout( () => {
-			this._init_listeners();
-		}, 3000 );
+		this.fetchWait = setInterval( () => {
+			this.taxonomies = getTaxonomies();
+			if ( this.taxonomies ) {
+				clearInterval( this.fetchWait );
+				this._init_listeners();
+			}
+		}, 1000 );
 	},
 	_init_listeners() {
-		const taxonomies = select( 'core' ).getTaxonomies();
-		taxonomies.forEach( ( taxonomy ) => {
+		this.taxonomies.forEach( ( taxonomy ) => {
 			if ( ! taxonomy.rest_base || ! taxonomy.visibility.public ) {
 				return;
 			}

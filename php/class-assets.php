@@ -560,7 +560,8 @@ class Assets extends Settings_Component {
 		);
 
 		$folder       = untrailingslashit( $this->media->get_cloudinary_folder() );
-		$asset_parent = self::POST_TYPE_SLUG === get_post_parent( $asset_id )->post_type ? true : false;
+		$asset_parent = self::POST_TYPE_SLUG === Utils::get_post_parent( $asset_id )->post_type;
+
 		if ( ! empty( $asset_parent ) ) {
 			$folder                     = $this->get_asset_storage_folder( get_the_title( $asset_id ) );
 			$options['overwrite']       = true; // Ensure we maintain this path and filename.
@@ -949,7 +950,7 @@ class Assets extends Settings_Component {
 		$path   = $this->clean_path( $this->media->local_url( $asset_id ) );
 		$parent = $this->get_param( $path );
 		if ( empty( $parent ) ) {
-			$parent = get_post_parent( $asset_id );
+			$parent = Utils::get_post_parent( $asset_id );
 		}
 
 		return $parent instanceof \WP_Post ? $parent : null;
@@ -1064,7 +1065,7 @@ class Assets extends Settings_Component {
 		}
 		$base        = get_post( $parent_id )->post_title;
 		$size        = getimagesize( $file_path );
-		$size        = $size[0] . 'x' . $size[1];
+		$size        = ! empty( $size[0] ) && ! empty( $size[1] ) ? $size[0] . 'x' . $size[1] : '0x0'; // phpcs:ignore PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound,PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found
 		$hash_name   = md5( $url );
 		$wp_filetype = wp_check_filetype( wp_basename( $url ), wp_get_mime_types() );
 		$args        = array(
