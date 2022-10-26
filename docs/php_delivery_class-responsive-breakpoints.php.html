@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Source: php/class-extensions.php - Cloudinary Docs</title>
+	<title>Source: php/delivery/class-responsive-breakpoints.php - Cloudinary Docs</title>
 
 	<script src="scripts/prettify/prettify.js"></script>
 	<script src="scripts/prettify/lang-css.js"></script>
@@ -22,7 +22,7 @@
 <div id="main">
 
 	
-	<h1 class="page-title">Source: php/class-extensions.php</h1>
+	<h1 class="page-title">Source: php/delivery/class-responsive-breakpoints.php</h1>
 	
 
 	
@@ -34,277 +34,184 @@
         <article>
             <pre class="prettyprint source linenums"><code>&lt;?php
 /**
- * Extensions class for the Cloudinary plugin.
+ * Responsive breakpoints.
  *
  * @package Cloudinary
  */
 
-namespace Cloudinary;
+namespace Cloudinary\Delivery;
 
-use Cloudinary\Component\Setup;
+use Cloudinary\Delivery_Feature;
+use Cloudinary\Connect\Api;
+use Cloudinary\Utils;
 
 /**
- * Class Extensions
+ * Class Responsive_Breakpoints
+ *
+ * @package Cloudinary
  */
-class Extensions extends Settings_Component implements Setup {
+class Responsive_Breakpoints extends Delivery_Feature {
 
 	/**
-	 * Holds the plugin instance.
+	 * The feature application priority.
 	 *
-	 * @var Plugin Instance of the global plugin.
+	 * @var int
 	 */
-	public $plugin;
+	protected $priority = 9;
 
 	/**
-	 * Holds the core plugin settings.
+	 * Holds the settings slug.
 	 *
-	 * @var Settings
+	 * @var string
 	 */
-	protected $settings;
+	protected $settings_slug = 'media_display';
 
 	/**
-	 * Holds various keys used.
-	 */
-	const KEYS = array(
-		'extension' => '@extension',
-		'register'  => '@register',
-	);
-
-	/**
-	 * Extensions constructor.
+	 * Holds the enabler slug.
 	 *
-	 * @param Plugin $plugin Global instance of the main plugin.
+	 * @var string
 	 */
-	public function __construct( Plugin $plugin ) {
-		parent::__construct( $plugin );
-		add_action( 'cloudinary_connected', array( $this, 'init' ) );
+	protected $enable_slug = 'enable_breakpoints';
+
+	/**
+	 * Setup hooks used when enabled.
+	 */
+	protected function setup_hooks() {
+		add_action( 'cloudinary_init_delivery', array( $this, 'remove_srcset_filter' ) );
+		add_filter( 'cloudinary_apply_breakpoints', '__return_false' );
 	}
 
 	/**
-	 * Init component on connection.
-	 */
-	public function init() {
-		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
-		add_action( 'cloudinary_init_settings', array( $this, 'register_extensions' ) );
-	}
-
-	/**
-	 * Add endpoints to the \Cloudinary\REST_API::$endpoints array.
+	 * Add features to a tag element set.
 	 *
-	 * @param array $endpoints Endpoints from the filter.
+	 * @param array $tag_element The tag element set.
 	 *
 	 * @return array
 	 */
-	public function rest_endpoints( $endpoints ) {
-
-		$endpoints['extension'] = array(
-			'method'              => \WP_REST_Server::CREATABLE,
-			'callback'            => array( $this, 'rest_toggle_extension' ),
-			'args'                => array(),
-			'permission_callback' => array( $this, 'rest_can_manage_options' ),
-		);
-
-		return $endpoints;
-	}
-
-	/**
-	 * Admin permission callback.
-	 *
-	 * Explicitly defined to allow easier testability.
-	 *
-	 * @return bool
-	 */
-	public function rest_can_manage_options() {
-		return Utils::user_can( 'manage_extensions' );
-	}
-
-	/**
-	 * Handles the enable and disable of an extension..
-	 *
-	 * @param \WP_REST_Request $request The request.
-	 *
-	 * @return \WP_REST_Response
-	 */
-	public function rest_toggle_extension( \WP_REST_Request $request ) {
-		$extension = $request->get_param( 'extension' );
-		$value     = true === $request->get_param( 'enabled' ) ? 'on' : 'off';
-
-		$extension_setting = $this->settings->get_setting( $extension );
-		$saved             = $extension_setting->save_value( $value );
-
-		$return = array(
-			// Translators: placeholder is number of active extensions.
-			'active_settings' => $this->get_active_count_text(),
-		);
-
-		return rest_ensure_response( $return );
-	}
-
-	/**
-	 * Get the active extensions count.
-	 *
-	 * @return string
-	 */
-	public function get_active_count_text() {
-		$active = 0;
-		foreach ( $this->settings->get_value( $this->settings_slug ) as $value ) {
-			if ( 'on' === $value ) {
-				$active ++;
-			}
+	public function add_features( $tag_element ) {
+		if ( 'upload' !== $this->media->get_media_delivery( $tag_element['id'] ) ) {
+			return $tag_element;
 		}
 
-		// Translators: placeholders are number of active extensions.
-		return sprintf( _n( '%s Active extension', '%s Active extensions', $active, 'cloudinary' ), $active );
-	}
+		// Bypass file formats that shouldn't have Responsive Images.
+		if (
+			in_array(
+				$tag_element['format'],
+				/**
+				 * Filter out file formats for Responsive Images.
+				 *
+				 * @hook  cloudinary_responsive_images_bypass_formats
+				 * @since 3.0.9
+				 *
+				 * @param $formats {array) The list of formats to exclude.
+				 */
+				apply_filters( 'cloudinary_responsive_images_bypass_formats', array( 'svg' ) ),
+				true
+			)
+		) {
+			return $tag_element;
+		}
 
-	/**
-	 * Get a list of internal extensions.
-	 *
-	 * @return array[]
-	 */
-	protected function get_internal_extensions() {
-		$internal = array(
-			'media-library' => array(
-				'name'        => __( 'Cloudinary DAM', 'cloudinary' ),
-				'description' => sprintf(
-					// translators: The Link for Learn more.
-					__( 'Cloudinary’s Digital Asset Management solutions is designed to meet the unique needs of today focusing on flexibility, intelligent automation features, and delivery at scale. %1$sLearn More%2$s.', 'cloudinary' ),
-					'&lt;br>&lt;a href="https://cloudinary.com/products/digital_asset_management" target="_blank">',
-					'&lt;/a>'
-				),
-				'icon'        => $this->plugin->dir_url . 'css/images/dam-icon.svg',
-				'handler'     => '\\Cloudinary\\Media_Library',
-				'default'     => 'off',
-			),
-		);
+		if ( Utils::is_amp() ) {
+			$tag_element['atts']['layout'] = 'responsive';
+		} else {
+			$tag_element['atts']['data-responsive'] = true;
+		}
+		unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 
-		return $internal;
-	}
-
-	/**
-	 * Register extensions.
-	 */
-	public function register_extensions() {
-		$extensions = $this->get_internal_extensions();
-
-		$panel = array(
-			'type'        => 'panel',
-			'slug'        => 'extensions',
-			'title'       => __( 'Extensions', 'cloudinary' ),
-			'description' => $this->get_active_count_text(),
-			'collapsible' => 'closed',
-			'attributes'  => array(
-				'description' => array(
-					'data-text' => 'active_settings',
-				),
-			),
-		);
-
-		$this->settings->set_param( 'sidebar' . $this->settings->separator . $this->settings_slug, $panel );
+		$lazy = $this->plugin->get_component( 'lazy_load' );
 
 		/**
-		 * Filter to register extensions.
+		 * Short circuit the lazy load.
 		 *
-		 * @hook  cloudinary_register_extensions
-		 * @since 3.0.0
+		 * @hook  cloudinary_lazy_load_bypass
+		 * @since 3.0.9
 		 *
-		 * @param $extensions {array}  The list of extensions to register.
-		 * @param $plugin     {Plugin} The core plugin object.
-		 *
-		 * @return {array}
+		 * @param $short_circuit {bool}  The short circuit value.
+		 * @param $tag_element   {array} The tag element.
 		 */
-		$extensions = apply_filters( 'cloudinary_register_extensions', $extensions, $this->plugin );
-		foreach ( $extensions as $slug => $extension ) {
-
-			$instance = null;
-			if ( isset( $extension['handler'] ) ) {
-				$try = array( $extension['handler'], 'get_instance' );
-				if ( is_callable( $try ) ) {
-					$instance = call_user_func( $try );
-				}
-
-				// Add to plugin components.
-				$this->plugin->components[ 'extension_' . $slug ] = $instance;
-			}
-
-			$extension_slug    = $this->settings_slug . $this->settings->separator . $slug;
-			$extension_setting = $this->settings->add(
-				$extension_slug,
-				isset( $extension['default'] ) ? $extension['default'] : 'off',
-				array(
-					'type'       => 'on_off',
-					'slug'       => 'enable',
-					'instance'   => $instance,
-					'attributes' => array(
-						'data-extension' => $slug,
-					),
-				)
-			);
-
-			// Create panel in sidebar.
-			$params = array(
-				'type'       => 'info_box',
-				'icon'       => $extension['icon'],
-				'slug'       => $slug,
-				'title'      => $extension['name'],
-				'text'       => $extension['description'],
-				'attributes' => array(
-					'wrap' => array(
-						'class' => array(
-							'extension-item',
-						),
-					),
-				),
-				$extension_setting,
-			);
-			$this->settings->set_param( 'sidebar.extensions.' . $slug, $params );
+		if ( is_null( $lazy ) || ! $lazy->is_enabled() || Utils::is_amp() || apply_filters( 'cloudinary_lazy_load_bypass', false, $tag_element ) ) {
+			$tag_element = $this->apply_breakpoints( $tag_element );
 		}
 
-		// Add page re-loader button.
-		$params = array(
-			'type'       => 'tag',
-			'element'    => 'a',
-			'content'    => __( 'Reload page', 'cloudinary' ),
-			'attributes' => array(
-				'style' => 'width:100%; display:none; text-align:center;',
-				'id'    => 'page-reloader',
-				'class' => array(
-					'button',
-					'button-small',
-				),
-				'href'  => add_query_arg( 'reload', '1' ),
-			),
-		);
-		$this->settings->set_param( 'sidebar.extensions.settings', $params );
-		// Set settings to own.
-		$this->settings = $this->settings->get_setting( $this->settings_slug );
+		return $tag_element;
 	}
 
 	/**
-	 * Setup Extensions.
+	 * Apply srcset breakpoints if lazy loading is off.
+	 *
+	 * @param array $tag_element The tag element array.
+	 *
+	 * @return array
+	 */
+	protected function apply_breakpoints( $tag_element ) {
+
+		$settings            = $this->settings->get_value( 'media_display' );
+		$max                 = $settings['max_width'];
+		$min                 = $settings['min_width'];
+		$width               = $tag_element['width'];
+		$height              = $tag_element['height'];
+		$size_tag            = '-' . $width . 'x' . $height . '.';
+		$step                = $settings['pixel_step'];
+		$ratio               = $width / $height;
+		$src                 = $tag_element['atts']['src'];
+		$size_transformation = $this->media->get_crop_from_transformation( $this->media->get_transformations_from_string( $src ) );
+		$size_string         = Api::generate_transformation_string( array( $size_transformation ) );
+		$breakpoints         = array();
+		while ( $max > $min ) {
+			if ( $width >= $max ) {
+				$size_transformation['width']  = $max;
+				$size_transformation['height'] = floor( $max / $ratio );
+				$new_size_tag                  = '-' . $size_transformation['width'] . 'x' . $size_transformation['height'] . '.';
+				$new_size                      = Api::generate_transformation_string( array( $size_transformation ) );
+				$new_url                       = str_replace( $size_string, $new_size, $src );
+				$new_url                       = str_replace( $size_tag, $new_size_tag, $new_url );
+				$breakpoints[]                 = $new_url . ' ' . $max . 'w';
+			}
+			$max -= $step;
+		}
+
+		if ( ! empty( $breakpoints ) ) {
+			$tag_element['atts']['srcset'] = implode( ', ', $breakpoints );
+			$tag_element['atts']['sizes']  = '(max-width: ' . $width . 'px) 100vw ' . $width . 'px';
+		}
+
+		return $tag_element;
+	}
+
+	/**
+	 * Remove the legacy breakpoints sync type and filters.
+	 *
+	 * @param array $structs The sync types structure.
+	 *
+	 * @return array
+	 */
+	public function remove_legacy_breakpoints( $structs ) {
+		unset( $structs['breakpoints'] );
+
+		return $structs;
+	}
+
+	/**
+	 * Remove the srcset filter.
+	 */
+	public function remove_srcset_filter() {
+		remove_filter( 'wp_calculate_image_srcset', array( $this->media, 'image_srcset' ), 10 );
+	}
+
+	/**
+	 * Setup the class.
 	 */
 	public function setup() {
-		$data = array(
-			'url'   => rest_url( REST_API::BASE . '/extension' ),
-			'nonce' => wp_create_nonce( 'wp_rest' ),
-		);
-		foreach ( $this->settings->get_settings() as $setting ) {
-			if ( 'on' === $setting->get_value() &amp;&amp; $setting->has_param( 'instance' ) ) {
-				$setting->get_param( 'instance' )->setup();
-			}
-		}
-		$this->plugin->add_script_data( 'extensions', $data );
+		parent::setup();
+		add_filter( 'cloudinary_sync_base_struct', array( $this, 'remove_legacy_breakpoints' ) );
 	}
 
 	/**
-	 * Init the settings.
-	 *
-	 * @param Settings $settings The core settings for the plugin.
+	 * Create Settings.
 	 */
-	public function init_settings( $settings ) {
-		parent::init_settings( $settings );
-		// Register setting point.
-		$settings->add( $this->settings_slug );
+	protected function create_settings() {
+		$this->settings = $this->media->get_settings()->get_setting( 'image_display' );
 	}
 }
 </code></pre>
