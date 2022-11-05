@@ -844,11 +844,13 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @param string $url           The url to get crop for.
 	 * @param int    $attachment_id image attachment id.
+	 * @param array  $tag_element   The tag element.
 	 *
 	 * @return array|bool The width and height of the crop, or false if size is custom.
 	 */
-	public function get_crop( $url, $attachment_id ) {
+	public function get_crop( $url, $attachment_id, $tag_element = array() ) {
 		$meta = wp_get_attachment_metadata( $attachment_id );
+		$size = false;
 		if ( ! empty( $meta['sizes'] ) ) {
 			// Try and match the file name from the sizes meta data to prevent false positives from filenames that have numbers separated by an x.
 			$file             = wp_basename( $url ); // We only need the base name to check.
@@ -882,12 +884,23 @@ class Media extends Settings_Component implements Setup {
 						$wp_size['gravity'] = 'auto';
 					}
 
-					return $wp_size;
+					$size = $wp_size;
+
+					break;
 				}
 			}
 		}
 
-		return false;
+		if ( ! empty( $tag_element['atts']['data-transformation-crop'] ) ) {
+			$transformations = $this->get_transformations_from_string( $tag_element['atts']['data-transformation-crop'] );
+			$size            = array_merge( $size, reset( $transformations ) );
+		}
+
+		if ( ! empty( $tag_element['atts']['data-skip-crop'] ) ) {
+			unset( $size['crop'], $size['gravity'] );
+		}
+
+		return $size;
 	}
 
 	/**

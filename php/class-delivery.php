@@ -1069,7 +1069,7 @@ class Delivery implements Setup {
 		}
 
 		if ( ! empty( $tag_element['atts']['src'] ) ) {
-			$has_wp_size = $this->media->get_crop( $tag_element['atts']['src'], $tag_element['id'] );
+			$has_wp_size = $this->media->get_crop( $tag_element['atts']['src'], $tag_element['id'], $tag_element );
 			if ( ! empty( $has_wp_size ) ) {
 				$size = $has_wp_size;
 			}
@@ -1098,7 +1098,7 @@ class Delivery implements Setup {
 			$parts = array_filter( explode( ' ', $att ) );
 			foreach ( $parts as &$part ) {
 				if ( $this->validate_url( $part ) ) {
-					$has_wp_size = $this->media->get_crop( $part, $tag_element['id'] );
+					$has_wp_size = $this->media->get_crop( $part, $tag_element['id'], $tag_element );
 					$size        = array();
 					if ( ! empty( $has_wp_size ) ) {
 						$size = $has_wp_size;
@@ -1225,6 +1225,8 @@ class Delivery implements Setup {
 	 */
 	public function parse_element( $element ) {
 		static $post_context = 0;
+		$config                   = $this->plugin->settings->get_value( 'image_settings' );
+		$has_sized_transformation = ! empty( $config['sized_transformations'] ) && 'on' === $config['sized_transformations'];
 
 		$tag_element = array(
 			'tag'                       => '',
@@ -1299,6 +1301,18 @@ class Delivery implements Setup {
 				if ( $file_ratio !== $original_ratio ) {
 					$attributes['data-crop'] = $file_ratio;
 				}
+				if ( $has_sized_transformation ) {
+					$tag_element['size'] = $this->get_registered_size( $item['post_id'], $has_size );
+
+					if (
+						! empty( $config[ 'disable_size_' . $tag_element['size'] ] )
+						&& 'on' === $config[ 'disable_size_' . $tag_element['size'] ]
+					) {
+						$attributes['data-skip-crop'] = true;
+					} else if ( ! empty( $config[ 'size_' . $tag_element['size'] ] ) ) {
+						$attributes['data-transformation-crop'] = $config[ 'size_' . $tag_element['size'] ];
+					}
+				}
 			}
 		}
 		if ( ! empty( $attributes['class'] ) ) {
@@ -1363,6 +1377,28 @@ class Delivery implements Setup {
 		$tag_element = apply_filters( 'cloudinary_parse_element', $tag_element );
 
 		return $tag_element;
+	}
+
+	/**
+	 * Get the registered size.
+	 *
+	 * @param int   $attachment_id The attachment ID.
+	 * @param array $size          The size array.
+	 *
+	 * @return int|string|null
+	 */
+	public function get_registered_size( $attachment_id, $size ) {
+		$registered_size = null;
+		$meta = wp_get_attachment_metadata( $attachment_id );
+
+		foreach ( $meta['sizes'] as $slug => $data ) {
+			if ( $data['width'] === $size[0] && $data['height'] === $size[1] ) {
+				$registered_size = $slug;
+				break;
+			}
+		}
+
+		return $registered_size;
 	}
 
 	/**
