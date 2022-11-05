@@ -820,6 +820,15 @@ class Media extends Settings_Component implements Setup {
 					);
 					break;
 				}
+
+				if ( ! $return ) {
+					$return = array_filter(
+						$transformation,
+						static function ( $item ) {
+							return ! isset( $item['crop'] ) && ! isset( $item['width'] ) && ! isset( $item['height'] );
+						}
+					);
+				}
 			}
 		} else {
 			$file     = Utils::pathinfo( $url );
