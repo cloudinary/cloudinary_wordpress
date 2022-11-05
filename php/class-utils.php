@@ -818,6 +818,68 @@ class Utils {
 	}
 
 	/**
+	 * Get the registered image sizes, the labels and crop settings.
+	 *
+	 * @return array
+	 */
+	public static function get_registered_sizes() {
+		$intermediate_sizes = get_intermediate_image_sizes(); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.get_intermediate_image_sizes_get_intermediate_image_sizes
+		$additional_sizes   = wp_get_additional_image_sizes();
+		$all_sizes          = array();
+		$labels             = array();
+
+		foreach ( $intermediate_sizes as $size ) {
+			$labels[ $size ] = ucwords( str_replace( array( '-', '_' ), ' ', $size ) );
+		}
+
+		/** This filter is documented in wp-admin/includes/media.php */
+		$image_sizes = apply_filters(
+			'image_size_names_choose',
+			array(
+				// phpcs:disable WordPress.WP.I18n.MissingArgDomain
+				'thumbnail'    => __( 'Thumbnail' ),
+				'medium'       => __( 'Medium' ),
+				'medium_large' => __( 'Medium Large' ),
+				'large'        => __( 'Large' ),
+				'full'         => __( 'Full Size' ),
+				// phpcs:enable WordPress.WP.I18n.MissingArgDomain
+			)
+		);
+
+		$labels = wp_parse_args( $labels, $image_sizes );
+
+		foreach ( $intermediate_sizes as $size ) {
+			if ( isset( $additional_sizes[ $size ] ) ) {
+				$all_sizes[ $size ] = array(
+					'label'  => $labels[ $size ],
+					'width'  => $additional_sizes[ $size ]['width'],
+					'height' => $additional_sizes[ $size ]['height'],
+					'crop'   => $additional_sizes[ $size ]['crop'],
+				);
+			} else {
+				$all_sizes[ $size ] = array(
+					'label'  => $labels[ $size ],
+					'width'  => (int) get_option( "{$size}_size_w" ),
+					'height' => (int) get_option( "{$size}_size_h" ),
+					'crop'   => (bool) get_option( "{$size}_crop" ),
+				);
+			}
+		}
+
+		/**
+		 * Filter the all sizes available.
+		 *
+		 * @param array $all_sizes All the registered sizes.
+		 *
+		 * @since 3.1.0
+		 *
+		 * @hook  cloudinary_registered_sizes
+		 */
+		return apply_filters( 'cloudinary_registered_sizes', $all_sizes );
+
+	}
+
+	/**
 	 * Clean up meta after sync.
 	 *
 	 * @param int $attachment_id The attachment ID.
