@@ -5,7 +5,48 @@
  * @package Cloudinary
  */
 
-$media    = $this->get_component( 'media' );
+use Cloudinary\Utils;
+
+$media            = $this->get_component( 'media' );
+$registered_sizes = Utils::get_registered_sizes();
+$sizes            = array();
+
+foreach ( $registered_sizes as $key => $size ) {
+	$transformation = $size['crop'] ? 'c_fill' : 'c_scale';
+	$sizes[]        = array(
+		'type'        => 'on_off',
+		'slug'        => 'disable_size_' . $key,
+		'title'       => $size['label'],
+		'description' => sprintf(
+		// translators: %s is the size.
+			__( 'Disable size cropping for %s.', 'cloudinary' ),
+			$size['label']
+		),
+		'default'     => 'off',
+		'attributes'  => array(
+			'data-context' => 'image',
+		),
+	);
+	$sizes[]        = array(
+		'type'      => 'group',
+		'condition' => array(
+			'disable_size_' . $key => false,
+		),
+		array(
+			'type'         => 'text',
+			'slug'         => 'size_' . $key,
+			'tooltip_text' => sprintf(
+			// translators: %s is the size.
+				__( 'Custom cropping for %s.', 'cloudinary' ),
+				$size['label']
+			),
+			'attributes'   => array(
+				'placeholder' => $transformation,
+			),
+		),
+	);
+}
+
 $settings = array(
 	array(
 		'type'        => 'panel',
@@ -140,6 +181,30 @@ $settings = array(
 						'A set of parameters included in a Cloudinary URL to programmatically transform the visual appearance of the assets on your website.',
 						'cloudinary'
 					),
+				),
+				array(
+					'type'    => 'tag',
+					'element' => 'hr',
+				),
+				array(
+					'type'         => 'on_off',
+					'slug'         => 'sized_transformations',
+					'title'        => __( 'Sized transformations', 'cloudinary' ),
+					'tooltip_text' => __(
+						'Enable transformations per registered image sizes.',
+						'cloudinary'
+					),
+					'description'  => __( 'Enable sized transformations.', 'cloudinary' ),
+					'default'      => 'off',
+				),
+				array(
+					'type'        => 'group',
+					'title'       => __( 'Sizes', 'cloudinary' ),
+					'collapsible' => true,
+					'condition'   => array(
+						'sized_transformations' => true,
+					),
+					$sizes,
 				),
 				array(
 					'type'    => 'tag',
