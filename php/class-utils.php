@@ -820,13 +820,22 @@ class Utils {
 	/**
 	 * Get the registered image sizes, the labels and crop settings.
 	 *
+	 * @param null|int $attachment_id The attachment ID to get the sizes. Defaults to generic registered sizes.
+	 *
 	 * @return array
 	 */
-	public static function get_registered_sizes() {
-		$intermediate_sizes = get_intermediate_image_sizes(); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.get_intermediate_image_sizes_get_intermediate_image_sizes
+	public static function get_registered_sizes( $attachment_id = null ) {
 		$additional_sizes   = wp_get_additional_image_sizes();
 		$all_sizes          = array();
 		$labels             = array();
+
+		if ( is_null( $attachment_id ) ) {
+			$intermediate_sizes = get_intermediate_image_sizes(); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.get_intermediate_image_sizes_get_intermediate_image_sizes
+		} else {
+			$meta = wp_get_attachment_metadata( $attachment_id );
+			$additional_sizes = wp_parse_args( $additional_sizes, $meta['sizes'] );
+			$intermediate_sizes = array_keys( $meta['sizes'] );
+		}
 
 		foreach ( $intermediate_sizes as $size ) {
 			$labels[ $size ] = ucwords( str_replace( array( '-', '_' ), ' ', $size ) );
@@ -854,15 +863,19 @@ class Utils {
 					'label'  => $labels[ $size ],
 					'width'  => $additional_sizes[ $size ]['width'],
 					'height' => $additional_sizes[ $size ]['height'],
-					'crop'   => $additional_sizes[ $size ]['crop'],
 				);
 			} else {
 				$all_sizes[ $size ] = array(
 					'label'  => $labels[ $size ],
 					'width'  => (int) get_option( "{$size}_size_w" ),
 					'height' => (int) get_option( "{$size}_size_h" ),
-					'crop'   => (bool) get_option( "{$size}_crop" ),
 				);
+			}
+
+			if ( ! empty( $additional_sizes[ $size ]['crop'] ) ) {
+				$all_sizes[ $size ]['crop'] = $additional_sizes[ $size ]['crop'];
+			} else {
+				$all_sizes[ $size ]['crop'] = (bool) get_option( "{$size}_crop" );
 			}
 		}
 
@@ -876,7 +889,6 @@ class Utils {
 		 * @hook  cloudinary_registered_sizes
 		 */
 		return apply_filters( 'cloudinary_registered_sizes', $all_sizes );
-
 	}
 
 	/**
