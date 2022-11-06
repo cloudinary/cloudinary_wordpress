@@ -5,11 +5,48 @@
  * @package Cloudinary
  */
 
-use Cloudinary\Utils;
 use Cloudinary\Report;
+use Cloudinary\Utils;
 use function Cloudinary\get_plugin_instance;
 
-$media    = $this->get_component( 'media' );
+$media            = $this->get_component( 'media' );
+$attachment_id    = (int) filter_input( INPUT_GET, 'asset', FILTER_SANITIZE_NUMBER_INT );
+$registered_sizes = Utils::get_registered_sizes( $attachment_id );
+$sizes            = array();
+
+foreach ( $registered_sizes as $key => $size ) {
+	$transformation = $size['crop'] ? 'c_fill' : 'c_scale';
+	$sizes[]        = array(
+		'type'        => 'on_off',
+		'slug'        => 'asset_disable_size_' . $key,
+		'title'       => $size['label'],
+		'description' => sprintf(
+			// translators: %s is the size.
+			__( 'Disable size cropping for %s.', 'cloudinary' ),
+			$size['label']
+		),
+		'default'     => 'off',
+	);
+	$sizes[]        = array(
+		'type' => 'group',
+		array(
+			'type'         => 'text',
+			'slug'         => 'asset_size_' . $key,
+			'condition'    => array(
+				'asset_disable_size_' . $key => false,
+			),
+			'tooltip_text' => sprintf(
+				// translators: %s is the size.
+				__( 'Custom cropping for %s.', 'cloudinary' ),
+				$size['label']
+			),
+			'attributes'   => array(
+				'placeholder' => $transformation,
+			),
+		),
+	);
+}
+
 $settings = array(
 	'dashboard'      => array(
 		'page_title'          => __( 'Cloudinary Dashboard', 'cloudinary' ),
@@ -450,9 +487,20 @@ $settings = array(
 		'slug'                => 'edit_asset',
 		'requires_connection' => true,
 		array(
-			'type' => 'row',
+			'type' => 'panel',
+			'tabs' => array(
+				'transformations'       => array(
+					'text' => __( 'Image transformations', 'cloudinary' ),
+					'id'   => 'transformations',
+				),
+				'sized_transformations' => array(
+					'text' => __( 'Sized transformations', 'cloudinary' ),
+					'id'   => 'sized_transformations',
+				),
+			),
 			array(
 				'type'       => 'column',
+				'tab_id'     => 'transformations',
 				'width'      => '950px',
 				'attributes' => array(
 					'wrap' => array(
@@ -466,6 +514,32 @@ $settings = array(
 					'type' => 'panel',
 					array(
 						'type' => 'asset_preview',
+					),
+				),
+			),
+			array(
+				'type'     => 'column',
+				'tab_id'   => 'sized_transformations',
+				'title'    => __( 'Sizes', 'cloudinary' ),
+				'settings' => array(
+					array(
+						'type'         => 'on_off',
+						'slug'         => 'asset_sized_transformations',
+						'title'        => __( 'Sized transformations', 'cloudinary' ),
+						'tooltip_text' => __(
+							'Enable transformations per registered image sizes.',
+							'cloudinary'
+						),
+						'description'  => __( 'Enable sized transformations.', 'cloudinary' ),
+						'default'      => 'off',
+					),
+					array(
+						'type'        => 'group',
+						'title'       => __( 'Sizes', 'cloudinary' ),
+						'condition'   => array(
+							'asset_sized_transformations' => true,
+						),
+						'settings'    => $sizes,
 					),
 				),
 			),
