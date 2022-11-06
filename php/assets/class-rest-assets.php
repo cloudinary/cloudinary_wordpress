@@ -109,6 +109,7 @@ class Rest_Assets {
 		$media                = $this->assets->media;
 		$attachment_id        = $request->get_param( 'ID' );
 		$transformations      = $request->get_param( 'transformations' );
+		$sizes                = $request->get_param( 'sizes' );
 		$type                 = $media->get_resource_type( $attachment_id );
 		$transformation_array = $media->get_transformations_from_string( $transformations, $type );
 		$cleaned              = Api::generate_transformation_string( $transformation_array, $type );
@@ -116,6 +117,8 @@ class Rest_Assets {
 		$return = array(
 			'transformations' => $cleaned,
 		);
+
+		$media->update_post_meta( $attachment_id, 'size_transformations', $sizes );
 
 		if ( $cleaned !== $transformations ) {
 			$return['note'] = __( 'Some transformations were invalid and were removed.', 'cloudinary' );
