@@ -19,6 +19,7 @@ const sharedConfig = {
 		chunkFilename: '[name].js',
 	},
 	optimization: {
+		minimize: true,
 		minimizer: [
 			new TerserPlugin( {
 				parallel: true,
