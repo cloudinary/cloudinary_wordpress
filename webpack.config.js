@@ -3,7 +3,7 @@
  */
 const path = require( 'path' );
 const MiniCssExtractPlugin = require( 'mini-css-extract-plugin' );
-const OptimizeCSSAssetsPlugin = require( 'optimize-css-assets-webpack-plugin' );
+const CssMinimizerPlugin = require( 'css-minimizer-webpack-plugin' );
 const RtlCssPlugin = require( 'rtlcss-webpack-plugin' );
 const TerserPlugin = require( 'terser-webpack-plugin' );
 
@@ -31,7 +31,7 @@ const sharedConfig = {
 				},
 				extractComments: false,
 			} ),
-			new OptimizeCSSAssetsPlugin( {} ),
+			new CssMinimizerPlugin(),
 		],
 	},
 	module: {
