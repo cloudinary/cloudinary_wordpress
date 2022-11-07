@@ -30,6 +30,8 @@
 
 namespace Cloudinary;
 
+use WP_CLI;
+
 // Define Cloudinary Constants.
 define( 'CLDN_CORE', __FILE__ );
 define( 'CLDN_PATH', plugin_dir_path( __FILE__ ) );
