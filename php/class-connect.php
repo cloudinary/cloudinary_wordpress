@@ -977,8 +977,8 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		// This filter is documented in wp-includes/class-wp-http-streams.php.
 		$sslverify = apply_filters( 'https_local_ssl_verify', false );
 
-		$url      = rest_url( 'cloudinary/v1/test_rest_api' );
-		$response = wp_remote_get( $url, compact( 'headers', 'timeout', 'sslverify' ) );
+		$url      = rest_url( REST_API::BASE . '/test_rest_api' );
+		$response = wp_safe_remote_get( $url, compact( 'headers', 'timeout', 'sslverify' ) );
 
 		if ( is_wp_error( $response ) ) {
 			$result = array(
