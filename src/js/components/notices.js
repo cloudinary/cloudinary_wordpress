@@ -5,9 +5,8 @@ const Notices = {
 		if ( typeof CLDIS !== 'undefined' ) {
 			const notices = document.getElementsByClassName( 'cld-notice-box' );
 			[ ...notices ].forEach( ( notice ) => {
-				const dismiss = notice.getElementsByClassName(
-					'notice-dismiss'
-				);
+				const dismiss =
+					notice.getElementsByClassName( 'notice-dismiss' );
 				if ( dismiss.length ) {
 					dismiss[ 0 ].addEventListener( 'click', ( ev ) => {
 						notice.style.height = notice.offsetHeight + 'px';

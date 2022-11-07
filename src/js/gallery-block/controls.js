@@ -452,7 +452,8 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 							options={ SELECTED_BORDER_POSITION }
 							onChange={ ( value ) =>
 								setAttributes( {
-									thumbnailProps_selectedBorderPosition: value,
+									thumbnailProps_selectedBorderPosition:
+										value,
 								} )
 							}
 						/>
