@@ -193,9 +193,10 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 
 		if ( ! empty( $url ) ) {
 			// Warm the last uploaded items in the media library.
-			wp_remote_get(
+			wp_safe_remote_request(
 				rest_url( 'wp/v2/media' ),
 				array(
+					'timeout'  => 0.1,
 					'blocking' => false,
 				)
 			);
