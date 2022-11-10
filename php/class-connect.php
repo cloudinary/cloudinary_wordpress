@@ -414,7 +414,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	public function history( $days = 1 ) {
 		$return  = array();
 		$history = get_option( self::META_KEYS['history'], array() );
-		$plan    = $this->usage['plan'];
+		$plan    = ! empty( $this->usage['plan'] ) ? $this->usage['plan'] : $this->credentials['cloud_name'];
 		for ( $i = 1; $i <= $days; $i ++ ) {
 			$date = date_i18n( 'd-m-Y', strtotime( '- ' . $i . ' days' ) );
 			if ( ! isset( $history[ $plan ][ $date ] ) ) {
@@ -444,16 +444,17 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		// Check if we need to upgrade the history.
 		if ( version_compare( $previous_version, '3.1.0', '<' ) ) {
 			$history = get_option( self::META_KEYS['history'], array() );
+			$plan    = ! empty( $this->usage['plan'] ) ? $this->usage['plan'] : $this->credentials['cloud_name'];
 
 			// Check whether history has migrated.
-			if ( ! empty( $this->usage['plan'] ) && ! empty( $history[ $this->usage['plan'] ] ) ) {
+			if ( ! empty( $plan ) && ! empty( $history[ $plan ] ) ) {
 				return;
 			}
 
 			// Fix history.
 			$new_history = array();
 			foreach ( $history as $date => $data ) {
-				$new_history[ $data['plan'] ][ $date ] = $data;
+				$new_history[ $plan ][ $date ] = $data;
 			}
 
 			foreach ( $new_history as &$data ) {
