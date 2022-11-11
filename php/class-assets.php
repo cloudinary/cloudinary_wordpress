@@ -342,6 +342,11 @@ class Assets extends Settings_Component {
 	 * @hook cloudinary_string_replace
 	 */
 	public function add_url_replacements() {
+		// Due to the output buffers, this can be called multiple times.
+		if ( 1 < did_action( 'cloudinary_string_replace' ) ) {
+			return;
+		}
+
 		$overlay = Utils::get_sanitized_text( 'cloudinary-cache-overlay' );
 		$setting = $this->plugin->settings->image_settings->overlay;
 
