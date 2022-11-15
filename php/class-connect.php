@@ -414,16 +414,62 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	public function history( $days = 1 ) {
 		$return  = array();
 		$history = get_option( self::META_KEYS['history'], array() );
+		$plan    = ! empty( $this->usage['plan'] ) ? $this->usage['plan'] : $this->credentials['cloud_name'];
 		for ( $i = 1; $i <= $days; $i ++ ) {
 			$date = date_i18n( 'd-m-Y', strtotime( '- ' . $i . ' days' ) );
-			if ( ! isset( $history[ $date ] ) ) {
-				$history[ $date ] = $this->api->usage( $date );
+			if ( ! isset( $history[ $plan ][ $date ] ) ) {
+				$history[ $plan ][ $date ] = $this->api->usage( $date );
+				uksort(
+					$history[ $plan ],
+					static function ( $a, $b ) {
+						return strtotime( $a ) > strtotime( $b );
+					}
+				);
+				$history[ $plan ] = array_slice( $history[ $plan ], -30 );
 			}
-			$return[ $date ] = $history[ $date ];
+			$return[ $date ] = $history[ $plan ][ $date ];
 		}
 		update_option( self::META_KEYS['history'], $history, false );
 
 		return $return;
+	}
+
+	/**
+	 * Upgrade method for version changes.
+	 *
+	 * @param string $previous_version The previous version number.
+	 * @param string $new_version      The New version number.
+	 */
+	public function upgrade_settings( $previous_version, $new_version ) {
+		// Check if we need to upgrade the history.
+		if ( version_compare( $previous_version, '3.1.0', '<' ) ) {
+			$history = get_option( self::META_KEYS['history'], array() );
+			$plan    = ! empty( $this->usage['plan'] ) ? $this->usage['plan'] : $this->credentials['cloud_name'];
+
+			// Check whether history has migrated.
+			if ( ! empty( $plan ) && ! empty( $history[ $plan ] ) ) {
+				return;
+			}
+
+			// Fix history.
+			$new_history = array();
+			foreach ( $history as $date => $data ) {
+				$new_history[ $plan ][ $date ] = $data;
+			}
+
+			foreach ( $new_history as &$data ) {
+				uksort(
+					$data,
+					static function ( $a, $b ) {
+						return strtotime( $a ) < strtotime( $b );
+					}
+				);
+
+				$data = array_reverse( array_slice( $data, 0, 30 ) );
+			}
+
+			update_option( self::META_KEYS['history'], $new_history, false );
+		}
 	}
 
 	/**
