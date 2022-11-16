@@ -129,9 +129,10 @@ if ( wp.media ) {
 											asset.resync.forEach( function (
 												newUpdateAsset
 											) {
-												const updateAttach = attachment.get(
-													newUpdateAsset.id
-												);
+												const updateAttach =
+													attachment.get(
+														newUpdateAsset.id
+													);
 												updateAttach.set(
 													newUpdateAsset
 												);

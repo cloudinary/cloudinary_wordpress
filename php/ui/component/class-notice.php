@@ -51,6 +51,23 @@ class Notice extends Component {
 	}
 
 	/**
+	 * Filter the icon parts structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function icon( $struct ) {
+		$struct['element'] = 'span';
+		$struct['attributes']['class'] = array( 'cld-ui-icon' );
+		if ( $this->setting->has_param( 'icon' ) ) {
+			$struct['attributes']['class'][] = $this->setting->get_param( 'icon' );
+			$struct['attributes']['class'][] = 'dashicons';
+		}
+		return $struct;
+	}
+
+	/**
 	 * Filter the message part structure.
 	 *
 	 * @param array $struct The array structure.
