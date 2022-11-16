@@ -1003,7 +1003,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			update_option(
 				$plugin::KEYS['notices'],
 				array(
-					'rest_api_notices' => $connectivity,
+					self::META_KEYS['notices'] => $connectivity,
 				),
 				false
 			);
