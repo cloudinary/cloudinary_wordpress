@@ -17,8 +17,6 @@ use Cloudinary\Assets as CLD_Assets;
 use Cloudinary\Media\Gallery;
 use Cloudinary\Sync\Storage;
 use Cloudinary\UI\State;
-use WP_REST_Request;
-use WP_REST_Server;
 use const E_USER_WARNING;
 use const WPCOM_IS_VIP_ENV;
 
@@ -106,6 +104,13 @@ final class Plugin {
 	 * @var     array
 	 */
 	public $hooks;
+
+	/**
+	 * Holds the list of keys.
+	 */
+	const KEYS = array(
+		'notices' => 'cloudinary_notices',
+	);
 
 	/**
 	 * Plugin_Base constructor.
