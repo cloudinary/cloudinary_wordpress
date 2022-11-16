@@ -997,8 +997,6 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			} else {
 				update_option( $plugin::KEYS['notices'], $notices, false );
 			}
-
-			wp_schedule_single_event( $now + ( DAY_IN_SECONDS ), 'cloudinary_rest_api_connectivity' );
 		} else {
 			update_option(
 				$plugin::KEYS['notices'],
@@ -1007,9 +1005,9 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 				),
 				false
 			);
-
-			wp_schedule_single_event( $now + ( HOUR_IN_SECONDS ), 'cloudinary_rest_api_connectivity' );
 		}
+
+		wp_schedule_single_event( $now + ( HOUR_IN_SECONDS ), 'cloudinary_rest_api_connectivity' );
 
 		return $connectivity;
 	}
