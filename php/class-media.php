@@ -14,6 +14,7 @@ use Cloudinary\Media\Global_Transformations;
 use Cloudinary\Media\Upgrade;
 use Cloudinary\Media\Video;
 use Cloudinary\Media\WooCommerceGallery;
+use Cloudinary\Relate\Relationship;
 use WP_Error;
 use WP_Query;
 
@@ -2068,6 +2069,7 @@ class Media extends Settings_Component implements Setup {
 
 		// Attempt to find attachment ID.
 		$asset['attachment_id'] = $this->get_id_from_sync_key( $asset['sync_key'] );
+		$asset['instances']     = Relationship::get_ids_by_public_id( $asset['public_id'] );
 
 		return $asset;
 	}
@@ -2098,17 +2100,21 @@ class Media extends Settings_Component implements Setup {
 				// Capture the ALT Text.
 				if ( ! empty( $asset['meta']['alt'] ) ) {
 					$alt_text = wp_strip_all_tags( $asset['meta']['alt'] );
-					update_post_meta( $asset['attachment_id'], '_wp_attachment_image_alt', $alt_text );
+					foreach ( $asset['instances'] as $id ) {
+						update_post_meta( $id, '_wp_attachment_image_alt', $alt_text );
+					}
 				}
 				// Capture the Caption Text.
 				if ( ! empty( $asset['meta']['caption'] ) ) {
 					$caption = wp_strip_all_tags( $asset['meta']['caption'] );
-					wp_update_post(
-						array(
-							'ID'           => $asset['attachment_id'],
-							'post_excerpt' => $caption,
-						)
-					);
+					foreach ( $asset['instances'] as $id ) {
+						wp_update_post(
+							array(
+								'ID'           => $id,
+								'post_excerpt' => $caption,
+							)
+						);
+					}
 				}
 				// Compare Version.
 				$current_version = $this->get_cloudinary_version( $asset['attachment_id'] );
