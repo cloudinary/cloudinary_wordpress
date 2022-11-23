@@ -183,4 +183,20 @@ class Relationship {
 
 		return $cache[ $post_id ];
 	}
+
+	/**
+	 * Get the attachment IDs by the public ID.
+	 *
+	 * @param string $public_id The public ID.
+	 *
+	 * @return array
+	 */
+	public static function get_ids_by_public_id( $public_id ) {
+		global $wpdb;
+
+		$table_name = Utils::get_relationship_table();
+		$ids        = $wpdb->get_col( $wpdb->prepare( "SELECT post_id FROM {$table_name} WHERE public_id = %s", $public_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		return array_map( 'intval', $ids );
+	}
 }
