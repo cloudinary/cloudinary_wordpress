@@ -816,4 +816,25 @@ class Utils {
 
 		return $is;
 	}
+
+	/**
+	 * Clean up meta after sync.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return void
+	 */
+	public static function clean_up_sync_meta( $attachment_id ) {
+		// remove pending.
+		delete_post_meta( $attachment_id, Sync::META_KEYS['pending'] );
+
+		// Remove processing flag.
+		delete_post_meta( $attachment_id, Sync::META_KEYS['syncing'] );
+
+		$sync_thread = get_post_meta( $attachment_id, Sync::META_KEYS['queued'], true );
+		if ( ! empty( $sync_thread ) ) {
+			delete_post_meta( $attachment_id, Sync::META_KEYS['queued'] );
+			delete_post_meta( $attachment_id, $sync_thread );
+		}
+	}
 }

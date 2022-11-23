@@ -345,12 +345,24 @@ class Delivery implements Setup {
 	 * @return bool
 	 */
 	public function is_deliverable( $attachment_id ) {
-		$is = wp_attachment_is_image( $attachment_id ) || wp_attachment_is( 'video', $attachment_id );
+		$is = false;
+
+		if ( wp_attachment_is_image( $attachment_id ) && 'on' === $this->plugin->settings->get_value( 'image_delivery' ) ) {
+			$is = true;
+		}
+
+		if ( ! $is && wp_attachment_is( 'video', $attachment_id ) && 'on' === $this->plugin->settings->get_value( 'video_delivery' ) ) {
+			$is = true;
+		}
 
 		// Ensure that the attachment has dimensions to be delivered.
 		if ( $is ) {
 			$meta = wp_get_attachment_metadata( $attachment_id, true );
 			$is   = ! empty( $meta['width'] ) && ! empty( $meta['height'] );
+		}
+
+		if ( ! $is ) {
+			$is = ! wp_attachment_is_image( $attachment_id ) && ! wp_attachment_is( 'video', $attachment_id );
 		}
 
 		/**
@@ -838,6 +850,9 @@ class Delivery implements Setup {
 
 			if ( $results ) {
 				foreach ( $results as $result ) {
+					if ( ! $this->is_deliverable( $result->post_id ) ) {
+						continue;
+					}
 					// If we are here, it means that an attachment in the media library doesn't have a delivery for the url.
 					// Reset the signature for delivery and add to sync, to update it.
 					$this->create_delivery( $result->post_id );
@@ -1523,15 +1538,22 @@ class Delivery implements Setup {
 		 */
 		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
 
-		$this->known[ $item['public_id'] ] = $item;
+		$found[ $item['public_id'] ] = $item;
 		$scaled                            = self::make_scaled_url( $item['sized_url'] );
 		$descaled                          = self::descaled_url( $item['sized_url'] );
 		$scaled_slashed                    = addcslashes( $scaled, '/' );
 		$descaled_slashed                  = addcslashes( $descaled, '/' );
-		$this->known[ $scaled ]            = $item;
-		$this->known[ $descaled ]          = $item;
-		$this->known[ $scaled_slashed ]    = array_merge( $item, array( 'slashed' => true ) );
-		$this->known[ $descaled_slashed ]  = array_merge( $item, array( 'slashed' => true ) );
+		$found[ $scaled ]            = $item;
+		$found[ $descaled ]          = $item;
+		$found[ $scaled_slashed ]    = array_merge( $item, array( 'slashed' => true ) );
+		$found[ $descaled_slashed ]  = array_merge( $item, array( 'slashed' => true ) );
+
+		if ( ! $this->is_deliverable( $item['post_id'] ) ) {
+			$this->unusable = array_merge( $this->unusable, $found );
+			return;
+		}
+
+		$this->known = array_merge( $this->known, $found );
 
 		if ( 'disable' === $item['post_state'] ) {
 			return;
