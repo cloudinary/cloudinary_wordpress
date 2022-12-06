@@ -204,7 +204,11 @@ $settings = array(
 					'condition'   => array(
 						'sized_transformations' => true,
 					),
-					$sizes,
+					array(
+						'type' => 'sizes',
+						'slug' => 'crop_sizes',
+					),
+					//$sizes,
 				),
 				array(
 					'type'    => 'tag',

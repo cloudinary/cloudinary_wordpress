@@ -466,6 +466,15 @@ abstract class Component {
 	}
 
 	/**
+	 * Get the components id/slug.
+	 *
+	 * @return string
+	 */
+	public function get_id() {
+		return $this->setting->get_slug();
+	}
+
+	/**
 	 * Handles a structure part before rendering.
 	 *
 	 * @param string $name   The name of the part.
