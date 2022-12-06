@@ -74,8 +74,8 @@ class On_Off extends Text {
 		$struct['attributes']['name']            = $this->get_name();
 		$struct['attributes']['id']              = $this->get_id();
 		$struct['attributes']['value']           = 'on';
-		$struct['attributes']['data-controller'] = $this->setting->get_slug();
-		if ( 'on' === $this->setting->get_value() ) {
+		$struct['attributes']['data-controller'] = $this->get_id();
+		if ( 'on' === $this->get_value() ) {
 			$struct['attributes']['checked'] = 'checked';
 		}
 		$struct['attributes']['class'][] = 'cld-ui-input';

@@ -132,6 +132,15 @@ class Relationship {
 		$list  = implode( ', ', array_fill( 0, count( $post_ids ), '%d' ) );
 		$where = "post_id IN( {$list} )";
 
+		// Sometimes it's an array or posts.
+		if ( is_object( $post_ids[0] ) ) {
+			$post_ids = array_map(
+				static function ( $obj ) {
+					return $obj->ID;
+				},
+				$post_ids
+			);
+		}
 		$sql   = $wpdb->prepare( "SELECT * FROM {$table_name} WHERE {$where}", $post_ids ); // phpcs:ignore WordPress.DB
 		$posts = $wpdb->get_results( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB
 
