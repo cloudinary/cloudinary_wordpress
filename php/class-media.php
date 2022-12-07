@@ -1733,6 +1733,15 @@ class Media extends Settings_Component implements Setup {
 			$image_meta['file'] = wp_parse_url( $image_src, PHP_URL_PATH );
 		}
 
+		// PDFs don't have sizes, so we need to inject them.
+		if ( empty( $image_meta['width'] ) ) {
+			$image_meta['width'] = $size_array[0];
+		}
+
+		if ( empty( $image_meta['height'] ) ) {
+			$image_meta['height'] = $size_array[1];
+		}
+
 		return $image_meta;
 	}
 
