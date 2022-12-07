@@ -828,13 +828,16 @@ class Utils {
 		$additional_sizes   = wp_get_additional_image_sizes();
 		$all_sizes          = array();
 		$labels             = array();
+		$intermediate_sizes = array();
 
 		if ( is_null( $attachment_id ) ) {
 			$intermediate_sizes = get_intermediate_image_sizes(); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.get_intermediate_image_sizes_get_intermediate_image_sizes
 		} else {
 			$meta = wp_get_attachment_metadata( $attachment_id );
-			$additional_sizes = wp_parse_args( $additional_sizes, $meta['sizes'] );
-			$intermediate_sizes = array_keys( $meta['sizes'] );
+			if ( ! empty( $meta['sizes'] ) ) {
+				$additional_sizes   = wp_parse_args( $additional_sizes, $meta['sizes'] );
+				$intermediate_sizes = array_keys( $meta['sizes'] );
+			}
 		}
 
 		foreach ( $intermediate_sizes as $size ) {
