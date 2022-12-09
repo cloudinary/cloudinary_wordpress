@@ -5,21 +5,13 @@ const SizePreview = {
 	previews: {},
 	panels: {},
 	allowed: {
-		c: [
-			'fill',
-			'scale',
-			'crop',
-			'thumb'
-		],
-		g: [
-			'auto',
-			'center',
-			'faces',
-			'bad'
-		]
+		c: [ 'fill', 'scale', 'crop', 'thumb' ],
+		g: [ 'auto', 'center', 'faces', 'bad' ],
 	},
 	init( context ) {
-		this.triggers = context.querySelectorAll( '.cld-size-items-item[data-size]' );
+		this.triggers = context.querySelectorAll(
+			'.cld-size-items-item[data-size]'
+		);
 		const panels = context.querySelectorAll( '.image-item[data-size]' );
 		[ ...panels ].forEach( ( panel ) => {
 			const size = panel.dataset.size;
@@ -38,7 +30,9 @@ const SizePreview = {
 			} );
 		} );
 		this.triggers.forEach( ( trigger ) => {
-			trigger.addEventListener( 'click', ( ev ) => this.triggerPanel( trigger ) );
+			trigger.addEventListener( 'click', ( ev ) =>
+				this.triggerPanel( trigger )
+			);
 		} );
 
 		if ( this.triggers[ 0 ] ) {
@@ -73,10 +67,13 @@ const SizePreview = {
 	},
 	validate( input ) {
 		const parts = input.replace( / /g, '' ).split( ',' );
-		let invalids = [];
+		const invalids = [];
 		parts.forEach( ( part ) => {
 			const sub = part.split( '_' );
-			if ( ! this.allowed[ sub[ 0 ] ] || -1 === this.allowed[ sub[ 0 ] ].indexOf( sub[ 1 ] ) ) {
+			if (
+				! this.allowed[ sub[ 0 ] ] ||
+				-1 === this.allowed[ sub[ 0 ] ].indexOf( sub[ 1 ] )
+			) {
 				invalids.push( part );
 			}
 		} );
@@ -93,8 +90,10 @@ const SizePreview = {
 		const file = preview.dataset.file;
 		const baseTransform = JSON.parse( preview.dataset.transformations );
 		baseTransform.crop = transformations;
-		const url = `${ base }${ Object.values( baseTransform ).join( ',' ) }${ file }`;
-		const src = `url("${url}")`;
+		const url = `${ base }${ Object.values( baseTransform ).join(
+			','
+		) }${ file }`;
+		const src = `url("${ url }")`;
 		if ( preview.style.backgroundImage !== src ) {
 			this.testUrl( url, preview );
 		}
@@ -105,10 +104,10 @@ const SizePreview = {
 			preview.classList.add( 'error' );
 		} );
 		testImg.addEventListener( 'load', () => {
-			preview.style.backgroundImage = `url("${url}")`;
+			preview.style.backgroundImage = `url("${ url }")`;
 		} );
 		testImg.src = url;
-	}
+	},
 };
 
 export default SizePreview;
