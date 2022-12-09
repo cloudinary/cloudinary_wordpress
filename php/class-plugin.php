@@ -156,6 +156,7 @@ final class Plugin {
 		$this->components['extensions']             = new Extensions( $this );
 		$this->components['svg']                    = new SVG( $this );
 		$this->components['relate']                 = new Relate( $this );
+		$this->components['metabox']                = new Meta_Box( $this );
 	}
 
 	/**

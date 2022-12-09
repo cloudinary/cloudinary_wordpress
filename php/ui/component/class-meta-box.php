@@ -12,14 +12,14 @@ namespace Cloudinary\UI\Component;
  *
  * @package Cloudinary\UI
  */
-class Stand_Alone extends Page {
+class Meta_Box extends Page {
 
 	/**
 	 * Holds the components build blueprint.
 	 *
 	 * @var string
 	 */
-	protected $blueprint = 'wrap|form|settings/|/wrap';
+	protected $blueprint = 'wrap|form/|settings/|/wrap';
 
 	/**
 	 * Filter the wrap parts structure.
@@ -47,7 +47,6 @@ class Stand_Alone extends Page {
 		$struct['element'] = 'div';
 		// Don't run action if page has tabs, since the page actions will be different for each tab.
 		$struct['children'] = $this->page_actions();
-		$struct['content']  = wp_nonce_field( 'cloudinary-settings', '_cld_nonce', false, false );
 
 		return $struct;
 	}
@@ -64,7 +63,7 @@ class Stand_Alone extends Page {
 		// Set the attributes for the field.
 		$option_atts                    = array(
 			'type'  => 'hidden',
-			'name'  => 'cloudinary-active-slug',
+			'name'  => 'cloudinary-active-metabox',
 			'value' => $option_name,
 		);
 		$inputs                         = array(

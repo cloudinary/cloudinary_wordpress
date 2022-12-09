@@ -236,12 +236,12 @@ const UI = {
 	},
 };
 
-const contexts = document.querySelectorAll('.cld-page,.cld-stand-alone' );
+const contexts = document.querySelectorAll( '.cld-page,.cld-meta-box' );
 if ( contexts.length ) {
-	contexts.forEach( ( context )=>{
+	contexts.forEach( ( context ) => {
 		// Init.
 		window.addEventListener( 'load', UI._init( context ) );
-	})
+	} );
 }
 
 export default UI;
