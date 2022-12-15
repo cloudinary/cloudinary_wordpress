@@ -140,6 +140,11 @@ class Gallery extends Settings_Component {
 
 		$config['queryParam'] = 'AA';
 
+		// Make sure custom settings are a json string.
+		if ( ! empty( $config['customSettings'] ) && is_array( $config['customSettings'] ) ) {
+			$config['customSettings'] = wp_json_encode( $config['customSettings'] );
+		}
+
 		return $config;
 	}
 

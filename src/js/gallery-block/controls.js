@@ -56,11 +56,6 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 	const attributesClone = cloneDeep( attributes );
 	const nestedAttrs = dot.object( attributesClone );
 
-	nestedAttrs.customSettings =
-		typeof nestedAttrs.customSettings === 'object'
-			? JSON.stringify( nestedAttrs.customSettings )
-			: nestedAttrs.customSettings;
-
 	if ( ! attributes.transformation_crop ) {
 		attributes.transformation_crop = 'pad';
 		attributes.transformation_background = 'rgb:FFFFFF';
@@ -452,8 +447,7 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 							options={ SELECTED_BORDER_POSITION }
 							onChange={ ( value ) =>
 								setAttributes( {
-									thumbnailProps_selectedBorderPosition:
-										value,
+									thumbnailProps_selectedBorderPosition: value,
 								} )
 							}
 						/>
@@ -526,15 +520,9 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 					) }
 					value={ nestedAttrs.customSettings }
 					onChange={ ( value ) => {
-						try {
-							setAttributes( {
-								customSettings: JSON.parse( value ),
-							} );
-						} catch {
-							setAttributes( {
-								customSettings: value,
-							} );
-						}
+						setAttributes( {
+							customSettings: value,
+						} );
 					} }
 				/>
 			</PanelBody>
