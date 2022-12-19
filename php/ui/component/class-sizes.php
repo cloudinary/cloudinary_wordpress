@@ -154,7 +154,8 @@ class Sizes extends Text {
 		$struct['attributes']['class'][] = 'image-preview-box';
 		$url                             = CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE;
 		$sample                          = '/fat_cat.jpg';
-		$asset                           = Utils::get_sanitized_text( 'asset' );
+		$asset                           = Utils::get_sanitized_text( 'post' );
+		// Override the sample image if we have an asset.
 		if ( ! empty( $asset ) ) {
 			$media  = get_plugin_instance()->get_component( 'media' );
 			$url    = $media->base_url . '/';
