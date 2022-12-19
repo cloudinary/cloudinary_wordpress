@@ -24,8 +24,20 @@ class Sizes extends Text {
 	 */
 	protected $blueprint = 'wrap|size/|preview/|/wrap';
 
-	var $current_size = null;
+	/**
+	 * Holds the current size.
+	 *
+	 * @var null|string
+	 */
+	protected $current_size = null;
 
+	/**
+	 * Wrapping structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
 	protected function wrap( $struct ) {
 		$struct = parent::wrap( $struct );
 
@@ -110,10 +122,24 @@ class Sizes extends Text {
 		return $id . '-' . $this->current_size;
 	}
 
+	/**
+	 * Sanitize the value.
+	 *
+	 * @param string $value The value to sanitize.
+	 *
+	 * @return string
+	 */
 	public function sanitize_value( $value ) {
 		return $value;
 	}
 
+	/**
+	 * Filter the preview parts structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
 	public function preview( $struct ) {
 		$struct['element']               = 'div';
 		$struct['attributes']['class'][] = 'image-items';
@@ -133,6 +159,14 @@ class Sizes extends Text {
 		return $struct;
 	}
 
+	/**
+	 * Make the preview image.
+	 *
+	 * @param string $size   The size to make.
+	 * @param array  $config The config for the size.
+	 *
+	 * @return array
+	 */
 	public function make_preview( $size, $config ) {
 		$struct                          = $this->get_part( 'div' );
 		$struct['attributes']['class'][] = 'image-preview-box';
@@ -169,6 +203,13 @@ class Sizes extends Text {
 		return $struct;
 	}
 
+	/**
+	 * Make the input.
+	 *
+	 * @param string $size The size to make.
+	 *
+	 * @return array
+	 */
 	protected function make_input( $size ) {
 		$struct                              = $this->get_part( 'input' );
 		$struct['attributes']['type']        = 'text';
