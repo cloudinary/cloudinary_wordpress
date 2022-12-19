@@ -235,11 +235,15 @@ const UI = {
 	},
 };
 
-const contexts = document.querySelectorAll( '.cld-page,.cld-meta-box' );
+const contexts = document.querySelectorAll(
+	'#cloudinary-settings-page,.cld-meta-box'
+);
 if ( contexts.length ) {
 	contexts.forEach( ( context ) => {
-		// Init.
-		window.addEventListener( 'load', UI._init( context ) );
+		if ( context ) {
+			// Init.
+			window.addEventListener( 'load', UI._init( context ) );
+		}
 	} );
 }
 
