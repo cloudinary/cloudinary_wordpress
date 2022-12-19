@@ -992,6 +992,34 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Get the crop transformation for the attachment.
+	 * Returns false if no crop is found.
+	 *
+	 * @param int    $attachment_id The attachment ID.
+	 * @param string $size          The requested size.
+	 *
+	 * @return false|string
+	 */
+	public function get_crop_transformations( $attachment_id, $size ) {
+		static $transformations = array();
+		$crop = false;
+
+		if ( empty( $transformations[ $attachment_id ] ) ) {
+			$meta = $this->get_post_meta( $attachment_id, 'cloudinary_metaboxes_crop_meta', true );
+
+			if ( ! empty( $meta['single_crop_sizes']['enable_single_sizes'] ) && 'on' === $meta['single_crop_sizes']['enable_single_sizes'] ) {
+				$transformations[ $attachment_id ] = $meta['single_crop_sizes']['single_sizes'];
+			}
+		}
+
+		if ( $size && ! empty( $transformations[ $attachment_id ][ $size ] ) ) {
+			$crop = $transformations[ $attachment_id ][ $size ];
+		}
+
+		return $crop;
+	}
+
+	/**
 	 * Extract the crop size part of a transformation that was done in the DAM widget.
 	 *
 	 * @param array      $transformations The transformations to get crop from.

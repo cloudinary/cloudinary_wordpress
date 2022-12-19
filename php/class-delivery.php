@@ -1303,24 +1303,23 @@ class Delivery implements Setup {
 			$attributes['data-public-id'] = $public_id;
 			$tag_element['format']        = $item['format'];
 
-			// Check if this is a crop or a scale.
-			$has_size = $this->media->get_size_from_url( $this->sanitize_url( $raw_url ) );
-			if ( ! empty( $has_size ) ) {
-				$file_ratio     = round( $has_size[0] / $has_size[1], 2 );
-				$original_ratio = round( $item['width'] / $item['height'], 2 );
-				if ( $file_ratio !== $original_ratio ) {
-					$attributes['data-crop'] = $file_ratio;
-				}
-				if ( $has_sized_transformation ) {
-					$tag_element['size'] = $this->get_registered_size( $item['post_id'], $has_size );
-
-					if (
-						! empty( $config[ 'disable_size_' . $tag_element['size'] ] )
-						&& 'on' === $config[ 'disable_size_' . $tag_element['size'] ]
-					) {
-						$attributes['data-skip-crop'] = true;
-					} else if ( ! empty( $config[ 'size_' . $tag_element['size'] ] ) ) {
-						$attributes['data-transformation-crop'] = $config[ 'size_' . $tag_element['size'] ];
+			if ( 'img' === $tag_element['tag'] ) {
+				// Check if this is a crop or a scale.
+				$has_size            = $this->media->get_size_from_url( $this->sanitize_url( $raw_url ) );
+				$tag_element['size'] = $this->get_registered_size( $item['post_id'], $has_size );
+				if ( ! empty( $has_size ) ) {
+					$file_ratio     = round( $has_size[0] / $has_size[1], 2 );
+					$original_ratio = round( $item['width'] / $item['height'], 2 );
+					if ( $file_ratio !== $original_ratio ) {
+						$attributes['data-crop'] = $file_ratio;
+					}
+					$image_transformations = $this->media->get_crop_transformations( $tag_element['id'], $tag_element['size'] );
+					if ( $image_transformations ) {
+						$attributes['data-transformation-crop'] = $image_transformations;
+					} elseif ( $has_sized_transformation ) {
+						if ( ! empty( $config['crop_sizes'][ $tag_element['size'] ] ) ) {
+							$attributes['data-transformation-crop'] = $config['crop_sizes'][ $tag_element['size'] ];
+						}
 					}
 				}
 			}
