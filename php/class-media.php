@@ -816,8 +816,8 @@ class Media extends Settings_Component implements Setup {
 			foreach ( $transformations as $transformation ) {
 				if ( ! empty( $transformation['crop'] ) && ! empty( $transformation['width'] ) && ! empty( $transformation['height'] ) ) {
 					$return = array(
-						$transformation['width'],
-						$transformation['height'],
+						(int) $transformation['width'],
+						(int) $transformation['height'],
 					);
 					break;
 				}
