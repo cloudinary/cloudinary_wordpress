@@ -3009,6 +3009,56 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Maybe add the crop size settings
+	 *
+	 * @param array $settings The Settings array.
+	 *
+	 * @return array
+	 */
+	public static function maybe_add_size_settings( $settings ) {
+
+		/**
+		 * Enable the crop size settings.
+		 *
+		 * @hook  cloudinary_enabled_crop_sizes
+		 * @since 3.1.0
+		 * @default {false}
+		 *
+		 * @param $enabeld {bool} Are the crop sizes enabled?
+		 *
+		 * @retrun {bool}
+		 */
+		if ( apply_filters( 'cloudinary_enabled_crop_sizes', false ) ) {
+			$crop_sizes   = array(
+				array(
+					'type'    => 'tag',
+					'element' => 'hr',
+				),
+				array(
+					'type'         => 'on_off',
+					'slug'         => 'sized_transformations',
+					'title'        => __( 'Sized transformations', 'cloudinary' ),
+					'tooltip_text' => __(
+						'Enable transformations per registered image sizes.',
+						'cloudinary'
+					),
+					'description'  => __( 'Enable sized transformations.', 'cloudinary' ),
+					'default'      => 'off',
+				),
+			);
+			$new_settings = array_merge(
+				array_slice( $settings[0][1][0], 0, 7 ),
+				$crop_sizes,
+				array_slice( $settings[0][1][0], 7 )
+			);
+
+			$settings[0][1][0] = $new_settings;
+		}
+
+		return $settings;
+	}
+
+	/**
 	 * Enabled method for version if settings are enabled.
 	 *
 	 * @param bool $enabled Flag to enable.

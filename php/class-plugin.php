@@ -300,6 +300,7 @@ final class Plugin {
 		add_filter( 'plugin_row_meta', array( $this, 'force_visit_plugin_site_link' ), 10, 4 );
 		add_action( 'admin_print_footer_scripts', array( $this, 'print_script_data' ), 1 );
 		add_action( 'wp_print_footer_scripts', array( $this, 'print_script_data' ), 1 );
+		add_filter( 'cloudinary_admin_image_settings', array( Media::class, 'maybe_add_size_settings' ) );
 
 		add_action( 'cloudinary_version_upgrade', array( Utils::class, 'install' ) );
 	}

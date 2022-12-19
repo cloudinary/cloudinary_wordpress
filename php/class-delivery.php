@@ -1225,8 +1225,21 @@ class Delivery implements Setup {
 	 */
 	public function parse_element( $element ) {
 		static $post_context = 0;
-		$config                   = $this->plugin->settings->get_value( 'image_settings' );
-		$has_sized_transformation = ! empty( $config['sized_transformations'] ) && 'on' === $config['sized_transformations'];
+		$config = $this->plugin->settings->get_value( 'image_settings' );
+
+		/**
+		 * Enable the crop size settings.
+		 *
+		 * @hook  cloudinary_enabled_crop_sizes
+		 * @since 3.1.0
+		 * @default {false}
+		 *
+		 * @param $enabeld {bool} Are the crop sizes enabled?
+		 *
+		 * @retrun {bool}
+		 */
+		$enabled_crop_sizes       = apply_filters( 'cloudinary_enabled_crop_sizes', false );
+		$has_sized_transformation = $enabled_crop_sizes && ! empty( $config['sized_transformations'] ) && 'on' === $config['sized_transformations'];
 
 		$tag_element = array(
 			'tag'                       => '',
