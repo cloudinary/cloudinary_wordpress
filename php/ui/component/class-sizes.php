@@ -1,18 +1,17 @@
 <?php
 /**
- * Data Component.
+ * Size Transformations Component.
  *
  * @package Cloudinary
  */
 
 namespace Cloudinary\UI\Component;
 
-use Cloudinary\UI\Component;
 use Cloudinary\Utils;
 use function Cloudinary\get_plugin_instance;
 
 /**
- * Data Component to hold data.
+ * Size Transformations UI.
  *
  * @package Cloudinary\UI
  */
@@ -33,7 +32,6 @@ class Sizes extends Text {
 		$struct['attributes']['class'][] = 'cld-sizes-preview';
 
 		return $struct;
-
 	}
 
 	/**
@@ -106,14 +104,13 @@ class Sizes extends Text {
 	 *
 	 * @return string
 	 */
-	public function sget_id() {
+	public function get_id() {
 		$id = parent::get_id();
 
 		return $id . '-' . $this->current_size;
 	}
 
 	public function sanitize_value( $value ) {
-		//vdump( $value );
 		return $value;
 	}
 

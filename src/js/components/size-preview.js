@@ -1,5 +1,3 @@
-import { __ } from '@wordpress/i18n';
-
 const SizePreview = {
 	triggers: null,
 	previews: {},
