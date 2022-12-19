@@ -1394,16 +1394,18 @@ class Delivery implements Setup {
 	 * @param int   $attachment_id The attachment ID.
 	 * @param array $size          The size array.
 	 *
-	 * @return int|string|null
+	 * @return string
 	 */
 	public function get_registered_size( $attachment_id, $size ) {
-		$registered_size = null;
-		$meta = wp_get_attachment_metadata( $attachment_id );
+		$registered_size = 'full';
 
-		foreach ( $meta['sizes'] as $slug => $data ) {
-			if ( $data['width'] === $size[0] && $data['height'] === $size[1] ) {
-				$registered_size = $slug;
-				break;
+		if ( is_array( $size ) ) {
+			$meta = wp_get_attachment_metadata( $attachment_id );
+			foreach ( $meta['sizes'] as $slug => $data ) {
+				if ( $data['width'] === $size[0] && $data['height'] === $size[1] ) {
+					$registered_size = $slug;
+					break;
+				}
 			}
 		}
 
