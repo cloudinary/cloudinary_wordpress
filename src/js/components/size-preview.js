@@ -4,7 +4,7 @@ const SizePreview = {
 	panels: {},
 	allowed: {
 		c: [ 'fill', 'scale', 'crop', 'thumb' ],
-		g: [ 'auto', 'center', 'faces', 'bad' ],
+		g: [ 'auto', 'center', 'face', 'faces', 'bad' ],
 	},
 	init( context ) {
 		this.triggers = context.querySelectorAll(
