@@ -525,4 +525,21 @@ class Storage implements Notice {
 			}
 		}
 	}
+
+	/**
+	 * Is storage set ot be full quality.
+	 *
+	 * @return bool
+	 */
+	public function is_local_full() {
+		// We need this option even before initialization of the Settings API.
+		$settings = get_option( Sync::SYNC_MEDIA );
+		$is       = false;
+
+		if ( ! empty( $settings['offload'] ) ) {
+			$is = 'dual_full' === $settings['offload'];
+		}
+
+		return $is;
+	}
 }
