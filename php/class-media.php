@@ -3059,10 +3059,10 @@ class Media extends Settings_Component implements Setup {
 		if ( apply_filters( 'cloudinary_enabled_crop_sizes', false ) ) {
 			$crop_sizes   = array(
 				array(
-					'type'    => 'tag',
-					'element' => 'hr',
-					'depends' => array(
-						'image_delivery',
+					'type'      => 'tag',
+					'element'   => 'hr',
+					'condition' => array(
+						'image_delivery' => true,
 					),
 				),
 				array(
@@ -3075,15 +3075,15 @@ class Media extends Settings_Component implements Setup {
 					),
 					'description'  => __( 'Enable sized transformations.', 'cloudinary' ),
 					'default'      => 'off',
-					'depends'      => array(
-						'image_delivery',
+					'condition'    => array(
+						'image_delivery' => true,
 					),
 				),
 				array(
 					'type'      => 'sizes',
 					'slug'      => 'crop_sizes',
 					'condition' => array(
-						'sized_transformations' => true,
+						'image_delivery' => true,
 					),
 				),
 			);

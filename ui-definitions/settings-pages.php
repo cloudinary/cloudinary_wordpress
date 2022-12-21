@@ -450,70 +450,22 @@ $settings = array(
 		'slug'                => 'edit_asset',
 		'requires_connection' => true,
 		array(
-			'type'       => 'column',
-			'tab_id'     => 'transformations',
-			'width'      => '950px',
-			'attributes' => array(
-				'wrap' => array(
-					'style' => 'margin: 0 auto;max-width:1200px;',
-				),
-			),
+			'type' => 'row',
 			array(
-				'type' => 'referrer_link',
-			),
-			array(
-				'type' => 'panel',
-				array(
-					'type' => 'asset_preview',
-				),
-			),
-		),
-	),
-	'edit_asset_sizes' => array(
-		'page_title'          => __( 'Edit asset', 'cloudinary' ),
-		'section'             => 'edit-asset-sizes',
-		'slug'                => 'edit_asset_sizes',
-		'storage'             => 'post-meta',
-		'requires_connection' => true,
-		array(
-			'type'       => 'column',
-			'tab_id'     => 'transformations',
-			'width'      => '950px',
-			'attributes' => array(
-				'wrap' => array(
-					'style' => 'margin: 0 auto;max-width:1200px;',
-				),
-			),
-			array(
-				'type' => 'referrer_link',
-			),
-			array(
-				'type' => 'panel',
-				'option_name'         => 'sizes',
-				array(
-					'type'     => 'column',
-					'tab_id'   => 'sized_transformations',
-					'title'    => __( 'Sizes', 'cloudinary' ),
-					'settings' => array(
-						array(
-							'type'         => 'on_off',
-							'slug'         => 'asset_sized_transformations',
-							'title'        => __( 'Sized transformations', 'cloudinary' ),
-							'tooltip_text' => __(
-								'Enable transformations per registered image sizes.',
-								'cloudinary'
-							),
-							'description'  => __( 'Enable sized transformations.', 'cloudinary' ),
-							'default'      => 'off',
-						),
+				'type'       => 'column',
+				'width'      => '950px',
+				'attributes' => array(
+					'wrap' => array(
+						'style' => 'margin: 0 auto;max-width:1200px;',
 					),
 				),
 				array(
-					'type'      => 'sizes',
-					'slug'      => 'sizes',
-					'mode'      => 'full',
-					'condition' => array(
-						'asset_sized_transformations' => true,
+					'type' => 'referrer_link',
+				),
+				array(
+					'type' => 'panel',
+					array(
+						'type' => 'asset_preview',
 					),
 				),
 			),
