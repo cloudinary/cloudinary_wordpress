@@ -171,6 +171,23 @@ class On_Off extends Text {
 	}
 
 	/**
+	 * Filter the tooltip structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function tooltip( $struct ) {
+		$struct = parent::tooltip( $struct );
+
+		if ( $this->setting->get_param( 'disabled' ) ) {
+			$struct['content'] = $this->setting->get_param( 'disabled_message' );
+		}
+
+		return $struct;
+	}
+
+	/**
 	 * Sanitize the value.
 	 *
 	 * @param string $value The value to sanitize.
