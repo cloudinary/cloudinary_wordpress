@@ -24,6 +24,7 @@ const UI = {
 		const files = context.querySelectorAll( '[data-file]' );
 		const autoSuffix = context.querySelectorAll( '[data-auto-suffix]' );
 		const confirms = context.querySelectorAll( '[data-confirm]' );
+		const self = this;
 		const compilerDebounce = {};
 		// Init states.
 		States.init();

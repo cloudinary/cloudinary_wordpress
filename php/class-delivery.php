@@ -9,11 +9,14 @@ namespace Cloudinary;
 
 use Cloudinary\Component\Setup;
 use Cloudinary\Connect\Api;
-use Cloudinary\Delivery\Bypass;
 use Cloudinary\Media\Filter;
 use Cloudinary\Media\Global_Transformations;
-use Cloudinary\Relate\Relationship;
+use Cloudinary\Sync;
+use Cloudinary\String_Replace;
 use Cloudinary\UI\Component\HTML;
+use Cloudinary\Delivery\Bypass;
+use Cloudinary\Relate\Relationship;
+use WP_Post;
 
 /**
  * Plugin Delivery class.

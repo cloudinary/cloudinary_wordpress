@@ -10,9 +10,45 @@ use Cloudinary\Utils;
 use function Cloudinary\get_plugin_instance;
 
 $media            = $this->get_component( 'media' );
+$attachment_id    = (int) filter_input( INPUT_GET, 'asset', FILTER_SANITIZE_NUMBER_INT );
+$registered_sizes = Utils::get_registered_sizes( $attachment_id );
+$sizes            = array();
+
+foreach ( $registered_sizes as $key => $size ) {
+	$transformation = $size['crop'] ? 'c_fill' : 'c_scale';
+	$sizes[]        = array(
+		'type'        => 'on_off',
+		'slug'        => 'asset_disable_size_' . $key,
+		'title'       => $size['label'],
+		'description' => sprintf(
+			// translators: %s is the size.
+			__( 'Disable size cropping for %s.', 'cloudinary' ),
+			$size['label']
+		),
+		'default'     => 'off',
+	);
+	$sizes[]        = array(
+		'type' => 'group',
+		array(
+			'type'         => 'text',
+			'slug'         => 'asset_size_' . $key,
+			'condition'    => array(
+				'asset_disable_size_' . $key => false,
+			),
+			'tooltip_text' => sprintf(
+				// translators: %s is the size.
+				__( 'Custom cropping for %s.', 'cloudinary' ),
+				$size['label']
+			),
+			'attributes'   => array(
+				'placeholder' => $transformation,
+			),
+		),
+	);
+}
 
 $settings = array(
-	'dashboard'        => array(
+	'dashboard'      => array(
 		'page_title'          => __( 'Cloudinary Dashboard', 'cloudinary' ),
 		'menu_title'          => __( 'Dashboard', 'cloudinary' ),
 		'priority'            => 1,
@@ -45,7 +81,7 @@ $settings = array(
 			),
 		),
 	),
-	'connect'          => array(
+	'connect'        => array(
 		'page_title'         => __( 'General settings', 'cloudinary' ),
 		'menu_title'         => __( 'General settings', 'cloudinary' ),
 		'disconnected_title' => __( 'Setup', 'cloudinary' ),
@@ -66,7 +102,7 @@ $settings = array(
 			),
 		),
 	),
-	'image_settings'   => array(
+	'image_settings' => array(
 		'page_title'          => __( 'Image settings', 'cloudinary' ),
 		'menu_title'          => __( 'Image settings', 'cloudinary' ),
 		'priority'            => 5,
@@ -74,7 +110,7 @@ $settings = array(
 		'sidebar'             => true,
 		'settings'            => include $this->dir_path . 'ui-definitions/settings-image.php',
 	),
-	'video_settings'   => array(
+	'video_settings' => array(
 		'page_title'          => __( 'Video settings', 'cloudinary' ),
 		'menu_title'          => __( 'Video settings', 'cloudinary' ),
 		'priority'            => 5,
@@ -82,8 +118,8 @@ $settings = array(
 		'sidebar'             => true,
 		'settings'            => include $this->dir_path . 'ui-definitions/settings-video.php',
 	),
-	'lazy_loading'     => array(),
-	'responsive'       => array(
+	'lazy_loading'   => array(),
+	'responsive'     => array(
 		'page_title'          => __( 'Responsive images', 'cloudinary' ),
 		'menu_title'          => __( 'Responsive images', 'cloudinary' ),
 		'priority'            => 5,
@@ -204,8 +240,8 @@ $settings = array(
 			),
 		),
 	),
-	'gallery'          => array(),
-	'help'             => array(
+	'gallery'        => array(),
+	'help'           => array(
 		'page_title' => __( 'Need help?', 'cloudinary' ),
 		'menu_title' => __( 'Need help?', 'cloudinary' ),
 		'priority'   => 50,
@@ -430,22 +466,22 @@ $settings = array(
 			),
 		),
 	),
-	'wizard'           => array(
+	'wizard'         => array(
 		'section' => 'wizard',
 		'slug'    => 'wizard',
 	),
-	'debug'            => array(
+	'debug'         => array(
 		'section' => 'debug',
 		'slug'    => 'debug',
 		array(
 			'type'  => 'panel',
 			'title' => __( 'Debug log', 'cloudinary' ),
 			array(
-				'type' => 'debug',
+				'type'    => 'debug',
 			),
 		),
 	),
-	'edit_asset'       => array(
+	'edit_asset'     => array(
 		'page_title'          => __( 'Edit asset', 'cloudinary' ),
 		'section'             => 'edit-asset',
 		'slug'                => 'edit_asset',
@@ -489,8 +525,8 @@ $settings = array(
 				'type' => 'referrer_link',
 			),
 			array(
-				'type'        => 'panel',
-				'option_name' => 'sizes',
+				'type' => 'panel',
+				'option_name'         => 'sizes',
 				array(
 					'type'     => 'column',
 					'tab_id'   => 'sized_transformations',
