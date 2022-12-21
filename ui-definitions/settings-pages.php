@@ -5,48 +5,11 @@
  * @package Cloudinary
  */
 
-use Cloudinary\Report;
 use Cloudinary\Utils;
+use Cloudinary\Report;
 use function Cloudinary\get_plugin_instance;
 
-$media            = $this->get_component( 'media' );
-$attachment_id    = (int) filter_input( INPUT_GET, 'asset', FILTER_SANITIZE_NUMBER_INT );
-$registered_sizes = Utils::get_registered_sizes( $attachment_id );
-$sizes            = array();
-
-foreach ( $registered_sizes as $key => $size ) {
-	$transformation = $size['crop'] ? 'c_fill' : 'c_scale';
-	$sizes[]        = array(
-		'type'        => 'on_off',
-		'slug'        => 'asset_disable_size_' . $key,
-		'title'       => $size['label'],
-		'description' => sprintf(
-			// translators: %s is the size.
-			__( 'Disable size cropping for %s.', 'cloudinary' ),
-			$size['label']
-		),
-		'default'     => 'off',
-	);
-	$sizes[]        = array(
-		'type' => 'group',
-		array(
-			'type'         => 'text',
-			'slug'         => 'asset_size_' . $key,
-			'condition'    => array(
-				'asset_disable_size_' . $key => false,
-			),
-			'tooltip_text' => sprintf(
-				// translators: %s is the size.
-				__( 'Custom cropping for %s.', 'cloudinary' ),
-				$size['label']
-			),
-			'attributes'   => array(
-				'placeholder' => $transformation,
-			),
-		),
-	);
-}
-
+$media    = $this->get_component( 'media' );
 $settings = array(
 	'dashboard'      => array(
 		'page_title'          => __( 'Cloudinary Dashboard', 'cloudinary' ),

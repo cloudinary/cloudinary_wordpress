@@ -5,8 +5,6 @@
  * @package Cloudinary
  */
 
-namespace Cloudinary;
-
 namespace Cloudinary\Sync;
 
 use Cloudinary\Component\Notice;

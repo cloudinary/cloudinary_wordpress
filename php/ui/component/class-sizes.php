@@ -96,17 +96,6 @@ class Sizes extends Text {
 	}
 
 	/**
-	 * Get the field name.
-	 *
-	 * @return string
-	 */
-	public function sget_id() {
-		$id = parent::get_id();
-
-		return $id . '-' . $this->current_size;
-	}
-
-	/**
 	 * Sanitize the value.
 	 *
 	 * @param string $value The value to sanitize.
@@ -114,7 +103,6 @@ class Sizes extends Text {
 	 * @return string
 	 */
 	public function sanitize_value( $value ) {
-		//vdump( $value );
 		return $value;
 	}
 

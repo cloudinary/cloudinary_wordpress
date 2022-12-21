@@ -121,7 +121,7 @@ $settings = array(
 							'attributes'   => array(
 								'data-context' => 'video',
 							),
-							'depends'            => array(
+							'depends'      => array(
 								'video_delivery',
 							),
 						),

@@ -92,7 +92,7 @@ class On_Off extends Text {
 			$struct['attributes']['data-main'] = wp_json_encode( $controllers );
 		}
 
-		if ( true === $this->setting->get_param( 'disabled', false ) || true === $this->setting->has_param( 'main_required', false ) && empty( $struct['attributes']['data-main'] ) ) {
+		if ( true === $this->setting->get_param( 'disabled', false ) || ( true === $this->setting->has_param( 'main_required', false ) && empty( $struct['attributes']['data-main'] ) ) ) {
 			$struct['attributes']['disabled'] = 'disabled';
 		}
 

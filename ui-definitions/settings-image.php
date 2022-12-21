@@ -138,7 +138,7 @@ $settings = array(
 						'slug'           => 'image_freeform',
 						'title'          => __( 'Additional image transformations', 'cloudinary' ),
 						'tooltip_text'   => sprintf(
-						// translators: The link to transformation reference.
+							// translators: The link to transformation reference.
 							__(
 								'A set of additional transformations to apply to all images. Specify your transformations using Cloudinary URL transformation syntax. See %1$sreference%2$s for all available transformations and syntax.',
 								'cloudinary'
