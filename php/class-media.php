@@ -3061,6 +3061,9 @@ class Media extends Settings_Component implements Setup {
 				array(
 					'type'    => 'tag',
 					'element' => 'hr',
+					'depends' => array(
+						'image_delivery',
+					),
 				),
 				array(
 					'type'         => 'on_off',
@@ -3072,6 +3075,16 @@ class Media extends Settings_Component implements Setup {
 					),
 					'description'  => __( 'Enable sized transformations.', 'cloudinary' ),
 					'default'      => 'off',
+					'depends'      => array(
+						'image_delivery',
+					),
+				),
+				array(
+					'type'      => 'sizes',
+					'slug'      => 'crop_sizes',
+					'condition' => array(
+						'sized_transformations' => true,
+					),
 				),
 			);
 			$new_settings = array_merge(
