@@ -1,4 +1,5 @@
 {
+  "customSyntax": "postcss-scss",
   "rules": {
     "selector-class-pattern": null
   }
