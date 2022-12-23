@@ -17,8 +17,6 @@ use Cloudinary\Assets as CLD_Assets;
 use Cloudinary\Media\Gallery;
 use Cloudinary\Sync\Storage;
 use Cloudinary\UI\State;
-use WP_REST_Request;
-use WP_REST_Server;
 use const E_USER_WARNING;
 use const WPCOM_IS_VIP_ENV;
 
@@ -108,6 +106,13 @@ final class Plugin {
 	public $hooks;
 
 	/**
+	 * Holds the list of keys.
+	 */
+	const KEYS = array(
+		'notices' => 'cloudinary_notices',
+	);
+
+	/**
 	 * Plugin_Base constructor.
 	 */
 	public function __construct() {
@@ -152,6 +157,7 @@ final class Plugin {
 		$this->components['extensions']             = new Extensions( $this );
 		$this->components['svg']                    = new SVG( $this );
 		$this->components['relate']                 = new Relate( $this );
+		$this->components['metabox']                = new Meta_Box( $this );
 	}
 
 	/**
@@ -295,6 +301,7 @@ final class Plugin {
 		add_filter( 'plugin_row_meta', array( $this, 'force_visit_plugin_site_link' ), 10, 4 );
 		add_action( 'admin_print_footer_scripts', array( $this, 'print_script_data' ), 1 );
 		add_action( 'wp_print_footer_scripts', array( $this, 'print_script_data' ), 1 );
+		add_filter( 'cloudinary_admin_image_settings', array( Media::class, 'maybe_add_size_settings' ) );
 
 		add_action( 'cloudinary_version_upgrade', array( Utils::class, 'install' ) );
 	}
