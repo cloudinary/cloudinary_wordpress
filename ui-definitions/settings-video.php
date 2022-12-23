@@ -5,6 +5,8 @@
  * @package Cloudinary
  */
 
+use function Cloudinary\get_plugin_instance;
+
 $settings = array(
 	array(
 		'type'        => 'panel',
@@ -41,8 +43,10 @@ $settings = array(
 					'description'        => __( 'Optimize and deliver videos on my site.', 'cloudinary' ),
 					'default'            => 'on',
 					'attributes'         => array(
-						'data-context' => 'image',
+						'data-context' => 'video',
 					),
+					'disabled'           => ! get_plugin_instance()->get_component( 'storage' )->is_local_full(),
+					'disabled_message'   => __( 'This setting is disabled because you have selected to offload all media to Cloudinary. Please check the Storage in the General Settings page.', 'cloudinary' ),
 				),
 				array(
 					'type'      => 'group',
@@ -121,7 +125,7 @@ $settings = array(
 							'attributes'   => array(
 								'data-context' => 'video',
 							),
-							'depends'            => array(
+							'depends'      => array(
 								'video_delivery',
 							),
 						),
