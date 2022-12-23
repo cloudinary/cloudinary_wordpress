@@ -138,6 +138,7 @@ final class Plugin {
 	 * that extend the Customizer to ensure resources are available in time.
 	 */
 	public function init() {
+		Cron::get_instance();
 		$this->components['admin']                  = new Admin( $this );
 		$this->components['state']                  = new State( $this );
 		$this->components['connect']                = new Connect( $this );

@@ -25,6 +25,11 @@ class Post_Meta extends Storage {
 	 */
 	protected $media;
 
+	/**
+	 * Post_Meta constructor.
+	 *
+	 * @param string $prefix Holds the storage prefix.
+	 */
 	public function __construct( $prefix ) {
 		parent::__construct( $prefix );
 		$plugin      = get_plugin_instance();
