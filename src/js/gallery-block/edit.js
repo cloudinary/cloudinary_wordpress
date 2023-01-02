@@ -102,9 +102,8 @@ const Edit = ( { setAttributes, attributes, className, isSelected } ) => {
 		if ( attributes.selectedImages.length ) {
 			let gallery;
 
-			const { customSettings, ...config } = setupAttributesForRendering(
-				attributes
-			);
+			const { customSettings, ...config } =
+				setupAttributesForRendering( attributes );
 
 			try {
 				gallery = cloudinary.galleryWidget(

@@ -33,7 +33,7 @@ class Radio extends Text {
 		);
 		foreach ( $options as $key => $value ) {
 			// Create the label wrapper.
-			$id                           = $this->setting->get_slug() . '_' . $key;
+			$id                           = $this->get_id() . '_' . $key;
 			$label                        = $this->get_part( 'label' );
 			$label['attributes']['for']   = $id;
 			$label['attributes']['class'] = array(
