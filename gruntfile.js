@@ -43,10 +43,8 @@ module.exports = function ( grunt ) {
 				expand: true,
 			},
 			package: {
-				src:
-					'<%= tester_dir %>/cloudinary-wordpress-<%= pluginVersion %>.zip',
-				dest:
-					'<%= package_dir %>/cloudinary-wordpress-<%= pluginVersion %>.zip',
+				src: '<%= tester_dir %>/cloudinary-wordpress-<%= pluginVersion %>.zip',
+				dest: '<%= package_dir %>/cloudinary-wordpress-<%= pluginVersion %>.zip',
 			},
 		},
 

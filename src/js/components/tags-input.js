@@ -158,9 +158,10 @@ const TagsInput = {
 		this.inputs[ id ].value = JSON.stringify( this.values[ id ] );
 	},
 	host( value ) {
-		const isUrl = /^(?:http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)/.test(
-			value
-		);
+		const isUrl =
+			/^(?:http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)/.test(
+				value
+			);
 		if ( false === isUrl ) {
 			value = 'https://' + value;
 		}
