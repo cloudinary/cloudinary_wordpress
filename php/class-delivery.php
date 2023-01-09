@@ -269,7 +269,7 @@ class Delivery implements Setup {
 			$size            = $this->media->get_size_from_url( $original_url );
 			$transformations = $this->media->get_transformations_from_string( $original_url );
 			if ( 'image' === $this->media->get_resource_type( $result['post_id'] ) ) {
-				$attachment_url = wp_get_attachment_image_url( $result['post_id'], array_values( $size ) );
+				$attachment_url = wp_get_attachment_image_url( $result['post_id'], $size );
 			} else {
 				$attachment_url = wp_get_attachment_url( $result['post_id'] );
 			}
@@ -1394,8 +1394,8 @@ class Delivery implements Setup {
 	/**
 	 * Get the registered size.
 	 *
-	 * @param int   $attachment_id The attachment ID.
-	 * @param array $size          The size array.
+	 * @param int         $attachment_id The attachment ID.
+	 * @param false|array $size          The size array or false.
 	 *
 	 * @return string
 	 */
