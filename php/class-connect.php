@@ -108,7 +108,6 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		add_filter( 'cloudinary_setting_get_value', array( $this, 'maybe_connection_string_constant' ), 10, 2 );
 		add_filter( 'cloudinary_admin_pages', array( $this, 'register_meta' ) );
 		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
-		add_action( 'cloudinary_rest_api_connectivity', array( $this, 'check_rest_api_connectivity' ) );
 	}
 
 	/**
@@ -700,10 +699,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 * @return void
 	 */
 	protected function setup_rest_api_cron() {
-		if ( false === wp_next_scheduled( 'cloudinary_rest_api_connectivity' ) ) {
-			$now = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
-			wp_schedule_single_event( $now + ( MINUTE_IN_SECONDS ), 'cloudinary_rest_api_connectivity' );
-		}
+		Cron::register_process( 'rest_api', array( $this, 'check_rest_api_connectivity' ), HOUR_IN_SECONDS );
 	}
 
 	/**
@@ -983,9 +979,6 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		$connectivity = self::test_rest_api_connectivity();
 		$plugin       = get_plugin_instance();
 		$notices      = get_option( $plugin::KEYS['notices'], array() );
-		$now          = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
-
-		wp_clear_scheduled_hook( 'cloudinary_rest_api_connectivity' );
 
 		if ( $connectivity['working'] ) {
 			unset( $notices[ self::META_KEYS['notices'] ] );
@@ -1003,8 +996,6 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 				false
 			);
 		}
-
-		wp_schedule_single_event( $now + ( HOUR_IN_SECONDS ), 'cloudinary_rest_api_connectivity' );
 
 		return $connectivity;
 	}
