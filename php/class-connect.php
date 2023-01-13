@@ -474,7 +474,13 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		// Check if we need to upgrade the history.
 		if ( version_compare( $previous_version, '3.1.0', '<' ) ) {
 			$history = get_option( self::META_KEYS['history'], array() );
-			$plan    = ! empty( $this->usage['plan'] ) ? $this->usage['plan'] : $this->credentials['cloud_name'];
+			$plan    = false;
+
+			if ( ! empty( $this->usage['plan'] ) ) {
+				$plan = $this->usage['plan'];
+			} elseif ( ! empty( $this->credentials['cloud_name'] ) ) {
+				$plan = $this->credentials['cloud_name'];
+			}
 
 			// Check whether history has migrated.
 			if ( ! empty( $plan ) && ! empty( $history[ $plan ] ) ) {
