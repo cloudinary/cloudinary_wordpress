@@ -1017,17 +1017,14 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			'message' => __( 'Cloudinary was able to connect to the WordPress REST API.', 'cloudinary' ),
 		);
 
-		$timeout = 10;
-		$headers = array(
-			'Cache-Control' => 'no-cache',
-			'X-WP-Nonce'    => wp_create_nonce( 'wp_rest' ),
+		$args = array(
+			'headers' => array(
+				'Cache-Control' => 'no-cache',
+			),
 		);
 
-		// This filter is documented in wp-includes/class-wp-http-streams.php.
-		$sslverify = apply_filters( 'https_local_ssl_verify', false );
-
 		$url      = rest_url( REST_API::BASE . '/test_rest_api' );
-		$response = wp_safe_remote_get( $url, compact( 'headers', 'timeout', 'sslverify' ) );
+		$response = wp_safe_remote_get( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
 			$result = array(
