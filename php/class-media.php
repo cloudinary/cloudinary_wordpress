@@ -3057,7 +3057,7 @@ class Media extends Settings_Component implements Setup {
 		 * @retrun {bool}
 		 */
 		if ( apply_filters( 'cloudinary_enabled_crop_sizes', false ) ) {
-			$crop_sizes   = array(
+			$crop_sizes      = array(
 				array(
 					'type'      => 'tag',
 					'element'   => 'hr',
