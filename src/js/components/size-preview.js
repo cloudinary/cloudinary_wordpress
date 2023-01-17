@@ -5,8 +5,8 @@ const SizePreview = {
 	previews: {},
 	panels: {},
 	allowed: {
-		c: [ 'fill', 'scale', 'crop', 'thumb' ],
-		g: [ 'auto', 'center', 'face', 'faces', 'bad' ],
+		c: cldData.cropSizeOptions.crop,
+		g: cldData.cropSizeOptions.gravity,
 	},
 	init( context ) {
 		this.triggers = context.querySelectorAll(

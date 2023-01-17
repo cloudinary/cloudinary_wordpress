@@ -44,6 +44,14 @@ class Sizes extends Text {
 
 		$struct['attributes']['class'][] = 'cld-sizes-preview';
 
+		get_plugin_instance()->add_script_data(
+			'cropSizeOptions',
+			array(
+				'crop'    => Utils::get_crop_options(),
+				'gravity' => Utils::get_gravity_options(),
+			)
+		);
+
 		return $struct;
 
 	}
