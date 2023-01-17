@@ -5,13 +5,17 @@ const SizePreview = {
 	previews: {},
 	panels: {},
 	allowed: {
-		c: cldData.cropSizeOptions.crop,
-		g: cldData.cropSizeOptions.gravity,
+		c: [],
+		g: [],
 	},
 	init( context ) {
 		this.triggers = context.querySelectorAll(
 			'.cld-size-items-item[data-size]'
 		);
+		if ( cldData.cropSizeOptions ) {
+			this.allowed.c = cldData.cropSizeOptions.crop;
+			this.allowed.g = cldData.cropSizeOptions.gravity;
+		}
 		const panels = context.querySelectorAll( '.image-item[data-size]' );
 		[ ...panels ].forEach( ( panel ) => {
 			const size = panel.dataset.size;
