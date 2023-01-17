@@ -692,7 +692,7 @@ abstract class Component {
 			$method = 'image_icon';
 		}
 
-		return $this->$method( $struct );
+		return $this->$method( $struct, $icon );
 	}
 
 	/**
