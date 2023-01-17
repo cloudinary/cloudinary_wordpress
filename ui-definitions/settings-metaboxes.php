@@ -21,15 +21,19 @@ $metaboxes = array(
 						'Enable transformations per registered image sizes.',
 						'cloudinary'
 					),
-					'description'  => __( 'Enable sized transformations.', 'cloudinary' ),
-					'default'      => 'off',
-				),
-				array(
-					'type'      => 'sizes',
-					'slug'      => 'single_sizes',
-					'mode'      => 'full',
-					'condition' => array(
-						'enable_single_sizes' => true,
+					array(
+						'type'      => 'sizes',
+						'slug'      => 'single_sizes',
+						'mode'      => 'full',
+						'condition' => array(
+							'enable_single_sizes' => true,
+						),
+					),
+					array(
+						'type'  => 'info_box',
+						'icon'  => 'dashicons-image-crop',
+						'title' => __( 'What are crop sizes?', 'cloudinary' ),
+						'text'  => Utils::get_crop_sizes_info_box_text(),
 					),
 				),
 			),

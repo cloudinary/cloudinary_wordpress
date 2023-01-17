@@ -3083,7 +3083,18 @@ class Media extends Settings_Component implements Setup {
 					'type'      => 'sizes',
 					'slug'      => 'crop_sizes',
 					'condition' => array(
-						'image_delivery' => true,
+						'image_delivery'        => true,
+						'sized_transformations' => true,
+					),
+				),
+				array(
+					'type'      => 'info_box',
+					'icon'      => 'dashicons-image-crop',
+					'title'     => __( 'What are crop sizes?', 'cloudinary' ),
+					'text'      => Utils::get_crop_sizes_info_box_text(),
+					'condition' => array(
+						'image_delivery'        => true,
+						'sized_transformations' => true,
 					),
 				),
 			);

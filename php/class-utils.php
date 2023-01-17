@@ -914,4 +914,83 @@ class Utils {
 			delete_post_meta( $attachment_id, $sync_thread );
 		}
 	}
+
+	/**
+	 * Get the crop size crop options.
+	 *
+	 * @return array
+	 */
+	public static function get_crop_options() {
+		$crop_options    = array( 'fill', 'scale', 'crop', 'thumb' );
+
+		/**
+		 * Filter the crop options for the sizes.
+		 *
+		 * @hook    cloudinary_crop_sizes_options
+		 * @since   3.1.0
+		 *
+		 * @param $crop_options {array} The default crop options.
+		 *
+		 * @default array( 'fill', 'scale', 'crop', 'thumb' )
+		 * @return  {array}
+		 */
+		$crop_options = apply_filters( 'cloudinary_crop_sizes_options', $crop_options );
+
+		sort( $crop_options );
+
+		return $crop_options;
+	}
+
+	/**
+	 * Get the crop size gravity options.
+	 *
+	 * @return array
+	 */
+	public static function get_gravity_options() {
+		$gravity_options = array( 'auto', 'center', 'face', 'faces' );
+
+		/**
+		 * Filter the gravity options for the sizes.
+		 *
+		 * @hook    cloudinary_gravity_sizes_options
+		 * @since   3.1.0
+		 *
+		 * @param $gravity_options {array} The default gravity options.
+		 *
+		 * @default ( 'auto', 'center', 'face', 'faces' )
+		 * @return  {array}
+		 */
+		$gravity_options = apply_filters( 'cloudinary_gravity_sizes_options', $gravity_options );
+
+		sort( $gravity_options );
+
+		return $gravity_options;
+	}
+
+	/**
+	 * Get the crop size gravity info box message.
+	 *
+	 * @return string
+	 */
+	public static function get_crop_sizes_info_box_text() {
+		$crop_options    = self::get_crop_options();
+		$gravity_options = self::get_gravity_options();
+		$text[]          = __( 'A combination of crop and gravity can be set per registered image size. These are the available options for each size.', 'cloudinary' );
+		$text[]          = sprintf(
+			// translators: Crop options description. %1$s is the prefix, %2$s is an example and %3$s is the list of supported options.
+			__( 'The crop should be prefixed by %1$s as in %2$s. This is the list of currently supported crops:%3$s', 'cloudinary' ),
+			'<code>c</code>',
+			'<code>c_' . reset( $crop_options ) . '</code>',
+			'<ul><li>' . implode( '</li><li>', $crop_options ) . '</li></ul>'
+		);
+		$text[]          = sprintf(
+			// translators: Gravity options description. %1$s is the prefix, %2$s is an example and %3$s is the list of supported options.
+			__( 'The gravity should be prefixed by %1$s as in %2$s. This is the list of currently supported gravities:%3$s', 'cloudinary' ),
+			'<code>g</code>	',
+			'<code>g_' . reset( $gravity_options ) . '</code>',
+			'<ul><li>' . implode( '</li><li>', $gravity_options ) . '</li></ul>'
+		);
+
+		return implode( '<hr>', $text );
+	}
 }
