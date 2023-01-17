@@ -28,6 +28,11 @@
 		vertical-align: center;
 		justify-content: center;
 		border-radius: 4px 0 0 4px;
+		align-items: center;
+
+		.cld-ui-icon {
+			color: $color-cld-blue;
+		}
 
 		img{
 			width: 24px;
