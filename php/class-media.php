@@ -3068,12 +3068,12 @@ class Media extends Settings_Component implements Setup {
 				array(
 					'type'         => 'on_off',
 					'slug'         => 'sized_transformations',
-					'title'        => __( 'Sized transformations', 'cloudinary' ),
+					'title'        => __( 'Crop sizes (beta)', 'cloudinary' ),
 					'tooltip_text' => __(
 						'Enable transformations per registered image sizes.',
 						'cloudinary'
 					),
-					'description'  => __( 'Enable sized transformations.', 'cloudinary' ),
+					'description'  => __( 'Enable crop sizes.', 'cloudinary' ),
 					'default'      => 'off',
 					'condition'    => array(
 						'image_delivery' => true,
