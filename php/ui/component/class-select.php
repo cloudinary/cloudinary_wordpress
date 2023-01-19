@@ -33,7 +33,7 @@ class Select extends Text {
 		$struct                          = parent::input( $struct );
 		$struct['element']               = 'select';
 		$struct['attributes']['name']    = $this->get_name();
-		$struct['attributes']['id']      = $this->get_id();
+		$struct['attributes']['id']      = $this->setting->get_slug();
 		$struct['attributes']['class'][] = 'regular-' . $this->type;
 		if ( $this->setting->has_param( 'required' ) ) {
 			$struct['attributes']['required'] = 'required';

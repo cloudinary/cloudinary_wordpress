@@ -816,19 +816,10 @@ class Media extends Settings_Component implements Setup {
 			foreach ( $transformations as $transformation ) {
 				if ( ! empty( $transformation['crop'] ) && ! empty( $transformation['width'] ) && ! empty( $transformation['height'] ) ) {
 					$return = array(
-						(int) $transformation['width'],
-						(int) $transformation['height'],
+						$transformation['width'],
+						$transformation['height'],
 					);
 					break;
-				}
-
-				if ( ! $return ) {
-					$return = array_filter(
-						$transformation,
-						static function ( $item ) {
-							return ! isset( $item['crop'] ) && ! isset( $item['width'] ) && ! isset( $item['height'] );
-						}
-					);
 				}
 			}
 		} else {
@@ -853,13 +844,11 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @param string $url           The url to get crop for.
 	 * @param int    $attachment_id image attachment id.
-	 * @param array  $tag_element   The tag element.
 	 *
 	 * @return array|bool The width and height of the crop, or false if size is custom.
 	 */
-	public function get_crop( $url, $attachment_id, $tag_element = array() ) {
+	public function get_crop( $url, $attachment_id ) {
 		$meta = wp_get_attachment_metadata( $attachment_id );
-		$size = false;
 		if ( ! empty( $meta['sizes'] ) ) {
 			// Try and match the file name from the sizes meta data to prevent false positives from filenames that have numbers separated by an x.
 			$file             = wp_basename( $url ); // We only need the base name to check.
@@ -893,23 +882,12 @@ class Media extends Settings_Component implements Setup {
 						$wp_size['gravity'] = 'auto';
 					}
 
-					$size = $wp_size;
-
-					break;
+					return $wp_size;
 				}
 			}
 		}
 
-		if ( ! empty( $tag_element['atts']['data-transformation-crop'] ) ) {
-			$transformations = $this->get_transformations_from_string( $tag_element['atts']['data-transformation-crop'] );
-			$size            = array_merge( $size, reset( $transformations ) );
-		}
-
-		if ( ! empty( $tag_element['atts']['data-skip-crop'] ) ) {
-			unset( $size['crop'], $size['gravity'] );
-		}
-
-		return $size;
+		return false;
 	}
 
 	/**
@@ -989,34 +967,6 @@ class Media extends Settings_Component implements Setup {
 		$cache[ $key ] = apply_filters( 'cloudinary_transformations', $transformations, $attachment_id );
 
 		return $cache[ $key ];
-	}
-
-	/**
-	 * Get the crop transformation for the attachment.
-	 * Returns false if no crop is found.
-	 *
-	 * @param int    $attachment_id The attachment ID.
-	 * @param string $size          The requested size.
-	 *
-	 * @return false|string
-	 */
-	public function get_crop_transformations( $attachment_id, $size ) {
-		static $transformations = array();
-		$crop = false;
-
-		if ( empty( $transformations[ $attachment_id ] ) ) {
-			$meta = $this->get_post_meta( $attachment_id, 'cloudinary_metaboxes_crop_meta', true );
-
-			if ( ! empty( $meta['single_crop_sizes']['enable_single_sizes'] ) && 'on' === $meta['single_crop_sizes']['enable_single_sizes'] ) {
-				$transformations[ $attachment_id ] = $meta['single_crop_sizes']['single_sizes'];
-			}
-		}
-
-		if ( $size && ! empty( $transformations[ $attachment_id ][ $size ] ) ) {
-			$crop = $transformations[ $attachment_id ][ $size ];
-		}
-
-		return $crop;
 	}
 
 	/**
@@ -1759,15 +1709,6 @@ class Media extends Settings_Component implements Setup {
 	public function calculate_image_srcset_meta( $image_meta, $size_array, $image_src ) {
 		if ( $this->is_cloudinary_url( $image_src ) ) {
 			$image_meta['file'] = wp_parse_url( $image_src, PHP_URL_PATH );
-		}
-
-		// PDFs don't have sizes, so we need to inject them.
-		if ( empty( $image_meta['width'] ) ) {
-			$image_meta['width'] = $size_array[0];
-		}
-
-		if ( empty( $image_meta['height'] ) ) {
-			$image_meta['height'] = $size_array[1];
 		}
 
 		return $image_meta;
@@ -3034,69 +2975,6 @@ class Media extends Settings_Component implements Setup {
 		);
 
 		return $args;
-	}
-
-	/**
-	 * Maybe add the crop size settings
-	 *
-	 * @param array $settings The Settings array.
-	 *
-	 * @return array
-	 */
-	public static function maybe_add_size_settings( $settings ) {
-
-		/**
-		 * Enable the crop size settings.
-		 *
-		 * @hook  cloudinary_enabled_crop_sizes
-		 * @since 3.1.0
-		 * @default {false}
-		 *
-		 * @param $enabeld {bool} Are the crop sizes enabled?
-		 *
-		 * @retrun {bool}
-		 */
-		if ( apply_filters( 'cloudinary_enabled_crop_sizes', false ) ) {
-			$crop_sizes   = array(
-				array(
-					'type'      => 'tag',
-					'element'   => 'hr',
-					'condition' => array(
-						'image_delivery' => true,
-					),
-				),
-				array(
-					'type'         => 'on_off',
-					'slug'         => 'sized_transformations',
-					'title'        => __( 'Sized transformations', 'cloudinary' ),
-					'tooltip_text' => __(
-						'Enable transformations per registered image sizes.',
-						'cloudinary'
-					),
-					'description'  => __( 'Enable sized transformations.', 'cloudinary' ),
-					'default'      => 'off',
-					'condition'    => array(
-						'image_delivery' => true,
-					),
-				),
-				array(
-					'type'      => 'sizes',
-					'slug'      => 'crop_sizes',
-					'condition' => array(
-						'image_delivery' => true,
-					),
-				),
-			);
-			$new_settings = array_merge(
-				array_slice( $settings[0][1][0], 0, 7 ),
-				$crop_sizes,
-				array_slice( $settings[0][1][0], 7 )
-			);
-
-			$settings[0][1][0] = $new_settings;
-		}
-
-		return $settings;
 	}
 
 	/**
