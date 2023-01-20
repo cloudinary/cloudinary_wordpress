@@ -37,16 +37,24 @@ $settings = array(
 					'title'              => __( 'Video delivery', 'cloudinary' ),
 					'optimisation_title' => __( 'Video delivery', 'cloudinary' ),
 					'tooltip_text'       => __(
-						'Videos will be uploaded and delivered from Cloudinary.',
+						'If you turn this setting off, your videos will be delivered from WordPress.',
 						'cloudinary'
 					),
-					'description'        => __( 'Optimize and deliver videos on my site.', 'cloudinary' ),
+					'description'        => __( 'Sync and deliver videos from Cloudinary.', 'cloudinary' ),
 					'default'            => 'on',
 					'attributes'         => array(
 						'data-context' => 'video',
 					),
 					'disabled'           => ! get_plugin_instance()->get_component( 'storage' )->is_local_full(),
-					'disabled_message'   => __( 'This setting is disabled because you have selected to offload all media to Cloudinary. Please check the Storage in the General Settings page.', 'cloudinary' ),
+					'disabled_message' => sprintf(
+						// translators: %s is a link to the storage settings page.
+						__( 'This setting currently can’t be turned off. Your videos must be delivered from Cloudinary because your assets are being stored in Cloudinary only. To enable delivering videos from WordPress, first select a %s in the General Settings page that will enable storing your assets also in WordPress.', 'cloudinary' ),
+						sprintf(
+							'<a href="%s">%s</a>',
+							add_query_arg( array( 'page' => 'cloudinary_connect#connect.offload' ), admin_url( 'admin.php' ) ),
+							__( 'Storage setting', 'cloudinary' )
+						)
+					),
 				),
 				array(
 					'type'      => 'group',
