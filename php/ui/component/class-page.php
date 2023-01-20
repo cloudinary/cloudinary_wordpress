@@ -25,6 +25,24 @@ class Page extends Panel {
 	protected $blueprint = 'wrap|header/|tabs/|form|notice/|body|/body|settings/|/form|/wrap';
 
 	/**
+	 * Filter the wrap parts structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function wrap( $struct ) {
+		static $added = null;
+
+		if ( empty( $added ) ) {
+			$struct['attributes']['id'] = 'cloudinary-settings-page';
+			$added                      = true;
+		}
+
+		return parent::wrap( $struct );
+	}
+
+	/**
 	 * Filter the form parts structure.
 	 *
 	 * @param array $struct The array structure.

@@ -133,7 +133,7 @@ class Cron extends Text {
 
 		// Add next run.
 		$next_run                   = $this->get_part( 'td' );
-		$next_run['content']        = 'on' === $field->get_value() ? sprintf( '%s', human_time_diff( $item['next_run'], time() ) ) : '';
+		$next_run['content']        = 'on' === $field->get_value() ? sprintf( 'in %s', human_time_diff( $item['next_run'], time() ) ) : '';
 		$tr['children']['next_run'] = $next_run;
 
 		return $tr;

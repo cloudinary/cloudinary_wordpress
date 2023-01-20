@@ -73,7 +73,7 @@ class React extends Text {
 		$struct['element'] = null;
 		if ( $this->setting->has_param( 'script' ) ) {
 			$script_default = array(
-				'handle'    => $this->get_id(),
+				'handle'    => $this->setting->get_slug(),
 				'src'       => '',
 				'depts'     => array(),
 				'ver'       => $this->setting->get_root_setting()->get_param( 'version' ),
