@@ -192,13 +192,9 @@ const CloudinaryLoader = {
 		const newSize = [];
 
 		// Set crop if needed, else just scale it.
-		if ( image.dataset.transformationCrop ) {
-			newSize.push( image.dataset.transformationCrop );
-		} else if ( ! image.dataset.crop ) {
-			newSize.push( image.dataset.crop ? 'c_fill' : 'c_scale' );
-			if ( image.dataset.crop ) {
-				newSize.push( 'g_auto' );
-			}
+		newSize.push( image.dataset.crop ? 'c_fill' : 'c_scale' );
+		if ( image.dataset.crop ) {
+			newSize.push( 'g_auto' );
 		}
 
 		newSize.push( 'w_' + scaledWidth );
