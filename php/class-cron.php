@@ -148,7 +148,15 @@ class Cron {
 	 */
 	public function init_cron( $plugin ) {
 		$this->setting = $plugin->settings->get_setting( self::CRON_SLUG );
-		if ( 'off' === $this->setting->get_value( 'enable_cron' ) ) {
+		$tasks         = $plugin->settings->get_value( self::CRON_SLUG . '.tasks' );
+		$status        = 'off';
+		foreach ( $tasks as $task ) {
+			if ( 'on' === $task ) {
+				$status = 'on';
+				break;
+			}
+		}
+		if ( 'off' === $status ) {
 			if ( $this->locker->has_lock_file() ) {
 				$this->locker->delete_lock_file();
 			}
