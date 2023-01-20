@@ -836,6 +836,10 @@ class Media extends Settings_Component implements Setup {
 			}
 		}
 
+		if ( $return ) {
+			$return = array_values( $return );
+		}
+
 		return $return;
 	}
 
