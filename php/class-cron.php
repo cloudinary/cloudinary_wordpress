@@ -67,7 +67,7 @@ class Cron {
 	 *
 	 * @var int
 	 */
-	public static $daemon_watcher_interval = 60;
+	public static $daemon_watcher_interval = 10;
 
 	/**
 	 * Cron constructor.
@@ -222,13 +222,15 @@ class Cron {
 	 */
 	public function register_schedule( $name ) {
 		if ( ! isset( $this->schedule[ $name ] ) ) {
-			$process                 = $this->processes[ $name ];
-			$next_run                = $this->init_time + $process['offset'];
-			$now_second              = (int) gmdate( 's', $next_run );
-			$runtime                 = (int) ceil( $now_second / 10 ) * 10;
+			$process    = $this->processes[ $name ];
+			$next_run   = $this->init_time + $process['offset'];
+			$now_second = (int) gmdate( 's', $next_run );
+			if ( $now_second > 0 ) {
+				$next_run = strtotime( '+' . ( 60 - $now_second ) . ' seconds' );
+			}
 			$this->schedule[ $name ] = array(
-				'last_run' => $runtime,
-				'next_run' => $runtime,
+				'last_run' => null,
+				'next_run' => $next_run,
 				'timeout'  => 0,
 			);
 
@@ -253,10 +255,8 @@ class Cron {
 	 * @param string $name Name of the process to update.
 	 */
 	public function update_schedule( $name ) {
-		$next_run                            = $this->init_time + $this->processes[ $name ]['interval'];
-		$runtime                             = ceil( $next_run / $this->processes[ $name ]['interval'] ) * $this->processes[ $name ]['interval'];
 		$this->schedule[ $name ]['last_run'] = $this->init_time;
-		$this->schedule[ $name ]['next_run'] = $runtime;
+		$this->schedule[ $name ]['next_run'] = $this->init_time + $this->processes[ $name ]['interval'];
 	}
 
 	/**
@@ -398,7 +398,6 @@ class Cron {
 	 * @param \WP_REST_Request $request The initial request.
 	 */
 	public function daemon_watcher( \WP_REST_Request $request ) {
-
 		$start_time = $request->get_param( 'time' );
 
 		// Validate this owns the lockfile.
@@ -414,7 +413,7 @@ class Cron {
 			}
 			$this->init_time = time();
 			$this->process_schedule();
-			usleep( 500000 );
+			sleep( 1 );
 		}
 		$this->locker->delete_lock_file();
 	}
