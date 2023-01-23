@@ -532,15 +532,6 @@ class Storage implements Notice {
 	 * @return bool
 	 */
 	public function is_local_full() {
-		// TODO: Change the way we use this method, so we use callbacks instead for the settings `disabled` property, and use the Settings API here.
-		// We need this option even before initialization of the Settings API.
-		$settings = get_option( Sync::SYNC_MEDIA );
-		$is       = false;
-
-		if ( ! empty( $settings['offload'] ) ) {
-			$is = 'dual_full' === $settings['offload'];
-		}
-
-		return $is;
+		return 'dual_full' === $this->media->get_settings()->get_value( 'sync_media' );
 	}
 }

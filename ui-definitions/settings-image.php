@@ -45,7 +45,9 @@ $settings = array(
 					'attributes'         => array(
 						'data-context' => 'image',
 					),
-					'disabled'         => ! get_plugin_instance()->get_component( 'storage' )->is_local_full(),
+					'disabled'         => function() {
+						return ! get_plugin_instance()->get_component( 'storage' )->is_local_full();
+					},
 					'disabled_message' => sprintf(
 						// translators: %s is a link to the storage settings page.
 						__( 'This setting currently can’t be turned off. Your images must be delivered from Cloudinary because your assets are being stored in Cloudinary only. To enable delivering images from WordPress, first select a %s in the General Settings page that will enable storing your assets also in WordPress.', 'cloudinary' ),

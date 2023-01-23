@@ -92,7 +92,7 @@ class On_Off extends Text {
 			$struct['attributes']['data-main'] = wp_json_encode( $controllers );
 		}
 
-		if ( true === $this->setting->get_param( 'disabled', false ) || true === $this->setting->has_param( 'main_required', false ) && empty( $struct['attributes']['data-main'] ) ) {
+		if ( $this->is_disabled() || ( true === $this->setting->has_param( 'main_required', false ) && empty( $struct['attributes']['data-main'] ) ) ) {
 			$struct['attributes']['disabled'] = 'disabled';
 		}
 
@@ -180,11 +180,20 @@ class On_Off extends Text {
 	protected function tooltip( $struct ) {
 		$struct = parent::tooltip( $struct );
 
-		if ( $this->setting->get_param( 'disabled' ) ) {
+		if ( $this->is_disabled() ) {
 			$struct['content'] = $this->setting->get_param( 'disabled_message' );
 		}
 
 		return $struct;
+	}
+
+	/**
+	 * Is toggle disabled-
+	 *
+	 * @return bool
+	 */
+	protected function is_disabled() {
+		return true === $this->setting->get_param( 'disabled', false ) || ( is_callable( $this->setting->get_param( 'disabled', false ) ) && call_user_func( $this->setting->get_param( 'disabled' ) ) );
 	}
 
 	/**
