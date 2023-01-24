@@ -5,7 +5,8 @@
  * @package Cloudinary
  */
 
-$media    = $this->get_component( 'media' );
+use function Cloudinary\get_plugin_instance;
+
 $settings = array(
 	array(
 		'type'        => 'panel',
@@ -36,13 +37,25 @@ $settings = array(
 					'title'              => __( 'Image delivery', 'cloudinary' ),
 					'optimisation_title' => __( 'Image delivery', 'cloudinary' ),
 					'tooltip_text'       => __(
-						'Images will be uploaded and delivered from Cloudinary.',
+						'If you turn this setting off, your images will be delivered from WordPress.',
 						'cloudinary'
 					),
-					'description'        => __( 'Optimize and deliver images on my site.', 'cloudinary' ),
+					'description'        => __( 'Sync and deliver images from Cloudinary.', 'cloudinary' ),
 					'default'            => 'on',
 					'attributes'         => array(
 						'data-context' => 'image',
+					),
+					'disabled'         => function() {
+						return ! get_plugin_instance()->get_component( 'storage' )->is_local_full();
+					},
+					'disabled_message' => sprintf(
+						// translators: %s is a link to the storage settings page.
+						__( 'This setting currently can’t be turned off. Your images must be delivered from Cloudinary because your assets are being stored in Cloudinary only. To enable delivering images from WordPress, first select a %s in the General Settings page that will enable storing your assets also in WordPress.', 'cloudinary' ),
+						sprintf(
+							'<a href="%s">%s</a>',
+							add_query_arg( array( 'page' => 'cloudinary_connect#connect.offload' ), admin_url( 'admin.php' ) ),
+							__( 'Storage setting', 'cloudinary' )
+						)
 					),
 				),
 				array(
