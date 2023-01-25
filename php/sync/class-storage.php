@@ -532,6 +532,8 @@ class Storage implements Notice {
 	 * @return bool
 	 */
 	public function is_local_full() {
-		return 'dual_full' === $this->media->get_settings()->get_value( 'sync_media' )['offload'];
+		$sync_media = $this->media->get_settings()->get_value( 'sync_media' );
+
+		return ! empty( $sync_media['offload'] ) && 'dual_full' === $sync_media['offload'];
 	}
 }
