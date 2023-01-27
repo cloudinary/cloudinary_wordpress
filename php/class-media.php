@@ -1319,13 +1319,11 @@ class Media extends Settings_Component implements Setup {
 		$url = apply_filters( 'cloudinary_converted_url', $url, $attachment_id, $pre_args );
 
 		// Add Cloudinary analytics.
-		$cache[ $key ] = esc_url(
-			add_query_arg(
-				array(
-					'_i' => 'AA',
-				),
-				$url
-			)
+		$cache[ $key ] = add_query_arg(
+			array(
+				'_i' => 'AA',
+			),
+			$url
 		);
 
 		return $cache[ $key ];
