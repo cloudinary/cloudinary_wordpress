@@ -1359,6 +1359,8 @@ class Delivery implements Setup {
 		 * @since 3.0.9
 		 *
 		 * @param $tag_element {array} The tag element.
+		 *
+		 * @return {array} The tag element.
 		 */
 		$tag_element = apply_filters( 'cloudinary_parse_element', $tag_element );
 
