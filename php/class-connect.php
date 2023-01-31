@@ -452,7 +452,14 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 				uksort(
 					$history[ $plan ],
 					static function ( $a, $b ) {
-						return strtotime( $a ) > strtotime( $b );
+						$a = strtotime( $a );
+						$b = strtotime( $b );
+
+						if ( $a === $b ) {
+							return 0;
+						}
+
+						return $a > $b ? - 1 : 1;
 					}
 				);
 				$history[ $plan ] = array_slice( $history[ $plan ], -30 );
