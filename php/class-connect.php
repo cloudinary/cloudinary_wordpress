@@ -480,38 +480,29 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	public function upgrade_settings( $previous_version, $new_version ) {
 		// Check if we need to upgrade the history.
 		if ( version_compare( $previous_version, '3.1.0', '<' ) ) {
-			$history = get_option( self::META_KEYS['history'], array() );
-			$plan    = false;
+			add_action(
+				'cloudinary_ready',
+				function () {
+					$history = get_option( self::META_KEYS['history'], array() );
+					$plan    = false;
 
-			if ( ! empty( $this->usage['plan'] ) ) {
-				$plan = $this->usage['plan'];
-			} elseif ( ! empty( $this->credentials['cloud_name'] ) ) {
-				$plan = $this->credentials['cloud_name'];
-			}
-
-			// Check whether history has migrated.
-			if ( ! empty( $plan ) && ! empty( $history[ $plan ] ) ) {
-				return;
-			}
-
-			// Fix history.
-			$new_history = array();
-			foreach ( $history as $date => $data ) {
-				$new_history[ $plan ][ $date ] = $data;
-			}
-
-			foreach ( $new_history as &$data ) {
-				uksort(
-					$data,
-					static function ( $a, $b ) {
-						return strtotime( $a ) < strtotime( $b );
+					if ( ! empty( $this->usage['plan'] ) ) {
+						$plan = $this->usage['plan'];
+					} elseif ( ! empty( $this->credentials['cloud_name'] ) ) {
+						$plan = $this->credentials['cloud_name'];
 					}
-				);
 
-				$data = array_reverse( array_slice( $data, 0, 30 ) );
-			}
+					// Check whether history has migrated.
+					if ( ! empty( $plan ) && ! empty( $history[ $plan ] ) ) {
+						return;
+					}
 
-			update_option( self::META_KEYS['history'], $new_history, false );
+					// Cleanup history.
+					$new_history = array();
+
+					update_option( self::META_KEYS['history'], $new_history, false );
+				}
+			);
 		}
 	}
 
