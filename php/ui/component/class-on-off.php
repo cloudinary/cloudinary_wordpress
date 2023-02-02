@@ -92,8 +92,19 @@ class On_Off extends Text {
 			$struct['attributes']['data-main'] = wp_json_encode( $controllers );
 		}
 
-		if ( $this->is_disabled() || ( true === $this->setting->has_param( 'main_required', false ) && empty( $struct['attributes']['data-main'] ) ) ) {
-			$struct['attributes']['disabled'] = 'disabled';
+		if ( $this->is_readonly() || ( true === $this->setting->has_param( 'main_required', false ) && empty( $struct['attributes']['data-main'] ) ) ) {
+			$clone  = $struct;
+			$struct = array();
+
+			// Add the shadow input.
+			$struct['children']['shadow']                       = $clone;
+			$struct['children']['shadow']['attributes']['type'] = 'hidden';
+
+			// Add the toggle stub.
+			$struct['children']['toggle']                           = $this->get_part( 'input' );
+			$struct['children']['toggle']['attributes']['disabled'] = 'disabled';
+			$struct['children']['toggle']['attributes']['checked']  = 'checked';
+			$struct['children']['toggle']['attributes']['type']     = 'checkbox';
 		}
 
 		return $struct;
@@ -117,12 +128,10 @@ class On_Off extends Text {
 		}
 		if (
 			true === $this->setting->get_param( 'disabled', false )
-			|| true === $this->setting->get_param( 'main_required', false )
-			&& empty(
-				$this->setting->get_param(
-					'main',
-					array()
-				)
+			|| $this->is_readonly()
+			|| (
+				true === $this->setting->get_param( 'main_required', false )
+				&& empty( $this->setting->get_param( 'main', array() ) )
 			)
 		) {
 			$struct['attributes']['class'][] = 'disabled';
@@ -180,20 +189,20 @@ class On_Off extends Text {
 	protected function tooltip( $struct ) {
 		$struct = parent::tooltip( $struct );
 
-		if ( $this->is_disabled() ) {
-			$struct['content'] = $this->setting->get_param( 'disabled_message' );
+		if ( $this->is_readonly() ) {
+			$struct['content'] = $this->setting->get_param( 'readonly_message' );
 		}
 
 		return $struct;
 	}
 
 	/**
-	 * Is toggle disabled-
+	 * Is toggle readonly
 	 *
 	 * @return bool
 	 */
-	protected function is_disabled() {
-		return true === $this->setting->get_param( 'disabled', false ) || ( is_callable( $this->setting->get_param( 'disabled', false ) ) && call_user_func( $this->setting->get_param( 'disabled' ) ) );
+	protected function is_readonly() {
+		return true === $this->setting->get_param( 'readonly', false ) || ( is_callable( $this->setting->get_param( 'readonly', false ) ) && call_user_func( $this->setting->get_param( 'readonly' ) ) );
 	}
 
 	/**
