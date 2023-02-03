@@ -901,15 +901,15 @@ class Delivery implements Setup {
 	 * @return array The media tags found.
 	 */
 	public function get_media_tags( $content, $tags = 'img|video' ) {
-		$images = array();
+		$media = array();
 		if ( preg_match_all( '#(?P<tags><(' . $tags . ')[^>]*\>){1}#is', $content, $found ) ) {
 			$count = count( $found[0] );
 			for ( $i = 0; $i < $count; $i ++ ) {
-				$images[ $i ] = $found['tags'][ $i ];
+				$media[ $i ] = $found['tags'][ $i ];
 			}
 		}
 
-		return $images;
+		return $media;
 	}
 
 	/**
