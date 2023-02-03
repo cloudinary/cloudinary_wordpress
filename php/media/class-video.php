@@ -308,7 +308,7 @@ class Video {
 	 */
 	protected function build_video_embed( $attachment_id, $attributes = array(), $overwrite_transformations = false ) {
 		$public_id = $this->media->get_public_id( $attachment_id );
-		$controls  = ! empty( $attributes['controls'] );
+		$controls  = isset( $attributes['controls'] ) ? $attributes['controls'] : $this->media->get_settings()->get_value( 'video_controls' );
 		$autoplay  = $this->media->get_settings()->get_value( 'video_autoplay_mode' );
 
 		// If we don't show controls, we need to autoplay the video.
@@ -322,7 +322,7 @@ class Video {
 			'cloud_name' => $this->media->plugin->get_component( 'connect' )->get_cloud_name(),
 			'player'     => array(
 				'fluid'    => 'true',
-				'controls' => $controls ? 'true' : 'false',
+				'controls' => 'on' === $controls ? 'true' : 'false',
 			),
 			'source'     => array(
 				'source_types' => array(),
