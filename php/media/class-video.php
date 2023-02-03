@@ -138,6 +138,19 @@ class Video {
 	 */
 	public function filter_video_shortcode( $html, $attr ) {
 
+		if ( empty( $attr['id'] ) ) {
+			$supported_formats = array_merge(
+				array( 'src' ),
+				wp_get_video_extensions()
+			);
+			foreach ( $supported_formats as $format ) {
+				if ( ! empty( $attr[ $format ] ) ) {
+					$attr['id'] = attachment_url_to_postid( $attr[ $format ] );
+					break;
+				}
+			}
+		}
+
 		// Confirm we have an ID and it's synced.
 		if ( empty( $attr['id'] ) || ! $this->media->has_public_id( $attr['id'] ) ) {
 			return $html;
