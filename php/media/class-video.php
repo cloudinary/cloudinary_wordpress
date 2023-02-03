@@ -563,6 +563,46 @@ class Video {
 					return $atts;
 				}
 			);
+
+			// Expand the video shortcode.
+			add_filter(
+				'pre_do_shortcode_tag',
+				/**
+				 * Expand the video shortcode.
+				 *
+				 * @since 3.1.0
+				 *
+				 * @param false|string $return Short-circuit return value. Either false or the value to replace the shortcode with.
+				 * @param string       $tag    The shortcode name.
+				 * @param array        $attr   The shortcode attributes.
+				 * @param array        $m      The shortcode matches.
+				 *
+				 * @return string
+				 */
+				static function ( $return, $tag, $attr, $m ) {
+					global $shortcode_tags;
+					if ( 'video' === $tag ) {
+						$supported_formats = array_merge(
+							array( 'src' ),
+							wp_get_video_extensions()
+						);
+						foreach ( $supported_formats as $format ) {
+							if ( ! empty( $attr[ $format ] ) ) {
+								$attr[ $format ] = strtok( $attr[ $format ], '?' );
+								break;
+							}
+						}
+
+						$content = isset( $m[5] ) ? $m[5] : null;
+
+						return $m[1] . call_user_func( $shortcode_tags[ $tag ], $attr, $content, $tag ) . $m[6];
+					}
+
+					return $return;
+				},
+				10,
+				5
+			);
 		}
 
 		// Add inline scripts for gutenberg.
