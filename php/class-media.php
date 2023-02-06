@@ -829,7 +829,7 @@ class Media extends Settings_Component implements Setup {
 
 				$size_parts = explode( 'x', $end_part );
 				$size_int   = array_map( 'intval', $size_parts );
-				$size       = array_filter( $size_int, 'is_int' );
+				$size       = array_filter( $size_int );
 				if ( ! empty( $size ) && 2 === count( $size ) ) {
 					$return = $size;
 				}

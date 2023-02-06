@@ -901,15 +901,15 @@ class Delivery implements Setup {
 	 * @return array The media tags found.
 	 */
 	public function get_media_tags( $content, $tags = 'img|video' ) {
-		$images = array();
+		$media = array();
 		if ( preg_match_all( '#(?P<tags><(' . $tags . ')[^>]*\>){1}#is', $content, $found ) ) {
 			$count = count( $found[0] );
 			for ( $i = 0; $i < $count; $i ++ ) {
-				$images[ $i ] = $found['tags'][ $i ];
+				$media[ $i ] = $found['tags'][ $i ];
 			}
 		}
 
-		return $images;
+		return $media;
 	}
 
 	/**
@@ -1625,14 +1625,17 @@ class Delivery implements Setup {
 	public function maybe_unsize_url( $url ) {
 		$file = Utils::pathinfo( $url, PATHINFO_FILENAME );
 		$dash = ltrim( strrchr( $file, '-' ), '-' );
-		if ( false !== $dash && 1 === substr_count( $dash, 'x' ) ) {
-			if ( is_numeric( str_replace( 'x', '', $dash ) ) ) {
-				$sized                                = wp_basename( $url );
-				$url                                  = str_replace( '-' . $dash, '', $url );
-				$scaled                               = self::make_scaled_url( $url );
-				$this->found_urls[ $url ][ $dash ]    = $sized;
-				$this->found_urls[ $scaled ][ $dash ] = $sized;
-			}
+		if (
+			! empty( $dash )
+			&& 1 === substr_count( $dash, 'x' )
+			&& is_numeric( str_replace( 'x', '', $dash ) )
+			&& 2 === count( array_filter( explode( 'x', $dash ) ) )
+		) {
+			$sized                                = wp_basename( $url );
+			$url                                  = str_replace( '-' . $dash, '', $url );
+			$scaled                               = self::make_scaled_url( $url );
+			$this->found_urls[ $url ][ $dash ]    = $sized;
+			$this->found_urls[ $scaled ][ $dash ] = $sized;
 		}
 
 		return $url;
