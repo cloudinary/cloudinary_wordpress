@@ -704,6 +704,7 @@ class Delivery implements Setup {
 	 */
 	public function do_clear_cache() {
 		delete_post_meta_by_key( self::META_CACHE_KEY );
+		wp_cache_flush();
 	}
 
 	/**
