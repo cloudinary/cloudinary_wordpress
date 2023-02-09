@@ -178,11 +178,15 @@ class Sync implements Setup, Assets {
 	 * @return bool
 	 */
 	public function been_synced( $attachment_id ) {
+		$been = false;
 
-		$public_id = $this->managers['media']->has_public_id( $attachment_id );
-		$meta      = wp_get_attachment_metadata( $attachment_id, true );
+		if ( $this->plugin->components['delivery']->is_deliverable( $attachment_id ) ) {
+			$public_id = $this->managers['media']->has_public_id( $attachment_id );
+			$meta      = wp_get_attachment_metadata( $attachment_id, true );
+			$been      = ! empty( $public_id ) || ! empty( $meta['cloudinary'] ); // From v1.
+		}
 
-		return ! empty( $public_id ) || ! empty( $meta['cloudinary'] ); // From v1.
+		return $been;
 	}
 
 	/**

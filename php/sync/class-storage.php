@@ -74,6 +74,13 @@ class Storage implements Notice {
 	protected $settings;
 
 	/**
+	 * Hold the Delivery instance.
+	 *
+	 * @var Delivery
+	 */
+	protected $delivery;
+
+	/**
 	 * The delay in seconds before local assets get deleted if Cloudinary only storage.
 	 */
 	const DELETE_DELAY = MINUTE_IN_SECONDS;
@@ -84,7 +91,9 @@ class Storage implements Notice {
 	 * @param \Cloudinary\Plugin $plugin The plugin.
 	 */
 	public function __construct( \Cloudinary\Plugin $plugin ) {
-		$this->plugin = $plugin;
+		$this->plugin   = $plugin;
+		$this->delivery = $this->plugin->get_component( 'delivery' );
+
 		add_action( 'cloudinary_register_sync_types', array( $this, 'setup' ), 20 );
 		// Add sync storage checks.
 		add_filter( 'cloudinary_render_field', array( $this, 'maybe_disable_connect' ), 10, 2 );
@@ -296,25 +305,41 @@ class Storage implements Notice {
 	 * @return bool
 	 */
 	public function validate( $attachment_id ) {
-		$valid = true;
-		if ( 'cld' === $this->settings['offload'] ) {
-			// In cld mode, we want to delay the deletion.
-			$delayed = get_post_meta( $attachment_id, Sync::META_KEYS['delay'], true );
-			$now     = time();
-			if ( empty( $delayed ) ) {
-				update_post_meta( $attachment_id, Sync::META_KEYS['delay'], $now );
+		$valid = false;
+
+		if ( $this->delivery->is_deliverable( $attachment_id ) ) {
+			$valid = true;
+
+			if ( 'cld' === $this->settings['offload'] ) {
+				// In cld mode, we want to delay the deletion.
+				$delayed = get_post_meta( $attachment_id, Sync::META_KEYS['delay'], true );
+				$now     = time();
+				if ( empty( $delayed ) ) {
+					update_post_meta( $attachment_id, Sync::META_KEYS['delay'], $now );
+					$file = get_post_meta( $attachment_id, '_wp_attached_file', true );
+					update_post_meta( $attachment_id, '_' . md5( $file ), $file );
+				}
+				$valid = file_exists( get_attached_file( $attachment_id ) );
+			} else {
+				// Remove the delay meta.
+				delete_post_meta( $attachment_id, Sync::META_KEYS['delay'] );
 				$file = get_post_meta( $attachment_id, '_wp_attached_file', true );
-				update_post_meta( $attachment_id, '_' . md5( $file ), $file );
+				delete_post_meta( $attachment_id, '_' . md5( $file ), $file );
 			}
-			$valid = file_exists( get_attached_file( $attachment_id ) );
-		} else {
-			// Remove the delay meta.
-			delete_post_meta( $attachment_id, Sync::META_KEYS['delay'] );
-			$file = get_post_meta( $attachment_id, '_wp_attached_file', true );
-			delete_post_meta( $attachment_id, '_' . md5( $file ), $file );
 		}
 
 		return $valid;
+	}
+
+	/**
+	 * Validates the Stats mechanism.
+	 *
+	 * @param int $attachment_id The attachment ID to validate.
+	 *
+	 * @return bool
+	 */
+	public function validate_stats( $attachment_id ) {
+		return $this->delivery->is_deliverable( $attachment_id );
 	}
 
 	/**
@@ -507,6 +532,7 @@ class Storage implements Notice {
 
 			$structure = array(
 				'generate' => array( $this, 'size_signature' ),
+				'validate' => array( $this, 'validate_stats' ),
 				'priority' => 16,
 				'sync'     => array( $this, 'size_sync' ),
 				'state'    => 'info syncing',
