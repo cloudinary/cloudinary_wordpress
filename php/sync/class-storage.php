@@ -91,8 +91,7 @@ class Storage implements Notice {
 	 * @param \Cloudinary\Plugin $plugin The plugin.
 	 */
 	public function __construct( \Cloudinary\Plugin $plugin ) {
-		$this->plugin   = $plugin;
-		$this->delivery = $this->plugin->get_component( 'delivery' );
+		$this->plugin = $plugin;
 
 		add_action( 'cloudinary_register_sync_types', array( $this, 'setup' ), 20 );
 		// Add sync storage checks.
@@ -515,6 +514,8 @@ class Storage implements Notice {
 		$this->download = $this->sync->managers['download'] ? $this->sync->managers['download'] : new Download_Sync( $this->plugin );
 
 		if ( $this->is_ready() ) {
+			$this->delivery = $this->plugin->get_component( 'delivery' );
+
 			$defaults       = array(
 				'offload' => 'dual_full',
 			);
