@@ -1,0 +1,15 @@
+// Cron.
+&-cron {
+	@extend .cld-panel;
+
+	padding-inline: 16px;
+	padding-block: 13px;
+
+	h2, h4{
+		margin: 0;
+	}
+
+	hr{
+		margin-block: 6px;
+	}
+}

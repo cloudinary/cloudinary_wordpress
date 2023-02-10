@@ -150,9 +150,11 @@ const GlobalTransformations = {
 					} else {
 						// temporary, will be replaced with i18n.sprintf
 						// instead of .replace
-						self.error_container.innerHTML = CLD_GLOBAL_TRANSFORMATIONS[
-							type
-						].warning.replace( '%s', 'f_mp4' );
+						self.error_container.innerHTML =
+							CLD_GLOBAL_TRANSFORMATIONS[ type ].warning.replace(
+								'%s',
+								'f_mp4'
+							);
 						self.error_container.classList.replace(
 							'settings-alert-error',
 							'settings-alert-warning'

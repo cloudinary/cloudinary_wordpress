@@ -268,6 +268,10 @@ class Assets extends Settings_Component {
 			$can = true;
 		}
 
+		if ( $can && ! $this->plugin->get_component( 'delivery' )->is_deliverable( $asset_id ) ) {
+			$can = false;
+		}
+
 		return $can;
 	}
 
@@ -319,18 +323,23 @@ class Assets extends Settings_Component {
 			foreach ( $this->delivery->unusable as $unusable ) {
 				if ( 'asset' === $unusable['sync_type'] && isset( $this->active_parents[ $unusable['parent_path'] ] ) && ! in_array( $unusable['post_id'], $assets, true ) ) {
 					$asset_id = (int) $unusable['post_id'];
-					$this->media->sync->set_signature_item( $asset_id, 'cld_asset', 'reset' );
-					$this->media->sync->add_to_sync( $asset_id );
-					$assets[] = $unusable['post_id'];
+					if ( $this->media->sync->can_sync( $asset_id ) ) {
+						$this->media->sync->set_signature_item( $asset_id, 'cld_asset', 'reset' );
+						$this->media->sync->add_to_sync( $asset_id );
+						$assets[] = $unusable['post_id'];
+					}
 				}
 			}
 		}
 
 		// Create found asset that's not media library.
 		if ( ! empty( $this->to_create ) && ! empty( $this->delivery->unknown ) ) {
-			foreach ( $this->delivery->unknown as $url ) {
-				if ( isset( $this->to_create[ $url ] ) ) {
-					$this->create_asset( $url, $this->to_create[ $url ] );
+			// Do not create assets if the image delivery is disabled.
+			if ( 'on' === $this->plugin->settings->get_value( 'image_delivery' ) ) {
+				foreach ( $this->delivery->unknown as $url ) {
+					if ( isset( $this->to_create[ $url ] ) ) {
+						$this->create_asset( $url, $this->to_create[ $url ] );
+					}
 				}
 			}
 		}
@@ -342,6 +351,11 @@ class Assets extends Settings_Component {
 	 * @hook cloudinary_string_replace
 	 */
 	public function add_url_replacements() {
+		// Due to the output buffers, this can be called multiple times.
+		if ( 1 < did_action( 'cloudinary_string_replace' ) ) {
+			return;
+		}
+
 		$overlay = Utils::get_sanitized_text( 'cloudinary-cache-overlay' );
 		$setting = $this->plugin->settings->image_settings->overlay;
 
@@ -632,6 +646,16 @@ class Assets extends Settings_Component {
 			}
 		}
 
+		if ( $valid && $this->delivery->is_deliverable( $attachment_id ) ) {
+			$valid = false;
+
+			// translators: The attachment ID.
+			$action_message = sprintf( __( 'Clean up sync metadata for %d', 'cloudinary' ), $attachment_id );
+			do_action( '_cloudinary_queue_action', $action_message );
+
+			Utils::clean_up_sync_meta( $attachment_id );
+		}
+
 		return $valid;
 	}
 
@@ -846,8 +870,11 @@ class Assets extends Settings_Component {
 			}
 		}
 		if ( $found instanceof \WP_Post ) {
-			$is_local                = true;
-			$this->to_create[ $url ] = $found->ID;
+			$is_local = true;
+
+			if ( $this->delivery->is_deliverable( $found->ID ) ) {
+				$this->to_create[ $url ] = $found->ID;
+			}
 		}
 
 		return $is_local;

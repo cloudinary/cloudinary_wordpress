@@ -74,8 +74,8 @@ class On_Off extends Text {
 		$struct['attributes']['name']            = $this->get_name();
 		$struct['attributes']['id']              = $this->get_id();
 		$struct['attributes']['value']           = 'on';
-		$struct['attributes']['data-controller'] = $this->setting->get_slug();
-		if ( 'on' === $this->setting->get_value() ) {
+		$struct['attributes']['data-controller'] = $this->get_id();
+		if ( 'on' === $this->get_value() ) {
 			$struct['attributes']['checked'] = 'checked';
 		}
 		$struct['attributes']['class'][] = 'cld-ui-input';
@@ -92,7 +92,7 @@ class On_Off extends Text {
 			$struct['attributes']['data-main'] = wp_json_encode( $controllers );
 		}
 
-		if ( true === $this->setting->get_param( 'disabled', false ) || true === $this->setting->has_param( 'main_required', false ) && empty( $struct['attributes']['data-main'] ) ) {
+		if ( true === $this->setting->get_param( 'disabled', false ) || ( true === $this->setting->has_param( 'main_required', false ) && empty( $struct['attributes']['data-main'] ) ) ) {
 			$struct['attributes']['disabled'] = 'disabled';
 		}
 
@@ -166,6 +166,23 @@ class On_Off extends Text {
 
 		$struct['children']['on']  = $on;
 		$struct['children']['off'] = $off;
+
+		return $struct;
+	}
+
+	/**
+	 * Filter the tooltip structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function tooltip( $struct ) {
+		$struct = parent::tooltip( $struct );
+
+		if ( $this->setting->get_param( 'disabled' ) ) {
+			$struct['content'] = $this->setting->get_param( 'disabled_message' );
+		}
 
 		return $struct;
 	}

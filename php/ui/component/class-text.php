@@ -57,7 +57,7 @@ class Text extends Component {
 	protected function label( $struct ) {
 
 		$struct['attributes']['class'][] = 'cld-input-label';
-		$struct['attributes']['for']     = $this->setting->get_slug();
+		$struct['attributes']['for']     = $this->get_id();
 
 		return $struct;
 	}
@@ -175,7 +175,7 @@ class Text extends Component {
 
 		$struct['element']               = 'label';
 		$struct['attributes']['class'][] = 'description';
-		$struct['attributes']['for']     = $this->setting->get_slug();
+		$struct['attributes']['for']     = $this->get_id();
 		$struct['content']               = $this->setting->get_param( 'description' );
 
 		return $struct;
@@ -187,22 +187,13 @@ class Text extends Component {
 	 * @return string
 	 */
 	protected function get_name() {
-		$parts = explode( $this->setting->separator, $this->setting->get_slug() );
+		$parts = explode( $this->setting->separator, $this->get_id() );
 		$name  = array_shift( $parts );
 		if ( ! empty( $parts ) ) {
 			$name .= '[' . implode( $this->setting->separator, $parts ) . ']';
 		}
 
 		return $name;
-	}
-
-	/**
-	 * Get the field ID.
-	 *
-	 * @return string
-	 */
-	protected function get_id() {
-		return $this->setting->get_slug();
 	}
 
 	/**

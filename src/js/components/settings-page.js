@@ -78,44 +78,44 @@
 
 						let fieldIsSet = false;
 
-						target.on( 'change init', function (
-							_,
-							isInit = false
-						) {
-							if ( fieldIsSet && isInit ) {
-								return;
-							}
-
-							let fieldCondition =
-								this.value === value || this.checked;
-
-							if (
-								Array.isArray( value ) &&
-								value.length === 2
-							) {
-								switch ( value[ 1 ] ) {
-									case 'neq':
-										fieldCondition =
-											this.value !== value[ 0 ];
-										break;
-									case 'gt':
-										fieldCondition =
-											this.value > value[ 0 ];
-										break;
-									case 'lt':
-										fieldCondition =
-											this.value < value[ 0 ];
+						target.on(
+							'change init',
+							function ( _, isInit = false ) {
+								if ( fieldIsSet && isInit ) {
+									return;
 								}
-							}
 
-							if ( fieldCondition ) {
-								wrapper.show();
-							} else {
-								wrapper.hide();
-							}
+								let fieldCondition =
+									this.value === value || this.checked;
 
-							fieldIsSet = true;
-						} );
+								if (
+									Array.isArray( value ) &&
+									value.length === 2
+								) {
+									switch ( value[ 1 ] ) {
+										case 'neq':
+											fieldCondition =
+												this.value !== value[ 0 ];
+											break;
+										case 'gt':
+											fieldCondition =
+												this.value > value[ 0 ];
+											break;
+										case 'lt':
+											fieldCondition =
+												this.value < value[ 0 ];
+									}
+								}
+
+								if ( fieldCondition ) {
+									wrapper.show();
+								} else {
+									wrapper.hide();
+								}
+
+								fieldIsSet = true;
+							}
+						);
 
 						target.trigger( 'init', true );
 					}

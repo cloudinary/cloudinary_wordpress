@@ -132,6 +132,15 @@ class Relationship {
 		$list  = implode( ', ', array_fill( 0, count( $post_ids ), '%d' ) );
 		$where = "post_id IN( {$list} )";
 
+		// Sometimes it's an array or posts.
+		if ( is_object( $post_ids[0] ) ) {
+			$post_ids = array_map(
+				static function ( $obj ) {
+					return $obj->ID;
+				},
+				$post_ids
+			);
+		}
 		$sql   = $wpdb->prepare( "SELECT * FROM {$table_name} WHERE {$where}", $post_ids ); // phpcs:ignore WordPress.DB
 		$posts = $wpdb->get_results( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB
 
@@ -182,5 +191,21 @@ class Relationship {
 		}
 
 		return $cache[ $post_id ];
+	}
+
+	/**
+	 * Get the attachment IDs by the public ID.
+	 *
+	 * @param string $public_id The public ID.
+	 *
+	 * @return array
+	 */
+	public static function get_ids_by_public_id( $public_id ) {
+		global $wpdb;
+
+		$table_name = Utils::get_relationship_table();
+		$ids        = $wpdb->get_col( $wpdb->prepare( "SELECT post_id FROM {$table_name} WHERE public_id = %s", $public_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		return array_map( 'intval', $ids );
 	}
 }

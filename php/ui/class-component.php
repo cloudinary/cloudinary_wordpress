@@ -466,6 +466,15 @@ abstract class Component {
 	}
 
 	/**
+	 * Get the components id/slug.
+	 *
+	 * @return string
+	 */
+	public function get_id() {
+		return $this->setting->get_slug();
+	}
+
+	/**
 	 * Handles a structure part before rendering.
 	 *
 	 * @param string $name   The name of the part.
@@ -584,7 +593,7 @@ abstract class Component {
 			'wbr',
 		);
 
-		return in_array( strtolower( $element ), $void_elements, true );
+		return ! empty( $element ) && in_array( strtolower( $element ), $void_elements, true );
 	}
 
 	/**
@@ -679,7 +688,7 @@ abstract class Component {
 
 		$icon   = $this->setting->get_param( 'icon' );
 		$method = 'dashicon';
-		if ( false === strpos( $icon, 'dashicons' ) ) {
+		if ( ! empty( $icon ) && false === strpos( $icon, 'dashicons' ) ) {
 			$method = 'image_icon';
 		}
 
