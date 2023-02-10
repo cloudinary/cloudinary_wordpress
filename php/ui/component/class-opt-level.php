@@ -36,7 +36,9 @@ class Opt_Level extends Line_Stat {
 	 * @var string[]
 	 */
 	protected $settings_slugs = array(
+		'image_settings.image_delivery',
 		'image_settings.image_optimization',
+		'video_settings.video_delivery',
 		'video_settings.video_optimization',
 		'connect.cache.enable',
 		'lazy_loading.use_lazy_load',
@@ -87,8 +89,18 @@ class Opt_Level extends Line_Stat {
 		$link['content']               = $setting->get_param( 'optimisation_title', $setting->get_param( 'title' ) );
 		$row['children']['link']       = $link;
 
+		$params       = $setting->get_params();
+		$meet_depends = true;
+		if ( ! empty( $params['depends'] ) ) {
+			foreach ( $params['depends'] as $depend ) {
+				if ( 'off' === $setting->get_value( $depend ) ) {
+					$meet_depends = false;
+				}
+			}
+		}
+
 		// Get the status.
-		if ( 'on' === $setting->get_value() ) {
+		if ( $meet_depends && 'on' === $setting->get_value() ) {
 			$row['children']['active'] = $this->get_badge();
 		} else {
 			$row['children']['not-active'] = $this->get_badge( 'not-active' );
@@ -185,11 +197,23 @@ class Opt_Level extends Line_Stat {
 		$this->limit = count( $this->settings_slugs );
 		$enabled     = 0;
 		foreach ( $this->settings_slugs as $slug ) {
-			if ( 'on' === $this->plugin_settings->get_value( $slug ) ) {
+			$setting      = $this->plugin_settings->get_setting( $slug );
+			$meet_depends = true;
+			if ( null !== $setting && ! is_wp_error( $setting ) ) {
+				$params = $setting->get_params();
+				if ( ! empty( $params['depends'] ) ) {
+					foreach ( $params['depends'] as $depend ) {
+						if ( 'off' === $setting->get_value( $depend ) ) {
+							$meet_depends = false;
+						}
+					}
+				}
+			}
+			if ( $meet_depends && 'on' === $this->plugin_settings->get_value( $slug ) ) {
 				$enabled ++;
 			}
 		}
 
-		return $enabled / $this->limit * 100;
+		return round( $enabled / $this->limit * 100 );
 	}
 }

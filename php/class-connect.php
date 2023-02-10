@@ -11,6 +11,10 @@ use Cloudinary\Component\Config;
 use Cloudinary\Component\Notice;
 use Cloudinary\Component\Setup;
 use Cloudinary\Connect\Api;
+use WP_Error;
+use WP_REST_Request;
+use WP_REST_Response;
+use WP_REST_Server;
 
 /**
  * Cloudinary connection class.
@@ -81,6 +85,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		'connection' => 'cloudinary_connect',
 		'status'     => 'cloudinary_status',
 		'history'    => '_cloudinary_history',
+		'notices'    => 'rest_api_notices',
 	);
 
 	/**
@@ -103,6 +108,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		add_filter( 'cloudinary_setting_get_value', array( $this, 'maybe_connection_string_constant' ), 10, 2 );
 		add_filter( 'cloudinary_admin_pages', array( $this, 'register_meta' ) );
 		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
+		add_action( 'cloudinary_rest_api_connectivity', array( $this, 'check_rest_api_connectivity' ) );
 	}
 
 	/**
@@ -115,16 +121,21 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	public function rest_endpoints( $endpoints ) {
 
 		$endpoints['test_connection'] = array(
-			'method'              => \WP_REST_Server::CREATABLE,
+			'method'              => WP_REST_Server::CREATABLE,
 			'callback'            => array( $this, 'rest_test_connection' ),
 			'args'                => array(),
 			'permission_callback' => array( 'Cloudinary\REST_API', 'rest_can_connect' ),
 		);
 		$endpoints['save_wizard']     = array(
-			'method'              => \WP_REST_Server::CREATABLE,
+			'method'              => WP_REST_Server::CREATABLE,
 			'callback'            => array( $this, 'rest_save_wizard' ),
 			'args'                => array(),
 			'permission_callback' => array( 'Cloudinary\REST_API', 'rest_can_connect' ),
+		);
+		$endpoints['test_rest_api']   = array(
+			'method'   => WP_REST_Server::READABLE,
+			'callback' => array( $this, 'rest_test_rest_api_connectivity' ),
+			'args'     => array(),
 		);
 
 		return $endpoints;
@@ -133,11 +144,11 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	/**
 	 * Test a connection string.
 	 *
-	 * @param \WP_REST_Request $request The request.
+	 * @param WP_REST_Request $request The request.
 	 *
-	 * @return \WP_REST_Response
+	 * @return WP_REST_Response
 	 */
-	public function rest_test_connection( \WP_REST_Request $request ) {
+	public function rest_test_connection( WP_REST_Request $request ) {
 
 		$url    = $request->get_param( 'cloudinary_url' );
 		$result = $this->test_connection( $url );
@@ -146,13 +157,22 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	}
 
 	/**
+	 * Test the REST API connectivity.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function rest_test_rest_api_connectivity() {
+		return new WP_REST_Response( null, 200 );
+	}
+
+	/**
 	 * Save the wizard setup.
 	 *
-	 * @param \WP_REST_Request $request The request.
+	 * @param WP_REST_Request $request The request.
 	 *
-	 * @return \WP_REST_Response
+	 * @return WP_REST_Response
 	 */
-	public function rest_save_wizard( \WP_REST_Request $request ) {
+	public function rest_save_wizard( WP_REST_Request $request ) {
 
 		$url      = $request->get_param( 'cldString' );
 		$media    = true === $request->get_param( 'mediaLibrary' ) ? 'on' : 'off';
@@ -191,6 +211,17 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 
 		$this->settings->save();
 
+		if ( ! empty( $url ) ) {
+			// Warm the last uploaded items in the media library.
+			wp_safe_remote_request(
+				rest_url( 'wp/v2/media' ),
+				array(
+					'timeout'  => 0.1,
+					'blocking' => false,
+				)
+			);
+		}
+
 		return rest_ensure_response( $this->settings->get_value() );
 	}
 
@@ -223,7 +254,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 *
 	 * @param array $data The submitted data to verify.
 	 *
-	 * @return array|\WP_Error The data if cleared.
+	 * @return array|WP_Error The data if cleared.
 	 */
 	public function verify_connection( $data ) {
 		$admin = $this->plugin->get_component( 'admin' );
@@ -349,7 +380,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 *
 	 * @param string $url The url to test.
 	 *
-	 * @return mixed
+	 * @return array
 	 */
 	public function test_connection( $url ) {
 		$result = array(
@@ -414,16 +445,62 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	public function history( $days = 1 ) {
 		$return  = array();
 		$history = get_option( self::META_KEYS['history'], array() );
+		$plan    = ! empty( $this->usage['plan'] ) ? $this->usage['plan'] : $this->credentials['cloud_name'];
 		for ( $i = 1; $i <= $days; $i ++ ) {
 			$date = date_i18n( 'd-m-Y', strtotime( '- ' . $i . ' days' ) );
-			if ( ! isset( $history[ $date ] ) ) {
-				$history[ $date ] = $this->api->usage( $date );
+			if ( ! isset( $history[ $plan ][ $date ] ) ) {
+				$history[ $plan ][ $date ] = $this->api->usage( $date );
+				uksort(
+					$history[ $plan ],
+					static function ( $a, $b ) {
+						return strtotime( $a ) > strtotime( $b );
+					}
+				);
+				$history[ $plan ] = array_slice( $history[ $plan ], -30 );
 			}
-			$return[ $date ] = $history[ $date ];
+			$return[ $date ] = $history[ $plan ][ $date ];
 		}
 		update_option( self::META_KEYS['history'], $history, false );
 
 		return $return;
+	}
+
+	/**
+	 * Upgrade method for version changes.
+	 *
+	 * @param string $previous_version The previous version number.
+	 * @param string $new_version      The New version number.
+	 */
+	public function upgrade_settings( $previous_version, $new_version ) {
+		// Check if we need to upgrade the history.
+		if ( version_compare( $previous_version, '3.1.0', '<' ) ) {
+			$history = get_option( self::META_KEYS['history'], array() );
+			$plan    = ! empty( $this->usage['plan'] ) ? $this->usage['plan'] : $this->credentials['cloud_name'];
+
+			// Check whether history has migrated.
+			if ( ! empty( $plan ) && ! empty( $history[ $plan ] ) ) {
+				return;
+			}
+
+			// Fix history.
+			$new_history = array();
+			foreach ( $history as $date => $data ) {
+				$new_history[ $plan ][ $date ] = $data;
+			}
+
+			foreach ( $new_history as &$data ) {
+				uksort(
+					$data,
+					static function ( $a, $b ) {
+						return strtotime( $a ) < strtotime( $b );
+					}
+				);
+
+				$data = array_reverse( array_slice( $data, 0, 30 ) );
+			}
+
+			update_option( self::META_KEYS['history'], $new_history, false );
+		}
 	}
 
 	/**
@@ -450,7 +527,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	/**
 	 * Check the status of Cloudinary.
 	 *
-	 * @return array|\WP_Error
+	 * @return array|WP_Error
 	 */
 	public function check_status() {
 		$status = $this->test_ping();
@@ -462,7 +539,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	/**
 	 * Do a ping test on the API.
 	 *
-	 * @return array|\WP_Error
+	 * @return array|WP_Error
 	 */
 	public function test_ping() {
 		$test      = new Connect\Api( $this, $this->plugin->version );
@@ -597,6 +674,8 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 * @since  0.1
 	 */
 	public function setup() {
+		$this->setup_rest_api_cron();
+
 		// Get the cloudinary url from settings.
 		$cloudinary_url = $this->settings->get_value( 'cloudinary_url' );
 		if ( ! empty( $cloudinary_url ) ) {
@@ -612,9 +691,18 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 * Setup Status cron.
 	 */
 	protected function setup_status_cron() {
-		if ( false === wp_get_schedule( 'cloudinary_status' ) ) {
+		Cron::register_process( 'check_status', array( $this, 'check_status' ), HOUR_IN_SECONDS );
+	}
+
+	/**
+	 * Setup the REST API cron.
+	 *
+	 * @return void
+	 */
+	protected function setup_rest_api_cron() {
+		if ( false === wp_next_scheduled( 'cloudinary_rest_api_connectivity' ) ) {
 			$now = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
-			wp_schedule_event( $now + ( MINUTE_IN_SECONDS ), 'hourly', 'cloudinary_status' );
+			wp_schedule_single_event( $now + ( MINUTE_IN_SECONDS ), 'cloudinary_rest_api_connectivity' );
 		}
 	}
 
@@ -751,12 +839,27 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	}
 
 	/**
+	 * Setup the connection notices.
+	 *
+	 * @return void
+	 */
+	public function connectivity_notices() {
+		$plugin  = get_plugin_instance();
+		$notices = get_option( $plugin::KEYS['notices'], array() );
+
+		if ( ! empty( $notices[ self::META_KEYS['notices'] ] ) ) {
+			$this->notices[] = $notices[ self::META_KEYS['notices'] ];
+		}
+	}
+
+	/**
 	 * Get admin notices.
 	 */
 	public function get_notices() {
 		$this->usage_notices();
+		$this->connectivity_notices();
 
-		return $this->notices;
+		return array_filter( $this->notices );
 	}
 
 	/**
@@ -868,6 +971,90 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		}
 
 		return $return;
+	}
+
+	/**
+	 * Check the REST API connectivity for Cloudinary's endpoints.
+	 *
+	 * @return array
+	 */
+	public static function check_rest_api_connectivity() {
+
+		$connectivity = self::test_rest_api_connectivity();
+		$plugin       = get_plugin_instance();
+		$notices      = get_option( $plugin::KEYS['notices'], array() );
+		$now          = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
+
+		wp_clear_scheduled_hook( 'cloudinary_rest_api_connectivity' );
+
+		if ( $connectivity['working'] ) {
+			unset( $notices[ self::META_KEYS['notices'] ] );
+			if ( empty( $notices ) ) {
+				delete_option( $plugin::KEYS['notices'] );
+			} else {
+				update_option( $plugin::KEYS['notices'], $notices, false );
+			}
+		} else {
+			update_option(
+				$plugin::KEYS['notices'],
+				array(
+					self::META_KEYS['notices'] => $connectivity,
+				),
+				false
+			);
+		}
+
+		wp_schedule_single_event( $now + ( HOUR_IN_SECONDS ), 'cloudinary_rest_api_connectivity' );
+
+		return $connectivity;
+	}
+
+	/**
+	 * Test the REST API connectivity for Cloudinary's endpoints.
+	 *
+	 * @return array
+	 */
+	public static function test_rest_api_connectivity() {
+		$result = array(
+			'working' => true,
+			'message' => __( 'Cloudinary was able to connect to the WordPress REST API.', 'cloudinary' ),
+		);
+
+		$timeout = 10;
+		$headers = array(
+			'Cache-Control' => 'no-cache',
+			'X-WP-Nonce'    => wp_create_nonce( 'wp_rest' ),
+		);
+
+		// This filter is documented in wp-includes/class-wp-http-streams.php.
+		$sslverify = apply_filters( 'https_local_ssl_verify', false );
+
+		$url      = rest_url( REST_API::BASE . '/test_rest_api' );
+		$response = wp_safe_remote_get( $url, compact( 'headers', 'timeout', 'sslverify' ) );
+
+		if ( is_wp_error( $response ) ) {
+			$result = array(
+				'working' => false,
+				'message' => sprintf(
+					/* translators: 1: The WordPress error message. 2: The WordPress error code. */
+					__( 'The Cloudinary REST API endpoints are not available. Error: %1$s (%2$s)', 'cloudinary' ),
+					$response->get_error_message(),
+					$response->get_error_code()
+				),
+			);
+		} elseif ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			$result = array(
+				'working' => false,
+				'message' => sprintf(
+					/* translators: 1: The WordPress error message. 2: The WordPress error code. */
+					__( 'The Cloudinary REST API endpoints are not available. Error: %1$s (%2$s)', 'cloudinary' ),
+					wp_remote_retrieve_response_message( $response ),
+					wp_remote_retrieve_response_code( $response )
+				),
+			);
+		}
+
+		return $result;
 	}
 
 	/**
