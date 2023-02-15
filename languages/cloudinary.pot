@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cloudinary STABLETAG\n"
 "Report-Msgid-Bugs-To: https://github.com/cloudinary/cloudinary_wordpress\n"
-"POT-Creation-Date: 2023-02-06 14:59:40+00:00\n"
+"POT-Creation-Date: 2023-02-15 14:44:43+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -43,39 +43,39 @@ msgid "Some transformations were invalid and were removed."
 msgstr ""
 
 #: php/assets/class-rest-assets.php:332 php/assets/class-rest-assets.php:360
-#: php/cache/class-cache-point.php:599
+#: php/cache/class-cache-point.php:601
 msgid "No items cached."
 msgstr ""
 
-#: php/assets/class-rest-assets.php:344 php/cache/class-cache-point.php:583
+#: php/assets/class-rest-assets.php:344 php/cache/class-cache-point.php:585
 #. translators: The current page and total pages.
 msgid "Page %1$d of %2$d"
 msgstr ""
 
-#: php/assets/class-rest-assets.php:347 php/cache/class-cache-point.php:586
+#: php/assets/class-rest-assets.php:347 php/cache/class-cache-point.php:588
 #. translators: The number of files.
 msgid "%d cached file"
 msgid_plural "%d cached files"
 msgstr[0] ""
 msgstr[1] ""
 
-#: php/assets/class-rest-assets.php:358 php/cache/class-cache-point.php:597
+#: php/assets/class-rest-assets.php:358 php/cache/class-cache-point.php:599
 msgid "No items found."
 msgstr ""
 
-#: php/cache/class-cache-point.php:956 php/class-assets.php:1142
+#: php/cache/class-cache-point.php:958 php/class-assets.php:1142
 msgid "Cloudinary Asset"
 msgstr ""
 
-#: php/cache/class-cache-point.php:957 php/class-assets.php:1143
+#: php/cache/class-cache-point.php:959 php/class-assets.php:1143
 msgid "Post type to represent a non-media library asset."
 msgstr ""
 
-#: php/class-admin.php:455
+#: php/class-admin.php:454
 msgid "Settings updated successfully"
 msgstr ""
 
-#: php/class-admin.php:458
+#: php/class-admin.php:457
 msgid "No changes to save"
 msgstr ""
 
@@ -630,52 +630,52 @@ msgid ""
 "from the relevant listing pages."
 msgstr ""
 
-#: php/class-sync.php:476
+#: php/class-sync.php:480
 msgid "Synchronizing asset with Cloudinary"
 msgstr ""
 
-#: php/class-sync.php:496
+#: php/class-sync.php:500
 msgid "Upgrading from previous version"
 msgstr ""
 
-#: php/class-sync.php:507
+#: php/class-sync.php:511
 msgid "Downloading from Cloudinary"
 msgstr ""
 
-#: php/class-sync.php:522 php/class-sync.php:539
+#: php/class-sync.php:526 php/class-sync.php:543
 msgid "Uploading to Cloudinary"
 msgstr ""
 
-#: php/class-sync.php:552
+#: php/class-sync.php:556
 #. translators: %s folder name
 msgid "Copying to folder %s."
 msgstr ""
 
-#: php/class-sync.php:567 php/class-sync.php:594
+#: php/class-sync.php:571 php/class-sync.php:598
 msgid "Updating metadata"
 msgstr ""
 
-#: php/class-sync.php:580
+#: php/class-sync.php:584
 msgid "Updating breakpoints"
 msgstr ""
 
-#: php/class-sync.php:615
+#: php/class-sync.php:619
 msgid "Uploading to new cloud name."
 msgstr ""
 
-#: php/class-sync.php:1139
+#: php/class-sync.php:1143
 msgid "Is Cloudinary synced."
 msgstr ""
 
-#: php/class-sync.php:1194
+#: php/class-sync.php:1198
 msgid "Media Library Sync Settings"
 msgstr ""
 
-#: php/class-sync.php:1199
+#: php/class-sync.php:1203
 msgid "Sync method"
 msgstr ""
 
-#: php/class-sync.php:1202
+#: php/class-sync.php:1206
 #. translators: The HTML break line, the link to Cloudinary documentation and
 #. closing tag.
 msgid ""
@@ -684,35 +684,35 @@ msgid ""
 "Media Library.%3$s%4$sLearn more%5$s"
 msgstr ""
 
-#: php/class-sync.php:1213
+#: php/class-sync.php:1217
 msgid "Auto sync"
 msgstr ""
 
-#: php/class-sync.php:1214
+#: php/class-sync.php:1218
 msgid "Manual sync"
 msgstr ""
 
-#: php/class-sync.php:1220
+#: php/class-sync.php:1224
 msgid "Cloudinary folder path"
 msgstr ""
 
-#: php/class-sync.php:1224
+#: php/class-sync.php:1228
 msgid "e.g.: wordpress_assets/"
 msgstr ""
 
-#: php/class-sync.php:1227
+#: php/class-sync.php:1231
 msgid ""
 "The folder in your Cloudinary account that WordPress assets are uploaded "
 "to. Leave blank to use the root of your Cloudinary library."
 msgstr ""
 
-#: php/class-sync.php:1236 php/ui/component/class-plan-details.php:118
+#: php/class-sync.php:1240 php/ui/component/class-plan-details.php:118
 #: php/ui/component/class-plan-status.php:94
 #: ui-definitions/settings-sidebar.php:30
 msgid "Storage"
 msgstr ""
 
-#: php/class-sync.php:1239
+#: php/class-sync.php:1243
 #. translators: the HTML for opening and closing list and its items.
 msgid ""
 "Choose where your assets are stored.%1$sCloudinary and WordPress: Stores "
@@ -725,15 +725,15 @@ msgid ""
 "compatibility.%4$s%5$sLearn more%6$s"
 msgstr ""
 
-#: php/class-sync.php:1252
+#: php/class-sync.php:1256
 msgid "Cloudinary and WordPress"
 msgstr ""
 
-#: php/class-sync.php:1253
+#: php/class-sync.php:1257
 msgid "Cloudinary and WordPress (low resolution)"
 msgstr ""
 
-#: php/class-sync.php:1254
+#: php/class-sync.php:1258
 msgid "Cloudinary only"
 msgstr ""
 
@@ -973,13 +973,13 @@ msgstr ""
 msgid "Ending thread %s"
 msgstr ""
 
-#: php/sync/class-storage.php:104
+#: php/sync/class-storage.php:112
 msgid ""
 "Please ensure all media is fully synced before changing the environment "
 "variable URL."
 msgstr ""
 
-#: php/sync/class-storage.php:109
+#: php/sync/class-storage.php:117
 #. translators: Placeholders are <a> tags.
 msgid ""
 "You can’t currently change your environment variable as your storage "
@@ -987,28 +987,28 @@ msgid ""
 "%2$s and sync your assets to WordPress storage to enable this setting."
 msgstr ""
 
-#: php/sync/class-storage.php:228
+#: php/sync/class-storage.php:236
 msgid "Syncing"
 msgstr ""
 
-#: php/sync/class-storage.php:231
+#: php/sync/class-storage.php:239
 msgid "Removing asset copy from local storage"
 msgstr ""
 
-#: php/sync/class-storage.php:238
+#: php/sync/class-storage.php:246
 #. translators: %s is time remaining.
 msgid "Local asset removal in %s"
 msgstr ""
 
-#: php/sync/class-storage.php:242
+#: php/sync/class-storage.php:250
 msgid "Syncing low resolution asset to local storage"
 msgstr ""
 
-#: php/sync/class-storage.php:245
+#: php/sync/class-storage.php:253
 msgid "Syncing asset to local storage"
 msgstr ""
 
-#: php/sync/class-storage.php:268
+#: php/sync/class-storage.php:276
 #. translators: Placeholders are <a> tags.
 msgid ""
 "You have reached one or more of your quota limits. Your Cloudinary media "
@@ -1018,11 +1018,11 @@ msgid ""
 "storage settings.%2$s"
 msgstr ""
 
-#: php/sync/class-storage.php:382
+#: php/sync/class-storage.php:406
 msgid "Restricted file type"
 msgstr ""
 
-#: php/sync/class-storage.php:513
+#: php/sync/class-storage.php:540
 msgid "Calculating stats"
 msgstr ""
 
