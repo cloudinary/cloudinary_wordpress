@@ -120,7 +120,7 @@ class String_Replace implements Setup {
 	}
 
 	/**
-	 * Filter out local urls in an 'edit' context rest request ( i.e for Gutenburg ).
+	 * Filter out local urls in an 'edit' context rest request ( i.e for Gutenberg ).
 	 *
 	 * @param \WP_REST_Response $response The post data array to save.
 	 * @param \WP_Post          $post     The current post.

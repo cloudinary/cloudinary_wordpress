@@ -319,6 +319,11 @@ class Sync implements Setup, Assets {
 			$can = false;
 		}
 
+		// Only sync deliverable attachments.
+		if ( $can && ! $this->plugin->get_component( 'delivery' )->is_deliverable( $attachment_id ) ) {
+			$can = false;
+		}
+
 		/**
 		 * Filter to allow changing if an asset is allowed to be synced.
 		 * Return a WP Error with reason why it can't be synced.
@@ -507,7 +512,11 @@ class Sync implements Setup, Assets {
 				'priority'    => 5.1,
 				'sync'        => array( $this->managers['upload'], 'upload_asset' ),
 				'validate'    => function ( $attachment_id ) {
-					return ! $this->managers['media']->has_public_id( $attachment_id ) && ! $this->managers['media']->is_oversize_media( $attachment_id );
+					$valid = ! $this->managers['media']->has_public_id( $attachment_id ) && ! $this->managers['media']->is_oversize_media( $attachment_id );
+					if ( $valid ) {
+						$valid = $this->plugin->get_component( 'delivery' )->is_deliverable( $attachment_id );
+					}
+					return $valid;
 				},
 				'state'       => 'uploading',
 				'note'        => __( 'Uploading to Cloudinary', 'cloudinary' ),
@@ -972,6 +981,12 @@ class Sync implements Setup, Assets {
 	 */
 	public function add_to_sync( $attachment_id ) {
 		if ( ! in_array( $attachment_id, $this->to_sync, true ) ) {
+
+			// There are cases where we do not check can_sync. This is to make sure we don't add to the to_sync array if we can't sync.
+			if ( ! $this->plugin->get_component( 'delivery' )->is_deliverable( $attachment_id ) ) {
+				return;
+			}
+
 			// Flag image as pending to prevent duplicate upload.
 			$this->set_pending( $attachment_id );
 			$this->to_sync[] = $attachment_id;

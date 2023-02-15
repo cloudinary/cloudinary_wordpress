@@ -44,9 +44,26 @@ class Notice extends Component {
 			$struct['attributes']['class'][] = 'is-dismissible';
 		}
 
-		$struct['attributes']['data-dismiss']  = $this->setting->get_slug();
+		$struct['attributes']['data-dismiss']  = $this->get_id();
 		$struct['attributes']['data-duration'] = $this->setting->get_param( 'duration', 0 );
 
+		return $struct;
+	}
+
+	/**
+	 * Filter the icon parts structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function icon( $struct ) {
+		$struct['element'] = 'span';
+		$struct['attributes']['class'] = array( 'cld-ui-icon' );
+		if ( $this->setting->has_param( 'icon' ) ) {
+			$struct['attributes']['class'][] = $this->setting->get_param( 'icon' );
+			$struct['attributes']['class'][] = 'dashicons';
+		}
 		return $struct;
 	}
 
@@ -114,6 +131,6 @@ class Notice extends Component {
 	 * @return bool
 	 */
 	protected function is_enabled() {
-		return empty( get_transient( $this->setting->get_slug() ) );
+		return empty( get_transient( $this->get_id() ) );
 	}
 }

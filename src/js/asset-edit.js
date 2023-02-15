@@ -1,4 +1,3 @@
-import { __ } from '@wordpress/i18n';
 import AssetPreview from './components/asset-preview';
 import AssetEditor from './components/asset-editor';
 
@@ -11,6 +10,7 @@ const AssetEdit = {
 	publicId: null,
 	size: null,
 	transformationsInput: document.getElementById( 'cld-asset-edit-transformations' ),
+	sizeTransformations: document.querySelectorAll('[id*="asset_size_transformations"]'),
 	saveButton: document.getElementById( 'cld-asset-edit-save' ),
 	currentURL: null,
 	init() {
@@ -50,9 +50,24 @@ const AssetEdit = {
 		} );
 
 		this.saveButton.addEventListener( 'click', () => {
+			const sizes = {};
+			[ ...this.sizeTransformations ].forEach(
+				( size ) => {
+					let sizeName = size.id.split( '.' ).pop().replace( 'asset_sized_', '' ).replace( 'asset_disable_size_', '' ).replace( 'size_', '' );
+
+					if ( ! isNaN( sizeName ) ) {
+						return;
+					}
+
+					const key = size.type === 'checkbox' ? 'toggle' : 'transformations';
+					sizes[ sizeName ]        = sizes[ sizeName ] || {};
+					sizes[ sizeName ][ key ] = size.type === 'checkbox' ? size.checked : size.value;
+				}
+			);
 			this.editor.save( {
 				ID: this.id,
 				transformations: this.transformationsInput.value,
+				sizes
 			} );
 		} );
 	}
