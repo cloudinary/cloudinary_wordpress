@@ -19,7 +19,7 @@ class On_Off extends Text {
 	 *
 	 * @var string
 	 */
-	protected $blueprint = 'wrap|span|label|title|/title|prefix/|/label|description_left/|control|false_value/|input/|slider/|/control|description/|/span|tooltip/|/wrap';
+	protected $blueprint = 'wrap|span|label|title|/title|prefix/|/label|description_left/|control|false_value/|input/|shadow/|slider/|/control|description/|/span|tooltip/|/wrap';
 
 	/**
 	 * Filter the false_value parts structure.
@@ -93,18 +93,27 @@ class On_Off extends Text {
 		}
 
 		if ( $this->is_readonly() || ( true === $this->setting->has_param( 'main_required', false ) && empty( $struct['attributes']['data-main'] ) ) ) {
-			$clone  = $struct;
-			$struct = array();
+			$struct['attributes']['type'] = 'hidden';
+		}
 
-			// Add the shadow input.
-			$struct['children']['shadow']                       = $clone;
-			$struct['children']['shadow']['attributes']['type'] = 'hidden';
+		return $struct;
+	}
 
-			// Add the toggle stub.
-			$struct['children']['toggle']                           = $this->get_part( 'input' );
-			$struct['children']['toggle']['attributes']['disabled'] = 'disabled';
-			$struct['children']['toggle']['attributes']['checked']  = 'checked';
-			$struct['children']['toggle']['attributes']['type']     = 'checkbox';
+	/**
+	 * Filter the shadow parts structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function shadow( $struct ) {
+		// Add the toggle stub.
+		if ( $this->is_readonly() || ( true === $this->setting->has_param( 'main_required', false ) && empty( $struct['attributes']['data-main'] ) ) ) {
+			$struct                           = $this->get_part( 'input' );
+			$struct['attributes']['type']     = 'checkbox';
+			$struct['attributes']['disabled'] = 'disabled';
+			$struct['attributes']['checked']  = 'checked';
+			$struct['attributes']['type']     = 'checkbox';
 		}
 
 		return $struct;
