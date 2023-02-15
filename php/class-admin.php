@@ -308,7 +308,7 @@ class Admin {
 			// If the section has a defined template, use that instead eg. wizard.
 			$file = $this->plugin->dir_path . 'ui-definitions/components/' . $template . '.php';
 		}
-		include $file;
+		include $file; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
 	}
 
 	/**
