@@ -198,13 +198,14 @@ class Cache_Point {
 	public function get_meta( $check, $object_id, $meta_key ) {
 
 		if ( self::POST_TYPE_SLUG === get_post_type( $object_id ) ) {
-			$meta = $this->get_meta_cache( $object_id );
+			$meta  = $this->get_meta_cache( $object_id );
+			$value = '';
+
 			if ( empty( $meta_key ) ) {
 				$value = $meta;
 			} elseif ( isset( $meta[ $meta_key ] ) ) {
+				$value   = array();
 				$value[] = $meta[ $meta_key ];
-			} else {
-				$value = '';
 			}
 
 			return $value;

@@ -1541,11 +1541,12 @@ class Delivery implements Setup {
 		 */
 		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
 
+		$found                       = array();
 		$found[ $item['public_id'] ] = $item;
-		$scaled                            = self::make_scaled_url( $item['sized_url'] );
-		$descaled                          = self::descaled_url( $item['sized_url'] );
-		$scaled_slashed                    = addcslashes( $scaled, '/' );
-		$descaled_slashed                  = addcslashes( $descaled, '/' );
+		$scaled                      = self::make_scaled_url( $item['sized_url'] );
+		$descaled                    = self::descaled_url( $item['sized_url'] );
+		$scaled_slashed              = addcslashes( $scaled, '/' );
+		$descaled_slashed            = addcslashes( $descaled, '/' );
 		$found[ $scaled ]            = $item;
 		$found[ $descaled ]          = $item;
 		$found[ $scaled_slashed ]    = array_merge( $item, array( 'slashed' => true ) );
