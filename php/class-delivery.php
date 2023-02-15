@@ -1055,7 +1055,7 @@ class Delivery implements Setup {
 			$tag_element['atts']['data-format'] = $tag_element['format'];
 		}
 		// Add wp-{media-type}-{id} class name.
-		if ( empty( $tag_element['atts']['class'] ) || ! in_array( 'wp-' . $tag_element['type'] . '-' . $tag_element['id'], $tag_element['atts']['class'] ) ) {
+		if ( empty( $tag_element['atts']['class'] ) || ! in_array( 'wp-' . $tag_element['type'] . '-' . $tag_element['id'], $tag_element['atts']['class'], true ) ) {
 			$tag_element['atts']['class'][] = 'wp-' . $tag_element['type'] . '-' . $tag_element['id'];
 		}
 
@@ -1541,11 +1541,12 @@ class Delivery implements Setup {
 		 */
 		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
 
+		$found                       = array();
 		$found[ $item['public_id'] ] = $item;
-		$scaled                            = self::make_scaled_url( $item['sized_url'] );
-		$descaled                          = self::descaled_url( $item['sized_url'] );
-		$scaled_slashed                    = addcslashes( $scaled, '/' );
-		$descaled_slashed                  = addcslashes( $descaled, '/' );
+		$scaled                      = self::make_scaled_url( $item['sized_url'] );
+		$descaled                    = self::descaled_url( $item['sized_url'] );
+		$scaled_slashed              = addcslashes( $scaled, '/' );
+		$descaled_slashed            = addcslashes( $descaled, '/' );
 		$found[ $scaled ]            = $item;
 		$found[ $descaled ]          = $item;
 		$found[ $scaled_slashed ]    = array_merge( $item, array( 'slashed' => true ) );
