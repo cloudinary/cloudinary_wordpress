@@ -432,11 +432,12 @@ class Cache_Point {
 			$url         = trailingslashit( $url );
 			$cache_point = null;
 			$params      = array(
-				'name'           => $key,
-				'post_type'      => self::POST_TYPE_SLUG,
-				'posts_per_page' => 1,
+				'name'             => $key,
+				'post_type'        => self::POST_TYPE_SLUG,
+				'posts_per_page'   => 1,
+				'suppress_filters' => false,
 			);
-			$found       = get_posts( $params );
+			$found       = get_posts( $params ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.get_posts_get_posts
 			if ( ! empty( $found ) ) {
 				$cache_point                           = array_shift( $found );
 				$this->registered_cache_points[ $url ] = $cache_point;
