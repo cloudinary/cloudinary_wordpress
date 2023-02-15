@@ -1055,7 +1055,7 @@ class Delivery implements Setup {
 			$tag_element['atts']['data-format'] = $tag_element['format'];
 		}
 		// Add wp-{media-type}-{id} class name.
-		if ( empty( $tag_element['atts']['class'] ) || ! in_array( 'wp-' . $tag_element['type'] . '-' . $tag_element['id'], $tag_element['atts']['class'] ) ) {
+		if ( empty( $tag_element['atts']['class'] ) || ! in_array( 'wp-' . $tag_element['type'] . '-' . $tag_element['id'], $tag_element['atts']['class'], true ) ) {
 			$tag_element['atts']['class'][] = 'wp-' . $tag_element['type'] . '-' . $tag_element['id'];
 		}
 
