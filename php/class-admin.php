@@ -414,7 +414,6 @@ class Admin {
 		$saving = filter_input_array( INPUT_POST, $args, false );
 		if ( ! empty( $saving ) && ! empty( $saving[ $submission ] ) && wp_verify_nonce( $saving['_cld_nonce'], 'cloudinary-settings' ) ) {
 			$referer = $saving['_wp_http_referer'];
-			wp_parse_str( wp_parse_url( $referer, PHP_URL_QUERY ), $query );
 
 			$data = $saving[ $submission ];
 			$this->save_settings( $submission, $data );
