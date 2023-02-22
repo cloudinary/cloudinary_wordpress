@@ -14,6 +14,7 @@ use Cloudinary\Media\Global_Transformations;
 use Cloudinary\Media\Upgrade;
 use Cloudinary\Media\Video;
 use Cloudinary\Media\WooCommerceGallery;
+use Cloudinary\Relate\Relationship;
 use WP_Error;
 use WP_Query;
 
@@ -828,11 +829,15 @@ class Media extends Settings_Component implements Setup {
 
 				$size_parts = explode( 'x', $end_part );
 				$size_int   = array_map( 'intval', $size_parts );
-				$size       = array_filter( $size_int, 'is_int' );
+				$size       = array_filter( $size_int );
 				if ( ! empty( $size ) && 2 === count( $size ) ) {
 					$return = $size;
 				}
 			}
+		}
+
+		if ( $return ) {
+			$return = array_values( $return );
 		}
 
 		return $return;
@@ -1055,6 +1060,10 @@ class Media extends Settings_Component implements Setup {
 	 * @return string Cloudinary URL.
 	 */
 	public function attachment_url( $url, $attachment_id ) {
+
+		if ( ! $this->plugin->get_component( 'delivery' )->is_deliverable( $attachment_id ) ) {
+			return $url;
+		}
 
 		// Previous v1 and Cloudinary only storage.
 		if ( false !== strpos( $url, 'https://', 5 ) ) {
@@ -1647,6 +1656,10 @@ class Media extends Settings_Component implements Setup {
 	 * @uses filter:image_downsize
 	 */
 	public function filter_downsize( $image, $attachment_id, $size ) {
+		if ( ! $this->plugin->get_component( 'delivery' )->is_deliverable( $attachment_id ) ) {
+			return $image;
+		}
+
 		// Don't do this while saving.
 		if ( true === $this->in_downsize || doing_filter( 'content_save_pre' ) || wp_attachment_is( 'video', $attachment_id ) || Utils::is_saving_metadata() ) {
 			return $image;
@@ -1702,6 +1715,15 @@ class Media extends Settings_Component implements Setup {
 			$image_meta['file'] = wp_parse_url( $image_src, PHP_URL_PATH );
 		}
 
+		// PDFs don't have sizes, so we need to inject them.
+		if ( empty( $image_meta['width'] ) ) {
+			$image_meta['width'] = $size_array[0];
+		}
+
+		if ( empty( $image_meta['height'] ) ) {
+			$image_meta['height'] = $size_array[1];
+		}
+
 		return $image_meta;
 	}
 
@@ -1739,6 +1761,10 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function image_srcset( $sources, $size_array, $image_src, $image_meta, $attachment_id ) {
 
+		if ( ! $this->plugin->get_component( 'delivery' )->is_deliverable( $attachment_id ) ) {
+			return $sources;
+		}
+
 		$cloudinary_id = isset( $image_meta['cloudinary_id'] ) ? $image_meta['cloudinary_id'] : $this->cloudinary_id( $attachment_id );
 		if ( ! $cloudinary_id ) {
 			return $sources; // Return WordPress default sources.
@@ -1754,7 +1780,7 @@ class Media extends Settings_Component implements Setup {
 		// Use Cloudinary breakpoints for same ratio.
 		$image_meta['overwrite_transformations'] = ! empty( $image_meta['overwrite_transformations'] ) ? $image_meta['overwrite_transformations'] : false;
 
-		if ( 'on' === $this->settings->get_setting( 'enable_breakpoints' )->get_value() && wp_image_matches_ratio( $image_meta['width'], $image_meta['height'], $size_array[0], $size_array[1] ) ) {
+		if ( ! empty( $image_meta['width'] ) && ! empty( $image_meta['height'] ) && 'on' === $this->settings->get_setting( 'enable_breakpoints' )->get_value() && wp_image_matches_ratio( $image_meta['width'], $image_meta['height'], $size_array[0], $size_array[1] ) ) {
 			$meta = $this->get_post_meta( $attachment_id, Sync::META_KEYS['breakpoints'], true );
 			if ( ! empty( $meta ) ) {
 				// Since srcset is primary and src is a fallback, we need to set the first srcset with the main image.
@@ -2056,6 +2082,7 @@ class Media extends Settings_Component implements Setup {
 
 		// Attempt to find attachment ID.
 		$asset['attachment_id'] = $this->get_id_from_sync_key( $asset['sync_key'] );
+		$asset['instances']     = Relationship::get_ids_by_public_id( $asset['public_id'] );
 
 		return $asset;
 	}
@@ -2086,17 +2113,21 @@ class Media extends Settings_Component implements Setup {
 				// Capture the ALT Text.
 				if ( ! empty( $asset['meta']['alt'] ) ) {
 					$alt_text = wp_strip_all_tags( $asset['meta']['alt'] );
-					update_post_meta( $asset['attachment_id'], '_wp_attachment_image_alt', $alt_text );
+					foreach ( $asset['instances'] as $id ) {
+						update_post_meta( $id, '_wp_attachment_image_alt', $alt_text );
+					}
 				}
 				// Capture the Caption Text.
 				if ( ! empty( $asset['meta']['caption'] ) ) {
 					$caption = wp_strip_all_tags( $asset['meta']['caption'] );
-					wp_update_post(
-						array(
-							'ID'           => $asset['attachment_id'],
-							'post_excerpt' => $caption,
-						)
-					);
+					foreach ( $asset['instances'] as $id ) {
+						wp_update_post(
+							array(
+								'ID'           => $id,
+								'post_excerpt' => $caption,
+							)
+						);
+					}
 				}
 				// Compare Version.
 				$current_version = $this->get_cloudinary_version( $asset['attachment_id'] );
@@ -2165,7 +2196,11 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function media_column_value( $column_name, $attachment_id ) {
 		if ( 'cld_status' === $column_name ) {
-			if ( ! $this->is_uploadable_media( $attachment_id ) ) :
+			if ( ! $this->plugin->get_component( 'delivery' )->is_deliverable( $attachment_id ) ) :
+				?>
+				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'The delivery for this asset is disabled.', 'cloudinary' ); ?>"></span>
+				<?php
+			elseif ( ! $this->is_uploadable_media( $attachment_id ) ) :
 				?>
 				<span class="dashicons-cloudinary info" title="<?php esc_attr_e( 'Not syncable. This is an external media.', 'cloudinary' ); ?>"></span>
 				<?php
@@ -2657,6 +2692,10 @@ class Media extends Settings_Component implements Setup {
 	 * @return string
 	 */
 	public function maybe_srcset_post_thumbnail( $content, $post_id, $attachment_id ) {
+		if ( ! $this->plugin->get_component( 'delivery' )->is_deliverable( $attachment_id ) ) {
+			return $content;
+		}
+
 		// Check the attachment is synced and does not already have a srcset (some themes do this already).
 		if ( $this->doing_featured_image === $attachment_id ) {
 			$overwrite_transformations  = $this->maybe_overwrite_featured_image( $attachment_id );

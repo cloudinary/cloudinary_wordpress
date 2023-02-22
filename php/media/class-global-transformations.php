@@ -649,6 +649,11 @@ class Global_Transformations {
 				return;
 			}
 
+			// If asset isn't deliverable, don't show transformations.
+			if ( ! $this->media->plugin->get_component( 'delivery' )->is_deliverable( $attachment_id ) ) {
+				return;
+			}
+
 			$item = $this->media->plugin->get_component( 'assets' )->get_asset( $attachment_id, 'dataset' );
 			if ( ! empty( $item['data']['public_id'] ) ) {
 				$text            = __( 'Add transformations', 'cloudinary' );

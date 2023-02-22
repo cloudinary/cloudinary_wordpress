@@ -17,9 +17,8 @@ const Storage = {
 	_init() {
 		if ( this.select ) {
 			this.addEventListener();
-			this.tooltip = this.select.parentNode.querySelector(
-				'.cld-tooltip'
-			);
+			this.tooltip =
+				this.select.parentNode.querySelector( '.cld-tooltip' );
 			this.descriptions = this.tooltip.querySelectorAll( 'li' );
 			this.change();
 		}

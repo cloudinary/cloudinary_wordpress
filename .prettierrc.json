@@ -1,0 +1,4 @@
+{
+  "_comment": "workaround for deprecated jsxBracketSameLine set on @wordpress/prettier-config",
+	"bracketSameLine": false
+}

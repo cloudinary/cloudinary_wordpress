@@ -345,12 +345,24 @@ class Delivery implements Setup {
 	 * @return bool
 	 */
 	public function is_deliverable( $attachment_id ) {
-		$is = wp_attachment_is_image( $attachment_id ) || wp_attachment_is( 'video', $attachment_id );
+		$is = false;
+
+		if ( wp_attachment_is_image( $attachment_id ) && 'on' === $this->plugin->settings->get_value( 'image_delivery' ) ) {
+			$is = true;
+		}
+
+		if ( ! $is && wp_attachment_is( 'video', $attachment_id ) && 'on' === $this->plugin->settings->get_value( 'video_delivery' ) ) {
+			$is = true;
+		}
 
 		// Ensure that the attachment has dimensions to be delivered.
 		if ( $is ) {
 			$meta = wp_get_attachment_metadata( $attachment_id, true );
 			$is   = ! empty( $meta['width'] ) && ! empty( $meta['height'] );
+		}
+
+		if ( ! $is ) {
+			$is = ! wp_attachment_is_image( $attachment_id ) && ! wp_attachment_is( 'video', $attachment_id );
 		}
 
 		/**
@@ -692,6 +704,7 @@ class Delivery implements Setup {
 	 */
 	public function do_clear_cache() {
 		delete_post_meta_by_key( self::META_CACHE_KEY );
+		wp_cache_flush();
 	}
 
 	/**
@@ -838,6 +851,9 @@ class Delivery implements Setup {
 
 			if ( $results ) {
 				foreach ( $results as $result ) {
+					if ( ! $this->is_deliverable( $result->post_id ) ) {
+						continue;
+					}
 					// If we are here, it means that an attachment in the media library doesn't have a delivery for the url.
 					// Reset the signature for delivery and add to sync, to update it.
 					$this->create_delivery( $result->post_id );
@@ -886,15 +902,15 @@ class Delivery implements Setup {
 	 * @return array The media tags found.
 	 */
 	public function get_media_tags( $content, $tags = 'img|video' ) {
-		$images = array();
+		$media = array();
 		if ( preg_match_all( '#(?P<tags><(' . $tags . ')[^>]*\>){1}#is', $content, $found ) ) {
 			$count = count( $found[0] );
 			for ( $i = 0; $i < $count; $i ++ ) {
-				$images[ $i ] = $found['tags'][ $i ];
+				$media[ $i ] = $found['tags'][ $i ];
 			}
 		}
 
-		return $images;
+		return $media;
 	}
 
 	/**
@@ -1039,7 +1055,7 @@ class Delivery implements Setup {
 			$tag_element['atts']['data-format'] = $tag_element['format'];
 		}
 		// Add wp-{media-type}-{id} class name.
-		if ( empty( $tag_element['atts']['class'] ) || ! in_array( 'wp-' . $tag_element['type'] . '-' . $tag_element['id'], $tag_element['atts']['class'] ) ) {
+		if ( empty( $tag_element['atts']['class'] ) || ! in_array( 'wp-' . $tag_element['type'] . '-' . $tag_element['id'], $tag_element['atts']['class'], true ) ) {
 			$tag_element['atts']['class'][] = 'wp-' . $tag_element['type'] . '-' . $tag_element['id'];
 		}
 
@@ -1271,8 +1287,8 @@ class Delivery implements Setup {
 				$public_id .= '.' . $item['format'];
 			}
 			$tag_element['id']            = (int) $item['post_id'];
-			$tag_element['width']         = $item['width'];
-			$tag_element['height']        = $item['height'];
+			$tag_element['width']         = ! empty( $attributes['width'] ) ? $attributes['width'] : $item['width'];
+			$tag_element['height']        = ! empty( $attributes['height'] ) ? $attributes['height'] : $item['height'];
 			$attributes['data-public-id'] = $public_id;
 			$tag_element['format']        = $item['format'];
 
@@ -1344,6 +1360,8 @@ class Delivery implements Setup {
 		 * @since 3.0.9
 		 *
 		 * @param $tag_element {array} The tag element.
+		 *
+		 * @return {array} The tag element.
 		 */
 		$tag_element = apply_filters( 'cloudinary_parse_element', $tag_element );
 
@@ -1523,15 +1541,23 @@ class Delivery implements Setup {
 		 */
 		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
 
-		$this->known[ $item['public_id'] ] = $item;
-		$scaled                            = self::make_scaled_url( $item['sized_url'] );
-		$descaled                          = self::descaled_url( $item['sized_url'] );
-		$scaled_slashed                    = addcslashes( $scaled, '/' );
-		$descaled_slashed                  = addcslashes( $descaled, '/' );
-		$this->known[ $scaled ]            = $item;
-		$this->known[ $descaled ]          = $item;
-		$this->known[ $scaled_slashed ]    = array_merge( $item, array( 'slashed' => true ) );
-		$this->known[ $descaled_slashed ]  = array_merge( $item, array( 'slashed' => true ) );
+		$found                       = array();
+		$found[ $item['public_id'] ] = $item;
+		$scaled                      = self::make_scaled_url( $item['sized_url'] );
+		$descaled                    = self::descaled_url( $item['sized_url'] );
+		$scaled_slashed              = addcslashes( $scaled, '/' );
+		$descaled_slashed            = addcslashes( $descaled, '/' );
+		$found[ $scaled ]            = $item;
+		$found[ $descaled ]          = $item;
+		$found[ $scaled_slashed ]    = array_merge( $item, array( 'slashed' => true ) );
+		$found[ $descaled_slashed ]  = array_merge( $item, array( 'slashed' => true ) );
+
+		if ( ! $this->is_deliverable( $item['post_id'] ) ) {
+			$this->unusable = array_merge( $this->unusable, $found );
+			return;
+		}
+
+		$this->known = array_merge( $this->known, $found );
 
 		if ( 'disable' === $item['post_state'] ) {
 			return;
@@ -1601,14 +1627,17 @@ class Delivery implements Setup {
 	public function maybe_unsize_url( $url ) {
 		$file = Utils::pathinfo( $url, PATHINFO_FILENAME );
 		$dash = ltrim( strrchr( $file, '-' ), '-' );
-		if ( false !== $dash && 1 === substr_count( $dash, 'x' ) ) {
-			if ( is_numeric( str_replace( 'x', '', $dash ) ) ) {
-				$sized                                = wp_basename( $url );
-				$url                                  = str_replace( '-' . $dash, '', $url );
-				$scaled                               = self::make_scaled_url( $url );
-				$this->found_urls[ $url ][ $dash ]    = $sized;
-				$this->found_urls[ $scaled ][ $dash ] = $sized;
-			}
+		if (
+			! empty( $dash )
+			&& 1 === substr_count( $dash, 'x' )
+			&& is_numeric( str_replace( 'x', '', $dash ) )
+			&& 2 === count( array_filter( explode( 'x', $dash ) ) )
+		) {
+			$sized                                = wp_basename( $url );
+			$url                                  = str_replace( '-' . $dash, '', $url );
+			$scaled                               = self::make_scaled_url( $url );
+			$this->found_urls[ $url ][ $dash ]    = $sized;
+			$this->found_urls[ $scaled ][ $dash ] = $sized;
 		}
 
 		return $url;

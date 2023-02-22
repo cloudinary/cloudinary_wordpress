@@ -132,12 +132,23 @@ class Bypass {
 	/**
 	 * Get the actions for delivery types.
 	 *
+	 * @param int|null $attachment_id The attachment ID to get action or generic action.
+	 *
 	 * @return array
 	 */
-	protected function get_actions() {
-		return array(
-			self::BYPASS_KEYS['wp'] => __( 'Deliver from WordPress', 'cloudinary' ),
-		);
+	protected function get_actions( $attachment_id = null ) {
+		$actions = array();
+
+		if (
+			null === $attachment_id
+			|| $this->plugin->get_component( 'delivery' )->is_deliverable( $attachment_id )
+		) {
+			$actions = array(
+				self::BYPASS_KEYS['wp'] => __( 'Deliver from WordPress', 'cloudinary' ),
+			);
+		}
+
+		return $actions;
 	}
 
 	/**
@@ -152,7 +163,7 @@ class Bypass {
 
 		$bypassed = $this->is_bypassed( $post->ID );
 		$action   = $bypassed ? self::BYPASS_KEYS['cld'] : self::BYPASS_KEYS['wp'];
-		$messages = $this->get_actions();
+		$messages = $this->get_actions( $post->ID );
 		if ( ! empty( $messages[ $action ] ) ) {
 
 			// Set url for action handling.
@@ -224,7 +235,7 @@ class Bypass {
 	 */
 	public function filter_status( $status, $attachment_id ) {
 		if ( ! empty( $status ) && $this->is_bypassed( $attachment_id ) ) {
-			$actions = $this->get_actions();
+			$actions = $this->get_actions( $attachment_id );
 			$status  = array(
 				'state' => 'info',
 				'note'  => $actions[ self::BYPASS_KEYS['wp'] ],
@@ -240,14 +251,16 @@ class Bypass {
 	 * @param WP_Post $attachment The attachment post object.
 	 */
 	public function delivery_actions( $attachment ) {
-		$actions = $this->get_actions();
-		?>
-		<div class="misc-pub-section misc-pub-delivery">
-			<label><input type="checkbox" name="attachment_delivery" value="true" <?php checked( true, $this->is_bypassed( $attachment->ID ) ); ?> />
-				<?php echo esc_html( $actions[ self::BYPASS_KEYS['wp'] ] ); ?>
-			</label>
-		</div>
-		<?php
+		$actions = $this->get_actions( $attachment->ID );
+		if ( ! empty( $actions[ self::BYPASS_KEYS['wp'] ] ) ) :
+			?>
+			<div class="misc-pub-section misc-pub-delivery">
+				<label><input type="checkbox" name="attachment_delivery" value="true" <?php checked( true, $this->is_bypassed( $attachment->ID ) ); ?> />
+					<?php echo esc_html( $actions[ self::BYPASS_KEYS['wp'] ] ); ?>
+				</label>
+			</div>
+			<?php
+		endif;
 	}
 
 	/**

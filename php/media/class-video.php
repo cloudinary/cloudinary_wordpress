@@ -138,6 +138,19 @@ class Video {
 	 */
 	public function filter_video_shortcode( $html, $attr ) {
 
+		if ( empty( $attr['id'] ) ) {
+			$supported_formats = array_merge(
+				array( 'src' ),
+				wp_get_video_extensions()
+			);
+			foreach ( $supported_formats as $format ) {
+				if ( ! empty( $attr[ $format ] ) ) {
+					$attr['id'] = attachment_url_to_postid( $attr[ $format ] );
+					break;
+				}
+			}
+		}
+
 		// Confirm we have an ID and it's synced.
 		if ( empty( $attr['id'] ) || ! $this->media->has_public_id( $attr['id'] ) ) {
 			return $html;
@@ -295,7 +308,7 @@ class Video {
 	 */
 	protected function build_video_embed( $attachment_id, $attributes = array(), $overwrite_transformations = false ) {
 		$public_id = $this->media->get_public_id( $attachment_id );
-		$controls  = ! empty( $attributes['controls'] );
+		$controls  = isset( $attributes['controls'] ) ? $attributes['controls'] : $this->media->get_settings()->get_value( 'video_controls' );
 		$autoplay  = $this->media->get_settings()->get_value( 'video_autoplay_mode' );
 
 		// If we don't show controls, we need to autoplay the video.
@@ -309,7 +322,7 @@ class Video {
 			'cloud_name' => $this->media->plugin->get_component( 'connect' )->get_cloud_name(),
 			'player'     => array(
 				'fluid'    => 'true',
-				'controls' => $controls ? 'true' : 'false',
+				'controls' => 'on' === $controls ? 'true' : 'false',
 			),
 			'source'     => array(
 				'source_types' => array(),
@@ -549,6 +562,46 @@ class Video {
 
 					return $atts;
 				}
+			);
+
+			// Expand the video shortcode.
+			add_filter(
+				'pre_do_shortcode_tag',
+				/**
+				 * Expand the video shortcode.
+				 *
+				 * @since 3.1.0
+				 *
+				 * @param false|string $return Short-circuit return value. Either false or the value to replace the shortcode with.
+				 * @param string       $tag    The shortcode name.
+				 * @param array        $attr   The shortcode attributes.
+				 * @param array        $m      The shortcode matches.
+				 *
+				 * @return string
+				 */
+				static function ( $return, $tag, $attr, $m ) {
+					global $shortcode_tags;
+					if ( 'video' === $tag ) {
+						$supported_formats = array_merge(
+							array( 'src' ),
+							wp_get_video_extensions()
+						);
+						foreach ( $supported_formats as $format ) {
+							if ( ! empty( $attr[ $format ] ) ) {
+								$attr[ $format ] = strtok( $attr[ $format ], '?' );
+								break;
+							}
+						}
+
+						$content = isset( $m[5] ) ? $m[5] : null;
+
+						return $m[1] . call_user_func( $shortcode_tags[ $tag ], $attr, $content, $tag ) . $m[6];
+					}
+
+					return $return;
+				},
+				10,
+				5
 			);
 		}
 

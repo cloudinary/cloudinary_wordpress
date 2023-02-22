@@ -17,8 +17,6 @@ use Cloudinary\Assets as CLD_Assets;
 use Cloudinary\Media\Gallery;
 use Cloudinary\Sync\Storage;
 use Cloudinary\UI\State;
-use WP_REST_Request;
-use WP_REST_Server;
 use const E_USER_WARNING;
 use const WPCOM_IS_VIP_ENV;
 
@@ -108,6 +106,13 @@ final class Plugin {
 	public $hooks;
 
 	/**
+	 * Holds the list of keys.
+	 */
+	const KEYS = array(
+		'notices' => 'cloudinary_notices',
+	);
+
+	/**
 	 * Plugin_Base constructor.
 	 */
 	public function __construct() {
@@ -133,6 +138,7 @@ final class Plugin {
 	 * that extend the Customizer to ensure resources are available in time.
 	 */
 	public function init() {
+		Cron::get_instance();
 		$this->components['admin']                  = new Admin( $this );
 		$this->components['state']                  = new State( $this );
 		$this->components['connect']                = new Connect( $this );
