@@ -329,8 +329,12 @@ class Delivery implements Setup {
 		if ( ! $sql ) {
 			$sql = Utils::get_table_sql();
 		}
+		$public_id          = null;
+		$relationship       = Relationship::get_relationship( $attachment_id );
+		if ( $relationship instanceof Relationship ) {
+			$public_id = $relationship->public_id;
+		}
 		$sizes              = $this->get_sized( $attachment_id );
-		$public_id          = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
 		$settings_signature = self::get_settings_signature();
 		$relation_signature = $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['relationship'], true );
 
