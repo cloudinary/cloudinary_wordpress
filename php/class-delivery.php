@@ -523,12 +523,13 @@ class Delivery implements Setup {
 	 */
 	public static function update_size_relations_public_id( $attachment_id, $public_id ) {
 		$relationship              = Relationship::get_relationship( $attachment_id );
-		$relationship->public_id   = $public_id;
-		$relationship->public_hash = md5( $public_id );
-		$relationship->signature   = self::get_settings_signature();
-		$relationship->save();
 
-		do_action( 'cloudinary_flush_cache' );
+		if ( $relationship instanceof Relationship ) {
+			$relationship->public_id   = $public_id;
+			$relationship->public_hash = md5( $public_id );
+			$relationship->signature   = self::get_settings_signature();
+			$relationship->save();
+		}
 	}
 
 	/**
@@ -539,8 +540,11 @@ class Delivery implements Setup {
 	 */
 	public static function update_size_relations_state( $attachment_id, $state ) {
 		$relationship             = Relationship::get_relationship( $attachment_id );
-		$relationship->post_state = $state;
-		$relationship->save();
+
+		if ( $relationship instanceof Relationship ) {
+			$relationship->post_state = $state;
+			$relationship->save();
+		}
 
 		do_action( 'cloudinary_flush_cache' );
 	}
