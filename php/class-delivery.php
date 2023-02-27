@@ -484,8 +484,6 @@ class Delivery implements Setup {
 		self::update_size_relations_public_id( $attachment_id, null );
 		self::update_size_relations_state( $attachment_id, 'disable' );
 		self::update_size_relations_transformations( $attachment_id, null );
-
-		do_action( 'cloudinary_flush_cache' );
 	}
 
 	/**
@@ -555,7 +553,6 @@ class Delivery implements Setup {
 	 */
 	public static function update_size_relations_transformations( $attachment_id, $transformations ) {
 		Relate::update_transformations( $attachment_id, $transformations );
-		do_action( 'cloudinary_flush_cache' );
 	}
 
 	/**
