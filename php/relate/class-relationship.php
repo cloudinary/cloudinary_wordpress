@@ -13,6 +13,12 @@ use function Cloudinary\get_plugin_instance;
 
 /**
  * Class Relationship
+ *
+ * @property string|null $post_state
+ * @property string|null $public_hash
+ * @property string|null $public_id
+ * @property string|null $signature
+ * @property string|null $transformations
  */
 class Relationship {
 
