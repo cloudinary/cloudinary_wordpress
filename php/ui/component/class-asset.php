@@ -7,10 +7,11 @@
 
 namespace Cloudinary\UI\Component;
 
-use Cloudinary\Assets;
 use Cloudinary\REST_API;
-use Cloudinary\Settings\Setting;
+use Cloudinary\Assets;
+use Cloudinary\UI\Component;
 use function Cloudinary\get_plugin_instance;
+use Cloudinary\Settings\Setting;
 
 /**
  * HTML Component to render components only.

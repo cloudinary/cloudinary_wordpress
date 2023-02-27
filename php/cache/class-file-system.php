@@ -182,7 +182,7 @@ class File_System {
 	 */
 	public function get_location( $path ) {
 		$location_path = trailingslashit( dirname( $path ) );
-		$type          = array_search( $location_path, $this->paths );
+		$type          = array_search( $location_path, $this->paths, true );
 
 		return $type ? $type : 'root';
 	}
@@ -346,7 +346,7 @@ class File_System {
 				$offset   = strlen( $file ) - strlen( $ext );
 				$min_file = substr( $file, 0, $offset ) . 'min.' . $ext;
 
-				return ! in_array( $min_file, $files );
+				return ! in_array( $min_file, $files, true );
 			}
 		);
 

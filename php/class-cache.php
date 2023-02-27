@@ -138,7 +138,7 @@ class Cache extends Settings_Component implements Setup {
 			return $template;
 		}
 		ob_start( array( $this, 'html_rewrite' ) );
-		include $template;
+		include $template; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
 
 		return CLDN_PATH . 'php/cache/template.php';
 	}

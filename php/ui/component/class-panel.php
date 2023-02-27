@@ -39,7 +39,7 @@ class Panel extends Component {
 	 */
 	public function setup() {
 		parent::setup();
-		$this->current_state = $this->state->get_state( $this->get_id(), $this->setting->get_param( 'collapsible' ) );
+		$this->current_state = $this->state->get_state( $this->setting->get_slug(), $this->setting->get_param( 'collapsible' ) );
 	}
 
 	/**
@@ -80,11 +80,11 @@ class Panel extends Component {
 
 		$struct['attributes']['class'][] = 'cld-' . $this->type . '-heading';
 		if ( $this->setting->has_param( 'anchor' ) ) {
-			$struct['attributes']['id'] = 'panel-' . str_replace( '_', '-', $this->get_id() );
+			$struct['attributes']['id'] = 'panel-' . str_replace( '_', '-', $this->setting->get_slug() );
 		}
 		if ( $this->setting->has_param( 'collapsible' ) ) {
 			$struct['attributes']['class'][]  = 'collapsible';
-			$struct['attributes']['data-for'] = $this->get_id();
+			$struct['attributes']['data-for'] = $this->setting->get_slug();
 		}
 
 		return parent::header( $struct );
@@ -164,8 +164,8 @@ class Panel extends Component {
 			$struct['render']                    = true;
 			$struct['attributes']['class'][]     = 'dashicons';
 			$struct['attributes']['class'][]     = 'open' === $this->current_state ? 'dashicons-arrow-up-alt2' : 'dashicons-arrow-down-alt2';
-			$struct['attributes']['data-toggle'] = $this->get_id();
-			$struct['attributes']['id']          = $this->get_id();
+			$struct['attributes']['data-toggle'] = $this->setting->get_slug();
+			$struct['attributes']['id']          = $this->setting->get_slug();
 		}
 
 		return $struct;
@@ -185,7 +185,7 @@ class Panel extends Component {
 
 			if ( $this->setting->has_param( 'collapsible' ) ) {
 				$struct['attributes']['class'][]    = $this->current_state;
-				$struct['attributes']['data-wrap']  = $this->get_id();
+				$struct['attributes']['data-wrap']  = $this->setting->get_slug();
 				$struct['attributes']['data-state'] = $this->current_state;
 			}
 		}
