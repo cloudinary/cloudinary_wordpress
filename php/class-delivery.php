@@ -705,11 +705,16 @@ class Delivery implements Setup {
 	/**
 	 * Delete cached metadata.
 	 *
+	 * @param bool $hard Whether to hard flush the cache.
+	 *
 	 * @hook cloudinary_flush_cache
 	 */
-	public function do_clear_cache() {
+	public function do_clear_cache( $hard = true ) {
 		delete_post_meta_by_key( self::META_CACHE_KEY );
-		wp_cache_flush();
+
+		if ( $hard ) {
+			wp_cache_flush();
+		}
 	}
 
 	/**
