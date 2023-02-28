@@ -19,7 +19,7 @@ class On_Off extends Text {
 	 *
 	 * @var string
 	 */
-	protected $blueprint = 'wrap|span|label|title|/title|prefix/|/label|description_left/|control|false_value/|input/|slider/|/control|description/|/span|tooltip/|/wrap';
+	protected $blueprint = 'wrap|span|label|title|/title|prefix/|/label|description_left/|control|false_value/|input/|shadow/|slider/|/control|description/|/span|tooltip/|/wrap';
 
 	/**
 	 * Filter the false_value parts structure.
@@ -92,8 +92,28 @@ class On_Off extends Text {
 			$struct['attributes']['data-main'] = wp_json_encode( $controllers );
 		}
 
-		if ( true === $this->setting->get_param( 'disabled', false ) || true === $this->setting->has_param( 'main_required', false ) && empty( $struct['attributes']['data-main'] ) ) {
+		if ( $this->is_readonly() || ( true === $this->setting->has_param( 'main_required', false ) && empty( $struct['attributes']['data-main'] ) ) ) {
+			$struct['attributes']['type'] = 'hidden';
+		}
+
+		return $struct;
+	}
+
+	/**
+	 * Filter the shadow parts structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function shadow( $struct ) {
+		// Add the toggle stub.
+		if ( $this->is_readonly() || ( true === $this->setting->has_param( 'main_required', false ) && empty( $struct['attributes']['data-main'] ) ) ) {
+			$struct                           = $this->get_part( 'input' );
+			$struct['attributes']['type']     = 'checkbox';
 			$struct['attributes']['disabled'] = 'disabled';
+			$struct['attributes']['checked']  = 'checked';
+			$struct['attributes']['type']     = 'checkbox';
 		}
 
 		return $struct;
@@ -117,12 +137,10 @@ class On_Off extends Text {
 		}
 		if (
 			true === $this->setting->get_param( 'disabled', false )
-			|| true === $this->setting->get_param( 'main_required', false )
-			&& empty(
-				$this->setting->get_param(
-					'main',
-					array()
-				)
+			|| $this->is_readonly()
+			|| (
+				true === $this->setting->get_param( 'main_required', false )
+				&& empty( $this->setting->get_param( 'main', array() ) )
 			)
 		) {
 			$struct['attributes']['class'][] = 'disabled';
@@ -168,6 +186,32 @@ class On_Off extends Text {
 		$struct['children']['off'] = $off;
 
 		return $struct;
+	}
+
+	/**
+	 * Filter the tooltip structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function tooltip( $struct ) {
+		$struct = parent::tooltip( $struct );
+
+		if ( $this->is_readonly() ) {
+			$struct['content'] = $this->setting->get_param( 'readonly_message' );
+		}
+
+		return $struct;
+	}
+
+	/**
+	 * Is toggle readonly
+	 *
+	 * @return bool
+	 */
+	protected function is_readonly() {
+		return true === $this->setting->get_param( 'readonly', false ) || ( is_callable( $this->setting->get_param( 'readonly', false ) ) && call_user_func( $this->setting->get_param( 'readonly' ) ) );
 	}
 
 	/**

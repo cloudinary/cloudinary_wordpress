@@ -464,7 +464,7 @@ class Sync_Queue {
 
 		$args = array(
 			'post_type'           => 'attachment',
-			'post_mime_type'      => array( 'image', 'video' ),
+			'post_mime_type'      => array(),
 			'post_status'         => 'inherit',
 			'paged'               => 1,
 			'posts_per_page'      => 100,
@@ -489,6 +489,14 @@ class Sync_Queue {
 			'no_found_rows'       => true,
 		);
 
+		if ( 'on' === $this->plugin->settings->get_value( 'image_delivery' ) ) {
+			$args['post_mime_type'][] = 'image';
+		}
+
+		if ( 'on' === $this->plugin->settings->get_value( 'video_delivery' ) ) {
+			$args['post_mime_type'][] = 'video';
+		}
+
 		/**
 		 * Filter the params for the query used to build a queue.
 		 *
@@ -500,6 +508,13 @@ class Sync_Queue {
 		 * @return {array}
 		 */
 		$args = apply_filters( 'cloudinary_build_queue_query', $args );
+
+		if ( empty( $args['post_mime_type'] ) ) {
+			$action_message = __( 'No mime types to query.', 'cloudinary' );
+			do_action( '_cloudinary_queue_action', $action_message );
+
+			return;
+		}
 
 		// translators: variable is page number.
 		$action_message = __( 'Building Queue.', 'cloudinary' );

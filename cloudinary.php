@@ -28,6 +28,10 @@
  * @package Cloudinary
  */
 
+namespace Cloudinary;
+
+use WP_CLI;
+
 // Define Cloudinary Constants.
 define( 'CLDN_CORE', __FILE__ );
 define( 'CLDN_PATH', plugin_dir_path( __FILE__ ) );
@@ -37,17 +41,17 @@ if ( version_compare( phpversion(), '5.6', '>=' ) ) {
 	register_activation_hook( __FILE__, array( 'Cloudinary\Utils', 'install' ) );
 } else {
 	if ( defined( 'WP_CLI' ) ) {
-		WP_CLI::warning( _cloudinary_php_version_text() );
+		WP_CLI::warning( php_version_text() );
 	} else {
-		add_action( 'admin_notices', '_cloudinary_php_version_error' );
+		add_action( 'admin_notices', __NAMESPACE__ . '\php_version_error' );
 	}
 }
 
 /**
  * Admin notice for incompatible versions of PHP.
  */
-function _cloudinary_php_version_error() {
-	printf( '<div class="error"><p>%s</p></div>', esc_html( _cloudinary_php_version_text() ) );
+function php_version_error() {
+	printf( '<div class="error"><p>%s</p></div>', esc_html( php_version_text() ) );
 }
 
 /**
@@ -55,6 +59,6 @@ function _cloudinary_php_version_error() {
  *
  * @return string
  */
-function _cloudinary_php_version_text() {
+function php_version_text() {
 	return __( 'Cloudinary plugin error: Your version of PHP is too old to run this plugin. You must be running PHP 5.6 or higher.', 'cloudinary' );
 }
