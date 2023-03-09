@@ -142,7 +142,14 @@ Your site is now setup to start using Cloudinary.
 
 == Changelog ==
 
-= 3.1 (22 FEBRUARY 2022) =
+= 3.1.1 (06 MARCH 2023) =
+
+Fixes and Improvements:
+
+* Fixed the *Add transformation* on the media library for newly added assets
+* Fixed PHP warning in error log after upgrading to PHP 8/8.X
+
+= 3.1 (22 FEBRUARY 2023) =
 
 Fixes and Improvements:
 
