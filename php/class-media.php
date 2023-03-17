@@ -191,6 +191,10 @@ class Media extends Settings_Component implements Setup {
 			'audio',
 			'application',
 			'text',
+			'document',
+			'archive',
+			'spreadsheet',
+			'interactive',
 		);
 
 		/**
