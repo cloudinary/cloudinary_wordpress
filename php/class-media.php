@@ -693,6 +693,10 @@ class Media extends Settings_Component implements Setup {
 			}
 		} else {
 			$public_id = isset( $path_info['dirname'] ) && '.' !== $path_info['dirname'] ? $path_info['dirname'] . DIRECTORY_SEPARATOR . $path_info['filename'] : $path_info['filename'];
+
+			if ( ! empty( $path_info['extension'] ) && in_array( 'raw', $maybe_seo, true ) ) {
+				$public_id .= '.' . $path_info['extension'];
+			}
 		}
 		$public_id = trim( $public_id, './' );
 
