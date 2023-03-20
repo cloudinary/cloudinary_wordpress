@@ -553,7 +553,7 @@ class Utils {
 		if ( ! $is_frontend_ajax && ! $is_admin ) {
 			// Catch the content type of the $_SERVER['CONTENT_TYPE'] variable.
 			$type             = filter_input( INPUT_SERVER, 'CONTENT_TYPE', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
-			$is_frontend_ajax = false !== strpos( $type, 'json' );
+			$is_frontend_ajax = $type && false !== strpos( $type, 'json' );
 		}
 
 		return $is_frontend_ajax;
