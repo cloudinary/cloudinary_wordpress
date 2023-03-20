@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cloudinary STABLETAG\n"
 "Report-Msgid-Bugs-To: https://github.com/cloudinary/cloudinary_wordpress\n"
-"POT-Creation-Date: 2023-02-15 14:44:43+00:00\n"
+"POT-Creation-Date: 2023-03-20 14:49:21+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -502,14 +502,14 @@ msgstr ""
 msgid "Unsynced"
 msgstr ""
 
-#: php/class-media.php:449
+#: php/class-media.php:453
 #. translators: variable is file size.
 msgid ""
 "File size exceeds the maximum of %s. This media asset will be served from "
 "WordPress."
 msgstr ""
 
-#: php/class-media.php:1919
+#: php/class-media.php:1925
 msgid "Import"
 msgstr ""
 
@@ -517,43 +517,43 @@ msgstr ""
 msgid "Cloudinary"
 msgstr ""
 
-#: php/class-media.php:2201
+#: php/class-media.php:2207
 msgid "The delivery for this asset is disabled."
 msgstr ""
 
-#: php/class-media.php:2205
+#: php/class-media.php:2211
 msgid "Not syncable. This is an external media."
 msgstr ""
 
-#: php/class-media.php:2209
+#: php/class-media.php:2215
 msgid "This media is Fetch type."
 msgstr ""
 
-#: php/class-media.php:2213
+#: php/class-media.php:2219
 msgid "This media is Sprite type."
 msgstr ""
 
-#: php/class-media.php:2223
+#: php/class-media.php:2229
 msgid "Not Synced"
 msgstr ""
 
-#: php/class-media.php:2228
+#: php/class-media.php:2234
 msgid "Synced"
 msgstr ""
 
-#: php/class-media.php:2869
+#: php/class-media.php:2875
 msgid "No Cloudinary filters"
 msgstr ""
 
-#: php/class-media.php:2969
+#: php/class-media.php:2975
 msgid "Media Settings"
 msgstr ""
 
-#: php/class-media.php:2972
+#: php/class-media.php:2978
 msgid "Media Display"
 msgstr ""
 
-#: php/class-media.php:2976 php/media/class-global-transformations.php:618
+#: php/class-media.php:2982 php/media/class-global-transformations.php:620
 #: php/ui/component/class-asset-preview.php:73
 #: php/ui/component/class-plan-details.php:119
 #: php/ui/component/class-plan-status.php:128
@@ -561,7 +561,7 @@ msgstr ""
 msgid "Transformations"
 msgstr ""
 
-#: php/class-media.php:2977
+#: php/class-media.php:2983
 msgid ""
 "Cloudinary allows you to easily transform your images on-the-fly to any "
 "required format, style and dimension, and also optimizes images for minimal "
@@ -570,7 +570,7 @@ msgid ""
 "transformation and delivery URLs."
 msgstr ""
 
-#: php/class-media.php:2982 ui-definitions/settings-image.php:163
+#: php/class-media.php:2988 ui-definitions/settings-image.php:163
 #: ui-definitions/settings-video.php:215
 msgid "See examples"
 msgstr ""
@@ -877,7 +877,7 @@ msgstr ""
 #: php/media/class-filter.php:604 php/media/class-filter.php:620
 #: php/media/class-filter.php:638 php/media/class-filter.php:654
 #: php/media/class-filter.php:670
-#: php/media/class-global-transformations.php:566
+#: php/media/class-global-transformations.php:568
 msgid "Overwrite Global Transformations"
 msgstr ""
 
@@ -914,29 +914,29 @@ msgid ""
 "classic editor."
 msgstr ""
 
-#: php/media/class-global-transformations.php:320
+#: php/media/class-global-transformations.php:322
 msgid "Categories/Tags transformations"
 msgstr ""
 
-#: php/media/class-global-transformations.php:452
+#: php/media/class-global-transformations.php:454
 msgid ""
 "If you placed custom transformations on categories/tags you may order them "
 "below. "
 msgstr ""
 
-#: php/media/class-global-transformations.php:454
+#: php/media/class-global-transformations.php:456
 msgid "No terms added"
 msgstr ""
 
-#: php/media/class-global-transformations.php:465
+#: php/media/class-global-transformations.php:467
 msgid "Disable global transformations"
 msgstr ""
 
-#: php/media/class-global-transformations.php:540
+#: php/media/class-global-transformations.php:542
 msgid "Flag on whether transformation should be overwritten for a featured image."
 msgstr ""
 
-#: php/media/class-global-transformations.php:659
+#: php/media/class-global-transformations.php:661
 msgid "Add transformations"
 msgstr ""
 
