@@ -268,7 +268,7 @@ class Delivery implements Setup {
 			}
 			$size            = $this->media->get_size_from_url( $original_url );
 			$transformations = $this->media->get_transformations_from_string( $original_url );
-			if ( 'image' === $this->media->get_resource_type( $result['post_id'] ) ) {
+			if ( 'image' === $this->media->get_resource_type( $result['post_id'] ) && ! $this->media->is_preview_only( $result['post_id'] ) ) {
 				$attachment_url = wp_get_attachment_image_url( $result['post_id'], $size );
 			} else {
 				$attachment_url = wp_get_attachment_url( $result['post_id'] );
