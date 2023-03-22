@@ -37,6 +37,7 @@
 	input {
 		margin-top: 6px;
 		color: $color-green;
+
 		&.invalid {
 			border-color: $color-red;
 			color: $color-red;
@@ -44,22 +45,47 @@
 	}
 }
 
+&-crops {
+	border-bottom: 1px solid $color-light-grey;
+	padding-bottom: 6px;
+	margin-bottom: 6px;
+}
 
 &-size-items {
 
-	width: 50%;
-
 	&-item {
+		display: flex;
+		flex-direction: column;
 		padding: 8px;
-		cursor: pointer;
+		border: 1px solid $color-light-grey;
+		margin-bottom: -1px;
 
-		&:hover {
-			background-color: $color-light-grey;
+		.cld-ui-suffix {
+			width: 50%;
+			text-overflow: ellipsis;
+			overflow: hidden;
+		}
+
+		img {
+			max-width: 100%;
+			object-fit: scale-down;
+			margin-bottom: 8px;
 		}
 	}
 
-	.selected {
-		background-color: $color-light-grey;
-		font-weight: bold;
+}
+
+&-image-selector {
+	display: flex;
+
+	&-item {
+		border: 1px solid $color-light-grey;
+		padding: 3px 6px;
+		margin: 0 3px -1px 0;
+		cursor: pointer;
+
+		&[data-selected] {
+			background-color: $color-light-grey;
+		}
 	}
 }

@@ -265,6 +265,7 @@ class Api {
 		}
 		$defaults = array(
 			'resource_type' => 'image',
+			'delivery_type' => 'upload',
 			'version'       => 'v1',
 		);
 		$args     = wp_parse_args( array_filter( $args ), $defaults );

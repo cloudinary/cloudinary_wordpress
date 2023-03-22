@@ -5,6 +5,20 @@
  * @package Cloudinary
  */
 
+/**
+ * Enable the crop size settings.
+ *
+ * @hook  cloudinary_enabled_crop_sizes
+ * @since 3.1.0
+ * @default {false}
+ *
+ * @param $enabeld {bool} Are the crop sizes enabled?
+ *
+ * @retrun {bool}
+ */
+if ( ! apply_filters( 'cloudinary_enabled_crop_sizes', false ) ) {
+	return array();
+}
 $metaboxes = array(
 	'crop_meta' => array(
 		'title'    => __( 'Cloudinary crop sizes', 'cloudinary' ),
@@ -25,7 +39,7 @@ $metaboxes = array(
 					'default'      => 'off',
 				),
 				array(
-					'type'      => 'sizes',
+					'type'      => 'crops',
 					'slug'      => 'single_sizes',
 					'mode'      => 'full',
 					'condition' => array(

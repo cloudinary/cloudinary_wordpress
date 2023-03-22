@@ -900,6 +900,14 @@ class Media extends Settings_Component implements Setup {
 			}
 		}
 
+		if ( ! empty( $size['wpsize'] ) ) {
+
+			$crops = $this->settings->get_value( 'crop_sizes' );
+			if ( ! empty( $crops[ $size['wpsize'] ] ) ) {
+				$transform = $this->get_transformations_from_string( $crops[ $size['wpsize'] ] );
+				$size      = array_merge( $size, $transform[0] );
+			}
+		}
 		if ( ! empty( $tag_element['atts']['data-transformation-crop'] ) ) {
 			$transformations = $this->get_transformations_from_string( $tag_element['atts']['data-transformation-crop'] );
 			$size            = array_merge( $size, reset( $transformations ) );
@@ -1011,7 +1019,12 @@ class Media extends Settings_Component implements Setup {
 				$transformations[ $attachment_id ] = $meta['single_crop_sizes']['single_sizes'];
 			}
 		}
-
+		if ( empty( $transformations ) ) {
+			$crops = $this->settings->get_value( 'crop_sizes' );
+			if ( ! empty( $crops[ $size ] ) ) {
+				$crop = $crops[ $size ];
+			}
+		}
 		if ( $size && ! empty( $transformations[ $attachment_id ][ $size ] ) ) {
 			$crop = $transformations[ $attachment_id ][ $size ];
 		}
@@ -1059,6 +1072,23 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Extract transformations from string..
+	 *
+	 * @param string $str  The transformation string.
+	 * @param string $type The type of transformation string.
+	 *
+	 * @return array The array of found transformations within the string.
+	 */
+	public static function extract_transformations_from_string( $str, $type = 'image' ) {
+		static $media;
+		if ( ! $media ) {
+			$media = get_plugin_instance()->get_component( 'media' );
+		}
+
+		return $media->get_transformations_from_string( $str, $type );
 	}
 
 	/**

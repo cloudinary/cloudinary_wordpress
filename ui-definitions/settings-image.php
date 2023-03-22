@@ -187,6 +187,14 @@ $settings = array(
 						'description'        => __( 'Enable SVG support.', 'cloudinary' ),
 						'default'            => 'off',
 					),
+					array(
+						'type'    => 'crops',
+						'slug'    => 'crop_sizes',
+						'title'   => __( 'Crops Sizes', 'cloudinary' ),
+						'enabled' => function () {
+							return apply_filters( 'cloudinary_enabled_crop_sizes', false );
+						},
+					),
 				),
 			),
 			array(

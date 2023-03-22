@@ -71,6 +71,15 @@ class Meta_Box {
 		$slug = $args['id'];
 		$box  = $this->settings->get_setting( $slug );
 		$box->set_param( 'type', 'meta_box' );
+		$media = $this->plugin->get_component( 'media' );
+		if ( wp_attachment_is_image( $post ) ) {
+			$public_id     = $media->get_public_id( $post->ID );
+			$file_id       = basename( $media->get_cloudinary_id( $post->ID ) );
+			$cloudinary_id = path_join( $public_id, $file_id );
+		} else {
+			$cloudinary_id = $media->get_cloudinary_id( $post->ID );
+		}
+		$box->get_root_setting()->set_param( 'preview_id', $cloudinary_id );
 		foreach ( $box->get_settings() as $setting ) {
 			$setting->set_param( 'type', 'wrap' );
 		}
@@ -81,13 +90,15 @@ class Meta_Box {
 	 * Setup the metabox settings.
 	 */
 	public function setup() {
-		$settings       = $this->get_config();
-		$config         = array(
-			'type'     => 'meta_box',
-			'storage'  => 'post_meta',
-			'settings' => $settings,
-		);
-		$this->settings = new Settings( 'cloudinary_metaboxes', $config );
+		$settings = $this->get_config();
+		if ( ! empty( $settings ) ) {
+			$config         = array(
+				'type'     => 'meta_box',
+				'storage'  => 'post_meta',
+				'settings' => $settings,
+			);
+			$this->settings = new Settings( 'cloudinary_metaboxes', $config );
+		}
 	}
 
 	/**

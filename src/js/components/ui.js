@@ -9,6 +9,7 @@ import RestrictedTypes from './restricted-types';
 import TagsInput from './tags-input';
 import SuffixValue from './suffix-value';
 import SizePreview from './size-preview';
+import CropSizes from './crops-sizes';
 
 const UI = {
 	bindings: {},
@@ -66,6 +67,7 @@ const UI = {
 		TagsInput.init( context );
 		SuffixValue.init( context );
 		SizePreview.init( context );
+		CropSizes.init( context );
 	},
 	_autoSuffix( input ) {
 		const suffixes = input.dataset.autoSuffix;

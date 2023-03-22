@@ -158,6 +158,7 @@ final class Plugin {
 		$this->components['svg']                    = new SVG( $this );
 		$this->components['relate']                 = new Relate( $this );
 		$this->components['metabox']                = new Meta_Box( $this );
+		$this->components['url']                    = new URL( $this );
 	}
 
 	/**
@@ -165,7 +166,7 @@ final class Plugin {
 	 *
 	 * @param mixed $component The component.
 	 *
-	 * @return Admin|Connect|Delivery|Media|REST_API|String_Replace|Sync|Report|null
+	 * @return Admin|Connect|Delivery|Media|REST_API|String_Replace|Sync|Report|URL|null
 	 */
 	public function get_component( $component ) {
 		$return = null;
@@ -301,7 +302,6 @@ final class Plugin {
 		add_filter( 'plugin_row_meta', array( $this, 'force_visit_plugin_site_link' ), 10, 4 );
 		add_action( 'admin_print_footer_scripts', array( $this, 'print_script_data' ), 1 );
 		add_action( 'wp_print_footer_scripts', array( $this, 'print_script_data' ), 1 );
-		add_filter( 'cloudinary_admin_image_settings', array( Media::class, 'maybe_add_size_settings' ) );
 
 		add_action( 'cloudinary_version_upgrade', array( Utils::class, 'install' ) );
 	}
