@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: images, videos, DAM, optimization, CDN
 Requires at least: 4.7
-Tested up to: 6.0.3
+Tested up to: 6.1.1
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -141,6 +141,14 @@ Your site is now setup to start using Cloudinary.
 1. Need help? We’ve got you covered
 
 == Changelog ==
+
+= 3.1.2 (29 MARCH 2023) =
+
+Fixes and Improvements:
+
+* Fixed support for special characters as (^) causing a broken thumbnail
+* Fixed Cloudinary URLs for all non-media library assets
+* Fixed PHP error caused by transformations on unsupported file types
 
 = 3.1.1 (06 MARCH 2023) =
 
