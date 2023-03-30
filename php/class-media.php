@@ -191,6 +191,10 @@ class Media extends Settings_Component implements Setup {
 			'audio',
 			'application',
 			'text',
+			'document',
+			'archive',
+			'spreadsheet',
+			'interactive',
 		);
 
 		/**
@@ -693,6 +697,10 @@ class Media extends Settings_Component implements Setup {
 			}
 		} else {
 			$public_id = isset( $path_info['dirname'] ) && '.' !== $path_info['dirname'] ? $path_info['dirname'] . DIRECTORY_SEPARATOR . $path_info['filename'] : $path_info['filename'];
+
+			if ( ! empty( $path_info['extension'] ) && in_array( 'raw', $maybe_seo, true ) ) {
+				$public_id .= '.' . $path_info['extension'];
+			}
 		}
 		$public_id = trim( $public_id, './' );
 
@@ -816,19 +824,10 @@ class Media extends Settings_Component implements Setup {
 			foreach ( $transformations as $transformation ) {
 				if ( ! empty( $transformation['crop'] ) && ! empty( $transformation['width'] ) && ! empty( $transformation['height'] ) ) {
 					$return = array(
-						(int) $transformation['width'],
-						(int) $transformation['height'],
+						$transformation['width'],
+						$transformation['height'],
 					);
 					break;
-				}
-
-				if ( ! $return ) {
-					$return = array_filter(
-						$transformation,
-						static function ( $item ) {
-							return ! isset( $item['crop'] ) && ! isset( $item['width'] ) && ! isset( $item['height'] );
-						}
-					);
 				}
 			}
 		} else {
@@ -838,11 +837,15 @@ class Media extends Settings_Component implements Setup {
 
 				$size_parts = explode( 'x', $end_part );
 				$size_int   = array_map( 'intval', $size_parts );
-				$size       = array_filter( $size_int, 'is_int' );
+				$size       = array_filter( $size_int );
 				if ( ! empty( $size ) && 2 === count( $size ) ) {
 					$return = $size;
 				}
 			}
+		}
+
+		if ( $return ) {
+			$return = array_values( $return );
 		}
 
 		return $return;
@@ -853,13 +856,11 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @param string $url           The url to get crop for.
 	 * @param int    $attachment_id image attachment id.
-	 * @param array  $tag_element   The tag element.
 	 *
 	 * @return array|bool The width and height of the crop, or false if size is custom.
 	 */
-	public function get_crop( $url, $attachment_id, $tag_element = array() ) {
+	public function get_crop( $url, $attachment_id ) {
 		$meta = wp_get_attachment_metadata( $attachment_id );
-		$size = false;
 		if ( ! empty( $meta['sizes'] ) ) {
 			// Try and match the file name from the sizes meta data to prevent false positives from filenames that have numbers separated by an x.
 			$file             = wp_basename( $url ); // We only need the base name to check.
@@ -892,14 +893,12 @@ class Media extends Settings_Component implements Setup {
 						}
 					}
 
-					$size = $wp_size;
-
-					break;
+					return $wp_size;
 				}
 			}
 		}
 
-		return $size;
+		return false;
 	}
 
 	/**
@@ -1393,13 +1392,11 @@ class Media extends Settings_Component implements Setup {
 		$url = apply_filters( 'cloudinary_converted_url', $url, $attachment_id, $pre_args );
 
 		// Add Cloudinary analytics.
-		$cache[ $key ] = esc_url(
-			add_query_arg(
-				array(
-					'_i' => 'AA',
-				),
-				$url
-			)
+		$cache[ $key ] = add_query_arg(
+			array(
+				'_i' => 'AA',
+			),
+			$url
 		);
 
 		return $cache[ $key ];
@@ -3057,69 +3054,6 @@ class Media extends Settings_Component implements Setup {
 		);
 
 		return $args;
-	}
-
-	/**
-	 * Maybe add the crop size settings
-	 *
-	 * @param array $settings The Settings array.
-	 *
-	 * @return array
-	 */
-	public static function maybe_add_size_settings( $settings ) {
-
-		/**
-		 * Enable the crop size settings.
-		 *
-		 * @hook  cloudinary_enabled_crop_sizes
-		 * @since 3.1.0
-		 * @default {false}
-		 *
-		 * @param $enabeld {bool} Are the crop sizes enabled?
-		 *
-		 * @retrun {bool}
-		 */
-		if ( apply_filters( 'cloudinary_enabled_crop_sizes', false ) ) {
-			$crop_sizes   = array(
-				array(
-					'type'      => 'tag',
-					'element'   => 'hr',
-					'condition' => array(
-						'image_delivery' => true,
-					),
-				),
-				array(
-					'type'         => 'on_off',
-					'slug'         => 'sized_transformations',
-					'title'        => __( 'Sized transformations', 'cloudinary' ),
-					'tooltip_text' => __(
-						'Enable transformations per registered image sizes.',
-						'cloudinary'
-					),
-					'description'  => __( 'Enable sized transformations.', 'cloudinary' ),
-					'default'      => 'off',
-					'condition'    => array(
-						'image_delivery' => true,
-					),
-				),
-				array(
-					'type'      => 'sizes',
-					'slug'      => 'crop_sizes',
-					'condition' => array(
-						'image_delivery' => true,
-					),
-				),
-			);
-			$new_settings = array_merge(
-				array_slice( $settings[0][1][0], 0, 7 ),
-				$crop_sizes,
-				array_slice( $settings[0][1][0], 7 )
-			);
-
-			$settings[0][1][0] = $new_settings;
-		}
-
-		return $settings;
 	}
 
 	/**

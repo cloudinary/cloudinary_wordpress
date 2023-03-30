@@ -124,13 +124,16 @@ class Cron extends Text {
 		$tr['children']['task'] = $task;
 
 		// Add last run.
-		$last_run                   = $this->get_part( 'td' );
-		$last_run['content']        = sprintf( '%s ago', human_time_diff( $item['last_run'], time() ) );
+		$last_run            = $this->get_part( 'td' );
+		$last_run['content'] = __( 'Waiting to start', 'cloudinary' );
+		if ( $item['last_run'] ) {
+			$last_run['content'] = sprintf( '%s ago', human_time_diff( $item['last_run'], time() ) );
+		}
 		$tr['children']['last_run'] = $last_run;
 
 		// Add next run.
 		$next_run                   = $this->get_part( 'td' );
-		$next_run['content']        = 'on' === $field->get_value() ? sprintf( '%s ago', human_time_diff( $item['next_run'], time() ) ) : '';
+		$next_run['content']        = 'on' === $field->get_value() ? sprintf( 'in %s', human_time_diff( $item['next_run'], time() ) ) : '';
 		$tr['children']['next_run'] = $next_run;
 
 		return $tr;

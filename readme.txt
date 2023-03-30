@@ -142,6 +142,23 @@ Your site is now setup to start using Cloudinary.
 
 == Changelog ==
 
+= 3.1.1 (06 MARCH 2023) =
+
+Fixes and Improvements:
+
+* Fixed the *Add transformation* on the media library for newly added assets
+* Fixed PHP warning in error log after upgrading to PHP 8/8.X
+
+= 3.1 (22 FEBRUARY 2023) =
+
+Fixes and Improvements:
+
+* Added proactive mechanism that improves the support of synced assets using a cron job
+* Improved the very first initialisation of the setup wizard
+* Fixed the warning message when adding multi page PDFs
+* Fixed the Cloudinary status from the WP admin bar
+* Fixed the DivisionByZeroError Fatal error message
+
 = 3.0.9 (25 OCTOBER 2022) =
 
 Fixes and Improvements:

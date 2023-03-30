@@ -37,16 +37,26 @@ $settings = array(
 					'title'              => __( 'Image delivery', 'cloudinary' ),
 					'optimisation_title' => __( 'Image delivery', 'cloudinary' ),
 					'tooltip_text'       => __(
-						'Images will be uploaded and delivered from Cloudinary.',
+						'If you turn this setting off, your images will be delivered from WordPress.',
 						'cloudinary'
 					),
-					'description'        => __( 'Optimize and deliver images on my site.', 'cloudinary' ),
+					'description'        => __( 'Sync and deliver images from Cloudinary.', 'cloudinary' ),
 					'default'            => 'on',
 					'attributes'         => array(
 						'data-context' => 'image',
 					),
-					'disabled'         => ! get_plugin_instance()->get_component( 'storage' )->is_local_full(),
-					'disabled_message' => __( 'This setting is disabled because you have selected to offload all media to Cloudinary. Please check the Storage in the General Settings page.', 'cloudinary' ),
+					'readonly'           => static function () {
+						return ! get_plugin_instance()->get_component( 'storage' )->is_local_full();
+					},
+					'readonly_message'   => sprintf(
+						// translators: %s is a link to the storage settings page.
+						__( 'This setting currently can’t be turned off. Your images must be delivered from Cloudinary because your assets are being stored in Cloudinary only. To enable delivering images from WordPress, first select a %s in the General Settings page that will enable storing your assets also in WordPress.', 'cloudinary' ),
+						sprintf(
+							'<a href="%s">%s</a>',
+							add_query_arg( array( 'page' => 'cloudinary_connect#connect.offload' ), admin_url( 'admin.php' ) ),
+							__( 'Storage setting', 'cloudinary' )
+						)
+					),
 				),
 				array(
 					'type'      => 'group',
@@ -141,7 +151,7 @@ $settings = array(
 						'slug'           => 'image_freeform',
 						'title'          => __( 'Additional image transformations', 'cloudinary' ),
 						'tooltip_text'   => sprintf(
-							// translators: The link to transformation reference.
+						// translators: The link to transformation reference.
 							__(
 								'A set of additional transformations to apply to all images. Specify your transformations using Cloudinary URL transformation syntax. See %1$sreference%2$s for all available transformations and syntax.',
 								'cloudinary'

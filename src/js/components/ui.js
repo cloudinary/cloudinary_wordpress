@@ -8,7 +8,6 @@ import States from './states';
 import RestrictedTypes from './restricted-types';
 import TagsInput from './tags-input';
 import SuffixValue from './suffix-value';
-import SizePreview from './size-preview';
 import CropSizes from './crops-sizes';
 
 const UI = {
@@ -66,7 +65,6 @@ const UI = {
 		RestrictedTypes.init( context );
 		TagsInput.init( context );
 		SuffixValue.init( context );
-		SizePreview.init( context );
 		CropSizes.init( context );
 	},
 	_autoSuffix( input ) {
@@ -238,16 +236,11 @@ const UI = {
 	},
 };
 
-const contexts = document.querySelectorAll(
-	'#cloudinary-settings-page,.cld-meta-box'
-);
-if ( contexts.length ) {
-	contexts.forEach( ( context ) => {
-		if ( context ) {
-			// Init.
-			window.addEventListener( 'load', UI._init( context ) );
-		}
-	} );
+const context = document.getElementById( 'cloudinary-settings-page' );
+
+if ( context ) {
+	// Init.
+	window.addEventListener( 'load', UI._init( context ) );
 }
 
 export default UI;

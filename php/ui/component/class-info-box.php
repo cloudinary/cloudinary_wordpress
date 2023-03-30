@@ -32,7 +32,7 @@ class Info_Box extends Panel {
 
 		$struct['element']             = 'a';
 		$struct['content']             = $this->setting->get_param( 'link_text' );
-		$struct['attributes']['href']  = esc_url( $this->setting->get_param( 'url' ) );
+		$struct['attributes']['href']  = esc_url( $this->setting->get_param( 'url', '' ) );
 		$struct['attributes']['class'] = array( 'button' );
 		if ( $this->setting->get_param( 'disabled' ) ) {
 			$struct['element'] = 'span';

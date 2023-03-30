@@ -252,13 +252,15 @@ class Bypass {
 	 */
 	public function delivery_actions( $attachment ) {
 		$actions = $this->get_actions( $attachment->ID );
-		?>
-		<div class="misc-pub-section misc-pub-delivery">
-			<label><input type="checkbox" name="attachment_delivery" value="true" <?php checked( true, $this->is_bypassed( $attachment->ID ) ); ?> />
-				<?php echo esc_html( $actions[ self::BYPASS_KEYS['wp'] ] ); ?>
-			</label>
-		</div>
-		<?php
+		if ( ! empty( $actions[ self::BYPASS_KEYS['wp'] ] ) ) :
+			?>
+			<div class="misc-pub-section misc-pub-delivery">
+				<label><input type="checkbox" name="attachment_delivery" value="true" <?php checked( true, $this->is_bypassed( $attachment->ID ) ); ?> />
+					<?php echo esc_html( $actions[ self::BYPASS_KEYS['wp'] ] ); ?>
+				</label>
+			</div>
+			<?php
+		endif;
 	}
 
 	/**

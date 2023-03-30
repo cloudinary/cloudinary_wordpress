@@ -37,11 +37,6 @@
 	$mini-slider-pad: 1px;
 	$mini-slider-size: $mini-control-height - $mini-slider-pad - $mini-slider-pad;
 
-	$large-control-width: 40px;
-	$large-control-height: 20px;
-	$large-slider-pad: 2px;
-	$large-slider-size: $large-control-height - $large-slider-pad - $large-slider-pad;
-
 	&-control {
 		$control-width: 30px;
 		$control-height: 16px;
@@ -69,7 +64,7 @@
 			bottom: 0;
 			background-color: $color-disabled-grey;
 			transition: background-color 0.3s;
-			border-radius: $large-control-height / 2;
+			border-radius: 10px;
 
 			input:disabled + & {
 				opacity: 0.4;
@@ -97,7 +92,7 @@
 				bottom: $slider-pad;
 				background-color: $color-white;
 				transition: transform 0.2s;
-				border-radius: 80%;
+				border-radius: 50%;
 
 				input:checked + & {
 					transform: translateX($control-width - $slider-size - $slider-pad * 2);
@@ -106,10 +101,6 @@
 				.mini input:checked + & {
 					transform: translateX($mini-control-width - $mini-slider-size - $mini-slider-pad * 2);
 				}
-
-				.large input:checked + & {
-					transform: translateX($large-control-width - $large-slider-size - $large-slider-pad * 2);
-				}
 			}
 		}
 
@@ -117,50 +108,18 @@
 			width: $mini-control-width;
 			height: $mini-control-height;
 		}
-
-		&.large {
-			width: $large-control-width;
-			height: $large-control-height;
-		}
 	}
 
-	.large &-control {
+	.mini &-control {
 		&-slider {
 
 			&::before {
-				height: $large-slider-size;
-				width: $large-slider-size;
-				left: $large-slider-pad;
-				bottom: $large-slider-pad;
+				height: $mini-slider-size;
+				width: $mini-slider-size;
+				left: $mini-slider-pad;
+				bottom: $mini-slider-pad;
 
 			}
 		}
-	}
-
-	.large &-control {
-		&-slider {
-
-			&::before {
-				height: $large-slider-size;
-				width: $large-slider-size;
-				left: $large-slider-pad;
-				bottom: $large-slider-pad;
-
-			}
-		}
-	}
-
-	.inner-input{
-		vertical-align: middle;
-		border: 1px solid #dedede;
-		margin-left: -24px;
-		background-color: #dedede;
-		border-radius: 9px;
-		text-indent: $large-slider-size + 4px;
-		height: $large-control-height;
-	}
-
-	.input-toggle{
-		margin-bottom: 5px;
 	}
 }

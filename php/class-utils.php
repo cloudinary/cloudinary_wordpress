@@ -553,7 +553,7 @@ class Utils {
 		if ( ! $is_frontend_ajax && ! $is_admin ) {
 			// Catch the content type of the $_SERVER['CONTENT_TYPE'] variable.
 			$type             = filter_input( INPUT_SERVER, 'CONTENT_TYPE', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
-			$is_frontend_ajax = false !== strpos( $type, 'json' );
+			$is_frontend_ajax = $type && false !== strpos( $type, 'json' );
 		}
 
 		return $is_frontend_ajax;
@@ -818,6 +818,27 @@ class Utils {
 	}
 
 	/**
+	 * Clean up meta after sync.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return void
+	 */
+	public static function clean_up_sync_meta( $attachment_id ) {
+		// remove pending.
+		delete_post_meta( $attachment_id, Sync::META_KEYS['pending'] );
+
+		// Remove processing flag.
+		delete_post_meta( $attachment_id, Sync::META_KEYS['syncing'] );
+
+		$sync_thread = get_post_meta( $attachment_id, Sync::META_KEYS['queued'], true );
+		if ( ! empty( $sync_thread ) ) {
+			delete_post_meta( $attachment_id, Sync::META_KEYS['queued'] );
+			delete_post_meta( $attachment_id, $sync_thread );
+		}
+	}
+
+	/**
 	 * Get the registered image sizes, the labels and crop settings.
 	 *
 	 * @param null|int $attachment_id The attachment ID to get the sizes. Defaults to generic registered sizes.
@@ -892,26 +913,5 @@ class Utils {
 		 * @hook  cloudinary_registered_sizes
 		 */
 		return apply_filters( 'cloudinary_registered_sizes', $all_sizes );
-	}
-
-	/**
-	 * Clean up meta after sync.
-	 *
-	 * @param int $attachment_id The attachment ID.
-	 *
-	 * @return void
-	 */
-	public static function clean_up_sync_meta( $attachment_id ) {
-		// remove pending.
-		delete_post_meta( $attachment_id, Sync::META_KEYS['pending'] );
-
-		// Remove processing flag.
-		delete_post_meta( $attachment_id, Sync::META_KEYS['syncing'] );
-
-		$sync_thread = get_post_meta( $attachment_id, Sync::META_KEYS['queued'], true );
-		if ( ! empty( $sync_thread ) ) {
-			delete_post_meta( $attachment_id, Sync::META_KEYS['queued'] );
-			delete_post_meta( $attachment_id, $sync_thread );
-		}
 	}
 }

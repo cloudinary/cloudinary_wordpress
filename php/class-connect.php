@@ -108,7 +108,6 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		add_filter( 'cloudinary_setting_get_value', array( $this, 'maybe_connection_string_constant' ), 10, 2 );
 		add_filter( 'cloudinary_admin_pages', array( $this, 'register_meta' ) );
 		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
-		add_action( 'cloudinary_rest_api_connectivity', array( $this, 'check_rest_api_connectivity' ) );
 	}
 
 	/**
@@ -453,7 +452,14 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 				uksort(
 					$history[ $plan ],
 					static function ( $a, $b ) {
-						return strtotime( $a ) > strtotime( $b );
+						$a = strtotime( $a );
+						$b = strtotime( $b );
+
+						if ( $a === $b ) {
+							return 0;
+						}
+
+						return $a > $b ? - 1 : 1;
 					}
 				);
 				$history[ $plan ] = array_slice( $history[ $plan ], -30 );
@@ -474,32 +480,29 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	public function upgrade_settings( $previous_version, $new_version ) {
 		// Check if we need to upgrade the history.
 		if ( version_compare( $previous_version, '3.1.0', '<' ) ) {
-			$history = get_option( self::META_KEYS['history'], array() );
-			$plan    = ! empty( $this->usage['plan'] ) ? $this->usage['plan'] : $this->credentials['cloud_name'];
+			add_action(
+				'cloudinary_ready',
+				function () {
+					$history = get_option( self::META_KEYS['history'], array() );
+					$plan    = false;
 
-			// Check whether history has migrated.
-			if ( ! empty( $plan ) && ! empty( $history[ $plan ] ) ) {
-				return;
-			}
-
-			// Fix history.
-			$new_history = array();
-			foreach ( $history as $date => $data ) {
-				$new_history[ $plan ][ $date ] = $data;
-			}
-
-			foreach ( $new_history as &$data ) {
-				uksort(
-					$data,
-					static function ( $a, $b ) {
-						return strtotime( $a ) < strtotime( $b );
+					if ( ! empty( $this->usage['plan'] ) ) {
+						$plan = $this->usage['plan'];
+					} elseif ( ! empty( $this->credentials['cloud_name'] ) ) {
+						$plan = $this->credentials['cloud_name'];
 					}
-				);
 
-				$data = array_reverse( array_slice( $data, 0, 30 ) );
-			}
+					// Check whether history has migrated.
+					if ( ! empty( $plan ) && ! empty( $history[ $plan ] ) ) {
+						return;
+					}
 
-			update_option( self::META_KEYS['history'], $new_history, false );
+					// Cleanup history.
+					$new_history = array();
+
+					update_option( self::META_KEYS['history'], $new_history, false );
+				}
+			);
 		}
 	}
 
@@ -700,10 +703,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 * @return void
 	 */
 	protected function setup_rest_api_cron() {
-		if ( false === wp_next_scheduled( 'cloudinary_rest_api_connectivity' ) ) {
-			$now = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
-			wp_schedule_single_event( $now + ( MINUTE_IN_SECONDS ), 'cloudinary_rest_api_connectivity' );
-		}
+		Cron::register_process( 'rest_api', array( $this, 'check_rest_api_connectivity' ), HOUR_IN_SECONDS );
 	}
 
 	/**
@@ -983,9 +983,6 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		$connectivity = self::test_rest_api_connectivity();
 		$plugin       = get_plugin_instance();
 		$notices      = get_option( $plugin::KEYS['notices'], array() );
-		$now          = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
-
-		wp_clear_scheduled_hook( 'cloudinary_rest_api_connectivity' );
 
 		if ( $connectivity['working'] ) {
 			unset( $notices[ self::META_KEYS['notices'] ] );
@@ -1004,8 +1001,6 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			);
 		}
 
-		wp_schedule_single_event( $now + ( HOUR_IN_SECONDS ), 'cloudinary_rest_api_connectivity' );
-
 		return $connectivity;
 	}
 
@@ -1020,17 +1015,14 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			'message' => __( 'Cloudinary was able to connect to the WordPress REST API.', 'cloudinary' ),
 		);
 
-		$timeout = 10;
-		$headers = array(
-			'Cache-Control' => 'no-cache',
-			'X-WP-Nonce'    => wp_create_nonce( 'wp_rest' ),
+		$args = array(
+			'headers' => array(
+				'Cache-Control' => 'no-cache',
+			),
 		);
 
-		// This filter is documented in wp-includes/class-wp-http-streams.php.
-		$sslverify = apply_filters( 'https_local_ssl_verify', false );
-
 		$url      = rest_url( REST_API::BASE . '/test_rest_api' );
-		$response = wp_safe_remote_get( $url, compact( 'headers', 'timeout', 'sslverify' ) );
+		$response = wp_safe_remote_get( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
 			$result = array(
@@ -1064,7 +1056,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 */
 	protected function get_connection_string_content() {
 		ob_start();
-		include $this->plugin->dir_path . 'php/templates/connection-string.php';
+		include $this->plugin->dir_path . 'php/templates/connection-string.php'; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
 
 		return ob_get_clean();
 	}
