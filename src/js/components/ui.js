@@ -236,9 +236,7 @@ const UI = {
 	},
 };
 
-const contexts = document.querySelectorAll(
-	'#cloudinary-settings-page,.cld-meta-box'
-);
+const contexts = document.querySelectorAll( '.cld-settings,.cld-meta-box' );
 if ( contexts.length ) {
 	contexts.forEach( ( context ) => {
 		if ( context ) {
