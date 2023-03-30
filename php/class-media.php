@@ -193,6 +193,10 @@ class Media extends Settings_Component implements Setup {
 			'audio',
 			'application',
 			'text',
+			'document',
+			'archive',
+			'spreadsheet',
+			'interactive',
 		);
 
 		/**
@@ -714,6 +718,10 @@ class Media extends Settings_Component implements Setup {
 			}
 		} else {
 			$public_id = isset( $path_info['dirname'] ) && '.' !== $path_info['dirname'] ? $path_info['dirname'] . DIRECTORY_SEPARATOR . $path_info['filename'] : $path_info['filename'];
+
+			if ( ! empty( $path_info['extension'] ) && in_array( 'raw', $maybe_seo, true ) ) {
+				$public_id .= '.' . $path_info['extension'];
+			}
 		}
 		$public_id = trim( $public_id, './' );
 
@@ -1367,13 +1375,11 @@ class Media extends Settings_Component implements Setup {
 		$url = apply_filters( 'cloudinary_converted_url', $url, $attachment_id, $pre_args );
 
 		// Add Cloudinary analytics.
-		$cache[ $key ] = esc_url(
-			add_query_arg(
-				array(
-					'_i' => 'AA',
-				),
-				$url
-			)
+		$cache[ $key ] = add_query_arg(
+			array(
+				'_i' => 'AA',
+			),
+			$url
 		);
 
 		return $cache[ $key ];

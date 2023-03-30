@@ -329,8 +329,12 @@ class Delivery implements Setup {
 		if ( ! $sql ) {
 			$sql = Utils::get_table_sql();
 		}
+		$public_id          = null;
+		$relationship       = Relationship::get_relationship( $attachment_id );
+		if ( $relationship instanceof Relationship ) {
+			$public_id = $relationship->public_id;
+		}
 		$sizes              = $this->get_sized( $attachment_id );
-		$public_id          = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
 		$settings_signature = self::get_settings_signature();
 		$relation_signature = $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['relationship'], true );
 
@@ -486,14 +490,6 @@ class Delivery implements Setup {
 		self::update_size_relations_public_id( $attachment_id, null );
 		self::update_size_relations_state( $attachment_id, 'disable' );
 		self::update_size_relations_transformations( $attachment_id, null );
-
-		/**
-		 * Action to flush delivery caches.
-		 *
-		 * @hook   cloudinary_flush_cache
-		 * @since  3.0.0
-		 */
-		do_action( 'cloudinary_flush_cache' );
 	}
 
 	/**
@@ -533,18 +529,13 @@ class Delivery implements Setup {
 	 */
 	public static function update_size_relations_public_id( $attachment_id, $public_id ) {
 		$relationship              = Relationship::get_relationship( $attachment_id );
-		$relationship->public_id   = $public_id;
-		$relationship->public_hash = md5( $public_id );
-		$relationship->signature   = self::get_settings_signature();
-		$relationship->save();
 
-		/**
-		 * Action to flush delivery caches.
-		 *
-		 * @hook   cloudinary_flush_cache
-		 * @since  3.0.0
-		 */
-		do_action( 'cloudinary_flush_cache' );
+		if ( $relationship instanceof Relationship ) {
+			$relationship->public_id   = $public_id;
+			$relationship->public_hash = md5( $public_id );
+			$relationship->signature   = self::get_settings_signature();
+			$relationship->save();
+		}
 	}
 
 	/**
@@ -555,8 +546,11 @@ class Delivery implements Setup {
 	 */
 	public static function update_size_relations_state( $attachment_id, $state ) {
 		$relationship             = Relationship::get_relationship( $attachment_id );
-		$relationship->post_state = $state;
-		$relationship->save();
+
+		if ( $relationship instanceof Relationship ) {
+			$relationship->post_state = $state;
+			$relationship->save();
+		}
 
 		/**
 		 * Action to flush delivery caches.
@@ -575,14 +569,6 @@ class Delivery implements Setup {
 	 */
 	public static function update_size_relations_transformations( $attachment_id, $transformations ) {
 		Relate::update_transformations( $attachment_id, $transformations );
-
-		/**
-		 * Action to flush delivery caches.
-		 *
-		 * @hook   cloudinary_flush_cache
-		 * @since  3.0.0
-		 */
-		do_action( 'cloudinary_flush_cache' );
 	}
 
 	/**
@@ -736,10 +722,15 @@ class Delivery implements Setup {
 
 	/**
 	 * Delete cached metadata.
+	 *
+	 * @param bool $hard Whether to hard flush the cache.
 	 */
-	public function do_clear_cache() {
+	public function do_clear_cache( $hard = true ) {
 		delete_post_meta_by_key( self::META_CACHE_KEY );
-		wp_cache_flush();
+
+		if ( $hard ) {
+			wp_cache_flush();
+		}
 	}
 
 	/**
@@ -895,8 +886,9 @@ class Delivery implements Setup {
 					if ( true === $auto_sync ) {
 						$this->sync->add_to_sync( $result->post_id );
 					}
-					$size                         = $this->get_sized( $result->post_id );
-					$cached[ $size['sized_url'] ] = (int) $result->post_id;
+					$size           = $this->get_sized( $result->post_id );
+					$key            = ! empty( $size['sized_url'] ) ? $size['sized_url'] : wp_get_attachment_url( $result->post_id );
+					$cached[ $key ] = (int) $result->post_id;
 				}
 			}
 			wp_cache_add( $key, $cached );
@@ -1329,7 +1321,7 @@ class Delivery implements Setup {
 
 			// Check if this is a crop or a scale.
 			$has_size = $this->media->get_size_from_url( $this->sanitize_url( $raw_url ) );
-			if ( ! empty( $has_size ) ) {
+			if ( ! empty( $has_size ) && ! empty( $item['height'] ) ) {
 				$file_ratio     = round( $has_size[0] / $has_size[1], 2 );
 				$original_ratio = round( $item['width'] / $item['height'], 2 );
 				if ( $file_ratio !== $original_ratio ) {
