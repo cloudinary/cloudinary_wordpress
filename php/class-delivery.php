@@ -870,8 +870,9 @@ class Delivery implements Setup {
 					if ( true === $auto_sync ) {
 						$this->sync->add_to_sync( $result->post_id );
 					}
-					$size                         = $this->get_sized( $result->post_id );
-					$cached[ $size['sized_url'] ] = (int) $result->post_id;
+					$size           = $this->get_sized( $result->post_id );
+					$key            = ! empty( $size['sized_url'] ) ? $size['sized_url'] : wp_get_attachment_url( $result->post_id );
+					$cached[ $key ] = (int) $result->post_id;
 				}
 			}
 			wp_cache_add( $key, $cached );
@@ -1304,7 +1305,7 @@ class Delivery implements Setup {
 
 			// Check if this is a crop or a scale.
 			$has_size = $this->media->get_size_from_url( $this->sanitize_url( $raw_url ) );
-			if ( ! empty( $has_size ) ) {
+			if ( ! empty( $has_size ) && ! empty( $item['height'] ) ) {
 				$file_ratio     = round( $has_size[0] / $has_size[1], 2 );
 				$original_ratio = round( $item['width'] / $item['height'], 2 );
 				if ( $file_ratio !== $original_ratio ) {
