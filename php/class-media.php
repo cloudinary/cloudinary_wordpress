@@ -879,18 +879,17 @@ class Media extends Settings_Component implements Setup {
 					}
 					// Make the WP Size array.
 					$wp_size = array(
-						'wpsize' => $size_name,
-						'file'   => $size['file'],
-						'width'  => $size['width'],
-						'height' => $size['height'],
-						'crop'   => $cropped ? 'fill' : 'scale',
+						'wpsize'         => $size_name,
+						'file'           => $size['file'],
+						'width'          => $size['width'],
+						'height'         => $size['height'],
+						'transformation' => 'c_scale',
 					);
 					if ( $cropped ) {
 						// Special thumbnail size.
 						if ( 'thumbnail' === $size_name ) {
-							$wp_size['crop'] = 'thumb';
+							$wp_size['transformation'] = 'c_thumb,g_auto';
 						}
-						$wp_size['gravity'] = 'auto';
 					}
 
 					$size = $wp_size;
@@ -898,23 +897,6 @@ class Media extends Settings_Component implements Setup {
 					break;
 				}
 			}
-		}
-
-		if ( ! empty( $size['wpsize'] ) ) {
-
-			$crops = $this->settings->get_value( 'crop_sizes' );
-			if ( ! empty( $crops[ $size['wpsize'] ] ) ) {
-				$transform = $this->get_transformations_from_string( $crops[ $size['wpsize'] ] );
-				$size      = array_merge( $size, $transform[0] );
-			}
-		}
-		if ( ! empty( $tag_element['atts']['data-transformation-crop'] ) ) {
-			$transformations = $this->get_transformations_from_string( $tag_element['atts']['data-transformation-crop'] );
-			$size            = array_merge( $size, reset( $transformations ) );
-		}
-
-		if ( ! empty( $tag_element['atts']['data-skip-crop'] ) ) {
-			unset( $size['crop'], $size['gravity'] );
 		}
 
 		return $size;
@@ -1003,33 +985,40 @@ class Media extends Settings_Component implements Setup {
 	 * Get the crop transformation for the attachment.
 	 * Returns false if no crop is found.
 	 *
-	 * @param int    $attachment_id The attachment ID.
-	 * @param string $size          The requested size.
+	 * @param int|string $attachment_id The attachment ID or type.
+	 * @param array      $size          The requested size width and height.
 	 *
 	 * @return false|string
 	 */
 	public function get_crop_transformations( $attachment_id, $size ) {
 		static $transformations = array();
-		$crop = false;
+		$size_dim = $size['width'] . 'x' . $size['height'];
+		$key = $attachment_id . $size_dim;
+		if ( empty( $transformations[ $key ] ) ) {
 
-		if ( empty( $transformations[ $attachment_id ] ) ) {
-			$meta = $this->get_post_meta( $attachment_id, 'cloudinary_metaboxes_crop_meta', true );
-
-			if ( ! empty( $meta['single_crop_sizes']['enable_single_sizes'] ) && 'on' === $meta['single_crop_sizes']['enable_single_sizes'] ) {
-				$transformations[ $attachment_id ] = $meta['single_crop_sizes']['single_sizes'];
+			if ( empty( $size['transformation'] ) ) {
+				$size['transformation'] = 'c_scale';
 			}
-		}
-		if ( empty( $transformations ) ) {
 			$crops = $this->settings->get_value( 'crop_sizes' );
-			if ( ! empty( $crops[ $size ] ) ) {
-				$crop = $crops[ $size ];
+			if ( ! empty( $crops[ $size_dim ] ) ) {
+				$size['transformation'] = $crops[ $size_dim ];
 			}
-		}
-		if ( $size && ! empty( $transformations[ $attachment_id ][ $size ] ) ) {
-			$crop = $transformations[ $attachment_id ][ $size ];
+
+			// Check for custom crop.
+			if ( is_numeric( $attachment_id ) ) {
+				$meta_sizes = $this->get_post_meta( $attachment_id, 'cloudinary_metaboxes_crop_meta', true );
+				if ( ! empty( $meta_sizes['single_crop_sizes']['single_sizes'] ) ) {
+					$custom_sizes = $meta_sizes['single_crop_sizes']['single_sizes'];
+					if ( ! empty( $custom_sizes[ $size_dim ] ) ) {
+						$size['transformation'] = $custom_sizes[ $size_dim ];
+					}
+				}
+			}
+			$transformations[ $key ] = 'w_' . $size['width'] . ',h_' . $size['height'] . ',' . $size['transformation'];
+
 		}
 
-		return $crop;
+		return $transformations[ $key ];
 	}
 
 	/**
@@ -1535,10 +1524,14 @@ class Media extends Settings_Component implements Setup {
 				'height' => $size[1],
 			);
 			if ( $size['width'] === $size['height'] ) {
-				$size['crop'] = 'fill';
+				$size['transformation'] = 'c_fill,g_auto';
 			}
 		}
 
+		// add Global crops.
+		if ( ! empty( $size['width'] ) && ! empty( $size['height'] ) ) {
+			$size['transformation'] = $this->get_crop_transformations( $attachment_id, $size );
+		}
 		/**
 		 * Filter Cloudinary size and crops
 		 *

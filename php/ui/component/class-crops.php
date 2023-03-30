@@ -89,9 +89,12 @@ class Crops extends Select {
 				$image['attributes']['height'] = $details['height'];
 			}
 			$image['attributes']['data-size'] = implode( ',', $size_array );
-
+			$size_key                         = $details['width'] . 'x' . $details['height'];
+			if ( empty( $value[ $size_key ] ) ) {
+				$value[ $size_key ] = '';
+			}
 			$row['children']['size']  = $image;
-			$row['children']['input'] = $this->make_input( $this->get_name() . '[' . $size . ']', $value[ $size ] );
+			$row['children']['input'] = $this->make_input( $this->get_name() . '[' . $size_key . ']', $value[ $size_key ] );
 			// Set the placeholder.
 			$placeholder = 'c_fill,g_auto';
 

@@ -292,7 +292,9 @@ class Api {
 
 		// Add size.
 		if ( ! empty( $size ) && is_array( $size ) ) {
-			$url_parts[] = self::generate_transformation_string( array( $size ), $args['resource_type'] );
+			if ( ! empty( $size['transformation'] ) ) {
+				$url_parts[] = $size['transformation'];
+			}
 			// add size to ID if scaled.
 			if ( ! empty( $size['file'] ) ) {
 				$public_id = str_replace( $base['basename'], $size['file'], $public_id );

@@ -1239,7 +1239,7 @@ class Delivery implements Setup {
 		 * @retrun {bool}
 		 */
 		$enabled_crop_sizes       = apply_filters( 'cloudinary_enabled_crop_sizes', false );
-		$has_sized_transformation = $enabled_crop_sizes && ! empty( $config['sized_transformations'] ) && 'on' === $config['sized_transformations'];
+		$has_sized_transformation = $enabled_crop_sizes && ! empty( $config['crop_sizes'] );
 
 		$tag_element = array(
 			'tag'                       => '',
@@ -1316,12 +1316,14 @@ class Delivery implements Setup {
 					if ( $file_ratio !== $original_ratio ) {
 						$attributes['data-crop'] = $file_ratio;
 					}
-					$image_transformations = $this->media->get_crop_transformations( $tag_element['id'], $tag_element['size'] );
-					if ( $image_transformations ) {
-						$attributes['data-transformation-crop'] = $image_transformations;
-					} elseif ( $has_sized_transformation ) {
-						if ( ! empty( $config['crop_sizes'][ $tag_element['size'] ] ) ) {
-							$attributes['data-transformation-crop'] = $config['crop_sizes'][ $tag_element['size'] ];
+					if ( $has_sized_transformation ) {
+						$crop_size = array(
+							'width'  => $has_size[0],
+							'height' => $has_size[1],
+						);
+						$image_transformations = $this->media->get_crop_transformations( $tag_element['id'], $crop_size );
+						if ( $image_transformations ) {
+							$attributes['data-transformation-crop'] = $image_transformations;
 						}
 					}
 				}
@@ -1381,7 +1383,7 @@ class Delivery implements Setup {
 		/**
 		 * Filter the tag element.
 		 *
-		 * @hook cloudinary_parse_element
+		 * @hook  cloudinary_parse_element
 		 * @since 3.0.9
 		 *
 		 * @param $tag_element {array} The tag element.
@@ -1589,10 +1591,10 @@ class Delivery implements Setup {
 		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
 
 		$found[ $item['public_id'] ] = $item;
-		$scaled                            = self::make_scaled_url( $item['sized_url'] );
-		$descaled                          = self::descaled_url( $item['sized_url'] );
-		$scaled_slashed                    = addcslashes( $scaled, '/' );
-		$descaled_slashed                  = addcslashes( $descaled, '/' );
+		$scaled                      = self::make_scaled_url( $item['sized_url'] );
+		$descaled                    = self::descaled_url( $item['sized_url'] );
+		$scaled_slashed              = addcslashes( $scaled, '/' );
+		$descaled_slashed            = addcslashes( $descaled, '/' );
 		$found[ $scaled ]            = $item;
 		$found[ $descaled ]          = $item;
 		$found[ $scaled_slashed ]    = array_merge( $item, array( 'slashed' => true ) );
@@ -1600,6 +1602,7 @@ class Delivery implements Setup {
 
 		if ( ! $this->is_deliverable( $item['post_id'] ) ) {
 			$this->unusable = array_merge( $this->unusable, $found );
+
 			return;
 		}
 
