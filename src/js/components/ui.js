@@ -236,11 +236,16 @@ const UI = {
 	},
 };
 
-const context = document.getElementById( 'cloudinary-settings-page' );
-
-if ( context ) {
-	// Init.
-	window.addEventListener( 'load', UI._init( context ) );
+const contexts = document.querySelectorAll(
+	'#cloudinary-settings-page,.cld-meta-box'
+);
+if ( contexts.length ) {
+	contexts.forEach( ( context ) => {
+		if ( context ) {
+			// Init.
+			window.addEventListener( 'load', UI._init( context ) );
+		}
+	} );
 }
 
 export default UI;

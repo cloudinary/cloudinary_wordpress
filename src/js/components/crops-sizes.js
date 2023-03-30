@@ -3,6 +3,8 @@ import { __ } from '@wordpress/i18n';
 const CropSizes = {
 	wrappers: null,
 	frame: null,
+	error:
+		'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="rgba(0,0,0,0.1)"/><text x="50%" y="50%" fill="red" text-anchor="middle" dominant-baseline="middle">%26%23x26A0%3B︎</text></svg>',
 	init( context ) {
 		this.wrappers = context.querySelectorAll( '.cld-size-items' );
 		this.wrappers.forEach( ( wrapper ) => {
@@ -46,6 +48,13 @@ const CropSizes = {
 					this.buildImages( wrapper );
 				}, 1000 );
 			} );
+
+			if ( ! image.bound ) {
+				image.addEventListener( 'error', () => {
+					image.src = this.error;
+				} );
+				image.bound = true;
+			}
 		} );
 	},
 };

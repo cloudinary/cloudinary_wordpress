@@ -75,6 +75,13 @@ const Front_Overlay = {
 		box.appendChild( this.makeLine( __( 'Transformations', 'cloudinary' ),
 			image.dataset.transformations
 		) );
+
+		if ( image.dataset.transformationCrop ) {
+			box.appendChild( this.makeLine( __( 'Crop transformations', 'cloudinary' ),
+				image.dataset.transformationCrop
+			) );
+		}
+
 		const link = document.createElement( 'a' );
 		link.classList.add( 'edit-link' );
 		link.href = image.dataset.permalink;
