@@ -173,6 +173,10 @@ class Setting {
 			$value = $this->get_component()->sanitize_value( $raw_value );
 		}
 
+		if ( is_null( $value ) && 'text' === $this->get_param( 'type' ) ) {
+			$value = $this->get_param( 'default', '' );
+		}
+
 		return $value;
 	}
 

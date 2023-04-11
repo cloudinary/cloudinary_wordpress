@@ -202,6 +202,7 @@ $settings = array(
 						'type'           => 'text',
 						'slug'           => 'video_freeform',
 						'title'          => __( 'Additional video transformations', 'cloudinary' ),
+						'default'       => '',
 						'tooltip_text'   => sprintf(
 							// translators: The link to transformation reference.
 							__(
