@@ -33,22 +33,32 @@ const CropSizes = {
 		let timout = null;
 		images.forEach( ( image ) => {
 			const size = image.dataset.size;
-			const input = image.nextSibling;
+			const input = image.parentNode.querySelector( '.regular-text' );
+			const disable = image.parentNode.querySelector( '.disable-toggle' );
 			const crop = input.value.length
 				? input.value.replace( ' ', '' )
 				: input.placeholder;
-			image.src = `${ baseURL }/${ size },${ crop }/${ sampleId }`;
-
-			input.addEventListener( 'input', () => {
-				if ( timout ) {
-					clearTimeout( timout );
-				}
-				timout = setTimeout( () => {
-					this.buildImages( wrapper );
-				}, 1000 );
-			} );
-
+			if ( ! disable.checked ) {
+				input.disabled = false;
+				image.src = `${ baseURL }/${ size },${ crop }/${ sampleId }`;
+			} else {
+				input.disabled = true;
+				image.src = `${ baseURL }/${ size }/${ sampleId }`;
+			}
 			if ( ! image.bound ) {
+				input.addEventListener( 'input', () => {
+					if ( timout ) {
+						clearTimeout( timout );
+					}
+					timout = setTimeout( () => {
+						this.buildImages( wrapper );
+					}, 1000 );
+				} );
+
+				disable.addEventListener( 'change', () => {
+					this.buildImages( wrapper );
+				} );
+
 				image.addEventListener( 'error', () => {
 					image.src = this.error;
 				} );

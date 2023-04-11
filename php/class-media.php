@@ -992,7 +992,7 @@ class Media extends Settings_Component implements Setup {
 	public function get_crop_transformations( $attachment_id, $size ) {
 		static $transformations = array();
 		$size_dim = $size['width'] . 'x' . $size['height'];
-		$key = $attachment_id . $size_dim;
+		$key      = $attachment_id . $size_dim;
 		if ( empty( $transformations[ $key ] ) ) {
 
 			if ( empty( $size['transformation'] ) ) {
@@ -1000,7 +1000,11 @@ class Media extends Settings_Component implements Setup {
 			}
 			$crops = $this->settings->get_value( 'crop_sizes' );
 			if ( ! empty( $crops[ $size_dim ] ) ) {
-				$size['transformation'] = $crops[ $size_dim ];
+				if ( '--' === $crops[ $size_dim ] ) {
+					$size['transformation'] = '';
+				} else {
+					$size['transformation'] = $crops[ $size_dim ];
+				}
 			}
 
 			// Check for custom crop.
@@ -1009,12 +1013,18 @@ class Media extends Settings_Component implements Setup {
 				if ( ! empty( $meta_sizes['single_crop_sizes']['single_sizes'] ) ) {
 					$custom_sizes = $meta_sizes['single_crop_sizes']['single_sizes'];
 					if ( ! empty( $custom_sizes[ $size_dim ] ) ) {
-						$size['transformation'] = $custom_sizes[ $size_dim ];
+						if ( '--' === $custom_sizes[ $size_dim ] ) {
+							$size['transformation'] = '';
+						} else {
+							$size['transformation'] = $custom_sizes[ $size_dim ];
+						}
 					}
 				}
 			}
-			$transformations[ $key ] = 'w_' . $size['width'] . ',h_' . $size['height'] . ',' . $size['transformation'];
-
+			$transformations[ $key ] = 'w_' . $size['width'] . ',h_' . $size['height'];
+			if ( ! empty( $size['transformation'] ) ) {
+				$transformations[ $key ] .= ',' . $size['transformation'];
+			}
 		}
 
 		return $transformations[ $key ];

@@ -73,6 +73,17 @@
 		}
 	}
 
+	.crop-size-inputs{
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+
+	.cld-ui-input.regular-text[disabled]{
+		background-color: $color-light-grey;
+		opacity: 0.5;
+	}
+
 }
 
 &-image-selector {

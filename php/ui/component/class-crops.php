@@ -101,7 +101,7 @@ class Crops extends Select {
 			if ( 'thumbnail' === $size ) {
 				$placeholder = 'c_thumb,g_auto';
 			}
-			$row['children']['input']['attributes']['placeholder'] = $placeholder;
+			$row['children']['input']['children']['input']['attributes']['placeholder'] = $placeholder;
 
 			$wrapper['children'][ $size ] = $row;
 
@@ -152,13 +152,32 @@ class Crops extends Select {
 	 * @return array
 	 */
 	protected function make_input( $name, $value ) {
+
+		$wrapper                        = $this->get_part( 'span' );
+		$wrapper['attributes']['class'] = array(
+			'crop-size-inputs',
+		);
+
+		$check                          = $this->get_part( 'input' );
+		$check['attributes']['type']    = 'checkbox';
+		$check['attributes']['name']    = $name;
+		$check['attributes']['value']   = '--';
+		$check['attributes']['class'][] = 'disable-toggle';
+		$check['attributes']['title']   = __( 'Disable gravity and crops', 'cloudinary' );
+		if ( '--' === $value ) {
+			$check['attributes']['checked'] = 'checked';
+		}
+
 		$input                          = $this->get_part( 'input' );
 		$input['attributes']['type']    = 'text';
 		$input['attributes']['name']    = $name;
-		$input['attributes']['value']   = $value;
+		$input['attributes']['value']   = '--' !== $value ? $value : '';
 		$input['attributes']['class'][] = 'regular-text';
 
-		return $input;
+		$wrapper['children']['input'] = $input;
+		$wrapper['children']['check'] = $check;
+
+		return $wrapper;
 	}
 
 	/**
