@@ -1,6 +1,6 @@
 <?php
 /**
- * Stand_Alone UI Component.
+ * Metabox UI Component.
  *
  * @package Cloudinary
  */

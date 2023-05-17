@@ -908,7 +908,7 @@ class Utils {
 		 *
 		 * @param array $all_sizes All the registered sizes.
 		 *
-		 * @since 3.1.0
+		 * @since 3.1.3
 		 *
 		 * @hook  cloudinary_registered_sizes
 		 */

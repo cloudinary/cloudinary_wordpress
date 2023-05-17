@@ -97,6 +97,15 @@ class Cloudinary extends Url_Object {
 	}
 
 	/**
+	 * Get the attachment id.
+	 *
+	 * @return int
+	 */
+	public function get_attachment_id() {
+		return $this->relation['post_id'];
+	}
+
+	/**
 	 * Get WordPress URL
 	 *
 	 * @return WordPress

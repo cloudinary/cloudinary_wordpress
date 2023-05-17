@@ -9,7 +9,7 @@
  * Enable the crop size settings.
  *
  * @hook  cloudinary_enabled_crop_sizes
- * @since 3.1.0
+ * @since 3.1.3
  * @default {false}
  *
  * @param $enabeld {bool} Are the crop sizes enabled?
@@ -55,7 +55,7 @@ $metaboxes = array(
  * Filter the meta boxes.
  *
  * @hook   cloudinary_meta_boxes
- * @since  3.1.0
+ * @since  3.1.3
  *
  * @param $metaboxes {array}  Array of meta boxes to create.
  *

@@ -7,7 +7,6 @@
 
 namespace Cloudinary\UI\Component;
 
-use Cloudinary\Connect\Api;
 use Cloudinary\Utils;
 use function Cloudinary\get_plugin_instance;
 
@@ -26,7 +25,6 @@ class Crops extends Select {
 	protected $demo_files = array(
 		'sample.jpg',
 		'lady.jpg',
-		'woman.jpg',
 		'horses.jpg',
 	);
 
@@ -61,9 +59,11 @@ class Crops extends Select {
 		} else {
 			$wrapper['attributes']['data-base'] = 'https://res.cloudinary.com/demo/image/upload';
 		}
-		$base  = parent::input( $struct );
-		$value = $this->setting->get_value();
 
+		$value = $this->setting->get_value();
+		if ( empty( $value ) ) {
+			$value = array();
+		}
 		$sizes = Utils::get_registered_sizes();
 
 		$selector                                = $this->make_selector();
@@ -117,7 +117,18 @@ class Crops extends Select {
 		$selector                          = $this->get_part( 'div' );
 		$selector['attributes']['class'][] = 'cld-image-selector';
 		$mode                              = $this->setting->get_param( 'mode', 'demos' );
-		$examples                          = $this->demo_files;
+
+		/**
+		 * Filter the demo files.
+		 *
+		 * @since 3.1.3
+		 *
+		 * @hook  cloudinary_registered_sizes
+		 *
+		 * @param array $demo_files array of demo files.
+		 *
+		 */
+		$examples = apply_filters( 'cloudinary_demo_crop_files', $this->demo_files );
 		if ( 'full' === $mode ) {
 			$public_id = $this->setting->get_root_setting()->get_param( 'preview_id' );
 			if ( ! empty( $public_id ) ) {

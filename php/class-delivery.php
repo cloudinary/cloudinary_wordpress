@@ -1243,7 +1243,7 @@ class Delivery implements Setup {
 		 * Enable the crop size settings.
 		 *
 		 * @hook  cloudinary_enabled_crop_sizes
-		 * @since 3.1.0
+		 * @since 3.1.3
 		 * @default {false}
 		 *
 		 * @param $enabeld {bool} Are the crop sizes enabled?
@@ -1321,7 +1321,7 @@ class Delivery implements Setup {
 			if ( 'img' === $tag_element['tag'] ) {
 				// Check if this is a crop or a scale.
 				$has_size = $this->media->get_size_from_url( $this->sanitize_url( $raw_url ) );
-				if ( ! empty( $has_size ) ) {
+				if ( ! empty( $has_size ) && ! empty( $item['height'] ) ) {
 					$file_ratio     = round( $has_size[0] / $has_size[1], 2 );
 					$original_ratio = round( $item['width'] / $item['height'], 2 );
 					if ( $file_ratio !== $original_ratio ) {

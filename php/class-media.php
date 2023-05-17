@@ -987,7 +987,7 @@ class Media extends Settings_Component implements Setup {
 	 * @param int|string $attachment_id The attachment ID or type.
 	 * @param array      $size          The requested size width and height.
 	 *
-	 * @return false|string
+	 * @return string
 	 */
 	public function get_crop_transformations( $attachment_id, $size ) {
 		static $transformations = array();
@@ -1008,7 +1008,7 @@ class Media extends Settings_Component implements Setup {
 			}
 
 			// Check for custom crop.
-			if ( is_numeric( $attachment_id ) ) {
+			if ( is_numeric( $attachment_id ) && apply_filters( 'cloudinary_enabled_crop_sizes', false ) ) {
 				$meta_sizes = $this->get_post_meta( $attachment_id, 'cloudinary_metaboxes_crop_meta', true );
 				if ( ! empty( $meta_sizes['single_crop_sizes']['single_sizes'] ) ) {
 					$custom_sizes = $meta_sizes['single_crop_sizes']['single_sizes'];
