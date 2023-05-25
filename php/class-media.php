@@ -2090,6 +2090,19 @@ class Media extends Settings_Component implements Setup {
 		$asset['attachment_id'] = $this->get_id_from_sync_key( $asset['sync_key'] );
 		$asset['instances']     = Relationship::get_ids_by_public_id( $asset['public_id'] );
 
+		/**
+		 * Filter the asset payload.
+		 *
+		 * @hook   cloudinary_asset_payload
+		 * @since  3.1.3
+		 *
+		 * @param $asset {array} The asset payload.
+		 * @param $data  {array} The raw data from the request.
+		 *
+		 * @return {array}
+		 */
+		$asset = apply_filters( 'cloudinary_asset_payload', $asset, $data );
+
 		return $asset;
 	}
 
