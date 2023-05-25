@@ -2180,6 +2180,17 @@ class Media extends Settings_Component implements Setup {
 			}
 			$return['transformations'] = $asset['transformations'];
 
+			/**
+			 * Action for the downloaded assets from Cloudinary Media Library.
+			 *
+			 * @hook  cloudinary_download_asset
+			 * @since 3.1.3
+			 *
+			 * @param $asset  {array} The default filters.
+			 * @param $return {array} The return payload.
+			 */
+			do_action( 'cloudinary_download_asset', $asset, $return );
+
 			wp_send_json_success( $return );
 		}
 
