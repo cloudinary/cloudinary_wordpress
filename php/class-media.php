@@ -1915,13 +1915,25 @@ class Media extends Settings_Component implements Setup {
 		/**
 		 * Filter the maximum number of files that can be imported from Cloudinary.
 		 *
-		 * @hook cloudinary_max_files_import
-		 * @since 3.1.3
+		 * @hook    cloudinary_max_files_import
+		 * @since   3.1.3
 		 *
 		 * @param $max_files {int} The maximum number of files that can be imported from Cloudinary.
+		 *
 		 * @default 20
 		 *
-		 * @return {int}
+		 * @return  {int}
+		 *
+		 * @example
+		 * <?php
+		 *
+		 * // Filter Cloudinary max files per import.
+		 * add_filter(
+		 *    'cloudinary_max_files_import',
+		 *    static function() {
+		 *        return 100;
+		 *    }
+		 * );
 		 */
 		$max_files = apply_filters( 'cloudinary_max_files_import', 20 );
 
