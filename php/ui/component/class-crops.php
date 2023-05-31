@@ -121,12 +121,12 @@ class Crops extends Select {
 		/**
 		 * Filter the demo files.
 		 *
-		 * @since 3.1.3
+		 * @hook   cloudinary_registered_sizes
+		 * @since  3.1.3
 		 *
-		 * @hook  cloudinary_registered_sizes
+		 * @param $demo_files {array} array of demo files.
 		 *
-		 * @param array $demo_files array of demo files.
-		 *
+		 * @return {array}
 		 */
 		$examples = apply_filters( 'cloudinary_demo_crop_files', $this->demo_files );
 		if ( 'full' === $mode ) {
