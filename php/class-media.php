@@ -982,7 +982,6 @@ class Media extends Settings_Component implements Setup {
 
 	/**
 	 * Get the crop transformation for the attachment.
-	 * Returns false if no crop is found.
 	 *
 	 * @param int|string $attachment_id The attachment ID or type.
 	 * @param array      $size          The requested size width and height.
