@@ -2100,6 +2100,34 @@ class Media extends Settings_Component implements Setup {
 		 * @param $data  {array} The raw data from the request.
 		 *
 		 * @return {array}
+		 *
+		 * @example
+		 * <?php
+		 *
+		 * // Extend Cloudinary support for extra data.
+		 * // Contextual metadata is passed by default.
+		 * add_filter(
+		 *    'cloudinary_asset_payload',
+		 *    static function ( $asset, $payload ) {
+		 *        // The structured keys on Cloudinary to use in WordPress.
+		 *        $key = 'structured_key';
+		 *
+		 *        // Structural metadata. Beware of key collision with contextual metadata.
+		 *        if ( ! empty ( $payload['asset']['metadata'][ $key ] ) ) {
+		 *            // The sanitize function to use should be adequate to the data type.
+		 *            $asset['meta'][ $key ] = sanitize_text_field( $payload['asset']['metadata'][ $key ] );
+		 *        }
+		 *
+		 *        // The Cloudinary tags.
+		 *        if ( ! empty ( $payload['asset']['tags'] ) ) {
+		 *            $asset['tags'] = array_map( 'sanitize_text_field', $payload['asset']['tags'] );
+		 *        }
+		 *
+		 *        return $asset;
+		 *    },
+		 *    10,
+		 *    2
+		 * );
 		 */
 		$asset = apply_filters( 'cloudinary_asset_payload', $asset, $data );
 
@@ -2188,6 +2216,27 @@ class Media extends Settings_Component implements Setup {
 			 *
 			 * @param $asset  {array} The default filters.
 			 * @param $return {array} The return payload.
+			 *
+			 * @example
+			 * <?php
+			 * add_action(
+			 *    'cloudinary_download_asset',
+			 *    static function ( $asset ) {
+			 *        // Store metadata. Contextual and Structured metadata should be similar.
+			 *        $key = 'metadata_key';
+			 *        if ( ! empty( $asset['meta'][ $key ] ) && ! empty( $asset['attachment_id'] ) && 'attachment' === get_post_type( $asset['attachment_id'] ) ) {
+			 *            update_post_meta( $asset['attachment_id'],  $key , $asset['meta'][ $key ] );
+			 *        }
+			 *
+			 *        // Store the tags. The taxonomy needs to be assigned to the post type.
+			 *        if ( ! empty( $asset['tags'] ) && ! empty( $asset['attachment_id'] ) && 'attachment' === get_post_type( $asset['attachment_id'] ) ) {
+			 *            wp_set_post_terms(
+			 *                $asset['attachment_id'],
+			 *                $asset['tags']
+			 *            );
+			 *        }
+			 *    }
+			 * );
 			 */
 			do_action( 'cloudinary_download_asset', $asset, $return );
 
