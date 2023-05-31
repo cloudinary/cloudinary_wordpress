@@ -7,6 +7,7 @@
 
 namespace Cloudinary\URL;
 
+use Cloudinary\Connect\Api;
 use Cloudinary\Media;
 use function Cloudinary\get_plugin_instance;
 
@@ -18,7 +19,7 @@ class Cloudinary extends Url_Object {
 	/**
 	 * Holds the Connect API object.
 	 *
-	 * @var \Cloudinary\Connect\Api
+	 * @var Api
 	 */
 	protected $api;
 
