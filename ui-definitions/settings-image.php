@@ -150,6 +150,7 @@ $settings = array(
 						'type'           => 'text',
 						'slug'           => 'image_freeform',
 						'title'          => __( 'Additional image transformations', 'cloudinary' ),
+						'default'       => '',
 						'tooltip_text'   => sprintf(
 						// translators: The link to transformation reference.
 							__(
@@ -196,6 +197,25 @@ $settings = array(
 						),
 						'description'        => __( 'Enable SVG support.', 'cloudinary' ),
 						'default'            => 'off',
+					),
+					array(
+						'type'    => 'crops',
+						'slug'    => 'crop_sizes',
+						'title'   => __( 'Crops Sizes', 'cloudinary' ),
+						'enabled' => function () {
+							/**
+							 * Enable the crop size settings.
+							 *
+							 * @hook  cloudinary_enabled_crop_sizes
+							 * @since 3.1.3
+							 * @default {false}
+							 *
+							 * @param $enabeld {bool} Are the crop sizes enabled?
+							 *
+							 * @retrun {bool}
+							 */
+							return apply_filters( 'cloudinary_enabled_crop_sizes', false );
+						},
 					),
 				),
 			),
