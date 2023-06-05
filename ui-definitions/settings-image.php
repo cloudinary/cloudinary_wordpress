@@ -150,6 +150,7 @@ $settings = array(
 						'type'           => 'text',
 						'slug'           => 'image_freeform',
 						'title'          => __( 'Additional image transformations', 'cloudinary' ),
+						'default'       => '',
 						'tooltip_text'   => sprintf(
 						// translators: The link to transformation reference.
 							__(
