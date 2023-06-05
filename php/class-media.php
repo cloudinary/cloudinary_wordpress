@@ -1911,6 +1911,32 @@ class Media extends Settings_Component implements Setup {
 	public function editor_assets() {
 		$deps = wp_script_is( 'cld-core', 'registered' ) ? array( 'cld-core' ) : array();
 		$this->plugin->register_assets(); // Ensure assets are registered.
+
+		/**
+		 * Filter the maximum number of files that can be imported from Cloudinary.
+		 *
+		 * @hook    cloudinary_max_files_import
+		 * @since   3.1.3
+		 *
+		 * @param $max_files {int} The maximum number of files that can be imported from Cloudinary.
+		 *
+		 * @default 20
+		 *
+		 * @return  {int}
+		 *
+		 * @example
+		 * <?php
+		 *
+		 * // Filter Cloudinary max files per import.
+		 * add_filter(
+		 *    'cloudinary_max_files_import',
+		 *    static function() {
+		 *        return 100;
+		 *    }
+		 * );
+		 */
+		$max_files = apply_filters( 'cloudinary_max_files_import', 20 );
+
 		// External assets.
 		wp_enqueue_script( 'cloudinary-media-modal', $this->plugin->dir_url . '/js/media-modal.js', null, $this->plugin->version, true );
 		wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, $deps, $this->plugin->version, true );
@@ -1924,6 +1950,7 @@ class Media extends Settings_Component implements Setup {
 				'cms_type'       => 'wordpress',
 				'insert_caption' => __( 'Import', 'cloudinary' ),
 				'remove_header'  => true,
+				'max_files'      => $max_files,
 				'integration'    => array(
 					'type'     => 'wordpress_plugin',
 					'platform' => 'WordPress ' . get_bloginfo( 'version' ),
