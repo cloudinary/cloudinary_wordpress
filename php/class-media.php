@@ -2090,6 +2090,47 @@ class Media extends Settings_Component implements Setup {
 		$asset['attachment_id'] = $this->get_id_from_sync_key( $asset['sync_key'] );
 		$asset['instances']     = Relationship::get_ids_by_public_id( $asset['public_id'] );
 
+		/**
+		 * Filter the asset payload.
+		 *
+		 * @hook   cloudinary_asset_payload
+		 * @since  3.1.3
+		 *
+		 * @param $asset {array} The asset payload.
+		 * @param $data  {array} The raw data from the request.
+		 *
+		 * @return {array}
+		 *
+		 * @example
+		 * <?php
+		 *
+		 * // Extend Cloudinary support for extra data.
+		 * // Contextual metadata is passed by default.
+		 * add_filter(
+		 *    'cloudinary_asset_payload',
+		 *    static function ( $asset, $payload ) {
+		 *        // The structured keys on Cloudinary to use in WordPress.
+		 *        $key = 'structured_key';
+		 *
+		 *        // Structural metadata. Beware of key collision with contextual metadata.
+		 *        if ( ! empty ( $payload['asset']['metadata'][ $key ] ) ) {
+		 *            // The sanitize function to use should be adequate to the data type.
+		 *            $asset['meta'][ $key ] = sanitize_text_field( $payload['asset']['metadata'][ $key ] );
+		 *        }
+		 *
+		 *        // The Cloudinary tags.
+		 *        if ( ! empty ( $payload['asset']['tags'] ) ) {
+		 *            $asset['tags'] = array_map( 'sanitize_text_field', $payload['asset']['tags'] );
+		 *        }
+		 *
+		 *        return $asset;
+		 *    },
+		 *    10,
+		 *    2
+		 * );
+		 */
+		$asset = apply_filters( 'cloudinary_asset_payload', $asset, $data );
+
 		return $asset;
 	}
 
@@ -2166,6 +2207,38 @@ class Media extends Settings_Component implements Setup {
 				}
 			}
 			$return['transformations'] = $asset['transformations'];
+
+			/**
+			 * Action for the downloaded assets from Cloudinary Media Library.
+			 *
+			 * @hook  cloudinary_download_asset
+			 * @since 3.1.3
+			 *
+			 * @param $asset  {array} The default filters.
+			 * @param $return {array} The return payload.
+			 *
+			 * @example
+			 * <?php
+			 * add_action(
+			 *    'cloudinary_download_asset',
+			 *    static function ( $asset ) {
+			 *        // Store metadata. Contextual and Structured metadata should be similar.
+			 *        $key = 'metadata_key';
+			 *        if ( ! empty( $asset['meta'][ $key ] ) && ! empty( $asset['attachment_id'] ) && 'attachment' === get_post_type( $asset['attachment_id'] ) ) {
+			 *            update_post_meta( $asset['attachment_id'],  $key , $asset['meta'][ $key ] );
+			 *        }
+			 *
+			 *        // Store the tags. The taxonomy needs to be assigned to the post type.
+			 *        if ( ! empty( $asset['tags'] ) && ! empty( $asset['attachment_id'] ) && 'attachment' === get_post_type( $asset['attachment_id'] ) ) {
+			 *            wp_set_post_terms(
+			 *                $asset['attachment_id'],
+			 *                $asset['tags']
+			 *            );
+			 *        }
+			 *    }
+			 * );
+			 */
+			do_action( 'cloudinary_download_asset', $asset, $return );
 
 			wp_send_json_success( $return );
 		}
