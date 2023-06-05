@@ -880,18 +880,17 @@ class Media extends Settings_Component implements Setup {
 					}
 					// Make the WP Size array.
 					$wp_size = array(
-						'wpsize' => $size_name,
-						'file'   => $size['file'],
-						'width'  => $size['width'],
-						'height' => $size['height'],
-						'crop'   => $cropped ? 'fill' : 'scale',
+						'wpsize'         => $size_name,
+						'file'           => $size['file'],
+						'width'          => $size['width'],
+						'height'         => $size['height'],
+						'transformation' => 'c_scale',
 					);
 					if ( $cropped ) {
 						// Special thumbnail size.
 						if ( 'thumbnail' === $size_name ) {
-							$wp_size['crop'] = 'thumb';
+							$wp_size['transformation'] = 'c_thumb,g_auto';
 						}
-						$wp_size['gravity'] = 'auto';
 					}
 
 					return $wp_size;
@@ -982,6 +981,68 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Get the crop transformation for the attachment.
+	 *
+	 * @param int|string $attachment_id The attachment ID or type.
+	 * @param array      $size          The requested size width and height.
+	 *
+	 * @return string
+	 */
+	public function get_crop_transformations( $attachment_id, $size ) {
+		static $transformations = array();
+		$size_dim = $size['width'] . 'x' . $size['height'];
+		$key      = $attachment_id . $size_dim;
+		if ( empty( $transformations[ $key ] ) ) {
+
+			if ( empty( $size['transformation'] ) ) {
+				$size['transformation'] = 'c_scale';
+			}
+			$crops = $this->settings->get_value( 'crop_sizes' );
+			if ( ! empty( $crops[ $size_dim ] ) ) {
+				if ( '--' === $crops[ $size_dim ] ) {
+					$size['transformation'] = '';
+				} else {
+					$size['transformation'] = $crops[ $size_dim ];
+				}
+			}
+
+			/**
+			 * Enable the crop size settings.
+			 *
+			 * @hook  cloudinary_enabled_crop_sizes
+			 * @since 3.1.3
+			 * @default {false}
+			 *
+			 * @param $enabeld {bool} Are the crop sizes enabled?
+			 *
+			 * @retrun {bool}
+			 */
+			$enabled_crop_sizes = apply_filters( 'cloudinary_enabled_crop_sizes', false );
+
+			// Check for custom crop.
+			if ( is_numeric( $attachment_id ) && $enabled_crop_sizes ) {
+				$meta_sizes = $this->get_post_meta( $attachment_id, 'cloudinary_metaboxes_crop_meta', true );
+				if ( ! empty( $meta_sizes['single_crop_sizes']['single_sizes'] ) ) {
+					$custom_sizes = $meta_sizes['single_crop_sizes']['single_sizes'];
+					if ( ! empty( $custom_sizes[ $size_dim ] ) ) {
+						if ( '--' === $custom_sizes[ $size_dim ] ) {
+							$size['transformation'] = '';
+						} else {
+							$size['transformation'] = $custom_sizes[ $size_dim ];
+						}
+					}
+				}
+			}
+			$transformations[ $key ] = 'w_' . $size['width'] . ',h_' . $size['height'];
+			if ( ! empty( $size['transformation'] ) ) {
+				$transformations[ $key ] .= ',' . $size['transformation'];
+			}
+		}
+
+		return $transformations[ $key ];
+	}
+
+	/**
 	 * Extract the crop size part of a transformation that was done in the DAM widget.
 	 *
 	 * @param array      $transformations The transformations to get crop from.
@@ -1021,6 +1082,23 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Extract transformations from string..
+	 *
+	 * @param string $str  The transformation string.
+	 * @param string $type The type of transformation string.
+	 *
+	 * @return array The array of found transformations within the string.
+	 */
+	public static function extract_transformations_from_string( $str, $type = 'image' ) {
+		static $media;
+		if ( ! $media ) {
+			$media = get_plugin_instance()->get_component( 'media' );
+		}
+
+		return $media->get_transformations_from_string( $str, $type );
 	}
 
 	/**
@@ -1465,10 +1543,14 @@ class Media extends Settings_Component implements Setup {
 				'height' => $size[1],
 			);
 			if ( $size['width'] === $size['height'] ) {
-				$size['crop'] = 'fill';
+				$size['transformation'] = 'c_fill,g_auto';
 			}
 		}
 
+		// add Global crops.
+		if ( ! empty( $size['width'] ) && ! empty( $size['height'] ) ) {
+			$size['transformation'] = $this->get_crop_transformations( $attachment_id, $size );
+		}
 		/**
 		 * Filter Cloudinary size and crops
 		 *
