@@ -202,6 +202,17 @@ $settings = array(
 						'slug'    => 'crop_sizes',
 						'title'   => __( 'Crops Sizes', 'cloudinary' ),
 						'enabled' => function () {
+							/**
+							 * Enable the crop size settings.
+							 *
+							 * @hook  cloudinary_enabled_crop_sizes
+							 * @since 3.1.3
+							 * @default {false}
+							 *
+							 * @param $enabeld {bool} Are the crop sizes enabled?
+							 *
+							 * @retrun {bool}
+							 */
 							return apply_filters( 'cloudinary_enabled_crop_sizes', false );
 						},
 					),

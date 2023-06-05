@@ -982,7 +982,6 @@ class Media extends Settings_Component implements Setup {
 
 	/**
 	 * Get the crop transformation for the attachment.
-	 * Returns false if no crop is found.
 	 *
 	 * @param int|string $attachment_id The attachment ID or type.
 	 * @param array      $size          The requested size width and height.
@@ -1007,8 +1006,21 @@ class Media extends Settings_Component implements Setup {
 				}
 			}
 
+			/**
+			 * Enable the crop size settings.
+			 *
+			 * @hook  cloudinary_enabled_crop_sizes
+			 * @since 3.1.3
+			 * @default {false}
+			 *
+			 * @param $enabeld {bool} Are the crop sizes enabled?
+			 *
+			 * @retrun {bool}
+			 */
+			$enabled_crop_sizes = apply_filters( 'cloudinary_enabled_crop_sizes', false );
+
 			// Check for custom crop.
-			if ( is_numeric( $attachment_id ) && apply_filters( 'cloudinary_enabled_crop_sizes', false ) ) {
+			if ( is_numeric( $attachment_id ) && $enabled_crop_sizes ) {
 				$meta_sizes = $this->get_post_meta( $attachment_id, 'cloudinary_metaboxes_crop_meta', true );
 				if ( ! empty( $meta_sizes['single_crop_sizes']['single_sizes'] ) ) {
 					$custom_sizes = $meta_sizes['single_crop_sizes']['single_sizes'];
