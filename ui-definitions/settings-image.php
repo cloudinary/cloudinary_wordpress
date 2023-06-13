@@ -201,20 +201,20 @@ $settings = array(
 					array(
 						'type'    => 'crops',
 						'slug'    => 'crop_sizes',
-						'title'   => __( 'Crops Sizes', 'cloudinary' ),
-						'enabled' => function () {
+						'title'   => __( 'Crop and Gravity control (beta)', 'cloudinary' ),
+						'enabled' => static function () {
 							/**
-							 * Enable the crop size settings.
+							 * Enable the Crop and Gravity control settings.
 							 *
-							 * @hook  cloudinary_enabled_crop_sizes
+							 * @hook  cloudinary_enable_crop_and_gravity_control
 							 * @since 3.1.3
 							 * @default {false}
 							 *
-							 * @param $enabeld {bool} Are the crop sizes enabled?
+							 * @param $enabeld {bool} Is the Crop and Gravity control enabled?
 							 *
 							 * @retrun {bool}
 							 */
-							return apply_filters( 'cloudinary_enabled_crop_sizes', false );
+							return apply_filters( 'cloudinary_enable_crop_and_gravity_control', false );
 						},
 					),
 				),
