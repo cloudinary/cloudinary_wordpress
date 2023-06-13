@@ -175,7 +175,7 @@ $settings = array(
 					),
 					array(
 						'type'  => 'info_box',
-						'icon'  => $this->dir_url . 'css/images/crop.svg',
+						'icon'  => $this->dir_url . 'css/images/transformation.svg',
 						'title' => __( 'What are transformations?', 'cloudinary' ),
 						'text'  => __(
 							'A set of parameters included in a Cloudinary URL to programmatically transform the visual appearance of the assets on your website.',
