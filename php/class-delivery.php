@@ -1241,18 +1241,18 @@ class Delivery implements Setup {
 		$config = $this->plugin->settings->get_value( 'image_settings' );
 
 		/**
-		 * Enable the crop size settings.
+		 * Enable the Crop and Gravity control settings.
 		 *
-		 * @hook  cloudinary_enabled_crop_sizes
+		 * @hook  cloudinary_enable_crop_and_gravity_control
 		 * @since 3.1.3
 		 * @default {false}
 		 *
-		 * @param $enabeld {bool} Are the crop sizes enabled?
+		 * @param $enabeld {bool} Is the Crop and Gravity control enabled?
 		 *
 		 * @retrun {bool}
 		 */
-		$enabled_crop_sizes       = apply_filters( 'cloudinary_enabled_crop_sizes', false );
-		$has_sized_transformation = $enabled_crop_sizes && ! empty( $config['crop_sizes'] );
+		$enabled_crop_gravity     = apply_filters( 'cloudinary_enable_crop_and_gravity_control', false );
+		$has_sized_transformation = $enabled_crop_gravity && ! empty( $config['crop_sizes'] );
 
 		$tag_element = array(
 			'tag'                       => '',

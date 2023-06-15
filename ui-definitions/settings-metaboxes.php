@@ -6,36 +6,36 @@
  */
 
 /**
- * Enable the crop size settings.
+ * Enable the Crop and Gravity control settings.
  *
- * @hook  cloudinary_enabled_crop_sizes
+ * @hook  cloudinary_enable_crop_and_gravity_control
  * @since 3.1.3
  * @default {false}
  *
- * @param $enabeld {bool} Are the crop sizes enabled?
+ * @param $enabeld {bool} Is the Crop and Gravity control enabled?
  *
  * @retrun {bool}
  */
-if ( ! apply_filters( 'cloudinary_enabled_crop_sizes', false ) ) {
+if ( ! apply_filters( 'cloudinary_enable_crop_and_gravity_control', false ) ) {
 	return array();
 }
 $metaboxes = array(
 	'crop_meta' => array(
-		'title'    => __( 'Cloudinary crop sizes', 'cloudinary' ),
+		'title'    => __( 'Cloudinary Crop and Gravity control', 'cloudinary' ),
 		'screen'   => 'attachment',
 		'settings' => array(
 			array(
-				'slug' => 'single_crop_sizes',
+				'slug' => 'single_crop_and_gravity',
 				'type' => 'stand_alone',
 				array(
 					'type'         => 'on_off',
-					'slug'         => 'enable_single_sizes',
-					'title'        => __( 'Sized transformations', 'cloudinary' ),
+					'slug'         => 'enable_crop_and_gravity',
+					'title'        => __( 'Crop and Gravity control (beta)', 'cloudinary' ),
 					'tooltip_text' => __(
-						'Enable transformations per registered image sizes.',
+						'Enable Crop and Gravity control for registered image sizes.',
 						'cloudinary'
 					),
-					'description'  => __( 'Enable sized transformations.', 'cloudinary' ),
+					'description'  => __( 'Enable Crop and Gravity', 'cloudinary' ),
 					'default'      => 'off',
 				),
 				array(
@@ -43,7 +43,7 @@ $metaboxes = array(
 					'slug'      => 'single_sizes',
 					'mode'      => 'full',
 					'condition' => array(
-						'enable_single_sizes' => true,
+						'enable_crop_and_gravity' => true,
 					),
 				),
 			),
