@@ -1,4 +1,4 @@
-=== Use Cloudinary’s plugin to automatically optimize, manage and edit images and videos at scale ===
+=== Cloudinary - Deliver Images and Videos at Scale ===
 Contributors: Cloudinary, XWP, Automattic
 Tags: image-optimizer, crop, core-web-vitals, responsive, resize, product-gallery, performance
 Requires at least: 4.7
