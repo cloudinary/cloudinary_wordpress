@@ -21,6 +21,7 @@
 	@import "ui/plan";
 	@import "ui/wizard";
 	@import "ui/import";
+	@import "ui/sizes-preview";
 	@import "ui/cron";
 }
 
@@ -30,4 +31,10 @@
 	background-color: rgba(0, 0, 0, 0.8);
 	color: $color-white;
 	font-size: 0.8em;
+}
+
+#poststuff .cld-info-box h2 {
+	padding: 0;
+	margin: 0 0 6px;
+	font-weight: 700;
 }

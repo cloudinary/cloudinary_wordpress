@@ -86,22 +86,24 @@ class Lazy_Load extends Delivery_Feature {
 		/**
 		 * Filter the classes that bypass lazy loading.
 		 *
-		 * @hook cloudinary_lazy_load_bypass_classes
-		 * @since 3.0.9
+		 * @hook   cloudinary_lazy_load_bypass_classes
+		 * @since  3.0.9
+		 *
+		 * @param $classes {array} Classes that bypass the Lazy Load.
+		 *
+		 * @return {bool}
 		 *
 		 * @example
 		 * <?php
 		 *
 		 * // Extend bypass lazy load classes to include `skip-lazy`.
 		 * add_filter(
-		 *  'cloudinary_lazy_load_bypass_classes',
-		 *  function( $classes ) {
-		 *      $classes[] = 'skip-lazy';
-		 *      return $classes;
-		 *  }
+		 *    'cloudinary_lazy_load_bypass_classes',
+		 *    function( $classes ) {
+		 *         $classes[] = 'skip-lazy';
+		 *         return $classes;
+		 *    }
 		 * );
-		 *
-		 * @param $classes {array} Classes that bypass the Lazy Load.
 		 */
 		$bypass_classes = apply_filters( 'cloudinary_lazy_load_bypass_classes', array( 'cld-bypass-lazy' ) );
 
@@ -266,10 +268,12 @@ class Lazy_Load extends Delivery_Feature {
 		 *
 		 * @hook  cloudinary_lazy_load_bypass
 		 *
+		 * @since 3.0.9
+		 *
 		 * @param $short_circuit {bool}  The short circuit value.
 		 * @param $tag_element   {array} The tag element.
 		 *
-		 * @since 3.0.9
+		 * @return {bool}
 		 *
 		 * @example
 		 * <?php
@@ -278,11 +282,11 @@ class Lazy_Load extends Delivery_Feature {
 		 * add_filter(
 		 *    'cloudinary_lazy_load_bypass',
 		 *    function( $bypass, $tag_element ) {
-		 *      if ( 'feature-image! === $tag_element['id'] ) {
-		 *          $bypass = true;
-		 *      }
-		 *      return $bypass;
-		 *  }
+		 *        if ( 'feature-image! === $tag_element['id'] ) {
+		 *            $bypass = true;
+		 *        }
+		 *        return $bypass;
+		 *    }
 		 * );
 		 */
 		if ( apply_filters( 'cloudinary_lazy_load_bypass', false, $tag_element ) ) {

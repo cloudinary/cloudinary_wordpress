@@ -157,6 +157,8 @@ final class Plugin {
 		$this->components['extensions']             = new Extensions( $this );
 		$this->components['svg']                    = new SVG( $this );
 		$this->components['relate']                 = new Relate( $this );
+		$this->components['metabox']                = new Meta_Box( $this );
+		$this->components['url']                    = new URL( $this );
 	}
 
 	/**
@@ -164,7 +166,7 @@ final class Plugin {
 	 *
 	 * @param mixed $component The component.
 	 *
-	 * @return Admin|Connect|Delivery|Media|REST_API|String_Replace|Sync|Report|null
+	 * @return Admin|Connect|Delivery|Media|REST_API|String_Replace|Sync|Report|URL|null
 	 */
 	public function get_component( $component ) {
 		$return = null;

@@ -329,8 +329,8 @@ class Delivery implements Setup {
 		if ( ! $sql ) {
 			$sql = Utils::get_table_sql();
 		}
-		$public_id          = null;
-		$relationship       = Relationship::get_relationship( $attachment_id );
+		$public_id    = null;
+		$relationship = Relationship::get_relationship( $attachment_id );
 		if ( $relationship instanceof Relationship ) {
 			$public_id = $relationship->public_id;
 		}
@@ -528,7 +528,7 @@ class Delivery implements Setup {
 	 * @param string $public_id     The public ID.
 	 */
 	public static function update_size_relations_public_id( $attachment_id, $public_id ) {
-		$relationship              = Relationship::get_relationship( $attachment_id );
+		$relationship = Relationship::get_relationship( $attachment_id );
 
 		if ( $relationship instanceof Relationship ) {
 			$relationship->public_id   = $public_id;
@@ -545,7 +545,7 @@ class Delivery implements Setup {
 	 * @param string $state         The state to set.
 	 */
 	public static function update_size_relations_state( $attachment_id, $state ) {
-		$relationship             = Relationship::get_relationship( $attachment_id );
+		$relationship = Relationship::get_relationship( $attachment_id );
 
 		if ( $relationship instanceof Relationship ) {
 			$relationship->post_state = $state;
@@ -1254,6 +1254,22 @@ class Delivery implements Setup {
 	public function parse_element( $element ) {
 		static $post_context = 0;
 
+		$config = $this->plugin->settings->get_value( 'image_settings' );
+
+		/**
+		 * Enable the Crop and Gravity control settings.
+		 *
+		 * @hook  cloudinary_enable_crop_and_gravity_control
+		 * @since 3.1.3
+		 * @default {false}
+		 *
+		 * @param $enabeld {bool} Is the Crop and Gravity control enabled?
+		 *
+		 * @retrun {bool}
+		 */
+		$enabled_crop_gravity     = apply_filters( 'cloudinary_enable_crop_and_gravity_control', false );
+		$has_sized_transformation = $enabled_crop_gravity && ! empty( $config['crop_sizes'] );
+
 		$tag_element = array(
 			'tag'                       => '',
 			'atts'                      => array(),
@@ -1318,14 +1334,26 @@ class Delivery implements Setup {
 			$tag_element['height']        = ! empty( $attributes['height'] ) ? $attributes['height'] : $item['height'];
 			$attributes['data-public-id'] = $public_id;
 			$tag_element['format']        = $item['format'];
-
-			// Check if this is a crop or a scale.
-			$has_size = $this->media->get_size_from_url( $this->sanitize_url( $raw_url ) );
-			if ( ! empty( $has_size ) && ! empty( $item['height'] ) ) {
-				$file_ratio     = round( $has_size[0] / $has_size[1], 2 );
-				$original_ratio = round( $item['width'] / $item['height'], 2 );
-				if ( $file_ratio !== $original_ratio ) {
-					$attributes['data-crop'] = $file_ratio;
+			
+			if ( 'img' === $tag_element['tag'] ) {
+				// Check if this is a crop or a scale.
+				$has_size = $this->media->get_size_from_url( $this->sanitize_url( $raw_url ) );
+				if ( ! empty( $has_size ) && ! empty( $item['height'] ) ) {
+					$file_ratio     = round( $has_size[0] / $has_size[1], 2 );
+					$original_ratio = round( $item['width'] / $item['height'], 2 );
+					if ( $file_ratio !== $original_ratio ) {
+						$attributes['data-crop'] = $file_ratio;
+					}
+					if ( $has_sized_transformation ) {
+						$crop_size             = array(
+							'width'  => $has_size[0],
+							'height' => $has_size[1],
+						);
+						$image_transformations = $this->media->get_crop_transformations( $tag_element['id'], $crop_size );
+						if ( $image_transformations ) {
+							$attributes['data-transformation-crop'] = $image_transformations;
+						}
+					}
 				}
 			}
 		}
@@ -1383,8 +1411,8 @@ class Delivery implements Setup {
 		/**
 		 * Filter the tag element.
 		 *
-		 * @hook cloudinary_parse_element
-		 * @since 3.0.9
+		 * @hook   cloudinary_parse_element
+		 * @since  3.0.9
 		 *
 		 * @param $tag_element {array} The tag element.
 		 *
@@ -1581,6 +1609,7 @@ class Delivery implements Setup {
 
 		if ( ! $this->is_deliverable( $item['post_id'] ) ) {
 			$this->unusable = array_merge( $this->unusable, $found );
+
 			return;
 		}
 
