@@ -1,8 +1,8 @@
-=== Use Cloudinary’s plugin to automatically optimize, manage and edit images and videos at scale ===
+=== Cloudinary - Deliver Images and Videos at Scale ===
 Contributors: Cloudinary, XWP, Automattic
 Tags: image-optimizer, crop, core-web-vitals, responsive, resize, product-gallery, performance
 Requires at least: 4.7
-Tested up to: 6.2
+Tested up to: 6.2.2
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -133,6 +133,17 @@ Your site is now setup to start using Cloudinary.
 1. Need help? We’ve got you covered
 
 == Changelog ==
+
+= 3.1.3 (19 JUNE 2023) =
+
+Fixes and Improvements:
+
+* Added filters to allow extended metadata sync from Cloudinary to WordPress
+* Added a filter to extend the limit of imported assets in a bulk from Cloudinary to WordPress
+* Added a beta feature by the use of filters in order change the Crop and Gravity controls
+* Fixed plan status in the Cloudinary dashboard page
+* Fixed saving the taxonomy transformations
+
 
 = 3.1.2 (29 MARCH 2023) =
 

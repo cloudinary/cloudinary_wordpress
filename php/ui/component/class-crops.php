@@ -7,6 +7,7 @@
 
 namespace Cloudinary\UI\Component;
 
+use Cloudinary\Settings\Setting;
 use Cloudinary\Utils;
 use function Cloudinary\get_plugin_instance;
 
@@ -33,13 +34,58 @@ class Crops extends Select {
 	 *
 	 * @var string
 	 */
-	protected $blueprint = 'wrap|label|title|/title|prefix/|/label|input/|/wrap';
+	protected $blueprint = 'wrap|hr/|label|title/|prefix/|/label|info_box/|input/|/wrap';
 
 	/**
 	 * Enqueue scripts this component may use.
 	 */
 	public function enqueue_scripts() {
 		wp_enqueue_media();
+	}
+
+	/**
+	 * Filter the hr structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function hr( $struct ) {
+
+		if ( 'image_settings' === $this->setting->get_parent()->get_slug() ) {
+			$struct['element'] = 'hr';
+			$struct['render']  = true;
+		}
+
+		return $struct;
+	}
+
+	/**
+	 * Filter the info box structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function info_box( $struct ) {
+		$panel_toggle = new Setting( 'info_box_crop_gravity' );
+		$panel_toggle->set_param( 'title', __( 'What is Crop and Gravity control?', 'cloudinary' ) );
+		$panel_toggle->set_param(
+			'text',
+			sprintf(
+				// translators: %1$s: link to Crop doc, %2$s: link to Gravity doc.
+				__( 'This feature allows you to fine tune the behaviour of the %1$s and %2$s per registered crop size of the delivered images.', 'cloudinary' ),
+				'<a href="https://cloudinary.com/documentation/resizing_and_cropping#resize_and_crop_modes" target="_blank">' . __( 'Crop', 'cloudinary' ) . '</a>',
+				'<a href="https://cloudinary.com/documentation/resizing_and_cropping#control_gravity" target="_blank">' . __( 'Gravity', 'cloudinary' ) . '</a>'
+			)
+		);
+		$panel_toggle->set_param( 'icon', get_plugin_instance()->dir_url . 'css/images/crop.svg' );
+		$title_toggle = new Info_Box( $panel_toggle );
+
+		$struct['element'] = 'div';
+		$struct['content'] = $title_toggle->render();
+
+		return $struct;
 	}
 
 	/**
@@ -169,9 +215,14 @@ class Crops extends Select {
 			'crop-size-inputs',
 		);
 
+		$label                      = $this->get_part( 'label' );
+		$label['attributes']['for'] = $name;
+		$label['content']           = __( 'Disable', 'cloudinary' );
+
 		$check                          = $this->get_part( 'input' );
 		$check['attributes']['type']    = 'checkbox';
 		$check['attributes']['name']    = $name;
+		$check['attributes']['id']      = $name;
 		$check['attributes']['value']   = '--';
 		$check['attributes']['class'][] = 'disable-toggle';
 		$check['attributes']['title']   = __( 'Disable gravity and crops', 'cloudinary' );
@@ -186,6 +237,7 @@ class Crops extends Select {
 		$input['attributes']['class'][] = 'regular-text';
 
 		$wrapper['children']['input'] = $input;
+		$wrapper['children']['label'] = $label;
 		$wrapper['children']['check'] = $check;
 
 		return $wrapper;
