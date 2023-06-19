@@ -459,7 +459,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 							return 0;
 						}
 
-						return $a > $b ? - 1 : 1;
+						return $a < $b ? - 1 : 1;
 					}
 				);
 				$history[ $plan ] = array_slice( $history[ $plan ], -30 );
