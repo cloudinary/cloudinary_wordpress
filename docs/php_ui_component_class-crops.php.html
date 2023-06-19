@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Source: php/delivery/class-bypass.php - Cloudinary Docs</title>
+	<title>Source: php/ui/component/class-crops.php - Cloudinary Docs</title>
 
 	<script src="scripts/prettify/prettify.js"></script>
 	<script src="scripts/prettify/lang-css.js"></script>
@@ -22,7 +22,7 @@
 <div id="main">
 
 	
-	<h1 class="page-title">Source: php/delivery/class-bypass.php</h1>
+	<h1 class="page-title">Source: php/ui/component/class-crops.php</h1>
 	
 
 	
@@ -34,300 +34,258 @@
         <article>
             <pre class="prettyprint source linenums"><code>&lt;?php
 /**
- * Bypass class for the Cloudinary plugin.
+ * Select UI Component.
  *
  * @package Cloudinary
  */
 
-namespace Cloudinary\Delivery;
+namespace Cloudinary\UI\Component;
 
-use Cloudinary\Plugin;
-use Cloudinary\Sync;
-use Cloudinary\Media;
-use Cloudinary\Settings;
-use WP_Post;
+use Cloudinary\Settings\Setting;
+use Cloudinary\Utils;
+use function Cloudinary\get_plugin_instance;
 
 /**
- * Class Bypass
+ * Class Component
+ *
+ * @package Cloudinary\UI
  */
-class Bypass {
+class Crops extends Select {
 
 	/**
-	 * Holds the plugin instance.
+	 * Holds the demo file name.
 	 *
-	 * @var Plugin Instance of the global plugin.
+	 * @var string
 	 */
-	public $plugin;
-
-	/**
-	 * Holds the Media instance.
-	 *
-	 * @var Media
-	 */
-	protected $media;
-
-	/**
-	 * Holds the main settings.
-	 *
-	 * @var Settings
-	 */
-	protected $settings;
-
-	/**
-	 * Flag to determine if bypassing is allowed.
-	 *
-	 * @var bool
-	 */
-	protected $enabled;
-
-	/**
-	 * Holds the bypass action keys.
-	 */
-	const BYPASS_KEYS = array(
-		'wp'  => 'wp-delivery',
-		'cld' => 'cld-delivery',
+	protected $demo_files = array(
+		'sample.jpg',
+		'lady.jpg',
+		'horses.jpg',
 	);
 
 	/**
-	 * Bypass constructor.
+	 * Holds the components build blueprint.
 	 *
-	 * @param Plugin $plugin Global instance of the main plugin.
+	 * @var string
 	 */
-	public function __construct( Plugin $plugin ) {
-		$this->plugin = $plugin;
+	protected $blueprint = 'wrap|hr/|label|title/|prefix/|/label|info_box/|input/|/wrap';
 
-		// Hook into settings init, to get settings ans start hooks.
-		add_action( 'cloudinary_init_settings', array( $this, 'init_settings' ) );
+	/**
+	 * Enqueue scripts this component may use.
+	 */
+	public function enqueue_scripts() {
+		wp_enqueue_media();
 	}
 
 	/**
-	 * Setup the filters and actions.
+	 * Filter the hr structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
 	 */
-	protected function setup_hooks() {
-		// Start delivery bypasses if enabled.
-		if ( $this->enabled ) {
-			add_filter( 'handle_bulk_actions-upload', array( $this, 'handle_bulk_actions' ), 10, 3 );
-			add_filter( 'media_row_actions', array( $this, 'add_inline_action' ), 10, 2 );
-			add_filter( 'bulk_actions-upload', array( $this, 'add_bulk_actions' ) );
-			add_action( 'attachment_submitbox_misc_actions', array( $this, 'delivery_actions' ), 11 );
-			add_filter( 'wp_insert_attachment_data', array( $this, 'handle_save_attachment_delivery' ), 10, 2 );
-			add_filter( 'cloudinary_can_sync_asset', array( $this, 'can_sync' ), 10, 2 );
-			add_filter( 'cloudinary_cache_media_asset', array( $this, 'can_sync' ), 10, 2 );
-			add_filter( 'cloudinary_media_status', array( $this, 'filter_status' ), 11, 2 );
-		}
-	}
+	protected function hr( $struct ) {
 
-	/**
-	 * Init the main settings.
-	 *
-	 * @param Plugin $plugin The plugin instance.
-	 */
-	public function init_settings( $plugin ) {
-		$this->media    = $plugin->get_component( 'media' );
-		$this->settings = $plugin->settings;
-		$this->enabled  = 'on' === $this->settings->get_value( 'auto_sync' ) &amp;&amp; 'cld' !== $this->settings->get_value( 'offload' );
-		$this->setup_hooks();
-	}
-
-	/**
-	 * Handles bulk actions for attachments.
-	 *
-	 * @param string $location The location to redirect after.
-	 * @param string $action   The action to handle.
-	 * @param array  $post_ids Post ID's to action.
-	 *
-	 * @return string
-	 */
-	public function handle_bulk_actions( $location, $action, $post_ids ) {
-		$delivery = null;
-		switch ( $action ) {
-			case self::BYPASS_KEYS['wp']:
-				$delivery = true;
-				break;
-			case self::BYPASS_KEYS['cld']:
-				$delivery = false;
-				break;
+		if ( 'image_settings' === $this->setting->get_parent()->get_slug() ) {
+			$struct['element'] = 'hr';
+			$struct['render']  = true;
 		}
 
-		if ( ! is_null( $delivery ) ) {
-			foreach ( $post_ids as $id ) {
-				if ( true === $delivery ) {
-					$this->media->sync->managers['unsync']->unsync_attachment( $id );
-				}
-				$this->set_attachment_delivery( $id, $delivery );
+		return $struct;
+	}
+
+	/**
+	 * Filter the info box structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function info_box( $struct ) {
+		$panel_toggle = new Setting( 'info_box_crop_gravity' );
+		$panel_toggle->set_param( 'title', __( 'What is Crop and Gravity control?', 'cloudinary' ) );
+		$panel_toggle->set_param(
+			'text',
+			sprintf(
+				// translators: %1$s: link to Crop doc, %2$s: link to Gravity doc.
+				__( 'This feature allows you to fine tune the behaviour of the %1$s and %2$s per registered crop size of the delivered images.', 'cloudinary' ),
+				'&lt;a href="https://cloudinary.com/documentation/resizing_and_cropping#resize_and_crop_modes" target="_blank">' . __( 'Crop', 'cloudinary' ) . '&lt;/a>',
+				'&lt;a href="https://cloudinary.com/documentation/resizing_and_cropping#control_gravity" target="_blank">' . __( 'Gravity', 'cloudinary' ) . '&lt;/a>'
+			)
+		);
+		$panel_toggle->set_param( 'icon', get_plugin_instance()->dir_url . 'css/images/crop.svg' );
+		$title_toggle = new Info_Box( $panel_toggle );
+
+		$struct['element'] = 'div';
+		$struct['content'] = $title_toggle->render();
+
+		return $struct;
+	}
+
+	/**
+	 * Filter the select input parts structure.
+	 *
+	 * @param array $struct The array structure.
+	 *
+	 * @return array
+	 */
+	protected function input( $struct ) {
+
+		$mode                             = $this->setting->get_param( 'mode', 'demos' );
+		$wrapper                          = $this->get_part( 'div' );
+		$wrapper['attributes']['class'][] = 'cld-size-items';
+		if ( 'full' === $mode ) {
+			$wrapper['attributes']['data-base'] = dirname( get_plugin_instance()->get_component( 'connect' )->api->cloudinary_url( '' ) );
+		} else {
+			$wrapper['attributes']['data-base'] = 'https://res.cloudinary.com/demo/image/upload';
+		}
+
+		$value = $this->setting->get_value();
+		if ( empty( $value ) ) {
+			$value = array();
+		}
+		$sizes = Utils::get_registered_sizes();
+
+		$selector                                = $this->make_selector();
+		$wrapper['children']['control-selector'] = $selector;
+		foreach ( $sizes as $size => $details ) {
+			if ( empty( $details['crop'] ) ) {
+				continue;
 			}
+			$row                          = $this->get_part( 'div' );
+			$row['attributes']['class'][] = 'cld-size-items-item';
+			$row['attributes']['class'][] = 'crop-preview';
+			$row['content']               = $size;
 
-			/**
-			 * Action to flush delivery caches.
-			 *
-			 * @hook   cloudinary_flush_cache
-			 * @since  3.0.0
-			 */
-			do_action( 'cloudinary_flush_cache' );
+			$image            = $this->get_part( 'img' );
+			$image['content'] = $size;
+			$size_array       = array();
+			if ( ! empty( $details['width'] ) ) {
+				$size_array[]                 = 'w_' . $details['width'];
+				$image['attributes']['width'] = $details['width'];
+			}
+			if ( ! empty( $details['height'] ) ) {
+				$size_array[]                  = 'h_' . $details['height'];
+				$image['attributes']['height'] = $details['height'];
+			}
+			$image['attributes']['data-size'] = implode( ',', $size_array );
+			$size_key                         = $details['width'] . 'x' . $details['height'];
+			if ( empty( $value[ $size_key ] ) ) {
+				$value[ $size_key ] = '';
+			}
+			$row['children']['size']  = $image;
+			$row['children']['input'] = $this->make_input( $this->get_name() . '[' . $size_key . ']', $value[ $size_key ] );
+			// Set the placeholder.
+			$placeholder = 'c_fill,g_auto';
+
+			if ( 'thumbnail' === $size ) {
+				$placeholder = 'c_thumb,g_auto';
+			}
+			$row['children']['input']['children']['input']['attributes']['placeholder'] = $placeholder;
+
+			$wrapper['children'][ $size ] = $row;
+
 		}
 
-		return $location;
+		return $wrapper;
 	}
 
 	/**
-	 * Get the actions for delivery types.
+	 * Make an image selector.
+	 */
+	protected function make_selector() {
+		$selector                          = $this->get_part( 'div' );
+		$selector['attributes']['class'][] = 'cld-image-selector';
+		$mode                              = $this->setting->get_param( 'mode', 'demos' );
+
+		/**
+		 * Filter the demo files.
+		 *
+		 * @hook   cloudinary_registered_sizes
+		 * @since  3.1.3
+		 *
+		 * @param $demo_files {array} array of demo files.
+		 *
+		 * @return {array}
+		 */
+		$examples = apply_filters( 'cloudinary_demo_crop_files', $this->demo_files );
+		if ( 'full' === $mode ) {
+			$public_id = $this->setting->get_root_setting()->get_param( 'preview_id' );
+			if ( ! empty( $public_id ) ) {
+				$examples = array(
+					$public_id,
+				);
+			}
+		}
+		foreach ( $examples as $index => $file ) {
+			$name                             = pathinfo( $file, PATHINFO_FILENAME );
+			$item                             = $this->get_part( 'span' );
+			$item['attributes']['data-image'] = $file;
+			if ( 0 === $index ) {
+				$item['attributes']['data-selected'] = true;
+
+			}
+			$item['attributes']['class'][] = 'cld-image-selector-item';
+
+			$item['content']                           = $name;
+			$selector['children'][ 'image-' . $index ] = $item;
+		}
+
+		return $selector;
+	}
+
+	/**
+	 * Make an input line.
 	 *
-	 * @param int|null $attachment_id The attachment ID to get action or generic action.
+	 * @param string $name  The name of the input.
+	 * @param string $value The value.
 	 *
 	 * @return array
 	 */
-	protected function get_actions( $attachment_id = null ) {
-		$actions = array();
+	protected function make_input( $name, $value ) {
 
-		if (
-			null === $attachment_id
-			|| $this->plugin->get_component( 'delivery' )->is_deliverable( $attachment_id )
-		) {
-			$actions = array(
-				self::BYPASS_KEYS['wp'] => __( 'Deliver from WordPress', 'cloudinary' ),
-			);
+		$wrapper                        = $this->get_part( 'span' );
+		$wrapper['attributes']['class'] = array(
+			'crop-size-inputs',
+		);
+
+		$label                      = $this->get_part( 'label' );
+		$label['attributes']['for'] = $name;
+		$label['content']           = __( 'Disable', 'cloudinary' );
+
+		$check                          = $this->get_part( 'input' );
+		$check['attributes']['type']    = 'checkbox';
+		$check['attributes']['name']    = $name;
+		$check['attributes']['id']      = $name;
+		$check['attributes']['value']   = '--';
+		$check['attributes']['class'][] = 'disable-toggle';
+		$check['attributes']['title']   = __( 'Disable gravity and crops', 'cloudinary' );
+		if ( '--' === $value ) {
+			$check['attributes']['checked'] = 'checked';
 		}
 
-		return $actions;
+		$input                          = $this->get_part( 'input' );
+		$input['attributes']['type']    = 'text';
+		$input['attributes']['name']    = $name;
+		$input['attributes']['value']   = '--' !== $value ? $value : '';
+		$input['attributes']['class'][] = 'regular-text';
+
+		$wrapper['children']['input'] = $input;
+		$wrapper['children']['label'] = $label;
+		$wrapper['children']['check'] = $check;
+
+		return $wrapper;
 	}
 
 	/**
-	 * Add an inline action for manual sync.
+	 * Sanitize the value.
 	 *
-	 * @param array    $actions All actions.
-	 * @param \WP_Post $post    The current post object.
+	 * @param array $value The value to sanitize.
 	 *
 	 * @return array
 	 */
-	public function add_inline_action( $actions, $post ) {
-
-		$bypassed = $this->is_bypassed( $post->ID );
-		$action   = $bypassed ? self::BYPASS_KEYS['cld'] : self::BYPASS_KEYS['wp'];
-		$messages = $this->get_actions( $post->ID );
-		if ( ! empty( $messages[ $action ] ) ) {
-
-			// Set url for action handling.
-			$action_url = add_query_arg(
-				array(
-					'action'   => $action,
-					'media[]'  => $post->ID,
-					'_wpnonce' => wp_create_nonce( 'bulk-media' ),
-				),
-				'upload.php'
-			);
-
-			// Add link th actions.
-			$actions[ $action ] = sprintf(
-				'&lt;a href="%1$s" aria-label="%2$s">%2$s&lt;/a>',
-				$action_url,
-				$messages[ $action ]
-			);
-		}
-
-		return $actions;
-	}
-
-	/**
-	 * Handle saving the deliver setting in single attachment edit.
-	 *
-	 * @param array $post_data The post array (unused).
-	 * @param array $data      The submitted data to save.
-	 *
-	 * @return array
-	 */
-	public function handle_save_attachment_delivery( $post_data, $data ) {
-		$this->set_attachment_delivery( $data['ID'], isset( $data['attachment_delivery'] ) );
-
-		return $post_data;
-	}
-
-	/**
-	 * Update an attachments delivery.
-	 *
-	 * @param int  $attachment_id The attachment ID to update.
-	 * @param bool $bypass        True to bypass and deliver from WordPress, false deliver from Cloudinary.
-	 */
-	public function set_attachment_delivery( $attachment_id, $bypass ) {
-		$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['bypass'], $bypass );
-		$this->media->sync->set_signature_item( $attachment_id, 'delivery' );
-	}
-
-	/**
-	 * Add bulk actions.
-	 *
-	 * @param array $actions Current actions to add to.
-	 *
-	 * @return array
-	 */
-	public function add_bulk_actions( $actions ) {
-		$cloudinary_actions = $this->get_actions();
-
-		return array_merge( $cloudinary_actions, $actions );
-	}
-
-	/**
-	 * Filter states to indicate delivery when bypassed.
-	 *
-	 * @param array $status        The current status.
-	 * @param int   $attachment_id The attachment ID.
-	 *
-	 * @return array
-	 */
-	public function filter_status( $status, $attachment_id ) {
-		if ( ! empty( $status ) &amp;&amp; $this->is_bypassed( $attachment_id ) ) {
-			$actions = $this->get_actions( $attachment_id );
-			$status  = array(
-				'state' => 'info',
-				'note'  => $actions[ self::BYPASS_KEYS['wp'] ],
-			);
-		}
-
-		return $status;
-	}
-
-	/**
-	 * Adds the deliver checkbox on the single image edit screen.
-	 *
-	 * @param WP_Post $attachment The attachment post object.
-	 */
-	public function delivery_actions( $attachment ) {
-		$actions = $this->get_actions( $attachment->ID );
-		if ( ! empty( $actions[ self::BYPASS_KEYS['wp'] ] ) ) :
-			?>
-			&lt;div class="misc-pub-section misc-pub-delivery">
-				&lt;label>&lt;input type="checkbox" name="attachment_delivery" value="true" &lt;?php checked( true, $this->is_bypassed( $attachment->ID ) ); ?> />
-					&lt;?php echo esc_html( $actions[ self::BYPASS_KEYS['wp'] ] ); ?>
-				&lt;/label>
-			&lt;/div>
-			&lt;?php
-		endif;
-	}
-
-	/**
-	 * Filter if the asset can be synced if it's bypassed.
-	 *
-	 * @param bool $can           The current flag to sync.
-	 * @param int  $attachment_id The attachment ID.
-	 *
-	 * @return bool
-	 */
-	public function can_sync( $can, $attachment_id ) {
-		if ( $this->is_bypassed( $attachment_id ) ) {
-			$can = false;
-		}
-
-		return $can;
-	}
-
-	/**
-	 * Check if an attachment is bypassing Cloudinary.
-	 *
-	 * @param int $attachment_id The attachment ID.
-	 *
-	 * @return bool
-	 */
-	public function is_bypassed( $attachment_id ) {
-		return (bool) $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['bypass'], true );
+	public function sanitize_value( $value ) {
+		return $value;
 	}
 }
 </code></pre>

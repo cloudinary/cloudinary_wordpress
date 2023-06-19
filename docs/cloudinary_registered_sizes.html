@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Source: php/delivery/class-bypass.php - Cloudinary Docs</title>
+	<title>Action: cloudinary_registered_sizes - Cloudinary Docs</title>
 
 	<script src="scripts/prettify/prettify.js"></script>
 	<script src="scripts/prettify/lang-css.js"></script>
@@ -22,317 +22,330 @@
 <div id="main">
 
 	
-	<h1 class="page-title">Source: php/delivery/class-bypass.php</h1>
+	<h1 class="page-title">Action: cloudinary_registered_sizes</h1>
 	
 
 	
+
+
+
+
+<section>
+
+<header>
+    <h2></h2>
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+
+    
+
+    <h4 class="name" id="cloudinary_registered_sizes">do_action( 'cloudinary_registered_sizes', <span class="signature">array )</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    Filter the all sizes available.
+</div>
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>array</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">$all_sizes All the registered sizes.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+    <dt class="tag-since">Since:</dt>
+    <dd class="tag-since"><ul class="dummy"><li>3.1.3</li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="php_class-utils.php.html">php/class-utils.php</a>, <a href="php_class-utils.php.html#line906">line 906</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
     
-    <section>
-        <article>
-            <pre class="prettyprint source linenums"><code>&lt;?php
-/**
- * Bypass class for the Cloudinary plugin.
- *
- * @package Cloudinary
- */
+    </div>
 
-namespace Cloudinary\Delivery;
+    
+</article>
 
-use Cloudinary\Plugin;
-use Cloudinary\Sync;
-use Cloudinary\Media;
-use Cloudinary\Settings;
-use WP_Post;
+</section>
 
-/**
- * Class Bypass
- */
-class Bypass {
 
-	/**
-	 * Holds the plugin instance.
-	 *
-	 * @var Plugin Instance of the global plugin.
-	 */
-	public $plugin;
 
-	/**
-	 * Holds the Media instance.
-	 *
-	 * @var Media
-	 */
-	protected $media;
 
-	/**
-	 * Holds the main settings.
-	 *
-	 * @var Settings
-	 */
-	protected $settings;
 
-	/**
-	 * Flag to determine if bypassing is allowed.
-	 *
-	 * @var bool
-	 */
-	protected $enabled;
 
-	/**
-	 * Holds the bypass action keys.
-	 */
-	const BYPASS_KEYS = array(
-		'wp'  => 'wp-delivery',
-		'cld' => 'cld-delivery',
-	);
 
-	/**
-	 * Bypass constructor.
-	 *
-	 * @param Plugin $plugin Global instance of the main plugin.
-	 */
-	public function __construct( Plugin $plugin ) {
-		$this->plugin = $plugin;
+<section>
 
-		// Hook into settings init, to get settings ans start hooks.
-		add_action( 'cloudinary_init_settings', array( $this, 'init_settings' ) );
-	}
+<header>
+    <h2></h2>
+    
+</header>
 
-	/**
-	 * Setup the filters and actions.
-	 */
-	protected function setup_hooks() {
-		// Start delivery bypasses if enabled.
-		if ( $this->enabled ) {
-			add_filter( 'handle_bulk_actions-upload', array( $this, 'handle_bulk_actions' ), 10, 3 );
-			add_filter( 'media_row_actions', array( $this, 'add_inline_action' ), 10, 2 );
-			add_filter( 'bulk_actions-upload', array( $this, 'add_bulk_actions' ) );
-			add_action( 'attachment_submitbox_misc_actions', array( $this, 'delivery_actions' ), 11 );
-			add_filter( 'wp_insert_attachment_data', array( $this, 'handle_save_attachment_delivery' ), 10, 2 );
-			add_filter( 'cloudinary_can_sync_asset', array( $this, 'can_sync' ), 10, 2 );
-			add_filter( 'cloudinary_cache_media_asset', array( $this, 'can_sync' ), 10, 2 );
-			add_filter( 'cloudinary_media_status', array( $this, 'filter_status' ), 11, 2 );
-		}
-	}
+<article>
+    <div class="container-overview">
+    
+        
 
-	/**
-	 * Init the main settings.
-	 *
-	 * @param Plugin $plugin The plugin instance.
-	 */
-	public function init_settings( $plugin ) {
-		$this->media    = $plugin->get_component( 'media' );
-		$this->settings = $plugin->settings;
-		$this->enabled  = 'on' === $this->settings->get_value( 'auto_sync' ) &amp;&amp; 'cld' !== $this->settings->get_value( 'offload' );
-		$this->setup_hooks();
-	}
+    
 
-	/**
-	 * Handles bulk actions for attachments.
-	 *
-	 * @param string $location The location to redirect after.
-	 * @param string $action   The action to handle.
-	 * @param array  $post_ids Post ID's to action.
-	 *
-	 * @return string
-	 */
-	public function handle_bulk_actions( $location, $action, $post_ids ) {
-		$delivery = null;
-		switch ( $action ) {
-			case self::BYPASS_KEYS['wp']:
-				$delivery = true;
-				break;
-			case self::BYPASS_KEYS['cld']:
-				$delivery = false;
-				break;
-		}
+    <h4 class="name" id="cloudinary_registered_sizes">apply_filters( 'cloudinary_registered_sizes', <span class="signature">$demo_files )</span><span class="type-signature"> &rarr; {array}</span></h4>
 
-		if ( ! is_null( $delivery ) ) {
-			foreach ( $post_ids as $id ) {
-				if ( true === $delivery ) {
-					$this->media->sync->managers['unsync']->unsync_attachment( $id );
-				}
-				$this->set_attachment_delivery( $id, $delivery );
-			}
+    
 
-			/**
-			 * Action to flush delivery caches.
-			 *
-			 * @hook   cloudinary_flush_cache
-			 * @since  3.0.0
-			 */
-			do_action( 'cloudinary_flush_cache' );
-		}
 
-		return $location;
-	}
 
-	/**
-	 * Get the actions for delivery types.
-	 *
-	 * @param int|null $attachment_id The attachment ID to get action or generic action.
-	 *
-	 * @return array
-	 */
-	protected function get_actions( $attachment_id = null ) {
-		$actions = array();
+<div class="description">
+    Filter the demo files.
+</div>
 
-		if (
-			null === $attachment_id
-			|| $this->plugin->get_component( 'delivery' )->is_deliverable( $attachment_id )
-		) {
-			$actions = array(
-				self::BYPASS_KEYS['wp'] => __( 'Deliver from WordPress', 'cloudinary' ),
-			);
-		}
 
-		return $actions;
-	}
 
-	/**
-	 * Add an inline action for manual sync.
-	 *
-	 * @param array    $actions All actions.
-	 * @param \WP_Post $post    The current post object.
-	 *
-	 * @return array
-	 */
-	public function add_inline_action( $actions, $post ) {
 
-		$bypassed = $this->is_bypassed( $post->ID );
-		$action   = $bypassed ? self::BYPASS_KEYS['cld'] : self::BYPASS_KEYS['wp'];
-		$messages = $this->get_actions( $post->ID );
-		if ( ! empty( $messages[ $action ] ) ) {
 
-			// Set url for action handling.
-			$action_url = add_query_arg(
-				array(
-					'action'   => $action,
-					'media[]'  => $post->ID,
-					'_wpnonce' => wp_create_nonce( 'bulk-media' ),
-				),
-				'upload.php'
-			);
 
-			// Add link th actions.
-			$actions[ $action ] = sprintf(
-				'&lt;a href="%1$s" aria-label="%2$s">%2$s&lt;/a>',
-				$action_url,
-				$messages[ $action ]
-			);
-		}
 
-		return $actions;
-	}
+    <h5>Parameters:</h5>
+    
 
-	/**
-	 * Handle saving the deliver setting in single attachment edit.
-	 *
-	 * @param array $post_data The post array (unused).
-	 * @param array $data      The submitted data to save.
-	 *
-	 * @return array
-	 */
-	public function handle_save_attachment_delivery( $post_data, $data ) {
-		$this->set_attachment_delivery( $data['ID'], isset( $data['attachment_delivery'] ) );
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
 
-		return $post_data;
-	}
+        <th>Type</th>
 
-	/**
-	 * Update an attachments delivery.
-	 *
-	 * @param int  $attachment_id The attachment ID to update.
-	 * @param bool $bypass        True to bypass and deliver from WordPress, false deliver from Cloudinary.
-	 */
-	public function set_attachment_delivery( $attachment_id, $bypass ) {
-		$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['bypass'], $bypass );
-		$this->media->sync->set_signature_item( $attachment_id, 'delivery' );
-	}
+        
 
-	/**
-	 * Add bulk actions.
-	 *
-	 * @param array $actions Current actions to add to.
-	 *
-	 * @return array
-	 */
-	public function add_bulk_actions( $actions ) {
-		$cloudinary_actions = $this->get_actions();
+        
 
-		return array_merge( $cloudinary_actions, $actions );
-	}
+        <th class="last">Description</th>
+    </tr>
+    </thead>
 
-	/**
-	 * Filter states to indicate delivery when bypassed.
-	 *
-	 * @param array $status        The current status.
-	 * @param int   $attachment_id The attachment ID.
-	 *
-	 * @return array
-	 */
-	public function filter_status( $status, $attachment_id ) {
-		if ( ! empty( $status ) &amp;&amp; $this->is_bypassed( $attachment_id ) ) {
-			$actions = $this->get_actions( $attachment_id );
-			$status  = array(
-				'state' => 'info',
-				'note'  => $actions[ self::BYPASS_KEYS['wp'] ],
-			);
-		}
+    <tbody>
+    
 
-		return $status;
-	}
+        <tr>
+            
+                <td class="name"><code>$demo_files</code></td>
+            
 
-	/**
-	 * Adds the deliver checkbox on the single image edit screen.
-	 *
-	 * @param WP_Post $attachment The attachment post object.
-	 */
-	public function delivery_actions( $attachment ) {
-		$actions = $this->get_actions( $attachment->ID );
-		if ( ! empty( $actions[ self::BYPASS_KEYS['wp'] ] ) ) :
-			?>
-			&lt;div class="misc-pub-section misc-pub-delivery">
-				&lt;label>&lt;input type="checkbox" name="attachment_delivery" value="true" &lt;?php checked( true, $this->is_bypassed( $attachment->ID ) ); ?> />
-					&lt;?php echo esc_html( $actions[ self::BYPASS_KEYS['wp'] ] ); ?>
-				&lt;/label>
-			&lt;/div>
-			&lt;?php
-		endif;
-	}
+            <td class="type">
+            
+                
+<span class="param-type">array</span>
 
-	/**
-	 * Filter if the asset can be synced if it's bypassed.
-	 *
-	 * @param bool $can           The current flag to sync.
-	 * @param int  $attachment_id The attachment ID.
-	 *
-	 * @return bool
-	 */
-	public function can_sync( $can, $attachment_id ) {
-		if ( $this->is_bypassed( $attachment_id ) ) {
-			$can = false;
-		}
 
-		return $can;
-	}
+            
+            </td>
 
-	/**
-	 * Check if an attachment is bypassing Cloudinary.
-	 *
-	 * @param int $attachment_id The attachment ID.
-	 *
-	 * @return bool
-	 */
-	public function is_bypassed( $attachment_id ) {
-		return (bool) $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['bypass'], true );
-	}
-}
-</code></pre>
-        </article>
-    </section>
+            
+
+            
+
+            <td class="description last">array of demo files.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+    <dt class="tag-since">Since:</dt>
+    <dd class="tag-since"><ul class="dummy"><li>3.1.3</li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="php_ui_component_class-crops.php.html">php/ui/component/class-crops.php</a>, <a href="php_ui_component_class-crops.php.html#line167">line 167</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">array</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+    
+    </div>
+
+    
+</article>
+
+</section>
 
 
 
