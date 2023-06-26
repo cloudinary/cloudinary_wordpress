@@ -502,7 +502,7 @@ class Delivery implements Setup {
 			$sizes[ $attachment_id ] = array();
 			$meta                    = wp_get_attachment_metadata( $attachment_id, true );
 			if ( ! empty( $meta['width'] ) && ! empty( $meta['height'] ) ) {
-				$local_url               = self::clean_url( $this->media->local_url( $attachment_id ), true );
+				$local_url               = self::get_path_from_url( $this->media->local_url( $attachment_id ) );
 				$sizes[ $attachment_id ] = array(
 					'sized_url' => $local_url,
 					'size'      => $meta['width'] . 'x' . $meta['height'],
@@ -835,11 +835,10 @@ class Delivery implements Setup {
 	public function find_attachment_size_urls() {
 
 		global $wpdb;
-		$dirs    = wp_get_upload_dir();
-		$search  = array();
-		$baseurl = self::clean_url( $dirs['baseurl'] );
+		$content_url = self::clean_url( content_url() );
+		$search      = array();
 		foreach ( $this->unknown as $url ) {
-			$url      = ltrim( str_replace( $baseurl, '', $url ), '/' );
+			$url      = ltrim( str_replace( $content_url, '', $url ), '/' );
 			$search[] = $url;
 		}
 
@@ -1500,6 +1499,21 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Get the path from a url.
+	 *
+	 * @param string $url The url.
+	 *
+	 * @return string
+	 */
+	public static function get_path_from_url( $url ) {
+		$content_url = content_url();
+		$path        = explode( self::clean_url( $content_url ), $url );
+		$path        = end( $path );
+
+		return $path;
+	}
+
+	/**
 	 * Check if the file type is allowed to be uploaded.
 	 *
 	 * @param string $ext The filetype extension.
@@ -1580,10 +1594,13 @@ class Delivery implements Setup {
 		 */
 		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
 
+		$content_url = content_url();
+
 		$found                       = array();
 		$found[ $item['public_id'] ] = $item;
-		$scaled                      = self::make_scaled_url( $item['sized_url'] );
-		$descaled                    = self::descaled_url( $item['sized_url'] );
+		$url                         = self::clean_url( $content_url ) . $item['sized_url'];
+		$scaled                      = self::make_scaled_url( $url );
+		$descaled                    = self::descaled_url( $url );
 		$scaled_slashed              = addcslashes( $scaled, '/' );
 		$descaled_slashed            = addcslashes( $descaled, '/' );
 		$found[ $scaled ]            = $item;
@@ -1615,14 +1632,14 @@ class Delivery implements Setup {
 			$this->sync->add_to_sync( $item['post_id'] );
 		} elseif ( ! empty( $item['public_id'] ) ) {
 			// Most likely an asset with a public ID.
-			$this->usable[ $item['sized_url'] ] = $item['sized_url'];
+			$this->usable[ $url ] = $url;
 			if ( self::get_settings_signature() !== $item['signature'] ) {
 				$sync_type = $this->sync->get_sync_type( $item['post_id'] );
 				if ( $sync_type ) {
 					$this->sync->add_to_sync( $item['post_id'] );
 					if ( $this->sync->is_required( $sync_type, $item['post_id'] ) ) {
 						// Can't render this, so lets remove it from usable list.
-						unset( $this->usable[ $item['sized_url'] ] );
+						unset( $this->usable[ $url ] );
 					}
 				}
 			}
@@ -1750,7 +1767,9 @@ class Delivery implements Setup {
 			return; // Bail since theres nothing.
 		}
 
-		$results = $this->query_relations( $public_ids, $urls );
+		$paths = array_map( array( $this, 'get_path_from_url' ), $urls );
+
+		$results = $this->query_relations( $public_ids, $paths );
 
 		$auto_sync = $this->sync->is_auto_sync_enabled();
 		foreach ( $results as $result ) {
