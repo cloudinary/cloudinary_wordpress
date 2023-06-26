@@ -1729,11 +1729,12 @@ class Delivery implements Setup {
 		$base_urls  = array_filter( array_map( array( $this, 'sanitize_url' ), $all_urls ) );
 		$clean_urls = array_map( array( $this, 'clean_url' ), $base_urls );
 		$urls       = array_filter( $clean_urls, array( $this, 'validate_url' ) );
+		$decoded    = array_map( 'urldecode', $urls );
 
 		// De-size.
 		$desized = array_unique( array_map( array( $this, 'maybe_unsize_url' ), $urls ) );
 		$scaled  = array_unique( array_map( array( $this, 'make_scaled_url' ), $desized ) );
-		$urls    = array_merge( $desized, $scaled );
+		$urls    = array_merge( $desized, $scaled, $decoded );
 		$urls    = array_values( $urls ); // resets the index.
 
 		$public_ids = array();

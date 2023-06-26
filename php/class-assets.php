@@ -436,7 +436,7 @@ class Assets extends Settings_Component {
 		$home = Delivery::clean_url( trailingslashit( home_url() ) );
 		$path = str_replace( $home, '', Delivery::clean_url( $path ) );
 		if ( empty( Utils::pathinfo( $path, PATHINFO_EXTENSION ) ) ) {
-			$path = trailingslashit( $path );
+			$path = urldecode( trailingslashit( $path ) );
 		}
 
 		return $path;
@@ -1099,8 +1099,8 @@ class Assets extends Settings_Component {
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 
-		$full_url  = home_url() . wp_parse_url( $url, PHP_URL_PATH );
-		$file_path = str_replace( home_url(), untrailingslashit( ABSPATH ), $full_url );
+		$full_url  = urldecode( home_url() . wp_parse_url( $url, PHP_URL_PATH ) );
+		$file_path = urldecode( str_replace( home_url(), untrailingslashit( ABSPATH ), $full_url ) );
 		if ( ! file_exists( $file_path ) ) {
 			return false;
 		}
@@ -1175,7 +1175,7 @@ class Assets extends Settings_Component {
 			foreach ( $paths->get_settings() as $path ) {
 				if ( 'on' === $path->get_value() ) {
 					$conf = $path->get_params();
-					self::register_asset_path( trailingslashit( $conf['url'] ), $conf['version'] );
+					self::register_asset_path( urldecode( trailingslashit( $conf['url'] ) ), $conf['version'] );
 				}
 			}
 		}
