@@ -835,10 +835,11 @@ class Delivery implements Setup {
 	public function find_attachment_size_urls() {
 
 		global $wpdb;
-		$content_url = self::clean_url( content_url() );
-		$search      = array();
+		$dirs    = wp_get_upload_dir();
+		$search  = array();
+		$baseurl = self::clean_url( $dirs['baseurl'] );
 		foreach ( $this->unknown as $url ) {
-			$url      = ltrim( str_replace( $content_url, '', $url ), '/' );
+			$url      = ltrim( str_replace( $baseurl, '', $url ), '/' );
 			$search[] = $url;
 		}
 
@@ -1751,7 +1752,7 @@ class Delivery implements Setup {
 		// De-size.
 		$desized = array_unique( array_map( array( $this, 'maybe_unsize_url' ), $urls ) );
 		$scaled  = array_unique( array_map( array( $this, 'make_scaled_url' ), $desized ) );
-		$urls    = array_merge( $desized, $scaled, $decoded );
+		$urls    = array_unique( array_merge( $desized, $scaled, $decoded ) );
 		$urls    = array_values( $urls ); // resets the index.
 
 		$public_ids = array();
