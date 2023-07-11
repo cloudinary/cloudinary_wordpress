@@ -804,7 +804,7 @@ class Api {
 		$hostname = $upload_prefix;
 
 		if ( filter_var( $upload_prefix, FILTER_VALIDATE_URL ) ) {
-			$hostname = parse_url( $upload_prefix, PHP_URL_HOST );
+			$hostname = wp_parse_url( $upload_prefix, PHP_URL_HOST );
 		}
 
 		return $hostname;
