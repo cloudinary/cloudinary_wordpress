@@ -68,7 +68,7 @@ class Info_Box extends Panel {
 	 */
 	protected function wrap( $struct ) {
 		$struct = parent::wrap( $struct );
-		unset( $struct['attributes']['class'][ array_search( 'has-heading', $struct['attributes']['class'] ) ] );
+		unset( $struct['attributes']['class'][ array_search( 'has-heading', $struct['attributes']['class'], true ) ] );
 
 		return $struct;
 	}
