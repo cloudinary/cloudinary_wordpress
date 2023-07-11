@@ -992,8 +992,8 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function get_crop_transformations( $attachment_id, $size ) {
 		static $transformations = array();
-		$size_dim = $size['width'] . 'x' . $size['height'];
-		$key      = $attachment_id . $size_dim;
+		$size_dim               = $size['width'] . 'x' . $size['height'];
+		$key                    = $attachment_id . $size_dim;
 		if ( empty( $transformations[ $key ] ) ) {
 
 			if ( empty( $size['transformation'] ) ) {

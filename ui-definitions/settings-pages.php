@@ -433,14 +433,14 @@ $settings = array(
 		'section' => 'wizard',
 		'slug'    => 'wizard',
 	),
-	'debug'         => array(
+	'debug'          => array(
 		'section' => 'debug',
 		'slug'    => 'debug',
 		array(
 			'type'  => 'panel',
 			'title' => __( 'Debug log', 'cloudinary' ),
 			array(
-				'type'    => 'debug',
+				'type' => 'debug',
 			),
 		),
 	),

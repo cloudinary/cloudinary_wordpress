@@ -279,8 +279,8 @@ class Video {
 						if ( ! empty( $attributes['poster'] ) ) {
 							// Maybe local URL.
 							if ( ! $this->media->is_cloudinary_url( $attributes['poster'] ) ) {
-								$post_id = attachment_url_to_postid( $attributes['poster'] );
-								$url = $this->media->cloudinary_url( $post_id );
+								$post_id = Utils::attachment_url_to_postid( $attributes['poster'] );
+								$url     = $this->media->cloudinary_url( $post_id );
 								if ( $url ) {
 									$content = str_replace( $attributes['poster'], $url, $content );
 								}
