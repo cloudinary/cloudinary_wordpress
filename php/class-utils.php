@@ -914,4 +914,25 @@ class Utils {
 		 */
 		return apply_filters( 'cloudinary_registered_sizes', $all_sizes );
 	}
+
+	/**
+	 * Get the attachment ID from the attachment URL.
+	 *
+	 * @param string $url The attachment URL.
+	 *
+	 * @return int
+	 */
+	public static function attachment_url_to_postid( $url ) {
+		$attachment_id = 0;
+		if ( function_exists( 'wpcom_vip_attachment_url_to_postid' ) ) {
+			$attachment_id = wpcom_vip_attachment_url_to_postid( $url );
+		}
+
+		if ( 0 === $attachment_id && empty( wp_cache_get( "postid_{$url}", 'cloudinary' ) ) ) {
+			$attachment_id = attachment_url_to_postid( $url ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.attachment_url_to_postid_attachment_url_to_postid
+			wp_cache_set( "postid_{$url}", $attachment_id, 'cloudinary' );
+		}
+
+		return $attachment_id;
+	}
 }

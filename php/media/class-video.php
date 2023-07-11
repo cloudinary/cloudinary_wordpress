@@ -145,7 +145,7 @@ class Video {
 			);
 			foreach ( $supported_formats as $format ) {
 				if ( ! empty( $attr[ $format ] ) ) {
-					$attr['id'] = attachment_url_to_postid( $attr[ $format ] );
+					$attr['id'] = Utils::attachment_url_to_postid( $attr[ $format ] );
 					break;
 				}
 			}
@@ -367,7 +367,7 @@ class Video {
 
 			// Maybe poster is a local URL.
 			if ( empty( $poster_id ) ) {
-				$post_id   = attachment_url_to_postid( $attributes['poster'] );
+				$post_id   = Utils::attachment_url_to_postid( $attributes['poster'] );
 				$poster_id = $this->media->get_public_id( $post_id );
 			}
 
