@@ -976,6 +976,6 @@ class Cache_Point {
 			'rewrite'             => false,
 			'capability_type'     => 'page',
 		);
-		$this->post_type = register_post_type( self::POST_TYPE_SLUG, $args );
+		$this->post_type = register_post_type( self::POST_TYPE_SLUG, $args ); // phpcs:ignore WordPress.NamingConventions.ValidPostTypeSlug.NotStringLiteral
 	}
 }

@@ -152,7 +152,7 @@ $advanced->set_value( 'on' );
 						<span class="spinner"></span>
 					</span>
 				</div>
-				<?php require $cloudinary->dir_path . 'php/templates/connection-string.php'; ?>
+				<?php require $cloudinary->dir_path . 'php/templates/connection-string.php'; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable ?>
 			</div>
 		</div>
 		<div class="cld-wizard-content cld-wizard-optimize hidden" id="tab-3">

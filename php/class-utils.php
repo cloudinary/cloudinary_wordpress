@@ -500,7 +500,7 @@ class Utils {
 		 *
 		 * @see wp-includes/formatting.php
 		 */
-		$path = str_replace( array( '%2F', '%5C' ), '/', urlencode( $path ) );
+		$path = str_replace( array( '%2F', '%5C' ), '/', urlencode( $path ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.urlencode_urlencode
 
 		$pathinfo = pathinfo( $path, $flags );
 
