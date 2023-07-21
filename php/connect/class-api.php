@@ -196,7 +196,19 @@ class Api {
 			$parts[] = $this->credentials['cloud_name'];
 		}
 
-		if ( false === $endpoint && 'image' === $resource && 'upload' === $function ) {
+		/**
+		 * Bypass Cloudinary's SEO URLs.
+		 *
+		 * @hook cloudinary_bypass_seo_url
+		 * @since 3.1.4
+		 *
+		 * @param $bypass_seo_url {bool} Whether to bypass SEO URLs.
+		 *
+		 * @return bool
+		 */
+		$bypass_seo_url = apply_filters( 'cloudinary_bypass_seo_url', false );
+
+		if ( false === $endpoint && 'image' === $resource && 'upload' === $function && ! $bypass_seo_url ) {
 			$parts[] = 'images';
 		} else {
 			$parts[] = $resource;
@@ -283,9 +295,24 @@ class Api {
 			'https:/',
 			$this->url( $args['resource_type'], $asset_endpoint ),
 		);
+
+		/**
+		 * Bypass Cloudinary's SEO URLs.
+		 *
+		 * @hook  cloudinary_bypass_seo_url
+		 * @since 3.1.4
+		 *
+		 * @param $bypass_seo_url {bool} Whether to bypass SEO URLs.
+		 *
+		 * @return {bool}
+		 */
+		$bypass_seo_url = apply_filters( 'cloudinary_bypass_seo_url', false );
+
+		$original_public_id = $public_id;
+
 		$base      = Utils::pathinfo( $public_id );
 		// Only do dynamic naming and sizes if upload type.
-		if ( 'image' === $args['resource_type'] && 'upload' === $args['delivery_type'] ) {
+		if ( 'image' === $args['resource_type'] && 'upload' === $args['delivery_type'] && ! $bypass_seo_url ) {
 			$new_path  = $base['filename'] . '/' . $base['basename'];
 			$public_id = str_replace( $base['basename'], $new_path, $public_id );
 		}
