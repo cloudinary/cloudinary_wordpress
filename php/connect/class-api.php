@@ -331,6 +331,22 @@ class Api {
 			$url_parts[] = self::generate_transformation_string( $args['transformation'], $args['resource_type'] );
 		}
 
+		if ( 'image' === $args['resource_type'] && 'upload' === $args['delivery_type'] && ! $bypass_seo_url ) {
+			/**
+			 * Filter the SEO public ID.
+			 *
+			 * @hook   cloudinary_seo_public_id
+			 * @since  3.1.4
+			 *
+			 * @param $public_id          {string} The suffixed public_id.
+			 * @param $original_public_id {string} The original public_id.
+			 * @param $base               {array}  The pathinfo of the public_id.
+			 *
+			 * @return {string}
+			 */
+			$public_id = apply_filters( 'cloudinary_seo_public_id', $public_id, $original_public_id, $base );
+		}
+
 		$url_parts[] = $args['version'];
 		$url_parts[] = $public_id;
 
