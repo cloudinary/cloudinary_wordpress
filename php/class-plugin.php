@@ -83,6 +83,13 @@ final class Plugin {
 	public $dir_url;
 
 	/**
+	 * The plugin file.
+	 *
+	 * @var string
+	 */
+	protected $plugin_file;
+
+	/**
 	 * Directory in plugin containing autoloaded classes.
 	 *
 	 * @var string
