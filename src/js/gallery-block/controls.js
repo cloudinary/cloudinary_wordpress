@@ -1,4 +1,5 @@
 import Dot from 'dot-object';
+import { useState } from 'react';
 import { __ } from '@wordpress/i18n';
 import cloneDeep from 'lodash/cloneDeep';
 import Tippy from '@tippyjs/react';
@@ -56,6 +57,17 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 	const attributesClone = cloneDeep( attributes );
 	const nestedAttrs = dot.object( attributesClone );
 
+	nestedAttrs.customSettings =
+		typeof nestedAttrs.customSettings === 'object'
+			? JSON.stringify( nestedAttrs.customSettings )
+			: nestedAttrs.customSettings;
+
+	const [ customSettings, setCustomSettings ] = useState(
+		nestedAttrs.customSettings
+	);
+
+	delete nestedAttrs.customSettings;
+
 	if ( ! attributes.transformation_crop ) {
 		attributes.transformation_crop = 'pad';
 		attributes.transformation_background = 'rgb:FFFFFF';
@@ -69,6 +81,18 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 		const newAttrs = { [ key ]: convertColors( value ) };
 
 		setAttributes( newAttrs );
+	};
+
+	const onChangeCustomSettings = ( value ) => {
+		const atts = {
+			...nestedAttrs,
+			...dot.dot( JSON.parse( value ) ),
+		};
+
+		setAttributes( {
+			...nestedAttrs,
+			...atts,
+		} );
 	};
 
 	return (
@@ -447,7 +471,8 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 							options={ SELECTED_BORDER_POSITION }
 							onChange={ ( value ) =>
 								setAttributes( {
-									thumbnailProps_selectedBorderPosition: value,
+									thumbnailProps_selectedBorderPosition:
+										value,
 								} )
 							}
 						/>
@@ -518,12 +543,12 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 						'Provide a JSON string of the settings you want to add and/or override.',
 						'cloudinary'
 					) }
-					value={ nestedAttrs.customSettings }
-					onChange={ ( value ) => {
-						setAttributes( {
-							customSettings: value,
-						} );
-					} }
+					value={
+						typeof customSettings === 'object'
+							? JSON.stringify( customSettings )
+							: customSettings
+					}
+					onChange={ onChangeCustomSettings }
 				/>
 			</PanelBody>
 		</>
