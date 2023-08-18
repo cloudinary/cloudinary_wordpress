@@ -445,6 +445,14 @@ class Gallery extends Settings_Component {
 			$attributes['secureDistribution'] = $credentials['cname'];
 			$attributes['privateCdn']         = true;
 		}
+
+		if ( ! empty( $attributes['customSettings'] ) ) {
+			if ( is_string( $attributes['customSettings'] ) && ! is_admin() ) {
+				$attributes['customSettings'] = json_decode( $attributes['customSettings'], true );
+			}
+			$attributes = wp_parse_args( $attributes['customSettings'], $attributes );
+		}
+
 		unset( $attributes['selectedImages'], $attributes['customSettings'] );
 
 		$attributes['queryParam'] = 'AA';
