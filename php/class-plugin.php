@@ -87,7 +87,7 @@ final class Plugin {
 	 *
 	 * @var string
 	 */
-	protected $plugin_file;
+	public $plugin_file;
 
 	/**
 	 * Directory in plugin containing autoloaded classes.
