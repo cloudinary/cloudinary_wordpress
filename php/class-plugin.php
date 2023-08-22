@@ -197,7 +197,7 @@ final class Plugin {
 
 		foreach ( $parts as $slug => $part ) {
 			if ( file_exists( $this->dir_path . "ui-definitions/settings-{$slug}.php" ) ) {
-				$parts[ $slug ] = include $this->dir_path . "ui-definitions/settings-{$slug}.php";
+				$parts[ $slug ] = include $this->dir_path . "ui-definitions/settings-{$slug}.php"; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
 			}
 		}
 

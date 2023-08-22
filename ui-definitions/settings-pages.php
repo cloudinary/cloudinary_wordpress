@@ -71,7 +71,7 @@ $settings = array(
 		'priority'            => 5,
 		'requires_connection' => true,
 		'sidebar'             => true,
-		'settings'            => include $this->dir_path . 'ui-definitions/settings-image.php',
+		'settings'            => include $this->dir_path . 'ui-definitions/settings-image.php', // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
 	),
 	'video_settings' => array(
 		'page_title'          => __( 'Video settings', 'cloudinary' ),
@@ -79,7 +79,7 @@ $settings = array(
 		'priority'            => 5,
 		'requires_connection' => true,
 		'sidebar'             => true,
-		'settings'            => include $this->dir_path . 'ui-definitions/settings-video.php',
+		'settings'            => include $this->dir_path . 'ui-definitions/settings-video.php', // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
 	),
 	'lazy_loading'   => array(),
 	'responsive'     => array(
@@ -433,14 +433,14 @@ $settings = array(
 		'section' => 'wizard',
 		'slug'    => 'wizard',
 	),
-	'debug'         => array(
+	'debug'          => array(
 		'section' => 'debug',
 		'slug'    => 'debug',
 		array(
 			'type'  => 'panel',
 			'title' => __( 'Debug log', 'cloudinary' ),
 			array(
-				'type'    => 'debug',
+				'type' => 'debug',
 			),
 		),
 	),

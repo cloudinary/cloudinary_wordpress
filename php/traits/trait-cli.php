@@ -466,11 +466,12 @@ trait CLI_Trait {
 	 * @return void
 	 */
 	protected function export_csv( $data, $type ) {
-		$filename = sanitize_file_name( 'cloudinary-' . $type . '-' . time() . '.csv' );
-		$fp       = fopen( $filename, 'wb+' );
+		$upload   = wp_get_upload_dir();
+		$filename = trailingslashit( $upload['path'] ) . sanitize_file_name( 'cloudinary-' . $type . '-' . time() . '.csv' );
+		$fp       = fopen( $filename, 'wb+' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fopen
 
 		foreach ( $data as $fields ) {
-			fputcsv( $fp, $fields );
+			fputcsv( $fp, $fields ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_fputcsv
 		}
 
 		fclose( $fp );

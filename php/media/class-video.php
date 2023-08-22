@@ -145,7 +145,7 @@ class Video {
 			);
 			foreach ( $supported_formats as $format ) {
 				if ( ! empty( $attr[ $format ] ) ) {
-					$attr['id'] = attachment_url_to_postid( $attr[ $format ] );
+					$attr['id'] = Utils::attachment_url_to_postid( $attr[ $format ] );
 					break;
 				}
 			}
@@ -279,8 +279,8 @@ class Video {
 						if ( ! empty( $attributes['poster'] ) ) {
 							// Maybe local URL.
 							if ( ! $this->media->is_cloudinary_url( $attributes['poster'] ) ) {
-								$post_id = attachment_url_to_postid( $attributes['poster'] );
-								$url = $this->media->cloudinary_url( $post_id );
+								$post_id = Utils::attachment_url_to_postid( $attributes['poster'] );
+								$url     = $this->media->cloudinary_url( $post_id );
 								if ( $url ) {
 									$content = str_replace( $attributes['poster'], $url, $content );
 								}
@@ -367,7 +367,7 @@ class Video {
 
 			// Maybe poster is a local URL.
 			if ( empty( $poster_id ) ) {
-				$post_id   = attachment_url_to_postid( $attributes['poster'] );
+				$post_id   = Utils::attachment_url_to_postid( $attributes['poster'] );
 				$poster_id = $this->media->get_public_id( $post_id );
 			}
 
