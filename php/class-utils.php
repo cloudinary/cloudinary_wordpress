@@ -500,7 +500,7 @@ class Utils {
 		 *
 		 * @see wp-includes/formatting.php
 		 */
-		$path = str_replace( array( '%2F', '%5C' ), '/', urlencode( $path ) );
+		$path = str_replace( array( '%2F', '%5C' ), '/', urlencode( $path ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.urlencode_urlencode
 
 		$pathinfo = pathinfo( $path, $flags );
 
@@ -913,5 +913,29 @@ class Utils {
 		 * @hook  cloudinary_registered_sizes
 		 */
 		return apply_filters( 'cloudinary_registered_sizes', $all_sizes );
+	}
+
+	/**
+	 * Get the attachment ID from the attachment URL.
+	 *
+	 * @param string $url The attachment URL.
+	 *
+	 * @return int
+	 */
+	public static function attachment_url_to_postid( $url ) {
+		$key = "postid_{$url}";
+
+		if ( function_exists( 'wpcom_vip_attachment_url_to_postid' ) ) {
+			$attachment_id = wpcom_vip_attachment_url_to_postid( $url );
+		} else {
+			$attachment_id = wp_cache_get( $key, 'cloudinary' );
+		}
+
+		if ( empty( $attachment_id ) ) {
+			$attachment_id = attachment_url_to_postid( $url ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.attachment_url_to_postid_attachment_url_to_postid
+			wp_cache_set( $key, $attachment_id, 'cloudinary' );
+		}
+
+		return $attachment_id;
 	}
 }
