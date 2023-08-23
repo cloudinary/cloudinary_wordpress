@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: image-optimizer, crop, core-web-vitals, responsive, resize, product-gallery, performance
 Requires at least: 4.7
-Tested up to: 6.2.2
+Tested up to: 6.3
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -133,6 +133,12 @@ Your site is now setup to start using Cloudinary.
 1. Need help? We’ve got you covered
 
 == Changelog ==
+
+= 3.1.4 (23 AUGUST 2023) =
+
+Fixes and Improvements:
+
+* Fixed PHP warnings related to version 8.X
 
 = 3.1.3 (19 JUNE 2023) =
 

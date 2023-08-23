@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cloudinary STABLETAG\n"
 "Report-Msgid-Bugs-To: https://github.com/cloudinary/cloudinary_wordpress\n"
-"POT-Creation-Date: 2023-06-15 08:49:55+00:00\n"
+"POT-Creation-Date: 2023-08-22 09:32:35+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -63,11 +63,11 @@ msgstr[1] ""
 msgid "No items found."
 msgstr ""
 
-#: php/cache/class-cache-point.php:958 php/class-assets.php:1142
+#: php/cache/class-cache-point.php:962 php/class-assets.php:1142
 msgid "Cloudinary Asset"
 msgstr ""
 
-#: php/cache/class-cache-point.php:959 php/class-assets.php:1143
+#: php/cache/class-cache-point.php:963 php/class-assets.php:1143
 msgid "Post type to represent a non-media library asset."
 msgstr ""
 
@@ -502,14 +502,14 @@ msgstr ""
 msgid "Unsynced"
 msgstr ""
 
-#: php/class-media.php:453
+#: php/class-media.php:455
 #. translators: variable is file size.
 msgid ""
 "File size exceeds the maximum of %s. This media asset will be served from "
 "WordPress."
 msgstr ""
 
-#: php/class-media.php:2033
+#: php/class-media.php:2035
 msgid "Import"
 msgstr ""
 
@@ -517,43 +517,43 @@ msgstr ""
 msgid "Cloudinary"
 msgstr ""
 
-#: php/class-media.php:2389
+#: php/class-media.php:2391
 msgid "The delivery for this asset is disabled."
 msgstr ""
 
-#: php/class-media.php:2393
+#: php/class-media.php:2395
 msgid "Not syncable. This is an external media."
 msgstr ""
 
-#: php/class-media.php:2397
+#: php/class-media.php:2399
 msgid "This media is Fetch type."
 msgstr ""
 
-#: php/class-media.php:2401
+#: php/class-media.php:2403
 msgid "This media is Sprite type."
 msgstr ""
 
-#: php/class-media.php:2411
+#: php/class-media.php:2413
 msgid "Not Synced"
 msgstr ""
 
-#: php/class-media.php:2416
+#: php/class-media.php:2418
 msgid "Synced"
 msgstr ""
 
-#: php/class-media.php:3057
+#: php/class-media.php:3061
 msgid "No Cloudinary filters"
 msgstr ""
 
-#: php/class-media.php:3157
+#: php/class-media.php:3161
 msgid "Media Settings"
 msgstr ""
 
-#: php/class-media.php:3160
+#: php/class-media.php:3164
 msgid "Media Display"
 msgstr ""
 
-#: php/class-media.php:3164 php/media/class-global-transformations.php:620
+#: php/class-media.php:3168 php/media/class-global-transformations.php:620
 #: php/ui/component/class-asset-preview.php:73
 #: php/ui/component/class-plan-details.php:119
 #: php/ui/component/class-plan-status.php:128
@@ -561,7 +561,7 @@ msgstr ""
 msgid "Transformations"
 msgstr ""
 
-#: php/class-media.php:3165
+#: php/class-media.php:3169
 msgid ""
 "Cloudinary allows you to easily transform your images on-the-fly to any "
 "required format, style and dimension, and also optimizes images for minimal "
@@ -570,12 +570,12 @@ msgid ""
 "transformation and delivery URLs."
 msgstr ""
 
-#: php/class-media.php:3170 ui-definitions/settings-image.php:164
+#: php/class-media.php:3174 ui-definitions/settings-image.php:164
 #: ui-definitions/settings-video.php:216
 msgid "See examples"
 msgstr ""
 
-#: php/class-plugin.php:755
+#: php/class-plugin.php:762
 msgid "Visit plugin site"
 msgstr ""
 
@@ -1100,26 +1100,26 @@ msgstr ""
 msgid "No posts"
 msgstr ""
 
-#: php/sync/class-sync-queue.php:560
+#: php/sync/class-sync-queue.php:561
 #. translators: variable is queue type.
 msgid "Stopping queue:  %s."
 msgstr ""
 
-#: php/sync/class-sync-queue.php:599
+#: php/sync/class-sync-queue.php:600
 #. translators: variable is queue type.
 msgid "Queue:  %s - not running."
 msgstr ""
 
-#: php/sync/class-sync-queue.php:651
+#: php/sync/class-sync-queue.php:652
 #. translators: variable is thread name.
 msgid "Starting thread %s."
 msgstr ""
 
-#: php/sync/class-sync-queue.php:905
+#: php/sync/class-sync-queue.php:906
 msgid "Resuming Maybe"
 msgstr ""
 
-#: php/sync/class-sync-queue.php:914
+#: php/sync/class-sync-queue.php:915
 #. translators: variable is thread name.
 msgid "Thread %s Stopped."
 msgstr ""
