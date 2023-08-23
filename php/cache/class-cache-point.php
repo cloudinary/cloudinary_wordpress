@@ -869,9 +869,13 @@ class Cache_Point {
 				foreach ( $indexes as $key ) {
 					$url = $urls[ $key ];
 
-					if ( ! isset( $meta[ self::META_KEYS['cached_urls'] ][ $url ] )
-						 || $url === $meta[ self::META_KEYS['cached_urls'] ][ $url ]
-							&& $meta[ self::META_KEYS['last_updated'] ] < time() - MINUTE_IN_SECONDS * 10 ) {
+					if (
+						! isset( $meta[ self::META_KEYS['cached_urls'] ][ $url ] )
+						|| (
+							$url === $meta[ self::META_KEYS['cached_urls'] ][ $url ]
+							&& $meta[ self::META_KEYS['last_updated'] ] < time() - MINUTE_IN_SECONDS * 10
+						)
+					) {
 						// Send to upload prep.
 						$this->prepare_for_sync( $post->ID );
 						$meta[ self::META_KEYS['cached_urls'] ][ $url ] = $url;
@@ -972,6 +976,6 @@ class Cache_Point {
 			'rewrite'             => false,
 			'capability_type'     => 'page',
 		);
-		$this->post_type = register_post_type( self::POST_TYPE_SLUG, $args );
+		$this->post_type = register_post_type( self::POST_TYPE_SLUG, $args ); // phpcs:ignore WordPress.NamingConventions.ValidPostTypeSlug.NotStringLiteral
 	}
 }

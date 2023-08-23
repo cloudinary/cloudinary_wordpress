@@ -572,7 +572,7 @@ class Filter {
 	public function pre_filter_rest_content( $response, $post, $request ) {
 		$context = $request->get_param( 'context' );
 		if ( 'edit' === $context ) {
-			$data                   = $response->get_data();
+			$data = $response->get_data();
 			// Handle meta if missing due to custom-fields not being supported.
 			if ( ! isset( $data['meta'] ) ) {
 				$data['meta'] = $request->get_param( 'meta' );

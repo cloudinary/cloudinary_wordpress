@@ -216,7 +216,7 @@ class Relationship {
 		global $wpdb;
 
 		$table_name = Utils::get_relationship_table();
-		$ids        = $wpdb->get_col( $wpdb->prepare( "SELECT post_id FROM {$table_name} WHERE public_id = %s", $public_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$ids        = $wpdb->get_col( $wpdb->prepare( "SELECT post_id FROM {$table_name} WHERE public_id = %s", $public_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		return array_map( 'intval', $ids );
 	}

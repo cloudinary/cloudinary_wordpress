@@ -224,7 +224,7 @@ class Download_Sync {
 			$http_class = ABSPATH . WPINC . '/class-wp-http.php';
 		}
 		if ( ! class_exists( 'WP_Http' ) ) {
-			require_once $http_class;
+			require_once $http_class; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
 		}
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		require_once ABSPATH . 'wp-admin/includes/image.php';
