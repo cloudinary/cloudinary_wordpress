@@ -58,7 +58,7 @@ class Notice extends Component {
 	 * @return array
 	 */
 	protected function icon( $struct ) {
-		$struct['element'] = 'span';
+		$struct['element']             = 'span';
 		$struct['attributes']['class'] = array( 'cld-ui-icon' );
 		if ( $this->setting->has_param( 'icon' ) ) {
 			$struct['attributes']['class'][] = $this->setting->get_param( 'icon' );

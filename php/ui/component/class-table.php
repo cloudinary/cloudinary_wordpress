@@ -129,8 +129,8 @@ class Table extends Text {
 	 */
 	protected function body_row( $slug, $row ) {
 		$next_colspan = 1;
-
-		$columns = array();
+		$columns      = array();
+		$previous     = null;
 		foreach ( $this->columns as $column ) {
 
 			$col_slug                     = $slug . '_' . $column;
