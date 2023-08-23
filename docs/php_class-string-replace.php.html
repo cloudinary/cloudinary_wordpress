@@ -202,7 +202,7 @@ class String_Replace implements Setup {
 		if ( defined( 'CLD_DEBUG' ) &amp;&amp; true === CLD_DEBUG &amp;&amp; ! Utils::get_sanitized_text( '_bypass' ) ) {
 			$this->context = 'view';
 			ob_start();
-			include $template;
+			include $template; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
 			$html = ob_get_clean();
 			echo $this->replace_strings( $html ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			$template = $this->plugin->template_path . 'blank-template.php';

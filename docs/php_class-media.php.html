@@ -402,6 +402,7 @@ class Media extends Settings_Component implements Setup {
 		if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
 			return false;
 		}
+		// phpcs:disable WordPress.WP.AlternativeFunctions
 		$ch = curl_init( $url );
 		curl_setopt( $ch, CURLOPT_NOBODY, true );
 		curl_exec( $ch );
@@ -414,6 +415,7 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		curl_close( $ch );
+		// phpcs:enable
 
 		return $status;
 	}
@@ -1047,8 +1049,8 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function get_crop_transformations( $attachment_id, $size ) {
 		static $transformations = array();
-		$size_dim = $size['width'] . 'x' . $size['height'];
-		$key      = $attachment_id . $size_dim;
+		$size_dim               = $size['width'] . 'x' . $size['height'];
+		$key                    = $attachment_id . $size_dim;
 		if ( empty( $transformations[ $key ] ) ) {
 
 			if ( empty( $size['transformation'] ) ) {
@@ -3123,13 +3125,15 @@ class Media extends Settings_Component implements Setup {
 			if ( SYNC::META_KEYS['unsynced'] === $request ) {
 				global $wpdb;
 				$wpdb->cld_table = Utils::get_relationship_table();
-				$result          = $wpdb->get_col( "SELECT post_id FROM $wpdb->cld_table WHERE public_id IS NULL" );
+				$result          = $wpdb->get_col( "SELECT post_id FROM $wpdb->cld_table WHERE public_id IS NULL" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 
+				// phpcs:disable WordPressVIPMinimum.Hooks.PreGetPosts.PreGetPosts
 				if ( ! empty( $result ) ) {
 					$query->set( 'post__in', $result );
 				} else {
 					$query->set( 'post__in', array( 0 ) );
 				}
+				// phpcs:enable
 			}
 		}
 	}
