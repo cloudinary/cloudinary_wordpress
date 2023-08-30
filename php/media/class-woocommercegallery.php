@@ -95,7 +95,7 @@ class WooCommerceGallery {
 		add_filter(
 			'cloudinary_gallery_html_container',
 			static function () {
-				return '.woocommerce-product-gallery';
+				return '.woocommerce-product-gallery__wrapper';
 			}
 		);
 
