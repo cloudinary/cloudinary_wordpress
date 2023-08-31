@@ -57,16 +57,9 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 	const attributesClone = cloneDeep( attributes );
 	const nestedAttrs = dot.object( attributesClone );
 
-	nestedAttrs.customSettings =
-		typeof nestedAttrs.customSettings === 'object'
-			? JSON.stringify( nestedAttrs.customSettings )
-			: nestedAttrs.customSettings;
-
-	const [ customSettings, setCustomSettings ] = useState(
+	const [ customSettingsPreview, setCustomSettingsPreview ] = useState(
 		nestedAttrs.customSettings
 	);
-
-	delete nestedAttrs.customSettings;
 
 	if ( ! attributes.transformation_crop ) {
 		attributes.transformation_crop = 'pad';
@@ -84,15 +77,22 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 	};
 
 	const onChangeCustomSettings = ( value ) => {
-		const atts = {
-			...nestedAttrs,
-			...dot.dot( JSON.parse( value ) ),
-		};
+		let customSettings = {};
+		setCustomSettingsPreview( value );
 
-		setAttributes( {
-			...nestedAttrs,
-			...atts,
-		} );
+		try {
+			customSettings = JSON.parse( value );
+		} catch ( e ) {}
+
+		if ( typeof customSettings === 'object' ) {
+			const atts = { ...nestedAttrs };
+			atts.customSettings = customSettings;
+
+			setAttributes( {
+				...nestedAttrs,
+				...atts,
+			} );
+		}
 	};
 
 	return (
@@ -543,11 +543,7 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 						'Provide a JSON string of the settings you want to add and/or override.',
 						'cloudinary'
 					) }
-					value={
-						typeof customSettings === 'object'
-							? JSON.stringify( customSettings )
-							: customSettings
-					}
+					value={ customSettingsPreview }
 					onChange={ onChangeCustomSettings }
 				/>
 			</PanelBody>
