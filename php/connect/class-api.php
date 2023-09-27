@@ -200,11 +200,11 @@ class Api {
 		 * Bypass Cloudinary's SEO URLs.
 		 *
 		 * @hook cloudinary_bypass_seo_url
-		 * @since 3.1.4
+		 * @since 3.1.5
 		 *
 		 * @param $bypass_seo_url {bool} Whether to bypass SEO URLs.
 		 *
-		 * @return bool
+		 * @return {bool}
 		 */
 		$bypass_seo_url = apply_filters( 'cloudinary_bypass_seo_url', false );
 
@@ -300,7 +300,7 @@ class Api {
 		 * Bypass Cloudinary's SEO URLs.
 		 *
 		 * @hook  cloudinary_bypass_seo_url
-		 * @since 3.1.4
+		 * @since 3.1.5
 		 *
 		 * @param $bypass_seo_url {bool} Whether to bypass SEO URLs.
 		 *
@@ -336,7 +336,7 @@ class Api {
 			 * Filter the SEO public ID.
 			 *
 			 * @hook   cloudinary_seo_public_id
-			 * @since  3.1.4
+			 * @since  3.1.5
 			 *
 			 * @param $public_id          {string} The suffixed public_id.
 			 * @param $original_public_id {string} The original public_id.
