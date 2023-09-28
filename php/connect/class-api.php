@@ -200,8 +200,8 @@ class Api {
 		/**
 		 * Bypass Cloudinary's SEO URLs.
 		 *
-		 * @hook cloudinary_bypass_seo_url
-		 * @since 3.1.5
+		 * @hook   cloudinary_bypass_seo_url
+		 * @since  3.1.5
 		 *
 		 * @param $bypass_seo_url {bool} Whether to bypass SEO URLs.
 		 *
@@ -298,27 +298,7 @@ class Api {
 			$this->url( $args['resource_type'], $asset_endpoint ),
 		);
 
-		/**
-		 * Bypass Cloudinary's SEO URLs.
-		 *
-		 * @hook  cloudinary_bypass_seo_url
-		 * @since 3.1.5
-		 *
-		 * @param $bypass_seo_url {bool} Whether to bypass SEO URLs.
-		 *
-		 * @return {bool}
-		 */
-		$bypass_seo_url = apply_filters( 'cloudinary_bypass_seo_url', false );
-
-		$original_public_id = $public_id;
-
-		$base      = Utils::pathinfo( $public_id );
-		// Only do dynamic naming and sizes if upload type.
-		if ( 'image' === $args['resource_type'] && 'upload' === $args['delivery_type'] && ! $bypass_seo_url ) {
-			$new_path  = $base['filename'] . '/' . $base['basename'];
-			$public_id = str_replace( $base['basename'], $new_path, $public_id );
-		}
-
+		$base = Utils::pathinfo( $public_id );
 		// Add size.
 		if ( ! empty( $size ) && is_array( $size ) ) {
 			if ( ! empty( $size['transformation'] ) ) {
@@ -333,20 +313,8 @@ class Api {
 			$url_parts[] = self::generate_transformation_string( $args['transformation'], $args['resource_type'] );
 		}
 
-		if ( 'image' === $args['resource_type'] && 'upload' === $args['delivery_type'] && ! $bypass_seo_url ) {
-			/**
-			 * Filter the SEO public ID.
-			 *
-			 * @hook   cloudinary_seo_public_id
-			 * @since  3.1.5
-			 *
-			 * @param $public_id          {string} The suffixed public_id.
-			 * @param $original_public_id {string} The original public_id.
-			 * @param $base               {array}  The pathinfo of the public_id.
-			 *
-			 * @return {string}
-			 */
-			$public_id = apply_filters( 'cloudinary_seo_public_id', $public_id, $original_public_id, $base );
+		if ( $attachment_id ) {
+			$public_id = $this->get_public_id( $attachment_id, $public_id );
 		}
 
 		$url_parts[] = $args['version'];
@@ -823,6 +791,51 @@ class Api {
 		}
 
 		return $upload_prefix;
+	}
+
+	/**
+	 * Get the Cloudinary public_id.
+	 *
+	 * @param int         $attachment_id      The attachment ID.
+	 * @param null|string $original_public_id The original public ID.
+	 *
+	 * @return string
+	 */
+	public function get_public_id( $attachment_id, $original_public_id = null ) {
+
+		$relationship = Relationship::get_relationship( $attachment_id );
+		$public_id    = $relationship->public_id;
+		$delivery     = $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['delivery'], true );
+
+		/**
+		 * Bypass Cloudinary's SEO URLs.
+		 *
+		 * @hook   cloudinary_bypass_seo_url
+		 * @since  3.1.5
+		 *
+		 * @param $bypass_seo_url {bool} Whether to bypass SEO URLs.
+		 *
+		 * @return {bool}
+		 */
+		$bypass_seo_url = apply_filters( 'cloudinary_bypass_seo_url', false );
+
+		if ( $public_id && 'upload' === $delivery && ! $bypass_seo_url ) {
+
+			/**
+			 * Filter the SEO public ID.
+			 *
+			 * @hook   cloudinary_seo_public_id
+			 * @since  3.1.5
+			 *
+			 * @param $public_id          {string} The suffixed public_id.
+			 * @param $original_public_id {string} The original public_id.
+			 *
+			 * @return {string}
+			 */
+			$public_id = apply_filters( 'cloudinary_seo_public_id', $public_id, $original_public_id );
+		}
+
+		return $public_id;
 	}
 
 	/**
