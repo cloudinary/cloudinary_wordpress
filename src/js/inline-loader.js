@@ -215,13 +215,15 @@ const CloudinaryLoader = {
 			nameExtension: scaledWidth + 'x' + scaledHeight,
 		};
 	},
+	getDeliveryMethod( image ) {
+		return image.dataset.seo && 'upload' === image.dataset.delivery ? 'images' : 'image/' + image.dataset.delivery;
+	},
 	getSizeURL( image, width ) {
 		const newSize = this.scaleSize( image, width, true );
 
 		const parts = [
 			this.config.base_url,
-			'image',
-			image.dataset.delivery,
+			this.getDeliveryMethod( image ),,
 			'upload' === image.dataset.delivery ? newSize.transformation : '',
 			image.dataset.transformations,
 			'v' + image.dataset.version,
@@ -236,8 +238,7 @@ const CloudinaryLoader = {
 
 		const parts = [
 			this.config.base_url,
-			'image',
-			image.dataset.delivery,
+			this.getDeliveryMethod( image ),
 			newSize.transformation,
 			this.config.placeholder,
 			image.dataset.publicId

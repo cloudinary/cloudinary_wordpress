@@ -1154,6 +1154,22 @@ class Delivery implements Setup {
 
 		$tag_element['atts']['data-version'] = $this->media->get_cloudinary_version( $tag_element['id'] );
 
+		/**
+		 * Bypass Cloudinary's SEO URLs.
+		 *
+		 * @hook   cloudinary_bypass_seo_url
+		 * @since  3.1.5
+		 *
+		 * @param $bypass_seo_url {bool} Whether to bypass SEO URLs.
+		 *
+		 * @return {bool}
+		 */
+		$bypass_seo_url = apply_filters( 'cloudinary_bypass_seo_url', false );
+
+		$tag_element['atts']['data-seo'] = ! $bypass_seo_url;
+
+		$tag_element['atts']['data-public-id'] = $this->plugin->get_component( 'connect' )->api->get_public_id( $tag_element['id'] );
+
 		return $tag_element;
 	}
 
