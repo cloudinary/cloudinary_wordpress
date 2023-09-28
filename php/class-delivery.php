@@ -1198,9 +1198,10 @@ class Delivery implements Setup {
 		if ( apply_filters( 'cloudinary_apply_breakpoints', true ) ) {
 			$meta = wp_get_attachment_metadata( $tag_element['id'] );
 			if ( ! empty( $meta['width'] ) && ! empty( $meta['height'] ) ) {
+				$relationship = Relationship::get_relationship( $tag_element['id'] );
 				// Check overwrite.
 				$meta['overwrite_transformations'] = $tag_element['overwrite_transformations'];
-				$meta['cloudinary_id']             = $tag_element['atts']['data-public-id'];
+				$meta['cloudinary_id']             = $relationship->public_id;
 				$meta['transformations']           = $tag_element['transformations'];
 				// Add new srcset.
 				$element = wp_image_add_srcset_and_sizes( $tag_element['original'], $meta, $tag_element['id'] );

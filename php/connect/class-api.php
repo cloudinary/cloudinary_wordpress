@@ -7,8 +7,9 @@
 
 namespace Cloudinary\Connect;
 
+use Cloudinary\Relate\Relationship;
+use Cloudinary\Sync;
 use Cloudinary\Utils;
-use function Cloudinary\get_plugin_instance;
 use Cloudinary\Plugin;
 use Cloudinary\Media;
 
@@ -264,13 +265,14 @@ class Api {
 	/**
 	 * Generate a Cloudinary URL.
 	 *
-	 * @param string|null $public_id The Public ID to get a url for.
-	 * @param array       $args      Additional args.
-	 * @param array       $size      The WP Size array.
+	 * @param string|null $public_id     The Public ID to get a url for.
+	 * @param array       $args          Additional args.
+	 * @param array       $size          The WP Size array.
+	 * @param int|null    $attachment_id The attachment ID.
 	 *
 	 * @return string
 	 */
-	public function cloudinary_url( $public_id = null, $args = array(), $size = array() ) {
+	public function cloudinary_url( $public_id = null, $args = array(), $size = array(), $attachment_id = null ) {
 
 		if ( null === $public_id ) {
 			return 'https://' . $this->url( null, null );
