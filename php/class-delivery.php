@@ -1140,7 +1140,7 @@ class Delivery implements Setup {
 				$local_size = filesize( get_attached_file( $tag_element['id'] ) );
 			}
 			$remote_size                           = get_post_meta( $tag_element['id'], Sync::META_KEYS['remote_size'], true );
-			$tag_element['atts']['data-filesize']  = size_format( $local_size );
+			$tag_element['atts']['data-filesize']   = size_format( $local_size );
 			$tag_element['atts']['data-optsize']   = size_format( $remote_size );
 			$tag_element['atts']['data-optformat'] = get_post_meta( $tag_element['id'], Sync::META_KEYS['remote_format'], true );
 			if ( ! empty( $local_size ) && ! empty( $remote_size ) ) {
@@ -1342,7 +1342,7 @@ class Delivery implements Setup {
 			$tag_element['height']        = ! empty( $attributes['height'] ) ? $attributes['height'] : $item['height'];
 			$attributes['data-public-id'] = $public_id;
 			$tag_element['format']        = $item['format'];
-			
+
 			if ( 'img' === $tag_element['tag'] ) {
 				// Check if this is a crop or a scale.
 				$has_size = $this->media->get_size_from_url( $this->sanitize_url( $raw_url ) );
