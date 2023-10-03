@@ -1032,6 +1032,10 @@ class Delivery implements Setup {
 			$replacements = array_merge( $replacements, $aliases );
 		}
 
+		// Sort by length, so we replace the longest first and prevent early replacements.
+		$keys = array_map( 'strlen', array_keys( $replacements ) );
+		array_multisort( $keys, SORT_DESC, $replacements );
+
 		// Update the post meta cache.
 		if ( is_singular() ) {
 			$has_cache          = array();
