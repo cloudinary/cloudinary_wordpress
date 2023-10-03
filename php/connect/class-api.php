@@ -840,6 +840,9 @@ class Api {
 			)
 		) {
 
+			$parts   = explode( '/', $public_id );
+			$filename = end( $parts );
+
 			/**
 			 * Filter the SEO public ID.
 			 *
@@ -851,7 +854,7 @@ class Api {
 			 *
 			 * @return {string}
 			 */
-			$public_id = apply_filters( 'cloudinary_seo_public_id', "{$public_id}/{$public_id}.{$relationship->format}", $original_public_id );
+			$public_id = apply_filters( 'cloudinary_seo_public_id', "{$public_id}/{$filename}.{$relationship->format}", $original_public_id );
 		}
 
 		return $public_id;
