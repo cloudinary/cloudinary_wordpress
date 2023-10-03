@@ -223,7 +223,7 @@ const CloudinaryLoader = {
 
 		const parts = [
 			this.config.base_url,
-			this.getDeliveryMethod( image ),,
+			this.getDeliveryMethod( image ),
 			'upload' === image.dataset.delivery ? newSize.transformation : '',
 			image.dataset.transformations,
 			'v' + image.dataset.version,
