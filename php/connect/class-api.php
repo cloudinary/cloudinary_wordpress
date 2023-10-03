@@ -279,7 +279,7 @@ class Api {
 		}
 		$defaults = array(
 			'resource_type' => 'image',
-			'delivery_type' => 'upload',
+			'delivery'      => 'upload',
 			'version'       => 'v1',
 		);
 		$args     = wp_parse_args( array_filter( $args ), $defaults );
@@ -291,7 +291,7 @@ class Api {
 
 		// Determine if we're dealing with a fetched.
 		// ...or uploaded image and update the URL accordingly.
-		$asset_endpoint = filter_var( $public_id, FILTER_VALIDATE_URL ) ? 'fetch' : $args['delivery_type'];
+		$asset_endpoint = filter_var( $public_id, FILTER_VALIDATE_URL ) ? 'fetch' : $args['delivery'];
 
 		$url_parts = array(
 			'https:/',

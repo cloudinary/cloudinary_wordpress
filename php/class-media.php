@@ -1383,7 +1383,7 @@ class Media extends Settings_Component implements Setup {
 			'secure'        => is_ssl(),
 			'version'       => $this->get_cloudinary_version( $attachment_id ),
 			'resource_type' => $resource_type,
-			'delivery_type' => $delivery,
+			'delivery'      => $delivery,
 		);
 		$set_size = array();
 		if ( 'upload' === $delivery ) {
