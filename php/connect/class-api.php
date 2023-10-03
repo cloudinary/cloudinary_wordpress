@@ -851,7 +851,7 @@ class Api {
 			 *
 			 * @return {string}
 			 */
-			$public_id = apply_filters( 'cloudinary_seo_public_id', $public_id, $original_public_id );
+			$public_id = apply_filters( 'cloudinary_seo_public_id', "{$public_id}/{$public_id}.{$relationship->format}", $original_public_id );
 		}
 
 		return $public_id;
