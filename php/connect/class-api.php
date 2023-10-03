@@ -314,7 +314,7 @@ class Api {
 		}
 
 		if ( $attachment_id ) {
-			$public_id = $this->get_public_id( $attachment_id, $public_id );
+			$public_id = $this->get_public_id( $attachment_id, $public_id, $args );
 		}
 
 		$url_parts[] = $args['version'];
@@ -798,14 +798,18 @@ class Api {
 	 *
 	 * @param int         $attachment_id      The attachment ID.
 	 * @param null|string $original_public_id The original public ID.
+	 * @param array       $args               The args.
 	 *
 	 * @return string
 	 */
-	public function get_public_id( $attachment_id, $original_public_id = null ) {
+	public function get_public_id( $attachment_id, $original_public_id = null, $args = array() ) {
 
 		$relationship = Relationship::get_relationship( $attachment_id );
-		$public_id    = $relationship->public_id;
-		$delivery     = $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['delivery'], true );
+		$public_id    = null;
+
+		if ( $relationship instanceof Relationship ) {
+			$public_id = $relationship->public_id;
+		}
 
 		/**
 		 * Bypass Cloudinary's SEO URLs.
@@ -819,7 +823,22 @@ class Api {
 		 */
 		$bypass_seo_url = apply_filters( 'cloudinary_bypass_seo_url', false );
 
-		if ( $public_id && 'upload' === $delivery && ! $bypass_seo_url ) {
+		if (
+			$public_id
+			&& ! $bypass_seo_url
+			&& (
+				// Get the SEO `public_id` for images with `upload` delivery.
+				(
+					! empty( $args['resource_type'] ) && 'image' === $args['resource_type']
+					&& ! empty( $args['delivery'] ) && 'upload' === $args['delivery']
+				)
+				// Get the SEO `public_id` for PDFs as they are regarded as images.
+				|| (
+					! empty( $args['resource_type'] ) && 'image' === $args['resource_type']
+					&& 'application' === $relationship->asset_type
+				)
+			)
+		) {
 
 			/**
 			 * Filter the SEO public ID.

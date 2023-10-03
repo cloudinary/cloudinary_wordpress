@@ -1168,7 +1168,14 @@ class Delivery implements Setup {
 
 		$tag_element['atts']['data-seo'] = ! $bypass_seo_url;
 
-		$tag_element['atts']['data-public-id'] = $this->plugin->get_component( 'connect' )->api->get_public_id( $tag_element['id'] );
+		$resource_type = in_array( $tag_element['type'], array( 'image', 'video' ), true ) ? $tag_element['type'] : 'raw';
+
+		$args = array(
+			'delivery'      => $this->media->get_media_delivery( $tag_element['id'] ),
+			'resource_type' => $resource_type,
+		);
+
+		$tag_element['atts']['data-public-id'] = $this->plugin->get_component( 'connect' )->api->get_public_id( $tag_element['id'], '', $args );
 
 		return $tag_element;
 	}
