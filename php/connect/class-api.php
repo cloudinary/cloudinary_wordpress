@@ -7,8 +7,9 @@
 
 namespace Cloudinary\Connect;
 
+use Cloudinary\Relate\Relationship;
+use Cloudinary\Sync;
 use Cloudinary\Utils;
-use function Cloudinary\get_plugin_instance;
 use Cloudinary\Plugin;
 use Cloudinary\Media;
 
@@ -196,7 +197,19 @@ class Api {
 			$parts[] = $this->credentials['cloud_name'];
 		}
 
-		if ( false === $endpoint && 'image' === $resource && 'upload' === $function ) {
+		/**
+		 * Bypass Cloudinary's SEO URLs.
+		 *
+		 * @hook   cloudinary_bypass_seo_url
+		 * @since  3.1.5
+		 *
+		 * @param $bypass_seo_url {bool} Whether to bypass SEO URLs.
+		 *
+		 * @return {bool}
+		 */
+		$bypass_seo_url = apply_filters( 'cloudinary_bypass_seo_url', false );
+
+		if ( false === $endpoint && 'image' === $resource && 'upload' === $function && ! $bypass_seo_url ) {
 			$parts[] = 'images';
 		} else {
 			$parts[] = $resource;
@@ -252,20 +265,21 @@ class Api {
 	/**
 	 * Generate a Cloudinary URL.
 	 *
-	 * @param string|null $public_id The Public ID to get a url for.
-	 * @param array       $args      Additional args.
-	 * @param array       $size      The WP Size array.
+	 * @param string|null $public_id     The Public ID to get a url for.
+	 * @param array       $args          Additional args.
+	 * @param array       $size          The WP Size array.
+	 * @param int|null    $attachment_id The attachment ID.
 	 *
 	 * @return string
 	 */
-	public function cloudinary_url( $public_id = null, $args = array(), $size = array() ) {
+	public function cloudinary_url( $public_id = null, $args = array(), $size = array(), $attachment_id = null ) {
 
 		if ( null === $public_id ) {
 			return 'https://' . $this->url( null, null );
 		}
 		$defaults = array(
 			'resource_type' => 'image',
-			'delivery_type' => 'upload',
+			'delivery'      => 'upload',
 			'version'       => 'v1',
 		);
 		$args     = wp_parse_args( array_filter( $args ), $defaults );
@@ -277,19 +291,14 @@ class Api {
 
 		// Determine if we're dealing with a fetched.
 		// ...or uploaded image and update the URL accordingly.
-		$asset_endpoint = filter_var( $public_id, FILTER_VALIDATE_URL ) ? 'fetch' : $args['delivery_type'];
+		$asset_endpoint = filter_var( $public_id, FILTER_VALIDATE_URL ) ? 'fetch' : $args['delivery'];
 
 		$url_parts = array(
 			'https:/',
 			$this->url( $args['resource_type'], $asset_endpoint ),
 		);
-		$base      = Utils::pathinfo( $public_id );
-		// Only do dynamic naming and sizes if upload type.
-		if ( 'image' === $args['resource_type'] && 'upload' === $args['delivery_type'] ) {
-			$new_path  = $base['filename'] . '/' . $base['basename'];
-			$public_id = str_replace( $base['basename'], $new_path, $public_id );
-		}
 
+		$base = Utils::pathinfo( $public_id );
 		// Add size.
 		if ( ! empty( $size ) && is_array( $size ) ) {
 			if ( ! empty( $size['transformation'] ) ) {
@@ -302,6 +311,10 @@ class Api {
 		}
 		if ( ! empty( $args['transformation'] ) ) {
 			$url_parts[] = self::generate_transformation_string( $args['transformation'], $args['resource_type'] );
+		}
+
+		if ( $attachment_id ) {
+			$public_id = $this->get_public_id( $attachment_id, $public_id, $args );
 		}
 
 		$url_parts[] = $args['version'];
@@ -778,6 +791,73 @@ class Api {
 		}
 
 		return $upload_prefix;
+	}
+
+	/**
+	 * Get the Cloudinary public_id.
+	 *
+	 * @param int         $attachment_id      The attachment ID.
+	 * @param null|string $original_public_id The original public ID.
+	 * @param array       $args               The args.
+	 *
+	 * @return string
+	 */
+	public function get_public_id( $attachment_id, $original_public_id = null, $args = array() ) {
+
+		$relationship = Relationship::get_relationship( $attachment_id );
+		$public_id    = null;
+
+		if ( $relationship instanceof Relationship ) {
+			$public_id = $relationship->public_id;
+		}
+
+		/**
+		 * Bypass Cloudinary's SEO URLs.
+		 *
+		 * @hook   cloudinary_bypass_seo_url
+		 * @since  3.1.5
+		 *
+		 * @param $bypass_seo_url {bool} Whether to bypass SEO URLs.
+		 *
+		 * @return {bool}
+		 */
+		$bypass_seo_url = apply_filters( 'cloudinary_bypass_seo_url', false );
+
+		if (
+			$public_id
+			&& ! $bypass_seo_url
+			&& (
+				// Get the SEO `public_id` for images with `upload` delivery.
+				(
+					! empty( $args['resource_type'] ) && 'image' === $args['resource_type']
+					&& ! empty( $args['delivery'] ) && 'upload' === $args['delivery']
+				)
+				// Get the SEO `public_id` for PDFs as they are regarded as images.
+				|| (
+					! empty( $args['resource_type'] ) && 'image' === $args['resource_type']
+					&& 'application' === $relationship->asset_type
+				)
+			)
+		) {
+
+			$parts   = explode( '/', $public_id );
+			$filename = end( $parts );
+
+			/**
+			 * Filter the SEO public ID.
+			 *
+			 * @hook   cloudinary_seo_public_id
+			 * @since  3.1.5
+			 *
+			 * @param $public_id          {string} The suffixed public_id.
+			 * @param $original_public_id {string} The original public_id.
+			 *
+			 * @return {string}
+			 */
+			$public_id = apply_filters( 'cloudinary_seo_public_id', "{$public_id}/{$filename}.{$relationship->format}", $original_public_id );
+		}
+
+		return $public_id;
 	}
 
 	/**

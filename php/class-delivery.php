@@ -1032,6 +1032,10 @@ class Delivery implements Setup {
 			$replacements = array_merge( $replacements, $aliases );
 		}
 
+		// Sort by length, so we replace the longest first and prevent early replacements.
+		$keys = array_map( 'strlen', array_keys( $replacements ) );
+		array_multisort( $keys, SORT_DESC, $replacements );
+
 		// Update the post meta cache.
 		if ( is_singular() ) {
 			$has_cache          = array();
@@ -1140,7 +1144,7 @@ class Delivery implements Setup {
 				$local_size = filesize( get_attached_file( $tag_element['id'] ) );
 			}
 			$remote_size                           = get_post_meta( $tag_element['id'], Sync::META_KEYS['remote_size'], true );
-			$tag_element['atts']['data-filesize']  = size_format( $local_size );
+			$tag_element['atts']['data-filesize']   = size_format( $local_size );
 			$tag_element['atts']['data-optsize']   = size_format( $remote_size );
 			$tag_element['atts']['data-optformat'] = get_post_meta( $tag_element['id'], Sync::META_KEYS['remote_format'], true );
 			if ( ! empty( $local_size ) && ! empty( $remote_size ) ) {
@@ -1153,6 +1157,29 @@ class Delivery implements Setup {
 		}
 
 		$tag_element['atts']['data-version'] = $this->media->get_cloudinary_version( $tag_element['id'] );
+
+		/**
+		 * Bypass Cloudinary's SEO URLs.
+		 *
+		 * @hook   cloudinary_bypass_seo_url
+		 * @since  3.1.5
+		 *
+		 * @param $bypass_seo_url {bool} Whether to bypass SEO URLs.
+		 *
+		 * @return {bool}
+		 */
+		$bypass_seo_url = apply_filters( 'cloudinary_bypass_seo_url', false );
+
+		$tag_element['atts']['data-seo'] = ! $bypass_seo_url;
+
+		$resource_type = in_array( $tag_element['type'], array( 'image', 'video' ), true ) ? $tag_element['type'] : 'raw';
+
+		$args = array(
+			'delivery'      => $this->media->get_media_delivery( $tag_element['id'] ),
+			'resource_type' => $resource_type,
+		);
+
+		$tag_element['atts']['data-public-id'] = $this->plugin->get_component( 'connect' )->api->get_public_id( $tag_element['id'], '', $args );
 
 		return $tag_element;
 	}
@@ -1182,9 +1209,10 @@ class Delivery implements Setup {
 		if ( apply_filters( 'cloudinary_apply_breakpoints', true ) ) {
 			$meta = wp_get_attachment_metadata( $tag_element['id'] );
 			if ( ! empty( $meta['width'] ) && ! empty( $meta['height'] ) ) {
+				$relationship = Relationship::get_relationship( $tag_element['id'] );
 				// Check overwrite.
 				$meta['overwrite_transformations'] = $tag_element['overwrite_transformations'];
-				$meta['cloudinary_id']             = $tag_element['atts']['data-public-id'];
+				$meta['cloudinary_id']             = $relationship->public_id;
 				$meta['transformations']           = $tag_element['transformations'];
 				// Add new srcset.
 				$element = wp_image_add_srcset_and_sizes( $tag_element['original'], $meta, $tag_element['id'] );
@@ -1318,7 +1346,7 @@ class Delivery implements Setup {
 			$tag_element['height']        = ! empty( $attributes['height'] ) ? $attributes['height'] : $item['height'];
 			$attributes['data-public-id'] = $public_id;
 			$tag_element['format']        = $item['format'];
-			
+
 			if ( 'img' === $tag_element['tag'] ) {
 				// Check if this is a crop or a scale.
 				$has_size = $this->media->get_size_from_url( $this->sanitize_url( $raw_url ) );
