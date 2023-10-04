@@ -851,10 +851,11 @@ class Api {
 			 *
 			 * @param $public_id          {string} The suffixed public_id.
 			 * @param $original_public_id {string} The original public_id.
+			 * @param $attachment_id      {int}    The attachment ID.
 			 *
 			 * @return {string}
 			 */
-			$public_id = apply_filters( 'cloudinary_seo_public_id', "{$public_id}/{$filename}.{$relationship->format}", $original_public_id );
+			$public_id = apply_filters( 'cloudinary_seo_public_id', "{$public_id}/{$filename}.{$relationship->format}", $original_public_id, $attachment_id );
 		}
 
 		return $public_id;
