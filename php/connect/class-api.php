@@ -314,7 +314,7 @@ class Api {
 		}
 
 		if ( $attachment_id ) {
-			$public_id = $this->get_public_id( $attachment_id, $public_id, $args );
+			$public_id = $this->get_public_id( $attachment_id, $args );
 		}
 
 		$url_parts[] = $args['version'];
@@ -796,13 +796,12 @@ class Api {
 	/**
 	 * Get the Cloudinary public_id.
 	 *
-	 * @param int         $attachment_id      The attachment ID.
-	 * @param null|string $original_public_id The original public ID.
-	 * @param array       $args               The args.
+	 * @param int   $attachment_id The attachment ID.
+	 * @param array $args          The args.
 	 *
 	 * @return string
 	 */
-	public function get_public_id( $attachment_id, $original_public_id = null, $args = array() ) {
+	public function get_public_id( $attachment_id, $args = array() ) {
 
 		$relationship = Relationship::get_relationship( $attachment_id );
 		$public_id    = null;
@@ -849,13 +848,15 @@ class Api {
 			 * @hook   cloudinary_seo_public_id
 			 * @since  3.1.5
 			 *
-			 * @param $public_id          {string} The suffixed public_id.
-			 * @param $original_public_id {string} The original public_id.
-			 * @param $attachment_id      {int}    The attachment ID.
+			 * @param $sufix          {string}       The public_id suffix.
+			 * @param $relationship  {Relationship} The relationship.
+			 * @param $attachment_id {int}          The attachment ID.
 			 *
 			 * @return {string}
 			 */
-			$public_id = apply_filters( 'cloudinary_seo_public_id', "{$public_id}/{$filename}.{$relationship->format}", $original_public_id, $attachment_id );
+			$suffix = apply_filters( 'cloudinary_seo_public_id', "{$filename}.{$relationship->format}", $relationship, $attachment_id );
+
+			$public_id .= "/{$suffix}";
 		}
 
 		return $public_id;
