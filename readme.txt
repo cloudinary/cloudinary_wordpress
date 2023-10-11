@@ -134,7 +134,7 @@ Your site is now setup to start using Cloudinary.
 
 == Changelog ==
 
-= 3.1.5 (11 OCTOBER 2023)=
+= 3.1.5 (11 OCTOBER 2023) =
 
 Fixes and Improvements:
 
