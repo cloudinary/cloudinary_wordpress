@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: image-optimizer, crop, core-web-vitals, responsive, resize, product-gallery, performance
 Requires at least: 4.7
-Tested up to: 6.3
+Tested up to: 6.3.1
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -133,6 +133,16 @@ Your site is now setup to start using Cloudinary.
 1. Need help? We’ve got you covered
 
 == Changelog ==
+
+= 3.1.5 (11 OCTOBER 2023) =
+
+Fixes and Improvements:
+
+* Added a filter for allowing RAW URLs for images - `cloudinary_bypass_seo_url`
+* Added a filter for better control of the SEO URL - `cloudinary_seo_public_id`
+* Fixed Cloudinary gallery compatibility issue with WooCommerce v7.8 and up
+* Fixed the double extension on RAW files
+
 
 = 3.1.4 (23 AUGUST 2023) =
 
