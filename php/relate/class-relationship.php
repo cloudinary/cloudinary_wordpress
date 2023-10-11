@@ -19,6 +19,7 @@ use function Cloudinary\get_plugin_instance;
  * @property string|null $public_id
  * @property string|null $signature
  * @property string|null $transformations
+ * @property string|null $sized_url
  */
 class Relationship {
 

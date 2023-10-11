@@ -136,6 +136,13 @@ class Gallery extends Settings_Component {
 		 */
 		$config['container'] = apply_filters( 'cloudinary_gallery_html_container', '' );
 
+		$credentials = $this->plugin->components['connect']->get_credentials();
+
+		if ( ! empty( $credentials['cname'] ) ) {
+			$config['secureDistribution'] = $credentials['cname'];
+			$config['privateCdn']         = true;
+		}
+
 		/**
 		 * Filter the gallery configuration.
 		 *

@@ -1420,7 +1420,7 @@ class Media extends Settings_Component implements Setup {
 			'secure'        => is_ssl(),
 			'version'       => $this->get_cloudinary_version( $attachment_id ),
 			'resource_type' => $resource_type,
-			'delivery_type' => $delivery,
+			'delivery'      => $delivery,
 		);
 		$set_size = array();
 		if ( 'upload' === $delivery ) {
@@ -1434,7 +1434,7 @@ class Media extends Settings_Component implements Setup {
 
 		// Make a copy as not to destroy the options in \Cloudinary::cloudinary_url().
 		$args = $pre_args;
-		$url  = $this->plugin->components['connect']->api->cloudinary_url( $cloudinary_id, $args, $set_size );
+		$url  = $this->plugin->components['connect']->api->cloudinary_url( $cloudinary_id, $args, $set_size, $attachment_id );
 
 		// Check if this type is a preview only type. i.e PDF.
 		if ( ! empty( $set_size ) && $this->is_preview_only( $attachment_id ) ) {
