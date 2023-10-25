@@ -310,6 +310,7 @@ class Video {
 		$public_id = $this->media->get_public_id( $attachment_id );
 		$controls  = isset( $attributes['controls'] ) ? $attributes['controls'] : $this->media->get_settings()->get_value( 'video_controls' );
 		$autoplay  = $this->media->get_settings()->get_value( 'video_autoplay_mode' );
+		$streaming = $this->media->get_settings()->get_value( 'adaptive_streaming', 'adaptive_streaming_mode' );
 
 		// If we don't show controls, we need to autoplay the video.
 		if ( ! $controls ) {
@@ -335,8 +336,11 @@ class Video {
 		}
 		// Set the source_type.
 		$video = wp_get_attachment_metadata( $attachment_id );
-		if ( ! empty( $video['fileformat'] ) ) {
+		if ( ! empty( $video['fileformat'] ) && 'off' === $streaming['adaptive_streaming'] ) {
 			$params['source']['source_types'][] = $video['fileformat'];
+			unset( $attributes[ $video['fileformat'] ] );
+		} elseif ( 'on' === $streaming['adaptive_streaming'] ) {
+			$params['source']['source_types'][] = $streaming['adaptive_streaming_mode'];
 			unset( $attributes[ $video['fileformat'] ] );
 		}
 		// Add cname if present.

@@ -115,6 +115,34 @@ $settings = array(
 								'</a>'
 							),
 						),
+						array(
+							'slug'         => 'adaptive_streaming',
+							'description'  => __( 'Adaptive bitrate streaming', 'cloudinary' ),
+							'type'         => 'on_off',
+							'default'      => 'off',
+							'tooltip_text' => sprintf(
+								// translators: Placeholders are <a> tags.
+								__(
+									'Adaptive bitrate streaming is a video delivery technique that adjusts the quality of a video stream in real time according to detected bandwidth and CPU capacity.%1$sRead more about Adaptive bitrate streaming%2$s',
+									'cloudinary'
+								),
+								'<br><a href="https://cloudinary.com/documentation/adaptive_bitrate_streaming" target="_blank">',
+								'</a>'
+							),
+						),
+						array(
+							'slug'      => 'adaptive_streaming_mode',
+							'title'     => __( 'Streaming format', 'cloudinary' ),
+							'type'      => 'select',
+							'default'   => 'mpd',
+							'options'   => array(
+								'mpd'  => __( 'MPD', 'cloudinary' ),
+								'm3u8' => __( 'M3U8', 'cloudinary' ),
+							),
+							'condition' => array(
+								'adaptive_streaming' => true,
+							),
+						),
 					),
 					array(
 						'type'    => 'tag',
