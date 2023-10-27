@@ -1498,36 +1498,6 @@ class Delivery implements Setup {
 	}
 
 	/**
-	 * Clean a url: adds scheme if missing, removes query and fragments.
-	 *
-	 * @param string $url         The URL to clean.
-	 * @param bool   $scheme_less Flag to clean out scheme.
-	 *
-	 * @return string
-	 */
-	public static function clean_url( $url, $scheme_less = true ) {
-
-		$default = array(
-			'scheme' => '',
-			'host'   => '',
-			'path'   => '',
-			'port'   => '',
-		);
-		$parts   = wp_parse_args( wp_parse_url( $url ), $default );
-		$host    = $parts['host'];
-		if ( ! empty( $parts['port'] ) ) {
-			$host .= ':' . $parts['port'];
-		}
-		$url = '//' . $host . $parts['path'];
-
-		if ( false === $scheme_less ) {
-			$url = $parts['scheme'] . ':' . $url;
-		}
-
-		return $url;
-	}
-
-	/**
 	 * Check if the file type is allowed to be uploaded.
 	 *
 	 * @param string $ext The filetype extension.
@@ -1755,7 +1725,7 @@ class Delivery implements Setup {
 		$content    = wp_unslash( $content );
 		$all_urls   = array_unique( Utils::extract_urls( $content ) );
 		$base_urls  = array_filter( array_map( array( $this, 'sanitize_url' ), $all_urls ) );
-		$clean_urls = array_map( array( $this, 'clean_url' ), $base_urls );
+		$clean_urls = array_map( array( 'Cloudinary\Utils', 'clean_url' ), $base_urls );
 		$urls       = array_filter( $clean_urls, array( $this, 'validate_url' ) );
 
 		// De-size.
@@ -1777,7 +1747,7 @@ class Delivery implements Setup {
 			return; // Bail since theres nothing.
 		}
 
-		$results = $this->query_relations( $public_ids, $urls );
+		$results = Utils::query_relations( $public_ids, $urls );
 
 		$auto_sync = $this->sync->is_auto_sync_enabled();
 		foreach ( $results as $result ) {
@@ -1785,43 +1755,6 @@ class Delivery implements Setup {
 		}
 		// Set unknowns.
 		$this->unknown = array_diff( $urls, array_keys( $this->known ) );
-	}
-
-	/**
-	 * Run a query with Public_id's and or local urls.
-	 *
-	 * @param array $public_ids List of Public_IDs qo query.
-	 * @param array $urls       List of URLS to query.
-	 *
-	 * @return array
-	 */
-	public function query_relations( $public_ids, $urls = array() ) {
-		global $wpdb;
-
-		$wheres = array();
-		if ( ! empty( $urls ) ) {
-			// Do the URLS.
-			$list     = implode( ', ', array_fill( 0, count( $urls ), '%s' ) );
-			$wheres[] = "url_hash IN( {$list} )";
-		}
-		if ( ! empty( $public_ids ) ) {
-			// Do the public_ids.
-			$list     = implode( ', ', array_fill( 0, count( $public_ids ), '%s' ) );
-			$wheres[] = "public_hash IN( {$list} )";
-			$urls     = array_merge( $urls, $public_ids );
-		}
-
-		$tablename = Utils::get_relationship_table();
-		$sql       = "SELECT * from {$tablename} WHERE " . implode( ' OR ', $wheres );
-		$prepared  = $wpdb->prepare( $sql, array_map( 'md5', $urls ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$cache_key = md5( $prepared );
-		$results   = wp_cache_get( $cache_key, 'cld_delivery' );
-		if ( empty( $results ) ) {
-			$results = $wpdb->get_results( $prepared, ARRAY_A );// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
-			wp_cache_add( $cache_key, $results, 'cld_delivery' );
-		}
-
-		return $results;
 	}
 
 	/**

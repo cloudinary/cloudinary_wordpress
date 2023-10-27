@@ -433,8 +433,8 @@ class Assets extends Settings_Component {
 	 * @return string
 	 */
 	public function clean_path( $path ) {
-		$home = Delivery::clean_url( trailingslashit( home_url() ) );
-		$path = str_replace( $home, '', Delivery::clean_url( $path ) );
+		$home = Utils::clean_url( trailingslashit( home_url() ) );
+		$path = str_replace( $home, '', Utils::clean_url( $path ) );
 		if ( empty( Utils::pathinfo( $path, PATHINFO_EXTENSION ) ) ) {
 			$path = trailingslashit( $path );
 		}
