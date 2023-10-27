@@ -430,6 +430,7 @@ class Video {
 			'allow'           => 'autoplay; fullscreen; encrypted-media; picture-in-picture',
 			'allowfullscreen' => true,
 			'frameborder'     => 0,
+			'style'           => 'aspect-ratio: 16/9; height: 100%; max-width: 100%;',
 		);
 		// Counter the issue of portrait videos.
 		if ( $video['height'] > $video['width'] ) {
