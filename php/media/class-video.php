@@ -262,39 +262,66 @@ class Video {
 	public function filter_video_block_pre_render( $block, $source_block ) {
 
 		if ( $this->has_video_block( $source_block ) ) {
-			if ( 'core/video' === $source_block['blockName'] && ! empty( $source_block['attrs']['id'] ) && $this->media->has_public_id( $source_block['attrs']['id'] ) ) {
-				$attachment_id             = $source_block['attrs']['id'];
-				$overwrite_transformations = ! empty( $source_block['attrs']['overwrite_transformations'] );
-				foreach ( $block['innerContent'] as &$content ) {
-					$video_tags = $this->media->filter->get_media_tags( $content );
-					$video_tag  = array_shift( $video_tags );
-					$attributes = Utils::get_tag_attributes( $video_tag );
-					if ( $this->player_enabled() ) {
-						unset( $attributes['src'] );
-						$content = $this->build_video_embed( $attachment_id, $attributes, $overwrite_transformations );
-					} else {
-						$url     = $this->media->cloudinary_url( $attachment_id );
-						$content = str_replace( $attributes['src'], $url, $content );
+			if ( 'core/video' === $source_block['blockName'] ) {
+				$attachment_id = ! empty( $source_block['attrs']['id'] ) ? $source_block['attrs']['id'] : $this->maybe_get_attachment_id( $block['innerHTML'] );
 
-						if ( ! empty( $attributes['poster'] ) ) {
-							// Maybe local URL.
-							if ( ! $this->media->is_cloudinary_url( $attributes['poster'] ) ) {
-								$post_id = Utils::attachment_url_to_postid( $attributes['poster'] );
-								$url     = $this->media->cloudinary_url( $post_id );
-								if ( $url ) {
-									$content = str_replace( $attributes['poster'], $url, $content );
+				if ( $attachment_id && $this->media->has_public_id( $attachment_id ) ) {
+					$overwrite_transformations = ! empty( $source_block['attrs']['overwrite_transformations'] );
+					foreach ( $block['innerContent'] as &$content ) {
+						$video_tags = $this->media->filter->get_media_tags( $content );
+						$video_tag  = array_shift( $video_tags );
+						$attributes = Utils::get_tag_attributes( $video_tag );
+						if ( $this->player_enabled() ) {
+							unset( $attributes['src'] );
+							$content = $this->build_video_embed( $attachment_id, $attributes, $overwrite_transformations );
+						} else {
+							$url     = $this->media->cloudinary_url( $attachment_id );
+							$content = str_replace( $attributes['src'], $url, $content );
+
+							if ( ! empty( $attributes['poster'] ) ) {
+								// Maybe local URL.
+								if ( ! $this->media->is_cloudinary_url( $attributes['poster'] ) ) {
+									$post_id = Utils::attachment_url_to_postid( $attributes['poster'] );
+									$url     = $this->media->cloudinary_url( $post_id );
+									if ( $url ) {
+										$content = str_replace( $attributes['poster'], $url, $content );
+									}
 								}
 							}
 						}
 					}
 				}
-			}
-			foreach ( $block['innerBlocks'] as &$inner_block ) {
-				$inner_block = $this->filter_video_block_pre_render( $inner_block, $inner_block );
+				foreach ( $block['innerBlocks'] as &$inner_block ) {
+					$inner_block = $this->filter_video_block_pre_render( $inner_block, $inner_block );
+				}
 			}
 		}
 
 		return $block;
+	}
+
+	/**
+	 * Get the video attachment ID from the Block HTML.
+	 *
+	 * @param string $html The HTML to parse.
+	 *
+	 * @return int|null
+	 */
+	protected function maybe_get_attachment_id( $html ) {
+		$attachment_id = null;
+
+		$urls = Utils::extract_urls( $html );
+		$urls = array_map( array( 'Cloudinary\Utils', 'clean_url' ), $urls );
+
+		$relations = Utils::query_relations( array(), $urls );
+
+		$relation = reset( $relations );
+
+		if ( ! empty( $relation['post_id'] ) ) {
+			$attachment_id = absint( $relation['post_id'] );
+		}
+
+		return $attachment_id;
 	}
 
 	/**
