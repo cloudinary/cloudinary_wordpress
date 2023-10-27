@@ -255,7 +255,7 @@ class Delivery implements Setup {
 			}
 		}
 
-		$results = $this->query_relations( array_keys( $urls ) );
+		$results = Utils::query_relations( array_keys( $urls ) );
 		String_Replace::reset();
 		foreach ( $results as $result ) {
 			if ( ! isset( $urls[ $result['public_id'] ] ) ) {
@@ -401,7 +401,7 @@ class Delivery implements Setup {
 		}
 
 		if ( empty( $sized_url ) ) {
-			$sized_url = self::clean_url( wp_get_attachment_url( $attachment_id ), true );
+			$sized_url = Utils::clean_url( wp_get_attachment_url( $attachment_id ), true );
 		}
 		self::create_size_relation( $attachment_id, $sized_url, $wh, $base );
 		// Update public ID and type.
@@ -502,7 +502,7 @@ class Delivery implements Setup {
 			$sizes[ $attachment_id ] = array();
 			$meta                    = wp_get_attachment_metadata( $attachment_id, true );
 			if ( ! empty( $meta['width'] ) && ! empty( $meta['height'] ) ) {
-				$local_url               = self::clean_url( $this->media->local_url( $attachment_id ), true );
+				$local_url               = Utils::clean_url( $this->media->local_url( $attachment_id ), true );
 				$sizes[ $attachment_id ] = array(
 					'sized_url' => $local_url,
 					'size'      => $meta['width'] . 'x' . $meta['height'],
@@ -837,7 +837,7 @@ class Delivery implements Setup {
 		global $wpdb;
 		$dirs    = wp_get_upload_dir();
 		$search  = array();
-		$baseurl = self::clean_url( $dirs['baseurl'] );
+		$baseurl = Utils::clean_url( $dirs['baseurl'] );
 		foreach ( $this->unknown as $url ) {
 			$url      = ltrim( str_replace( $baseurl, '', $url ), '/' );
 			$search[] = $url;
@@ -1319,7 +1319,7 @@ class Delivery implements Setup {
 			return null;
 		}
 		$raw_url                 = $attributes['src'];
-		$url                     = $this->maybe_unsize_url( self::clean_url( $this->sanitize_url( $raw_url ) ) );
+		$url                     = $this->maybe_unsize_url( Utils::clean_url( $this->sanitize_url( $raw_url ) ) );
 		$tag_element['base_url'] = $url;
 		// Track back the found URL.
 		if ( $this->media->is_cloudinary_url( $raw_url ) ) {
