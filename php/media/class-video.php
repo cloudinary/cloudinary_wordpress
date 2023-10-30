@@ -289,6 +289,20 @@ class Video {
 						}
 					}
 				}
+			} elseif ( $this->player_enabled() ) {
+				foreach ( $block['innerContent'] as &$content ) {
+					$urls = Utils::extract_urls( $content );
+					$url = reset( $urls );
+
+					if ( wp_http_validate_url( $url ) ) {
+						$video_tags = $this->media->filter->get_media_tags( $content );
+						$video_tag  = array_shift( $video_tags );
+						$attributes = Utils::get_tag_attributes( $video_tag );
+						unset( $attributes['src'] );
+
+						$content = $this->build_video_embed( $url, $attributes, true );
+					}
+				}
 			}
 			foreach ( $block['innerBlocks'] as &$inner_block ) {
 				$inner_block = $this->filter_video_block_pre_render( $inner_block, $inner_block );
@@ -325,14 +339,22 @@ class Video {
 	/**
 	 * Build a new iframe embed for a video.
 	 *
-	 * @param int   $attachment_id             The attachment ID.
-	 * @param array $attributes                Attributes to add to the embed.
-	 * @param bool  $overwrite_transformations Flag to overwrite transformations.
+	 * @param int|string $source                    The attachment ID, or the URL.
+	 * @param array      $attributes                Attributes to add to the embed.
+	 * @param bool       $overwrite_transformations Flag to overwrite transformations.
 	 *
 	 * @return string|null
 	 */
-	protected function build_video_embed( $attachment_id, $attributes = array(), $overwrite_transformations = false ) {
-		$public_id = $this->media->get_public_id( $attachment_id );
+	protected function build_video_embed( $source, $attributes = array(), $overwrite_transformations = false ) {
+		$public_id     = $source;
+		$attachment_id = null;
+
+		// If the source is the attachment ID, get the public ID.
+		if ( is_numeric( $source ) ) {
+			$public_id     = $this->media->get_public_id( $source );
+			$attachment_id = $source;
+		}
+
 		$controls  = isset( $attributes['controls'] ) ? $attributes['controls'] : $this->media->get_settings()->get_value( 'video_controls' );
 		$autoplay  = $this->media->get_settings()->get_value( 'video_autoplay_mode' );
 
@@ -353,17 +375,34 @@ class Video {
 				'source_types' => array(),
 			),
 		);
-		// Check for transformations.
-		$transformations = $this->media->get_transformations( $attachment_id, array(), $overwrite_transformations );
-		if ( ! empty( $transformations ) ) {
-			$params['source']['transformation'] = $transformations;
+
+		$video = array();
+
+		// If it is an attachment, get the video metadata.
+		if ( $attachment_id ) {
+			// Check for transformations.
+			$transformations = $this->media->get_transformations( $attachment_id, array(), $overwrite_transformations );
+			if ( ! empty( $transformations ) ) {
+				$params['source']['transformation'] = $transformations;
+			}
+
+			$video = wp_get_attachment_metadata( $attachment_id );
+
+			// Set the source_type.
+			if ( $public_id && ! empty( $video['fileformat'] ) ) {
+				$params['source']['source_types'][] = $video['fileformat'];
+				unset( $attributes[ $video['fileformat'] ] );
+			}
 		}
-		// Set the source_type.
-		$video = wp_get_attachment_metadata( $attachment_id );
-		if ( ! empty( $video['fileformat'] ) ) {
-			$params['source']['source_types'][] = $video['fileformat'];
-			unset( $attributes[ $video['fileformat'] ] );
-		}
+
+		$video_defaults = array(
+			'fileformat' => 'mp4',
+			'width'      => 640,
+			'height'     => 360,
+		);
+
+		$video = wp_parse_args( $video, $video_defaults );
+
 		// Add cname if present.
 		if ( ! empty( $this->media->credentials['cname'] ) ) {
 			$params['cloudinary'] = array(
