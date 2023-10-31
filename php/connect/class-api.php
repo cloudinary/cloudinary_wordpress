@@ -859,6 +859,10 @@ class Api {
 			$public_id .= "/{$suffix}";
 		}
 
+		if ( 'video' === $relationship->asset_type ) {
+			$public_id .= ".{$relationship->format}";
+		}
+
 		return $public_id;
 	}
 
