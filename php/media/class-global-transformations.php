@@ -174,15 +174,17 @@ class Global_Transformations {
 	 */
 	private function get_term_transformations( $term_id, $type ) {
 		$meta_data = array();
-		foreach ( $this->taxonomy_fields[ $type ] as $setting ) {
-			$slug               = $setting->get_param( 'slug' );
-			$meta_key           = self::META_ORDER_KEY . '_' . $slug;
-			$value              = get_term_meta( $term_id, $meta_key, true );
-			$meta_data[ $slug ] = $value;
-		}
+		if ( ! empty( $this->taxonomy_fields[ $type ] ) ) {
+			foreach ( $this->taxonomy_fields[ $type ] as $setting ) {
+				$slug               = $setting->get_param( 'slug' );
+				$meta_key           = self::META_ORDER_KEY . '_' . $slug;
+				$value              = get_term_meta( $term_id, $meta_key, true );
+				$meta_data[ $slug ] = $value;
+			}
 
-		// Clear out empty items.
-		$meta_data = array_filter( $meta_data );
+			// Clear out empty items.
+			$meta_data = array_filter( $meta_data );
+		}
 
 		return $meta_data;
 	}

@@ -507,6 +507,7 @@ class Sync_Queue {
 		} while ( $query->have_posts() );
 
 		$threads          = $this->add_to_queue( $ids );
+		$queue            = array();
 		$queue['total']   = array_sum( $threads );
 		$queue['threads'] = array_keys( $threads );
 		$queue['started'] = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
@@ -611,7 +612,7 @@ class Sync_Queue {
 	 * @return bool
 	 */
 	public function is_autosync_thread( $thread ) {
-		return in_array( $thread, $this->autosync_threads );
+		return in_array( $thread, $this->autosync_threads, true );
 	}
 
 	/**
@@ -828,17 +829,17 @@ class Sync_Queue {
 	 */
 	public function add_to_queue( array $attachment_ids, $type = 'queue' ) {
 
-		$been_synced = array_filter( $attachment_ids, array( $this->sync, 'been_synced' ) );
-		$new_items   = array_diff( $attachment_ids, $been_synced );
-		$threads     = $this->get_threads( $type );
-		$new_thread  = array_shift( $threads );
+		$been_synced    = array_filter( $attachment_ids, array( $this->sync, 'been_synced' ) );
+		$new_items      = array_diff( $attachment_ids, $been_synced );
+		$threads        = $this->get_threads( $type );
+		$new_thread     = array_shift( $threads );
+		$active_threads = array();
 		if ( ! empty( $new_items ) ) {
 			$this->add_to_thread_queue( $new_thread, $new_items );
 			$active_threads[ $new_thread ] = count( $new_items );
 		}
 
 		$attachment_ids = $been_synced;
-		$active_threads = array();
 		if ( ! empty( $attachment_ids ) ) {
 			$chunk_size = ceil( count( $attachment_ids ) / count( $threads ) );
 			$chunks     = array_chunk( $attachment_ids, $chunk_size );

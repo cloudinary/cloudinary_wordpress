@@ -168,7 +168,7 @@ class String_Replace implements Setup {
 		if ( defined( 'CLD_DEBUG' ) && true === CLD_DEBUG && ! Utils::get_sanitized_text( '_bypass' ) ) {
 			$this->context = 'view';
 			ob_start();
-			include $template;
+			include $template; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
 			$html = ob_get_clean();
 			echo $this->replace_strings( $html ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			$template = $this->plugin->template_path . 'blank-template.php';

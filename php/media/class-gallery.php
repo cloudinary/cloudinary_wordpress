@@ -131,6 +131,13 @@ class Gallery extends Settings_Component {
 		 */
 		$config['container'] = apply_filters( 'cloudinary_gallery_html_container', '' );
 
+		$credentials = $this->plugin->components['connect']->get_credentials();
+
+		if ( ! empty( $credentials['cname'] ) ) {
+			$config['secureDistribution'] = $credentials['cname'];
+			$config['privateCdn']         = true;
+		}
+
 		/**
 		 * Filter the gallery configuration.
 		 *
@@ -217,7 +224,7 @@ class Gallery extends Settings_Component {
 	 * @return array
 	 */
 	private function get_asset() {
-		$asset = require $this->plugin->dir_path . 'js/gallery.asset.php';
+		$asset = require $this->plugin->dir_path . 'js/gallery.asset.php'; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
 
 		$asset['dependencies'] = array_filter(
 			$asset['dependencies'],

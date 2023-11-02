@@ -268,7 +268,7 @@ class Delivery implements Setup {
 			}
 			$size            = $this->media->get_size_from_url( $original_url );
 			$transformations = $this->media->get_transformations_from_string( $original_url );
-			if ( 'image' === $this->media->get_resource_type( $result['post_id'] ) ) {
+			if ( 'image' === $this->media->get_resource_type( $result['post_id'] ) && ! $this->media->is_preview_only( $result['post_id'] ) ) {
 				$attachment_url = wp_get_attachment_image_url( $result['post_id'], $size );
 			} else {
 				$attachment_url = wp_get_attachment_url( $result['post_id'] );
@@ -329,8 +329,12 @@ class Delivery implements Setup {
 		if ( ! $sql ) {
 			$sql = Utils::get_table_sql();
 		}
+		$public_id    = null;
+		$relationship = Relationship::get_relationship( $attachment_id );
+		if ( $relationship instanceof Relationship ) {
+			$public_id = $relationship->public_id;
+		}
 		$sizes              = $this->get_sized( $attachment_id );
-		$public_id          = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
 		$settings_signature = self::get_settings_signature();
 		$relation_signature = $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['relationship'], true );
 
@@ -480,8 +484,6 @@ class Delivery implements Setup {
 		self::update_size_relations_public_id( $attachment_id, null );
 		self::update_size_relations_state( $attachment_id, 'disable' );
 		self::update_size_relations_transformations( $attachment_id, null );
-
-		do_action( 'cloudinary_flush_cache' );
 	}
 
 	/**
@@ -520,13 +522,14 @@ class Delivery implements Setup {
 	 * @param string $public_id     The public ID.
 	 */
 	public static function update_size_relations_public_id( $attachment_id, $public_id ) {
-		$relationship              = Relationship::get_relationship( $attachment_id );
-		$relationship->public_id   = $public_id;
-		$relationship->public_hash = md5( $public_id );
-		$relationship->signature   = self::get_settings_signature();
-		$relationship->save();
+		$relationship = Relationship::get_relationship( $attachment_id );
 
-		do_action( 'cloudinary_flush_cache' );
+		if ( $relationship instanceof Relationship ) {
+			$relationship->public_id   = $public_id;
+			$relationship->public_hash = md5( $public_id );
+			$relationship->signature   = self::get_settings_signature();
+			$relationship->save();
+		}
 	}
 
 	/**
@@ -536,9 +539,12 @@ class Delivery implements Setup {
 	 * @param string $state         The state to set.
 	 */
 	public static function update_size_relations_state( $attachment_id, $state ) {
-		$relationship             = Relationship::get_relationship( $attachment_id );
-		$relationship->post_state = $state;
-		$relationship->save();
+		$relationship = Relationship::get_relationship( $attachment_id );
+
+		if ( $relationship instanceof Relationship ) {
+			$relationship->post_state = $state;
+			$relationship->save();
+		}
 
 		do_action( 'cloudinary_flush_cache' );
 	}
@@ -551,7 +557,6 @@ class Delivery implements Setup {
 	 */
 	public static function update_size_relations_transformations( $attachment_id, $transformations ) {
 		Relate::update_transformations( $attachment_id, $transformations );
-		do_action( 'cloudinary_flush_cache' );
 	}
 
 	/**
@@ -700,10 +705,16 @@ class Delivery implements Setup {
 	/**
 	 * Delete cached metadata.
 	 *
+	 * @param bool $hard Whether to hard flush the cache.
+	 *
 	 * @hook cloudinary_flush_cache
 	 */
-	public function do_clear_cache() {
+	public function do_clear_cache( $hard = true ) {
 		delete_post_meta_by_key( self::META_CACHE_KEY );
+
+		if ( $hard ) {
+			wp_cache_flush();
+		}
 	}
 
 	/**
@@ -859,8 +870,9 @@ class Delivery implements Setup {
 					if ( true === $auto_sync ) {
 						$this->sync->add_to_sync( $result->post_id );
 					}
-					$size                         = $this->get_sized( $result->post_id );
-					$cached[ $size['sized_url'] ] = (int) $result->post_id;
+					$size           = $this->get_sized( $result->post_id );
+					$key            = ! empty( $size['sized_url'] ) ? $size['sized_url'] : wp_get_attachment_url( $result->post_id );
+					$cached[ $key ] = (int) $result->post_id;
 				}
 			}
 			wp_cache_add( $key, $cached );
@@ -901,15 +913,15 @@ class Delivery implements Setup {
 	 * @return array The media tags found.
 	 */
 	public function get_media_tags( $content, $tags = 'img|video' ) {
-		$images = array();
+		$media = array();
 		if ( preg_match_all( '#(?P<tags><(' . $tags . ')[^>]*\>){1}#is', $content, $found ) ) {
 			$count = count( $found[0] );
 			for ( $i = 0; $i < $count; $i ++ ) {
-				$images[ $i ] = $found['tags'][ $i ];
+				$media[ $i ] = $found['tags'][ $i ];
 			}
 		}
 
-		return $images;
+		return $media;
 	}
 
 	/**
@@ -1020,6 +1032,10 @@ class Delivery implements Setup {
 			$replacements = array_merge( $replacements, $aliases );
 		}
 
+		// Sort by length, so we replace the longest first and prevent early replacements.
+		$keys = array_map( 'strlen', array_keys( $replacements ) );
+		array_multisort( $keys, SORT_DESC, $replacements );
+
 		// Update the post meta cache.
 		if ( is_singular() ) {
 			$has_cache          = array();
@@ -1054,7 +1070,7 @@ class Delivery implements Setup {
 			$tag_element['atts']['data-format'] = $tag_element['format'];
 		}
 		// Add wp-{media-type}-{id} class name.
-		if ( empty( $tag_element['atts']['class'] ) || ! in_array( 'wp-' . $tag_element['type'] . '-' . $tag_element['id'], $tag_element['atts']['class'] ) ) {
+		if ( empty( $tag_element['atts']['class'] ) || ! in_array( 'wp-' . $tag_element['type'] . '-' . $tag_element['id'], $tag_element['atts']['class'], true ) ) {
 			$tag_element['atts']['class'][] = 'wp-' . $tag_element['type'] . '-' . $tag_element['id'];
 		}
 
@@ -1128,7 +1144,7 @@ class Delivery implements Setup {
 				$local_size = filesize( get_attached_file( $tag_element['id'] ) );
 			}
 			$remote_size                           = get_post_meta( $tag_element['id'], Sync::META_KEYS['remote_size'], true );
-			$tag_element['atts']['data-filesize']  = size_format( $local_size );
+			$tag_element['atts']['data-filesize']   = size_format( $local_size );
 			$tag_element['atts']['data-optsize']   = size_format( $remote_size );
 			$tag_element['atts']['data-optformat'] = get_post_meta( $tag_element['id'], Sync::META_KEYS['remote_format'], true );
 			if ( ! empty( $local_size ) && ! empty( $remote_size ) ) {
@@ -1141,6 +1157,29 @@ class Delivery implements Setup {
 		}
 
 		$tag_element['atts']['data-version'] = $this->media->get_cloudinary_version( $tag_element['id'] );
+
+		/**
+		 * Bypass Cloudinary's SEO URLs.
+		 *
+		 * @hook   cloudinary_bypass_seo_url
+		 * @since  3.1.5
+		 *
+		 * @param $bypass_seo_url {bool} Whether to bypass SEO URLs.
+		 *
+		 * @return {bool}
+		 */
+		$bypass_seo_url = apply_filters( 'cloudinary_bypass_seo_url', false );
+
+		$tag_element['atts']['data-seo'] = ! $bypass_seo_url;
+
+		$resource_type = in_array( $tag_element['type'], array( 'image', 'video' ), true ) ? $tag_element['type'] : 'raw';
+
+		$args = array(
+			'delivery'      => $this->media->get_media_delivery( $tag_element['id'] ),
+			'resource_type' => $resource_type,
+		);
+
+		$tag_element['atts']['data-public-id'] = $this->plugin->get_component( 'connect' )->api->get_public_id( $tag_element['id'], $args );
 
 		return $tag_element;
 	}
@@ -1170,9 +1209,10 @@ class Delivery implements Setup {
 		if ( apply_filters( 'cloudinary_apply_breakpoints', true ) ) {
 			$meta = wp_get_attachment_metadata( $tag_element['id'] );
 			if ( ! empty( $meta['width'] ) && ! empty( $meta['height'] ) ) {
+				$relationship = Relationship::get_relationship( $tag_element['id'] );
 				// Check overwrite.
 				$meta['overwrite_transformations'] = $tag_element['overwrite_transformations'];
-				$meta['cloudinary_id']             = $tag_element['atts']['data-public-id'];
+				$meta['cloudinary_id']             = $relationship->public_id;
 				$meta['transformations']           = $tag_element['transformations'];
 				// Add new srcset.
 				$element = wp_image_add_srcset_and_sizes( $tag_element['original'], $meta, $tag_element['id'] );
@@ -1225,6 +1265,22 @@ class Delivery implements Setup {
 	 */
 	public function parse_element( $element ) {
 		static $post_context = 0;
+
+		$config = $this->plugin->settings->get_value( 'image_settings' );
+
+		/**
+		 * Enable the Crop and Gravity control settings.
+		 *
+		 * @hook  cloudinary_enable_crop_and_gravity_control
+		 * @since 3.1.3
+		 * @default {false}
+		 *
+		 * @param $enabeld {bool} Is the Crop and Gravity control enabled?
+		 *
+		 * @retrun {bool}
+		 */
+		$enabled_crop_gravity     = apply_filters( 'cloudinary_enable_crop_and_gravity_control', false );
+		$has_sized_transformation = $enabled_crop_gravity && ! empty( $config['crop_sizes'] );
 
 		$tag_element = array(
 			'tag'                       => '',
@@ -1286,18 +1342,30 @@ class Delivery implements Setup {
 				$public_id .= '.' . $item['format'];
 			}
 			$tag_element['id']            = (int) $item['post_id'];
-			$tag_element['width']         = $item['width'];
-			$tag_element['height']        = $item['height'];
+			$tag_element['width']         = ! empty( $attributes['width'] ) ? $attributes['width'] : $item['width'];
+			$tag_element['height']        = ! empty( $attributes['height'] ) ? $attributes['height'] : $item['height'];
 			$attributes['data-public-id'] = $public_id;
 			$tag_element['format']        = $item['format'];
 
-			// Check if this is a crop or a scale.
-			$has_size = $this->media->get_size_from_url( $this->sanitize_url( $raw_url ) );
-			if ( ! empty( $has_size ) ) {
-				$file_ratio     = round( $has_size[0] / $has_size[1], 2 );
-				$original_ratio = round( $item['width'] / $item['height'], 2 );
-				if ( $file_ratio !== $original_ratio ) {
-					$attributes['data-crop'] = $file_ratio;
+			if ( 'img' === $tag_element['tag'] ) {
+				// Check if this is a crop or a scale.
+				$has_size = $this->media->get_size_from_url( $this->sanitize_url( $raw_url ) );
+				if ( ! empty( $has_size ) && ! empty( $item['height'] ) ) {
+					$file_ratio     = round( $has_size[0] / $has_size[1], 2 );
+					$original_ratio = round( $item['width'] / $item['height'], 2 );
+					if ( $file_ratio !== $original_ratio ) {
+						$attributes['data-crop'] = $file_ratio;
+					}
+					if ( $has_sized_transformation ) {
+						$crop_size             = array(
+							'width'  => $has_size[0],
+							'height' => $has_size[1],
+						);
+						$image_transformations = $this->media->get_crop_transformations( $tag_element['id'], $crop_size );
+						if ( $image_transformations ) {
+							$attributes['data-transformation-crop'] = $image_transformations;
+						}
+					}
 				}
 			}
 		}
@@ -1355,10 +1423,12 @@ class Delivery implements Setup {
 		/**
 		 * Filter the tag element.
 		 *
-		 * @hook cloudinary_parse_element
-		 * @since 3.0.9
+		 * @hook   cloudinary_parse_element
+		 * @since  3.0.9
 		 *
 		 * @param $tag_element {array} The tag element.
+		 *
+		 * @return {array} The tag element.
 		 */
 		$tag_element = apply_filters( 'cloudinary_parse_element', $tag_element );
 
@@ -1538,11 +1608,12 @@ class Delivery implements Setup {
 		 */
 		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
 
+		$found                       = array();
 		$found[ $item['public_id'] ] = $item;
-		$scaled                            = self::make_scaled_url( $item['sized_url'] );
-		$descaled                          = self::descaled_url( $item['sized_url'] );
-		$scaled_slashed                    = addcslashes( $scaled, '/' );
-		$descaled_slashed                  = addcslashes( $descaled, '/' );
+		$scaled                      = self::make_scaled_url( $item['sized_url'] );
+		$descaled                    = self::descaled_url( $item['sized_url'] );
+		$scaled_slashed              = addcslashes( $scaled, '/' );
+		$descaled_slashed            = addcslashes( $descaled, '/' );
 		$found[ $scaled ]            = $item;
 		$found[ $descaled ]          = $item;
 		$found[ $scaled_slashed ]    = array_merge( $item, array( 'slashed' => true ) );
@@ -1550,6 +1621,7 @@ class Delivery implements Setup {
 
 		if ( ! $this->is_deliverable( $item['post_id'] ) ) {
 			$this->unusable = array_merge( $this->unusable, $found );
+
 			return;
 		}
 
@@ -1623,14 +1695,17 @@ class Delivery implements Setup {
 	public function maybe_unsize_url( $url ) {
 		$file = Utils::pathinfo( $url, PATHINFO_FILENAME );
 		$dash = ltrim( strrchr( $file, '-' ), '-' );
-		if ( false !== $dash && 1 === substr_count( $dash, 'x' ) ) {
-			if ( is_numeric( str_replace( 'x', '', $dash ) ) ) {
-				$sized                                = wp_basename( $url );
-				$url                                  = str_replace( '-' . $dash, '', $url );
-				$scaled                               = self::make_scaled_url( $url );
-				$this->found_urls[ $url ][ $dash ]    = $sized;
-				$this->found_urls[ $scaled ][ $dash ] = $sized;
-			}
+		if (
+			! empty( $dash )
+			&& 1 === substr_count( $dash, 'x' )
+			&& is_numeric( str_replace( 'x', '', $dash ) )
+			&& 2 === count( array_filter( explode( 'x', $dash ) ) )
+		) {
+			$sized                                = wp_basename( $url );
+			$url                                  = str_replace( '-' . $dash, '', $url );
+			$scaled                               = self::make_scaled_url( $url );
+			$this->found_urls[ $url ][ $dash ]    = $sized;
+			$this->found_urls[ $scaled ][ $dash ] = $sized;
 		}
 
 		return $url;

@@ -83,6 +83,13 @@ final class Plugin {
 	public $dir_url;
 
 	/**
+	 * The plugin file.
+	 *
+	 * @var string
+	 */
+	public $plugin_file;
+
+	/**
 	 * Directory in plugin containing autoloaded classes.
 	 *
 	 * @var string
@@ -138,6 +145,7 @@ final class Plugin {
 	 * that extend the Customizer to ensure resources are available in time.
 	 */
 	public function init() {
+		Cron::get_instance();
 		$this->components['admin']                  = new Admin( $this );
 		$this->components['state']                  = new State( $this );
 		$this->components['connect']                = new Connect( $this );
@@ -156,6 +164,8 @@ final class Plugin {
 		$this->components['extensions']             = new Extensions( $this );
 		$this->components['svg']                    = new SVG( $this );
 		$this->components['relate']                 = new Relate( $this );
+		$this->components['metabox']                = new Meta_Box( $this );
+		$this->components['url']                    = new URL( $this );
 	}
 
 	/**
@@ -163,7 +173,7 @@ final class Plugin {
 	 *
 	 * @param mixed $component The component.
 	 *
-	 * @return Admin|Connect|Delivery|Media|REST_API|String_Replace|Sync|Report|null
+	 * @return Admin|Connect|Delivery|Media|REST_API|String_Replace|Sync|Report|URL|null
 	 */
 	public function get_component( $component ) {
 		$return = null;
@@ -187,7 +197,7 @@ final class Plugin {
 
 		foreach ( $parts as $slug => $part ) {
 			if ( file_exists( $this->dir_path . "ui-definitions/settings-{$slug}.php" ) ) {
-				$parts[ $slug ] = include $this->dir_path . "ui-definitions/settings-{$slug}.php";
+				$parts[ $slug ] = include $this->dir_path . "ui-definitions/settings-{$slug}.php"; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
 			}
 		}
 

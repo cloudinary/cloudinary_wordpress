@@ -13,6 +13,13 @@ use function Cloudinary\get_plugin_instance;
 
 /**
  * Class Relationship
+ *
+ * @property string|null $post_state
+ * @property string|null $public_hash
+ * @property string|null $public_id
+ * @property string|null $signature
+ * @property string|null $transformations
+ * @property string|null $sized_url
  */
 class Relationship {
 
@@ -105,6 +112,7 @@ class Relationship {
 		if ( ! $this->save_on_shutdown ) {
 			$this->save_on_shutdown = true;
 			add_action( 'shutdown', array( $this, 'do_save' ) );
+			add_action( 'shutdown', array( $this, 'flush_cache' ), 100 );
 		}
 	}
 
@@ -115,9 +123,23 @@ class Relationship {
 	 */
 	public function do_save() {
 		global $wpdb;
-		$data = $this->get_data();
+		$data   = $this->get_data();
+		$update = false;
 
-		return $wpdb->update( Utils::get_relationship_table(), $data, array( 'id' => $data['id'] ), array( '%s' ), array( '%d' ) );// phpcs:ignore WordPress.DB
+		if ( ! empty( $data['id'] ) ) {
+			$update = $wpdb->update( Utils::get_relationship_table(), $data, array( 'id' => $data['id'] ), array( '%s' ), array( '%d' ) );// phpcs:ignore WordPress.DB
+		}
+
+		return $update;
+	}
+
+	/**
+	 * Flush the cache.
+	 *
+	 * @return void
+	 */
+	public function flush_cache() {
+		do_action( 'cloudinary_flush_cache', false );
 	}
 
 	/**
@@ -195,7 +217,7 @@ class Relationship {
 		global $wpdb;
 
 		$table_name = Utils::get_relationship_table();
-		$ids        = $wpdb->get_col( $wpdb->prepare( "SELECT post_id FROM {$table_name} WHERE public_id = %s", $public_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$ids        = $wpdb->get_col( $wpdb->prepare( "SELECT post_id FROM {$table_name} WHERE public_id = %s", $public_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		return array_map( 'intval', $ids );
 	}

@@ -500,7 +500,7 @@ class Utils {
 		 *
 		 * @see wp-includes/formatting.php
 		 */
-		$path = str_replace( array( '%2F', '%5C' ), '/', urlencode( $path ) );
+		$path = str_replace( array( '%2F', '%5C' ), '/', urlencode( $path ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.urlencode_urlencode
 
 		$pathinfo = pathinfo( $path, $flags );
 
@@ -553,7 +553,7 @@ class Utils {
 		if ( ! $is_frontend_ajax && ! $is_admin ) {
 			// Catch the content type of the $_SERVER['CONTENT_TYPE'] variable.
 			$type             = filter_input( INPUT_SERVER, 'CONTENT_TYPE', FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
-			$is_frontend_ajax = false !== strpos( $type, 'json' );
+			$is_frontend_ajax = $type && false !== strpos( $type, 'json' );
 		}
 
 		return $is_frontend_ajax;
@@ -836,5 +836,106 @@ class Utils {
 			delete_post_meta( $attachment_id, Sync::META_KEYS['queued'] );
 			delete_post_meta( $attachment_id, $sync_thread );
 		}
+	}
+
+	/**
+	 * Get the registered image sizes, the labels and crop settings.
+	 *
+	 * @param null|int $attachment_id The attachment ID to get the sizes. Defaults to generic registered sizes.
+	 *
+	 * @return array
+	 */
+	public static function get_registered_sizes( $attachment_id = null ) {
+		$additional_sizes   = wp_get_additional_image_sizes();
+		$all_sizes          = array();
+		$labels             = array();
+		$intermediate_sizes = array();
+
+		if ( is_null( $attachment_id ) ) {
+			$intermediate_sizes = get_intermediate_image_sizes(); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.get_intermediate_image_sizes_get_intermediate_image_sizes
+		} else {
+			$meta = wp_get_attachment_metadata( $attachment_id );
+			if ( ! empty( $meta['sizes'] ) ) {
+				$additional_sizes   = wp_parse_args( $additional_sizes, $meta['sizes'] );
+				$intermediate_sizes = array_keys( $meta['sizes'] );
+			}
+		}
+
+		foreach ( $intermediate_sizes as $size ) {
+			$labels[ $size ] = ucwords( str_replace( array( '-', '_' ), ' ', $size ) );
+		}
+
+		/** This filter is documented in wp-admin/includes/media.php */
+		$image_sizes = apply_filters(
+			'image_size_names_choose',
+			array(
+				// phpcs:disable WordPress.WP.I18n.MissingArgDomain
+				'thumbnail'    => __( 'Thumbnail' ),
+				'medium'       => __( 'Medium' ),
+				'medium_large' => __( 'Medium Large' ),
+				'large'        => __( 'Large' ),
+				'full'         => __( 'Full Size' ),
+				// phpcs:enable WordPress.WP.I18n.MissingArgDomain
+			)
+		);
+
+		$labels = wp_parse_args( $labels, $image_sizes );
+
+		foreach ( $intermediate_sizes as $size ) {
+			if ( isset( $additional_sizes[ $size ] ) ) {
+				$all_sizes[ $size ] = array(
+					'label'  => $labels[ $size ],
+					'width'  => $additional_sizes[ $size ]['width'],
+					'height' => $additional_sizes[ $size ]['height'],
+				);
+			} else {
+				$all_sizes[ $size ] = array(
+					'label'  => $labels[ $size ],
+					'width'  => (int) get_option( "{$size}_size_w" ),
+					'height' => (int) get_option( "{$size}_size_h" ),
+				);
+			}
+
+			if ( ! empty( $additional_sizes[ $size ]['crop'] ) ) {
+				$all_sizes[ $size ]['crop'] = $additional_sizes[ $size ]['crop'];
+			} else {
+				$all_sizes[ $size ]['crop'] = (bool) get_option( "{$size}_crop" );
+			}
+		}
+
+		/**
+		 * Filter the all sizes available.
+		 *
+		 * @param array $all_sizes All the registered sizes.
+		 *
+		 * @since 3.1.3
+		 *
+		 * @hook  cloudinary_registered_sizes
+		 */
+		return apply_filters( 'cloudinary_registered_sizes', $all_sizes );
+	}
+
+	/**
+	 * Get the attachment ID from the attachment URL.
+	 *
+	 * @param string $url The attachment URL.
+	 *
+	 * @return int
+	 */
+	public static function attachment_url_to_postid( $url ) {
+		$key = "postid_{$url}";
+
+		if ( function_exists( 'wpcom_vip_attachment_url_to_postid' ) ) {
+			$attachment_id = wpcom_vip_attachment_url_to_postid( $url );
+		} else {
+			$attachment_id = wp_cache_get( $key, 'cloudinary' );
+		}
+
+		if ( empty( $attachment_id ) ) {
+			$attachment_id = attachment_url_to_postid( $url ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.attachment_url_to_postid_attachment_url_to_postid
+			wp_cache_set( $key, $attachment_id, 'cloudinary' );
+		}
+
+		return $attachment_id;
 	}
 }

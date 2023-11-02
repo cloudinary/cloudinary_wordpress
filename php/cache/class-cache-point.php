@@ -198,13 +198,14 @@ class Cache_Point {
 	public function get_meta( $check, $object_id, $meta_key ) {
 
 		if ( self::POST_TYPE_SLUG === get_post_type( $object_id ) ) {
-			$meta = $this->get_meta_cache( $object_id );
+			$meta  = $this->get_meta_cache( $object_id );
+			$value = '';
+
 			if ( empty( $meta_key ) ) {
 				$value = $meta;
 			} elseif ( isset( $meta[ $meta_key ] ) ) {
+				$value   = array();
 				$value[] = $meta[ $meta_key ];
-			} else {
-				$value = '';
 			}
 
 			return $value;
@@ -431,11 +432,12 @@ class Cache_Point {
 			$url         = trailingslashit( $url );
 			$cache_point = null;
 			$params      = array(
-				'name'           => $key,
-				'post_type'      => self::POST_TYPE_SLUG,
-				'posts_per_page' => 1,
+				'name'             => $key,
+				'post_type'        => self::POST_TYPE_SLUG,
+				'posts_per_page'   => 1,
+				'suppress_filters' => false,
 			);
-			$found       = get_posts( $params );
+			$found       = get_posts( $params ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.get_posts_get_posts
 			if ( ! empty( $found ) ) {
 				$cache_point                           = array_shift( $found );
 				$this->registered_cache_points[ $url ] = $cache_point;
@@ -867,9 +869,13 @@ class Cache_Point {
 				foreach ( $indexes as $key ) {
 					$url = $urls[ $key ];
 
-					if ( ! isset( $meta[ self::META_KEYS['cached_urls'] ][ $url ] )
-						 || $url === $meta[ self::META_KEYS['cached_urls'] ][ $url ]
-							&& $meta[ self::META_KEYS['last_updated'] ] < time() - MINUTE_IN_SECONDS * 10 ) {
+					if (
+						! isset( $meta[ self::META_KEYS['cached_urls'] ][ $url ] )
+						|| (
+							$url === $meta[ self::META_KEYS['cached_urls'] ][ $url ]
+							&& $meta[ self::META_KEYS['last_updated'] ] < time() - MINUTE_IN_SECONDS * 10
+						)
+					) {
 						// Send to upload prep.
 						$this->prepare_for_sync( $post->ID );
 						$meta[ self::META_KEYS['cached_urls'] ][ $url ] = $url;
@@ -970,6 +976,6 @@ class Cache_Point {
 			'rewrite'             => false,
 			'capability_type'     => 'page',
 		);
-		$this->post_type = register_post_type( self::POST_TYPE_SLUG, $args );
+		$this->post_type = register_post_type( self::POST_TYPE_SLUG, $args ); // phpcs:ignore WordPress.NamingConventions.ValidPostTypeSlug.NotStringLiteral
 	}
 }
