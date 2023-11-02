@@ -15,6 +15,7 @@
 	<arg name="extensions" value="php" />
 	<arg name="colors" />
 	<arg value="s" /><!-- Show sniff codes in all reports. -->
+	<arg name="severity" value="3" /><!-- Match WPVIP requirements. -->
 
 	<!-- Includes WordPress-Core, WordPress-Docs and WordPress-Extra rulesets. -->
 	<rule ref="WordPress" />

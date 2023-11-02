@@ -192,9 +192,13 @@ const CloudinaryLoader = {
 		const newSize = [];
 
 		// Set crop if needed, else just scale it.
-		newSize.push( image.dataset.crop ? 'c_fill' : 'c_scale' );
-		if ( image.dataset.crop ) {
-			newSize.push( 'g_auto' );
+		if ( image.dataset.transformationCrop ) {
+			newSize.push( image.dataset.transformationCrop );
+		} else if ( ! image.dataset.crop ) {
+			newSize.push( image.dataset.crop ? 'c_fill' : 'c_scale' );
+			if ( image.dataset.crop ) {
+				newSize.push( 'g_auto' );
+			}
 		}
 
 		newSize.push( 'w_' + scaledWidth );
@@ -211,13 +215,15 @@ const CloudinaryLoader = {
 			nameExtension: scaledWidth + 'x' + scaledHeight,
 		};
 	},
+	getDeliveryMethod( image ) {
+		return image.dataset.seo && 'upload' === image.dataset.delivery ? 'images' : 'image/' + image.dataset.delivery;
+	},
 	getSizeURL( image, width ) {
 		const newSize = this.scaleSize( image, width, true );
 
 		const parts = [
 			this.config.base_url,
-			'image',
-			image.dataset.delivery,
+			this.getDeliveryMethod( image ),
 			'upload' === image.dataset.delivery ? newSize.transformation : '',
 			image.dataset.transformations,
 			'v' + image.dataset.version,
@@ -232,8 +238,7 @@ const CloudinaryLoader = {
 
 		const parts = [
 			this.config.base_url,
-			'image',
-			image.dataset.delivery,
+			this.getDeliveryMethod( image ),
 			newSize.transformation,
 			this.config.placeholder,
 			image.dataset.publicId

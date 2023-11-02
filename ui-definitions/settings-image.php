@@ -5,7 +5,8 @@
  * @package Cloudinary
  */
 
-$media    = $this->get_component( 'media' );
+use function Cloudinary\get_plugin_instance;
+
 $settings = array(
 	array(
 		'type'        => 'panel',
@@ -36,13 +37,25 @@ $settings = array(
 					'title'              => __( 'Image delivery', 'cloudinary' ),
 					'optimisation_title' => __( 'Image delivery', 'cloudinary' ),
 					'tooltip_text'       => __(
-						'Images will be uploaded and delivered from Cloudinary.',
+						'If you turn this setting off, your images will be delivered from WordPress.',
 						'cloudinary'
 					),
-					'description'        => __( 'Optimize and deliver images on my site.', 'cloudinary' ),
+					'description'        => __( 'Sync and deliver images from Cloudinary.', 'cloudinary' ),
 					'default'            => 'on',
 					'attributes'         => array(
 						'data-context' => 'image',
+					),
+					'readonly'           => static function () {
+						return ! get_plugin_instance()->get_component( 'storage' )->is_local_full();
+					},
+					'readonly_message'   => sprintf(
+						// translators: %s is a link to the storage settings page.
+						__( 'This setting currently can’t be turned off. Your images must be delivered from Cloudinary because your assets are being stored in Cloudinary only. To enable delivering images from WordPress, first select a %s in the General Settings page that will enable storing your assets also in WordPress.', 'cloudinary' ),
+						sprintf(
+							'<a href="%s">%s</a>',
+							add_query_arg( array( 'page' => 'cloudinary_connect#connect.offload' ), admin_url( 'admin.php' ) ),
+							__( 'Storage setting', 'cloudinary' )
+						)
 					),
 				),
 				array(
@@ -137,6 +150,7 @@ $settings = array(
 						'type'           => 'text',
 						'slug'           => 'image_freeform',
 						'title'          => __( 'Additional image transformations', 'cloudinary' ),
+						'default'        => '',
 						'tooltip_text'   => sprintf(
 						// translators: The link to transformation reference.
 							__(
@@ -161,7 +175,7 @@ $settings = array(
 					),
 					array(
 						'type'  => 'info_box',
-						'icon'  => $this->dir_url . 'css/images/crop.svg',
+						'icon'  => $this->dir_url . 'css/images/transformation.svg',
 						'title' => __( 'What are transformations?', 'cloudinary' ),
 						'text'  => __(
 							'A set of parameters included in a Cloudinary URL to programmatically transform the visual appearance of the assets on your website.',
@@ -175,14 +189,33 @@ $settings = array(
 					array(
 						'type'               => 'on_off',
 						'slug'               => 'svg_support',
-						'title'              => __( 'SVG Support (beta)', 'cloudinary' ),
-						'optimisation_title' => __( 'SVG Support (beta)', 'cloudinary' ),
+						'title'              => __( 'SVG Support', 'cloudinary' ),
+						'optimisation_title' => __( 'SVG Support', 'cloudinary' ),
 						'tooltip_text'       => __(
 							'Enable Cloudinary\'s beta SVG Support.',
 							'cloudinary'
 						),
 						'description'        => __( 'Enable SVG support.', 'cloudinary' ),
 						'default'            => 'off',
+					),
+					array(
+						'type'    => 'crops',
+						'slug'    => 'crop_sizes',
+						'title'   => __( 'Crop and Gravity control (beta)', 'cloudinary' ),
+						'enabled' => static function () {
+							/**
+							 * Enable the Crop and Gravity control settings.
+							 *
+							 * @hook  cloudinary_enable_crop_and_gravity_control
+							 * @since 3.1.3
+							 * @default {false}
+							 *
+							 * @param $enabeld {bool} Is the Crop and Gravity control enabled?
+							 *
+							 * @retrun {bool}
+							 */
+							return apply_filters( 'cloudinary_enable_crop_and_gravity_control', false );
+						},
 					),
 				),
 			),

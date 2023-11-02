@@ -5,6 +5,8 @@
  * @package Cloudinary
  */
 
+use function Cloudinary\get_plugin_instance;
+
 $settings = array(
 	array(
 		'type'        => 'panel',
@@ -35,13 +37,25 @@ $settings = array(
 					'title'              => __( 'Video delivery', 'cloudinary' ),
 					'optimisation_title' => __( 'Video delivery', 'cloudinary' ),
 					'tooltip_text'       => __(
-						'Videos will be uploaded and delivered from Cloudinary.',
+						'If you turn this setting off, your videos will be delivered from WordPress.',
 						'cloudinary'
 					),
-					'description'        => __( 'Optimize and deliver videos on my site.', 'cloudinary' ),
+					'description'        => __( 'Sync and deliver videos from Cloudinary.', 'cloudinary' ),
 					'default'            => 'on',
 					'attributes'         => array(
-						'data-context' => 'image',
+						'data-context' => 'video',
+					),
+					'readonly'           => static function () {
+						return ! get_plugin_instance()->get_component( 'storage' )->is_local_full();
+					},
+					'readonly_message'   => sprintf(
+						// translators: %s is a link to the storage settings page.
+						__( 'This setting currently can’t be turned off. Your videos must be delivered from Cloudinary because your assets are being stored in Cloudinary only. To enable delivering videos from WordPress, first select a %s in the General Settings page that will enable storing your assets also in WordPress.', 'cloudinary' ),
+						sprintf(
+							'<a href="%s">%s</a>',
+							add_query_arg( array( 'page' => 'cloudinary_connect#connect.offload' ), admin_url( 'admin.php' ) ),
+							__( 'Storage setting', 'cloudinary' )
+						)
 					),
 				),
 				array(
@@ -121,7 +135,7 @@ $settings = array(
 							'attributes'   => array(
 								'data-context' => 'video',
 							),
-							'depends'            => array(
+							'depends'      => array(
 								'video_delivery',
 							),
 						),
@@ -188,6 +202,7 @@ $settings = array(
 						'type'           => 'text',
 						'slug'           => 'video_freeform',
 						'title'          => __( 'Additional video transformations', 'cloudinary' ),
+						'default'        => '',
 						'tooltip_text'   => sprintf(
 							// translators: The link to transformation reference.
 							__(

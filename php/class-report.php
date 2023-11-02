@@ -223,7 +223,7 @@ class Report extends Settings_Component implements Setup {
 			"SELECT * FROM {$wpdb->cld_table} WHERE post_id = %d;",
 			$post->ID
 		);
-		$relationship    = $wpdb->get_row( $prepare ); // phpcs:ignore WordPress.DB.PreparedSQL
+		$relationship    = $wpdb->get_row( $prepare ); // phpcs:ignore WordPress.DB.PreparedSQL,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		ksort( $attachment );
 		ksort( $meta );
