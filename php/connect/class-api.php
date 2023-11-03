@@ -227,10 +227,11 @@ class Api {
 	 *
 	 * @param array  $options The transformation options to generate from.
 	 * @param string $type    The asset Type.
+	 * @param string $context The context.
 	 *
 	 * @return string
 	 */
-	public static function generate_transformation_string( array $options, $type = 'image' ) {
+	public static function generate_transformation_string( array $options, $type = 'image', $context = '' ) {
 		if ( ! isset( self::$transformation_index[ $type ] ) ) {
 			return '';
 		}
@@ -255,6 +256,58 @@ class Api {
 			},
 			$options
 		);
+
+		// Prepare the eager transformations for the upload.
+		if ( 'upload' === $context ) {
+			foreach ( $transformations as &$transformation ) {
+				if ( 0 <= strpos( $transformation, 'f_auto' ) ) {
+					$parts = explode( ',', $transformation );
+					unset( $parts[ array_search( 'f_auto', $parts, true ) ] );
+					$remaining_transformations = implode( ',', $parts );
+					$formats                   = array();
+
+					if ( 'image' === $type ) {
+						$formats = array(
+							'f_avif',
+							'f_webp',
+							'f_webp,fl_awebp',
+							'f_wdp',
+							'f_jp2',
+						);
+					} elseif ( 'video' === $type ) {
+						$formats = array(
+							'f_webm,vc_vp9',
+							'f_mp4,vc_h265',
+							'f_mp4,vc_h264',
+						);
+					}
+
+					/**
+					 * Filter the upload eager formats.
+					 *
+					 * @hook cloudinary_upload_eager_formats
+					 * @since 3.1.6
+					 *
+					 * @param $formats {array} The default formats.
+					 * @param $type    {string} The asset type.
+					 *
+					 * @return {array}
+					 */
+					$formats = apply_filters( 'cloudinary_upload_eager_formats', $formats, $type );
+
+					array_walk(
+						$formats,
+						static function ( &$i ) use ( $remaining_transformations ) {
+							if ( $remaining_transformations ) {
+								$i .= ",{$remaining_transformations}";
+							}
+						}
+					);
+
+					$transformation = implode( '|', $formats );
+				}
+			}
+		}
 
 		// Clear out empty parts.
 		$transformations = array_filter( $transformations );

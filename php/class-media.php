@@ -2799,11 +2799,12 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Get the media upload options as connected to Cloudinary.
 	 *
-	 * @param int $attachment_id The attachment ID.
+	 * @param int    $attachment_id The attachment ID.
+	 * @param string $context       The context to use.
 	 *
 	 * @return array
 	 */
-	public function get_upload_options( $attachment_id ) {
+	public function get_upload_options( $attachment_id, $context = '' ) {
 
 		// Prepare upload options.
 		$public_id = $this->get_public_id( $attachment_id, true );
@@ -2817,7 +2818,7 @@ class Media extends Settings_Component implements Setup {
 		);
 
 		if ( 'image' === $options['resource_type'] || 'video' === $options['resource_type'] ) {
-			$options['eager']       = Api::generate_transformation_string( $this->apply_default_transformations( array(), $attachment_id ) );
+			$options['eager']       = Api::generate_transformation_string( $this->apply_default_transformations( array(), $attachment_id ), $options['resource_type'], $context );
 			$options['eager_async'] = 'video' === $options['resource_type'];
 		}
 		/**
