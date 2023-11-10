@@ -1150,6 +1150,8 @@ class Delivery implements Setup {
 			if ( ! empty( $local_size ) && ! empty( $remote_size ) ) {
 				$diff                                = $local_size - $remote_size;
 				$tag_element['atts']['data-percent'] = round( $diff / $local_size * 100, 1 );
+			} elseif ( 'image' === $tag_element['type'] ) {
+				$this->plugin->get_component( 'storage' )->size_sync( $tag_element['id'] );
 			}
 
 			$base_url                              = $this->plugin->settings->get_url( 'edit_asset' );
