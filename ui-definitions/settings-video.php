@@ -136,8 +136,8 @@ $settings = array(
 							'type'      => 'select',
 							'default'   => 'mpd',
 							'options'   => array(
-								'mpd'  => __( 'MPD', 'cloudinary' ),
-								'm3u8' => __( 'M3U8', 'cloudinary' ),
+								'mpd'  => __( 'Dynamic Adaptive Streaming over HTTP (MPEG-DASH)', 'cloudinary' ),
+								'm3u8' => __( 'HTTP Live Streaming (HLS)', 'cloudinary' ),
 							),
 							'condition' => array(
 								'adaptive_streaming' => true,
