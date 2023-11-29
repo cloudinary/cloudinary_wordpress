@@ -1362,6 +1362,12 @@ class Media extends Settings_Component implements Setup {
 			}
 		}
 
+		$public_id = $this->get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
+
+		if ( ! empty( $public_id ) ) {
+			$cloudinary_id = $public_id;
+		}
+
 		$args = array(
 			$attachment_id,
 			$size,

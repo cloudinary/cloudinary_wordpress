@@ -314,7 +314,7 @@ class Api {
 		}
 
 		if ( $attachment_id ) {
-			$public_id = $this->get_public_id( $attachment_id, $args );
+			$public_id = $this->get_public_id( $attachment_id, $args, $public_id );
 		}
 
 		$url_parts[] = $args['version'];
@@ -796,18 +796,24 @@ class Api {
 	/**
 	 * Get the Cloudinary public_id.
 	 *
-	 * @param int   $attachment_id The attachment ID.
-	 * @param array $args          The args.
+	 * @param int         $attachment_id      The attachment ID.
+	 * @param array       $args               The args.
+	 * @param null|string $original_public_id The original public ID.
 	 *
 	 * @return string
 	 */
-	public function get_public_id( $attachment_id, $args = array() ) {
+	public function get_public_id( $attachment_id, $args = array(), $original_public_id = null ) {
 
 		$relationship = Relationship::get_relationship( $attachment_id );
 		$public_id    = null;
 
 		if ( $relationship instanceof Relationship ) {
 			$public_id = $relationship->public_id;
+		}
+
+		// On cases like the initial sync, we might not have a relationship, so we need to trust to requested public_id.
+		if ( empty( $public_id ) ) {
+			$public_id = $original_public_id;
 		}
 
 		/**
