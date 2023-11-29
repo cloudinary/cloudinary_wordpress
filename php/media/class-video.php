@@ -342,6 +342,13 @@ class Video {
 		} elseif ( 'on' === $streaming['adaptive_streaming'] ) {
 			$params['source']['source_types'][] = $streaming['adaptive_streaming_mode'];
 			unset( $attributes[ $video['fileformat'] ] );
+			$streaming_transform                = array(
+				array(
+					'streaming_profile' => 'auto',
+					'fetch_format'      => $streaming['adaptive_streaming_mode'],
+				),
+			);
+			$params['source']['transformation'] = array_merge( $streaming_transform, $transformations );
 		}
 		// Add cname if present.
 		if ( ! empty( $this->media->credentials['cname'] ) ) {

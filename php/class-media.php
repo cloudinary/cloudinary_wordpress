@@ -1236,19 +1236,6 @@ class Media extends Settings_Component implements Setup {
 			'global' => array(),
 			'qf'     => array(),
 		);
-		// Adaptive streaming eagers.
-		if ( 'video' === $type ) {
-			$streaming = $this->settings->get_value( 'adaptive_streaming', 'adaptive_streaming_mode' );
-			if ( 'on' === $streaming['adaptive_streaming'] ) {
-				$streaming_transform          = array(
-					array(
-						'streaming_profile' => 'auto',
-						'fetch_format'      => $streaming['adaptive_streaming_mode'],
-					),
-				);
-				$new_transformations['video'] = Api::generate_transformation_string( $streaming_transform, $type );
-			}
-		}
 		// Get Taxonomies.
 		$new_transformations['tax'] = $this->global_transformations->get_taxonomy_transformations( $type );
 		if ( ! $this->global_transformations->is_taxonomy_overwrite() ) {
