@@ -2747,7 +2747,7 @@ class Media extends Settings_Component implements Setup {
 		$media_library_context = array(
 			'caption' => esc_attr( $caption ),
 			'alt'     => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
-			'guid'    => md5( get_the_guid( $attachment_id ) ),
+			'guid'    => md5( Delivery::get_path_from_url( get_the_guid( $attachment_id ) ) ),
 		);
 		$context_options       = array(
 			'cld_wp_plugin' => 1,
