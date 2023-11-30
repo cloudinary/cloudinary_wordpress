@@ -81,5 +81,8 @@
   },
   "transformation_background": {
     "type": "string"
+  },
+  "customSettings": {
+    "type": "string"
   }
 }

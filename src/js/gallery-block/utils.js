@@ -69,7 +69,7 @@ export const setupAttributesForRendering = ( attributes ) => {
 	const dot = new Dot( '_' );
 
 	const attributesClone = cloneDeep( attributes );
-	let { selectedImages: mediaAssets, ...config } = dot.object(
+	const { selectedImages: mediaAssets, ...config } = dot.object(
 		attributesClone,
 		{}
 	);
@@ -104,13 +104,6 @@ export const setupAttributesForRendering = ( attributes ) => {
 
 	if ( config?.themeProps?.active ) {
 		config.themeProps.active = convertColors( config?.themeProps?.active );
-	}
-
-	if ( config.customSettings ) {
-		try {
-			const customSettings = JSON.parse( config.customSettings );
-			config = { ...config, customSettings };
-		} catch ( err ) {}
 	}
 
 	return config;

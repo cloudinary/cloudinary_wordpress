@@ -255,7 +255,7 @@ class Delivery implements Setup {
 			}
 		}
 
-		$results = $this->query_relations( array_keys( $urls ) );
+		$results = Utils::query_relations( array_keys( $urls ) );
 		String_Replace::reset();
 		foreach ( $results as $result ) {
 			if ( ! isset( $urls[ $result['public_id'] ] ) ) {
@@ -401,7 +401,7 @@ class Delivery implements Setup {
 		}
 
 		if ( empty( $sized_url ) ) {
-			$sized_url = self::clean_url( wp_get_attachment_url( $attachment_id ), true );
+			$sized_url = Utils::clean_url( wp_get_attachment_url( $attachment_id ), true );
 		}
 		self::create_size_relation( $attachment_id, $sized_url, $wh, $base );
 		// Update public ID and type.
@@ -502,7 +502,7 @@ class Delivery implements Setup {
 			$sizes[ $attachment_id ] = array();
 			$meta                    = wp_get_attachment_metadata( $attachment_id, true );
 			if ( ! empty( $meta['width'] ) && ! empty( $meta['height'] ) ) {
-				$local_url               = self::clean_url( $this->media->local_url( $attachment_id ), true );
+				$local_url               = Utils::clean_url( $this->media->local_url( $attachment_id ), true );
 				$sizes[ $attachment_id ] = array(
 					'sized_url' => $local_url,
 					'size'      => $meta['width'] . 'x' . $meta['height'],
@@ -837,7 +837,7 @@ class Delivery implements Setup {
 		global $wpdb;
 		$dirs    = wp_get_upload_dir();
 		$search  = array();
-		$baseurl = self::clean_url( $dirs['baseurl'] );
+		$baseurl = Utils::clean_url( $dirs['baseurl'] );
 		foreach ( $this->unknown as $url ) {
 			$url      = ltrim( str_replace( $baseurl, '', $url ), '/' );
 			$search[] = $url;
@@ -1150,6 +1150,8 @@ class Delivery implements Setup {
 			if ( ! empty( $local_size ) && ! empty( $remote_size ) ) {
 				$diff                                = $local_size - $remote_size;
 				$tag_element['atts']['data-percent'] = round( $diff / $local_size * 100, 1 );
+			} elseif ( 'image' === $tag_element['type'] ) {
+				$this->plugin->get_component( 'storage' )->size_sync( $tag_element['id'] );
 			}
 
 			$base_url                              = $this->plugin->settings->get_url( 'edit_asset' );
@@ -1319,7 +1321,7 @@ class Delivery implements Setup {
 			return null;
 		}
 		$raw_url                 = $attributes['src'];
-		$url                     = $this->maybe_unsize_url( self::clean_url( $this->sanitize_url( $raw_url ) ) );
+		$url                     = $this->maybe_unsize_url( Utils::clean_url( $this->sanitize_url( $raw_url ) ) );
 		$tag_element['base_url'] = $url;
 		// Track back the found URL.
 		if ( $this->media->is_cloudinary_url( $raw_url ) ) {
@@ -1498,33 +1500,18 @@ class Delivery implements Setup {
 	}
 
 	/**
-	 * Clean a url: adds scheme if missing, removes query and fragments.
+	 * Get the path from a url.
 	 *
-	 * @param string $url         The URL to clean.
-	 * @param bool   $scheme_less Flag to clean out scheme.
+	 * @param string $url The url.
 	 *
 	 * @return string
 	 */
-	public static function clean_url( $url, $scheme_less = true ) {
+	public static function get_path_from_url( $url ) {
+		$content_url = content_url();
+		$path        = explode( Utils::clean_url( $content_url ), $url );
+		$path        = end( $path );
 
-		$default = array(
-			'scheme' => '',
-			'host'   => '',
-			'path'   => '',
-			'port'   => '',
-		);
-		$parts   = wp_parse_args( wp_parse_url( $url ), $default );
-		$host    = $parts['host'];
-		if ( ! empty( $parts['port'] ) ) {
-			$host .= ':' . $parts['port'];
-		}
-		$url = '//' . $host . $parts['path'];
-
-		if ( false === $scheme_less ) {
-			$url = $parts['scheme'] . ':' . $url;
-		}
-
-		return $url;
+		return $path;
 	}
 
 	/**
@@ -1608,10 +1595,13 @@ class Delivery implements Setup {
 		 */
 		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
 
+		$content_url = content_url();
+
 		$found                       = array();
 		$found[ $item['public_id'] ] = $item;
-		$scaled                      = self::make_scaled_url( $item['sized_url'] );
-		$descaled                    = self::descaled_url( $item['sized_url'] );
+		$url                         = Utils::clean_url( $content_url ) . $item['sized_url'];
+		$scaled                      = self::make_scaled_url( $url );
+		$descaled                    = self::descaled_url( $url );
 		$scaled_slashed              = addcslashes( $scaled, '/' );
 		$descaled_slashed            = addcslashes( $descaled, '/' );
 		$found[ $scaled ]            = $item;
@@ -1643,14 +1633,14 @@ class Delivery implements Setup {
 			$this->sync->add_to_sync( $item['post_id'] );
 		} elseif ( ! empty( $item['public_id'] ) ) {
 			// Most likely an asset with a public ID.
-			$this->usable[ $item['sized_url'] ] = $item['sized_url'];
+			$this->usable[ $url ] = $url;
 			if ( self::get_settings_signature() !== $item['signature'] ) {
 				$sync_type = $this->sync->get_sync_type( $item['post_id'] );
 				if ( $sync_type ) {
 					$this->sync->add_to_sync( $item['post_id'] );
 					if ( $this->sync->is_required( $sync_type, $item['post_id'] ) ) {
 						// Can't render this, so lets remove it from usable list.
-						unset( $this->usable[ $item['sized_url'] ] );
+						unset( $this->usable[ $url ] );
 					}
 				}
 			}
@@ -1755,13 +1745,14 @@ class Delivery implements Setup {
 		$content    = wp_unslash( $content );
 		$all_urls   = array_unique( Utils::extract_urls( $content ) );
 		$base_urls  = array_filter( array_map( array( $this, 'sanitize_url' ), $all_urls ) );
-		$clean_urls = array_map( array( $this, 'clean_url' ), $base_urls );
+		$clean_urls = array_map( array( 'Cloudinary\Utils', 'clean_url' ), $base_urls );
 		$urls       = array_filter( $clean_urls, array( $this, 'validate_url' ) );
+		$decoded    = array_map( 'urldecode', $urls );
 
 		// De-size.
 		$desized = array_unique( array_map( array( $this, 'maybe_unsize_url' ), $urls ) );
 		$scaled  = array_unique( array_map( array( $this, 'make_scaled_url' ), $desized ) );
-		$urls    = array_merge( $desized, $scaled );
+		$urls    = array_unique( array_merge( $desized, $scaled, $decoded ) );
 		$urls    = array_values( $urls ); // resets the index.
 
 		$public_ids = array();
@@ -1777,7 +1768,9 @@ class Delivery implements Setup {
 			return; // Bail since theres nothing.
 		}
 
-		$results = $this->query_relations( $public_ids, $urls );
+		$paths = array_map( array( $this, 'get_path_from_url' ), $urls );
+
+		$results = Utils::query_relations( $public_ids, $urls );
 
 		$auto_sync = $this->sync->is_auto_sync_enabled();
 		foreach ( $results as $result ) {
@@ -1785,43 +1778,6 @@ class Delivery implements Setup {
 		}
 		// Set unknowns.
 		$this->unknown = array_diff( $urls, array_keys( $this->known ) );
-	}
-
-	/**
-	 * Run a query with Public_id's and or local urls.
-	 *
-	 * @param array $public_ids List of Public_IDs qo query.
-	 * @param array $urls       List of URLS to query.
-	 *
-	 * @return array
-	 */
-	public function query_relations( $public_ids, $urls = array() ) {
-		global $wpdb;
-
-		$wheres = array();
-		if ( ! empty( $urls ) ) {
-			// Do the URLS.
-			$list     = implode( ', ', array_fill( 0, count( $urls ), '%s' ) );
-			$wheres[] = "url_hash IN( {$list} )";
-		}
-		if ( ! empty( $public_ids ) ) {
-			// Do the public_ids.
-			$list     = implode( ', ', array_fill( 0, count( $public_ids ), '%s' ) );
-			$wheres[] = "public_hash IN( {$list} )";
-			$urls     = array_merge( $urls, $public_ids );
-		}
-
-		$tablename = Utils::get_relationship_table();
-		$sql       = "SELECT * from {$tablename} WHERE " . implode( ' OR ', $wheres );
-		$prepared  = $wpdb->prepare( $sql, array_map( 'md5', $urls ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$cache_key = md5( $prepared );
-		$results   = wp_cache_get( $cache_key, 'cld_delivery' );
-		if ( empty( $results ) ) {
-			$results = $wpdb->get_results( $prepared, ARRAY_A );// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
-			wp_cache_add( $cache_key, $results, 'cld_delivery' );
-		}
-
-		return $results;
 	}
 
 	/**
