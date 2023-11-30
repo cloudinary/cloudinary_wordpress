@@ -292,7 +292,7 @@ class Upload_Sync {
 			2
 		);
 
-		$options = $this->media->get_upload_options( $attachment_id );
+		$options = $this->media->get_upload_options( $attachment_id, 'upload' );
 		if ( empty( $type ) ) {
 			$type = $this->sync->get_sync_type( $attachment_id );
 		}
@@ -371,7 +371,7 @@ class Upload_Sync {
 	 */
 	public function context_update( $attachment_id ) {
 
-		$options = $this->media->get_upload_options( $attachment_id );
+		$options = $this->media->get_upload_options( $attachment_id, 'upload' );
 		$result  = $this->connect->api->context( $options );
 
 		if ( ! is_wp_error( $result ) ) {

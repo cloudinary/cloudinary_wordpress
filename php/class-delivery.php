@@ -1150,6 +1150,8 @@ class Delivery implements Setup {
 			if ( ! empty( $local_size ) && ! empty( $remote_size ) ) {
 				$diff                                = $local_size - $remote_size;
 				$tag_element['atts']['data-percent'] = round( $diff / $local_size * 100, 1 );
+			} elseif ( 'image' === $tag_element['type'] ) {
+				$this->plugin->get_component( 'storage' )->size_sync( $tag_element['id'] );
 			}
 
 			$base_url                              = $this->plugin->settings->get_url( 'edit_asset' );
@@ -1498,6 +1500,21 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Get the path from a url.
+	 *
+	 * @param string $url The url.
+	 *
+	 * @return string
+	 */
+	public static function get_path_from_url( $url ) {
+		$content_url = content_url();
+		$path        = explode( Utils::clean_url( $content_url ), $url );
+		$path        = end( $path );
+
+		return $path;
+	}
+
+	/**
 	 * Check if the file type is allowed to be uploaded.
 	 *
 	 * @param string $ext The filetype extension.
@@ -1578,10 +1595,13 @@ class Delivery implements Setup {
 		 */
 		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
 
+		$content_url = content_url();
+
 		$found                       = array();
 		$found[ $item['public_id'] ] = $item;
-		$scaled                      = self::make_scaled_url( $item['sized_url'] );
-		$descaled                    = self::descaled_url( $item['sized_url'] );
+		$url                         = Utils::clean_url( $content_url ) . $item['sized_url'];
+		$scaled                      = self::make_scaled_url( $url );
+		$descaled                    = self::descaled_url( $url );
 		$scaled_slashed              = addcslashes( $scaled, '/' );
 		$descaled_slashed            = addcslashes( $descaled, '/' );
 		$found[ $scaled ]            = $item;
@@ -1613,14 +1633,14 @@ class Delivery implements Setup {
 			$this->sync->add_to_sync( $item['post_id'] );
 		} elseif ( ! empty( $item['public_id'] ) ) {
 			// Most likely an asset with a public ID.
-			$this->usable[ $item['sized_url'] ] = $item['sized_url'];
+			$this->usable[ $url ] = $url;
 			if ( self::get_settings_signature() !== $item['signature'] ) {
 				$sync_type = $this->sync->get_sync_type( $item['post_id'] );
 				if ( $sync_type ) {
 					$this->sync->add_to_sync( $item['post_id'] );
 					if ( $this->sync->is_required( $sync_type, $item['post_id'] ) ) {
 						// Can't render this, so lets remove it from usable list.
-						unset( $this->usable[ $item['sized_url'] ] );
+						unset( $this->usable[ $url ] );
 					}
 				}
 			}
@@ -1727,11 +1747,12 @@ class Delivery implements Setup {
 		$base_urls  = array_filter( array_map( array( $this, 'sanitize_url' ), $all_urls ) );
 		$clean_urls = array_map( array( 'Cloudinary\Utils', 'clean_url' ), $base_urls );
 		$urls       = array_filter( $clean_urls, array( $this, 'validate_url' ) );
+		$decoded    = array_map( 'urldecode', $urls );
 
 		// De-size.
 		$desized = array_unique( array_map( array( $this, 'maybe_unsize_url' ), $urls ) );
 		$scaled  = array_unique( array_map( array( $this, 'make_scaled_url' ), $desized ) );
-		$urls    = array_merge( $desized, $scaled );
+		$urls    = array_unique( array_merge( $desized, $scaled, $decoded ) );
 		$urls    = array_values( $urls ); // resets the index.
 
 		$public_ids = array();
@@ -1746,6 +1767,8 @@ class Delivery implements Setup {
 		if ( empty( $urls ) && empty( $public_ids ) ) {
 			return; // Bail since theres nothing.
 		}
+
+		$paths = array_map( array( $this, 'get_path_from_url' ), $urls );
 
 		$results = Utils::query_relations( $public_ids, $urls );
 

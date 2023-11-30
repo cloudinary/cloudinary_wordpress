@@ -30,7 +30,7 @@ final class Plugin {
 	 *
 	 * @since   0.1
 	 *
-	 * @var     Media[]|Sync[]|Admin[]|REST_API[]|Connect[]|Delivery[]
+	 * @var Admin|CLD_Assets|Connect|Dashboard|Deactivation|Delivery|Extensions|Gallery|Lazy_Load|Media|Meta_Box|Relate|Report|Responsive_Breakpoints|REST_API|State|Storage|SVG|Sync|URL|null
 	 */
 	public $components;
 	/**
@@ -173,7 +173,7 @@ final class Plugin {
 	 *
 	 * @param mixed $component The component.
 	 *
-	 * @return Admin|Connect|Delivery|Media|REST_API|String_Replace|Sync|Report|URL|null
+	 * @return Admin|CLD_Assets|Connect|Dashboard|Deactivation|Delivery|Extensions|Gallery|Lazy_Load|Media|Meta_Box|Relate|Report|Responsive_Breakpoints|REST_API|State|Storage|SVG|Sync|URL|null
 	 */
 	public function get_component( $component ) {
 		$return = null;
