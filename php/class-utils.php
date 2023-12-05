@@ -920,7 +920,7 @@ class Utils {
 	 *
 	 * @param string $url The attachment URL.
 	 *
-	 * @return int
+	 * @return int|null
 	 */
 	public static function attachment_url_to_postid( $url ) {
 		$key = "postid_{$url}";
@@ -934,6 +934,18 @@ class Utils {
 		if ( empty( $attachment_id ) ) {
 			$attachment_id = attachment_url_to_postid( $url ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.attachment_url_to_postid_attachment_url_to_postid
 			wp_cache_set( $key, $attachment_id, 'cloudinary' );
+		}
+
+		if ( empty( $attachment_id ) ) {
+			$media           = get_plugin_instance()->get_component( 'media' );
+			$maybe_public_id = $media->get_public_id_from_url( $url );
+			$relations       = self::query_relations( array( $maybe_public_id ) );
+			foreach ( $relations as $relation ) {
+				if ( ! empty( $relation['post_id'] ) ) {
+					$attachment_id = (int) $relation['post_id'];
+					wp_cache_set( $key, $attachment_id, 'cloudinary' );
+				}
+			}
 		}
 
 		return $attachment_id;
