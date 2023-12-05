@@ -322,10 +322,18 @@ class Video {
 	protected function maybe_get_attachment_id( $html ) {
 		$attachment_id = null;
 
-		$urls = Utils::extract_urls( $html );
-		$urls = array_map( array( 'Cloudinary\Utils', 'clean_url' ), $urls );
+		$urls       = Utils::extract_urls( $html );
+		$public_ids = array();
 
-		$relations = Utils::query_relations( array(), $urls );
+		foreach ( $urls as $url ) {
+			if ( $this->media->is_cloudinary_url( $url ) ) {
+				$public_ids[] = $this->media->get_public_id_from_url( $url );
+			} else {
+				$urls = array_map( array( Utils::class, 'clean_url' ), $urls );
+			}
+		}
+
+		$relations = Utils::query_relations( $public_ids, $urls );
 
 		$relation = reset( $relations );
 
