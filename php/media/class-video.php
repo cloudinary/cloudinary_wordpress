@@ -357,6 +357,7 @@ class Video {
 
 		$controls  = isset( $attributes['controls'] ) ? $attributes['controls'] : $this->media->get_settings()->get_value( 'video_controls' );
 		$autoplay  = $this->media->get_settings()->get_value( 'video_autoplay_mode' );
+		$streaming = $this->media->get_settings()->get_value( 'adaptive_streaming', 'adaptive_streaming_mode' );
 
 		// If we don't show controls, we need to autoplay the video.
 		if ( ! $controls ) {
@@ -385,13 +386,21 @@ class Video {
 			if ( ! empty( $transformations ) ) {
 				$params['source']['transformation'] = $transformations;
 			}
-
-			$video = wp_get_attachment_metadata( $attachment_id );
-
 			// Set the source_type.
-			if ( $public_id && ! empty( $video['fileformat'] ) ) {
+			$video = wp_get_attachment_metadata( $attachment_id );
+			if ( ! empty( $video['fileformat'] ) && 'off' === $streaming['adaptive_streaming'] ) {
 				$params['source']['source_types'][] = $video['fileformat'];
 				unset( $attributes[ $video['fileformat'] ] );
+			} elseif ( 'on' === $streaming['adaptive_streaming'] ) {
+				$params['source']['source_types'][] = $streaming['adaptive_streaming_mode'];
+				unset( $attributes[ $video['fileformat'] ] );
+				$streaming_transform                = array(
+					array(
+						'streaming_profile' => 'auto',
+						'fetch_format'      => $streaming['adaptive_streaming_mode'],
+					),
+				);
+				$params['source']['transformation'] = array_merge( $streaming_transform, $transformations );
 			}
 		}
 

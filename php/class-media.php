@@ -1230,6 +1230,7 @@ class Media extends Settings_Component implements Setup {
 		}
 		// Base image level.
 		$new_transformations = array(
+			'video'  => array(),
 			'image'  => Api::generate_transformation_string( $transformations, $type ),
 			'tax'    => array(),
 			'global' => array(),
