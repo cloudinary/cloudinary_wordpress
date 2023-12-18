@@ -561,7 +561,7 @@ class Assets extends Settings_Component {
 	 */
 	public function generate_edit_signature( $attachment_id ) {
 		$sig  = wp_json_encode( (array) get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true ) );
-		$file = Delivery::get_path_from_url( get_attached_file( $attachment_id ) );
+		$file = Utils::get_path_from_url( get_attached_file( $attachment_id ) );
 
 		return $sig . $file;
 	}
@@ -1125,7 +1125,7 @@ class Assets extends Settings_Component {
 		wp_generate_attachment_metadata( $id, $file_path );
 
 		// Init the auto sync.
-		Delivery::create_size_relation( $id, Delivery::get_path_from_url( $url ), $size, $base );
+		Delivery::create_size_relation( $id, Utils::get_path_from_url( $url ), $size, $base );
 		Delivery::update_size_relations_state( $id, 'enable' );
 		$this->media->sync->set_signature_item( $id, 'delivery' );
 		$this->media->sync->get_sync_type( $id );
