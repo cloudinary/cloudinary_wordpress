@@ -192,7 +192,7 @@ $settings = array(
 						'title'              => __( 'SVG Support', 'cloudinary' ),
 						'optimisation_title' => __( 'SVG Support', 'cloudinary' ),
 						'tooltip_text'       => __(
-							'Enable Cloudinary\'s beta SVG Support.',
+							'Enable Cloudinary\'s SVG Support.',
 							'cloudinary'
 						),
 						'description'        => __( 'Enable SVG support.', 'cloudinary' ),
