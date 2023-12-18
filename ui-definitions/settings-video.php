@@ -85,7 +85,7 @@ $settings = array(
 						),
 						array(
 							'slug'         => 'adaptive_streaming',
-							'description'  => __( 'Adaptive bitrate streaming', 'cloudinary' ),
+							'description'  => __( 'Adaptive bitrate streaming (beta)', 'cloudinary' ),
 							'type'         => 'on_off',
 							'default'      => 'off',
 							'tooltip_text' => sprintf(
