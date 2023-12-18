@@ -503,7 +503,7 @@ class Delivery implements Setup {
 			$sizes[ $attachment_id ] = array();
 			$meta                    = wp_get_attachment_metadata( $attachment_id, true );
 			if ( ! empty( $meta['width'] ) && ! empty( $meta['height'] ) ) {
-				$local_url               = Utils::clean_url( $this->media->local_url( $attachment_id ), true );
+				$local_url               = Utils::get_path_from_url( $this->media->local_url( $attachment_id ) );
 				$sizes[ $attachment_id ] = array(
 					'sized_url' => $local_url,
 					'size'      => $meta['width'] . 'x' . $meta['height'],
@@ -836,11 +836,10 @@ class Delivery implements Setup {
 	public function find_attachment_size_urls() {
 
 		global $wpdb;
-		$dirs    = wp_get_upload_dir();
-		$search  = array();
-		$baseurl = Utils::clean_url( $dirs['baseurl'] );
+		$content_url = Utils::clean_url( content_url() );
+		$search      = array();
 		foreach ( $this->unknown as $url ) {
-			$url      = ltrim( str_replace( $baseurl, '', $url ), '/' );
+			$url      = ltrim( str_replace( $content_url, '', $url ), '/' );
 			$search[] = $url;
 		}
 
