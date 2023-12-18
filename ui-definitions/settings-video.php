@@ -100,12 +100,12 @@ $settings = array(
 						),
 						array(
 							'slug'      => 'adaptive_streaming_mode',
-							'title'     => __( 'Streaming format', 'cloudinary' ),
+							'title'     => __( 'Streaming protocol', 'cloudinary' ),
 							'type'      => 'select',
 							'default'   => 'mpd',
 							'options'   => array(
-								'mpd'  => __( 'Dynamic Adaptive Streaming over HTTP (MPEG-DASH)', 'cloudinary' ),
-								'm3u8' => __( 'HTTP Live Streaming (HLS)', 'cloudinary' ),
+								'mpd'  => __( 'Dynamic adaptive streaming over HTTP (MPEG-DASH)', 'cloudinary' ),
+								'm3u8' => __( 'HTTP live streaming (HLS)', 'cloudinary' ),
 							),
 							'condition' => array(
 								'adaptive_streaming' => true,
