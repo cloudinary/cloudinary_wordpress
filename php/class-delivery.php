@@ -17,6 +17,7 @@ use Cloudinary\UI\Component\HTML;
 use Cloudinary\Delivery\Bypass;
 use Cloudinary\Relate\Relationship;
 use WP_Post;
+use Cloudinary\Utils;
 
 /**
  * Plugin Delivery class.
@@ -502,7 +503,7 @@ class Delivery implements Setup {
 			$sizes[ $attachment_id ] = array();
 			$meta                    = wp_get_attachment_metadata( $attachment_id, true );
 			if ( ! empty( $meta['width'] ) && ! empty( $meta['height'] ) ) {
-				$local_url               = Utils::clean_url( $this->media->local_url( $attachment_id ), true );
+				$local_url               = Utils::get_path_from_url( $this->media->local_url( $attachment_id ) );
 				$sizes[ $attachment_id ] = array(
 					'sized_url' => $local_url,
 					'size'      => $meta['width'] . 'x' . $meta['height'],
@@ -835,11 +836,10 @@ class Delivery implements Setup {
 	public function find_attachment_size_urls() {
 
 		global $wpdb;
-		$dirs    = wp_get_upload_dir();
-		$search  = array();
-		$baseurl = Utils::clean_url( $dirs['baseurl'] );
+		$content_url = Utils::clean_url( content_url() );
+		$search      = array();
 		foreach ( $this->unknown as $url ) {
-			$url      = ltrim( str_replace( $baseurl, '', $url ), '/' );
+			$url      = ltrim( str_replace( $content_url, '', $url ), '/' );
 			$search[] = $url;
 		}
 
@@ -1500,21 +1500,6 @@ class Delivery implements Setup {
 	}
 
 	/**
-	 * Get the path from a url.
-	 *
-	 * @param string $url The url.
-	 *
-	 * @return string
-	 */
-	public static function get_path_from_url( $url ) {
-		$content_url = content_url();
-		$path        = explode( Utils::clean_url( $content_url ), $url );
-		$path        = end( $path );
-
-		return $path;
-	}
-
-	/**
 	 * Check if the file type is allowed to be uploaded.
 	 *
 	 * @param string $ext The filetype extension.
@@ -1600,8 +1585,8 @@ class Delivery implements Setup {
 		$found                       = array();
 		$found[ $item['public_id'] ] = $item;
 		$url                         = Utils::clean_url( $content_url ) . $item['sized_url'];
-		$scaled                      = self::make_scaled_url( $url );
-		$descaled                    = self::descaled_url( $url );
+		$scaled                      = Utils::make_scaled_url( $url );
+		$descaled                    = Utils::descaled_url( $url );
 		$scaled_slashed              = addcslashes( $scaled, '/' );
 		$descaled_slashed            = addcslashes( $descaled, '/' );
 		$found[ $scaled ]            = $item;
@@ -1693,44 +1678,9 @@ class Delivery implements Setup {
 		) {
 			$sized                                = wp_basename( $url );
 			$url                                  = str_replace( '-' . $dash, '', $url );
-			$scaled                               = self::make_scaled_url( $url );
+			$scaled                               = Utils::make_scaled_url( $url );
 			$this->found_urls[ $url ][ $dash ]    = $sized;
 			$this->found_urls[ $scaled ][ $dash ] = $sized;
-		}
-
-		return $url;
-	}
-
-	/**
-	 * Make a scaled version.
-	 *
-	 * @param string $url The url to make scaled.
-	 *
-	 * @return string
-	 */
-	public static function make_scaled_url( $url ) {
-		$file = Utils::pathinfo( $url );
-		$dash = strrchr( $file['filename'], '-' );
-		if ( '-scaled' === $dash ) {
-			return $url;
-		}
-
-		return $file['dirname'] . '/' . $file['filename'] . '-scaled.' . $file['extension'];
-	}
-
-	/**
-	 * Make a descaled version.
-	 *
-	 * @param string $url The url to descaled.
-	 *
-	 * @return string
-	 */
-	public static function descaled_url( $url ) {
-		$file = Utils::pathinfo( $url );
-		$dash = strrchr( $file['filename'], '-' );
-		if ( '-scaled' === $dash ) {
-			$file['basename'] = str_replace( '-scaled.', '.', $file['basename'] );
-			$url              = $file['dirname'] . '/' . $file['basename'];
 		}
 
 		return $url;
@@ -1751,7 +1701,7 @@ class Delivery implements Setup {
 
 		// De-size.
 		$desized = array_unique( array_map( array( $this, 'maybe_unsize_url' ), $urls ) );
-		$scaled  = array_unique( array_map( array( $this, 'make_scaled_url' ), $desized ) );
+		$scaled  = array_unique( array_map( array( Utils::class, 'make_scaled_url' ), $desized ) );
 		$urls    = array_unique( array_merge( $desized, $scaled, $decoded ) );
 		$urls    = array_values( $urls ); // resets the index.
 
@@ -1768,7 +1718,7 @@ class Delivery implements Setup {
 			return; // Bail since theres nothing.
 		}
 
-		$paths = array_map( array( $this, 'get_path_from_url' ), $urls );
+		$paths = array_map( array( Utils::class, 'get_path_from_url' ), $urls );
 
 		$results = Utils::query_relations( $public_ids, $urls );
 

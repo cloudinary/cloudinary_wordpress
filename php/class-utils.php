@@ -1016,4 +1016,54 @@ class Utils {
 
 		return $url;
 	}
+
+	/**
+	 * Get the path from a url.
+	 *
+	 * @param string $url The url.
+	 *
+	 * @return string
+	 */
+	public static function get_path_from_url( $url ) {
+		$content_url = content_url();
+		$path        = explode( self::clean_url( $content_url ), $url );
+		$path        = end( $path );
+
+		return $path;
+	}
+
+	/**
+	 * Make a scaled version.
+	 *
+	 * @param string $url The url to make scaled.
+	 *
+	 * @return string
+	 */
+	public static function make_scaled_url( $url ) {
+		$file = self::pathinfo( $url );
+		$dash = strrchr( $file['filename'], '-' );
+		if ( '-scaled' === $dash ) {
+			return $url;
+		}
+
+		return $file['dirname'] . '/' . $file['filename'] . '-scaled.' . $file['extension'];
+	}
+
+	/**
+	 * Make a descaled version.
+	 *
+	 * @param string $url The url to descaled.
+	 *
+	 * @return string
+	 */
+	public static function descaled_url( $url ) {
+		$file = self::pathinfo( $url );
+		$dash = strrchr( $file['filename'], '-' );
+		if ( '-scaled' === $dash ) {
+			$file['basename'] = str_replace( '-scaled.', '.', $file['basename'] );
+			$url              = $file['dirname'] . '/' . $file['basename'];
+		}
+
+		return $url;
+	}
 }
