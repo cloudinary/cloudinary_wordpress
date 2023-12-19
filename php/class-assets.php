@@ -561,7 +561,7 @@ class Assets extends Settings_Component {
 	 */
 	public function generate_edit_signature( $attachment_id ) {
 		$sig  = wp_json_encode( (array) get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true ) );
-		$file = Utils::get_path_from_url( get_attached_file( $attachment_id ) );
+		$file = Utils::get_path_from_url( $this->media->local_url( $attachment_id ) );
 
 		return $sig . $file;
 	}
