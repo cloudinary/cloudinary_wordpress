@@ -1721,7 +1721,7 @@ class Delivery implements Setup {
 
 		$paths = array_map( array( Utils::class, 'get_path_from_url' ), $urls );
 
-		$results = Utils::query_relations( $public_ids, $urls );
+		$results = Utils::query_relations( $public_ids, $paths );
 
 		$auto_sync = $this->sync->is_auto_sync_enabled();
 		foreach ( $results as $result ) {
