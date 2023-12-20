@@ -836,10 +836,11 @@ class Delivery implements Setup {
 	public function find_attachment_size_urls() {
 
 		global $wpdb;
-		$content_url = Utils::clean_url( content_url() );
-		$search      = array();
+		$dirs    = wp_get_upload_dir();
+		$baseurl = Utils::clean_url( $dirs['baseurl'] );
+		$search  = array();
 		foreach ( $this->unknown as $url ) {
-			$url      = ltrim( str_replace( $content_url, '', $url ), '/' );
+			$url      = ltrim( str_replace( $baseurl, '', $url ), '/' );
 			$search[] = $url;
 		}
 
@@ -1720,7 +1721,7 @@ class Delivery implements Setup {
 
 		$paths = array_map( array( Utils::class, 'get_path_from_url' ), $urls );
 
-		$results = Utils::query_relations( $public_ids, $urls );
+		$results = Utils::query_relations( $public_ids, $paths );
 
 		$auto_sync = $this->sync->is_auto_sync_enabled();
 		foreach ( $results as $result ) {
