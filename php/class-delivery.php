@@ -522,7 +522,7 @@ class Delivery implements Setup {
 	 * @param int    $attachment_id The attachment ID.
 	 * @param string $public_id     The public ID.
 	 */
-	public static function update_size_relations_public_id( $attachment_id, $public_id ) {
+	public static function update_size_relations_public_id( $attachment_id, $public_id = '' ) {
 		$relationship = Relationship::get_relationship( $attachment_id );
 
 		if ( $relationship instanceof Relationship ) {
@@ -1145,7 +1145,7 @@ class Delivery implements Setup {
 				$local_size = filesize( get_attached_file( $tag_element['id'] ) );
 			}
 			$remote_size                           = get_post_meta( $tag_element['id'], Sync::META_KEYS['remote_size'], true );
-			$tag_element['atts']['data-filesize']   = size_format( $local_size );
+			$tag_element['atts']['data-filesize']  = size_format( $local_size );
 			$tag_element['atts']['data-optsize']   = size_format( $remote_size );
 			$tag_element['atts']['data-optformat'] = get_post_meta( $tag_element['id'], Sync::META_KEYS['remote_format'], true );
 			if ( ! empty( $local_size ) && ! empty( $remote_size ) ) {
