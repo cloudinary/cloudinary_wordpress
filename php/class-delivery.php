@@ -1583,9 +1583,22 @@ class Delivery implements Setup {
 
 		$content_url = content_url();
 
+		/**
+		 * The URL to be searched for and prepared to be delivered by Cloudinary.
+		 *
+		 * @hook   cloudinary_delivery_searchable_url
+		 * @since  3.1.6
+		 *
+		 * @param $url         {string} The URL to be searched for and prepared to be delivered by Cloudinary.
+		 * @param $item        {array}  The found asset array.
+		 * @param $content_url {string} The content URL.
+		 *
+		 * @return {string}
+		 */
+		$url = apply_filters( 'cloudinary_delivery_searchable_url', Utils::clean_url( $content_url ) . $item['sized_url'], $item, $content_url );
+
 		$found                       = array();
 		$found[ $item['public_id'] ] = $item;
-		$url                         = Utils::clean_url( $content_url ) . $item['sized_url'];
 		$scaled                      = Utils::make_scaled_url( $url );
 		$descaled                    = Utils::descaled_url( $url );
 		$scaled_slashed              = addcslashes( $scaled, '/' );
