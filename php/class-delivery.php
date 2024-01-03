@@ -1597,8 +1597,12 @@ class Delivery implements Setup {
 		 */
 		$url = apply_filters( 'cloudinary_delivery_searchable_url', Utils::clean_url( $content_url ) . $item['sized_url'], $item, $content_url );
 
-		$found                       = array();
-		$found[ $item['public_id'] ] = $item;
+		$found = array();
+
+		// If there's no public ID then don't pollute the found items.
+		if ( ! empty( $item['public_id'] ) ) {
+			$found[ $item['public_id'] ] = $item;
+		}
 		$scaled                      = Utils::make_scaled_url( $url );
 		$descaled                    = Utils::descaled_url( $url );
 		$scaled_slashed              = addcslashes( $scaled, '/' );
