@@ -519,15 +519,15 @@ class Delivery implements Setup {
 	/**
 	 * Update relationship public ID.
 	 *
-	 * @param int    $attachment_id The attachment ID.
-	 * @param string $public_id     The public ID.
+	 * @param int         $attachment_id The attachment ID.
+	 * @param null|string $public_id     The public ID.
 	 */
-	public static function update_size_relations_public_id( $attachment_id, $public_id = '' ) {
+	public static function update_size_relations_public_id( $attachment_id, $public_id ) {
 		$relationship = Relationship::get_relationship( $attachment_id );
 
 		if ( $relationship instanceof Relationship ) {
 			$relationship->public_id   = $public_id;
-			$relationship->public_hash = md5( $public_id );
+			$relationship->public_hash = md5( (string) $public_id );
 			$relationship->signature   = self::get_settings_signature();
 			$relationship->save();
 		}
