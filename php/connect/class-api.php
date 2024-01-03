@@ -591,7 +591,7 @@ class Api {
 			 * it's likely due to CURL or the location does not support URL file attachments.
 			 * In this case, we'll flag and disable it and try again with a local file.
 			 */
-			if ( 404 !== $code && empty( $disable_https_fetch ) && false !== strpos( $error, $args['file'] ) ) {
+			if ( 404 !== $code && empty( $disable_https_fetch ) && false !== strpos( urldecode( $error ), $args['file'] ) ) {
 				// URLS are not remotely available, try again as a file.
 				set_transient( '_cld_disable_http_upload', true, DAY_IN_SECONDS );
 				// Remove URL file.
