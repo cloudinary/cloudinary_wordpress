@@ -1633,7 +1633,7 @@ class Delivery implements Setup {
 			$this->sync->add_to_sync( $item['post_id'] );
 		} elseif ( true === $auto_sync && true === $is_media && empty( $item['public_id'] ) ) {
 			// Un-synced media item with auto sync on. Add to sync.
-			$this->sync->add_to_sync( (int) $item['post_id'] );
+			$this->sync->add_to_sync( $item['post_id'] );
 		} elseif ( ! empty( $item['public_id'] ) ) {
 			// Most likely an asset with a public ID.
 			$this->usable[ $url ] = $url;
