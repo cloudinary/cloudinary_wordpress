@@ -402,7 +402,7 @@ class Delivery implements Setup {
 		}
 
 		if ( empty( $sized_url ) ) {
-			$sized_url = Utils::clean_url( wp_get_attachment_url( $attachment_id ), true );
+			$sized_url = Utils::get_path_from_url( wp_get_attachment_url( $attachment_id ), true );
 		}
 		self::create_size_relation( $attachment_id, $sized_url, $wh, $base );
 		// Update public ID and type.
@@ -519,15 +519,15 @@ class Delivery implements Setup {
 	/**
 	 * Update relationship public ID.
 	 *
-	 * @param int    $attachment_id The attachment ID.
-	 * @param string $public_id     The public ID.
+	 * @param int         $attachment_id The attachment ID.
+	 * @param null|string $public_id     The public ID.
 	 */
 	public static function update_size_relations_public_id( $attachment_id, $public_id ) {
 		$relationship = Relationship::get_relationship( $attachment_id );
 
 		if ( $relationship instanceof Relationship ) {
 			$relationship->public_id   = $public_id;
-			$relationship->public_hash = md5( $public_id );
+			$relationship->public_hash = md5( (string) $public_id );
 			$relationship->signature   = self::get_settings_signature();
 			$relationship->save();
 		}
@@ -1145,7 +1145,7 @@ class Delivery implements Setup {
 				$local_size = filesize( get_attached_file( $tag_element['id'] ) );
 			}
 			$remote_size                           = get_post_meta( $tag_element['id'], Sync::META_KEYS['remote_size'], true );
-			$tag_element['atts']['data-filesize']   = size_format( $local_size );
+			$tag_element['atts']['data-filesize']  = size_format( $local_size );
 			$tag_element['atts']['data-optsize']   = size_format( $remote_size );
 			$tag_element['atts']['data-optformat'] = get_post_meta( $tag_element['id'], Sync::META_KEYS['remote_format'], true );
 			if ( ! empty( $local_size ) && ! empty( $remote_size ) ) {
@@ -1583,9 +1583,26 @@ class Delivery implements Setup {
 
 		$content_url = content_url();
 
-		$found                       = array();
-		$found[ $item['public_id'] ] = $item;
-		$url                         = Utils::clean_url( $content_url ) . $item['sized_url'];
+		/**
+		 * The URL to be searched for and prepared to be delivered by Cloudinary.
+		 *
+		 * @hook   cloudinary_delivery_searchable_url
+		 * @since  3.1.6
+		 *
+		 * @param $url         {string} The URL to be searched for and prepared to be delivered by Cloudinary.
+		 * @param $item        {array}  The found asset array.
+		 * @param $content_url {string} The content URL.
+		 *
+		 * @return {string}
+		 */
+		$url = apply_filters( 'cloudinary_delivery_searchable_url', Utils::clean_url( $content_url ) . $item['sized_url'], $item, $content_url );
+
+		$found = array();
+
+		// If there's no public ID then don't pollute the found items.
+		if ( ! empty( $item['public_id'] ) ) {
+			$found[ $item['public_id'] ] = $item;
+		}
 		$scaled                      = Utils::make_scaled_url( $url );
 		$descaled                    = Utils::descaled_url( $url );
 		$scaled_slashed              = addcslashes( $scaled, '/' );
