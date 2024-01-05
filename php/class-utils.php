@@ -975,14 +975,18 @@ class Utils {
 			$urls     = array_merge( $urls, $public_ids );
 		}
 
-		$tablename = self::get_relationship_table();
-		$sql       = "SELECT * from {$tablename} WHERE " . implode( ' OR ', $wheres );
-		$prepared  = $wpdb->prepare( $sql, array_map( 'md5', $urls ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$cache_key = md5( $prepared );
-		$results   = wp_cache_get( $cache_key, 'cld_delivery' );
-		if ( empty( $results ) ) {
-			$results = $wpdb->get_results( $prepared, ARRAY_A );// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
-			wp_cache_add( $cache_key, $results, 'cld_delivery' );
+		$results = array();
+
+		if ( ! empty( array_filter( $urls ) ) ) {
+			$tablename = self::get_relationship_table();
+			$sql       = "SELECT * from {$tablename} WHERE " . implode( ' OR ', $wheres );
+			$prepared  = $wpdb->prepare( $sql, array_map( 'md5', $urls ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$cache_key = md5( $prepared );
+			$results   = wp_cache_get( $cache_key, 'cld_delivery' );
+			if ( empty( $results ) ) {
+				$results = $wpdb->get_results( $prepared, ARRAY_A );// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
+				wp_cache_add( $cache_key, $results, 'cld_delivery' );
+			}
 		}
 
 		return $results;
