@@ -503,7 +503,7 @@ class Delivery implements Setup {
 			$sizes[ $attachment_id ] = array();
 			$meta                    = wp_get_attachment_metadata( $attachment_id, true );
 			if ( ! empty( $meta['width'] ) && ! empty( $meta['height'] ) ) {
-				$local_url               = Utils::get_path_from_url( $this->media->local_url( $attachment_id ) );
+				$local_url               = Utils::get_path_from_url( $this->media->local_url( $attachment_id ), true );
 				$sizes[ $attachment_id ] = array(
 					'sized_url' => $local_url,
 					'size'      => $meta['width'] . 'x' . $meta['height'],
@@ -1581,7 +1581,17 @@ class Delivery implements Setup {
 		 */
 		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
 
-		$content_url = content_url();
+		/**
+		 * The URL to be searched for and prepared to be delivered by Cloudinary.
+		 *
+		 * @hook   cloudinary_content_url
+		 * @since  3.1.6
+		 *
+		 * @param $url {string} The default content_url.
+		 *
+		 * @return {string}
+		 */
+		$content_url = apply_filters( 'cloudinary_content_url', content_url() );
 
 		/**
 		 * The URL to be searched for and prepared to be delivered by Cloudinary.
