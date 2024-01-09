@@ -139,7 +139,7 @@ class Responsive_Breakpoints extends Delivery_Feature {
 
 		if ( ! empty( $breakpoints ) ) {
 			$tag_element['atts']['srcset'] = implode( ', ', $breakpoints );
-			$tag_element['atts']['sizes']  = '(max-width: ' . $width . 'px) 100vw ' . $width . 'px';
+			$tag_element['atts']['sizes']  = '(max-width: ' . $width . 'px) 100vw, ' . $width . 'px';
 		}
 
 		return $tag_element;
