@@ -1024,14 +1024,19 @@ class Utils {
 	/**
 	 * Get the path from a url.
 	 *
-	 * @param string $url The url.
+	 * @param string $url            The url.
+	 * @param bool   $bypass_filters Flag to bypass the filters.
 	 *
 	 * @return string
 	 */
-	public static function get_path_from_url( $url ) {
+	public static function get_path_from_url( $url, $bypass_filters = false ) {
 		$content_url = content_url();
-		$path        = explode( self::clean_url( $content_url ), $url );
-		$path        = end( $path );
+
+		if ( ! $bypass_filters ) {
+			$content_url = apply_filters( 'cloudinary_content_url', $content_url );
+		}
+		$path = explode( self::clean_url( $content_url ), $url );
+		$path = end( $path );
 
 		return $path;
 	}
