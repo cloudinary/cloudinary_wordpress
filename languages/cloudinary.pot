@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cloudinary STABLETAG\n"
 "Report-Msgid-Bugs-To: https://github.com/cloudinary/cloudinary_wordpress\n"
-"POT-Creation-Date: 2024-01-04 11:07:27+00:00\n"
+"POT-Creation-Date: 2024-01-10 09:34:05+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -541,19 +541,19 @@ msgstr ""
 msgid "Synced"
 msgstr ""
 
-#: php/class-media.php:3069
+#: php/class-media.php:3075
 msgid "No Cloudinary filters"
 msgstr ""
 
-#: php/class-media.php:3169
+#: php/class-media.php:3175
 msgid "Media Settings"
 msgstr ""
 
-#: php/class-media.php:3172
+#: php/class-media.php:3178
 msgid "Media Display"
 msgstr ""
 
-#: php/class-media.php:3176 php/media/class-global-transformations.php:620
+#: php/class-media.php:3182 php/media/class-global-transformations.php:620
 #: php/ui/component/class-asset-preview.php:73
 #: php/ui/component/class-plan-details.php:119
 #: php/ui/component/class-plan-status.php:128
@@ -561,7 +561,7 @@ msgstr ""
 msgid "Transformations"
 msgstr ""
 
-#: php/class-media.php:3177
+#: php/class-media.php:3183
 msgid ""
 "Cloudinary allows you to easily transform your images on-the-fly to any "
 "required format, style and dimension, and also optimizes images for minimal "
@@ -570,7 +570,7 @@ msgid ""
 "transformation and delivery URLs."
 msgstr ""
 
-#: php/class-media.php:3182 ui-definitions/settings-image.php:164
+#: php/class-media.php:3188 ui-definitions/settings-image.php:164
 #: ui-definitions/settings-video.php:250
 msgid "See examples"
 msgstr ""
@@ -630,52 +630,52 @@ msgid ""
 "from the relevant listing pages."
 msgstr ""
 
-#: php/class-sync.php:495
+#: php/class-sync.php:480
 msgid "Synchronizing asset with Cloudinary"
 msgstr ""
 
-#: php/class-sync.php:515
+#: php/class-sync.php:500
 msgid "Upgrading from previous version"
 msgstr ""
 
-#: php/class-sync.php:526
+#: php/class-sync.php:511
 msgid "Downloading from Cloudinary"
 msgstr ""
 
-#: php/class-sync.php:541 php/class-sync.php:558
+#: php/class-sync.php:526 php/class-sync.php:543
 msgid "Uploading to Cloudinary"
 msgstr ""
 
-#: php/class-sync.php:571
+#: php/class-sync.php:556
 #. translators: %s folder name
 msgid "Copying to folder %s."
 msgstr ""
 
-#: php/class-sync.php:586 php/class-sync.php:613
+#: php/class-sync.php:571 php/class-sync.php:598
 msgid "Updating metadata"
 msgstr ""
 
-#: php/class-sync.php:599
+#: php/class-sync.php:584
 msgid "Updating breakpoints"
 msgstr ""
 
-#: php/class-sync.php:634
+#: php/class-sync.php:619
 msgid "Uploading to new cloud name."
 msgstr ""
 
-#: php/class-sync.php:1158
+#: php/class-sync.php:1143
 msgid "Is Cloudinary synced."
 msgstr ""
 
-#: php/class-sync.php:1213
+#: php/class-sync.php:1198
 msgid "Media Library Sync Settings"
 msgstr ""
 
-#: php/class-sync.php:1218
+#: php/class-sync.php:1203
 msgid "Sync method"
 msgstr ""
 
-#: php/class-sync.php:1221
+#: php/class-sync.php:1206
 #. translators: The HTML break line, the link to Cloudinary documentation and
 #. closing tag.
 msgid ""
@@ -684,35 +684,35 @@ msgid ""
 "Media Library.%3$s%4$sLearn more%5$s"
 msgstr ""
 
-#: php/class-sync.php:1232
+#: php/class-sync.php:1217
 msgid "Auto sync"
 msgstr ""
 
-#: php/class-sync.php:1233
+#: php/class-sync.php:1218
 msgid "Manual sync"
 msgstr ""
 
-#: php/class-sync.php:1239
+#: php/class-sync.php:1224
 msgid "Cloudinary folder path"
 msgstr ""
 
-#: php/class-sync.php:1243
+#: php/class-sync.php:1228
 msgid "e.g.: wordpress_assets/"
 msgstr ""
 
-#: php/class-sync.php:1246
+#: php/class-sync.php:1231
 msgid ""
 "The folder in your Cloudinary account that WordPress assets are uploaded "
 "to. Leave blank to use the root of your Cloudinary library."
 msgstr ""
 
-#: php/class-sync.php:1255 php/ui/component/class-plan-details.php:118
+#: php/class-sync.php:1240 php/ui/component/class-plan-details.php:118
 #: php/ui/component/class-plan-status.php:94
 #: ui-definitions/settings-sidebar.php:30
 msgid "Storage"
 msgstr ""
 
-#: php/class-sync.php:1258
+#: php/class-sync.php:1243
 #. translators: the HTML for opening and closing list and its items.
 msgid ""
 "Choose where your assets are stored.%1$sCloudinary and WordPress: Stores "
@@ -725,15 +725,15 @@ msgid ""
 "compatibility.%4$s%5$sLearn more%6$s"
 msgstr ""
 
-#: php/class-sync.php:1271
+#: php/class-sync.php:1256
 msgid "Cloudinary and WordPress"
 msgstr ""
 
-#: php/class-sync.php:1272
+#: php/class-sync.php:1257
 msgid "Cloudinary and WordPress (low resolution)"
 msgstr ""
 
-#: php/class-sync.php:1273
+#: php/class-sync.php:1258
 msgid "Cloudinary only"
 msgstr ""
 
