@@ -225,7 +225,6 @@ class SVG extends Delivery_Feature {
 		// Init instances.
 		$this->connect = $this->plugin->get_component( 'connect' );
 		$this->media   = $this->plugin->get_component( 'media' );
-		$this->sync    = $this->plugin->get_component( 'sync' );
 
 		// Add filters.
 		add_filter( 'upload_mimes', array( $this, 'add_svg_mime' ) ); // phpcs:ignore WordPressVIPMinimum.Hooks.RestrictedHooks.upload_mimes

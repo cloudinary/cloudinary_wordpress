@@ -121,11 +121,6 @@ class Sync implements Setup, Assets {
 	const SYNC_MEDIA = 'cloudinary_sync_media';
 
 	/**
-	 * Holds the Update Stats option key.
-	 */
-	const UPDATE_STATS = 'update_stats';
-
-	/**
 	 * Push_Sync constructor.
 	 *
 	 * @param Plugin $plugin Global instance of the main plugin.
@@ -141,16 +136,6 @@ class Sync implements Setup, Assets {
 
 		// Register Settings.
 		add_filter( 'cloudinary_admin_pages', array( $this, 'settings' ) );
-
-		if ( ! get_option( self::UPDATE_STATS ) ) {
-			add_action(
-				'cloudinary_ready',
-				function() {
-					// Update stats.
-					Cron::register_process( 'update_stats', array( $this, 'update_stats' ), MINUTE_IN_SECONDS );
-				}
-			);
-		}
 	}
 
 	/**
@@ -1278,31 +1263,6 @@ class Sync implements Setup, Assets {
 		);
 
 		return $pages;
-	}
-
-	/**
-	 * Updates the images stats via Cron Job.
-	 *
-	 * @return void
-	 */
-	public function update_stats() {
-		global $wpdb;
-
-		$missing = $wpdb->get_results( $wpdb->prepare( "SELECT post_id FROM {$wpdb->prefix}postmeta WHERE meta_key = %s and meta_value = 0 LIMIT 100", self::META_KEYS['remote_size'] ) );
-
-		if ( $missing ) {
-			foreach ( $missing as $post ) {
-				$this->plugin->get_component( 'storage' )->size_sync( $post->post_id );
-			}
-		} else {
-			update_option( self::UPDATE_STATS, time() );
-
-			$cron = Cron::get_instance();
-
-			if ( $cron instanceof Cron ) {
-				$cron->unregister_schedule( 'update_stats' );
-			}
-		}
 	}
 
 	/**

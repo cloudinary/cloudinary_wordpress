@@ -370,6 +370,12 @@ class Delivery implements Setup {
 			$is = ! wp_attachment_is_image( $attachment_id ) && ! wp_attachment_is( 'video', $attachment_id );
 		}
 
+		$svg = $this->plugin->get_component( 'svg' );
+
+		if ( ! $is && wp_attachment_is_image( $attachment_id ) && $svg->is_active() ) {
+			$is = true;
+		}
+
 		/**
 		 * Filter deliverable attachments.
 		 *
