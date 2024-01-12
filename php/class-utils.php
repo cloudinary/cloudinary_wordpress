@@ -825,6 +825,11 @@ class Utils {
 	 * @return void
 	 */
 	public static function clean_up_sync_meta( $attachment_id ) {
+
+		// translators: The attachment ID.
+		$action_message = sprintf( __( 'Clean up sync metadata for %d', 'cloudinary' ), $attachment_id );
+		do_action( '_cloudinary_queue_action', $action_message );
+
 		// remove pending.
 		delete_post_meta( $attachment_id, Sync::META_KEYS['pending'] );
 

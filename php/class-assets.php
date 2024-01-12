@@ -646,16 +646,6 @@ class Assets extends Settings_Component {
 			}
 		}
 
-		if ( $valid && $this->delivery->is_deliverable( $attachment_id ) ) {
-			$valid = false;
-
-			// translators: The attachment ID.
-			$action_message = sprintf( __( 'Clean up sync metadata for %d', 'cloudinary' ), $attachment_id );
-			do_action( '_cloudinary_queue_action', $action_message );
-
-			Utils::clean_up_sync_meta( $attachment_id );
-		}
-
 		return $valid;
 	}
 
@@ -1125,7 +1115,7 @@ class Assets extends Settings_Component {
 		wp_generate_attachment_metadata( $id, $file_path );
 
 		// Init the auto sync.
-		Delivery::create_size_relation( $id, Utils::get_path_from_url( $url, true ), $size, $base );
+		Delivery::create_size_relation( $id, Utils::clean_url( $url, true ), $size, $base );
 		Delivery::update_size_relations_state( $id, 'enable' );
 		$this->media->sync->set_signature_item( $id, 'delivery' );
 		$this->media->sync->get_sync_type( $id );

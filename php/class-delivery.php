@@ -509,7 +509,12 @@ class Delivery implements Setup {
 			$sizes[ $attachment_id ] = array();
 			$meta                    = wp_get_attachment_metadata( $attachment_id, true );
 			if ( ! empty( $meta['width'] ) && ! empty( $meta['height'] ) ) {
-				$local_url               = Utils::get_path_from_url( $this->media->local_url( $attachment_id ), true );
+				// Keep the full URL for cloudinary_assets.
+				if ( Assets::POST_TYPE_SLUG === get_post_type( $attachment_id ) ) {
+					$local_url = Utils::clean_url( $this->media->local_url( $attachment_id ), true );
+				} else {
+					$local_url = Utils::get_path_from_url( $this->media->local_url( $attachment_id ), true );
+				}
 				$sizes[ $attachment_id ] = array(
 					'sized_url' => $local_url,
 					'size'      => $meta['width'] . 'x' . $meta['height'],
@@ -1599,6 +1604,13 @@ class Delivery implements Setup {
 		 */
 		$content_url = apply_filters( 'cloudinary_content_url', content_url() );
 
+		// Cloudinary assets have a full URL.
+		if ( 'asset' === $item['sync_type'] ) {
+			$url = $item['sized_url'];
+		} else {
+			$url = Utils::clean_url( $content_url ) . $item['sized_url'];
+		}
+
 		/**
 		 * The URL to be searched for and prepared to be delivered by Cloudinary.
 		 *
@@ -1611,7 +1623,7 @@ class Delivery implements Setup {
 		 *
 		 * @return {string}
 		 */
-		$url = apply_filters( 'cloudinary_delivery_searchable_url', Utils::clean_url( $content_url ) . $item['sized_url'], $item, $content_url );
+		$url = apply_filters( 'cloudinary_delivery_searchable_url', $url, $item, $content_url );
 
 		$found = array();
 
@@ -1754,7 +1766,8 @@ class Delivery implements Setup {
 
 		$paths = array_map( array( Utils::class, 'get_path_from_url' ), $urls );
 
-		$results = Utils::query_relations( $public_ids, $paths );
+		// Get the results that include the public IDs, the paths (from Media Library), and urls for additional assets.
+		$results = Utils::query_relations( $public_ids, array_merge( $paths, $urls ) );
 
 		$auto_sync = $this->sync->is_auto_sync_enabled();
 		foreach ( $results as $result ) {
