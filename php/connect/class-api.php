@@ -227,10 +227,11 @@ class Api {
 	 *
 	 * @param array  $options The transformation options to generate from.
 	 * @param string $type    The asset Type.
+	 * @param string $context The context.
 	 *
 	 * @return string
 	 */
-	public static function generate_transformation_string( array $options, $type = 'image' ) {
+	public static function generate_transformation_string( array $options, $type = 'image', $context = '' ) {
 		if ( ! isset( self::$transformation_index[ $type ] ) ) {
 			return '';
 		}
@@ -255,6 +256,58 @@ class Api {
 			},
 			$options
 		);
+
+		// Prepare the eager transformations for the upload.
+		if ( 'upload' === $context ) {
+			foreach ( $transformations as &$transformation ) {
+				if ( 0 <= strpos( $transformation, 'f_auto' ) ) {
+					$parts = explode( ',', $transformation );
+					unset( $parts[ array_search( 'f_auto', $parts, true ) ] );
+					$remaining_transformations = implode( ',', $parts );
+					$formats                   = array();
+
+					if ( 'image' === $type ) {
+						$formats = array(
+							'f_avif',
+							'f_webp',
+							'f_webp,fl_awebp',
+							'f_wdp',
+							'f_jp2',
+						);
+					} elseif ( 'video' === $type ) {
+						$formats = array(
+							'f_webm,vc_vp9',
+							'f_mp4,vc_h265',
+							'f_mp4,vc_h264',
+						);
+					}
+
+					/**
+					 * Filter the upload eager formats.
+					 *
+					 * @hook cloudinary_upload_eager_formats
+					 * @since 3.1.6
+					 *
+					 * @param $formats {array} The default formats.
+					 * @param $type    {string} The asset type.
+					 *
+					 * @return {array}
+					 */
+					$formats = apply_filters( 'cloudinary_upload_eager_formats', $formats, $type );
+
+					array_walk(
+						$formats,
+						static function ( &$i ) use ( $remaining_transformations ) {
+							if ( $remaining_transformations ) {
+								$i .= ",{$remaining_transformations}";
+							}
+						}
+					);
+
+					$transformation = implode( '|', $formats );
+				}
+			}
+		}
 
 		// Clear out empty parts.
 		$transformations = array_filter( $transformations );
@@ -314,7 +367,7 @@ class Api {
 		}
 
 		if ( $attachment_id ) {
-			$public_id = $this->get_public_id( $attachment_id, $args );
+			$public_id = $this->get_public_id( $attachment_id, $args, $public_id );
 		}
 
 		$url_parts[] = $args['version'];
@@ -538,7 +591,7 @@ class Api {
 			 * it's likely due to CURL or the location does not support URL file attachments.
 			 * In this case, we'll flag and disable it and try again with a local file.
 			 */
-			if ( 404 !== $code && empty( $disable_https_fetch ) && false !== strpos( $error, $args['file'] ) ) {
+			if ( 404 !== $code && empty( $disable_https_fetch ) && false !== strpos( urldecode( $error ), $args['file'] ) ) {
 				// URLS are not remotely available, try again as a file.
 				set_transient( '_cld_disable_http_upload', true, DAY_IN_SECONDS );
 				// Remove URL file.
@@ -796,18 +849,24 @@ class Api {
 	/**
 	 * Get the Cloudinary public_id.
 	 *
-	 * @param int   $attachment_id The attachment ID.
-	 * @param array $args          The args.
+	 * @param int         $attachment_id      The attachment ID.
+	 * @param array       $args               The args.
+	 * @param null|string $original_public_id The original public ID.
 	 *
 	 * @return string
 	 */
-	public function get_public_id( $attachment_id, $args = array() ) {
+	public function get_public_id( $attachment_id, $args = array(), $original_public_id = null ) {
 
 		$relationship = Relationship::get_relationship( $attachment_id );
 		$public_id    = null;
 
 		if ( $relationship instanceof Relationship ) {
 			$public_id = $relationship->public_id;
+		}
+
+		// On cases like the initial sync, we might not have a relationship, so we need to trust to requested public_id.
+		if ( empty( $public_id ) ) {
+			$public_id = $original_public_id;
 		}
 
 		/**
@@ -857,6 +916,10 @@ class Api {
 			$suffix = apply_filters( 'cloudinary_seo_public_id', "{$filename}.{$relationship->format}", $relationship, $attachment_id );
 
 			$public_id .= "/{$suffix}";
+		}
+
+		if ( 'video' === $relationship->asset_type ) {
+			$public_id .= ".{$relationship->format}";
 		}
 
 		return $public_id;
@@ -921,7 +984,16 @@ class Api {
 		}
 
 		// Set a long-ish timeout since uploads can be 20mb+.
-		$args['timeout'] = 60; // phpcs:ignore
+		$args['timeout'] = 90; // phpcs:ignore
+
+		// Adjust timeout for additional eagers if image_freeform or video_freeform is set.
+		if ( ! empty( $args['body']['resource_type'] ) ) {
+			$freeform = $this->media->get_settings()->get_value( $args['body']['resource_type'] . '_freeform' );
+			if ( ! empty( $freeform ) ) {
+				$timeout_multiplier = explode( '/', $freeform );
+				$args['timeout']   += 60 * count( $timeout_multiplier ); // phpcs:ignore
+			}
+		}
 
 		$request = wp_remote_request( $url, $args );
 		if ( is_wp_error( $request ) ) {

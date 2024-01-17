@@ -27,7 +27,7 @@ cd "$PROJECT_ROOT_DIR" || exit
 
 # Build the release.
 npm install
-npm run package
+npm run package:build
 
 # All good.
 echo -e "☁️  \033[1;32mNew build package files is complete.\033[0m ☀️"

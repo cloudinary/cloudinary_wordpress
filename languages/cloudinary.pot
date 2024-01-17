@@ -1,14 +1,14 @@
-# Copyright (C) 2023 Cloudinary Ltd., XWP
+# Copyright (C) 2024 Cloudinary Ltd., XWP
 # This file is distributed under the GPLv2+.
 msgid ""
 msgstr ""
 "Project-Id-Version: Cloudinary STABLETAG\n"
 "Report-Msgid-Bugs-To: https://github.com/cloudinary/cloudinary_wordpress\n"
-"POT-Creation-Date: 2023-10-10 10:18:43+00:00\n"
+"POT-Creation-Date: 2024-01-12 09:58:32+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2023-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2024-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: en\n"
@@ -63,11 +63,11 @@ msgstr[1] ""
 msgid "No items found."
 msgstr ""
 
-#: php/cache/class-cache-point.php:962 php/class-assets.php:1142
+#: php/cache/class-cache-point.php:962 php/class-assets.php:1132
 msgid "Cloudinary Asset"
 msgstr ""
 
-#: php/cache/class-cache-point.php:963 php/class-assets.php:1143
+#: php/cache/class-cache-point.php:963 php/class-assets.php:1133
 msgid "Post type to represent a non-media library asset."
 msgstr ""
 
@@ -87,119 +87,114 @@ msgstr ""
 msgid "Enable Cloudinary status"
 msgstr ""
 
-#: php/class-assets.php:653
-#. translators: The attachment ID.
-msgid "Clean up sync metadata for %d"
-msgstr ""
-
-#: php/class-assets.php:697
+#: php/class-assets.php:687
 msgid "Caching"
 msgstr ""
 
-#: php/class-assets.php:708
+#: php/class-assets.php:698
 msgid "Creating shadow assets"
 msgstr ""
 
-#: php/class-assets.php:719
+#: php/class-assets.php:709
 msgid "Updating asset storage"
 msgstr ""
 
-#: php/class-assets.php:1204
+#: php/class-assets.php:1194
 msgid "Additional Asset Sync Settings"
 msgstr ""
 
-#: php/class-assets.php:1224
+#: php/class-assets.php:1214
 msgid "Additional asset sync settings"
 msgstr ""
 
-#: php/class-assets.php:1225
+#: php/class-assets.php:1215
 msgid ""
 "Enabling additional asset syncing will sync the toggled assets with "
 "Cloudinary to make use of advanced optimization and CDN delivery "
 "functionality."
 msgstr ""
 
-#: php/class-assets.php:1226
+#: php/class-assets.php:1216
 msgid "Enable additional asset syncing"
 msgstr ""
 
-#: php/class-assets.php:1265
+#: php/class-assets.php:1255
 msgid "External Asset Sync Settings"
 msgstr ""
 
-#: php/class-assets.php:1290 php/class-cache.php:615
+#: php/class-assets.php:1280 php/class-cache.php:615
 msgid "Plugin"
 msgstr ""
 
-#: php/class-assets.php:1327 php/class-cache.php:792
+#: php/class-assets.php:1317 php/class-cache.php:792
 msgid "Plugins"
 msgstr ""
 
-#: php/class-assets.php:1345 php/class-cache.php:809
+#: php/class-assets.php:1335 php/class-cache.php:809
 msgid "Deliver assets from all plugin folders"
 msgstr ""
 
-#: php/class-assets.php:1377 php/class-cache.php:652
+#: php/class-assets.php:1367 php/class-cache.php:652
 msgid "Theme"
 msgstr ""
 
-#: php/class-assets.php:1409 php/class-cache.php:843
+#: php/class-assets.php:1399 php/class-cache.php:843
 msgid "Themes"
 msgstr ""
 
-#: php/class-assets.php:1427 php/class-cache.php:860
+#: php/class-assets.php:1417 php/class-cache.php:860
 msgid "Deliver all assets from active theme."
 msgstr ""
 
-#: php/class-assets.php:1452 php/class-assets.php:1487 php/class-cache.php:684
+#: php/class-assets.php:1442 php/class-assets.php:1477 php/class-cache.php:684
 #: php/class-cache.php:895
 msgid "WordPress"
 msgstr ""
 
-#: php/class-assets.php:1461 php/class-cache.php:668
+#: php/class-assets.php:1451 php/class-cache.php:668
 msgid "WordPress Admin"
 msgstr ""
 
-#: php/class-assets.php:1468 php/class-cache.php:675
+#: php/class-assets.php:1458 php/class-cache.php:675
 msgid "WordPress Includes"
 msgstr ""
 
-#: php/class-assets.php:1505 php/class-cache.php:912
+#: php/class-assets.php:1495 php/class-cache.php:912
 msgid "Deliver all assets from WordPress core."
 msgstr ""
 
-#: php/class-assets.php:1531 php/class-assets.php:1557 php/class-cache.php:708
+#: php/class-assets.php:1521 php/class-assets.php:1547 php/class-cache.php:708
 #: php/class-cache.php:947
 msgid "Content"
 msgstr ""
 
-#: php/class-assets.php:1538 php/class-cache.php:699
+#: php/class-assets.php:1528 php/class-cache.php:699
 msgid "Uploads"
 msgstr ""
 
-#: php/class-assets.php:1575 php/class-cache.php:964
+#: php/class-assets.php:1565 php/class-cache.php:964
 msgid "Deliver all content assets from WordPress Media Library."
 msgstr ""
 
-#: php/class-assets.php:1599
+#: php/class-assets.php:1589
 msgid "Enable external assets"
 msgstr ""
 
-#: php/class-assets.php:1600
+#: php/class-assets.php:1590
 msgid ""
 "Enabling external assets allows you to sync assets from specific external "
 "sources with Cloudinary."
 msgstr ""
 
-#: php/class-assets.php:1610
+#: php/class-assets.php:1600
 msgid "Domains for each external source."
 msgstr ""
 
-#: php/class-assets.php:1613
+#: php/class-assets.php:1603
 msgid "Enter a domain"
 msgstr ""
 
-#: php/class-assets.php:1614
+#: php/class-assets.php:1604
 msgid "Press ENTER or SPACE or type comma or tab to continue."
 msgstr ""
 
@@ -376,7 +371,7 @@ msgstr ""
 msgid "Share a %s with Cloudinary to help improve the plugin."
 msgstr ""
 
-#: php/class-deactivation.php:183 php/class-report.php:268
+#: php/class-deactivation.php:183 php/class-report.php:275
 #: ui-definitions/settings-pages.php:338
 #. translators: The System Report link and label.
 msgid "System Report"
@@ -509,7 +504,7 @@ msgid ""
 "WordPress."
 msgstr ""
 
-#: php/class-media.php:2035
+#: php/class-media.php:2042
 msgid "Import"
 msgstr ""
 
@@ -517,43 +512,43 @@ msgstr ""
 msgid "Cloudinary"
 msgstr ""
 
-#: php/class-media.php:2391
+#: php/class-media.php:2398
 msgid "The delivery for this asset is disabled."
 msgstr ""
 
-#: php/class-media.php:2395
+#: php/class-media.php:2402
 msgid "Not syncable. This is an external media."
 msgstr ""
 
-#: php/class-media.php:2399
+#: php/class-media.php:2406
 msgid "This media is Fetch type."
 msgstr ""
 
-#: php/class-media.php:2403
+#: php/class-media.php:2410
 msgid "This media is Sprite type."
 msgstr ""
 
-#: php/class-media.php:2413
+#: php/class-media.php:2420
 msgid "Not Synced"
 msgstr ""
 
-#: php/class-media.php:2418
+#: php/class-media.php:2425
 msgid "Synced"
 msgstr ""
 
-#: php/class-media.php:3061
+#: php/class-media.php:3075
 msgid "No Cloudinary filters"
 msgstr ""
 
-#: php/class-media.php:3161
+#: php/class-media.php:3175
 msgid "Media Settings"
 msgstr ""
 
-#: php/class-media.php:3164
+#: php/class-media.php:3178
 msgid "Media Display"
 msgstr ""
 
-#: php/class-media.php:3168 php/media/class-global-transformations.php:620
+#: php/class-media.php:3182 php/media/class-global-transformations.php:620
 #: php/ui/component/class-asset-preview.php:73
 #: php/ui/component/class-plan-details.php:119
 #: php/ui/component/class-plan-status.php:128
@@ -561,7 +556,7 @@ msgstr ""
 msgid "Transformations"
 msgstr ""
 
-#: php/class-media.php:3169
+#: php/class-media.php:3183
 msgid ""
 "Cloudinary allows you to easily transform your images on-the-fly to any "
 "required format, style and dimension, and also optimizes images for minimal "
@@ -570,8 +565,8 @@ msgid ""
 "transformation and delivery URLs."
 msgstr ""
 
-#: php/class-media.php:3174 ui-definitions/settings-image.php:164
-#: ui-definitions/settings-video.php:216
+#: php/class-media.php:3188 ui-definitions/settings-image.php:164
+#: ui-definitions/settings-video.php:250
 msgid "See examples"
 msgstr ""
 
@@ -591,40 +586,40 @@ msgstr ""
 msgid "Cloudinary Metadata viewer"
 msgstr ""
 
-#: php/class-report.php:277
+#: php/class-report.php:284
 msgid "System information report"
 msgstr ""
 
-#: php/class-report.php:280
+#: php/class-report.php:287
 msgid "Enable report"
 msgstr ""
 
-#: php/class-report.php:340
+#: php/class-report.php:347
 msgid ""
 "Enabling system information reporting will allow you to generate and "
 "download a realtime snapshot report. The report will be in JSON format and "
 "will include information about:"
 msgstr ""
 
-#: php/class-report.php:343
+#: php/class-report.php:350
 msgid "Current WordPress and Cloudinary configuration."
 msgstr ""
 
-#: php/class-report.php:344
+#: php/class-report.php:351
 msgid "Currently installed plugins."
 msgstr ""
 
-#: php/class-report.php:345
+#: php/class-report.php:352
 msgid "Any themes that are being used."
 msgstr ""
 
-#: php/class-report.php:346
+#: php/class-report.php:353
 msgid ""
 "Any specifically selected media. These can be added to the report from the "
 "WordPress Media Library."
 msgstr ""
 
-#: php/class-report.php:347
+#: php/class-report.php:354
 msgid ""
 "Any specifically selected posts or pages. These can be added to the report "
 "from the relevant listing pages."
@@ -756,36 +751,41 @@ msgstr ""
 msgid "Missing SRC attribute."
 msgstr ""
 
-#: php/class-utils.php:873
+#: php/class-utils.php:830
+#. translators: The attachment ID.
+msgid "Clean up sync metadata for %d"
+msgstr ""
+
+#: php/class-utils.php:878
 msgid "Thumbnail"
 msgstr ""
 
-#: php/class-utils.php:874
+#: php/class-utils.php:879
 msgid "Medium"
 msgstr ""
 
-#: php/class-utils.php:875
+#: php/class-utils.php:880
 msgid "Medium Large"
 msgstr ""
 
-#: php/class-utils.php:876
+#: php/class-utils.php:881
 msgid "Large"
 msgstr ""
 
-#: php/class-utils.php:877
+#: php/class-utils.php:882
 msgid "Full Size"
 msgstr ""
 
-#: php/connect/class-api.php:373
+#: php/connect/class-api.php:426
 msgid "No direct access to file system."
 msgstr ""
 
-#: php/connect/class-api.php:468
+#: php/connect/class-api.php:521
 #. translators: variable is thread name and queue size.
 msgid "Uploading remote url:  %1$s."
 msgstr ""
 
-#: php/connect/class-api.php:599
+#: php/connect/class-api.php:652
 msgid "Could not get VIP file content"
 msgstr ""
 
@@ -874,7 +874,7 @@ msgid "Dominant Color"
 msgstr ""
 
 #: php/delivery/class-lazy-load.php:498 php/delivery/class-lazy-load.php:513
-#: ui-definitions/settings-video.php:104
+#: ui-definitions/settings-video.php:138
 msgid "Off"
 msgstr ""
 
@@ -905,29 +905,29 @@ msgstr ""
 msgid "Attachment Display Settings"
 msgstr ""
 
-#: php/media/class-gallery.php:350 php/media/class-gallery.php:351
+#: php/media/class-gallery.php:355 php/media/class-gallery.php:356
 msgid "Gallery settings"
 msgstr ""
 
-#: php/media/class-gallery.php:359
+#: php/media/class-gallery.php:364
 msgid "Gallery Settings"
 msgstr ""
 
-#: php/media/class-gallery.php:369
+#: php/media/class-gallery.php:374
 msgid "Replace WooCommerce Gallery"
 msgstr ""
 
-#: php/media/class-gallery.php:370
+#: php/media/class-gallery.php:375
 msgid ""
 "Replace the default WooCommerce gallery with the Cloudinary Gallery on "
 "product pages."
 msgstr ""
 
-#: php/media/class-gallery.php:378
+#: php/media/class-gallery.php:383
 msgid "Cloudinary Gallery block defaults"
 msgstr ""
 
-#: php/media/class-gallery.php:381
+#: php/media/class-gallery.php:386
 msgid ""
 "The Cloudinary Gallery is available as a new block type which can be "
 "inserted to any post or page. Note, this is not available when using the "
@@ -1038,11 +1038,11 @@ msgid ""
 "storage settings.%2$s"
 msgstr ""
 
-#: php/sync/class-storage.php:406
+#: php/sync/class-storage.php:414
 msgid "Restricted file type"
 msgstr ""
 
-#: php/sync/class-storage.php:540
+#: php/sync/class-storage.php:548
 msgid "Calculating stats"
 msgstr ""
 
@@ -1702,12 +1702,12 @@ msgid ""
 msgstr ""
 
 #: ui-definitions/settings-image.php:103 ui-definitions/settings-image.php:127
-#: ui-definitions/settings-video.php:158 ui-definitions/settings-video.php:177
+#: ui-definitions/settings-video.php:192 ui-definitions/settings-video.php:211
 msgid "Not set"
 msgstr ""
 
 #: ui-definitions/settings-image.php:104 ui-definitions/settings-image.php:128
-#: ui-definitions/settings-video.php:159 ui-definitions/settings-video.php:178
+#: ui-definitions/settings-video.php:193 ui-definitions/settings-video.php:212
 msgid "Auto"
 msgstr ""
 
@@ -1738,19 +1738,19 @@ msgid ""
 "file size."
 msgstr ""
 
-#: ui-definitions/settings-image.php:129 ui-definitions/settings-video.php:179
+#: ui-definitions/settings-image.php:129 ui-definitions/settings-video.php:213
 msgid "Auto best"
 msgstr ""
 
-#: ui-definitions/settings-image.php:130 ui-definitions/settings-video.php:180
+#: ui-definitions/settings-image.php:130 ui-definitions/settings-video.php:214
 msgid "Auto good"
 msgstr ""
 
-#: ui-definitions/settings-image.php:131 ui-definitions/settings-video.php:181
+#: ui-definitions/settings-image.php:131 ui-definitions/settings-video.php:215
 msgid "Auto eco"
 msgstr ""
 
-#: ui-definitions/settings-image.php:132 ui-definitions/settings-video.php:182
+#: ui-definitions/settings-image.php:132 ui-definitions/settings-video.php:216
 msgid "Auto low"
 msgstr ""
 
@@ -1766,11 +1766,11 @@ msgid ""
 "%1$sreference%2$s for all available transformations and syntax."
 msgstr ""
 
-#: ui-definitions/settings-image.php:179 ui-definitions/settings-video.php:231
+#: ui-definitions/settings-image.php:179 ui-definitions/settings-video.php:265
 msgid "What are transformations?"
 msgstr ""
 
-#: ui-definitions/settings-image.php:180 ui-definitions/settings-video.php:232
+#: ui-definitions/settings-image.php:180 ui-definitions/settings-video.php:266
 msgid ""
 "A set of parameters included in a Cloudinary URL to programmatically "
 "transform the visual appearance of the assets on your website."
@@ -1781,7 +1781,7 @@ msgid "SVG Support"
 msgstr ""
 
 #: ui-definitions/settings-image.php:194
-msgid "Enable Cloudinary's beta SVG Support."
+msgid "Enable Cloudinary's SVG Support."
 msgstr ""
 
 #: ui-definitions/settings-image.php:198
@@ -2116,26 +2116,50 @@ msgid "Cloudinary player"
 msgstr ""
 
 #: ui-definitions/settings-video.php:88
+msgid "Adaptive bitrate streaming (beta)"
+msgstr ""
+
+#: ui-definitions/settings-video.php:93
+#. translators: Placeholders are <a> tags.
+msgid ""
+"Adaptive bitrate streaming is a video delivery technique that adjusts the "
+"quality of a video stream in real time according to detected bandwidth and "
+"CPU capacity.%1$sRead more about Adaptive bitrate streaming%2$s"
+msgstr ""
+
+#: ui-definitions/settings-video.php:103
+msgid "Streaming protocol"
+msgstr ""
+
+#: ui-definitions/settings-video.php:107
+msgid "Dynamic adaptive streaming over HTTP (MPEG-DASH)"
+msgstr ""
+
+#: ui-definitions/settings-video.php:108
+msgid "HTTP live streaming (HLS)"
+msgstr ""
+
+#: ui-definitions/settings-video.php:122
 msgid "Show controls"
 msgstr ""
 
-#: ui-definitions/settings-video.php:94
+#: ui-definitions/settings-video.php:128
 msgid "Repeat video"
 msgstr ""
 
-#: ui-definitions/settings-video.php:100
+#: ui-definitions/settings-video.php:134
 msgid "Autoplay"
 msgstr ""
 
-#: ui-definitions/settings-video.php:105
+#: ui-definitions/settings-video.php:139
 msgid "Always"
 msgstr ""
 
-#: ui-definitions/settings-video.php:106
+#: ui-definitions/settings-video.php:140
 msgid "On-scroll (autoplay when in view)"
 msgstr ""
 
-#: ui-definitions/settings-video.php:110
+#: ui-definitions/settings-video.php:144
 #. translators: Placeholders are <a> tags.
 msgid ""
 "Please note that when choosing \"always\", the video will autoplay without "
@@ -2143,47 +2167,47 @@ msgid ""
 "browsers.%1$sRead more about muted autoplay%2$s"
 msgstr ""
 
-#: ui-definitions/settings-video.php:128
+#: ui-definitions/settings-video.php:162
 msgid "Video optimization"
 msgstr ""
 
-#: ui-definitions/settings-video.php:129
+#: ui-definitions/settings-video.php:163
 msgid ""
 "Videos will be delivered using Cloudinary’s automatic format and quality "
 "algorithms for the best tradeoff between visual quality and file size. Use "
 "Advanced Optimization options to manually tune format and quality."
 msgstr ""
 
-#: ui-definitions/settings-video.php:133
+#: ui-definitions/settings-video.php:167
 msgid "Optimize videos on my site."
 msgstr ""
 
-#: ui-definitions/settings-video.php:151
+#: ui-definitions/settings-video.php:185
 msgid "Video format"
 msgstr ""
 
-#: ui-definitions/settings-video.php:152
+#: ui-definitions/settings-video.php:186
 msgid ""
 "The video format to use for delivery. Leave as Auto to automatically "
 "deliver the most optimal format based on the user's browser and device."
 msgstr ""
 
-#: ui-definitions/settings-video.php:170
+#: ui-definitions/settings-video.php:204
 msgid "Video quality"
 msgstr ""
 
-#: ui-definitions/settings-video.php:171
+#: ui-definitions/settings-video.php:205
 msgid ""
 "The compression quality to apply when delivering videos. Leave as Auto to "
 "apply an algorithm that finds the best tradeoff between visual quality and "
 "file size."
 msgstr ""
 
-#: ui-definitions/settings-video.php:204
+#: ui-definitions/settings-video.php:238
 msgid "Additional video transformations"
 msgstr ""
 
-#: ui-definitions/settings-video.php:208
+#: ui-definitions/settings-video.php:242
 #. translators: The link to transformation reference.
 msgid ""
 "A set of additional transformations to apply to all videos. Specify your "
@@ -2191,7 +2215,7 @@ msgid ""
 "%1$sreference%2$s for all available transformations and syntax."
 msgstr ""
 
-#: ui-definitions/settings-video.php:247
+#: ui-definitions/settings-video.php:281
 msgid "Video preview"
 msgstr ""
 

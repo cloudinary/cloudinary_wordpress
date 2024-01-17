@@ -1230,6 +1230,7 @@ class Media extends Settings_Component implements Setup {
 		}
 		// Base image level.
 		$new_transformations = array(
+			'video'  => array(),
 			'image'  => Api::generate_transformation_string( $transformations, $type ),
 			'tax'    => array(),
 			'global' => array(),
@@ -1360,6 +1361,12 @@ class Media extends Settings_Component implements Setup {
 			if ( ! $cloudinary_id ) {
 				return null;
 			}
+		}
+
+		$public_id = $this->get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
+
+		if ( ! empty( $public_id ) ) {
+			$cloudinary_id = $public_id;
 		}
 
 		$args = array(
@@ -2417,6 +2424,12 @@ class Media extends Settings_Component implements Setup {
 						'state' => 'success',
 						'note'  => esc_html__( 'Synced', 'cloudinary' ),
 					);
+
+					if ( wp_attachment_is_image( $attachment_id ) ) {
+						if ( empty( get_post_meta( $attachment_id, Sync::META_KEYS['remote_size'], true ) ) ) {
+							$this->plugin->get_component( 'storage' )->size_sync( $attachment_id );
+						}
+					}
 				}
 				// filter status.
 				$status = apply_filters( 'cloudinary_media_status', $status, $attachment_id );
@@ -2741,7 +2754,7 @@ class Media extends Settings_Component implements Setup {
 		$media_library_context = array(
 			'caption' => esc_attr( $caption ),
 			'alt'     => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
-			'guid'    => md5( get_the_guid( $attachment_id ) ),
+			'guid'    => md5( Utils::get_path_from_url( get_the_guid( $attachment_id ), true ) ),
 		);
 		$context_options       = array(
 			'cld_wp_plugin' => 1,
@@ -2799,11 +2812,12 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Get the media upload options as connected to Cloudinary.
 	 *
-	 * @param int $attachment_id The attachment ID.
+	 * @param int    $attachment_id The attachment ID.
+	 * @param string $context       The context to use.
 	 *
 	 * @return array
 	 */
-	public function get_upload_options( $attachment_id ) {
+	public function get_upload_options( $attachment_id, $context = '' ) {
 
 		// Prepare upload options.
 		$public_id = $this->get_public_id( $attachment_id, true );
@@ -2817,7 +2831,7 @@ class Media extends Settings_Component implements Setup {
 		);
 
 		if ( 'image' === $options['resource_type'] || 'video' === $options['resource_type'] ) {
-			$options['eager']       = Api::generate_transformation_string( $this->apply_default_transformations( array(), $attachment_id ) );
+			$options['eager']       = Api::generate_transformation_string( $this->apply_default_transformations( array(), $attachment_id ), $options['resource_type'], $context );
 			$options['eager_async'] = 'video' === $options['resource_type'];
 		}
 		/**

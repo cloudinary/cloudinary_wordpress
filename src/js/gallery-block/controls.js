@@ -1,4 +1,5 @@
 import Dot from 'dot-object';
+import { useState } from 'react';
 import { __ } from '@wordpress/i18n';
 import cloneDeep from 'lodash/cloneDeep';
 import Tippy from '@tippyjs/react';
@@ -56,10 +57,9 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 	const attributesClone = cloneDeep( attributes );
 	const nestedAttrs = dot.object( attributesClone );
 
-	nestedAttrs.customSettings =
-		typeof nestedAttrs.customSettings === 'object'
-			? JSON.stringify( nestedAttrs.customSettings )
-			: nestedAttrs.customSettings;
+	const [ customSettingsPreview, setCustomSettingsPreview ] = useState(
+		nestedAttrs.customSettings
+	);
 
 	if ( ! attributes.transformation_crop ) {
 		attributes.transformation_crop = 'pad';
@@ -74,6 +74,25 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 		const newAttrs = { [ key ]: convertColors( value ) };
 
 		setAttributes( newAttrs );
+	};
+
+	const onChangeCustomSettings = ( value ) => {
+		let customSettings = {};
+		setCustomSettingsPreview( value );
+
+		try {
+			customSettings = JSON.parse( value );
+		} catch ( e ) {}
+
+		if ( typeof customSettings === 'object' ) {
+			const atts = { ...nestedAttrs };
+			atts.customSettings = customSettings;
+
+			setAttributes( {
+				...nestedAttrs,
+				...atts,
+			} );
+		}
 	};
 
 	return (
@@ -524,18 +543,8 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 						'Provide a JSON string of the settings you want to add and/or override.',
 						'cloudinary'
 					) }
-					value={ nestedAttrs.customSettings }
-					onChange={ ( value ) => {
-						try {
-							setAttributes( {
-								customSettings: JSON.parse( value ),
-							} );
-						} catch {
-							setAttributes( {
-								customSettings: value,
-							} );
-						}
-					} }
+					value={ customSettingsPreview }
+					onChange={ onChangeCustomSettings }
 				/>
 			</PanelBody>
 		</>
