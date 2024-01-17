@@ -74,7 +74,11 @@ class Meta_Box {
 		$media = $this->plugin->get_component( 'media' );
 		if ( wp_attachment_is_image( $post ) ) {
 			$public_id     = $media->get_public_id( $post->ID );
-			$file_id       = basename( $media->get_cloudinary_id( $post->ID ) );
+			$cloudinary_id = $media->get_cloudinary_id( $post->ID );
+			if ( empty( $cloudinary_id ) ) {
+				$cloudinary_id = '';
+			}
+			$file_id       = basename( $cloudinary_id );
 			$cloudinary_id = path_join( $public_id, $file_id );
 		} else {
 			$cloudinary_id = $media->get_cloudinary_id( $post->ID );

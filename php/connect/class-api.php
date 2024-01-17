@@ -591,7 +591,7 @@ class Api {
 			 * it's likely due to CURL or the location does not support URL file attachments.
 			 * In this case, we'll flag and disable it and try again with a local file.
 			 */
-			if ( 404 !== $code && empty( $disable_https_fetch ) && false !== strpos( $error, $args['file'] ) ) {
+			if ( 404 !== $code && empty( $disable_https_fetch ) && false !== strpos( urldecode( $error ), $args['file'] ) ) {
 				// URLS are not remotely available, try again as a file.
 				set_transient( '_cld_disable_http_upload', true, DAY_IN_SECONDS );
 				// Remove URL file.
@@ -984,7 +984,16 @@ class Api {
 		}
 
 		// Set a long-ish timeout since uploads can be 20mb+.
-		$args['timeout'] = 60; // phpcs:ignore
+		$args['timeout'] = 90; // phpcs:ignore
+
+		// Adjust timeout for additional eagers if image_freeform or video_freeform is set.
+		if ( ! empty( $args['body']['resource_type'] ) ) {
+			$freeform = $this->media->get_settings()->get_value( $args['body']['resource_type'] . '_freeform' );
+			if ( ! empty( $freeform ) ) {
+				$timeout_multiplier = explode( '/', $freeform );
+				$args['timeout']   += 60 * count( $timeout_multiplier ); // phpcs:ignore
+			}
+		}
 
 		$request = wp_remote_request( $url, $args );
 		if ( is_wp_error( $request ) ) {

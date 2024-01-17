@@ -391,6 +391,14 @@ class Storage implements Notice {
 	 * @param string $public_id     Optional public ID.
 	 */
 	public function size_sync( $attachment_id, $public_id = null ) {
+		if ( is_null( $public_id ) ) {
+			$public_id = $this->media->get_public_id( $attachment_id );
+		}
+
+		if ( is_null( $public_id ) ) {
+			return;
+		}
+
 		$args      = array(
 			/** This filter is documented in wp-includes/class-wp-http-streams.php */
 			'sslverify' => apply_filters( 'https_local_ssl_verify', false ),
@@ -449,7 +457,7 @@ class Storage implements Notice {
 			$exists = $this->media->get_id_from_sync_key( $file_path );
 			if ( empty( $exists ) ) {
 				// Scaled size check.
-				$exists = $this->media->get_id_from_sync_key( Delivery::make_scaled_url( $file_path ) );
+				$exists = $this->media->get_id_from_sync_key( Utils::make_scaled_url( $file_path ) );
 				// Check for not synced items.
 				if ( empty( $exists ) && ! file_exists( $dir . DIRECTORY_SEPARATOR . $filename ) ) {
 					break;

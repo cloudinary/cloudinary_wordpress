@@ -17,6 +17,7 @@ use Cloudinary\UI\Component\HTML;
 use Cloudinary\Delivery\Bypass;
 use Cloudinary\Relate\Relationship;
 use WP_Post;
+use Cloudinary\Utils;
 
 /**
  * Plugin Delivery class.
@@ -369,6 +370,12 @@ class Delivery implements Setup {
 			$is = ! wp_attachment_is_image( $attachment_id ) && ! wp_attachment_is( 'video', $attachment_id );
 		}
 
+		$svg = $this->plugin->get_component( 'svg' );
+
+		if ( ! $is && wp_attachment_is_image( $attachment_id ) && $svg->is_active() ) {
+			$is = true;
+		}
+
 		/**
 		 * Filter deliverable attachments.
 		 *
@@ -401,7 +408,7 @@ class Delivery implements Setup {
 		}
 
 		if ( empty( $sized_url ) ) {
-			$sized_url = Utils::clean_url( wp_get_attachment_url( $attachment_id ), true );
+			$sized_url = Utils::get_path_from_url( wp_get_attachment_url( $attachment_id ), true );
 		}
 		self::create_size_relation( $attachment_id, $sized_url, $wh, $base );
 		// Update public ID and type.
@@ -502,7 +509,12 @@ class Delivery implements Setup {
 			$sizes[ $attachment_id ] = array();
 			$meta                    = wp_get_attachment_metadata( $attachment_id, true );
 			if ( ! empty( $meta['width'] ) && ! empty( $meta['height'] ) ) {
-				$local_url               = Utils::clean_url( $this->media->local_url( $attachment_id ), true );
+				// Keep the full URL for cloudinary_assets.
+				if ( Assets::POST_TYPE_SLUG === get_post_type( $attachment_id ) ) {
+					$local_url = Utils::clean_url( $this->media->local_url( $attachment_id ), true );
+				} else {
+					$local_url = Utils::get_path_from_url( $this->media->local_url( $attachment_id ), true );
+				}
 				$sizes[ $attachment_id ] = array(
 					'sized_url' => $local_url,
 					'size'      => $meta['width'] . 'x' . $meta['height'],
@@ -518,15 +530,15 @@ class Delivery implements Setup {
 	/**
 	 * Update relationship public ID.
 	 *
-	 * @param int    $attachment_id The attachment ID.
-	 * @param string $public_id     The public ID.
+	 * @param int         $attachment_id The attachment ID.
+	 * @param null|string $public_id     The public ID.
 	 */
 	public static function update_size_relations_public_id( $attachment_id, $public_id ) {
 		$relationship = Relationship::get_relationship( $attachment_id );
 
 		if ( $relationship instanceof Relationship ) {
 			$relationship->public_id   = $public_id;
-			$relationship->public_hash = md5( $public_id );
+			$relationship->public_hash = md5( (string) $public_id );
 			$relationship->signature   = self::get_settings_signature();
 			$relationship->save();
 		}
@@ -836,8 +848,8 @@ class Delivery implements Setup {
 
 		global $wpdb;
 		$dirs    = wp_get_upload_dir();
-		$search  = array();
 		$baseurl = Utils::clean_url( $dirs['baseurl'] );
+		$search  = array();
 		foreach ( $this->unknown as $url ) {
 			$url      = ltrim( str_replace( $baseurl, '', $url ), '/' );
 			$search[] = $url;
@@ -1144,7 +1156,7 @@ class Delivery implements Setup {
 				$local_size = filesize( get_attached_file( $tag_element['id'] ) );
 			}
 			$remote_size                           = get_post_meta( $tag_element['id'], Sync::META_KEYS['remote_size'], true );
-			$tag_element['atts']['data-filesize']   = size_format( $local_size );
+			$tag_element['atts']['data-filesize']  = size_format( $local_size );
 			$tag_element['atts']['data-optsize']   = size_format( $remote_size );
 			$tag_element['atts']['data-optformat'] = get_post_meta( $tag_element['id'], Sync::META_KEYS['remote_format'], true );
 			if ( ! empty( $local_size ) && ! empty( $remote_size ) ) {
@@ -1500,21 +1512,6 @@ class Delivery implements Setup {
 	}
 
 	/**
-	 * Get the path from a url.
-	 *
-	 * @param string $url The url.
-	 *
-	 * @return string
-	 */
-	public static function get_path_from_url( $url ) {
-		$content_url = content_url();
-		$path        = explode( Utils::clean_url( $content_url ), $url );
-		$path        = end( $path );
-
-		return $path;
-	}
-
-	/**
 	 * Check if the file type is allowed to be uploaded.
 	 *
 	 * @param string $ext The filetype extension.
@@ -1595,13 +1592,47 @@ class Delivery implements Setup {
 		 */
 		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
 
-		$content_url = content_url();
+		/**
+		 * The URL to be searched for and prepared to be delivered by Cloudinary.
+		 *
+		 * @hook   cloudinary_content_url
+		 * @since  3.1.6
+		 *
+		 * @param $url {string} The default content_url.
+		 *
+		 * @return {string}
+		 */
+		$content_url = apply_filters( 'cloudinary_content_url', content_url() );
 
-		$found                       = array();
-		$found[ $item['public_id'] ] = $item;
-		$url                         = Utils::clean_url( $content_url ) . $item['sized_url'];
-		$scaled                      = self::make_scaled_url( $url );
-		$descaled                    = self::descaled_url( $url );
+		// Cloudinary assets have a full URL.
+		if ( 'asset' === $item['sync_type'] ) {
+			$url = $item['sized_url'];
+		} else {
+			$url = Utils::clean_url( $content_url ) . $item['sized_url'];
+		}
+
+		/**
+		 * The URL to be searched for and prepared to be delivered by Cloudinary.
+		 *
+		 * @hook   cloudinary_delivery_searchable_url
+		 * @since  3.1.6
+		 *
+		 * @param $url         {string} The URL to be searched for and prepared to be delivered by Cloudinary.
+		 * @param $item        {array}  The found asset array.
+		 * @param $content_url {string} The content URL.
+		 *
+		 * @return {string}
+		 */
+		$url = apply_filters( 'cloudinary_delivery_searchable_url', $url, $item, $content_url );
+
+		$found = array();
+
+		// If there's no public ID then don't pollute the found items.
+		if ( ! empty( $item['public_id'] ) ) {
+			$found[ $item['public_id'] ] = $item;
+		}
+		$scaled                      = Utils::make_scaled_url( $url );
+		$descaled                    = Utils::descaled_url( $url );
 		$scaled_slashed              = addcslashes( $scaled, '/' );
 		$descaled_slashed            = addcslashes( $descaled, '/' );
 		$found[ $scaled ]            = $item;
@@ -1693,44 +1724,9 @@ class Delivery implements Setup {
 		) {
 			$sized                                = wp_basename( $url );
 			$url                                  = str_replace( '-' . $dash, '', $url );
-			$scaled                               = self::make_scaled_url( $url );
+			$scaled                               = Utils::make_scaled_url( $url );
 			$this->found_urls[ $url ][ $dash ]    = $sized;
 			$this->found_urls[ $scaled ][ $dash ] = $sized;
-		}
-
-		return $url;
-	}
-
-	/**
-	 * Make a scaled version.
-	 *
-	 * @param string $url The url to make scaled.
-	 *
-	 * @return string
-	 */
-	public static function make_scaled_url( $url ) {
-		$file = Utils::pathinfo( $url );
-		$dash = strrchr( $file['filename'], '-' );
-		if ( '-scaled' === $dash ) {
-			return $url;
-		}
-
-		return $file['dirname'] . '/' . $file['filename'] . '-scaled.' . $file['extension'];
-	}
-
-	/**
-	 * Make a descaled version.
-	 *
-	 * @param string $url The url to descaled.
-	 *
-	 * @return string
-	 */
-	public static function descaled_url( $url ) {
-		$file = Utils::pathinfo( $url );
-		$dash = strrchr( $file['filename'], '-' );
-		if ( '-scaled' === $dash ) {
-			$file['basename'] = str_replace( '-scaled.', '.', $file['basename'] );
-			$url              = $file['dirname'] . '/' . $file['basename'];
 		}
 
 		return $url;
@@ -1751,7 +1747,7 @@ class Delivery implements Setup {
 
 		// De-size.
 		$desized = array_unique( array_map( array( $this, 'maybe_unsize_url' ), $urls ) );
-		$scaled  = array_unique( array_map( array( $this, 'make_scaled_url' ), $desized ) );
+		$scaled  = array_unique( array_map( array( Utils::class, 'make_scaled_url' ), $desized ) );
 		$urls    = array_unique( array_merge( $desized, $scaled, $decoded ) );
 		$urls    = array_values( $urls ); // resets the index.
 
@@ -1768,9 +1764,10 @@ class Delivery implements Setup {
 			return; // Bail since theres nothing.
 		}
 
-		$paths = array_map( array( $this, 'get_path_from_url' ), $urls );
+		$paths = array_map( array( Utils::class, 'get_path_from_url' ), $urls );
 
-		$results = Utils::query_relations( $public_ids, $urls );
+		// Get the results that include the public IDs, the paths (from Media Library), and urls for additional assets.
+		$results = Utils::query_relations( $public_ids, array_merge( $paths, $urls ) );
 
 		$auto_sync = $this->sync->is_auto_sync_enabled();
 		foreach ( $results as $result ) {

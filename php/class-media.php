@@ -2424,6 +2424,12 @@ class Media extends Settings_Component implements Setup {
 						'state' => 'success',
 						'note'  => esc_html__( 'Synced', 'cloudinary' ),
 					);
+
+					if ( wp_attachment_is_image( $attachment_id ) ) {
+						if ( empty( get_post_meta( $attachment_id, Sync::META_KEYS['remote_size'], true ) ) ) {
+							$this->plugin->get_component( 'storage' )->size_sync( $attachment_id );
+						}
+					}
 				}
 				// filter status.
 				$status = apply_filters( 'cloudinary_media_status', $status, $attachment_id );
@@ -2748,7 +2754,7 @@ class Media extends Settings_Component implements Setup {
 		$media_library_context = array(
 			'caption' => esc_attr( $caption ),
 			'alt'     => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
-			'guid'    => md5( Delivery::get_path_from_url( get_the_guid( $attachment_id ) ) ),
+			'guid'    => md5( Utils::get_path_from_url( get_the_guid( $attachment_id ), true ) ),
 		);
 		$context_options       = array(
 			'cld_wp_plugin' => 1,

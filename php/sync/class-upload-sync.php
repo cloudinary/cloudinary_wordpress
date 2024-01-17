@@ -243,7 +243,7 @@ class Upload_Sync {
 			$attached_file = get_attached_file( $attachment_id, true );
 			// The original will never be a -scaled.
 			// If we scale the attached file and the original, they should match. Meaning the attached file is not an edit.
-			if ( Delivery::make_scaled_url( $original_image ) !== Delivery::make_scaled_url( $attached_file ) ) {
+			if ( Utils::make_scaled_url( $original_image ) !== Utils::make_scaled_url( $attached_file ) ) {
 				// Since attached file is an edit, we want to upload the edited file, not the original.
 				$original_image = $attached_file;
 			}

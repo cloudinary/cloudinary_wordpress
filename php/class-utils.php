@@ -581,7 +581,7 @@ class Utils {
 			"#([\"']?)("
 				. '(?:[\w-]+:)?//?'
 				. '[^\s()<>"\']+'
-				. '[.]'
+				. '[.,]'
 				. '(?:'
 					. '\([\w\d]+\)|'
 					. '(?:'
@@ -825,6 +825,11 @@ class Utils {
 	 * @return void
 	 */
 	public static function clean_up_sync_meta( $attachment_id ) {
+
+		// translators: The attachment ID.
+		$action_message = sprintf( __( 'Clean up sync metadata for %d', 'cloudinary' ), $attachment_id );
+		do_action( '_cloudinary_queue_action', $action_message );
+
 		// remove pending.
 		delete_post_meta( $attachment_id, Sync::META_KEYS['pending'] );
 
@@ -920,7 +925,7 @@ class Utils {
 	 *
 	 * @param string $url The attachment URL.
 	 *
-	 * @return int
+	 * @return int|null
 	 */
 	public static function attachment_url_to_postid( $url ) {
 		$key = "postid_{$url}";
@@ -934,6 +939,18 @@ class Utils {
 		if ( empty( $attachment_id ) ) {
 			$attachment_id = attachment_url_to_postid( $url ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.attachment_url_to_postid_attachment_url_to_postid
 			wp_cache_set( $key, $attachment_id, 'cloudinary' );
+		}
+
+		if ( empty( $attachment_id ) ) {
+			$media           = get_plugin_instance()->get_component( 'media' );
+			$maybe_public_id = $media->get_public_id_from_url( $url );
+			$relations       = self::query_relations( array( $maybe_public_id ) );
+			foreach ( $relations as $relation ) {
+				if ( ! empty( $relation['post_id'] ) ) {
+					$attachment_id = (int) $relation['post_id'];
+					wp_cache_set( $key, $attachment_id, 'cloudinary' );
+				}
+			}
 		}
 
 		return $attachment_id;
@@ -963,14 +980,18 @@ class Utils {
 			$urls     = array_merge( $urls, $public_ids );
 		}
 
-		$tablename = self::get_relationship_table();
-		$sql       = "SELECT * from {$tablename} WHERE " . implode( ' OR ', $wheres );
-		$prepared  = $wpdb->prepare( $sql, array_map( 'md5', $urls ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$cache_key = md5( $prepared );
-		$results   = wp_cache_get( $cache_key, 'cld_delivery' );
-		if ( empty( $results ) ) {
-			$results = $wpdb->get_results( $prepared, ARRAY_A );// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
-			wp_cache_add( $cache_key, $results, 'cld_delivery' );
+		$results = array();
+
+		if ( ! empty( array_filter( $urls ) ) ) {
+			$tablename = self::get_relationship_table();
+			$sql       = "SELECT * from {$tablename} WHERE " . implode( ' OR ', $wheres );
+			$prepared  = $wpdb->prepare( $sql, array_map( 'md5', $urls ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$cache_key = md5( $prepared );
+			$results   = wp_cache_get( $cache_key, 'cld_delivery' );
+			if ( empty( $results ) ) {
+				$results = $wpdb->get_results( $prepared, ARRAY_A );// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
+				wp_cache_add( $cache_key, $results, 'cld_delivery' );
+			}
 		}
 
 		return $results;
@@ -1000,6 +1021,61 @@ class Utils {
 
 		if ( false === $scheme_less ) {
 			$url = $parts['scheme'] . ':' . $url;
+		}
+
+		return $url;
+	}
+
+	/**
+	 * Get the path from a url.
+	 *
+	 * @param string $url            The url.
+	 * @param bool   $bypass_filters Flag to bypass the filters.
+	 *
+	 * @return string
+	 */
+	public static function get_path_from_url( $url, $bypass_filters = false ) {
+		$content_url = content_url();
+
+		if ( ! $bypass_filters ) {
+			$content_url = apply_filters( 'cloudinary_content_url', $content_url );
+		}
+		$path = explode( self::clean_url( $content_url ), $url );
+		$path = end( $path );
+
+		return $path;
+	}
+
+	/**
+	 * Make a scaled version.
+	 *
+	 * @param string $url The url to make scaled.
+	 *
+	 * @return string
+	 */
+	public static function make_scaled_url( $url ) {
+		$file = self::pathinfo( $url );
+		$dash = strrchr( $file['filename'], '-' );
+		if ( '-scaled' === $dash ) {
+			return $url;
+		}
+
+		return $file['dirname'] . '/' . $file['filename'] . '-scaled.' . $file['extension'];
+	}
+
+	/**
+	 * Make a descaled version.
+	 *
+	 * @param string $url The url to descaled.
+	 *
+	 * @return string
+	 */
+	public static function descaled_url( $url ) {
+		$file = self::pathinfo( $url );
+		$dash = strrchr( $file['filename'], '-' );
+		if ( '-scaled' === $dash ) {
+			$file['basename'] = str_replace( '-scaled.', '.', $file['basename'] );
+			$url              = $file['dirname'] . '/' . $file['basename'];
 		}
 
 		return $url;
