@@ -984,7 +984,7 @@ class Api {
 		}
 
 		// Set a long-ish timeout since uploads can be 20mb+.
-		$args['timeout'] = 60; // phpcs:ignore
+		$args['timeout'] = 90; // phpcs:ignore
 
 		// Adjust timeout for additional eagers if image_freeform or video_freeform is set.
 		if ( ! empty( $args['body']['resource_type'] ) ) {
