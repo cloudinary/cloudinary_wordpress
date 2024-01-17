@@ -986,11 +986,13 @@ class Api {
 		// Set a long-ish timeout since uploads can be 20mb+.
 		$args['timeout'] = 60; // phpcs:ignore
 
-		// Adjust timeout for additional eagers if image_freeform is set.
-		$image_freeform = $this->media->get_settings()->get_value( 'image_freeform' );
-		if ( ! empty( $image_freeform ) ) {
-			$timeout_multiplier = explode( '/', $image_freeform );
-			$args['timeout']   += 60 * count( $timeout_multiplier ); // phpcs:ignore
+		// Adjust timeout for additional eagers if image_freeform or video_freeform is set.
+		if ( ! empty( $args['body']['resource_type'] ) ) {
+			$freeform = $this->media->get_settings()->get_value( $args['body']['resource_type'] . '_freeform' );
+			if ( ! empty( $freeform ) ) {
+				$timeout_multiplier = explode( '/', $freeform );
+				$args['timeout']   += 60 * count( $timeout_multiplier ); // phpcs:ignore
+			}
 		}
 
 		$request = wp_remote_request( $url, $args );
