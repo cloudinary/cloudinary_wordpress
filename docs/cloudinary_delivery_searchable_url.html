@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Filter: cloudinary_plugin_asset_cache_inline_types - Cloudinary Docs</title>
+	<title>Filter: cloudinary_delivery_searchable_url - Cloudinary Docs</title>
 
 	<script src="scripts/prettify/prettify.js"></script>
 	<script src="scripts/prettify/lang-css.js"></script>
@@ -22,7 +22,7 @@
 <div id="main">
 
 	
-	<h1 class="page-title">Filter: cloudinary_plugin_asset_cache_inline_types</h1>
+	<h1 class="page-title">Filter: cloudinary_delivery_searchable_url</h1>
 	
 
 	
@@ -44,14 +44,14 @@
 
     
 
-    <h4 class="name" id="cloudinary_plugin_asset_cache_inline_types">apply_filters( 'cloudinary_plugin_asset_cache_inline_types', <span class="signature">$inline_types )</span><span class="type-signature"> &rarr; {array}</span></h4>
+    <h4 class="name" id="cloudinary_delivery_searchable_url">apply_filters( 'cloudinary_delivery_searchable_url', <span class="signature">$url, $item, $content_url )</span><span class="type-signature"> &rarr; {string}</span></h4>
 
     
 
 
 
 <div class="description">
-    Filter types of files that can replaced inline with a base64 encoded data URI.
+    The URL to be searched for and prepared to be delivered by Cloudinary.
 </div>
 
 
@@ -85,7 +85,30 @@
 
         <tr>
             
-                <td class="name"><code>$inline_types</code></td>
+                <td class="name"><code>$url</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The URL to be searched for and prepared to be delivered by Cloudinary.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>$item</code></td>
             
 
             <td class="type">
@@ -101,7 +124,30 @@
 
             
 
-            <td class="description last">The types of files to be encoded inline.</td>
+            <td class="description last">The found asset array.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>$content_url</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The content URL.</td>
         </tr>
 
     
@@ -118,7 +164,8 @@
     
 
     
-
+    <dt class="tag-since">Since:</dt>
+    <dd class="tag-since"><ul class="dummy"><li>3.1.6</li></ul></dd>
     
 
     
@@ -138,16 +185,13 @@
     
 
     
-    <dt class="tag-default">Default Value:</dt>
-    <dd class="tag-default"><ul class="dummy">
-            <li>array()</li>
-        </ul></dd>
+
     
 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="php_class-cache.php.html">php/class-cache.php</a>, <a href="php_class-cache.php.html#line481">line 481</a>
+        <a href="php_class-delivery.php.html">php/class-delivery.php</a>, <a href="php_class-delivery.php.html#line1630">line 1630</a>
     </li></ul></dd>
     
 
@@ -181,7 +225,7 @@
     </dt>
     <dd>
         
-<span class="param-type">array</span>
+<span class="param-type">string</span>
 
 
     </dd>
