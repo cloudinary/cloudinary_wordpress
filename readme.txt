@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: image-optimizer, crop, core-web-vitals, responsive, resize, product-gallery, performance
 Requires at least: 4.7
-Tested up to: 6.3.1
+Tested up to: 6.4.2
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -133,6 +133,25 @@ Your site is now setup to start using Cloudinary.
 1. Need help? We’ve got you covered
 
 == Changelog ==
+
+= 3.1.6 (17 JANUARY 2024) =
+
+Fixes and Improvements:
+
+* Added support for video adaptive bitrate streaming protocols, HLS and MPEG-DASH
+* Implemented eagerly generating transformations for auto_formats to ensure faster delivery for both images and videos
+* Enable the Cloudinary video player when using a video URL in the video block
+* Fixed syncing and delivery of SVG files to Cloudinary
+* Resolved the issue of failure in fetching local data as it should appear on the plugin dashboard
+* Fixed a missing comma in the `sizes` attribute
+* Fixed the problem of extra query calls when no frontend URLs are detected
+* Fixed the extension being removed while using f_auto for video delivery
+* Resolved the issue of pushing staging assets to production, resulting in a full resync of the assets
+* Fixed invalid data in the additional settings block when editing the Cloudinary product gallery widget
+* Added a filter for extending eagerly generating transformations formats - `cloudinary_upload_eager_formats`
+* Added a filter for supporting different headless frontend domain - `cloudinary_delivery_searchable_url`
+* Added a filter for supporting different content URLs - `cloudinary_content_url`
+
 
 = 3.1.5 (11 OCTOBER 2023) =
 

@@ -243,7 +243,7 @@ class Upload_Sync {
 			$attached_file = get_attached_file( $attachment_id, true );
 			// The original will never be a -scaled.
 			// If we scale the attached file and the original, they should match. Meaning the attached file is not an edit.
-			if ( Delivery::make_scaled_url( $original_image ) !== Delivery::make_scaled_url( $attached_file ) ) {
+			if ( Utils::make_scaled_url( $original_image ) !== Utils::make_scaled_url( $attached_file ) ) {
 				// Since attached file is an edit, we want to upload the edited file, not the original.
 				$original_image = $attached_file;
 			}
@@ -292,7 +292,7 @@ class Upload_Sync {
 			2
 		);
 
-		$options = $this->media->get_upload_options( $attachment_id );
+		$options = $this->media->get_upload_options( $attachment_id, 'upload' );
 		if ( empty( $type ) ) {
 			$type = $this->sync->get_sync_type( $attachment_id );
 		}
@@ -371,7 +371,7 @@ class Upload_Sync {
 	 */
 	public function context_update( $attachment_id ) {
 
-		$options = $this->media->get_upload_options( $attachment_id );
+		$options = $this->media->get_upload_options( $attachment_id, 'upload' );
 		$result  = $this->connect->api->context( $options );
 
 		if ( ! is_wp_error( $result ) ) {

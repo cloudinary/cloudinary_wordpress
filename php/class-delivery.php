@@ -17,6 +17,7 @@ use Cloudinary\UI\Component\HTML;
 use Cloudinary\Delivery\Bypass;
 use Cloudinary\Relate\Relationship;
 use WP_Post;
+use Cloudinary\Utils;
 
 /**
  * Plugin Delivery class.
@@ -255,7 +256,7 @@ class Delivery implements Setup {
 			}
 		}
 
-		$results = $this->query_relations( array_keys( $urls ) );
+		$results = Utils::query_relations( array_keys( $urls ) );
 		String_Replace::reset();
 		foreach ( $results as $result ) {
 			if ( ! isset( $urls[ $result['public_id'] ] ) ) {
@@ -369,6 +370,12 @@ class Delivery implements Setup {
 			$is = ! wp_attachment_is_image( $attachment_id ) && ! wp_attachment_is( 'video', $attachment_id );
 		}
 
+		$svg = $this->plugin->get_component( 'svg' );
+
+		if ( ! $is && wp_attachment_is_image( $attachment_id ) && $svg->is_active() ) {
+			$is = true;
+		}
+
 		/**
 		 * Filter deliverable attachments.
 		 *
@@ -401,7 +408,7 @@ class Delivery implements Setup {
 		}
 
 		if ( empty( $sized_url ) ) {
-			$sized_url = self::clean_url( wp_get_attachment_url( $attachment_id ), true );
+			$sized_url = Utils::get_path_from_url( wp_get_attachment_url( $attachment_id ), true );
 		}
 		self::create_size_relation( $attachment_id, $sized_url, $wh, $base );
 		// Update public ID and type.
@@ -508,7 +515,12 @@ class Delivery implements Setup {
 			$sizes[ $attachment_id ] = array();
 			$meta                    = wp_get_attachment_metadata( $attachment_id, true );
 			if ( ! empty( $meta['width'] ) && ! empty( $meta['height'] ) ) {
-				$local_url               = self::clean_url( $this->media->local_url( $attachment_id ), true );
+				// Keep the full URL for cloudinary_assets.
+				if ( Assets::POST_TYPE_SLUG === get_post_type( $attachment_id ) ) {
+					$local_url = Utils::clean_url( $this->media->local_url( $attachment_id ), true );
+				} else {
+					$local_url = Utils::get_path_from_url( $this->media->local_url( $attachment_id ), true );
+				}
 				$sizes[ $attachment_id ] = array(
 					'sized_url' => $local_url,
 					'size'      => $meta['width'] . 'x' . $meta['height'],
@@ -524,15 +536,15 @@ class Delivery implements Setup {
 	/**
 	 * Update relationship public ID.
 	 *
-	 * @param int    $attachment_id The attachment ID.
-	 * @param string $public_id     The public ID.
+	 * @param int         $attachment_id The attachment ID.
+	 * @param null|string $public_id     The public ID.
 	 */
 	public static function update_size_relations_public_id( $attachment_id, $public_id ) {
 		$relationship = Relationship::get_relationship( $attachment_id );
 
 		if ( $relationship instanceof Relationship ) {
 			$relationship->public_id   = $public_id;
-			$relationship->public_hash = md5( $public_id );
+			$relationship->public_hash = md5( (string) $public_id );
 			$relationship->signature   = self::get_settings_signature();
 			$relationship->save();
 		}
@@ -852,8 +864,8 @@ class Delivery implements Setup {
 
 		global $wpdb;
 		$dirs    = wp_get_upload_dir();
+		$baseurl = Utils::clean_url( $dirs['baseurl'] );
 		$search  = array();
-		$baseurl = self::clean_url( $dirs['baseurl'] );
 		foreach ( $this->unknown as $url ) {
 			$url      = ltrim( str_replace( $baseurl, '', $url ), '/' );
 			$search[] = $url;
@@ -1160,12 +1172,14 @@ class Delivery implements Setup {
 				$local_size = filesize( get_attached_file( $tag_element['id'] ) );
 			}
 			$remote_size                           = get_post_meta( $tag_element['id'], Sync::META_KEYS['remote_size'], true );
-			$tag_element['atts']['data-filesize']   = size_format( $local_size );
+			$tag_element['atts']['data-filesize']  = size_format( $local_size );
 			$tag_element['atts']['data-optsize']   = size_format( $remote_size );
 			$tag_element['atts']['data-optformat'] = get_post_meta( $tag_element['id'], Sync::META_KEYS['remote_format'], true );
 			if ( ! empty( $local_size ) && ! empty( $remote_size ) ) {
 				$diff                                = $local_size - $remote_size;
 				$tag_element['atts']['data-percent'] = round( $diff / $local_size * 100, 1 );
+			} elseif ( 'image' === $tag_element['type'] ) {
+				$this->plugin->get_component( 'storage' )->size_sync( $tag_element['id'] );
 			}
 
 			$base_url                              = $this->plugin->settings->get_url( 'edit_asset' );
@@ -1335,7 +1349,7 @@ class Delivery implements Setup {
 			return null;
 		}
 		$raw_url                 = $attributes['src'];
-		$url                     = $this->maybe_unsize_url( self::clean_url( $this->sanitize_url( $raw_url ) ) );
+		$url                     = $this->maybe_unsize_url( Utils::clean_url( $this->sanitize_url( $raw_url ) ) );
 		$tag_element['base_url'] = $url;
 		// Track back the found URL.
 		if ( $this->media->is_cloudinary_url( $raw_url ) ) {
@@ -1514,36 +1528,6 @@ class Delivery implements Setup {
 	}
 
 	/**
-	 * Clean a url: adds scheme if missing, removes query and fragments.
-	 *
-	 * @param string $url         The URL to clean.
-	 * @param bool   $scheme_less Flag to clean out scheme.
-	 *
-	 * @return string
-	 */
-	public static function clean_url( $url, $scheme_less = true ) {
-
-		$default = array(
-			'scheme' => '',
-			'host'   => '',
-			'path'   => '',
-			'port'   => '',
-		);
-		$parts   = wp_parse_args( wp_parse_url( $url ), $default );
-		$host    = $parts['host'];
-		if ( ! empty( $parts['port'] ) ) {
-			$host .= ':' . $parts['port'];
-		}
-		$url = '//' . $host . $parts['path'];
-
-		if ( false === $scheme_less ) {
-			$url = $parts['scheme'] . ':' . $url;
-		}
-
-		return $url;
-	}
-
-	/**
 	 * Check if the file type is allowed to be uploaded.
 	 *
 	 * @param string $ext The filetype extension.
@@ -1624,10 +1608,47 @@ class Delivery implements Setup {
 		 */
 		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
 
-		$found                       = array();
-		$found[ $item['public_id'] ] = $item;
-		$scaled                      = self::make_scaled_url( $item['sized_url'] );
-		$descaled                    = self::descaled_url( $item['sized_url'] );
+		/**
+		 * The URL to be searched for and prepared to be delivered by Cloudinary.
+		 *
+		 * @hook   cloudinary_content_url
+		 * @since  3.1.6
+		 *
+		 * @param $url {string} The default content_url.
+		 *
+		 * @return {string}
+		 */
+		$content_url = apply_filters( 'cloudinary_content_url', content_url() );
+
+		// Cloudinary assets have a full URL.
+		if ( 'asset' === $item['sync_type'] ) {
+			$url = $item['sized_url'];
+		} else {
+			$url = Utils::clean_url( $content_url ) . $item['sized_url'];
+		}
+
+		/**
+		 * The URL to be searched for and prepared to be delivered by Cloudinary.
+		 *
+		 * @hook   cloudinary_delivery_searchable_url
+		 * @since  3.1.6
+		 *
+		 * @param $url         {string} The URL to be searched for and prepared to be delivered by Cloudinary.
+		 * @param $item        {array}  The found asset array.
+		 * @param $content_url {string} The content URL.
+		 *
+		 * @return {string}
+		 */
+		$url = apply_filters( 'cloudinary_delivery_searchable_url', $url, $item, $content_url );
+
+		$found = array();
+
+		// If there's no public ID then don't pollute the found items.
+		if ( ! empty( $item['public_id'] ) ) {
+			$found[ $item['public_id'] ] = $item;
+		}
+		$scaled                      = Utils::make_scaled_url( $url );
+		$descaled                    = Utils::descaled_url( $url );
 		$scaled_slashed              = addcslashes( $scaled, '/' );
 		$descaled_slashed            = addcslashes( $descaled, '/' );
 		$found[ $scaled ]            = $item;
@@ -1659,14 +1680,14 @@ class Delivery implements Setup {
 			$this->sync->add_to_sync( $item['post_id'] );
 		} elseif ( ! empty( $item['public_id'] ) ) {
 			// Most likely an asset with a public ID.
-			$this->usable[ $item['sized_url'] ] = $item['sized_url'];
+			$this->usable[ $url ] = $url;
 			if ( self::get_settings_signature() !== $item['signature'] ) {
 				$sync_type = $this->sync->get_sync_type( $item['post_id'] );
 				if ( $sync_type ) {
 					$this->sync->add_to_sync( $item['post_id'] );
 					if ( $this->sync->is_required( $sync_type, $item['post_id'] ) ) {
 						// Can't render this, so lets remove it from usable list.
-						unset( $this->usable[ $item['sized_url'] ] );
+						unset( $this->usable[ $url ] );
 					}
 				}
 			}
@@ -1719,44 +1740,9 @@ class Delivery implements Setup {
 		) {
 			$sized                                = wp_basename( $url );
 			$url                                  = str_replace( '-' . $dash, '', $url );
-			$scaled                               = self::make_scaled_url( $url );
+			$scaled                               = Utils::make_scaled_url( $url );
 			$this->found_urls[ $url ][ $dash ]    = $sized;
 			$this->found_urls[ $scaled ][ $dash ] = $sized;
-		}
-
-		return $url;
-	}
-
-	/**
-	 * Make a scaled version.
-	 *
-	 * @param string $url The url to make scaled.
-	 *
-	 * @return string
-	 */
-	public static function make_scaled_url( $url ) {
-		$file = Utils::pathinfo( $url );
-		$dash = strrchr( $file['filename'], '-' );
-		if ( '-scaled' === $dash ) {
-			return $url;
-		}
-
-		return $file['dirname'] . '/' . $file['filename'] . '-scaled.' . $file['extension'];
-	}
-
-	/**
-	 * Make a descaled version.
-	 *
-	 * @param string $url The url to descaled.
-	 *
-	 * @return string
-	 */
-	public static function descaled_url( $url ) {
-		$file = Utils::pathinfo( $url );
-		$dash = strrchr( $file['filename'], '-' );
-		if ( '-scaled' === $dash ) {
-			$file['basename'] = str_replace( '-scaled.', '.', $file['basename'] );
-			$url              = $file['dirname'] . '/' . $file['basename'];
 		}
 
 		return $url;
@@ -1771,13 +1757,14 @@ class Delivery implements Setup {
 		$content    = wp_unslash( $content );
 		$all_urls   = array_unique( Utils::extract_urls( $content ) );
 		$base_urls  = array_filter( array_map( array( $this, 'sanitize_url' ), $all_urls ) );
-		$clean_urls = array_map( array( $this, 'clean_url' ), $base_urls );
+		$clean_urls = array_map( array( 'Cloudinary\Utils', 'clean_url' ), $base_urls );
 		$urls       = array_filter( $clean_urls, array( $this, 'validate_url' ) );
+		$decoded    = array_map( 'urldecode', $urls );
 
 		// De-size.
 		$desized = array_unique( array_map( array( $this, 'maybe_unsize_url' ), $urls ) );
-		$scaled  = array_unique( array_map( array( $this, 'make_scaled_url' ), $desized ) );
-		$urls    = array_merge( $desized, $scaled );
+		$scaled  = array_unique( array_map( array( Utils::class, 'make_scaled_url' ), $desized ) );
+		$urls    = array_unique( array_merge( $desized, $scaled, $decoded ) );
 		$urls    = array_values( $urls ); // resets the index.
 
 		$public_ids = array();
@@ -1793,7 +1780,10 @@ class Delivery implements Setup {
 			return; // Bail since theres nothing.
 		}
 
-		$results = $this->query_relations( $public_ids, $urls );
+		$paths = array_map( array( Utils::class, 'get_path_from_url' ), $urls );
+
+		// Get the results that include the public IDs, the paths (from Media Library), and urls for additional assets.
+		$results = Utils::query_relations( $public_ids, array_merge( $paths, $urls ) );
 
 		$auto_sync = $this->sync->is_auto_sync_enabled();
 		foreach ( $results as $result ) {
@@ -1801,43 +1791,6 @@ class Delivery implements Setup {
 		}
 		// Set unknowns.
 		$this->unknown = array_diff( $urls, array_keys( $this->known ) );
-	}
-
-	/**
-	 * Run a query with Public_id's and or local urls.
-	 *
-	 * @param array $public_ids List of Public_IDs qo query.
-	 * @param array $urls       List of URLS to query.
-	 *
-	 * @return array
-	 */
-	public function query_relations( $public_ids, $urls = array() ) {
-		global $wpdb;
-
-		$wheres = array();
-		if ( ! empty( $urls ) ) {
-			// Do the URLS.
-			$list     = implode( ', ', array_fill( 0, count( $urls ), '%s' ) );
-			$wheres[] = "url_hash IN( {$list} )";
-		}
-		if ( ! empty( $public_ids ) ) {
-			// Do the public_ids.
-			$list     = implode( ', ', array_fill( 0, count( $public_ids ), '%s' ) );
-			$wheres[] = "public_hash IN( {$list} )";
-			$urls     = array_merge( $urls, $public_ids );
-		}
-
-		$tablename = Utils::get_relationship_table();
-		$sql       = "SELECT * from {$tablename} WHERE " . implode( ' OR ', $wheres );
-		$prepared  = $wpdb->prepare( $sql, array_map( 'md5', $urls ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$cache_key = md5( $prepared );
-		$results   = wp_cache_get( $cache_key, 'cld_delivery' );
-		if ( empty( $results ) ) {
-			$results = $wpdb->get_results( $prepared, ARRAY_A );// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
-			wp_cache_add( $cache_key, $results, 'cld_delivery' );
-		}
-
-		return $results;
 	}
 
 	/**

@@ -402,7 +402,7 @@ class Filter {
 		if ( isset( $linked_assets[ $cleaned ] ) ) {
 			$asset_id = $linked_assets[ $cleaned ];
 		}
-		$scaled = Delivery::make_scaled_url( $cleaned );
+		$scaled = Utils::make_scaled_url( $cleaned );
 		if ( isset( $linked_assets[ $scaled ] ) ) {
 			$asset_id = $linked_assets[ $scaled ];
 		}

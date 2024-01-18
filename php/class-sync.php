@@ -1002,7 +1002,7 @@ class Sync implements Setup, Assets {
 	 * @param int $attachment_id The attachment ID to add.
 	 */
 	public function add_to_sync( $attachment_id ) {
-		if ( ! in_array( $attachment_id, $this->to_sync, true ) ) {
+		if ( ! in_array( (int) $attachment_id, $this->to_sync, true ) ) {
 
 			// There are cases where we do not check can_sync. This is to make sure we don't add to the to_sync array if we can't sync.
 			if ( ! $this->plugin->get_component( 'delivery' )->is_deliverable( $attachment_id ) ) {

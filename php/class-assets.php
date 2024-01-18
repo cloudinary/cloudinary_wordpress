@@ -425,10 +425,10 @@ class Assets extends Settings_Component {
 	 * @return string
 	 */
 	public function clean_path( $path ) {
-		$home = Delivery::clean_url( trailingslashit( home_url() ) );
-		$path = str_replace( $home, '', Delivery::clean_url( $path ) );
+		$home = Utils::clean_url( trailingslashit( home_url() ) );
+		$path = str_replace( $home, '', Utils::clean_url( $path ) );
 		if ( empty( Utils::pathinfo( $path, PATHINFO_EXTENSION ) ) ) {
-			$path = trailingslashit( $path );
+			$path = urldecode( trailingslashit( $path ) );
 		}
 
 		return $path;
@@ -553,7 +553,7 @@ class Assets extends Settings_Component {
 	 */
 	public function generate_edit_signature( $attachment_id ) {
 		$sig  = wp_json_encode( (array) get_post_meta( $attachment_id, '_wp_attachment_backup_sizes', true ) );
-		$file = get_attached_file( $attachment_id );
+		$file = Utils::get_path_from_url( $this->media->local_url( $attachment_id ), true );
 
 		return $sig . $file;
 	}
@@ -636,16 +636,6 @@ class Assets extends Settings_Component {
 			if ( ! $parent ) {
 				$valid = false;
 			}
-		}
-
-		if ( $valid && $this->delivery->is_deliverable( $attachment_id ) ) {
-			$valid = false;
-
-			// translators: The attachment ID.
-			$action_message = sprintf( __( 'Clean up sync metadata for %d', 'cloudinary' ), $attachment_id );
-			do_action( '_cloudinary_queue_action', $action_message );
-
-			Utils::clean_up_sync_meta( $attachment_id );
 		}
 
 		return $valid;
@@ -1039,7 +1029,7 @@ class Assets extends Settings_Component {
 		$parts    = explode( $item['parent_path'], $item['sized_url'] );
 		$parts[0] = $dirs['baseurl'];
 
-		$url     = './' . $parts[1];
+		$url     = $item['sized_url'];
 		$size    = $item['width'] > $item['height'] ? array( 'width' => $max_size ) : array( 'height' => $max_size );
 		$break   = null;
 		$preview = wp_get_attachment_thumb_url( $item['post_id'] );
@@ -1085,8 +1075,8 @@ class Assets extends Settings_Component {
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 
-		$full_url  = home_url() . wp_parse_url( $url, PHP_URL_PATH );
-		$file_path = str_replace( home_url(), untrailingslashit( ABSPATH ), $full_url );
+		$full_url  = urldecode( home_url() . wp_parse_url( $url, PHP_URL_PATH ) );
+		$file_path = urldecode( str_replace( home_url(), untrailingslashit( ABSPATH ), $full_url ) );
 		if ( ! file_exists( $file_path ) ) {
 			return false;
 		}
@@ -1111,7 +1101,7 @@ class Assets extends Settings_Component {
 		wp_generate_attachment_metadata( $id, $file_path );
 
 		// Init the auto sync.
-		Delivery::create_size_relation( $id, $url, $size, $base );
+		Delivery::create_size_relation( $id, Utils::clean_url( $url, true ), $size, $base );
 		Delivery::update_size_relations_state( $id, 'enable' );
 		$this->media->sync->set_signature_item( $id, 'delivery' );
 		$this->media->sync->get_sync_type( $id );
@@ -1159,7 +1149,7 @@ class Assets extends Settings_Component {
 			foreach ( $paths->get_settings() as $path ) {
 				if ( 'on' === $path->get_value() ) {
 					$conf = $path->get_params();
-					self::register_asset_path( trailingslashit( $conf['url'] ), $conf['version'] );
+					self::register_asset_path( urldecode( trailingslashit( $conf['url'] ) ), $conf['version'] );
 				}
 			}
 		}

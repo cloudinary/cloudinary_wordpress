@@ -26,7 +26,8 @@
     "lint:php": "composer lint",
     "lint:php:fix": "composer fix",
     "lint:style": "wp-scripts lint-style",
-    "package": "npm run build && grunt package",
+    "package": "./package/package.sh",
+    "package:build": "npm run build && grunt package",
     "postinstall": "composer install",
     "readme": "composer readme",
     "release": "release-it --no-increment",
@@ -134,7 +135,7 @@
     "postcss-nested": "^5.0.5",
     "postcss-preset-env": "^5.3.0",
     "prettier": "npm:wp-prettier@^2.0.5",
-    "progressbar.js": "^1.1.0",
+    "progressbar.js": "^1.1.1",
     "puppeteer": "npm:puppeteer-core@^3.0.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
@@ -152,5 +153,5 @@
     "webpackbar": "^5.0.2",
     "wp-hookdoc": "^0.2.0"
   },
-  "version": "3.1.0"
+  "version": "3.1.6"
 }

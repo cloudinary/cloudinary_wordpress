@@ -62,14 +62,22 @@ const StatefulGalleryControls = () => {
 	} ) ).filter( ( colorObject ) => 0 !== colorObject.color.length );
 
 	useEffect( () => {
-		let gallery;
+		let gallery, customSettingsPreview;
 
 		const config = setupAttributesForRendering( statefulAttrs );
 		const { customSettings, ...mainConfig } = config;
 
 		try {
+			try {
+				customSettingsPreview = JSON.parse( customSettings );
+			} catch {
+				customSettingsPreview = customSettings;
+			}
 			gallery = cloudinary.galleryWidget(
-				galleryWidgetConfig( { ...mainConfig, ...customSettings } )
+				galleryWidgetConfig( {
+					...mainConfig,
+					...customSettingsPreview,
+				} )
 			);
 		} catch {
 			gallery = cloudinary.galleryWidget(

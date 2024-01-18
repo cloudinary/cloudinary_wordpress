@@ -156,6 +156,11 @@ class Gallery extends Settings_Component {
 
 		$config['queryParam'] = 'AA';
 
+		// Make sure custom settings are a json string.
+		if ( ! empty( $config['customSettings'] ) && is_array( $config['customSettings'] ) ) {
+			$config['customSettings'] = wp_json_encode( $config['customSettings'] );
+		}
+
 		return $config;
 	}
 
@@ -456,6 +461,14 @@ class Gallery extends Settings_Component {
 			$attributes['secureDistribution'] = $credentials['cname'];
 			$attributes['privateCdn']         = true;
 		}
+
+		if ( ! empty( $attributes['customSettings'] ) ) {
+			if ( is_string( $attributes['customSettings'] ) && ! is_admin() ) {
+				$attributes['customSettings'] = json_decode( $attributes['customSettings'], true );
+			}
+			$attributes = wp_parse_args( $attributes['customSettings'], $attributes );
+		}
+
 		unset( $attributes['selectedImages'], $attributes['customSettings'] );
 
 		$attributes['queryParam'] = 'AA';
