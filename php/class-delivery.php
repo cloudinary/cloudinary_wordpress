@@ -464,7 +464,6 @@ class Delivery implements Setup {
 			'realtime'    => true,
 		);
 		$this->sync->register_sync_type( 'relation', $structure );
-
 	}
 
 	/**
@@ -936,7 +935,7 @@ class Delivery implements Setup {
 		$media = array();
 		if ( preg_match_all( '#(?P<tags><(' . $tags . ')[^>]*\>){1}#is', $content, $found ) ) {
 			$count = count( $found[0] );
-			for ( $i = 0; $i < $count; $i ++ ) {
+			for ( $i = 0; $i < $count; $i++ ) {
 				$media[ $i ] = $found['tags'][ $i ];
 			}
 		}
@@ -1639,14 +1638,14 @@ class Delivery implements Setup {
 		if ( ! empty( $item['public_id'] ) ) {
 			$found[ $item['public_id'] ] = $item;
 		}
-		$scaled                      = Utils::make_scaled_url( $url );
-		$descaled                    = Utils::descaled_url( $url );
-		$scaled_slashed              = addcslashes( $scaled, '/' );
-		$descaled_slashed            = addcslashes( $descaled, '/' );
-		$found[ $scaled ]            = $item;
-		$found[ $descaled ]          = $item;
-		$found[ $scaled_slashed ]    = array_merge( $item, array( 'slashed' => true ) );
-		$found[ $descaled_slashed ]  = array_merge( $item, array( 'slashed' => true ) );
+		$scaled                     = Utils::make_scaled_url( $url );
+		$descaled                   = Utils::descaled_url( $url );
+		$scaled_slashed             = addcslashes( $scaled, '/' );
+		$descaled_slashed           = addcslashes( $descaled, '/' );
+		$found[ $scaled ]           = $item;
+		$found[ $descaled ]         = $item;
+		$found[ $scaled_slashed ]   = array_merge( $item, array( 'slashed' => true ) );
+		$found[ $descaled_slashed ] = array_merge( $item, array( 'slashed' => true ) );
 
 		if ( ! $this->is_deliverable( $item['post_id'] ) ) {
 			$this->unusable = array_merge( $this->unusable, $found );
