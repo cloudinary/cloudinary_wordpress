@@ -396,7 +396,7 @@ class Filter {
 		}
 		// If we are here, we are using a URL for the attachment from previous edit. Try find the new ID.
 		$unsized       = $this->delivery->maybe_unsize_url( $url );
-		$cleaned       = Delivery::clean_url( $unsized );
+		$cleaned       = Utils::clean_url( $unsized );
 		$linked_assets = $this->media->get_post_meta( $attachment_id, Assets::META_KEYS['edits'], true );
 		$asset_id      = $attachment_id;
 		if ( isset( $linked_assets[ $cleaned ] ) ) {

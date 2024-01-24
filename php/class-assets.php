@@ -783,7 +783,7 @@ class Assets extends Settings_Component {
 					continue;
 				}
 
-				$url = Delivery::clean_url( path_join( $base, $data['file'] ) );
+				$url = Utils::clean_url( path_join( $base, $data['file'] ) );
 				if ( wp_basename( $url ) === $current ) {
 					// Currently the original.
 					if ( isset( $assets[ $url ] ) ) {
