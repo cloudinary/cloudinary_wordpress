@@ -64,7 +64,7 @@ class Filter {
 		if ( preg_match_all( '#(?P<tags><(' . $tags . ')[^>]*?>){1}#is', $content, $found ) ) {
 
 			$count = count( $found[0] );
-			for ( $i = 0; $i < $count; $i ++ ) {
+			for ( $i = 0; $i < $count; $i++ ) {
 				$images[ $i ] = $found['tags'][ $i ];
 			}
 		}
@@ -686,13 +686,25 @@ class Filter {
 		$str_vid_edit   = '<# if ( ! _.isEmpty( data.model.poster ) ) { #>';
 		$str_vid_insert = '<# if ( \'undefined\' !== typeof data.sizes ) { #>';
 		$str_gen_edit   = '<h2>' . __( 'Attachment Display Settings' ) . '</h2>'; // phpcs:ignore
-		$template       = str_replace( $str_label, $this->template_overwrite_insert() . $str_label, $template );
-		$template       = str_replace( $str_container, $this->template_overwrite_edit() . $str_container, $template );
-		$template       = str_replace( $str_vid_edit, $this->template_overwrite_video_edit() . $str_vid_edit, $template );
-		$template       = str_replace( $str_vid_insert, $this->template_overwrite_insert_video() . $str_vid_insert, $template );
-		$template       = str_replace( $str_gen_edit, $str_gen_edit . $this->template_overwrite_general(), $template );
+		$template       = str_replace(
+			array(
+				$str_label,
+				$str_container,
+				$str_vid_edit,
+				$str_vid_insert,
+				$str_gen_edit,
+			),
+			array(
+				$this->template_overwrite_insert() . $str_label,
+				$this->template_overwrite_edit() . $str_container,
+				$this->template_overwrite_video_edit() . $str_vid_edit,
+				$this->template_overwrite_insert_video() . $str_vid_insert,
+				$str_gen_edit . $this->template_overwrite_general(),
+			),
+			$template
+		);
 
-		echo $template; // phpcs:ignore XSS ok
+		echo $template; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 
 	/**
