@@ -395,6 +395,13 @@ class Delivery implements Setup {
 	 * @param int $attachment_id The attachment ID.
 	 */
 	public function create_delivery( $attachment_id ) {
+		$relationship    = Relationship::get_relationship( $attachment_id );
+		$transformations = null;
+		// Preserve pre-existing transformations.
+		if ( $relationship instanceof Relationship ) {
+			$data            = $relationship->get_data();
+			$transformations = $data['transformations'];
+		}
 		$this->delete_size_relationship( $attachment_id );
 		$size      = $this->get_sized( $attachment_id );
 		$public_id = $this->media->has_public_id( $attachment_id ) ? $this->media->get_public_id( $attachment_id ) : null;
@@ -414,6 +421,7 @@ class Delivery implements Setup {
 		// Update public ID and type.
 		self::update_size_relations_public_id( $attachment_id, $public_id );
 		self::update_size_relations_state( $attachment_id, 'inherit' );
+		self::update_size_relations_transformations( $attachment_id, $transformations );
 		$this->sync->set_signature_item( $attachment_id, 'delivery' );
 	}
 
@@ -564,8 +572,8 @@ class Delivery implements Setup {
 	/**
 	 * Update relationship transformations.
 	 *
-	 * @param int    $attachment_id   The attachment ID.
-	 * @param string $transformations The transformations to set.
+	 * @param int         $attachment_id   The attachment ID.
+	 * @param string|null $transformations The transformations to set.
 	 */
 	public static function update_size_relations_transformations( $attachment_id, $transformations ) {
 		Relate::update_transformations( $attachment_id, $transformations );
