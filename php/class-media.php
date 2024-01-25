@@ -745,7 +745,6 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		return $attachment_id;
-
 	}
 
 	/**
@@ -3237,6 +3236,5 @@ class Media extends Settings_Component implements Setup {
 			// Save to DB.
 			$setting->save_value();
 		}
-
 	}
 }

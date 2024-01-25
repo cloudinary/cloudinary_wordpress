@@ -633,7 +633,7 @@ final class Plugin {
 		$namespace = trim( implode( DIRECTORY_SEPARATOR, $namespace ) );
 
 		// Get the path to our files.
-		$directory = dirname( __FILE__ ) . DIRECTORY_SEPARATOR . '../php';
+		$directory = __DIR__ . DIRECTORY_SEPARATOR . '../php';
 		if ( ! empty( $namespace ) ) {
 			$directory .= DIRECTORY_SEPARATOR . strtolower( $namespace );
 		}
