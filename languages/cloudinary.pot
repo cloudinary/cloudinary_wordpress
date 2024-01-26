@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cloudinary STABLETAG\n"
 "Report-Msgid-Bugs-To: https://github.com/cloudinary/cloudinary_wordpress\n"
-"POT-Creation-Date: 2024-01-12 09:58:32+00:00\n"
+"POT-Creation-Date: 2024-01-26 15:41:01+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -42,32 +42,32 @@ msgstr ""
 msgid "Some transformations were invalid and were removed."
 msgstr ""
 
-#: php/assets/class-rest-assets.php:332 php/assets/class-rest-assets.php:360
+#: php/assets/class-rest-assets.php:333 php/assets/class-rest-assets.php:361
 #: php/cache/class-cache-point.php:601
 msgid "No items cached."
 msgstr ""
 
-#: php/assets/class-rest-assets.php:344 php/cache/class-cache-point.php:585
+#: php/assets/class-rest-assets.php:345 php/cache/class-cache-point.php:585
 #. translators: The current page and total pages.
 msgid "Page %1$d of %2$d"
 msgstr ""
 
-#: php/assets/class-rest-assets.php:347 php/cache/class-cache-point.php:588
+#: php/assets/class-rest-assets.php:348 php/cache/class-cache-point.php:588
 #. translators: The number of files.
 msgid "%d cached file"
 msgid_plural "%d cached files"
 msgstr[0] ""
 msgstr[1] ""
 
-#: php/assets/class-rest-assets.php:358 php/cache/class-cache-point.php:599
+#: php/assets/class-rest-assets.php:359 php/cache/class-cache-point.php:599
 msgid "No items found."
 msgstr ""
 
-#: php/cache/class-cache-point.php:962 php/class-assets.php:1132
+#: php/cache/class-cache-point.php:962 php/class-assets.php:1131
 msgid "Cloudinary Asset"
 msgstr ""
 
-#: php/cache/class-cache-point.php:963 php/class-assets.php:1133
+#: php/cache/class-cache-point.php:963 php/class-assets.php:1132
 msgid "Post type to represent a non-media library asset."
 msgstr ""
 
@@ -99,102 +99,102 @@ msgstr ""
 msgid "Updating asset storage"
 msgstr ""
 
-#: php/class-assets.php:1194
+#: php/class-assets.php:1193
 msgid "Additional Asset Sync Settings"
 msgstr ""
 
-#: php/class-assets.php:1214
+#: php/class-assets.php:1213
 msgid "Additional asset sync settings"
 msgstr ""
 
-#: php/class-assets.php:1215
+#: php/class-assets.php:1214
 msgid ""
 "Enabling additional asset syncing will sync the toggled assets with "
 "Cloudinary to make use of advanced optimization and CDN delivery "
 "functionality."
 msgstr ""
 
-#: php/class-assets.php:1216
+#: php/class-assets.php:1215
 msgid "Enable additional asset syncing"
 msgstr ""
 
-#: php/class-assets.php:1255
+#: php/class-assets.php:1254
 msgid "External Asset Sync Settings"
 msgstr ""
 
-#: php/class-assets.php:1280 php/class-cache.php:615
+#: php/class-assets.php:1279 php/class-cache.php:615
 msgid "Plugin"
 msgstr ""
 
-#: php/class-assets.php:1317 php/class-cache.php:792
+#: php/class-assets.php:1315 php/class-cache.php:792
 msgid "Plugins"
 msgstr ""
 
-#: php/class-assets.php:1335 php/class-cache.php:809
+#: php/class-assets.php:1333 php/class-cache.php:809
 msgid "Deliver assets from all plugin folders"
 msgstr ""
 
-#: php/class-assets.php:1367 php/class-cache.php:652
+#: php/class-assets.php:1365 php/class-cache.php:652
 msgid "Theme"
 msgstr ""
 
-#: php/class-assets.php:1399 php/class-cache.php:843
+#: php/class-assets.php:1397 php/class-cache.php:843
 msgid "Themes"
 msgstr ""
 
-#: php/class-assets.php:1417 php/class-cache.php:860
+#: php/class-assets.php:1415 php/class-cache.php:860
 msgid "Deliver all assets from active theme."
 msgstr ""
 
-#: php/class-assets.php:1442 php/class-assets.php:1477 php/class-cache.php:684
+#: php/class-assets.php:1440 php/class-assets.php:1475 php/class-cache.php:684
 #: php/class-cache.php:895
 msgid "WordPress"
 msgstr ""
 
-#: php/class-assets.php:1451 php/class-cache.php:668
+#: php/class-assets.php:1449 php/class-cache.php:668
 msgid "WordPress Admin"
 msgstr ""
 
-#: php/class-assets.php:1458 php/class-cache.php:675
+#: php/class-assets.php:1456 php/class-cache.php:675
 msgid "WordPress Includes"
 msgstr ""
 
-#: php/class-assets.php:1495 php/class-cache.php:912
+#: php/class-assets.php:1493 php/class-cache.php:912
 msgid "Deliver all assets from WordPress core."
 msgstr ""
 
-#: php/class-assets.php:1521 php/class-assets.php:1547 php/class-cache.php:708
+#: php/class-assets.php:1519 php/class-assets.php:1545 php/class-cache.php:708
 #: php/class-cache.php:947
 msgid "Content"
 msgstr ""
 
-#: php/class-assets.php:1528 php/class-cache.php:699
+#: php/class-assets.php:1526 php/class-cache.php:699
 msgid "Uploads"
 msgstr ""
 
-#: php/class-assets.php:1565 php/class-cache.php:964
+#: php/class-assets.php:1563 php/class-cache.php:964
 msgid "Deliver all content assets from WordPress Media Library."
 msgstr ""
 
-#: php/class-assets.php:1589
+#: php/class-assets.php:1587
 msgid "Enable external assets"
 msgstr ""
 
-#: php/class-assets.php:1590
+#: php/class-assets.php:1588
 msgid ""
 "Enabling external assets allows you to sync assets from specific external "
 "sources with Cloudinary."
 msgstr ""
 
-#: php/class-assets.php:1600
+#: php/class-assets.php:1598
 msgid "Domains for each external source."
 msgstr ""
 
-#: php/class-assets.php:1603
+#: php/class-assets.php:1601
 msgid "Enter a domain"
 msgstr ""
 
-#: php/class-assets.php:1604
+#: php/class-assets.php:1602
 msgid "Press ENTER or SPACE or type comma or tab to continue."
 msgstr ""
 
@@ -504,7 +504,7 @@ msgid ""
 "WordPress."
 msgstr ""
 
-#: php/class-media.php:2042
+#: php/class-media.php:2048
 msgid "Import"
 msgstr ""
 
@@ -512,43 +512,43 @@ msgstr ""
 msgid "Cloudinary"
 msgstr ""
 
-#: php/class-media.php:2398
+#: php/class-media.php:2404
 msgid "The delivery for this asset is disabled."
 msgstr ""
 
-#: php/class-media.php:2402
+#: php/class-media.php:2408
 msgid "Not syncable. This is an external media."
 msgstr ""
 
-#: php/class-media.php:2406
+#: php/class-media.php:2412
 msgid "This media is Fetch type."
 msgstr ""
 
-#: php/class-media.php:2410
+#: php/class-media.php:2416
 msgid "This media is Sprite type."
 msgstr ""
 
-#: php/class-media.php:2420
+#: php/class-media.php:2426
 msgid "Not Synced"
 msgstr ""
 
-#: php/class-media.php:2425
+#: php/class-media.php:2431
 msgid "Synced"
 msgstr ""
 
-#: php/class-media.php:3075
+#: php/class-media.php:3081
 msgid "No Cloudinary filters"
 msgstr ""
 
-#: php/class-media.php:3175
+#: php/class-media.php:3181
 msgid "Media Settings"
 msgstr ""
 
-#: php/class-media.php:3178
+#: php/class-media.php:3184
 msgid "Media Display"
 msgstr ""
 
-#: php/class-media.php:3182 php/media/class-global-transformations.php:620
+#: php/class-media.php:3188 php/media/class-global-transformations.php:620
 #: php/ui/component/class-asset-preview.php:73
 #: php/ui/component/class-plan-details.php:119
 #: php/ui/component/class-plan-status.php:128
@@ -556,7 +556,7 @@ msgstr ""
 msgid "Transformations"
 msgstr ""
 
-#: php/class-media.php:3183
+#: php/class-media.php:3189
 msgid ""
 "Cloudinary allows you to easily transform your images on-the-fly to any "
 "required format, style and dimension, and also optimizes images for minimal "
@@ -565,7 +565,7 @@ msgid ""
 "transformation and delivery URLs."
 msgstr ""
 
-#: php/class-media.php:3188 ui-definitions/settings-image.php:164
+#: php/class-media.php:3194 ui-definitions/settings-image.php:164
 #: ui-definitions/settings-video.php:250
 msgid "See examples"
 msgstr ""
