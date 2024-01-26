@@ -745,7 +745,6 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		return $attachment_id;
-
 	}
 
 	/**
@@ -1268,6 +1267,13 @@ class Media extends Settings_Component implements Setup {
 				$new_transformations['global'] = implode( '/', $freeform[ $type ] );
 			}
 		}
+
+		$streaming = $this->get_settings()->get_value( 'adaptive_streaming', 'adaptive_streaming_mode' );
+
+		if ( 'video' === $type && 'on' === $streaming['adaptive_streaming'] ) {
+			unset( $new_transformations['qf'] );
+		}
+
 		// Clean out empty parts, and join into a sectioned string.
 		$new_transformations = array_filter( $new_transformations );
 		$new_transformations = implode( '/', $new_transformations );
@@ -3230,6 +3236,5 @@ class Media extends Settings_Component implements Setup {
 			// Save to DB.
 			$setting->save_value();
 		}
-
 	}
 }

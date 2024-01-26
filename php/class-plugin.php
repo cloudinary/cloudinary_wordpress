@@ -597,7 +597,7 @@ final class Plugin {
 		 * The Cloudinary Video Player version.
 		 */
 		if ( ! defined( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION' ) ) {
-			define( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION', '1.9.0' );
+			define( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION', '1.10.1' );
 		}
 	}
 
@@ -633,7 +633,7 @@ final class Plugin {
 		$namespace = trim( implode( DIRECTORY_SEPARATOR, $namespace ) );
 
 		// Get the path to our files.
-		$directory = dirname( __FILE__ ) . DIRECTORY_SEPARATOR . '../php';
+		$directory = __DIR__ . DIRECTORY_SEPARATOR . '../php';
 		if ( ! empty( $namespace ) ) {
 			$directory .= DIRECTORY_SEPARATOR . strtolower( $namespace );
 		}
