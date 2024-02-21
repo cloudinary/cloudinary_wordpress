@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: image-optimizer, crop, core-web-vitals, responsive, resize, product-gallery, performance
 Requires at least: 4.7
-Tested up to: 6.4.2
+Tested up to: 6.4.3
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -133,6 +133,17 @@ Your site is now setup to start using Cloudinary.
 1. Need help? We’ve got you covered
 
 == Changelog ==
+
+
+= 3.1.7 (21 February 2024) =
+
+Fixes and Improvements:
+
+* Upgraded the Cloudinary Video Player to v1.10.1
+* Added support for [video analytics](https://cloudinary.com/documentation/video_analytics)
+* Fixed `Uncaught Error: Call to undefined method Cloudinary\Delivery::clean_url()` error message
+* Fixed individual transformations lost when upgrading the plugin version
+
 
 = 3.1.6 (17 JANUARY 2024) =
 
