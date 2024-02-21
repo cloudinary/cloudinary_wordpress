@@ -72,7 +72,7 @@
     "@wordpress/jest-preset-default": "^11.4.0",
     "@wordpress/jest-puppeteer-axe": "^1.10.0",
     "@wordpress/postcss-themes": "^4.0.1",
-    "@wordpress/scripts": "^24.4.0",
+    "@wordpress/scripts": "^27.2.0",
     "@wordpress/server-side-render": "^1.19.1",
     "@wordpress/url": "^2.19.0",
     "accessible-autocomplete": "^2.0.3",
