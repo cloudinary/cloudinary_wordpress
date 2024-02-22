@@ -309,6 +309,7 @@ class Rest_Assets {
 				}
 			}
 
+			$cache          = array();
 			$prepare        = $wpdb->prepare(
 				"SELECT COUNT( id ) as total FROM $wpdb->cld_table WHERE parent_path = %s AND post_state != 'inherit' {$search_ext};", // phpcs:ignore WordPress.DB.PreparedSQL
 				$cache_point->post_title

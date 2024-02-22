@@ -81,8 +81,8 @@ class Relate {
 	/**
 	 * Update transformations for an asset.
 	 *
-	 * @param int          $attachment_id   The attachment ID.
-	 * @param array|string $transformations The transformations.
+	 * @param int               $attachment_id   The attachment ID.
+	 * @param array|string|null $transformations The transformations.
 	 */
 	public static function update_transformations( $attachment_id, $transformations ) {
 		$relationship = Relationship::get_relationship( $attachment_id );

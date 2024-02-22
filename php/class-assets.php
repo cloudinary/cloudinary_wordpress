@@ -12,7 +12,7 @@ use Cloudinary\Connect\Api;
 use Cloudinary\Sync;
 use Cloudinary\Traits\Params_Trait;
 use Cloudinary\Utils;
-use \WP_Error;
+use WP_Error;
 
 /**
  * Class Assets
@@ -773,7 +773,7 @@ class Assets extends Settings_Component {
 					continue;
 				}
 
-				$url = Delivery::clean_url( path_join( $base, $data['file'] ) );
+				$url = Utils::clean_url( path_join( $base, $data['file'] ) );
 				if ( wp_basename( $url ) === $current ) {
 					// Currently the original.
 					if ( isset( $assets[ $url ] ) ) {
@@ -819,10 +819,9 @@ class Assets extends Settings_Component {
 				$this->asset_parents[ $post->post_title ] = $post;
 			}
 			$args = $query->query_vars;
-			$args['paged'] ++;
+			++$args['paged'];
 			$query = new \WP_Query( $args );
 		} while ( $query->have_posts() );
-
 	}
 
 	/**
@@ -1287,7 +1286,6 @@ class Assets extends Settings_Component {
 		}
 
 		return $rows;
-
 	}
 
 	/**
@@ -1592,5 +1590,4 @@ class Assets extends Settings_Component {
 
 		return $params;
 	}
-
 }
