@@ -122,7 +122,13 @@ class Bypass {
 				}
 				$this->set_attachment_delivery( $id, $delivery );
 			}
-			// This action is documented in `class-delivery.php`.
+
+			/**
+			 * Action to flush delivery caches.
+			 *
+			 * @hook   cloudinary_flush_cache
+			 * @since  3.0.0
+			 */
 			do_action( 'cloudinary_flush_cache' );
 		}
 
