@@ -409,6 +409,21 @@ class Gallery extends Settings_Component {
 			),
 		);
 
+		$panel[] = array(
+			'type'  => 'info_box',
+			'icon'  => $this->plugin->dir_url . 'css/images/academy.svg',
+			'title' => __( 'Need help?', 'cloudinary' ),
+			'text'  => sprintf(
+				// Translators: The HTML for opening and closing link tags.
+				__(
+					'Watch lessons on how to use the Gallery Settings in the %1$sCloudinary Academy%2$s.',
+					'cloudinary'
+				),
+				'<a href="https://training.cloudinary.com/learn/course/introduction-to-cloudinary-for-wordpress-administrators-70-minute-course-1h85/lessons/using-cloudinary-for-product-galleries-in-woocommerce-and-page-content-906?page=1" target="_blank" rel="noopener noreferrer">',
+				'</a>'
+			),
+		);
+
 		$pages['gallery']['settings'] = array(
 			$panel,
 		);
