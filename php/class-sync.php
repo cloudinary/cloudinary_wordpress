@@ -878,15 +878,14 @@ class Sync implements Setup, Assets {
 			$this->set_signature_item( $attachment_id, $type );
 
 			$type = $this->get_sync_type( $attachment_id, false ); // Set cache to false to get the new signature.
-		} else {
+
 			// Check if this is a realtime process.
-			if ( ! empty( $this->sync_base_struct[ $type ]['realtime'] ) ) {
-				$result = $this->run_sync_method( $type, 'sync', $attachment_id );
-				if ( ! empty( $result ) ) {
-					$this->log_sync_result( $attachment_id, $type, $result );
-				}
-				$type = $this->get_sync_type( $attachment_id, false ); // Set cache to false to get the new signature.
+		} elseif ( ! empty( $this->sync_base_struct[ $type ]['realtime'] ) ) {
+			$result = $this->run_sync_method( $type, 'sync', $attachment_id );
+			if ( ! empty( $result ) ) {
+				$this->log_sync_result( $attachment_id, $type, $result );
 			}
+			$type = $this->get_sync_type( $attachment_id, false ); // Set cache to false to get the new signature.
 		}
 
 		return $type;
