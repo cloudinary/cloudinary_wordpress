@@ -1258,6 +1258,20 @@ class Sync implements Setup, Assets {
 							'cld'       => __( 'Cloudinary only', 'cloudinary' ),
 						),
 					),
+					array(
+						'type'  => 'info_box',
+						'icon'  => $this->plugin->dir_url . 'css/images/academy.svg',
+						'title' => __( 'Need help?', 'cloudinary' ),
+						'text'  => sprintf(
+							// Translators: The HTML for opening and closing link tags.
+							__(
+								'Watch lessons on how to use the Media Library Sync Settings in the %1$sCloudinary Academy%2$s.',
+								'cloudinary'
+							),
+							'<a href="https://training.cloudinary.com/learn/course/introduction-to-cloudinary-for-wordpress-administrators-70-minute-course-1h85/lessons/uploading-and-syncing-cloudinary-assets-1624?page=1" target="_blank" rel="noopener noreferrer">',
+							'</a>'
+						),
+					),
 				),
 			),
 		);
