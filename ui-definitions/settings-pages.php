@@ -357,6 +357,45 @@ $settings = array(
 						),
 					),
 				),
+				array(
+					'type'                => 'column',
+					'requires_connection' => true,
+					'attributes'          => array(
+						'wrap' => array(
+							'class' => array(
+								'help-box',
+							),
+						),
+					),
+					array(
+						'type'       => 'tag',
+						'element'    => 'a',
+						'attributes' => array(
+							'href'   => 'https://training.cloudinary.com/courses/introduction-to-cloudinary-for-wordpress-administrators-70-minute-course-zf3x',
+							'target' => '_blank',
+							'rel'    => 'noopener noreferrer',
+							'class'  => array(
+								'large-button',
+							),
+						),
+						array(
+							'type'       => 'tag',
+							'element'    => 'img',
+							'attributes' => array(
+								'src' => $this->dir_url . 'css/images/academy.jpg',
+							),
+						),
+						array(
+							'type'    => 'tag',
+							'element' => 'h4',
+							'content' => __( 'Cloudinary Academy', 'cloudinary' ),
+						),
+						array(
+							'type'    => 'a',
+							'content' => __( 'Do you work better at your own pace? Or do you prefer to learn from a seasoned instructor in person? We have built coursework and lessons for all types of learners, regardless of their preferred style.', 'cloudinary' ),
+						),
+					),
+				),
 			),
 		),
 		array(
