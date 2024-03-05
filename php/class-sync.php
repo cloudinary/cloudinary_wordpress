@@ -1206,7 +1206,7 @@ class Sync implements Setup, Assets {
 							'<ul><li>',
 							'</li><li>',
 							'</li></ul>',
-							'<a href="https://cloudinary.com/documentation/wordpress_integration#sync" target="_blank" rel="noopener noreferrer">',
+							'<a href="https://cloudinary.com/documentation/wordpress_integration#syncing_media" target="_blank" rel="noopener noreferrer">',
 							'</a>'
 						),
 						'slug'         => 'auto_sync',
@@ -1264,7 +1264,7 @@ class Sync implements Setup, Assets {
 						'text'  => sprintf(
 							// Translators: The HTML for opening and closing link tags.
 							__(
-								'Watch lessons on how to use the Media Library Sync Settings in the %1$sCloudinary Academy%2$s.',
+								'Watch free lessons on how to use the Media Library Sync Settings in the %1$sCloudinary Academy%2$s.',
 								'cloudinary'
 							),
 							'<a href="https://training.cloudinary.com/learn/course/introduction-to-cloudinary-for-wordpress-administrators-70-minute-course-1h85/lessons/uploading-and-syncing-cloudinary-assets-1624?page=1" target="_blank" rel="noopener noreferrer">',

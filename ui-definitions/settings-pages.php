@@ -207,7 +207,7 @@ $settings = array(
 					'text'  => sprintf(
 						// Translators: The HTML for opening and closing link tags.
 						__(
-							'Watch lessons on how to use the Responsive Images Settings in the %1$sCloudinary Academy%2$s.',
+							'Watch free lessons on how to use the Responsive Images Settings in the %1$sCloudinary Academy%2$s.',
 							'cloudinary'
 						),
 						'<a href="https://training.cloudinary.com/learn/course/introduction-to-cloudinary-for-wordpress-administrators-70-minute-course-1h85/lessons/lazily-loading-and-delivering-responsive-images-1003?page=1" target="_blank" rel="noopener noreferrer">',
@@ -283,6 +283,45 @@ $settings = array(
 					),
 				),
 				array(
+					'type'                => 'column',
+					'requires_connection' => true,
+					'attributes'          => array(
+						'wrap' => array(
+							'class' => array(
+								'help-box',
+							),
+						),
+					),
+					array(
+						'type'       => 'tag',
+						'element'    => 'a',
+						'attributes' => array(
+							'href'   => 'https://training.cloudinary.com/courses/introduction-to-cloudinary-for-wordpress-administrators-70-minute-course-zf3x',
+							'target' => '_blank',
+							'rel'    => 'noopener noreferrer',
+							'class'  => array(
+								'large-button',
+							),
+						),
+						array(
+							'type'       => 'tag',
+							'element'    => 'img',
+							'attributes' => array(
+								'src' => $this->dir_url . 'css/images/academy.jpg',
+							),
+						),
+						array(
+							'type'    => 'tag',
+							'element' => 'h4',
+							'content' => __( 'Cloudinary Academy', 'cloudinary' ),
+						),
+						array(
+							'type'    => 'a',
+							'content' => __( "With Cloudinary's plugin, it is easy to enhance your WordPress site's images and videos! In this self-paced course, our expert instructor will show you how to configure the plugin and use its most powerful features - asset management, image and video optimization, product gallery creation and more.", 'cloudinary' ),
+						),
+					),
+				),
+				array(
 					'type'       => 'column',
 					'attributes' => array(
 						'wrap' => array(
@@ -354,45 +393,6 @@ $settings = array(
 						array(
 							'type'    => 'a',
 							'content' => __( "Generate a system report to help debug any specific issues you're having with your Cloudinary media, our support team will usually ask for this when submitting a support request.", 'cloudinary' ),
-						),
-					),
-				),
-				array(
-					'type'                => 'column',
-					'requires_connection' => true,
-					'attributes'          => array(
-						'wrap' => array(
-							'class' => array(
-								'help-box',
-							),
-						),
-					),
-					array(
-						'type'       => 'tag',
-						'element'    => 'a',
-						'attributes' => array(
-							'href'   => 'https://training.cloudinary.com/courses/introduction-to-cloudinary-for-wordpress-administrators-70-minute-course-zf3x',
-							'target' => '_blank',
-							'rel'    => 'noopener noreferrer',
-							'class'  => array(
-								'large-button',
-							),
-						),
-						array(
-							'type'       => 'tag',
-							'element'    => 'img',
-							'attributes' => array(
-								'src' => $this->dir_url . 'css/images/academy.jpg',
-							),
-						),
-						array(
-							'type'    => 'tag',
-							'element' => 'h4',
-							'content' => __( 'Cloudinary Academy', 'cloudinary' ),
-						),
-						array(
-							'type'    => 'a',
-							'content' => __( 'Do you work better at your own pace? Or do you prefer to learn from a seasoned instructor in person? We have built coursework and lessons for all types of learners, regardless of their preferred style.', 'cloudinary' ),
 						),
 					),
 				),
