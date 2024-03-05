@@ -662,15 +662,16 @@ class Utils {
 	 */
 	public static function download_fragment( $url, $size = 1048576 ) {
 
-		$pointer = tmpfile();
-		$file    = false;
+		$temp_file = wp_tempnam( basename( $url ) );
+		$pointer   = fopen( $temp_file, 'wb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
+		$file      = false;
 		if ( $pointer ) {
 			// Prep to purge.
 			$index = count( self::$file_fragments );
 			if ( empty( $index ) ) {
 				add_action( 'shutdown', array( __CLASS__, 'purge_fragments' ) );
 			}
-			self::$file_fragments[ $index ] = $pointer;
+			self::$file_fragments[ $index ] = $temp_file;
 			// Get the metadata of the stream.
 			$data = stream_get_meta_data( $pointer );
 			// Stream the content to the temp file.
