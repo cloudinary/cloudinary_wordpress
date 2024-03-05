@@ -400,7 +400,7 @@ class Delivery implements Setup {
 		// Preserve pre-existing transformations.
 		if ( $relationship instanceof Relationship ) {
 			$data            = $relationship->get_data();
-			$transformations = $data['transformations'];
+			$transformations = isset( $data['transformations'] ) ? $data['transformations'] : null;
 		}
 		$this->delete_size_relationship( $attachment_id );
 		$size      = $this->get_sized( $attachment_id );
