@@ -200,6 +200,20 @@ $settings = array(
 						),
 					),
 				),
+				array(
+					'type'  => 'info_box',
+					'icon'  => $this->dir_url . 'css/images/academy.svg',
+					'title' => __( 'Need help?', 'cloudinary' ),
+					'text'  => sprintf(
+						// Translators: The HTML for opening and closing link tags.
+						__(
+							'Watch free lessons on how to use the Responsive Images Settings in the %1$sCloudinary Academy%2$s.',
+							'cloudinary'
+						),
+						'<a href="https://training.cloudinary.com/learn/course/introduction-to-cloudinary-for-wordpress-administrators-70-minute-course-1h85/lessons/lazily-loading-and-delivering-responsive-images-1003?page=1" target="_blank" rel="noopener noreferrer">',
+						'</a>'
+					),
+				),
 			),
 		),
 	),
@@ -265,6 +279,45 @@ $settings = array(
 						array(
 							'type'    => 'span',
 							'content' => __( 'Learn more about how to use the Cloudinary plugin and get the most out of the functionality.', 'cloudinary' ),
+						),
+					),
+				),
+				array(
+					'type'                => 'column',
+					'requires_connection' => true,
+					'attributes'          => array(
+						'wrap' => array(
+							'class' => array(
+								'help-box',
+							),
+						),
+					),
+					array(
+						'type'       => 'tag',
+						'element'    => 'a',
+						'attributes' => array(
+							'href'   => 'https://training.cloudinary.com/courses/introduction-to-cloudinary-for-wordpress-administrators-70-minute-course-zf3x',
+							'target' => '_blank',
+							'rel'    => 'noopener noreferrer',
+							'class'  => array(
+								'large-button',
+							),
+						),
+						array(
+							'type'       => 'tag',
+							'element'    => 'img',
+							'attributes' => array(
+								'src' => $this->dir_url . 'css/images/academy.jpg',
+							),
+						),
+						array(
+							'type'    => 'tag',
+							'element' => 'h4',
+							'content' => __( 'Cloudinary Academy', 'cloudinary' ),
+						),
+						array(
+							'type'    => 'a',
+							'content' => __( "With Cloudinary's plugin, it is easy to enhance your WordPress site's images and videos! In this self-paced course, our expert instructor will show you how to configure the plugin and use its most powerful features - asset management, image and video optimization, product gallery creation and more.", 'cloudinary' ),
 						),
 					),
 				),
@@ -380,6 +433,18 @@ $settings = array(
 						__( 'Most common media files are supported for optimization and delivery by Cloudinary. For free accounts, you will not be able to deliver PDF or ZIP files by default for security reasons. If this is a requirement, please contact our support team who can help activate this for you.%1$sTo deliver additional file types via Cloudinary, you can extend the functionality of the plugin using the %2$sactions and filters%3$s the plugin exposes for developers.', 'cloudinary' ),
 						'<br><br>',
 						'<a href="https://cloudinary.com/documentation/wordpress_integration#actions_and_filters" target="_blank" rel="noopener noreferrer">',
+						'</a>'
+					),
+				),
+				array(
+					'type'        => 'panel',
+					'title'       => __( 'Does the WordPress plugin require an active WordPress REST API connection?', 'cloudinary' ),
+					'collapsible' => 'closed',
+					'content'     => sprintf(
+						// translators: The HTML markup.
+						__( ' To function correctly, the Cloudinary WordPress plugin requires an active WordPress REST API connection. Ensure your WordPress setup, including multisite or headless configurations, has the REST API enabled and active for seamless plugin operation.%1$sFor more information, see %2$sWordPress’s REST API Handbook%3$s.', 'cloudinary' ),
+						'<br><br>',
+						'<a href="https://developer.wordpress.org/rest-api/" target="_blank" rel="noopener noreferrer">',
 						'</a>'
 					),
 				),
