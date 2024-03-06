@@ -24,7 +24,9 @@ Use Cloudinary's plugin to efficiently create, manage and deliver images, videos
 
 Cloudinary’s [award-winning plugin](https://www.businesswire.com/news/home/20200923005566/en/Cloudinary-Wins-2020-MarTech-Breakthrough-Award-for-Best-WordPress-Plugin)  makes automating your image, video, and visual media workflows easy, offering a variety of features. From image and video upload through management, transformation, optimization, and global CDN delivery, all features are offered within the plugin. Users can get started in minutes with a true plug-and-play solution paired with an intuitive onboarding wizard helping deliver optimized and responsive media out-of-the-box.
 
-https://youtu.be/B1Jx5hB1Ijk
+https://youtu.be/AMVS_O_VEss
+
+> Know more on at the [Cloudinary Academy - Introduction to Cloudinary for WordPress Administrators](https://training.cloudinary.com/courses/introduction-to-cloudinary-for-wordpress-administrators-70-minute-course-zf3x)
 
 On top of that, users can also leverage a dashboard giving insights into optimization metrics and data usage so there are never any surprises. No matter if your use case is for personal use or business needs, the Cloudinary plugin offers enterprise quality and architecture for all.
 
@@ -76,6 +78,7 @@ Read more about Cloudinary:
 * [Image transformations documentation](http://cloudinary.com/documentation/image_transformations)
 * [Video transformations documentation](https://cloudinary.com/documentation/video_manipulation_and_delivery)
 * [Cloudinary FAQ](http://cloudinary.com/faq)
+* **[Cloudinary Academy - Introduction to Cloudinary for WordPress Administrators](https://training.cloudinary.com/courses/introduction-to-cloudinary-for-wordpress-administrators-70-minute-course-zf3x)**
 
 == Customer Case Studies ==
 
@@ -85,7 +88,7 @@ Read more about Cloudinary:
 
 == Contributors & Developers ==
 
-“Cloudinary – Dynamic Image and Video Management” is an open source software. The following people have contributed to this plugin:
+`Cloudinary – Dynamic Image and Video Management` is an open source software. The following people have contributed to this plugin:
 [Cloudinary](https://profiles.wordpress.org/cloudinary/)
 [XWP](https://profiles.wordpress.org/xwp/)
 [Automattic](https://profiles.wordpress.org/automattic/)
@@ -95,7 +98,7 @@ Read more about Cloudinary:
 = Install from within WordPress =
 * Visit the plugins page within your dashboard and select `Add New`.
 * Search for `Cloudinary`.
-* Select "Cloudinary – Image and Video Optimization, Manipulation, and Delivery" from the list.
+* Select `Cloudinary – Image and Video Optimization, Manipulation, and Delivery` from the list.
 * Activate `Cloudinary` from your Plugins page.
 * Go to `Setting up` below.
 
@@ -106,8 +109,8 @@ Read more about Cloudinary:
 
 = Setting up =
 * Once the plugin is activated, go to the `Cloudinary` settings.
-* You’ll be prompted to “Add your Cloudinary URL”.
-* Enter your “Cloudinary environment variable URL”, the format should be cloudinary://{API_Key}:{API_Secret}@{Cloud_Name} and can be found in the "Account Details" section of the Cloudinary Console Dashboard, then click save.
+* You’ll be prompted to `Add your Cloudinary URL`.
+* Enter your `Cloudinary environment variable URL`, the format should be `cloudinary://{API_Key}:{API_Secret}@{Cloud_Name}` and can be found in the `Account Details` section of the `Cloudinary Console Dashboard`, then click save.
 * After saving, additional settings tabs will be available.
 
 **Note**
