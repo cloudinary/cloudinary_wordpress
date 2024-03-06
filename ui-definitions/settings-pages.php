@@ -438,6 +438,18 @@ $settings = array(
 				),
 				array(
 					'type'        => 'panel',
+					'title'       => __( 'Does the WordPress plugin require an active WordPress REST API connection?', 'cloudinary' ),
+					'collapsible' => 'closed',
+					'content'     => sprintf(
+						// translators: The HTML markup.
+						__( ' To function correctly, the Cloudinary WordPress plugin requires an active WordPress REST API connection. Ensure your WordPress setup, including multisite or headless configurations, has the REST API enabled and active for seamless plugin operation.%1$sFor more information, see %2$sWordPress’s REST API Handbook%3$s.', 'cloudinary' ),
+						'<br><br>',
+						'<a href="https://developer.wordpress.org/rest-api/" target="_blank" rel="noopener noreferrer">',
+						'</a>'
+					),
+				),
+				array(
+					'type'        => 'panel',
 					'title'       => __( "I'm having an incompatibility issue with a theme, plugin, or hosting environment, what can I do?", 'cloudinary' ),
 					'collapsible' => 'closed',
 					'content'     => sprintf(
