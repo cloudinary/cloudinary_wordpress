@@ -536,7 +536,7 @@ class Lazy_Load extends Delivery_Feature {
 					),
 					array(
 						'type'  => 'info_box',
-						'icon'  => $this->plugin->dir_url . 'css/images/academy.svg',
+						'icon'  => $this->plugin->dir_url . 'css/images/academy-icon.svg',
 						'title' => __( 'Need help?', 'cloudinary' ),
 						'text'  => sprintf(
 							// Translators: The HTML for opening and closing link tags.
