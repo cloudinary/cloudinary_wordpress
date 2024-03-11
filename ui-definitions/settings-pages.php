@@ -284,7 +284,6 @@ $settings = array(
 				),
 				array(
 					'type'                => 'column',
-					'requires_connection' => true,
 					'attributes'          => array(
 						'wrap' => array(
 							'class' => array(
