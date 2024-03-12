@@ -202,7 +202,7 @@ $settings = array(
 				),
 				array(
 					'type'  => 'info_box',
-					'icon'  => $this->dir_url . 'css/images/academy.svg',
+					'icon'  => $this->dir_url . 'css/images/academy-icon.svg',
 					'title' => __( 'Need help?', 'cloudinary' ),
 					'text'  => sprintf(
 						// Translators: The HTML for opening and closing link tags.
@@ -284,7 +284,6 @@ $settings = array(
 				),
 				array(
 					'type'                => 'column',
-					'requires_connection' => true,
 					'attributes'          => array(
 						'wrap' => array(
 							'class' => array(
