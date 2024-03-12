@@ -225,7 +225,7 @@ $settings = array(
 		'sidebar'    => true,
 		array(
 			'type'  => 'panel',
-			'title' => __( 'Help Centre', 'cloudinary' ),
+			'title' => __( 'Help Center', 'cloudinary' ),
 			array(
 				'type'    => 'tag',
 				'element' => 'h4',
