@@ -13,6 +13,7 @@ use Cloudinary\Media;
 use Cloudinary\REST_API;
 use Cloudinary\Settings_Component;
 use Cloudinary\Utils;
+use WP_Screen;
 
 /**
  * Class Gallery.
@@ -114,6 +115,11 @@ class Gallery extends Settings_Component {
 	 * @return array
 	 */
 	public function get_config() {
+		$screen = null;
+
+		if ( function_exists( 'get_current_screen' ) ) {
+			$screen = get_current_screen();
+		}
 
 		$config = ! empty( $this->settings->get_value( 'gallery_config' ) ) ?
 			$this->settings->get_value( 'gallery_config' ) :
@@ -133,7 +139,11 @@ class Gallery extends Settings_Component {
 
 		$credentials = $this->plugin->components['connect']->get_credentials();
 
-		if ( ! empty( $credentials['cname'] ) ) {
+		// Do not use privateCdn and secureDistribution on gallery settings page.
+		if (
+			! empty( $credentials['cname'] )
+			&& ( ! $screen instanceof WP_Screen || 'cloudinary_page_cloudinary_gallery' !== $screen->id )
+		) {
 			$config['secureDistribution'] = $credentials['cname'];
 			$config['privateCdn']         = true;
 		}
