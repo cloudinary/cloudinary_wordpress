@@ -455,7 +455,7 @@ class Api {
 			if ( is_wp_error( $result ) ) {
 				break;
 			}
-			$index ++;
+			++$index;
 		}
 		fclose( $src ); //phpcs:ignore
 		unlink( $temp_file_name ); //phpcs:ignore
@@ -464,7 +464,6 @@ class Api {
 		}
 
 		return $result;
-
 	}
 
 	/**
@@ -911,7 +910,7 @@ class Api {
 			)
 		) {
 
-			$parts   = explode( '/', $public_id );
+			$parts    = explode( '/', $public_id );
 			$filename = end( $parts );
 
 			/**
@@ -1023,5 +1022,4 @@ class Api {
 
 		return $result;
 	}
-
 }
