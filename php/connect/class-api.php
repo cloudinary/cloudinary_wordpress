@@ -505,7 +505,20 @@ class Api {
 		$args                = $this->clean_args( $args );
 		$disable_https_fetch = get_transient( '_cld_disable_http_upload' );
 
-		if ( function_exists( 'wp_get_original_image_url' ) && wp_attachment_is_image( $attachment_id ) ) {
+		/**
+		 * Whether to use the original image URL.
+		 *
+		 * @hook    cloudinary_use_original_image
+		 * @since   3.1.8
+		 * @default true
+		 *
+		 * @param $use_original  {bool} The default value.
+		 * @param $attachment_id {int}  The attachment ID.
+		 *
+		 * @return  {bool}
+		 */
+		$use_original = apply_filters( 'cloudinary_use_original_image', true, $attachment_id );
+		if ( $use_original && function_exists( 'wp_get_original_image_url' ) && wp_attachment_is_image( $attachment_id ) ) {
 			$file_url = wp_get_original_image_url( $attachment_id );
 		} else {
 			$file_url = wp_get_attachment_url( $attachment_id );
@@ -535,7 +548,7 @@ class Api {
 			// We should have the file in args at this point, but if the transient was set, it will be defaulting here.
 			if ( empty( $args['file'] ) ) {
 				if ( wp_attachment_is_image( $attachment_id ) ) {
-					$get_path_func = function_exists( 'wp_get_original_image_path' ) ? 'wp_get_original_image_path' : 'get_attached_file';
+					$get_path_func = $use_original && function_exists( 'wp_get_original_image_path' ) ? 'wp_get_original_image_path' : 'get_attached_file';
 					$args['file']  = call_user_func( $get_path_func, $attachment_id );
 				} else {
 					$args['file'] = get_attached_file( $attachment_id );
