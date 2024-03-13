@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cloudinary STABLETAG\n"
 "Report-Msgid-Bugs-To: https://github.com/cloudinary/cloudinary_wordpress\n"
-"POT-Creation-Date: 2024-03-12 10:09:59+00:00\n"
+"POT-Creation-Date: 2024-03-13 16:38:15+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -733,7 +733,7 @@ msgid "Cloudinary only"
 msgstr ""
 
 #: php/class-sync.php:1263 php/delivery/class-lazy-load.php:538
-#: php/media/class-gallery.php:406 ui-definitions/components/header.php:19
+#: php/media/class-gallery.php:416 ui-definitions/components/header.php:19
 #: ui-definitions/settings-image.php:246 ui-definitions/settings-pages.php:206
 #: ui-definitions/settings-pages.php:222 ui-definitions/settings-pages.php:223
 #: ui-definitions/settings-video.php:293
@@ -795,12 +795,12 @@ msgstr ""
 msgid "No direct access to file system."
 msgstr ""
 
-#: php/connect/class-api.php:521
+#: php/connect/class-api.php:533
 #. translators: variable is thread name and queue size.
 msgid "Uploading remote url:  %1$s."
 msgstr ""
 
-#: php/connect/class-api.php:652
+#: php/connect/class-api.php:664
 msgid "Could not get VIP file content"
 msgstr ""
 
@@ -927,36 +927,36 @@ msgstr ""
 msgid "Attachment Display Settings"
 msgstr ""
 
-#: php/media/class-gallery.php:355 php/media/class-gallery.php:356
+#: php/media/class-gallery.php:365 php/media/class-gallery.php:366
 msgid "Gallery settings"
 msgstr ""
 
-#: php/media/class-gallery.php:364
+#: php/media/class-gallery.php:374
 msgid "Gallery Settings"
 msgstr ""
 
-#: php/media/class-gallery.php:374
+#: php/media/class-gallery.php:384
 msgid "Replace WooCommerce Gallery"
 msgstr ""
 
-#: php/media/class-gallery.php:375
+#: php/media/class-gallery.php:385
 msgid ""
 "Replace the default WooCommerce gallery with the Cloudinary Gallery on "
 "product pages."
 msgstr ""
 
-#: php/media/class-gallery.php:383
+#: php/media/class-gallery.php:393
 msgid "Cloudinary Gallery block defaults"
 msgstr ""
 
-#: php/media/class-gallery.php:386
+#: php/media/class-gallery.php:396
 msgid ""
 "The Cloudinary Gallery is available as a new block type which can be "
 "inserted to any post or page. Note, this is not available when using the "
 "classic editor."
 msgstr ""
 
-#: php/media/class-gallery.php:409
+#: php/media/class-gallery.php:419
 #. Translators: The HTML for opening and closing link tags.
 msgid ""
 "Watch free lessons on how to use the Gallery Settings in the %1$sCloudinary "
@@ -1952,7 +1952,7 @@ msgid ""
 msgstr ""
 
 #: ui-definitions/settings-pages.php:228
-msgid "Help Centre"
+msgid "Help Center"
 msgstr ""
 
 #: ui-definitions/settings-pages.php:232
