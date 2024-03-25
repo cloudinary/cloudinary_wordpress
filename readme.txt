@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: image-optimizer, crop, core-web-vitals, responsive, resize, product-gallery, performance
 Requires at least: 4.7
-Tested up to: 6.4.3
+Tested up to: 6.5
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -136,6 +136,17 @@ Your site is now setup to start using Cloudinary.
 1. Need help? We’ve got you covered
 
 == Changelog ==
+
+= 3.1.8 (25 March 2024) =
+
+Fixes and Improvements:
+
+* Added the Cloudinary for WordPress Administrators course as part of the plugin need help section
+* Added individual "Need Help? Watch Lessons Here!" call-outs at the top of every section as a tool tip, pointing to specific lessons where that section is covered
+* Updated the FAQ section
+* Upgraded the Cloudinary Video Player to v1.11.1
+* Fixed Cloudinary\\tmpfile() undefined error log when importing assets from Cloudinary
+* Fixed md5() method deprecation warning in PHP 8.2
 
 
 = 3.1.7 (21 February 2024) =
