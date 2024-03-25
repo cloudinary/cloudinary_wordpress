@@ -223,7 +223,7 @@ class Utils {
 		 * @default 'manage_options'
 		 * @return  {string}
 		 */
-		$capability = apply_filters( "cloudinary_task_capability_{$task}", $capability, $context, $args );
+		$capability = apply_filters( "cloudinary_task_capability_{$task}", $capability, $context, ...$args );
 
 		/**
 		 * Filter the capability required for Cloudinary tasks.
@@ -254,10 +254,10 @@ class Utils {
 		 *
 		 * @return  {string}
 		 */
-		$capability = apply_filters( 'cloudinary_task_capability', $capability, $task, $context, $args );
+		$capability = apply_filters( 'cloudinary_task_capability', $capability, $task, $context, ...$args );
 		// phpcs:enable WordPress.WhiteSpace.DisallowInlineTabs.NonIndentTabsUsed
 
-		return current_user_can( $capability, $args );
+		return current_user_can( $capability, ...$args );
 	}
 
 	/**

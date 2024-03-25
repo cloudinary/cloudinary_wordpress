@@ -202,7 +202,7 @@ $settings = array(
 				),
 				array(
 					'type'  => 'info_box',
-					'icon'  => $this->dir_url . 'css/images/academy.svg',
+					'icon'  => $this->dir_url . 'css/images/academy-icon.svg',
 					'title' => __( 'Need help?', 'cloudinary' ),
 					'text'  => sprintf(
 						// Translators: The HTML for opening and closing link tags.
@@ -225,7 +225,7 @@ $settings = array(
 		'sidebar'    => true,
 		array(
 			'type'  => 'panel',
-			'title' => __( 'Help Centre', 'cloudinary' ),
+			'title' => __( 'Help Center', 'cloudinary' ),
 			array(
 				'type'    => 'tag',
 				'element' => 'h4',
@@ -284,7 +284,6 @@ $settings = array(
 				),
 				array(
 					'type'                => 'column',
-					'requires_connection' => true,
 					'attributes'          => array(
 						'wrap' => array(
 							'class' => array(
@@ -404,14 +403,14 @@ $settings = array(
 			array(
 				array(
 					'type'        => 'panel',
-					'title'       => __( 'Do I need a Cloudinary account to use the plugin and can I try it out for free?', 'cloudinary' ),
+					'title'       => __( 'Do I need a Cloudinary account to use the Cloudinary plugin and can I try it out for free?', 'cloudinary' ),
 					'enabled'     => static function () {
 						return ! get_plugin_instance()->get_component( 'connect' )->is_connected();
 					},
 					'collapsible' => 'closed',
 					'content'     => sprintf(
 						// translators: The HTML markup.
-						__( 'To use the Cloudinary Plugin and all the functionality that comes with it, you will need to have a Cloudinary Account. %1$sIf you don’t have an account yet, %2$ssign up%3$s now for a free Cloudinary Programmable Media account%4$s. You’ll start with generous usage limits and when your requirements grow, you can easily upgrade to a plan that best fits your needs.', 'cloudinary' ),
+						__( 'To use the Cloudinary plugin and all the functionality that comes with it, you will need to have a Cloudinary Account. %1$sIf you don’t have an account yet, %2$ssign up%3$s now for a free Cloudinary Programmable Media account%4$s. You’ll start with generous usage limits and when your requirements grow, you can easily upgrade to a plan that best fits your needs.', 'cloudinary' ),
 						'<b>',
 						'<a href="https://cloudinary.com/signup?source=wp&utm_source=wp&utm_medium=wporgmarketplace&utm_campaign=wporgmarketplace" target="_blank" rel="noopener noreferrer">',
 						'</a>',
@@ -420,7 +419,7 @@ $settings = array(
 				),
 				array(
 					'type'        => 'panel',
-					'title'       => __( 'I’ve installed the plugin, what happens now?', 'cloudinary' ),
+					'title'       => __( 'I’ve installed the Cloudinary plugin, what happens now?', 'cloudinary' ),
 					'collapsible' => 'closed',
 					'content'     => __( 'If you left all the settings as default, all your current media will begin syncing with Cloudinary. Once syncing is complete, your media will be optimized and delivered using Cloudinary URLs and you should begin seeing improvements in performance across your site.', 'cloudinary' ),
 				),
@@ -438,11 +437,11 @@ $settings = array(
 				),
 				array(
 					'type'        => 'panel',
-					'title'       => __( 'Does the WordPress plugin require an active WordPress REST API connection?', 'cloudinary' ),
+					'title'       => __( 'Does the Cloudinary plugin require an active WordPress REST API connection?', 'cloudinary' ),
 					'collapsible' => 'closed',
 					'content'     => sprintf(
 						// translators: The HTML markup.
-						__( ' To function correctly, the Cloudinary WordPress plugin requires an active WordPress REST API connection. Ensure your WordPress setup, including multisite or headless configurations, has the REST API enabled and active for seamless plugin operation.%1$sFor more information, see %2$sWordPress’s REST API Handbook%3$s.', 'cloudinary' ),
+						__( ' To function correctly, the Cloudinary plugin requires an active WordPress REST API connection. Ensure your WordPress setup, including multisite or headless configurations, has the REST API enabled and active for seamless plugin operation.%1$sFor more information, see %2$sWordPress’s REST API Handbook%3$s.', 'cloudinary' ),
 						'<br><br>',
 						'<a href="https://developer.wordpress.org/rest-api/" target="_blank" rel="noopener noreferrer">',
 						'</a>'
@@ -465,7 +464,7 @@ $settings = array(
 					'collapsible' => 'closed',
 					'content'     => sprintf(
 						// translators: The HTML markup.
-						__( 'Yes, the plugin has full support for WooCommerce. We also have additional functionality that allows you to add a fully optimized %1$sProduct Gallery%2$s.', 'cloudinary' ),
+						__( 'Yes, the Cloudinary plugin has full support for WooCommerce. We also have additional functionality that allows you to add a fully optimized %1$sProduct Gallery%2$s.', 'cloudinary' ),
 						'<a href="' . esc_url( add_query_arg( 'page', 'cloudinary_gallery' ) ) . '">',
 						'</a>'
 					),
