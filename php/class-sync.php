@@ -878,15 +878,14 @@ class Sync implements Setup, Assets {
 			$this->set_signature_item( $attachment_id, $type );
 
 			$type = $this->get_sync_type( $attachment_id, false ); // Set cache to false to get the new signature.
-		} else {
+
 			// Check if this is a realtime process.
-			if ( ! empty( $this->sync_base_struct[ $type ]['realtime'] ) ) {
-				$result = $this->run_sync_method( $type, 'sync', $attachment_id );
-				if ( ! empty( $result ) ) {
-					$this->log_sync_result( $attachment_id, $type, $result );
-				}
-				$type = $this->get_sync_type( $attachment_id, false ); // Set cache to false to get the new signature.
+		} elseif ( ! empty( $this->sync_base_struct[ $type ]['realtime'] ) ) {
+			$result = $this->run_sync_method( $type, 'sync', $attachment_id );
+			if ( ! empty( $result ) ) {
+				$this->log_sync_result( $attachment_id, $type, $result );
 			}
+			$type = $this->get_sync_type( $attachment_id, false ); // Set cache to false to get the new signature.
 		}
 
 		return $type;
@@ -1207,7 +1206,7 @@ class Sync implements Setup, Assets {
 							'<ul><li>',
 							'</li><li>',
 							'</li></ul>',
-							'<a href="https://cloudinary.com/documentation/wordpress_integration#sync" target="_blank" rel="noopener noreferrer">',
+							'<a href="https://cloudinary.com/documentation/wordpress_integration#syncing_media" target="_blank" rel="noopener noreferrer">',
 							'</a>'
 						),
 						'slug'         => 'auto_sync',
@@ -1256,6 +1255,20 @@ class Sync implements Setup, Assets {
 							'dual_full' => __( 'Cloudinary and WordPress', 'cloudinary' ),
 							'dual_low'  => __( 'Cloudinary and WordPress (low resolution)', 'cloudinary' ),
 							'cld'       => __( 'Cloudinary only', 'cloudinary' ),
+						),
+					),
+					array(
+						'type'  => 'info_box',
+						'icon'  => $this->plugin->dir_url . 'css/images/academy-icon.svg',
+						'title' => __( 'Need help?', 'cloudinary' ),
+						'text'  => sprintf(
+							// Translators: The HTML for opening and closing link tags.
+							__(
+								'Watch free lessons on how to use the Media Library Sync Settings in the %1$sCloudinary Academy%2$s.',
+								'cloudinary'
+							),
+							'<a href="https://training.cloudinary.com/learn/course/introduction-to-cloudinary-for-wordpress-administrators-70-minute-course-1h85/lessons/uploading-and-syncing-cloudinary-assets-1624?page=1" target="_blank" rel="noopener noreferrer">',
+							'</a>'
 						),
 					),
 				),

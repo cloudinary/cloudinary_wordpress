@@ -165,7 +165,6 @@ class Lazy_Load extends Delivery_Feature {
 		);
 
 		return HTML::build_tag( 'noscript', $atts ) . $tag . HTML::build_tag( 'noscript', null, 'close' );
-
 	}
 
 	/**
@@ -339,7 +338,6 @@ class Lazy_Load extends Delivery_Feature {
 		}
 
 		return $tag_element;
-
 	}
 
 	/**
@@ -534,7 +532,20 @@ class Lazy_Load extends Delivery_Feature {
 							),
 						),
 					),
-
+					array(
+						'type'  => 'info_box',
+						'icon'  => $this->plugin->dir_url . 'css/images/academy-icon.svg',
+						'title' => __( 'Need help?', 'cloudinary' ),
+						'text'  => sprintf(
+							// Translators: The HTML for opening and closing link tags.
+							__(
+								'Watch free lessons on how to use the Lazy Load Settings in the %1$sCloudinary Academy%2$s.',
+								'cloudinary'
+							),
+							'<a href="https://training.cloudinary.com/learn/course/introduction-to-cloudinary-for-wordpress-administrators-70-minute-course-1h85/lessons/lazily-loading-and-delivering-responsive-images-1003?page=1" target="_blank" rel="noopener noreferrer">',
+							'</a>'
+						),
+					),
 				),
 			),
 		);

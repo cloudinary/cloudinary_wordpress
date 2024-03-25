@@ -13,6 +13,7 @@ use Cloudinary\Media;
 use Cloudinary\REST_API;
 use Cloudinary\Settings_Component;
 use Cloudinary\Utils;
+use WP_Screen;
 
 /**
  * Class Gallery.
@@ -114,6 +115,11 @@ class Gallery extends Settings_Component {
 	 * @return array
 	 */
 	public function get_config() {
+		$screen = null;
+
+		if ( function_exists( 'get_current_screen' ) ) {
+			$screen = get_current_screen();
+		}
 
 		$config = ! empty( $this->settings->get_value( 'gallery_config' ) ) ?
 			$this->settings->get_value( 'gallery_config' ) :
@@ -133,7 +139,11 @@ class Gallery extends Settings_Component {
 
 		$credentials = $this->plugin->components['connect']->get_credentials();
 
-		if ( ! empty( $credentials['cname'] ) ) {
+		// Do not use privateCdn and secureDistribution on gallery settings page.
+		if (
+			! empty( $credentials['cname'] )
+			&& ( ! $screen instanceof WP_Screen || 'cloudinary_page_cloudinary_gallery' !== $screen->id )
+		) {
 			$config['secureDistribution'] = $credentials['cname'];
 			$config['privateCdn']         = true;
 		}
@@ -397,6 +407,21 @@ class Gallery extends Settings_Component {
 			'script' => array(
 				'slug' => 'gallery-widget',
 				'src'  => $this->plugin->dir_url . 'js/gallery.js',
+			),
+		);
+
+		$panel[] = array(
+			'type'  => 'info_box',
+			'icon'  => $this->plugin->dir_url . 'css/images/academy-icon.svg',
+			'title' => __( 'Need help?', 'cloudinary' ),
+			'text'  => sprintf(
+				// Translators: The HTML for opening and closing link tags.
+				__(
+					'Watch free lessons on how to use the Gallery Settings in the %1$sCloudinary Academy%2$s.',
+					'cloudinary'
+				),
+				'<a href="https://training.cloudinary.com/learn/course/introduction-to-cloudinary-for-wordpress-administrators-70-minute-course-1h85/lessons/using-cloudinary-for-product-galleries-in-woocommerce-and-page-content-906?page=1" target="_blank" rel="noopener noreferrer">',
+				'</a>'
 			),
 		);
 

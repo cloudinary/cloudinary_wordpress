@@ -161,14 +161,14 @@ class Utils {
 	/**
 	 * Get the depth of an array.
 	 *
-	 * @param array $array The array to check.
+	 * @param array $data The array to check.
 	 *
 	 * @return int
 	 */
-	public static function array_depth( array $array ) {
+	public static function array_depth( array $data ) {
 		$depth = 0;
 
-		foreach ( $array as $value ) {
+		foreach ( $data as $value ) {
 			if ( is_array( $value ) ) {
 				$level = self::array_depth( $value ) + 1;
 
@@ -205,15 +205,15 @@ class Utils {
 		 *
 		 * // Enforce `manage_options` to download an asset from Cloudinary.
 		 * add_filter(
-		 * 	'cloudinary_task_capability_manage_assets',
-		 * 	function( $task, $context ) {
-		 * 		if ( 'download' === $context ) {
-		 * 			$capability = 'manage_options';
-		 * 		}
-		 * 		return $capability;
-		 * 	},
-		 * 	10,
-		 * 	2
+		 *     'cloudinary_task_capability_manage_assets',
+		 *     function( $task, $context ) {
+		 *         if ( 'download' === $context ) {
+		 *             $capability = 'manage_options';
+		 *         }
+		 *         return $capability;
+		 *     },
+		 *     10,
+		 *     2
 		 * );
 		 *
 		 * @param $capability {string} The capability.
@@ -223,7 +223,7 @@ class Utils {
 		 * @default 'manage_options'
 		 * @return  {string}
 		 */
-		$capability = apply_filters( "cloudinary_task_capability_{$task}", $capability, $context, $args );
+		$capability = apply_filters( "cloudinary_task_capability_{$task}", $capability, $context, ...$args );
 
 		/**
 		 * Filter the capability required for Cloudinary tasks.
@@ -236,15 +236,15 @@ class Utils {
 		 *
 		 * // Enforce `manage_options` to download an asset from Cloudinary.
 		 * add_filter(
-		 * 	'cloudinary_task_capability',
-		 * 	function( $capability, $task, $context ) {
-		 * 		if ( 'manage_assets' === $task && 'download' === $context ) {
-		 * 			$capability = 'manage_options';
-		 * 		}
-		 * 		return $capability;
-		 * 	},
-		 * 	10,
-		 * 	3
+		 *     'cloudinary_task_capability',
+		 *     function( $capability, $task, $context ) {
+		 *         if ( 'manage_assets' === $task && 'download' === $context ) {
+		 *             $capability = 'manage_options';
+		 *         }
+		 *         return $capability;
+		 *     },
+		 *     10,
+		 *     3
 		 * );
 		 *
 		 * @param $capability {string} The current capability for the task.
@@ -254,10 +254,10 @@ class Utils {
 		 *
 		 * @return  {string}
 		 */
-		$capability = apply_filters( 'cloudinary_task_capability', $capability, $task, $context, $args );
+		$capability = apply_filters( 'cloudinary_task_capability', $capability, $task, $context, ...$args );
 		// phpcs:enable WordPress.WhiteSpace.DisallowInlineTabs.NonIndentTabsUsed
 
-		return current_user_can( $capability, $args );
+		return current_user_can( $capability, ...$args );
 	}
 
 	/**
@@ -415,7 +415,6 @@ class Utils {
 
 		// Set DB Version.
 		update_option( Sync::META_KEYS['db_version'], get_plugin_instance()->version );
-
 	}
 
 	/**
@@ -469,19 +468,19 @@ class Utils {
 
 		$javascript = "\n" . trim( $javascript, "\n\r " ) . "\n";
 
-		echo sprintf( "<script type='text/javascript'>%s</script>\n", $javascript ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		printf( "<script type='text/javascript'>%s</script>\n", $javascript ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 
 	/**
 	 * Get a sanitized input text field.
 	 *
-	 * @param string $var  The value to get.
-	 * @param int    $type The type to get.
+	 * @param string $var_name The value to get.
+	 * @param int    $type     The type to get.
 	 *
 	 * @return mixed
 	 */
-	public static function get_sanitized_text( $var, $type = INPUT_GET ) {
-		return filter_input( $type, $var, FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+	public static function get_sanitized_text( $var_name, $type = INPUT_GET ) {
+		return filter_input( $type, $var_name, FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
 	}
 
 	/**
@@ -662,15 +661,16 @@ class Utils {
 	 */
 	public static function download_fragment( $url, $size = 1048576 ) {
 
-		$pointer = tmpfile();
-		$file    = false;
+		$temp_file = wp_tempnam( basename( $url ) );
+		$pointer   = fopen( $temp_file, 'wb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
+		$file      = false;
 		if ( $pointer ) {
 			// Prep to purge.
 			$index = count( self::$file_fragments );
 			if ( empty( $index ) ) {
 				add_action( 'shutdown', array( __CLASS__, 'purge_fragments' ) );
 			}
-			self::$file_fragments[ $index ] = $pointer;
+			self::$file_fragments[ $index ] = $temp_file;
 			// Get the metadata of the stream.
 			$data = stream_get_meta_data( $pointer );
 			// Stream the content to the temp file.
