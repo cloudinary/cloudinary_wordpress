@@ -2173,7 +2173,8 @@ class Media extends Settings_Component implements Setup {
 			'src'             => filter_var( $data['asset']['secure_url'], FILTER_SANITIZE_URL ),
 			'url'             => filter_var( $data['asset']['secure_url'], FILTER_SANITIZE_URL ),
 			'transformations' => array(),
-			'meta'            => array(),
+			'meta'            => array(), // Contextual metadata.
+			'structured'      => array(), // Structured metadata.
 		);
 		// Set sync key.
 		$asset['sync_key'] = $asset['public_id'];
@@ -2192,6 +2193,16 @@ class Media extends Settings_Component implements Setup {
 				$data['asset']['context'],
 				function ( $value, $key ) use ( &$asset ) {
 					$asset['meta'][ $key ] = sanitize_text_field( $value );
+				}
+			);
+		}
+
+		// Move all structured metadata into the meta key.
+		if ( ! empty( $data['asset']['metadata'] ) ) {
+			array_walk_recursive(
+				$data['asset']['metadata'],
+				function ( $value, $key ) use ( &$asset ) {
+					$asset['structured'][ $key ] = sanitize_text_field( $value );
 				}
 			);
 		}
