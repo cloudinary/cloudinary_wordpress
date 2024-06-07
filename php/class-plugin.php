@@ -90,29 +90,6 @@ final class Plugin {
 	public $plugin_file;
 
 	/**
-	 * Directory in plugin containing autoloaded classes.
-	 *
-	 * @var string
-	 */
-	protected $autoload_class_dir = 'php';
-
-	/**
-	 * Autoload matches cache.
-	 *
-	 * @var array
-	 */
-	protected $autoload_matches_cache = array();
-
-	/**
-	 * Holds the list of hooks.
-	 *
-	 * @since   0.1
-	 *
-	 * @var     array
-	 */
-	public $hooks;
-
-	/**
 	 * Holds the list of keys.
 	 */
 	const KEYS = array(
