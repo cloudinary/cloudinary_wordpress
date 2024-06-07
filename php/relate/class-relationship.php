@@ -20,6 +20,7 @@ use function Cloudinary\get_plugin_instance;
  * @property string|null $signature
  * @property string|null $transformations
  * @property string|null $sized_url
+ * @property string|null $media_context
  */
 class Relationship {
 
@@ -45,6 +46,13 @@ class Relationship {
 	public $asset_type;
 
 	/**
+	 * Holds the media context.
+	 *
+	 * @var string
+	 */
+	public $context;
+
+	/**
 	 * The constructor.
 	 *
 	 * @param int $post_id The relationship post id.
@@ -52,6 +60,7 @@ class Relationship {
 	public function __construct( $post_id ) {
 		$this->post_id    = (int) $post_id;
 		$this->asset_type = get_plugin_instance()->get_component( 'media' )->get_media_type( $this->post_id );
+		$this->context    = Utils::get_media_context( $post_id );
 	}
 
 	/**
@@ -60,17 +69,20 @@ class Relationship {
 	 * @return array|null
 	 */
 	public function get_data() {
-		$cache_data = wp_cache_get( $this->post_id, Sync::META_KEYS['cloudinary'] );
+		$key = $this->post_id . $this->context;
+
+		$cache_data = wp_cache_get( $key, Sync::META_KEYS['cloudinary'] );
+
 		if ( $cache_data ) {
 			return $cache_data;
 		}
 		global $wpdb;
 		$table_name = Utils::get_relationship_table();
 
-		$sql  = $wpdb->prepare( "SELECT * FROM {$table_name} WHERE post_id = %d", $this->post_id ); // phpcs:ignore WordPress.DB
+		$sql  = $wpdb->prepare( "SELECT * FROM {$table_name} WHERE post_id = %d AND media_context = %s", $this->post_id, $this->context ); // phpcs:ignore WordPress.DB
 		$data = $wpdb->get_row( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB
 
-		self::set_cache( $this->post_id, $data );
+		self::set_cache( $this->post_id, $this->context, $data );
 
 		return $data;
 	}
@@ -84,7 +96,7 @@ class Relationship {
 	public function __set( $key, $value ) {
 		$data         = $this->get_data();
 		$data[ $key ] = $value;
-		self::set_cache( $this->post_id, $data );
+		self::set_cache( $this->post_id, $this->context, $data );
 	}
 
 	/**
@@ -158,18 +170,22 @@ class Relationship {
 		$posts = $wpdb->get_results( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB
 
 		foreach ( $posts as $post ) {
-			self::set_cache( $post['post_id'], $post );
+			$media_context = Utils::get_media_context( $post['post_id'] );
+			self::set_cache( $post['post_id'], $media_context, $post );
 		}
 	}
 
 	/**
 	 * Set the relationship data cache.
 	 *
-	 * @param int   $post_id The post id.
-	 * @param array $data    The data.
+	 * @param int    $post_id       The post id.
+	 * @param string $media_context The media context.
+	 * @param array  $data          The data.
 	 */
-	public static function set_cache( $post_id, $data ) {
-		return wp_cache_set( (int) $post_id, $data, Sync::META_KEYS['cloudinary'] );
+	public static function set_cache( $post_id, $media_context, $data ) {
+		$key = $post_id . $media_context;
+
+		return wp_cache_set( $key, $data, Sync::META_KEYS['cloudinary'] );
 	}
 
 	/**
@@ -178,7 +194,17 @@ class Relationship {
 	public function delete() {
 		global $wpdb;
 		$table_name = Utils::get_relationship_table();
-		$wpdb->delete( $table_name, array( 'post_id' => $this->post_id ), array( '%d' ) ); // phpcs:ignore WordPress.DB
+		$wpdb->delete(
+			$table_name,
+			array(
+				'post_id'       => $this->post_id,
+				'media_context' => $this->context,
+			),
+			array(
+				'%d',
+				'%s',
+			)
+		);
 		$this->delete_cache();
 	}
 
@@ -186,7 +212,9 @@ class Relationship {
 	 * Delete the relationship cache.
 	 */
 	public function delete_cache() {
-		wp_cache_delete( $this->post_id, Sync::META_KEYS['cloudinary'] );
+		$key = $this->post_id . $this->media_context;
+
+		wp_cache_delete( $key, Sync::META_KEYS['cloudinary'] );
 	}
 
 	/**
@@ -216,8 +244,9 @@ class Relationship {
 	public static function get_ids_by_public_id( $public_id ) {
 		global $wpdb;
 
-		$table_name = Utils::get_relationship_table();
-		$ids        = $wpdb->get_col( $wpdb->prepare( "SELECT post_id FROM {$table_name} WHERE public_id = %s", $public_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$table_name    = Utils::get_relationship_table();
+		$media_context = Utils::get_media_context();
+		$ids           = $wpdb->get_col( $wpdb->prepare( "SELECT post_id FROM {$table_name} WHERE public_id = %s AND media_context = %s", $public_id, $media_context ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		return array_map( 'intval', $ids );
 	}

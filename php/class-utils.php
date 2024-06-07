@@ -288,6 +288,7 @@ class Utils {
 	  public_id varchar(1000) DEFAULT NULL,
 	  parent_path varchar(1000) DEFAULT NULL,
 	  sized_url varchar(1000) DEFAULT NULL,
+	  media_context varchar(12) DEFAULT 'default',
 	  width int(11) DEFAULT NULL,
 	  height int(11) DEFAULT NULL,
 	  format varchar(12) DEFAULT NULL,
@@ -299,7 +300,7 @@ class Utils {
 	  url_hash varchar(45) DEFAULT NULL,
 	  parent_hash varchar(45) DEFAULT NULL,
 	  PRIMARY KEY (id),
-	  UNIQUE KEY url_hash (url_hash),
+	  UNIQUE KEY media (url_hash, media_context),
 	  KEY post_id (post_id),
 	  KEY parent_hash (parent_hash),
 	  KEY public_hash (public_hash),
@@ -412,6 +413,24 @@ class Utils {
 		$wpdb->query( "ALTER TABLE {$tablename} CHANGE sized_url sized_url varchar(1000) DEFAULT NULL" ); // phpcs:ignore WordPress.DB
 		// Alter engine.
 		$wpdb->query( "ALTER TABLE {$tablename} ENGINE=InnoDB;" );// phpcs:ignore WordPress.DB
+
+		// Set DB Version.
+		update_option( Sync::META_KEYS['db_version'], get_plugin_instance()->version );
+	}
+
+	/**
+	 * Upgrade DB from v3.0.1 to v3.1.9.
+	 */
+	public static function upgrade_3_1_9() {
+		global $wpdb;
+		$tablename = self::get_relationship_table();
+
+		// Add new columns.
+		$wpdb->query( "ALTER TABLE {$tablename} ADD COLUMN `media_context` VARCHAR(12) DEFAULT 'default' AFTER `sized_url`" ); // phpcs:ignore WordPress.DB
+
+		// Update indexes.
+		$wpdb->query( "ALTER TABLE {$tablename} DROP INDEX url_hash" ); // phpcs:ignore WordPress.DB
+		$wpdb->query( "ALTER TABLE {$tablename} ADD UNIQUE INDEX media (url_hash, media_context)" ); // phpcs:ignore WordPress.DB
 
 		// Set DB Version.
 		update_option( Sync::META_KEYS['db_version'], get_plugin_instance()->version );
@@ -967,25 +986,30 @@ class Utils {
 	public static function query_relations( $public_ids, $urls = array() ) {
 		global $wpdb;
 
-		$wheres = array();
+		$media_context   = self::get_media_context();
+		$wheres          = array();
+		$searched_things = array();
 		if ( ! empty( $urls ) ) {
 			// Do the URLS.
-			$list     = implode( ', ', array_fill( 0, count( $urls ), '%s' ) );
-			$wheres[] = "url_hash IN( {$list} )";
+			$list            = implode( ', ', array_fill( 0, count( $urls ), '%s' ) );
+			$where           = "(url_hash IN( {$list} ) AND media_context = %s)";
+			$searched_things = array_merge( $searched_things, array_map( 'md5', $urls ), array( $media_context ) );
+			$wheres[]        = $where;
 		}
 		if ( ! empty( $public_ids ) ) {
 			// Do the public_ids.
-			$list     = implode( ', ', array_fill( 0, count( $public_ids ), '%s' ) );
-			$wheres[] = "public_hash IN( {$list} )";
-			$urls     = array_merge( $urls, $public_ids );
+			$list            = implode( ', ', array_fill( 0, count( $public_ids ), '%s' ) );
+			$where           = "(public_hash IN( {$list} ) AND media_context = %s)";
+			$searched_things = array_merge( $searched_things, array_map( 'md5', $public_ids ), array( $media_context ) );
+			$wheres[]        = $where;
 		}
 
 		$results = array();
 
-		if ( ! empty( array_filter( $urls ) ) ) {
+		if ( ! empty( array_filter( $wheres ) ) ) {
 			$tablename = self::get_relationship_table();
 			$sql       = "SELECT * from {$tablename} WHERE " . implode( ' OR ', $wheres );
-			$prepared  = $wpdb->prepare( $sql, array_map( 'md5', $urls ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$prepared  = $wpdb->prepare( $sql, $searched_things ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			$cache_key = md5( $prepared );
 			$results   = wp_cache_get( $cache_key, 'cld_delivery' );
 			if ( empty( $results ) ) {
@@ -1079,5 +1103,31 @@ class Utils {
 		}
 
 		return $url;
+	}
+
+	/**
+	 * Get the media context.
+	 *
+	 * @param int|null $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public static function get_media_context( $attachment_id = null ) {
+		/**
+		 * Filter the media context.
+		 *
+		 * This filter allows you to set a media context for the media for cases where the same asset is used in
+		 * different use cases, such as in a multilingual context.
+		 *
+		 * @hook    cloudinary_media_context
+		 * @since   3.1.9
+		 * @default {'default'}
+		 *
+		 * @param $media_context {string}   The media context.
+		 * @param $attachment_id {int|null} The attachment ID.
+		 *
+		 * @return {string}
+		 */
+		return apply_filters( 'cloudinary_media_context', 'default', $attachment_id );
 	}
 }
