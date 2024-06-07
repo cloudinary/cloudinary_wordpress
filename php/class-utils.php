@@ -361,17 +361,27 @@ class Utils {
 	 * @return array
 	 */
 	protected static function get_upgrade_sequence() {
-		$sequence         = array();
+		$upgrade_sequence = array();
 		$sequences        = array(
-			'3.0.0' => array( 'Cloudinary\Utils', 'upgrade_3_0_1' ),
+			'3.0.0' => array(
+				'range'  => array( '3.0.0' ),
+				'method' => array( 'Cloudinary\Utils', 'upgrade_3_0_1' ),
+			),
+			'3.1.9' => array(
+				'range'  => array( '3.0.1', '3.1.9' ),
+				'method' => array( 'Cloudinary\Utils', 'upgrade_3_1_9' ),
+			),
+
 		);
-		$upgrade_versions = array_keys( $sequences );
 		$previous_version = get_option( Sync::META_KEYS['db_version'], '3.0.0' );
 		$current_version  = get_plugin_instance()->version;
-		if ( version_compare( $current_version, $previous_version, '>' ) ) {
-			$index = array_search( $previous_version, $upgrade_versions, true );
-			if ( false !== $index ) {
-				$sequence = array_slice( $sequences, $index );
+		foreach ( $sequences as $sequence ) {
+			if (
+				version_compare( $current_version, $previous_version, '>' )
+				&& version_compare( $previous_version, reset( $sequence['range'] ), '>=' )
+				&& version_compare( $previous_version, end( $sequence['range'] ), '<' )
+			) {
+				$upgrade_sequence[] = $sequence['method'];
 			}
 		}
 
@@ -381,11 +391,11 @@ class Utils {
 		 * @hook   cloudinary_upgrade_sequence
 		 * @since  3.0.1
 		 *
-		 * @param $sequence {array} The default sequence.
+		 * @param $upgrade_sequence {array} The default sequence.
 		 *
 		 * @return {array}
 		 */
-		return apply_filters( 'cloudinary_upgrade_sequence', $sequence );
+		return apply_filters( 'cloudinary_upgrade_sequence', $upgrade_sequence );
 	}
 
 	/**
