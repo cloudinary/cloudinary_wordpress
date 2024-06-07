@@ -1012,6 +1012,9 @@ class Delivery implements Setup {
 			$base           = $type . ':' . $url;
 			$public_id      = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
 			$cloudinary_url = $this->media->cloudinary_url( $relation['post_id'], array(), $relation['transformations'], $public_id );
+			if ( empty( $cloudinary_url ) ) {
+				continue;
+			}
 			if ( ! empty( $relation['slashed'] ) && $relation['slashed'] ) {
 				$aliases[ $base . '?' ] = addcslashes( $cloudinary_url . '&', '/' );
 				$aliases[ $base ]       = addcslashes( $cloudinary_url, '/' );
