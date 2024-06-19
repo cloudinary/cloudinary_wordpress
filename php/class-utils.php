@@ -699,7 +699,10 @@ class Utils {
 			if ( empty( $index ) ) {
 				add_action( 'shutdown', array( __CLASS__, 'purge_fragments' ) );
 			}
-			self::$file_fragments[ $index ] = $temp_file;
+			self::$file_fragments[ $index ] = array(
+				'pointer' => $pointer,
+				'file'    => $temp_file,
+			);
 			// Get the metadata of the stream.
 			$data = stream_get_meta_data( $pointer );
 			// Stream the content to the temp file.
@@ -739,8 +742,8 @@ class Utils {
 	 */
 	public static function purge_fragment( $index ) {
 		if ( isset( self::$file_fragments[ $index ] ) ) {
-			fclose( self::$file_fragments[ $index ] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fclose
-			unset( self::$file_fragments[ $index ] );
+			fclose( self::$file_fragments[ $index ]['pointer'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fclose
+			unlink( self::$file_fragments[ $index ]['file'] );
 		}
 	}
 
