@@ -34,7 +34,7 @@ import '../css/images/logo-icon.svg';
 import '../css/images/transformation.svg';
 import '../css/images/upload.svg';
 import '../css/images/video.svg';
-import '../css/images/connection-string.png';
+import '../css/images/connection-string.jpg';
 import '../css/images/sample.webp';
 import '../css/images/wizard-welcome.jpg';
 import '../css/images/document.svg';
