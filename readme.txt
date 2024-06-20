@@ -42,21 +42,38 @@ Enjoy a seamless upgrade to experience the completely new look and feel of our p
 
 == Frequently Asked Questions ==
 
-**I’ve installed the plugin, what happens now?**
+**Do I need a Cloudinary account to use the Cloudinary plugin and can I try it out for free?**
 
-If you left all the settings as default, all your current media will begin syncing to Cloudinary and will start to be optimized and delivered by fast CDN on your website using Cloudinary URLs. Once the syncing is complete, you should start seeing improvements in performance across your site.
+To use the Cloudinary plugin and all the functionality that comes with it, you will need to have a Cloudinary Account. __If you don’t have an account yet, [sign up](https://cloudinary.com/signup?source=wp&utm_source=wp&utm_medium=wporgmarketplace&utm_campaign=wporgmarketplace) now for a free Cloudinary Programmable Media account__. You’ll start with generous usage limits and when your requirements grow, you can easily upgrade to a plan that best fits your needs.
+
+**I’ve installed the Cloudinary plugin, what happens now?**
+
+If you left all the settings as default, all your current media will begin syncing with Cloudinary. Once syncing is complete, your media will be optimized and delivered using Cloudinary URLs and you should begin seeing improvements in performance across your site.
+
 
 **Which file types are supported?**
 
-Most common media files are supported for optimization and delivery by Cloudinary. For free accounts, you will not be able to deliver PDF or ZIP files by default for security reasons. If this is a requirement, please [contact our support team](https://support.cloudinary.com/hc/en-us/requests/new) who can help activate this for you.
+Most common media files are supported for optimization and delivery by Cloudinary. For free accounts, you will not be able to deliver PDF or ZIP files by default for security reasons. If this is a requirement, please contact our support team who can help activate this for you.
 
-To deliver additional file types via Cloudinary, you can extend the functionality of the plugin using the [actions and filters](https://cloudinary.com/documentation/wordpress_integration#actions_and_filters) the plugin exposes for developers.
+To deliver additional file types via Cloudinary, you can extend the functionality of the plugin using the [actions and filters](https://cloudinary.com/documentation/wordpress_integration#actions_and_filters) the plugin exposes for developers
 
-**I have various other plugins installed, will the Cloudinary Plugin still work?**
 
-**I’m having an incompatibility issue with a theme, plugin, or hosting environment, what can I do?**
+**Does the Cloudinary plugin require an active WordPress REST API connection?**
+
+To function correctly, the Cloudinary plugin requires an active WordPress REST API connection. Ensure your WordPress setup, including multisite or headless configurations, has the REST API enabled and active for seamless plugin operation.
+
+For more information, see [WordPress’s REST API Handbook](https://developer.wordpress.org/rest-api/).
+
+
+**I'm having an incompatibility issue with a theme, plugin, or hosting environment, what can I do?**
 
 We’re compatible with most other plugins so we expect it to work absolutely fine. If you do have any issues, please [contact our support team](https://support.cloudinary.com/hc/en-us/requests/new) who will help resolve your issue.
+
+
+**Can I use the Cloudinary plugin for my eCommerce websites?**
+
+Yes, the Cloudinary plugin has full support for WooCommerce. We also have additional functionality that allows you to add a fully optimized Product Gallery.
+
 
 **Why are my images loading locally and not from Cloudinary?**
 
@@ -65,6 +82,11 @@ Your images may be loading locally for a number of reasons:
 * The asset has been selected to be delivered from WordPress. You can update this for each asset via the WordPress Media Library.
 * Your asset is stored outside of your WordPress storage.
 * The asset is not properly synced with Cloudinary. You can find the sync status of your assets in the WordPress Media Library.
+
+
+**How do I handle a CLDBind error which is causing issues with lazy loading?**
+
+The Cloudinary lazy loading scripts must be loaded in the page head. Ensure your site or any 3rd party plugins are not setup to move these scripts.
 
 == About Cloudinary ==
 
