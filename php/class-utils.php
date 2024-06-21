@@ -1141,6 +1141,8 @@ class Utils {
 		 *
 		 * @return {string}
 		 */
-		return apply_filters( 'cloudinary_media_context', 'default', $attachment_id );
+		$context = apply_filters( 'cloudinary_media_context', 'default', $attachment_id );
+
+		return sanitize_key( $context );
 	}
 }
