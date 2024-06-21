@@ -53,6 +53,6 @@ $dir_url = Cloudinary\get_plugin_instance()->dir_url;
 		</ol>
 	</div>
 	<div class="cld-wizard-connect-help-image">
-		<img src="<?php echo esc_url( $dir_url ); ?>css/images/connection-string.jpg" alt="<?php esc_attr_e( 'Where the connection string can be found on the cloudinary.com console.', 'cloudinary' ); ?>" class="img-connection-string" />
+		<img src="<?php echo esc_url( $dir_url ); ?>css/images/connection-string.png" alt="<?php esc_attr_e( 'Where the connection string can be found on the cloudinary.com console.', 'cloudinary' ); ?>" class="img-connection-string" />
 	</div>
 </div>
