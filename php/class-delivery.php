@@ -622,7 +622,7 @@ class Delivery implements Setup {
 			'post_id'         => $attachment_id,
 			'parent_path'     => $parent_path,
 			'sized_url'       => $sized_url,
-			'media_context'   => Utils::get_media_context( $attachment_id, $type ),
+			'media_context'   => Utils::get_media_context( $attachment_id ),
 			'width'           => $width_height[0] ? $width_height[0] : 0,
 			'height'          => $width_height[1] ? $width_height[1] : 0,
 			'format'          => Utils::pathinfo( $sized_url, PATHINFO_EXTENSION ),
