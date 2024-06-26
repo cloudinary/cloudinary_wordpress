@@ -100,12 +100,6 @@ Read more about Cloudinary:
 * [Cloudinary FAQ](http://cloudinary.com/faq)
 * **[Cloudinary Academy - Introduction to Cloudinary for WordPress Administrators](https://training.cloudinary.com/courses/introduction-to-cloudinary-for-wordpress-administrators-70-minute-course-zf3x)**
 
-== Customer Case Studies ==
-
-* [Complex Networks](https://cloudinary-res.cloudinary.com/image/upload/v1606310155/website/resources/case-study/cloudinary_case_study_complex_networks_0720_v2.pdf)
-* [StubHub](https://cloudinary-res.cloudinary.com/image/upload/v1599569503/website/resources/case-study/cloudinary_case_study_stubHub_0820_fnl.pdf)
-* [Fairfax Media](https://cloudinary-res.cloudinary.com/image/upload/v1599569441/website/resources/case-study/cloudinary_case_study_Fairfax_Media_0720_fnl.pdf)
-
 == Installation ==
 = Install from within WordPress =
 * Visit the plugins page within your dashboard and select `Add New`.
