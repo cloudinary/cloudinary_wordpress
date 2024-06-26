@@ -100,12 +100,6 @@ Read more about Cloudinary:
 * [Cloudinary FAQ](http://cloudinary.com/faq)
 * **[Cloudinary Academy - Introduction to Cloudinary for WordPress Administrators](https://training.cloudinary.com/courses/introduction-to-cloudinary-for-wordpress-administrators-70-minute-course-zf3x)**
 
-== Customer Case Studies ==
-
-* [Complex Networks](https://cloudinary-res.cloudinary.com/image/upload/v1606310155/website/resources/case-study/cloudinary_case_study_complex_networks_0720_v2.pdf)
-* [StubHub](https://cloudinary-res.cloudinary.com/image/upload/v1599569503/website/resources/case-study/cloudinary_case_study_stubHub_0820_fnl.pdf)
-* [Fairfax Media](https://cloudinary-res.cloudinary.com/image/upload/v1599569441/website/resources/case-study/cloudinary_case_study_Fairfax_Media_0720_fnl.pdf)
-
 == Installation ==
 = Install from within WordPress =
 * Visit the plugins page within your dashboard and select `Add New`.
@@ -131,21 +125,19 @@ Your site is now setup to start using Cloudinary.
 
 
 == Screenshots ==
-1. Streamline Your Creative Workflow
-1. Media Editor
-1. DAM-Powered Media Library
-1. Easy Generation of Asset Derivatives
-1. Automatically Deliver Responsive Images
-1. Global Image Transformation Settings
-1. Global Video Transformation Settings
+1. Streamline your creative workflow
+1. Optimize your site in a two-step wizard
+1. Gain insight into how your assets are performing
+1. Global Image Transformation settings
+1. Automatically deliver Responsive Images
 1. Improve web performance with Lazy Loading assets
+1. Cloudinary video player settings
 1. Display assets in a customizable and responsive product gallery
 1. Folder and Syncing Settings
-1. Additional Syncing Settings
-1. Gain insight into how your assets are performing
-1. Easily Configure Your Account
-1. Configure your assets to be automatically optimized out-of-the-box
 1. Need help? We’ve got you covered
+1. DAM-Powered Media Library
+1. Configure your assets to be automatically optimized out-of-the-box
+
 
 == Changelog ==
 
