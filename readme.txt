@@ -8,37 +8,35 @@ Stable tag: STABLETAG
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Use Cloudinary's plugin to efficiently create, manage and deliver images, videos, and other media, personalized and optimized for every device and channel.
+Boost the performance of your WordPress site by optimizing your images and videos with the Cloudinary WordPress Plugin. WordPress developers, content creators, and administrators can efficiently create, manage and deliver images and videos. The plugin scales from individual blogs to enterprise sites that deliver hundreds of thousands of images and videos and that need to be accessed across a variety of devices.
 
 == What can Cloudinary do for you? ==
 
-> * Provide best in class image and video optimization.[Try out our magic!](https://cloudinary.com/developers)
-* Deliver dynamically created responsive images across various devices, in different resolutions with exact pixel accuracy.
-* Lazy load images automatically with customizable placeholder settings.
-* Automatically optimize existing videos and images, as well as any future uploads.
-* Offer image and video editing capabilities, powered by AI, including transcoding, smart cropping, applying filters, generating thumbnails, and more.
+> * Automatically optimize and transform all your new and existing images and videos through best-in-class algorithms that improve site performance and SEO rankings. [Check out some examples](https://cloudinary.com/developers)!
+* Rapidly edit assets, via AI, that deepen engagement through capabilities such as smart cropping, thumbnail generation, automated transcoding, and more.
+* Deliver dynamically created responsive images across various devices and different resolutions.
+* Utilize lazy loading and customizable placeholders to load images that are viewed by your users.
+* Support both [headless](https://cloudinary.com/blog/image-optimization-headless-wordpress-wpgraphql) and UI-based WordPress deployments, maintaining flexibility in website development.
 * Maintain compatibility with popular page builders.
 * Provide end-to-end support for the WooCommerce plugin.
+* Stream videos using the Cloudinary Video Player, featuring advanced capabilities to enhance user engagement.
+* Present a responsive and interactive Product Gallery for creating captivating visual experiences.
 
 == About ==
 
-Cloudinary’s [award-winning plugin](https://www.businesswire.com/news/home/20200923005566/en/Cloudinary-Wins-2020-MarTech-Breakthrough-Award-for-Best-WordPress-Plugin)  makes automating your image, video, and visual media workflows easy, offering a variety of features. From image and video upload through management, transformation, optimization, and global CDN delivery, all features are offered within the plugin. Users can get started in minutes with a true plug-and-play solution paired with an intuitive onboarding wizard helping deliver optimized and responsive media out-of-the-box.
+Cloudinary’s [award-winning plugin](https://www.businesswire.com/news/home/20200923005566/en/Cloudinary-Wins-2020-MarTech-Breakthrough-Award-for-Best-WordPress-Plugin) makes automating your image and video workflows easy, offering a variety of features. Supporting nearly two million developers and over 10,000 customers, Cloudinary enables companies to manage, transform, optimize and deliver image and video assets. The Cloudinary Plugin supports all these capabilities, providing users with a true plug-and-play solution. Getting started takes only minutes using the intuitive onboarding wizard.
 
 https://youtu.be/AMVS_O_VEss
 
-> Know more on at the [Cloudinary Academy - Introduction to Cloudinary for WordPress Administrators](https://training.cloudinary.com/courses/introduction-to-cloudinary-for-wordpress-administrators-70-minute-course-zf3x)
+> Learn more about the plugin with the [Cloudinary Academy - Introduction to Cloudinary for WordPress Administrators](https://training.cloudinary.com/courses/introduction-to-cloudinary-for-wordpress-administrators-70-minute-course-zf3x)
 
-On top of that, users can also leverage a dashboard giving insights into optimization metrics and data usage so there are never any surprises. No matter if your use case is for personal use or business needs, the Cloudinary plugin offers enterprise quality and architecture for all.
+After deployment, users can access a dashboard that provides insights into optimization metrics and data usage. The Cloudinary Plugin is based on an architecture that supports any type of site including business, enterprise and personal.
 
-**Optimize your site performance**  and user experience with faster page load times and advanced auto-responsive delivery, allowing you to improve your **Google page rankings**, **Core Web Vitals**, and **Lighthouse scores**. Publish faster while consistently delivering positive user experiences via an array of automated features such as video and image optimization, advanced responsive design, customizable lazy loading, and fast CDN delivery of assets. Display engaging visual experiences with automated quality and encoding settings, **video and image resizing** and **cropping via AI**, comprehensive transformations and effects, and delivery to any device in any resolution or pixel density.
+**Optimize your site performance** and user experience by achieving faster page load times and implementing advanced auto-responsive delivery. This not only improves your **Google page rankings** but also enhances **Core Web Vitals**, and **Lighthouse scores**. By leveraging features such as video and image optimization, advanced responsive design, customizable lazy loading, and built-in CDN support, you can publish content faster while consistently delivering engaging user experiences. The Plugin supports both headless and UI-based development models, and allows you to customize development and extend functionality with the Cloudinary Plugin [actions and filters](https://cloudinary.com/documentation/wordpress_developers#actions_and_filters). Moreover, you can create engaging visual experiences with automated quality and encoding settings, **video and image resizing** and **cropping via AI**, comprehensive [transformations](https://cloudinary.com/documentation/image_transformations) and effects, and seamless delivery to any device in any resolution or pixel density.
 
 == Getting Started ==
 
-To use the Cloudinary Plugin and all the functionality that comes with it, you will need to have a Cloudinary Account. **If you don’t have an account yet, [sign up](https://cloudinary.com/signup?utm_source=wordpress-plugin-page&utm_medium=affiliate&utm_content=sign-up&utm_campaign=1976) now for a free Cloudinary Programmable Media account**. You’ll start with generous usage limits and when your requirements grow, you can easily upgrade to a plan that best fits your needs. Upon account creation you can plug in your account credentials and customize your configurations as desired. That’s it.
-
-**Upgrade Messaging**
-
-Enjoy a seamless upgrade to experience the completely new look and feel of our plugin. Boasting many new features including our digital asset management platform, video player offering advanced capabilities, auto-responsive images, customizable lazy loading, responsive and interactive product gallery, automatic optimizations and transformations, and much more.
+To use the Cloudinary Plugin and all the functionality that comes with it, you will need to have a Cloudinary Account. **If you don’t have an account yet, [sign up](https://cloudinary.com/users/register_free?utm_campaign=1976&utm_content=sign-up&utm_medium=affiliate&utm_source=wordpress-plugin-page) now for a free Cloudinary Programmable Media account**. You’ll start with generous usage limits and when your requirements grow, you can easily upgrade to a plan that best fits your needs. Upon account creation you can plug in your account credentials and customize your configurations as desired. That’s it.
 
 == Frequently Asked Questions ==
 
@@ -94,7 +92,7 @@ Read more about Cloudinary:
 
 * [Our website](http://cloudinary.com/)
 * [Blog](http://cloudinary.com/blog)
-* [Feature guides](https://cloudinary.com/documentation/cloudinary_guides)
+* [Feature guides](https://cloudinary.com/documentation/programmable_media_guides)
 * [DAM solution](https://cloudinary.com/products/digital_asset_management)
 * [Detailed documentation](http://cloudinary.com/documentation)
 * [Image transformations documentation](http://cloudinary.com/documentation/image_transformations)
@@ -107,14 +105,6 @@ Read more about Cloudinary:
 * [Complex Networks](https://cloudinary-res.cloudinary.com/image/upload/v1606310155/website/resources/case-study/cloudinary_case_study_complex_networks_0720_v2.pdf)
 * [StubHub](https://cloudinary-res.cloudinary.com/image/upload/v1599569503/website/resources/case-study/cloudinary_case_study_stubHub_0820_fnl.pdf)
 * [Fairfax Media](https://cloudinary-res.cloudinary.com/image/upload/v1599569441/website/resources/case-study/cloudinary_case_study_Fairfax_Media_0720_fnl.pdf)
-
-== Contributors & Developers ==
-
-`Cloudinary – Dynamic Image and Video Management` is an open source software. The following people have contributed to this plugin:
-[Cloudinary](https://profiles.wordpress.org/cloudinary/)
-[XWP](https://profiles.wordpress.org/xwp/)
-[Automattic](https://profiles.wordpress.org/automattic/)
-
 
 == Installation ==
 = Install from within WordPress =
