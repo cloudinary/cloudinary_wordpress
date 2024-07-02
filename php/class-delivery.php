@@ -11,13 +11,9 @@ use Cloudinary\Component\Setup;
 use Cloudinary\Connect\Api;
 use Cloudinary\Media\Filter;
 use Cloudinary\Media\Global_Transformations;
-use Cloudinary\Sync;
-use Cloudinary\String_Replace;
 use Cloudinary\UI\Component\HTML;
 use Cloudinary\Delivery\Bypass;
 use Cloudinary\Relate\Relationship;
-use WP_Post;
-use Cloudinary\Utils;
 
 /**
  * Plugin Delivery class.
@@ -335,11 +331,12 @@ class Delivery implements Setup {
 		if ( $relationship instanceof Relationship ) {
 			$public_id = $relationship->public_id;
 		}
+
 		$sizes              = $this->get_sized( $attachment_id );
 		$settings_signature = self::get_settings_signature();
 		$relation_signature = $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['relationship'], true );
 
-		return wp_json_encode( $sizes ) . $public_id . $sql . $settings_signature . $relation_signature;
+		return wp_json_encode( $sizes ) . $public_id . $sql . $settings_signature . $relation_signature . Utils::get_media_context( $attachment_id );
 	}
 
 	/**
@@ -544,9 +541,10 @@ class Delivery implements Setup {
 		$relationship = Relationship::get_relationship( $attachment_id );
 
 		if ( $relationship instanceof Relationship ) {
-			$relationship->public_id   = $public_id;
-			$relationship->public_hash = md5( (string) $public_id );
-			$relationship->signature   = self::get_settings_signature();
+			$relationship->public_id     = $public_id;
+			$relationship->public_hash   = md5( (string) $public_id );
+			$relationship->signature     = self::get_settings_signature();
+			$relationship->media_context = Utils::get_media_context( $attachment_id );
 			$relationship->save();
 		}
 	}
@@ -624,6 +622,7 @@ class Delivery implements Setup {
 			'post_id'         => $attachment_id,
 			'parent_path'     => $parent_path,
 			'sized_url'       => $sized_url,
+			'media_context'   => Utils::get_media_context( $attachment_id ),
 			'width'           => $width_height[0] ? $width_height[0] : 0,
 			'height'          => $width_height[1] ? $width_height[1] : 0,
 			'format'          => Utils::pathinfo( $sized_url, PATHINFO_EXTENSION ),
@@ -1013,6 +1012,9 @@ class Delivery implements Setup {
 			$base           = $type . ':' . $url;
 			$public_id      = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
 			$cloudinary_url = $this->media->cloudinary_url( $relation['post_id'], array(), $relation['transformations'], $public_id );
+			if ( empty( $cloudinary_url ) ) {
+				continue;
+			}
 			if ( ! empty( $relation['slashed'] ) && $relation['slashed'] ) {
 				$aliases[ $base . '?' ] = addcslashes( $cloudinary_url . '&', '/' );
 				$aliases[ $base ]       = addcslashes( $cloudinary_url, '/' );
