@@ -19,6 +19,8 @@ import Tabs from "./components/tabs";
 import '../css/main.scss';
 
 // include images.
+import '../css/images/academy.jpg';
+import '../css/images/academy-icon.svg';
 import '../css/images/bandwidth.svg';
 import '../css/images/star.svg';
 import '../css/images/cloud.svg';
