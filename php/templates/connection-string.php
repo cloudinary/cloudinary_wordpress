@@ -28,7 +28,7 @@ $dir_url = Cloudinary\get_plugin_instance()->dir_url;
 			?>
 		</p>
 		<ol>
-			<li><?php esc_html_e( 'Open your Cloudinary Dashboard', 'cloudinary' ); ?></li>
+			<li><?php esc_html_e( 'Open your Cloudinary Console.', 'cloudinary' ); ?></li>
 			<li>
 				<?php
 				printf(
