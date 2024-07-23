@@ -8,6 +8,7 @@
 namespace Cloudinary\Integrations;
 
 use Cloudinary\Cron;
+use Cloudinary\Utils;
 use WPML\Auryn\InjectionException;
 use WPML\FP\Obj;
 use WPML\Records\Translations as TranslationRecords;
