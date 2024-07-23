@@ -60,6 +60,9 @@ class WPML extends Integrations {
 		add_filter( 'wp_generate_attachment_metadata', array( $this, 'wp_generate_attachment_metadata' ), 10, 3 );
 		add_action( 'cloudinary_ready', array( $this, 'setup_cron' ) );
 		add_filter( 'cloudinary_media_context', array( $this, 'add_wpml_context' ), 10, 2 );
+		add_filter( 'cloudinary_media_context_query', array( $this, 'filter_media_context_query' ) );
+		add_filter( 'cloudinary_media_context_things', array( $this, 'filter_media_context_things' ) );
+		add_filter( 'cloudinary_home_url', array( $this, 'home_url' ) );
 	}
 
 	/**
@@ -150,6 +153,39 @@ class WPML extends Integrations {
 		}
 
 		return $context;
+	}
+
+	/**
+	 * Filter the media context query.
+	 *
+	 * @return string
+	 */
+	public function filter_media_context_query() {
+		return 'media_context IN ( %s, %s )';
+	}
+
+	/**
+	 * Filter the media context things to query.
+	 *
+	 * @param array $things The things to query for.
+	 *
+	 * @return array
+	 */
+	public function filter_media_context_things( $things ) {
+		$things[] = Utils::get_media_context();
+
+		return $things;
+	}
+
+	/**
+	 * Get the home URL.
+	 * Typically WPML will return the home URL with the current language as subdirectory.
+	 * For dealing with static assets, we need the home URL without the language subdirectory.
+	 *
+	 * @return string
+	 */
+	public function home_url() {
+		return get_option( 'home' );
 	}
 
 	/**
