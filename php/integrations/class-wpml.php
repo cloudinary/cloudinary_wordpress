@@ -63,6 +63,7 @@ class WPML extends Integrations {
 		add_filter( 'cloudinary_media_context_query', array( $this, 'filter_media_context_query' ) );
 		add_filter( 'cloudinary_media_context_things', array( $this, 'filter_media_context_things' ) );
 		add_filter( 'cloudinary_home_url', array( $this, 'home_url' ) );
+		add_action( 'cloudinary_edit_asset_permalink', array( $this, 'add_locale' ) );
 	}
 
 	/**
@@ -186,6 +187,18 @@ class WPML extends Integrations {
 	 */
 	public function home_url() {
 		return get_option( 'home' );
+	}
+
+	/**
+	 * Add the locale to the edit asset link.
+	 * This will ensure that the asset is edited in the correct language.
+	 *
+	 * @param string $permalink The permalink.
+	 *
+	 * @return string
+	 */
+	public function add_locale( $permalink ) {
+		return add_query_arg( 'lang', apply_filters( 'wpml_current_language', null ), $permalink );
 	}
 
 	/**

@@ -1175,8 +1175,20 @@ class Delivery implements Setup {
 				$this->plugin->get_component( 'storage' )->size_sync( $tag_element['id'] );
 			}
 
-			$base_url                              = $this->plugin->settings->get_url( 'edit_asset' );
-			$tag_element['atts']['data-permalink'] = add_query_arg( 'asset', $tag_element['id'], $base_url );
+			$base_url = $this->plugin->settings->get_url( 'edit_asset' );
+
+			/**
+			 * Filter the permalink for the edit asset link.
+			 *
+			 * @hook   cloudinary_edit_asset_permalink
+			 * @since  3.1.9
+			 *
+			 * @param $permalink {string} The permalink.
+			 *
+			 * @return {string}
+			 */
+			$permalink = apply_filters( 'cloudinary_edit_asset_permalink', add_query_arg( 'asset', $tag_element['id'], $base_url ) );
+			$tag_element['atts']['data-permalink'] = $permalink;
 		}
 
 		$tag_element['atts']['data-version'] = $this->media->get_cloudinary_version( $tag_element['id'] );
