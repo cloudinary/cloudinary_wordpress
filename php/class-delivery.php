@@ -879,18 +879,29 @@ class Delivery implements Setup {
 
 			if ( $results ) {
 				foreach ( $results as $result ) {
-					if ( ! $this->is_deliverable( $result->post_id ) ) {
+					/**
+					 * Get the contextualized post id.
+					 *
+					 * @hook cloudinary_contextualized_post_id
+					 * @since 3.1.9
+					 *
+					 * @param $post_id {int} The post ID.
+					 *
+					 * @return {int}
+					 */
+					$post_id = apply_filters( 'cloudinary_contextualized_post_id', $result->post_id );
+					if ( ! $this->is_deliverable( $post_id ) ) {
 						continue;
 					}
 					// If we are here, it means that an attachment in the media library doesn't have a delivery for the url.
 					// Reset the signature for delivery and add to sync, to update it.
-					$this->create_delivery( $result->post_id );
+					$this->create_delivery( $post_id );
 					if ( true === $auto_sync ) {
-						$this->sync->add_to_sync( $result->post_id );
+						$this->sync->add_to_sync( $post_id );
 					}
-					$size           = $this->get_sized( $result->post_id );
-					$key            = ! empty( $size['sized_url'] ) ? $size['sized_url'] : wp_get_attachment_url( $result->post_id );
-					$cached[ $key ] = (int) $result->post_id;
+					$size           = $this->get_sized( $post_id );
+					$key            = ! empty( $size['sized_url'] ) ? $size['sized_url'] : wp_get_attachment_url( $post_id );
+					$cached[ $key ] = (int) $post_id;
 				}
 			}
 			wp_cache_add( $key, $cached );

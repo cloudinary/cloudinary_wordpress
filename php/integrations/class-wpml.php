@@ -64,6 +64,7 @@ class WPML extends Integrations {
 		add_filter( 'cloudinary_media_context_things', array( $this, 'filter_media_context_things' ) );
 		add_filter( 'cloudinary_home_url', array( $this, 'home_url' ) );
 		add_action( 'cloudinary_edit_asset_permalink', array( $this, 'add_locale' ) );
+		add_filter( 'cloudinary_contextualized_post_id', array( $this, 'contextualized_post_id' ) );
 	}
 
 	/**
@@ -199,6 +200,21 @@ class WPML extends Integrations {
 	 */
 	public function add_locale( $permalink ) {
 		return add_query_arg( 'lang', apply_filters( 'wpml_current_language', null ), $permalink );
+	}
+
+	/**
+	 * Get the contextualized post id.
+	 *
+	 * @param int $post_id The attachment id.
+	 *
+	 * @return int
+	 */
+	public function contextualized_post_id( $post_id ) {
+		if ( 'attachment' !== get_post_type( $post_id ) ) {
+			return $post_id;
+		}
+
+		return apply_filters( 'wpml_object_id', $post_id, 'attachment' );
 	}
 
 	/**
