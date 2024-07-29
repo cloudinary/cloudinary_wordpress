@@ -1,8 +1,8 @@
 === Cloudinary - Deliver Images and Videos at Scale ===
 Contributors: Cloudinary, XWP, Automattic
-Tags: image-optimizer, crop, core-web-vitals, responsive, resize, product-gallery, performance
+Tags: image-optimizer, core-web-vitals, responsive-images, resize, performance
 Requires at least: 4.7
-Tested up to: 6.5
+Tested up to: 6.6.1
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -140,6 +140,15 @@ Your site is now setup to start using Cloudinary.
 
 
 == Changelog ==
+
+= 3.1.9 (29 July 2024) =
+
+Fixes and improvements:
+
+* Added support for WPML
+* Updated the Wizard with new instructions for obtaining the Cloudinary API key
+* Fixed issue with downloaded fragments not being deleted
+
 
 = 3.1.8 (25 March 2024) =
 
