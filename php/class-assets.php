@@ -1020,7 +1020,8 @@ class Assets extends Settings_Component {
 		global $wpdb;
 
 		$wpdb->cld_table = Utils::get_relationship_table();
-		$prepare         = $wpdb->prepare( "SELECT * FROM $wpdb->cld_table WHERE post_id = %d;", (int) $post_id );
+		$media_context   = Utils::get_media_context( $post_id );
+		$prepare         = $wpdb->prepare( "SELECT * FROM $wpdb->cld_table WHERE post_id = %d AND media_context = %s;", (int) $post_id, $media_context );
 		$result          = $wpdb->get_row( $prepare, ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
 
 		return $this->build_item( $result );

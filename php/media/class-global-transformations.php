@@ -93,7 +93,7 @@ class Global_Transformations {
 				}
 				$priority = intval( $setting->get_param( 'taxonomy_field.priority', 10 ) ) * 1000;
 				while ( isset( $this->taxonomy_fields[ $context ][ $priority ] ) ) {
-					$priority ++;
+					++$priority;
 				}
 				if ( ! isset( $this->taxonomy_fields[ $context ] ) ) {
 					$this->taxonomy_fields[ $context ] = array();
@@ -635,7 +635,7 @@ class Global_Transformations {
 	 * @param int    $attachment_id The attachment id.
 	 */
 	public function transformations_column_value( $column_name, $attachment_id ) {
-		if ( 'cld_transformations' === $column_name && $this->media->sync->is_synced( $attachment_id ) ) {
+		if ( 'cld_transformations' === $column_name && $this->media->sync->is_synced( $attachment_id, true ) ) {
 
 			// Transformations are only available for Images and Videos.
 			if (
