@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Filter: cloudinary_current_post_id - Cloudinary Docs</title>
+	<title>Filter: cloudinary_media_context - Cloudinary Docs</title>
 
 	<script src="scripts/prettify/prettify.js"></script>
 	<script src="scripts/prettify/lang-css.js"></script>
@@ -22,7 +22,7 @@
 <div id="main">
 
 	
-	<h1 class="page-title">Filter: cloudinary_current_post_id</h1>
+	<h1 class="page-title">Filter: cloudinary_media_context</h1>
 	
 
 	
@@ -44,20 +44,98 @@
 
     
 
-    <h4 class="name" id="cloudinary_current_post_id">apply_filters( 'cloudinary_current_post_id' )</h4>
+    <h4 class="name" id="cloudinary_media_context">apply_filters( 'cloudinary_media_context', <span class="signature">$media_context, $attachment_id )</span><span class="type-signature"> &rarr; {string}</span></h4>
 
     
 
 
 
 <div class="description">
-    Filter the post ID.
+    Filter the media context.
+
+This filter allows you to set a media context for the media for cases where the same asset is used in
+different use cases, such as in a multilingual context.
 </div>
 
 
 
 
 
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>$media_context</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The media context.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>$attachment_id</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">int</span>
+|
+
+<span class="param-type">null</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The attachment ID.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
 
 
 
@@ -68,6 +146,9 @@
 
     
 
+    
+    <dt class="tag-since">Since:</dt>
+    <dd class="tag-since"><ul class="dummy"><li>3.1.9</li></ul></dd>
     
 
     
@@ -91,14 +172,14 @@
     
     <dt class="tag-default">Default Value:</dt>
     <dd class="tag-default"><ul class="dummy">
-            <li>null</li>
+            <li>{'default'}</li>
         </ul></dd>
     
 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="php_media_class-global-transformations.php.html">php/media/class-global-transformations.php</a>, <a href="php_media_class-global-transformations.php.html#line593">line 593</a>
+        <a href="php_class-utils.php.html">php/class-utils.php</a>, <a href="php_class-utils.php.html#line1129">line 1129</a>
     </li></ul></dd>
     
 
@@ -132,10 +213,7 @@
     </dt>
     <dd>
         
-<span class="param-type">WP_Post</span>
-|
-
-<span class="param-type">null</span>
+<span class="param-type">string</span>
 
 
     </dd>
