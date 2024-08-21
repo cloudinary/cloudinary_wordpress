@@ -114,7 +114,7 @@ class Sync_Queue {
 		 * @return {int}
 		 */
 		$queue_threads_count = apply_filters( 'cloudinary_queue_threads', 2 );
-		for ( $i = 0; $i < $queue_threads_count; $i ++ ) {
+		for ( $i = 0; $i < $queue_threads_count; ++$i ) {
 			$this->queue_threads[] = 'queue_sync_thread_' . $i;
 		}
 
@@ -128,7 +128,7 @@ class Sync_Queue {
 		 * @return {int}
 		 */
 		$autosync_thread_count = apply_filters( 'cloudinary_autosync_threads', 2 );
-		for ( $i = 0; $i < $autosync_thread_count; $i ++ ) {
+		for ( $i = 0; $i < $autosync_thread_count; ++$i ) {
 			$this->autosync_threads[] = 'auto_sync_thread_' . $i;
 		}
 		$this->threads = array_merge( $this->queue_threads, $this->autosync_threads );
@@ -503,7 +503,7 @@ class Sync_Queue {
 		do {
 			$ids  = array_merge( $ids, $query->get_posts() );
 			$args = $query->query_vars;
-			$args['paged'] ++;
+			++$args['paged'];
 			$query = new \WP_Query( $args );
 		} while ( $query->have_posts() );
 
