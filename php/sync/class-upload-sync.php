@@ -7,7 +7,6 @@
 
 namespace Cloudinary\Sync;
 
-use Cloudinary\Delivery;
 use Cloudinary\Sync;
 use Cloudinary\Utils;
 
@@ -91,7 +90,8 @@ class Upload_Sync {
 			'bulk_actions-upload',
 			function ( $actions ) {
 				$cloudinary_actions = array(
-					'cloudinary-push' => __( 'Sync with Cloudinary', 'cloudinary' ),
+					'cloudinary-push'     => __( 'Sync with Cloudinary', 'cloudinary' ),
+					'cloudinary-clean-up' => __( 'Clean Cloudinary error', 'cloudinary' ),
 				);
 
 				return array_merge( $cloudinary_actions, $actions );
@@ -148,6 +148,25 @@ class Upload_Sync {
 			}
 		}
 
+		if (
+			$this->sync->is_syncable( $post->ID )
+			&& ! empty( get_post_meta( $post->ID, Sync::META_KEYS['sync_error'], true ) )
+		) {
+			$actions['cloudinary-clean-up'] = sprintf(
+				'<a href="%s" aria-label="%s">%s</a>',
+				add_query_arg(
+					array(
+						'action'   => 'cloudinary-clean-up',
+						'media[]'  => $post->ID,
+						'_wpnonce' => wp_create_nonce( 'bulk-media' ),
+					),
+					admin_url( 'upload.php' )
+				),
+				esc_attr__( 'Clean Cloudinary error', 'cloudinary' ),
+				esc_html__( 'Clean Cloudinary error', 'cloudinary' )
+			);
+		}
+
 		return $actions;
 	}
 
@@ -186,6 +205,15 @@ class Upload_Sync {
 						$this->media->delete_post_meta( $post_id, Sync::META_KEYS['public_id'] );
 						$this->sync->add_to_sync( $post_id );
 					}
+				}
+				break;
+
+			case 'cloudinary-clean-up':
+				foreach ( $post_ids as $post_id ) {
+					if ( ! $this->sync->is_syncable( $post_id ) ) {
+						continue;
+					}
+					delete_post_meta( $post_id, Sync::META_KEYS['sync_error'] );
 				}
 				break;
 		}
