@@ -153,6 +153,30 @@ class Dashboard {
 										),
 									),
 								),
+								array(
+									'type'    => 'tag',
+									'element' => 'br',
+								),
+								array(
+									'type'       => 'tag',
+									'element'    => 'a',
+									'content'    => '&nbsp;',
+									'attributes' => array(
+										'href'      => add_query_arg(
+											array(
+												'page'   => 'cloudinary',
+												'action' => 'clean_up',
+												'nonce'  => wp_create_nonce( 'clean_up' ),
+											),
+											admin_url( 'admin.php' )
+										),
+										'data-text' => 'error_clean_up',
+										'class'     => array(
+											'cld-stat-text',
+											'cld-ui-error',
+										),
+									),
+								),
 							),
 						),
 						array(
@@ -334,5 +358,4 @@ class Dashboard {
 
 		return $pages;
 	}
-
 }

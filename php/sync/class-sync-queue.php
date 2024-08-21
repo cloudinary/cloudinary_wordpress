@@ -412,6 +412,7 @@ class Sync_Queue {
 			'error_count'             => $errors_count,
 			// translators: placeholders are the number of errors.
 			'error_count_hr'          => 0 === $errors_count ? '' : sprintf( _n( '%s error with assets.', '%s errors with assets', $errors_count, 'cloudinary' ), number_format_i18n( $errors_count ) ),
+			'error_clean_up'          => 0 === $errors_count ? '' : __( 'Retry errored assets.', 'cloudinary' ),
 
 			// Number of assets.
 			'total_assets'            => $total_assets, // This is a count of the assets in _cloudinary_relationships.
