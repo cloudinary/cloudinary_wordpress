@@ -272,7 +272,7 @@ trait CLI_Trait {
 				// Paginate.
 				$query_args = $query->query_vars;
 				if ( true === $paginate ) {
-					$query_args['paged'] ++;
+					++$query_args['paged'];
 				}
 				$query = new \WP_Query( $query_args );
 			} while ( $query->have_posts() );
@@ -294,7 +294,7 @@ trait CLI_Trait {
 			$done = 0;
 		}
 		foreach ( $posts as $index => $asset ) {
-			$done ++; // Set $done early to not show 0 of x.
+			++$done; // Set $done early to not show 0 of x.
 			$file     = get_attached_file( $asset );
 			$filename = self::pad_name( wp_basename( $file ), 20, ' ', '*' );
 			$bar->tick( 1, 'Syncing (' . ( $done ) . ' of ' . $total . ') : ' . $filename );
@@ -345,7 +345,7 @@ trait CLI_Trait {
 		$errored_attachments  = array();
 
 		foreach ( $posts as $asset ) {
-			$done ++;
+			++$done;
 			$key = '_cld_unsupported';
 			if (
 				$this->plugin->get_component( 'media' )->is_uploadable_media( $asset )
@@ -378,7 +378,7 @@ trait CLI_Trait {
 					}
 				}
 			}
-			$info[ $key ] ++;
+			++$info[ $key ];
 			$bar->tick( 1, $done . ' of ' . $total . ' |' );
 		}
 		// Done message.
