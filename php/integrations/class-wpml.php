@@ -144,7 +144,7 @@ class WPML extends Integrations {
 	 * @return string|null
 	 */
 	public function add_wpml_context( $context, $attachment_id ) {
-		if ( 'attachment' === get_post_type( $attachment_id ) ) {
+		if ( is_null( $attachment_id ) || 'attachment' === get_post_type( $attachment_id ) ) {
 			$context = apply_filters( 'wpml_current_language', null );
 		}
 
