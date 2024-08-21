@@ -212,7 +212,7 @@ class Report extends Settings_Component implements Setup {
 		unset( $meta[ Sync::META_KEYS['cloudinary'] ], $meta[ Sync::META_KEYS['process_log'] ], $meta['_wp_attachment_metadata'] );
 		array_walk(
 			$meta,
-			static function( &$row ) {
+			static function ( &$row ) {
 				$row = reset( $row );
 			}
 		);
@@ -226,9 +226,11 @@ class Report extends Settings_Component implements Setup {
 		}
 
 		$wpdb->cld_table = Utils::get_relationship_table();
+		$media_context   = Utils::get_media_context( $post->ID );
 		$prepare         = $wpdb->prepare(
-			"SELECT * FROM {$wpdb->cld_table} WHERE post_id = %d;",
-			$post->ID
+			"SELECT * FROM {$wpdb->cld_table} WHERE post_id = %d AND media_context = %s;",
+			$post->ID,
+			$media_context
 		);
 		$relationship    = $wpdb->get_row( $prepare ); // phpcs:ignore WordPress.DB.PreparedSQL,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 

@@ -12,6 +12,7 @@ use Cloudinary\Sync;
 use Cloudinary\Utils;
 use Cloudinary\Plugin;
 use Cloudinary\Media;
+use function Cloudinary\get_plugin_instance;
 
 /**
  * Class API.
@@ -527,7 +528,11 @@ class Api {
 			$disable_https_fetch = true;
 		}
 
-		if ( ! $this->media->is_uploadable_media( $attachment_id ) ) {
+		if ( ! $this->media ) {
+			$this->media = get_plugin_instance()->get_component( 'media' );
+		}
+
+		if ( $this->media && ! $this->media->is_uploadable_media( $attachment_id ) ) {
 			$disable_https_fetch = false; // Remote can upload via url.
 			// translators: variable is thread name and queue size.
 			$action_message = sprintf( __( 'Uploading remote url:  %1$s.', 'cloudinary' ), $file_url );
