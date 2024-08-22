@@ -91,7 +91,7 @@ class Upload_Sync {
 			function ( $actions ) {
 				$cloudinary_actions = array(
 					'cloudinary-push'     => __( 'Sync with Cloudinary', 'cloudinary' ),
-					'cloudinary-clean-up' => __( 'Clean Cloudinary error', 'cloudinary' ),
+					'cloudinary-clean-up' => __( 'Clean Cloudinary Error', 'cloudinary' ),
 				);
 
 				return array_merge( $cloudinary_actions, $actions );
@@ -161,7 +161,7 @@ class Upload_Sync {
 					admin_url( 'upload.php' )
 				),
 				esc_attr__( 'Clean Cloudinary error', 'cloudinary' ),
-				esc_html__( 'Clean Cloudinary error', 'cloudinary' )
+				esc_html__( 'Clean Cloudinary Error', 'cloudinary' )
 			);
 		}
 
