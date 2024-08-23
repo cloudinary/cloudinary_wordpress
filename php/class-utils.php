@@ -543,7 +543,21 @@ class Utils {
 	 * @return bool
 	 */
 	public static function looks_like_json( $thing ) {
-		return is_string( $thing ) && ! empty( ltrim( $thing ) ) && in_array( $thing[0], array( '{', '[' ), true );
+		if ( ! is_string( $thing ) ) {
+			return false;
+		}
+
+		$thing = trim( $thing );
+	
+		if ( empty( $thing ) ) {
+			return false;
+		}
+	
+		if ( ! in_array( $thing[0], array( '{', '[' ), true ) ) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
