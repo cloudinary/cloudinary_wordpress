@@ -73,21 +73,12 @@ class Special_Offer {
 					'type'    => 'link',
 					'content' => __( 'Get started', 'cloudinary' ),
 					'url'     => static function () {
-						$current_user = wp_get_current_user();
-						$plugin       = get_plugin_instance();
-						$cloud_name   = $plugin->components['connect']->get_cloud_name();
-
-						return add_query_arg(
-							array(
-								'tf_anonymous_requester_email' => $current_user->user_email,
-								'tf_22246877'                  => $current_user->display_name,
-								'tf_360007219560'              => $cloud_name,
-								'tf_360017815680'              => 'help_with_plans',
-								'tf_subject'                   => __( 'Request to Purchase the Small Plan', 'cloudinary' ),
-								'tf_description'               => __( "Hello,\n\nI'm interested in purchasing the Small plan for $29. Could you please provide me with the next steps to complete the purchase?\n\nThank you!", 'cloudinary' ),
-							),
-							'https://support.cloudinary.com/hc/en-us/requests/new'
+						$args = array(
+							'tf_360017815680' => 'help_with_plans',
+							'tf_subject'      => __( 'Request to Purchase the Small Plan', 'cloudinary' ),
+							'tf_description'  => __( "Hello,<br><br>I'm interested in purchasing the Small plan for $29. Could you please provide me with the next steps to complete the purchase?<br><br>Thank you!", 'cloudinary' ),
 						);
+						return Utils::get_support_link( $args );
 					},
 					'target'  => '_blank',
 				),

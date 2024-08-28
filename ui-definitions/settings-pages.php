@@ -333,7 +333,12 @@ $settings = array(
 						'type'       => 'tag',
 						'element'    => 'a',
 						'attributes' => array(
-							'href'   => Utils::get_support_link( '-' ),
+							'href'   => static function () {
+								$args = array(
+									'tf_360017815680' => '-',
+								);
+								return Utils::get_support_link( $args );
+							},
 							'target' => '_blank',
 							'rel'    => 'noopener noreferrer',
 							'class'  => array(
@@ -451,12 +456,14 @@ $settings = array(
 					'type'        => 'panel',
 					'title'       => __( "I'm having an incompatibility issue with a theme, plugin, or hosting environment, what can I do?", 'cloudinary' ),
 					'collapsible' => 'closed',
-					'content'     => sprintf(
-						// translators: The HTML markup.
-						__( 'We’re compatible with most other plugins so we expect it to work absolutely fine. If you do have any issues, please %1$scontact our support team%2$s who will help resolve your issue.', 'cloudinary' ),
-						'<a href="' . Utils::get_support_link() . '" target="_blank" rel="noopener noreferrer">',
-						'</a>'
-					),
+					'content'     => static function () {
+						return sprintf(
+							// translators: The HTML markup.
+							__( 'We’re compatible with most other plugins so we expect it to work absolutely fine. If you do have any issues, please %1$scontact our support team%2$s who will help resolve your issue.', 'cloudinary' ),
+							'<a href="' . Utils::get_support_link() . '" target="_blank" rel="noopener noreferrer">',
+							'</a>'
+						);
+					},
 				),
 				array(
 					'type'        => 'panel',

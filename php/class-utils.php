@@ -449,35 +449,31 @@ class Utils {
 	/**
 	 * Gets the URL for opening a Support Request.
 	 *
-	 * @param string $reason  The reason option slug.
-	 * @param string $subject The subject for the request.
+	 * @param array $args The arguments.
 	 *
 	 * @return string
 	 */
-	public static function get_support_link( $reason = '', $subject = '' ) {
+	public static function get_support_link( $args = array() ) {
 		$user   = wp_get_current_user();
 		$plugin = get_plugin_instance();
 		$url    = 'https://support.cloudinary.com/hc/en-us/requests/new';
 
-		if ( empty( $reason ) ) {
-			$reason = 'other_help_needed';
-		}
-
-		if ( empty( $subject ) ) {
-			$subject = sprintf(
-			// translators: The plugin version.
+		$default_args = array(
+			'tf_anonymous_requester_email' => $user->user_email,
+			'tf_22246877'                  => $user->display_name,
+			'tf_360007219560'              => $plugin->components['connect']->get_cloud_name(),
+			'tf_360017815680'              => 'other_help_needed',
+			'tf_subject'                   => sprintf(
+				// translators: The plugin version.
 				__( 'I need help with Cloudinary WordPress plugin version %s', 'cloudinary' ),
 				$plugin->version
-			);
-		}
+			),
+			'tf_description'  => __( 'Please, provide more details on your request, and if possible, attach a System Report', 'cloudinary' ),
+		);
 
-		$args = array(
-			'request_anonymous_requester_email'  => $user->display_name,
-			'request_custom_fields_22246877'     => $user->user_email,
-			'request_custom_fields_360007219560' => $plugin->components['connect']->get_cloud_name(),
-			'request_custom_fields_360017815680' => $reason,
-			'request_subject'                    => $subject,
-			'request_description'                => __( 'Please, provide more details on your request, and if possible, attach a System Report', 'cloudinary' ),
+		$args = wp_parse_args(
+			$args,
+			$default_args
 		);
 
 		return add_query_arg( array_filter( $args ), $url );
