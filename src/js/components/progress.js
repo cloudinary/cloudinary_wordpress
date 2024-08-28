@@ -171,6 +171,14 @@ const Progress = {
 				} );
 				textElements.forEach( ( element ) => {
 					element.innerText = result[ stat ];
+
+					if ( element.classList.contains( 'cld-toggle' ) ) {
+						if ( result[ stat ] ) {
+							element.classList.remove( 'hidden' );
+						} else {
+							element.classList.add( 'hidden' );
+						}
+					}
 				} );
 			}
 		} );

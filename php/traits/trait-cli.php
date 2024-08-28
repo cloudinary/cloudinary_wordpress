@@ -72,13 +72,22 @@ trait CLI_Trait {
 
 	/**
 	 * Is debug mode on.
-	 * Either verbose or export flags.git
+	 * Either verbose or export flags.
 	 *
 	 * @since 3.0.3
 	 *
 	 * @var bool
 	 */
 	protected $is_debug_enabled = false;
+
+	/**
+	 * Clean up flag.
+	 *
+	 * @since 3.2.0
+	 *
+	 * @var bool
+	 */
+	protected $clean_up = false;
 
 	/**
 	 * CLI Cloudinary Setup.
@@ -114,6 +123,16 @@ trait CLI_Trait {
 	 *
 	 *     wp cloudinary sync
 	 *
+	 * ## OPTIONS
+	 * [--verbose]
+	 * : Whether to show extra information on unsynced and errored attachments.
+	 *
+	 * [--export]
+	 * : Whether to export CSV files with unsynced and errored attachments.
+	 *
+	 * [--clean-up]
+	 * : Whether to clean up all the error flags.
+	 *
 	 * @when    after_wp_load
 	 * @since   2.5.1
 	 *
@@ -133,6 +152,7 @@ trait CLI_Trait {
 		$this->is_verbose       = ! empty( $assoc_args['verbose'] );
 		$this->is_export        = ! empty( $assoc_args['export'] );
 		$this->is_debug_enabled = empty( $args ) && ( $this->is_verbose || $this->is_export );
+		$this->clean_up         = ! empty( $assoc_args['clean-up'] );
 
 		// Initial Query.
 		$query_args = $this->base_query_args;
@@ -152,7 +172,6 @@ trait CLI_Trait {
 			\WP_CLI::log( \WP_CLI::colorize( '%gAll assets synced.%n' ) );
 			delete_option( '_cld_cli_analyzed' );
 		}
-
 	}
 
 	/**
@@ -164,6 +183,9 @@ trait CLI_Trait {
 	 *
 	 * [--export]
 	 * : Whether to export CSV files with unsynced and errored attachments.
+	 *
+	 * [--clean-up]
+	 * : Whether to clean up all the error flags.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -179,11 +201,14 @@ trait CLI_Trait {
 	 */
 	public function analyze( $args = null, $assoc_args = null ) {
 
+		static $did_cleanup = false;
+
 		// Warmup flags if called as command.
 		if ( ! is_null( $args ) && ! is_null( $assoc_args ) ) {
 			$this->is_verbose       = ! empty( $assoc_args['verbose'] );
 			$this->is_export        = ! empty( $assoc_args['export'] );
 			$this->is_debug_enabled = empty( $args ) && ( $this->is_verbose || $this->is_export );
+			$this->clean_up         = ! empty( $assoc_args['clean-up'] );
 		}
 
 		// Initial query.
@@ -196,6 +221,14 @@ trait CLI_Trait {
 
 		// Do process.
 		$this->do_process( $query, 'analyze' );
+
+		// Clean up all the error flags.
+		if ( $this->clean_up && ! $did_cleanup ) {
+			$did_cleanup = true;
+
+			\WP_CLI::log( \WP_CLI::colorize( '%gCleaning up the error flags.%n' ) );
+			delete_post_meta_by_key( Sync::META_KEYS['sync_error'] );
+		}
 	}
 
 	/**
@@ -239,7 +272,7 @@ trait CLI_Trait {
 				// Paginate.
 				$query_args = $query->query_vars;
 				if ( true === $paginate ) {
-					$query_args['paged'] ++;
+					++$query_args['paged'];
 				}
 				$query = new \WP_Query( $query_args );
 			} while ( $query->have_posts() );
@@ -261,7 +294,7 @@ trait CLI_Trait {
 			$done = 0;
 		}
 		foreach ( $posts as $index => $asset ) {
-			$done ++; // Set $done early to not show 0 of x.
+			++$done; // Set $done early to not show 0 of x.
 			$file     = get_attached_file( $asset );
 			$filename = self::pad_name( wp_basename( $file ), 20, ' ', '*' );
 			$bar->tick( 1, 'Syncing (' . ( $done ) . ' of ' . $total . ') : ' . $filename );
@@ -312,7 +345,7 @@ trait CLI_Trait {
 		$errored_attachments  = array();
 
 		foreach ( $posts as $asset ) {
-			$done ++;
+			++$done;
 			$key = '_cld_unsupported';
 			if (
 				$this->plugin->get_component( 'media' )->is_uploadable_media( $asset )
@@ -345,7 +378,7 @@ trait CLI_Trait {
 					}
 				}
 			}
-			$info[ $key ] ++;
+			++$info[ $key ];
 			$bar->tick( 1, $done . ' of ' . $total . ' |' );
 		}
 		// Done message.

@@ -449,35 +449,33 @@ class Utils {
 	/**
 	 * Gets the URL for opening a Support Request.
 	 *
-	 * @param string $reason  The reason option slug.
-	 * @param string $subject The subject for the request.
+	 * @param array $args The arguments.
 	 *
 	 * @return string
 	 */
-	public static function get_support_link( $reason = '', $subject = '' ) {
+	public static function get_support_link( $args = array() ) {
 		$user   = wp_get_current_user();
 		$plugin = get_plugin_instance();
 		$url    = 'https://support.cloudinary.com/hc/en-us/requests/new';
 
-		if ( empty( $reason ) ) {
-			$reason = 'other_help_needed';
-		}
+		$default_args = array(
+			'tf_anonymous_requester_email' => $user->user_email,
+			'tf_22246877'                  => $user->display_name,
+			'tf_360007219560'              => $plugin->components['connect']->get_cloud_name(),
+			'tf_360017815680'              => 'other_help_needed',
+			'tf_subject'                   => esc_attr(
+				sprintf(
+					// translators: The plugin version.
+					__( 'I need help with Cloudinary WordPress plugin version %s', 'cloudinary' ),
+					$plugin->version
+				)
+			),
+			'tf_description'  => esc_attr( __( 'Please, provide more details on your request, and if possible, attach a System Report', 'cloudinary' ) ),
+		);
 
-		if ( empty( $subject ) ) {
-			$subject = sprintf(
-			// translators: The plugin version.
-				__( 'I need help with Cloudinary WordPress plugin version %s', 'cloudinary' ),
-				$plugin->version
-			);
-		}
-
-		$args = array(
-			'request_anonymous_requester_email'  => $user->display_name,
-			'request_custom_fields_22246877'     => $user->user_email,
-			'request_custom_fields_360007219560' => $plugin->components['connect']->get_cloud_name(),
-			'request_custom_fields_360017815680' => $reason,
-			'request_subject'                    => $subject,
-			'request_description'                => __( 'Please, provide more details on your request, and if possible, attach a System Report', 'cloudinary' ),
+		$args = wp_parse_args(
+			$args,
+			$default_args
 		);
 
 		return add_query_arg( array_filter( $args ), $url );
@@ -543,7 +541,21 @@ class Utils {
 	 * @return bool
 	 */
 	public static function looks_like_json( $thing ) {
-		return ! empty( $thing ) && is_string( $thing ) && in_array( ltrim( $thing )[0], array( '{', '[' ), true );
+		if ( ! is_string( $thing ) ) {
+			return false;
+		}
+
+		$thing = trim( $thing );
+	
+		if ( empty( $thing ) ) {
+			return false;
+		}
+	
+		if ( ! in_array( $thing[0], array( '{', '[' ), true ) ) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -999,21 +1011,45 @@ class Utils {
 	public static function query_relations( $public_ids, $urls = array() ) {
 		global $wpdb;
 
-		$media_context   = self::get_media_context();
 		$wheres          = array();
 		$searched_things = array();
+
+		/**
+		 * Filter the media context query.
+		 *
+		 * @hook   cloudinary_media_context_query
+		 * @since  3.1.9
+		 *
+		 * @param $media_context_query {string} The default media context query.
+		 *
+		 * @return {string}
+		 */
+		$media_context_query = apply_filters( 'cloudinary_media_context_query', 'media_context = %s' );
+
+		/**
+		 * Filter the media context things.
+		 *
+		 * @hook   cloudinary_media_context_things
+		 * @since  3.1.9
+		 *
+		 * @param $media_context_things {array} The default media context things.
+		 *
+		 * @return {array}
+		 */
+		$media_context_things = apply_filters( 'cloudinary_media_context_things', array( 'default' ) );
+
 		if ( ! empty( $urls ) ) {
 			// Do the URLS.
 			$list            = implode( ', ', array_fill( 0, count( $urls ), '%s' ) );
-			$where           = "(url_hash IN( {$list} ) AND media_context = %s)";
-			$searched_things = array_merge( $searched_things, array_map( 'md5', $urls ), array( $media_context ) );
+			$where           = "(url_hash IN( {$list} ) AND {$media_context_query} )";
+			$searched_things = array_merge( $searched_things, array_map( 'md5', $urls ), $media_context_things );
 			$wheres[]        = $where;
 		}
 		if ( ! empty( $public_ids ) ) {
 			// Do the public_ids.
 			$list            = implode( ', ', array_fill( 0, count( $public_ids ), '%s' ) );
-			$where           = "(public_hash IN( {$list} ) AND media_context = %s)";
-			$searched_things = array_merge( $searched_things, array_map( 'md5', $public_ids ), array( $media_context ) );
+			$where           = "(public_hash IN( {$list} ) AND {$media_context_query} )";
+			$searched_things = array_merge( $searched_things, array_map( 'md5', $public_ids ), $media_context_things );
 			$wheres[]        = $where;
 		}
 
