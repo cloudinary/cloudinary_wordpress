@@ -1018,7 +1018,7 @@ class Utils {
 		 * Filter the media context query.
 		 *
 		 * @hook   cloudinary_media_context_query
-		 * @since  3.1.9
+		 * @since  3.2.0
 		 *
 		 * @param $media_context_query {string} The default media context query.
 		 *
@@ -1030,7 +1030,7 @@ class Utils {
 		 * Filter the media context things.
 		 *
 		 * @hook   cloudinary_media_context_things
-		 * @since  3.1.9
+		 * @since  3.2.0
 		 *
 		 * @param $media_context_things {array} The default media context things.
 		 *

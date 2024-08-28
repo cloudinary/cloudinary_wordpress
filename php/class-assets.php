@@ -437,7 +437,7 @@ class Assets extends Settings_Component {
 		 * Filter the home url.
 		 *
 		 * @hook cloudinary_home_url
-		 * @since 3.1.9
+		 * @since 3.2.0
 		 *
 		 * @param $home_url {string} The home url.
 		 *

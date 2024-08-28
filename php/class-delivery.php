@@ -883,7 +883,7 @@ class Delivery implements Setup {
 					 * Get the contextualized post id.
 					 *
 					 * @hook cloudinary_contextualized_post_id
-					 * @since 3.1.9
+					 * @since 3.2.0
 					 *
 					 * @param $post_id {int} The post ID.
 					 *
@@ -1194,7 +1194,7 @@ class Delivery implements Setup {
 			 * Filter the permalink for the edit asset link.
 			 *
 			 * @hook   cloudinary_edit_asset_permalink
-			 * @since  3.1.9
+			 * @since  3.2.0
 			 *
 			 * @param $permalink {string} The permalink.
 			 *
