@@ -250,4 +250,29 @@ class Relationship {
 
 		return array_map( 'intval', $ids );
 	}
+
+	/**
+	 * Get the relationship in a different context.
+	 *
+	 * @param string $context The context.
+	 *
+	 * @return Relationship|null
+	 */
+	public function get_contextualized_relationship( $context ) {
+		$relationship = null;
+		if ( ! empty( $this->context ) && $this->context !== $context ) {
+			global $wpdb;
+			$table_name = Utils::get_relationship_table();
+
+			$sql     = $wpdb->prepare( "SELECT post_id FROM {$table_name} WHERE url_hash = %s AND media_context = %s", $this->url_hash, $context ); // phpcs:ignore WordPress.DB
+			$post_id = $wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB
+
+			if ( $post_id ) {
+				$relationship          = self::get_relationship( $post_id );
+				$relationship->context = $context;
+			}
+		}
+
+		return $relationship;
+	}
 }
