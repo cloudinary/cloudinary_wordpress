@@ -541,7 +541,21 @@ class Utils {
 	 * @return bool
 	 */
 	public static function looks_like_json( $thing ) {
-		return ! empty( $thing ) && is_string( $thing ) && in_array( ltrim( $thing )[0], array( '{', '[' ), true );
+		if ( ! is_string( $thing ) ) {
+			return false;
+		}
+
+		$thing = trim( $thing );
+	
+		if ( empty( $thing ) ) {
+			return false;
+		}
+	
+		if ( ! in_array( $thing[0], array( '{', '[' ), true ) ) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -997,21 +1011,45 @@ class Utils {
 	public static function query_relations( $public_ids, $urls = array() ) {
 		global $wpdb;
 
-		$media_context   = self::get_media_context();
 		$wheres          = array();
 		$searched_things = array();
+
+		/**
+		 * Filter the media context query.
+		 *
+		 * @hook   cloudinary_media_context_query
+		 * @since  3.1.9
+		 *
+		 * @param $media_context_query {string} The default media context query.
+		 *
+		 * @return {string}
+		 */
+		$media_context_query = apply_filters( 'cloudinary_media_context_query', 'media_context = %s' );
+
+		/**
+		 * Filter the media context things.
+		 *
+		 * @hook   cloudinary_media_context_things
+		 * @since  3.1.9
+		 *
+		 * @param $media_context_things {array} The default media context things.
+		 *
+		 * @return {array}
+		 */
+		$media_context_things = apply_filters( 'cloudinary_media_context_things', array( 'default' ) );
+
 		if ( ! empty( $urls ) ) {
 			// Do the URLS.
 			$list            = implode( ', ', array_fill( 0, count( $urls ), '%s' ) );
-			$where           = "(url_hash IN( {$list} ) AND media_context = %s)";
-			$searched_things = array_merge( $searched_things, array_map( 'md5', $urls ), array( $media_context ) );
+			$where           = "(url_hash IN( {$list} ) AND {$media_context_query} )";
+			$searched_things = array_merge( $searched_things, array_map( 'md5', $urls ), $media_context_things );
 			$wheres[]        = $where;
 		}
 		if ( ! empty( $public_ids ) ) {
 			// Do the public_ids.
 			$list            = implode( ', ', array_fill( 0, count( $public_ids ), '%s' ) );
-			$where           = "(public_hash IN( {$list} ) AND media_context = %s)";
-			$searched_things = array_merge( $searched_things, array_map( 'md5', $public_ids ), array( $media_context ) );
+			$where           = "(public_hash IN( {$list} ) AND {$media_context_query} )";
+			$searched_things = array_merge( $searched_things, array_map( 'md5', $public_ids ), $media_context_things );
 			$wheres[]        = $where;
 		}
 
