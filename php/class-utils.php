@@ -463,12 +463,14 @@ class Utils {
 			'tf_22246877'                  => $user->display_name,
 			'tf_360007219560'              => $plugin->components['connect']->get_cloud_name(),
 			'tf_360017815680'              => 'other_help_needed',
-			'tf_subject'                   => sprintf(
-				// translators: The plugin version.
-				__( 'I need help with Cloudinary WordPress plugin version %s', 'cloudinary' ),
-				$plugin->version
+			'tf_subject'                   => esc_attr(
+				sprintf(
+					// translators: The plugin version.
+					__( 'I need help with Cloudinary WordPress plugin version %s', 'cloudinary' ),
+					$plugin->version
+				)
 			),
-			'tf_description'  => __( 'Please, provide more details on your request, and if possible, attach a System Report', 'cloudinary' ),
+			'tf_description'  => esc_attr( __( 'Please, provide more details on your request, and if possible, attach a System Report', 'cloudinary' ) ),
 		);
 
 		$args = wp_parse_args(

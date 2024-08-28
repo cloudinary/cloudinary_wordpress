@@ -75,8 +75,8 @@ class Special_Offer {
 					'url'     => static function () {
 						$args = array(
 							'tf_360017815680' => 'help_with_plans',
-							'tf_subject'      => __( 'Request to Purchase the Small Plan', 'cloudinary' ),
-							'tf_description'  => __( "Hello,<br><br>I'm interested in purchasing the Small plan for $29. Could you please provide me with the next steps to complete the purchase?<br><br>Thank you!", 'cloudinary' ),
+							'tf_subject'      => esc_attr( __( 'Request to Purchase the Small Plan', 'cloudinary' ) ),
+							'tf_description'  => esc_attr( __( "Hello,<br><br>I'm interested in purchasing the Small plan for $29. Could you please provide me with the next steps to complete the purchase?<br><br>Thank you!", 'cloudinary' ) ),
 						);
 						return Utils::get_support_link( $args );
 					},
