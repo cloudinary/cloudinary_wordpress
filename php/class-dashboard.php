@@ -149,8 +149,12 @@ class Dashboard {
 										'data-text' => 'error_count_hr',
 										'class'     => array(
 											'cld-stat-text',
-											'cld-ui-error',
+											'cld-link-button',
+											'cld-link-button-secondary',
+											'cld-toggle',
+											'hidden',
 										),
+										'title'       => __( 'View errored assets', 'cloudinary' ),
 									),
 								),
 								array(
@@ -173,8 +177,13 @@ class Dashboard {
 										'data-text' => 'error_clean_up',
 										'class'     => array(
 											'cld-stat-text',
-											'cld-ui-error',
+											'cld-link-button',
+											'cld-link-button-secondary',
+											'cld-link-button-secondary-error',
+											'cld-toggle',
+											'hidden',
 										),
+										'title'       => __( 'Retry sync assets with errors', 'cloudinary' ),
 									),
 								),
 							),
