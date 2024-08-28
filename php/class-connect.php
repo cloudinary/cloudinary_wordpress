@@ -447,7 +447,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		$plan    = ! empty( $this->usage['plan'] ) ? $this->usage['plan'] : $this->credentials['cloud_name'];
 		for ( $i = 1; $i <= $days; $i ++ ) {
 			$date = date_i18n( 'd-m-Y', strtotime( '- ' . $i . ' days' ) );
-			if ( ! isset( $history[ $plan ][ $date ] ) ) {
+			if ( ! isset( $history[ $plan ][ $date ] ) || is_wp_error( $history[ $plan ][ $date ] ) ) {
 				$history[ $plan ][ $date ] = $this->api->usage( $date );
 				uksort(
 					$history[ $plan ],
