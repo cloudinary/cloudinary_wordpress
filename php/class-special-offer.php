@@ -96,7 +96,7 @@ class Special_Offer {
 	protected function is_special_offer_available() {
 		$last_usage = get_option( Connect::META_KEYS['last_usage'], array( 'plan' => '' ) );
 
-		return 'free' !== strtolower( $last_usage['plan'] );
+		return 'free' === strtolower( $last_usage['plan'] );
 	}
 
 	/**
