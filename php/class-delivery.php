@@ -1027,11 +1027,13 @@ class Delivery implements Setup {
 				continue;
 			}
 			if ( ! empty( $relation['slashed'] ) && $relation['slashed'] ) {
-				$aliases[ $base . '?' ] = addcslashes( $cloudinary_url . '&', '/' );
-				$aliases[ $base ]       = addcslashes( $cloudinary_url, '/' );
+				$aliases[ $base . '?_i=AA' ] = addcslashes( $cloudinary_url, '/' );
+				$aliases[ $base . '?' ]      = addcslashes( $cloudinary_url . '&', '/' );
+				$aliases[ $base ]            = addcslashes( $cloudinary_url, '/' );
 			} else {
-				$aliases[ $base . '?' ] = $cloudinary_url . '&';
-				$aliases[ $base ]       = $cloudinary_url;
+				$aliases[ $base . '?_i=AA' ] = $cloudinary_url;
+				$aliases[ $base . '?' ]      = $cloudinary_url . '&';
+				$aliases[ $base ]            = $cloudinary_url;
 			}
 		}
 
