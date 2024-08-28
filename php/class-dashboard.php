@@ -149,8 +149,41 @@ class Dashboard {
 										'data-text' => 'error_count_hr',
 										'class'     => array(
 											'cld-stat-text',
-											'cld-ui-error',
+											'cld-link-button',
+											'cld-link-button-secondary',
+											'cld-toggle',
+											'hidden',
 										),
+										'title'       => __( 'View errored assets', 'cloudinary' ),
+									),
+								),
+								array(
+									'type'    => 'tag',
+									'element' => 'br',
+								),
+								array(
+									'type'       => 'tag',
+									'element'    => 'a',
+									'content'    => '&nbsp;',
+									'attributes' => array(
+										'href'      => add_query_arg(
+											array(
+												'page'   => 'cloudinary',
+												'action' => 'clean_up',
+												'nonce'  => wp_create_nonce( 'clean_up' ),
+											),
+											admin_url( 'admin.php' )
+										),
+										'data-text' => 'error_clean_up',
+										'class'     => array(
+											'cld-stat-text',
+											'cld-link-button',
+											'cld-link-button-secondary',
+											'cld-link-button-secondary-error',
+											'cld-toggle',
+											'hidden',
+										),
+										'title'       => __( 'Retry sync assets with errors', 'cloudinary' ),
 									),
 								),
 							),
@@ -334,5 +367,4 @@ class Dashboard {
 
 		return $pages;
 	}
-
 }
