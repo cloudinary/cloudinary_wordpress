@@ -16,5 +16,27 @@
 			color: #fff;
 			text-decoration: none;
 		}
+
+		&.hidden {
+			display: none;
+		}
+
+		&-secondary {
+			background-color: $color-cld-grey-blue;
+			color: $color-cld-dark-description;
+			border: 1px solid $color-cld-blue;
+
+			&:hover, &:focus {
+				background-color: $color-cld-blue;
+			}
+
+			&-error {
+				border-color: $color-red;
+
+				&:hover, &:focus {
+					background-color: $color-red;
+				}
+			}
+		}
 	}
 }
