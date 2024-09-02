@@ -7,7 +7,7 @@
 
 ?>
 
-<p><?php esc_html_e( 'Running out of space on your free account? Upgrade for just $29 and supercharge your WordPress site with Cloudinary for unlimited awesomeness!', 'cloudinary' ); ?></p>
+<p><?php esc_html_e( 'Running out of space on your free account? Upgrade for just $29/month and supercharge your WordPress site with Cloudinary for unlimited awesomeness!', 'cloudinary' ); ?></p>
 
 <p>
 	<?php esc_html_e( 'As a note:', 'cloudinary' ); ?>

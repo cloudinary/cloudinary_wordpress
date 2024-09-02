@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cloudinary STABLETAG\n"
 "Report-Msgid-Bugs-To: https://github.com/cloudinary/cloudinary_wordpress\n"
-"POT-Creation-Date: 2024-08-28 17:20:41+00:00\n"
+"POT-Creation-Date: 2024-09-02 14:29:09+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -634,29 +634,26 @@ msgid ""
 msgstr ""
 
 #: php/class-special-offer.php:55
-msgid "Special Offer"
+msgid "Special Offer!"
 msgstr ""
 
 #: php/class-special-offer.php:64
 msgid "Get a small $29 plan"
 msgstr ""
 
-#: php/class-special-offer.php:65
-msgid "Contact us"
-msgstr ""
-
-#: php/class-special-offer.php:74
+#: php/class-special-offer.php:72
 msgid "Get started"
 msgstr ""
 
 #: php/class-special-offer.php:78
-msgid "Request to Purchase the Small Plan"
+#. translators: The plugin version.
+msgid "Request to Purchase the WordPress plugin version %s Small Plan"
 msgstr ""
 
-#: php/class-special-offer.php:79
+#: php/class-special-offer.php:81
 msgid ""
-"Hello,<br><br>I'm interested in purchasing the Small plan for $29. Could "
-"you please provide me with the next steps to complete the "
+"Hello,<br><br>I'm interested in purchasing the monthly Small plan for "
+"$29/month. Could you please provide me with the next steps to complete the "
 "purchase?<br><br>Thank you!"
 msgstr ""
 
@@ -1143,7 +1140,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: php/sync/class-sync-queue.php:415
-msgid "Retry errored unsynced items"
+msgid "Fix Sync Errors"
 msgstr ""
 
 #: php/sync/class-sync-queue.php:423
@@ -1262,7 +1259,7 @@ msgstr ""
 
 #: php/templates/special-offer.php:10
 msgid ""
-"Running out of space on your free account? Upgrade for just $29 and "
+"Running out of space on your free account? Upgrade for just $29/month and "
 "supercharge your WordPress site with Cloudinary for unlimited awesomeness!"
 msgstr ""
 

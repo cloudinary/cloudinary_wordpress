@@ -70,11 +70,15 @@ class Special_Offer {
 				array(
 					'type'    => 'link',
 					'content' => __( 'Get started', 'cloudinary' ),
-					'url'     => static function () {
+					'url'     => function () {
 						$args = array(
 							'tf_360017815680' => 'help_with_plans',
-							'tf_subject'      => esc_attr( __( 'Request to Purchase the WordPress Small Plan', 'cloudinary' ) ),
-							'tf_description'  => esc_attr( __( "Hello,<br><br>I'm interested in purchasing the Small plan for $29. Could you please provide me with the next steps to complete the purchase?<br><br>Thank you!", 'cloudinary' ) ),
+							'tf_subject'      => sprintf(
+								// translators: The plugin version.
+								esc_attr( __( 'Request to Purchase the WordPress plugin version %s Small Plan', 'cloudinary' ) ),
+								$this->plugin->version
+							),
+							'tf_description'  => esc_attr( __( "Hello,<br><br>I'm interested in purchasing the monthly Small plan for $29/month. Could you please provide me with the next steps to complete the purchase?<br><br>Thank you!", 'cloudinary' ) ),
 						);
 						return Utils::get_support_link( $args );
 					},
