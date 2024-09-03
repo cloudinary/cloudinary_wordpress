@@ -42,5 +42,9 @@
 	&-text {
 		font-weight: bold;
 		margin: .75em 0;
+
+		&.cld-link-button {
+			margin: .75em 0;
+		}
 	}
 }

@@ -879,18 +879,29 @@ class Delivery implements Setup {
 
 			if ( $results ) {
 				foreach ( $results as $result ) {
-					if ( ! $this->is_deliverable( $result->post_id ) ) {
+					/**
+					 * Get the contextualized post id.
+					 *
+					 * @hook cloudinary_contextualized_post_id
+					 * @since 3.2.0
+					 *
+					 * @param $post_id {int} The post ID.
+					 *
+					 * @return {int}
+					 */
+					$post_id = apply_filters( 'cloudinary_contextualized_post_id', $result->post_id );
+					if ( ! $this->is_deliverable( $post_id ) ) {
 						continue;
 					}
 					// If we are here, it means that an attachment in the media library doesn't have a delivery for the url.
 					// Reset the signature for delivery and add to sync, to update it.
-					$this->create_delivery( $result->post_id );
+					$this->create_delivery( $post_id );
 					if ( true === $auto_sync ) {
-						$this->sync->add_to_sync( $result->post_id );
+						$this->sync->add_to_sync( $post_id );
 					}
-					$size           = $this->get_sized( $result->post_id );
-					$key            = ! empty( $size['sized_url'] ) ? $size['sized_url'] : wp_get_attachment_url( $result->post_id );
-					$cached[ $key ] = (int) $result->post_id;
+					$size           = $this->get_sized( $post_id );
+					$key            = ! empty( $size['sized_url'] ) ? $size['sized_url'] : wp_get_attachment_url( $post_id );
+					$cached[ $key ] = (int) $post_id;
 				}
 			}
 			wp_cache_add( $key, $cached );
@@ -1016,11 +1027,13 @@ class Delivery implements Setup {
 				continue;
 			}
 			if ( ! empty( $relation['slashed'] ) && $relation['slashed'] ) {
-				$aliases[ $base . '?' ] = addcslashes( $cloudinary_url . '&', '/' );
-				$aliases[ $base ]       = addcslashes( $cloudinary_url, '/' );
+				$aliases[ $base . '?_i=AA' ] = addcslashes( $cloudinary_url, '/' );
+				$aliases[ $base . '?' ]      = addcslashes( $cloudinary_url . '&', '/' );
+				$aliases[ $base ]            = addcslashes( $cloudinary_url, '/' );
 			} else {
-				$aliases[ $base . '?' ] = $cloudinary_url . '&';
-				$aliases[ $base ]       = $cloudinary_url;
+				$aliases[ $base . '?_i=AA' ] = $cloudinary_url;
+				$aliases[ $base . '?' ]      = $cloudinary_url . '&';
+				$aliases[ $base ]            = $cloudinary_url;
 			}
 		}
 
@@ -1175,8 +1188,20 @@ class Delivery implements Setup {
 				$this->plugin->get_component( 'storage' )->size_sync( $tag_element['id'] );
 			}
 
-			$base_url                              = $this->plugin->settings->get_url( 'edit_asset' );
-			$tag_element['atts']['data-permalink'] = add_query_arg( 'asset', $tag_element['id'], $base_url );
+			$base_url = $this->plugin->settings->get_url( 'edit_asset' );
+
+			/**
+			 * Filter the permalink for the edit asset link.
+			 *
+			 * @hook   cloudinary_edit_asset_permalink
+			 * @since  3.2.0
+			 *
+			 * @param $permalink {string} The permalink.
+			 *
+			 * @return {string}
+			 */
+			$permalink = apply_filters( 'cloudinary_edit_asset_permalink', add_query_arg( 'asset', $tag_element['id'], $base_url ) );
+			$tag_element['atts']['data-permalink'] = $permalink;
 		}
 
 		$tag_element['atts']['data-version'] = $this->media->get_cloudinary_version( $tag_element['id'] );
