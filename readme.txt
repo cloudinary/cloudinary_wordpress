@@ -141,6 +141,15 @@ Your site is now setup to start using Cloudinary.
 
 == Changelog ==
 
+= 3.2.0 (03 September 2024) =
+
+Fixes and improvements:
+
+* Added an option to resolve Cloudinary sync errors, accessible both from the Cloudinary dashboard and the WordPress media library
+* Introduced a new $29/month Small Plan for free users looking to enhance their Cloudinary experience
+* Fixed an issue with sitemaps that caused the duplication of query strings
+
+
 = 3.1.9 (29 July 2024) =
 
 Fixes and improvements:
