@@ -425,7 +425,19 @@ class Assets extends Settings_Component {
 	 * @return string
 	 */
 	public function clean_path( $path ) {
-		$home = Utils::clean_url( trailingslashit( home_url() ) );
+		/**
+		 * Filter the home url.
+		 *
+		 * @hook cloudinary_home_url
+		 * @since 3.2.0
+		 *
+		 * @param $home_url {string} The home url.
+		 *
+		 * @return {string}
+		 */
+		$home_url = apply_filters( 'cloudinary_home_url', home_url() );
+
+		$home = Utils::clean_url( trailingslashit( $home_url ) );
 		$path = str_replace( $home, '', Utils::clean_url( $path ) );
 		if ( empty( Utils::pathinfo( $path, PATHINFO_EXTENSION ) ) ) {
 			$path = urldecode( trailingslashit( $path ) );

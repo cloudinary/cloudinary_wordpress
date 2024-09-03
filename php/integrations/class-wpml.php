@@ -8,6 +8,8 @@
 namespace Cloudinary\Integrations;
 
 use Cloudinary\Cron;
+use Cloudinary\Relate\Relationship;
+use Cloudinary\Utils;
 use WPML\Auryn\InjectionException;
 use WPML\FP\Obj;
 use WPML\Records\Translations as TranslationRecords;
@@ -59,6 +61,12 @@ class WPML extends Integrations {
 		add_filter( 'wp_generate_attachment_metadata', array( $this, 'wp_generate_attachment_metadata' ), 10, 3 );
 		add_action( 'cloudinary_ready', array( $this, 'setup_cron' ) );
 		add_filter( 'cloudinary_media_context', array( $this, 'add_wpml_context' ), 10, 2 );
+		add_filter( 'cloudinary_media_context_query', array( $this, 'filter_media_context_query' ) );
+		add_filter( 'cloudinary_media_context_things', array( $this, 'filter_media_context_things' ) );
+		add_filter( 'cloudinary_home_url', array( $this, 'home_url' ) );
+		add_action( 'cloudinary_edit_asset_permalink', array( $this, 'add_locale' ) );
+		add_filter( 'cloudinary_contextualized_post_id', array( $this, 'contextualized_post_id' ) );
+		add_filter( 'wpml_admin_language_switcher_items', array( $this, 'language_switcher_items' ) );
 	}
 
 	/**
@@ -152,6 +160,101 @@ class WPML extends Integrations {
 	}
 
 	/**
+	 * Filter the media context query.
+	 *
+	 * @return string
+	 */
+	public function filter_media_context_query() {
+		return 'media_context IN ( %s, %s )';
+	}
+
+	/**
+	 * Filter the media context things to query.
+	 *
+	 * @param array $things The things to query for.
+	 *
+	 * @return array
+	 */
+	public function filter_media_context_things( $things ) {
+		$things[] = Utils::get_media_context();
+
+		return $things;
+	}
+
+	/**
+	 * Get the home URL.
+	 * Typically WPML will return the home URL with the current language as subdirectory.
+	 * For dealing with static assets, we need the home URL without the language subdirectory.
+	 *
+	 * @return string
+	 */
+	public function home_url() {
+		return get_option( 'home' );
+	}
+
+	/**
+	 * Add the locale to the edit asset link.
+	 * This will ensure that the asset is edited in the correct language.
+	 *
+	 * @param string $permalink The permalink.
+	 *
+	 * @return string
+	 */
+	public function add_locale( $permalink ) {
+		return add_query_arg( 'lang', apply_filters( 'wpml_current_language', null ), $permalink );
+	}
+
+	/**
+	 * Get the contextualized post id.
+	 *
+	 * @param int $post_id The attachment id.
+	 *
+	 * @return int
+	 */
+	public function contextualized_post_id( $post_id ) {
+		if ( 'attachment' !== get_post_type( $post_id ) ) {
+			return $post_id;
+		}
+
+		return apply_filters( 'wpml_object_id', $post_id, 'attachment' );
+	}
+
+	/**
+	 * Update the link for the Cloudinary Assets item on the admin bar language switcher.
+	 *
+	 * @param array $languages_links The language switcher items.
+	 *
+	 * @return array
+	 */
+	public function language_switcher_items( $languages_links ) {
+		foreach ( $languages_links as $language => &$link ) {
+			$args       = array();
+			$query_args = wp_parse_url( $link['url'], PHP_URL_QUERY );
+			parse_str( $query_args, $args );
+
+			// Check if we are in the context of editing an asset.
+			if (
+				empty( $args['page'] )
+				|| 'cloudinary' !== $args['page']
+				|| empty( $args['section'] )
+				|| 'edit-asset' !== $args['section']
+				|| empty( $args['asset'] )
+			) {
+				break;
+			}
+
+			$relationship = new Relationship( $args['asset'] );
+			$contextual_relationship = $relationship->get_contextualized_relationship( $language );
+
+			if ( ! empty( $contextual_relationship ) ) {
+				$link['url'] = add_query_arg( 'asset', $contextual_relationship->post_id, $link['url'] );
+			}
+		}
+
+		return $languages_links;
+	}
+
+	/**
 	 * Register the cron action at a late stage to ensure that WPML is loaded.
 	 *
 	 * @return void
@@ -223,8 +326,8 @@ class WPML extends Integrations {
 			)
 			LIMIT %d";
 
-		$query = $wpdb->prepare( $sql, self::LIMIT ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$results = array_map( 'intval', $wpdb->get_col( $query ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared
+		$query   = $wpdb->prepare( $sql, self::LIMIT ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$results = array_map( 'intval', $wpdb->get_col( $query ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		return $results;
 	}

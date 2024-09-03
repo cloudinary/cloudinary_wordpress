@@ -109,3 +109,14 @@
 		}
 	}
 }
+
+&-special-offer {
+	background-color: $color-cld-coral;
+	color: #fff;
+	text-decoration: none;
+	padding: 5px 14px;
+	border-radius: 4px 4px 0 0;
+	font-weight: bold;
+	font-size: $size-sidebar-title;
+	margin: 2em 0 0;
+}

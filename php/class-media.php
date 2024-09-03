@@ -2811,6 +2811,7 @@ class Media extends Settings_Component implements Setup {
 		);
 		$context_options       = array(
 			'cld_wp_plugin' => 1,
+			'wp_context'    => Utils::get_media_context( $attachment_id ),
 		);
 		if ( $this->is_folder_synced( $attachment_id ) ) {
 			$context_options = wp_parse_args( $media_library_context, $context_options );

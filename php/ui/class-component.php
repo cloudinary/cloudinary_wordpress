@@ -759,11 +759,13 @@ abstract class Component {
 					$value = implode( ' ', $value );
 				}
 			}
+			if ( ! is_string( $value ) && is_callable( $value ) ) {
+				$value = call_user_func( $value );
+			}
 			$return[] = esc_attr( $attribute ) . '="' . esc_attr( $value ) . '"';
 		}
 
 		return implode( ' ', $return );
-
 	}
 
 	/**

@@ -145,6 +145,7 @@ final class Plugin {
 		$this->components['metabox']                = new Meta_Box( $this );
 		$this->components['url']                    = new URL( $this );
 		$this->components['wpml']                   = new WPML( $this );
+		$this->components['special_offer']          = new Special_Offer( $this );
 	}
 
 	/**

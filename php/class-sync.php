@@ -1098,6 +1098,45 @@ class Sync implements Setup, Assets {
 	}
 
 	/**
+	 * Cleanup errored syncs.
+	 */
+	public function maybe_cleanup_errored() {
+		if ( 'cloudinary' !== Utils::get_sanitized_text( 'page' ) ) {
+			return;
+		}
+
+		if ( 'cleaned_up' === Utils::get_sanitized_text( 'action' ) ) {
+			$this->plugin->get_component( 'admin' )->add_admin_notice( 'error_notice', __( 'Sync errors cleaned up', 'cloudinary' ), 'success' );
+		}
+
+		if ( 'clean_up' !== Utils::get_sanitized_text( 'action' ) ) {
+			return;
+		}
+
+		if ( ! wp_verify_nonce( Utils::get_sanitized_text( 'nonce' ), 'clean_up' ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		delete_post_meta_by_key( self::META_KEYS['sync_error'] );
+
+		wp_redirect(
+			add_query_arg(
+				array(
+					'page'    => 'cloudinary',
+					'action'  => 'cleaned_up',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+
+		exit;
+	}
+
+	/**
 	 * Checks if auto sync feature is enabled.
 	 *
 	 * @return bool
@@ -1192,6 +1231,8 @@ class Sync implements Setup, Assets {
 
 			add_filter( 'cloudinary_setting_get_value', array( $this, 'filter_get_cloudinary_folder' ), 10, 2 );
 			add_filter( 'cloudinary_get_signature', array( $this, 'get_signature_syncable_type' ), 10, 2 );
+
+			add_action( 'admin_init', array( $this, 'maybe_cleanup_errored' ), 10, 2 );
 
 			add_action( 'rest_api_init', array( $this, 'rest_api_is_synced_field' ) );
 		}
