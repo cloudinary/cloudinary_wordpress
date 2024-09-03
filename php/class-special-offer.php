@@ -52,7 +52,7 @@ class Special_Offer {
 			array(
 				'type'       => 'tag',
 				'element'    => 'div',
-				'content'    => __( 'Special Offer', 'cloudinary' ),
+				'content'    => __( 'Special Offer!', 'cloudinary' ),
 				'attributes' => array(
 					'class' => array(
 						'cld-special-offer',
@@ -62,21 +62,23 @@ class Special_Offer {
 			array(
 				'type'        => 'panel',
 				'title'       => __( 'Get a small $29 plan', 'cloudinary' ),
-				'description' => __( 'Contact us', 'cloudinary' ),
 				'collapsible' => 'closed',
 				array(
-					'type'    => 'tag',
-					'element' => 'div',
+					'type'    => 'div',
 					'content' => $this->get_special_offer_content(),
 				),
 				array(
 					'type'    => 'link',
 					'content' => __( 'Get started', 'cloudinary' ),
-					'url'     => static function () {
+					'url'     => function () {
 						$args = array(
 							'tf_360017815680' => 'help_with_plans',
-							'tf_subject'      => esc_attr( __( 'Request to Purchase the Small Plan', 'cloudinary' ) ),
-							'tf_description'  => esc_attr( __( "Hello,<br><br>I'm interested in purchasing the Small plan for $29. Could you please provide me with the next steps to complete the purchase?<br><br>Thank you!", 'cloudinary' ) ),
+							'tf_subject'      => sprintf(
+								// translators: The plugin version.
+								esc_attr( __( 'Request to Purchase the WordPress plugin version %s Small Plan', 'cloudinary' ) ),
+								$this->plugin->version
+							),
+							'tf_description'  => esc_attr( __( "Hello,<br><br>I'm interested in purchasing the monthly Small plan for $29/month. Could you please provide me with the next steps to complete the purchase?<br><br>Thank you!", 'cloudinary' ) ),
 						);
 						return Utils::get_support_link( $args );
 					},
