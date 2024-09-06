@@ -20,9 +20,17 @@ $settings = array(
 		'type'        => 'panel',
 		'title'       => __( 'Account status', 'cloudinary' ),
 		'description' => function () {
-			$data = get_plugin_instance()->settings->get_value( 'last_usage' );
+			$plugin     = get_plugin_instance();
+			$data       = $plugin->settings->get_value( 'last_usage' );
+			$cloud_name = $plugin->components['connect']->get_cloud_name();
 
-			return $data['plan'];
+			ob_start();
+			?>
+				<?php echo esc_html( $data['plan'] ); ?>
+				<br />
+				<span class="cld-ui-description-cloudname cloudname">@<?php echo esc_html( $cloud_name ); ?></span>
+			<?php
+			return ob_get_clean();
 		},
 		'collapsible' => 'open',
 		array(
@@ -65,7 +73,6 @@ $settings = array(
 
 			/* translators: %s is the percentage optimized. */
 			return sprintf( __( '%s Optimized', 'cloudinary' ), $percentage );
-
 		},
 		'collapsible' => 'closed',
 		array(
