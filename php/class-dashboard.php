@@ -363,7 +363,7 @@ class Dashboard {
 					'title' => function () use ( $plugin ) {
 						$cloud_name = $plugin->components['connect']->get_cloud_name();
 						/* Translators: placeholder is the Cloudinary cloud name. */
-						return sprintf( __( 'Plan details for Cloud:%s', 'cloudinary' ), esc_html( $cloud_name ) );
+						return sprintf( __( 'Plan details for @%s', 'cloudinary' ), esc_html( $cloud_name ) );
 					},
 					array(
 						'type' => 'plan_details',
