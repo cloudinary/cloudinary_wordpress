@@ -164,7 +164,11 @@ const Wizard = {
 		return this.tabs[ `tab-icon-${ this.config.tab }` ];
 	},
 	getTab( tab ) {
-		if ( 4 === tab && window.localStorage.getItem( this.storageKey ) ) {
+		if (
+			4 === tab &&
+			window.localStorage.getItem( this.storageKey ) &&
+			! this.didSave
+		) {
 			// Place a save and wait, before moving.
 			this.saveConfig();
 			return;
@@ -215,7 +219,6 @@ const Wizard = {
 				this.hide( this.tabBar );
 				this.hide( this.next );
 				this.hide( this.back );
-				this.saveConfig();
 				break;
 		}
 		this.setConfig( 'tab', tab );
@@ -293,16 +296,22 @@ const Wizard = {
 	saveConfig() {
 		this.lockNext();
 		this.next.innerText = __( 'Setting up Cloudinary', 'cloudinary' );
+		this.didSave = true;
+
 		apiFetch( {
 			path: cldData.wizard.saveURL,
 			data: this.config,
 			method: 'POST',
-		} ).then( ( result ) => {
-			this.next.innerText = __( 'Next', 'cloudinary' );
-			this.unlockNext();
-			this.getTab( 4 );
-			window.localStorage.removeItem( this.storageKey );
-		} );
+		} )
+			.then( ( result ) => {
+				this.next.innerText = __( 'Next', 'cloudinary' );
+				this.unlockNext();
+				this.getTab( 4 );
+				window.localStorage.removeItem( this.storageKey );
+			} )
+			.fail( ( error ) => {
+				this.didSave = false;
+			} );
 	},
 };
 
