@@ -91,6 +91,10 @@
 		.button.wp-color-result {
 			border-color: #d0d0d0;
 		}
+
+		.button.hidden {
+			display: none;
+		}
 	}
 
 	&-error {

@@ -55,6 +55,13 @@ const Wizard = {
 		const connectionInput = document.getElementById(
 			'connect.cloudinary_url'
 		);
+		const updateConnection = document.getElementById( 'update-connection' );
+		const didSave = false;
+
+		updateConnection.addEventListener( 'click', () => {
+			connectionInput.parentNode.classList.remove( 'hidden' );
+			updateConnection.classList.add( 'hidden' );
+		} );
 
 		[ ...navs ].forEach( ( button ) => {
 			button.addEventListener( 'click', () => {
@@ -94,8 +101,10 @@ const Wizard = {
 				}, 500 );
 			}
 		} );
-		if ( this.config.cldString.length ) {
-			connectionInput.value = this.config.cldString;
+
+		if ( this.config.cldString ) {
+			connectionInput.parentNode.classList.add( 'hidden' );
+			updateConnection.classList.remove( 'hidden' );
 		}
 
 		this.getTab( this.config.tab );
@@ -179,7 +188,7 @@ const Wizard = {
 				break;
 			case 2:
 				this.show( this.back );
-				if ( ! this.config.cldString.length ) {
+				if ( ! this.config.cldString ) {
 					this.lockNext();
 					setTimeout( () => {
 						document
@@ -191,7 +200,7 @@ const Wizard = {
 				}
 				break;
 			case 3:
-				if ( ! this.config.cldString.length ) {
+				if ( ! this.config.cldString ) {
 					document.location.hash = '1';
 					return;
 				}
@@ -199,7 +208,7 @@ const Wizard = {
 				this.show( this.back );
 				break;
 			case 4:
-				if ( ! this.config.cldString.length ) {
+				if ( ! this.config.cldString ) {
 					document.location.hash = '1';
 					return;
 				}
