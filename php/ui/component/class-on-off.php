@@ -96,6 +96,17 @@ class On_Off extends Text {
 			$struct['attributes']['type'] = 'hidden';
 		}
 
+		if (
+			true === $this->setting->get_param( 'disabled', false )
+			|| $this->is_readonly()
+			|| (
+				true === $this->setting->get_param( 'main_required', false )
+				&& empty( $this->setting->get_param( 'main', array() ) )
+			)
+		) {
+			$struct['attributes']['disabled'] = 'disabled';
+		}
+
 		return $struct;
 	}
 
