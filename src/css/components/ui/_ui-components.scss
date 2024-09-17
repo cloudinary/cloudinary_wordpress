@@ -57,6 +57,10 @@
 			font-size: $size-panel-description;
 		}
 
+		.cloudname {
+			font-style: italic;
+		}
+
 		.button:not(.wp-color-result) {
 			background-color: $color-cld-blue;
 			color: #fff;
