@@ -31,11 +31,10 @@ $export_data = array(
 	'saveNonce' => wp_create_nonce( 'wp_rest' ),
 	'config'    => array(
 		'tab'          => $current_tab,
-		'cldString'    => $cloudinary_url,
+		'cldString'    => ! empty( $cloudinary_url ),
 		'mediaLibrary' => $autosync,
 		'nonMedia'     => $nonmedia,
 		'advanced'     => $advanced,
-
 	),
 );
 
@@ -142,6 +141,8 @@ $advanced->set_value( 'on' );
 						</div>
 						<input type="text" class="connection-string cld-ui-input regular-text" name="connect[cloudinary_url]" id="connect.cloudinary_url" value="" placeholder="cloudinary://API_KEY:API_SECRET@CLOUD_NAME">
 					</div>
+					<button id="update-connection" class="button button-primary hidden"><?php esc_html_e( 'Update the connection string', 'cloudinary' ); ?></button>
+					<button id="cancel-update-connection" class="button button-secondary hidden"><?php esc_html_e( 'Cancel the update', 'cloudinary' ); ?></button>
 					<span id="connection-success" class="cld-wizard-connect-status success">
 						<span class="dashicons dashicons-yes-alt"></span> <?php esc_html_e( 'Connected!', 'cloudinary' ); ?>
 					</span>

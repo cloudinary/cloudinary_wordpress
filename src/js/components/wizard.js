@@ -30,7 +30,12 @@ const Wizard = {
 		working: document.getElementById( 'connection-working' ),
 	},
 	debounceConnect: null,
+	updateConnection: document.getElementById( 'update-connection' ),
+	cancelUpdateConnection: document.getElementById(
+		'cancel-update-connection'
+	),
 	config: {},
+	didSave: false,
 	init() {
 		if ( ! cldData.wizard ) {
 			return;
@@ -55,6 +60,24 @@ const Wizard = {
 		const connectionInput = document.getElementById(
 			'connect.cloudinary_url'
 		);
+
+		this.updateConnection.addEventListener( 'click', () => {
+			this.lockNext();
+			connectionInput.parentNode.classList.remove( 'hidden' );
+			this.cancelUpdateConnection.classList.remove( 'hidden' );
+			this.updateConnection.classList.add( 'hidden' );
+		} );
+
+		this.cancelUpdateConnection.addEventListener( 'click', () => {
+			this.unlockNext();
+			connectionInput.parentNode.classList.add( 'hidden' );
+			this.cancelUpdateConnection.classList.add( 'hidden' );
+			this.updateConnection.classList.remove( 'hidden' );
+			this.config.cldString = true;
+			connectionInput.value = '';
+			this.connection.error.classList.remove( 'active' );
+			this.connection.success.classList.add( 'active' );
+		} );
 
 		[ ...navs ].forEach( ( button ) => {
 			button.addEventListener( 'click', () => {
@@ -94,8 +117,10 @@ const Wizard = {
 				}, 500 );
 			}
 		} );
-		if ( this.config.cldString.length ) {
-			connectionInput.value = this.config.cldString;
+
+		if ( this.config.cldString ) {
+			connectionInput.parentNode.classList.add( 'hidden' );
+			this.updateConnection.classList.remove( 'hidden' );
 		}
 
 		this.getTab( this.config.tab );
@@ -155,7 +180,11 @@ const Wizard = {
 		return this.tabs[ `tab-icon-${ this.config.tab }` ];
 	},
 	getTab( tab ) {
-		if ( 4 === tab && window.localStorage.getItem( this.storageKey ) ) {
+		if (
+			4 === tab &&
+			window.localStorage.getItem( this.storageKey ) &&
+			! this.didSave
+		) {
 			// Place a save and wait, before moving.
 			this.saveConfig();
 			return;
@@ -179,7 +208,7 @@ const Wizard = {
 				break;
 			case 2:
 				this.show( this.back );
-				if ( ! this.config.cldString.length ) {
+				if ( ! this.config.cldString ) {
 					this.lockNext();
 					setTimeout( () => {
 						document
@@ -189,9 +218,12 @@ const Wizard = {
 				} else {
 					this.showSuccess();
 				}
+				if ( this.updateConnection.classList.contains( 'hidden' ) ) {
+					this.lockNext();
+				}
 				break;
 			case 3:
-				if ( ! this.config.cldString.length ) {
+				if ( ! this.config.cldString ) {
 					document.location.hash = '1';
 					return;
 				}
@@ -199,14 +231,13 @@ const Wizard = {
 				this.show( this.back );
 				break;
 			case 4:
-				if ( ! this.config.cldString.length ) {
+				if ( ! this.config.cldString ) {
 					document.location.hash = '1';
 					return;
 				}
 				this.hide( this.tabBar );
 				this.hide( this.next );
 				this.hide( this.back );
-				this.saveConfig();
 				break;
 		}
 		this.setConfig( 'tab', tab );
@@ -284,16 +315,22 @@ const Wizard = {
 	saveConfig() {
 		this.lockNext();
 		this.next.innerText = __( 'Setting up Cloudinary', 'cloudinary' );
+		this.didSave = true;
+
 		apiFetch( {
 			path: cldData.wizard.saveURL,
 			data: this.config,
 			method: 'POST',
-		} ).then( ( result ) => {
-			this.next.innerText = __( 'Next', 'cloudinary' );
-			this.unlockNext();
-			this.getTab( 4 );
-			window.localStorage.removeItem( this.storageKey );
-		} );
+		} )
+			.then( ( result ) => {
+				this.next.innerText = __( 'Next', 'cloudinary' );
+				this.unlockNext();
+				this.getTab( 4 );
+				window.localStorage.removeItem( this.storageKey );
+			} )
+			.fail( ( error ) => {
+				this.didSave = false;
+			} );
 	},
 };
 
