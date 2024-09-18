@@ -1549,7 +1549,8 @@ class Media extends Settings_Component implements Setup {
 			}
 		} elseif ( is_string( $size ) || ( is_array( $size ) && 3 === count( $size ) ) ) {
 			$intermediate = image_get_intermediate_size( $attachment_id, $size );
-			if ( is_array( $intermediate ) ) {
+			// PDF's do not have intermediate URL.
+			if ( is_array( $intermediate ) && ! empty( $intermediate['url'] ) ) {
 				$size = $this->get_crop( $intermediate['url'], $attachment_id );
 			}
 		} elseif ( array_keys( $size ) === array( 0, 1 ) ) {
