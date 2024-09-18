@@ -30,7 +30,12 @@ const Wizard = {
 		working: document.getElementById( 'connection-working' ),
 	},
 	debounceConnect: null,
+	updateConnection: document.getElementById( 'update-connection' ),
+	cancelUpdateConnection: document.getElementById(
+		'cancel-update-connection'
+	),
 	config: {},
+	didSave: false,
 	init() {
 		if ( ! cldData.wizard ) {
 			return;
@@ -55,12 +60,23 @@ const Wizard = {
 		const connectionInput = document.getElementById(
 			'connect.cloudinary_url'
 		);
-		const updateConnection = document.getElementById( 'update-connection' );
-		const didSave = false;
 
-		updateConnection.addEventListener( 'click', () => {
+		this.updateConnection.addEventListener( 'click', () => {
+			this.lockNext();
 			connectionInput.parentNode.classList.remove( 'hidden' );
-			updateConnection.classList.add( 'hidden' );
+			this.cancelUpdateConnection.classList.remove( 'hidden' );
+			this.updateConnection.classList.add( 'hidden' );
+		} );
+
+		this.cancelUpdateConnection.addEventListener( 'click', () => {
+			this.unlockNext();
+			connectionInput.parentNode.classList.add( 'hidden' );
+			this.cancelUpdateConnection.classList.add( 'hidden' );
+			this.updateConnection.classList.remove( 'hidden' );
+			this.config.cldString = true;
+			connectionInput.value = '';
+			this.connection.error.classList.remove( 'active' );
+			this.connection.success.classList.add( 'active' );
 		} );
 
 		[ ...navs ].forEach( ( button ) => {
@@ -104,7 +120,7 @@ const Wizard = {
 
 		if ( this.config.cldString ) {
 			connectionInput.parentNode.classList.add( 'hidden' );
-			updateConnection.classList.remove( 'hidden' );
+			this.updateConnection.classList.remove( 'hidden' );
 		}
 
 		this.getTab( this.config.tab );
@@ -201,6 +217,9 @@ const Wizard = {
 					}, 0 );
 				} else {
 					this.showSuccess();
+				}
+				if ( this.updateConnection.classList.contains( 'hidden' ) ) {
+					this.lockNext();
 				}
 				break;
 			case 3:
