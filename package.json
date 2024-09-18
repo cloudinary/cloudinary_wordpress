@@ -150,5 +150,5 @@
     "webpack-cli": "^4.2.0",
     "webpackbar": "^5.0.2"
   },
-  "version": "3.2.1-build-2"
+  "version": "3.2.1"
 }
