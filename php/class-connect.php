@@ -179,8 +179,10 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		$advanced = true === $request->get_param( 'advanced' ) ? 'on' : 'off';
 
 		// Cloudinary URL.
-		$connect = $this->settings->get_setting( 'cloudinary_url' );
-		$connect->set_pending( $url );
+		if ( ! empty( $url ) && true !== $url ) {
+			$connect = $this->settings->get_setting( 'cloudinary_url' );
+			$connect->set_pending( $url );
+		}
 
 		// Autosync setup.
 		$autosync = $this->settings->get_setting( 'auto_sync' );

@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: image-optimizer, core-web-vitals, responsive-images, resize, performance
 Requires at least: 4.7
-Tested up to: 6.6.1
+Tested up to: 6.6.2
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -140,6 +140,16 @@ Your site is now setup to start using Cloudinary.
 
 
 == Changelog ==
+
+
+= 3.2.1 (18 September 2024) =
+
+Fixes and improvements:
+
+* Added Cloud name and plan information to the Dashboard and sidebar
+* Improved the wizard workflow and enhanced security
+* Fixed several PHP errors
+
 
 = 3.2.0 (03 September 2024) =
 
