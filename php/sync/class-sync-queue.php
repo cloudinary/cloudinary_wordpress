@@ -90,8 +90,28 @@ class Sync_Queue {
 	 * @param \Cloudinary\Plugin $plugin The plugin.
 	 */
 	public function __construct( \Cloudinary\Plugin $plugin ) {
-		$this->plugin            = $plugin;
-		$this->cron_frequency    = apply_filters( 'cloudinary_cron_frequency', 10 * MINUTE_IN_SECONDS );
+		$this->plugin = $plugin;
+		/**
+		 * Filter the cron job frequency.
+		 *
+		 * @hook    cloudinary_cron_frequency
+		 * @default 600
+		 *
+		 * @param $time {int} The filtered time.
+		 *
+		 * @return {int}
+		 */
+		$this->cron_frequency = apply_filters( 'cloudinary_cron_frequency', 10 * MINUTE_IN_SECONDS );
+		/**
+		 * Filter the cron start offset.
+		 *
+		 * @hook    cloudinary_cron_start_offset
+		 * @default 60
+		 *
+		 * @param $time {int} The filtered time.
+		 *
+		 * @return {int}
+		 */
 		$this->cron_start_offset = apply_filters( 'cloudinary_cron_start_offset', MINUTE_IN_SECONDS );
 		$this->load_hooks();
 	}
@@ -107,7 +127,8 @@ class Sync_Queue {
 		/**
 		 * Filter the amount of background threads to process for manual syncing.
 		 *
-		 * @hook   cloudinary_queue_threads
+		 * @hook    cloudinary_queue_threads
+		 * @default 2
 		 *
 		 * @param $count {int} The number of manual sync threads to use.
 		 *
@@ -121,7 +142,8 @@ class Sync_Queue {
 		/**
 		 * Filter the amount of background threads to process for auto syncing.
 		 *
-		 * @hook   cloudinary_autosync_threads
+		 * @hook    cloudinary_autosync_threads
+		 * @default 2
 		 *
 		 * @param $count {int} The number of autosync threads to use.
 		 *
@@ -265,7 +287,15 @@ class Sync_Queue {
 			$thread_queue = $this->get_thread_queue( $thread );
 			// translators: variable is thread name and queue size.
 			$action_message = sprintf( __( '%1$s : Queue size :  %2$s.', 'cloudinary' ), $thread, $thread_queue['count'] );
-			do_action( '_cloudinary_queue_action', $action_message, $thread );
+			/**
+			 * Do action on queue action.
+			 *
+			 * @hook cloudinary_queue_action
+			 *
+			 * @param $action_message {string} The message.
+			 * @param $thread         {string} The thread.
+			 */
+			do_action( 'cloudinary_queue_action', $action_message, $thread );
 			if ( empty( $thread_queue['next'] ) ) {
 				// Nothing left to sync.
 				return $return;
@@ -489,13 +519,27 @@ class Sync_Queue {
 
 		// translators: variable is page number.
 		$action_message = __( 'Building Queue.', 'cloudinary' );
-		do_action( '_cloudinary_queue_action', $action_message );
+		/**
+		 * Do action on queue action.
+		 *
+		 * @hook cloudinary_queue_action
+		 *
+		 * @param $action_message {string} The message.
+		 */
+		do_action( 'cloudinary_queue_action', $action_message );
 
 		$query = new \WP_Query( $args );
 		if ( ! $query->have_posts() ) {
 			// translators: variable is page number.
 			$action_message = __( 'No posts', 'cloudinary' );
-			do_action( '_cloudinary_queue_action', $action_message );
+			/**
+			 * Do action on queue action.
+			 *
+			 * @hook cloudinary_queue_action
+			 *
+			 * @param $action_message {string} The message.
+			 */
+			do_action( 'cloudinary_queue_action', $action_message );
 
 			return;
 		}
@@ -560,7 +604,14 @@ class Sync_Queue {
 
 		// translators: variable is queue type.
 		$action_message = sprintf( __( 'Stopping queue:  %s.', 'cloudinary' ), $type );
-		do_action( '_cloudinary_queue_action', $action_message );
+		/**
+		 * Do action on queue action.
+		 *
+		 * @hook cloudinary_queue_action
+		 *
+		 * @param $action_message {string} The message.
+		 */
+		do_action( 'cloudinary_queue_action', $action_message );
 		if ( 'queue' === $type ) {
 			delete_post_meta_by_key( Sync::META_KEYS['queued'] );
 		} else {
@@ -599,7 +650,14 @@ class Sync_Queue {
 		} else {
 			// translators: variable is queue type.
 			$action_message = sprintf( __( 'Queue:  %s - not running.', 'cloudinary' ), $type );
-			do_action( '_cloudinary_queue_action', $action_message );
+			/**
+			 * Do action on queue action.
+			 *
+			 * @hook cloudinary_queue_action
+			 *
+			 * @param $action_message {string} The message.
+			 */
+			do_action( 'cloudinary_queue_action', $action_message );
 		}
 
 		return $started;
@@ -652,6 +710,15 @@ class Sync_Queue {
 			// translators: variable is thread name.
 			$action_message = sprintf( __( 'Starting thread %s.', 'cloudinary' ), $thread );
 			do_action( '_cloudinary_queue_action', $action_message, $thread );
+			/**
+			 * Do action on queue action.
+			 *
+			 * @hook cloudinary_queue_action
+			 *
+			 * @param $action_message {string} The message.
+			 * @param $thread         {string} The thread.
+			 */
+			do_action( 'cloudinary_queue_action', $action_message, $thread );
 			$this->plugin->components['api']->background_request( 'queue', array( 'thread' => $thread ) );
 			$sync_state = 2; // Set as started.
 		}
@@ -904,7 +971,12 @@ class Sync_Queue {
 	 */
 	public function maybe_resume_queue() {
 
-		do_action( '_cloudinary_queue_action', __( 'Resuming Maybe', 'cloudinary' ) );
+		/**
+		 * Do action on queue action.
+		 *
+		 * @hook cloudinary_queue_action
+		 */
+		do_action( 'cloudinary_queue_action', __( 'Resuming Maybe', 'cloudinary' ) );
 		$stopped = array();
 		if ( $this->is_running() ) {
 			// Check each thread.
@@ -914,7 +986,15 @@ class Sync_Queue {
 					$stopped[] = $thread;
 					// translators: variable is thread name.
 					$action_message = sprintf( __( 'Thread %s Stopped.', 'cloudinary' ), $thread );
-					do_action( '_cloudinary_queue_action', $action_message, $thread );
+					/**
+					 * Do action on queue action.
+					 *
+					 * @hook cloudinary_queue_action
+					 *
+					 * @param $action_message {string} The message.
+					 * @param $thread         {string} The thread.
+					 */
+					do_action( 'cloudinary_queue_action', $action_message, $thread );
 				}
 			}
 

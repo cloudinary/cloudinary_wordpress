@@ -42,6 +42,16 @@ class REST_API {
 			'permission_callback' => '__return_true',
 		);
 
+		/**
+		 * Filter the Cloudinary REST API endpoints.
+		 *
+		 * @hook    cloudinary_api_rest_endpoints
+		 * @default array()
+		 *
+		 * @param $types {array} The registered endpoints.
+		 *
+		 * @return {array}
+		 */
 		$this->endpoints = apply_filters( 'cloudinary_api_rest_endpoints', array() );
 
 		foreach ( $this->endpoints as $route => $endpoint ) {
