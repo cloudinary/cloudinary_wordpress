@@ -60,6 +60,9 @@ class Dashboard {
 	 * @return array
 	 */
 	public function register_settings( $pages ) {
+
+		$plugin = $this->plugin;
+
 		$pages['dashboard'] = array(
 			'page_title'          => __( 'Cloudinary Dashboard', 'cloudinary' ),
 			'menu_title'          => __( 'Dashboard', 'cloudinary' ),
@@ -154,7 +157,7 @@ class Dashboard {
 											'cld-toggle',
 											'hidden',
 										),
-										'title'       => __( 'View errored assets', 'cloudinary' ),
+										'title'     => __( 'View errored assets', 'cloudinary' ),
 									),
 								),
 								array(
@@ -183,7 +186,7 @@ class Dashboard {
 											'cld-toggle',
 											'hidden',
 										),
-										'title'       => __( 'Retry sync assets with errors', 'cloudinary' ),
+										'title'     => __( 'Retry sync assets with errors', 'cloudinary' ),
 									),
 								),
 							),
@@ -357,7 +360,11 @@ class Dashboard {
 				),
 				array(
 					'type'  => 'panel',
-					'title' => __( 'Plan details', 'cloudinary' ),
+					'title' => function () use ( $plugin ) {
+						$cloud_name = $plugin->components['connect']->get_cloud_name();
+						/* Translators: placeholder is the Cloudinary cloud name. */
+						return sprintf( __( 'Plan details for @%s', 'cloudinary' ), esc_html( $cloud_name ) );
+					},
 					array(
 						'type' => 'plan_details',
 					),

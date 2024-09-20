@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cloudinary STABLETAG\n"
 "Report-Msgid-Bugs-To: https://github.com/cloudinary/cloudinary_wordpress\n"
-"POT-Creation-Date: 2024-09-02 14:29:09+00:00\n"
+"POT-Creation-Date: 2024-09-18 11:55:33+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -218,46 +218,46 @@ msgstr ""
 msgid "Enable caching site assets."
 msgstr ""
 
-#: php/class-connect.php:264
+#: php/class-connect.php:266
 msgid "Connection to Cloudinary has been removed."
 msgstr ""
 
-#: php/class-connect.php:285
+#: php/class-connect.php:287
 msgid ""
 "The environment variable URL must be in this format: "
 "cloudinary://API_KEY:API_SECRET@CLOUD_NAME"
 msgstr ""
 
-#: php/class-connect.php:306
+#: php/class-connect.php:308
 msgid "Successfully connected to Cloudinary."
 msgstr ""
 
-#: php/class-connect.php:350
+#: php/class-connect.php:352
 #. translators: Placeholder refers the error from API.
 msgid "Cloudinary Error: %s"
 msgstr ""
 
-#: php/class-connect.php:358
+#: php/class-connect.php:360
 #. translators: Placeholders are <a> tags.
 msgid ""
 "Cloudinary Account Disabled. %1$s Upgrade your plan %3$s or %2$s submit a "
 "support request %3$s for assistance."
 msgstr ""
 
-#: php/class-connect.php:403
+#: php/class-connect.php:405
 #. translators: Placeholder refers to the expected URL format.
 msgid "Incorrect Format. Expecting: %s"
 msgstr ""
 
-#: php/class-connect.php:415
+#: php/class-connect.php:417
 msgid "CNAME is not a valid domain name."
 msgstr ""
 
-#: php/class-connect.php:805
+#: php/class-connect.php:807
 msgid "upgrade your account"
 msgstr ""
 
-#: php/class-connect.php:820
+#: php/class-connect.php:822
 #. translators: %1$s quota size, %2$s amount in percent, %3$s link URL, %4$s
 #. link anchor text.
 msgid ""
@@ -269,11 +269,11 @@ msgid ""
 "full functionality."
 msgstr ""
 
-#: php/class-connect.php:1015
+#: php/class-connect.php:1017
 msgid "Cloudinary was able to connect to the WordPress REST API."
 msgstr ""
 
-#: php/class-connect.php:1032 php/class-connect.php:1042
+#: php/class-connect.php:1034 php/class-connect.php:1044
 #. translators: 1: The WordPress error message. 2: The WordPress error code.
 msgid "The Cloudinary REST API endpoints are not available. Error: %1$s (%2$s)"
 msgstr ""
@@ -290,56 +290,57 @@ msgstr ""
 msgid "Enable Cron"
 msgstr ""
 
-#: php/class-dashboard.php:64 ui-definitions/settings-pages.php:15
+#: php/class-dashboard.php:67 ui-definitions/settings-pages.php:15
 msgid "Cloudinary Dashboard"
 msgstr ""
 
-#: php/class-dashboard.php:65 ui-definitions/settings-pages.php:16
+#: php/class-dashboard.php:68 ui-definitions/settings-pages.php:16
 msgid "Dashboard"
 msgstr ""
 
-#: php/class-dashboard.php:72 php/class-dashboard.php:244
+#: php/class-dashboard.php:75 php/class-dashboard.php:247
 msgid "How much you optimize"
 msgstr ""
 
-#: php/class-dashboard.php:109
+#: php/class-dashboard.php:112
 msgid "Percentage of assets optimized by Cloudinary"
 msgstr ""
 
-#: php/class-dashboard.php:157
+#: php/class-dashboard.php:160
 msgid "View errored assets"
 msgstr ""
 
-#: php/class-dashboard.php:186
+#: php/class-dashboard.php:189
 msgid "Retry sync assets with errors"
 msgstr ""
 
-#: php/class-dashboard.php:196
+#: php/class-dashboard.php:199
 msgid "Original size"
 msgstr ""
 
-#: php/class-dashboard.php:203
+#: php/class-dashboard.php:206
 msgid "Optimized size"
 msgstr ""
 
-#: php/class-dashboard.php:231
+#: php/class-dashboard.php:234
 msgid "That's the amount you've saved by using Cloudinary."
 msgstr ""
 
-#: php/class-dashboard.php:280 php/class-dashboard.php:313
+#: php/class-dashboard.php:283 php/class-dashboard.php:316
 msgid "Not enough data to show"
 msgstr ""
 
-#: php/class-dashboard.php:285 php/class-dashboard.php:318
+#: php/class-dashboard.php:288 php/class-dashboard.php:321
 msgid "Come back when more data is available"
 msgstr ""
 
-#: php/class-dashboard.php:326
+#: php/class-dashboard.php:329
 msgid "Your plan status"
 msgstr ""
 
-#: php/class-dashboard.php:360
-msgid "Plan details"
+#: php/class-dashboard.php:366
+#. Translators: placeholder is the Cloudinary cloud name.
+msgid "Plan details for @%s"
 msgstr ""
 
 #: php/class-deactivation.php:115
@@ -512,7 +513,7 @@ msgid ""
 "WordPress."
 msgstr ""
 
-#: php/class-media.php:2048
+#: php/class-media.php:2049
 msgid "Import"
 msgstr ""
 
@@ -520,51 +521,51 @@ msgstr ""
 msgid "Cloudinary"
 msgstr ""
 
-#: php/class-media.php:2404
+#: php/class-media.php:2405
 msgid "The delivery for this asset is disabled."
 msgstr ""
 
-#: php/class-media.php:2408
+#: php/class-media.php:2409
 msgid "Not syncable. This is an external media."
 msgstr ""
 
-#: php/class-media.php:2412
+#: php/class-media.php:2413
 msgid "This media is Fetch type."
 msgstr ""
 
-#: php/class-media.php:2416
+#: php/class-media.php:2417
 msgid "This media is Sprite type."
 msgstr ""
 
-#: php/class-media.php:2426
+#: php/class-media.php:2427
 msgid "Not Synced"
 msgstr ""
 
-#: php/class-media.php:2431
+#: php/class-media.php:2432
 msgid "Synced"
 msgstr ""
 
-#: php/class-media.php:3082
+#: php/class-media.php:3083
 msgid "No Cloudinary filters"
 msgstr ""
 
-#: php/class-media.php:3182
+#: php/class-media.php:3183
 msgid "Media Settings"
 msgstr ""
 
-#: php/class-media.php:3185
+#: php/class-media.php:3186
 msgid "Media Display"
 msgstr ""
 
-#: php/class-media.php:3189 php/media/class-global-transformations.php:620
+#: php/class-media.php:3190 php/media/class-global-transformations.php:620
 #: php/ui/component/class-asset-preview.php:73
 #: php/ui/component/class-plan-details.php:119
 #: php/ui/component/class-plan-status.php:128
-#: ui-definitions/settings-sidebar.php:36
+#: ui-definitions/settings-sidebar.php:44
 msgid "Transformations"
 msgstr ""
 
-#: php/class-media.php:3190
+#: php/class-media.php:3191
 msgid ""
 "Cloudinary allows you to easily transform your images on-the-fly to any "
 "required format, style and dimension, and also optimizes images for minimal "
@@ -573,7 +574,7 @@ msgid ""
 "transformation and delivery URLs."
 msgstr ""
 
-#: php/class-media.php:3195 ui-definitions/settings-image.php:164
+#: php/class-media.php:3196 ui-definitions/settings-image.php:164
 #: ui-definitions/settings-video.php:250
 msgid "See examples"
 msgstr ""
@@ -739,7 +740,7 @@ msgstr ""
 
 #: php/class-sync.php:1280 php/ui/component/class-plan-details.php:118
 #: php/ui/component/class-plan-status.php:94
-#: ui-definitions/settings-sidebar.php:30
+#: ui-definitions/settings-sidebar.php:38
 msgid "Storage"
 msgstr ""
 
@@ -1508,7 +1509,7 @@ msgstr ""
 
 #: php/ui/component/class-plan-details.php:120
 #: php/ui/component/class-plan-status.php:161
-#: ui-definitions/settings-sidebar.php:41
+#: ui-definitions/settings-sidebar.php:49
 msgid "Bandwidth"
 msgstr ""
 
@@ -1620,108 +1621,116 @@ msgstr ""
 msgid "Importing"
 msgstr ""
 
-#: ui-definitions/components/wizard.php:47
+#: ui-definitions/components/wizard.php:46
 msgid "Optimize media library items"
 msgstr ""
 
-#: ui-definitions/components/wizard.php:48
+#: ui-definitions/components/wizard.php:47
 msgid ""
 "Your media assets will be delivered using Cloudinary’s automatic format and "
 "quality algorithms for the best tradeoff between visual quality and file "
 "size."
 msgstr ""
 
-#: ui-definitions/components/wizard.php:58
+#: ui-definitions/components/wizard.php:57
 msgid "Optimize themes, plugins, WordPress core and uploads folder items"
 msgstr ""
 
-#: ui-definitions/components/wizard.php:59
+#: ui-definitions/components/wizard.php:58
 msgid ""
 "Additional assets relating to themes, plugins, WordPress core and your "
 "uploads folder will be optimized and delivered by Cloudinary, giving you an "
 "additional performance boost."
 msgstr ""
 
-#: ui-definitions/components/wizard.php:69
+#: ui-definitions/components/wizard.php:68
 msgid "Activate advanced features (lazy loading and responsive breakpoints)"
 msgstr ""
 
-#: ui-definitions/components/wizard.php:70
+#: ui-definitions/components/wizard.php:69
 msgid ""
 "Cloudinary's lazy loading and responsive image functionality will be "
 "applied to your media assets as part of delivery to further optimize your "
 "assets."
 msgstr ""
 
-#: ui-definitions/components/wizard.php:95
+#: ui-definitions/components/wizard.php:94
 msgid "Welcome to Cloudinary"
 msgstr ""
 
-#: ui-definitions/components/wizard.php:99
+#: ui-definitions/components/wizard.php:98
 msgid "Connect Plugin"
 msgstr ""
 
-#: ui-definitions/components/wizard.php:103
+#: ui-definitions/components/wizard.php:102
 msgid "Recommended Settings"
 msgstr ""
 
-#: ui-definitions/components/wizard.php:111
+#: ui-definitions/components/wizard.php:110
 msgid "Welcome and thank you for installing the Cloudinary Plugin"
 msgstr ""
 
-#: ui-definitions/components/wizard.php:114
+#: ui-definitions/components/wizard.php:113
 msgid ""
 "For more control over the quality of the media that your site delivers, you "
 "can specify different levels of quality."
 msgstr ""
 
-#: ui-definitions/components/wizard.php:117
+#: ui-definitions/components/wizard.php:116
 msgid ""
 "If pristine quality is more important to you than file size, you can choose "
 "high quality settings."
 msgstr ""
 
-#: ui-definitions/components/wizard.php:120
+#: ui-definitions/components/wizard.php:119
 msgid ""
 "Alternatively, choose lower quality settings to save on bandwidth and speed "
 "up delivery times."
 msgstr ""
 
-#: ui-definitions/components/wizard.php:122
+#: ui-definitions/components/wizard.php:121
 msgid "Signup"
 msgstr ""
 
-#: ui-definitions/components/wizard.php:129
+#: ui-definitions/components/wizard.php:128
 msgid "Connect to Cloudinary!"
 msgstr ""
 
-#: ui-definitions/components/wizard.php:131
+#: ui-definitions/components/wizard.php:130
 msgid ""
 "You need to connect your Cloudinary account to WordPress by adding your "
 "unique connection string."
 msgstr ""
 
-#: ui-definitions/components/wizard.php:134
+#: ui-definitions/components/wizard.php:133
 msgid "See below for where to find this."
 msgstr ""
 
-#: ui-definitions/components/wizard.php:140
+#: ui-definitions/components/wizard.php:139
 msgid "Connection string"
 msgstr ""
 
-#: ui-definitions/components/wizard.php:146
+#: ui-definitions/components/wizard.php:144
+msgid "Update the connection string"
+msgstr ""
+
+#: ui-definitions/components/wizard.php:145
+msgid "Cancel the update"
+msgstr ""
+
+#: ui-definitions/components/wizard.php:147
 msgid "Connected!"
 msgstr ""
 
-#: ui-definitions/components/wizard.php:149
+#: ui-definitions/components/wizard.php:150
 msgid "Incorrect connection string"
 msgstr ""
 
-#: ui-definitions/components/wizard.php:160
+#: ui-definitions/components/wizard.php:161
 msgid "We collected some basic settings for you"
 msgstr ""
 
-#: ui-definitions/components/wizard.php:164
+#: ui-definitions/components/wizard.php:165
 msgid ""
 "The options below help to optimize all of your assets, we recommend leaving "
 "them on for the most optimal site performance. Click next to complete your "
@@ -1729,36 +1738,36 @@ msgid ""
 "website will start being fast, optimized and responsive."
 msgstr ""
 
-#: ui-definitions/components/wizard.php:183
+#: ui-definitions/components/wizard.php:184
 msgid "All set! We're starting to sync your files to Cloudinary"
 msgstr ""
 
-#: ui-definitions/components/wizard.php:187
+#: ui-definitions/components/wizard.php:188
 msgid ""
 "You have successfully set up the Cloudinary plugin for your site, your "
 "media assets will now be optimized and delivered via fast CDN. To further "
 "configure the plugin, take a look at the various settings available."
 msgstr ""
 
-#: ui-definitions/components/wizard.php:194
+#: ui-definitions/components/wizard.php:195
 msgid ""
 "Once your assets have finished syncing, the plugin dashboard will show the "
 "impact on performance for your site."
 msgstr ""
 
-#: ui-definitions/components/wizard.php:196
+#: ui-definitions/components/wizard.php:197
 msgid "Go to plugin dashboard"
 msgstr ""
 
-#: ui-definitions/components/wizard.php:202
+#: ui-definitions/components/wizard.php:203
 msgid "Click the lock to make changes"
 msgstr ""
 
-#: ui-definitions/components/wizard.php:206
+#: ui-definitions/components/wizard.php:207
 msgid "Back"
 msgstr ""
 
-#: ui-definitions/components/wizard.php:207
+#: ui-definitions/components/wizard.php:208
 msgid "Next"
 msgstr ""
 
@@ -2217,15 +2226,15 @@ msgstr ""
 msgid "Account status"
 msgstr ""
 
-#: ui-definitions/settings-sidebar.php:48
+#: ui-definitions/settings-sidebar.php:56
 msgid "View my account status"
 msgstr ""
 
-#: ui-definitions/settings-sidebar.php:61
+#: ui-definitions/settings-sidebar.php:69
 msgid "Optimization level"
 msgstr ""
 
-#: ui-definitions/settings-sidebar.php:67
+#: ui-definitions/settings-sidebar.php:75
 #. translators: %s is the percentage optimized.
 msgid "%s Optimized"
 msgstr ""

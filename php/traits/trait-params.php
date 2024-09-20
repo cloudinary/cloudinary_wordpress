@@ -53,10 +53,15 @@ trait Params_Trait {
 			return $new;
 		}
 
-		if ( '' === $key ) {
-			$new[] = $value;
+		if ( is_array( $new ) ) {
+			if ( '' === $key ) {
+				$new[] = $value;
+			} else {
+				$new[ $key ] = $value;
+			}
 		} else {
-			$new[ $key ] = $value;
+			// There's likely a problem here, as we're setting an array key on a non-array.
+			$new = array();
 		}
 		// @TODO: I took ksort out, need to check that it doesn't have any problems being.
 
