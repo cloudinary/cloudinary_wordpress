@@ -235,16 +235,18 @@ $settings = array(
 					array(
 						'type'           => 'text',
 						'slug'           => 'video_freeform',
-						'title'          => __( 'Additional video transformations', 'cloudinary' ),
+						'title'          => __( 'Cloudinary global transformations', 'cloudinary' ),
 						'default'        => '',
 						'tooltip_text'   => sprintf(
 							// translators: The link to transformation reference.
 							__(
-								'A set of additional transformations to apply to all videos. Specify your transformations using Cloudinary URL transformation syntax. See %1$sreference%2$s for all available transformations and syntax.',
+								'A set of additional transformations to apply to all videos. Specify your transformations using Cloudinary URL transformation syntax. See %1$sreference%2$s for all available transformations and syntax.%3$s* The Cloudinary global transformations are only applied to assets managed in the Media Library%4$s.',
 								'cloudinary'
 							),
 							'<a href="https://cloudinary.com/documentation/transformation_reference" target="_blank" rel="noopener noreferrer">',
-							'</a>'
+							'</a>',
+							'<br><br><em>',
+							'</em>'
 						),
 						'link'           => array(
 							'text' => __( 'See examples', 'cloudinary' ),
