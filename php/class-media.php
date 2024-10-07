@@ -1428,6 +1428,13 @@ class Media extends Settings_Component implements Setup {
 		 */
 		$url = apply_filters( 'cloudinary_converted_url', $url, $attachment_id, $pre_args );
 
+		// Early bail for admin AJAX requests.
+		if ( defined( 'DOING_AJAX' ) && DOING_AJAX && is_admin() ) {
+			$cache[ $key ] = $url;
+
+			return $cache[ $key ];
+		}
+
 		// Add Cloudinary analytics.
 		$cache[ $key ] = add_query_arg(
 			array(
