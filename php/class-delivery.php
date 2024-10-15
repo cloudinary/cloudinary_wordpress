@@ -1589,7 +1589,7 @@ class Delivery implements Setup {
 	public function validate_url( $url ) {
 		static $home;
 		if ( ! $home ) {
-			$home = wp_parse_url( home_url( '/' ) );
+			$home = wp_parse_url( Utils::home_url( '/' ) );
 		}
 		$parts = wp_parse_url( $url );
 		if ( empty( $parts['host'] ) ) {

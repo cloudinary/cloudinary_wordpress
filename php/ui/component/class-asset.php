@@ -10,6 +10,7 @@ namespace Cloudinary\UI\Component;
 use Cloudinary\REST_API;
 use Cloudinary\Assets;
 use Cloudinary\UI\Component;
+use Cloudinary\Utils;
 use function Cloudinary\get_plugin_instance;
 use Cloudinary\Settings\Setting;
 
@@ -262,11 +263,11 @@ class Asset extends Panel {
 	protected function pre_render() {
 		$plugin = get_plugin_instance();
 		$export = array(
-			'update_url' => rest_url( REST_API::BASE . '/disable_cache_items' ),
-			'fetch_url'  => rest_url( REST_API::BASE . '/show_cache' ),
-			'purge_url'  => rest_url( REST_API::BASE . '/purge_cache' ),
-			'purge_all'  => rest_url( REST_API::BASE . '/purge_all' ),
-			'save_url'   => rest_url( REST_API::BASE . '/save_asset' ),
+			'update_url' => Utils::rest_url( REST_API::BASE . '/disable_cache_items' ),
+			'fetch_url'  => Utils::rest_url( REST_API::BASE . '/show_cache' ),
+			'purge_url'  => Utils::rest_url( REST_API::BASE . '/purge_cache' ),
+			'purge_all'  => Utils::rest_url( REST_API::BASE . '/purge_all' ),
+			'save_url'   => Utils::rest_url( REST_API::BASE . '/save_asset' ),
 			'nonce'      => wp_create_nonce( 'wp_rest' ),
 		);
 		wp_add_inline_script( 'cloudinary', 'var CLDASSETS = ' . wp_json_encode( $export ), 'before' );

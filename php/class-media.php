@@ -329,14 +329,14 @@ class Media extends Settings_Component implements Setup {
 	 * @return bool
 	 */
 	public function is_local_media( $attachment_id ) {
-		$local_host = wp_parse_url( get_site_url(), PHP_URL_HOST );
+		$local_host = wp_parse_url( Utils::site_url(), PHP_URL_HOST );
 		$guid       = get_the_guid( $attachment_id );
 
 		// Maybe GUID is a path.
 		if ( ! filter_var( $guid, FILTER_VALIDATE_URL ) ) {
-			$url = home_url( $guid );
+			$url = Utils::home_url( $guid );
 			if ( $this->maybe_file_exist_in_url( $url ) ) {
-				$guid = home_url( $guid );
+				$guid = Utils::home_url( $guid );
 			}
 		}
 
@@ -2270,7 +2270,7 @@ class Media extends Settings_Component implements Setup {
 			$asset = $this->get_asset_payload();
 			// Set a base array for pulling an asset if needed.
 			$base_return = array(
-				'fetch'         => rest_url( REST_API::BASE . '/asset' ),
+				'fetch'         => Utils::rest_url( REST_API::BASE . '/asset' ),
 				'uploading'     => true,
 				'src'           => $asset['src'],
 				'url'           => $asset['url'],

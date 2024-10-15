@@ -8,6 +8,7 @@
 namespace Cloudinary\Cache;
 
 use Cloudinary\Plugin;
+use Cloudinary\Utils;
 
 /**
  * Class File System.
@@ -62,7 +63,7 @@ class File_System {
 			content_url()        => $this->wp_file_system->wp_content_dir(),
 			admin_url()          => $this->wp_file_system->abspath() . 'wp-admin/',
 			includes_url()       => $this->wp_file_system->abspath() . 'wp-includes/',
-			home_url()           => $this->wp_file_system->abspath(),
+			Utils::home_url()    => $this->wp_file_system->abspath(),
 		);
 		foreach ( $paths as $url => $path ) {
 			$this->paths[ trailingslashit( $url ) ] = trailingslashit( $path );
