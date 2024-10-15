@@ -46,7 +46,8 @@ $settings = array(
 						'data-context' => 'video',
 					),
 					'readonly'           => static function () {
-						return ! get_plugin_instance()->get_component( 'storage' )->is_local_full();
+						$plugin = get_plugin_instance();
+						return 'on' === $plugin->settings->get_value( 'video_delivery' ) && ! $plugin->get_component( 'storage' )->is_local_full();
 					},
 					'readonly_message'   => sprintf(
 						// translators: %s is a link to the storage settings page.
