@@ -334,7 +334,7 @@ class Deactivation {
 			'cloudinary-deactivation',
 			'CLD_Deactivate',
 			array(
-				'endpoint' => rest_url( REST_API::BASE . '/' . self::$internal_endpoint ),
+				'endpoint' => Utils::rest_url( REST_API::BASE . '/' . self::$internal_endpoint ),
 				'nonce'    => wp_create_nonce( 'wp_rest' ),
 			)
 		);

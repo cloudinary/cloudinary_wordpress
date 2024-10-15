@@ -26,8 +26,8 @@ if ( ! empty( $cloudinary_url ) ) {
 
 // Export settings.
 $export_data = array(
-	'testURL'   => rest_url( REST_API::BASE . '/test_connection' ),
-	'saveURL'   => rest_url( REST_API::BASE . '/save_wizard' ),
+	'testURL'   => Utils::rest_url( REST_API::BASE . '/test_connection' ),
+	'saveURL'   => Utils::rest_url( REST_API::BASE . '/save_wizard' ),
 	'saveNonce' => wp_create_nonce( 'wp_rest' ),
 	'config'    => array(
 		'tab'          => $current_tab,
