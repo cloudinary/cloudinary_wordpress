@@ -8,6 +8,7 @@
 namespace Cloudinary\UI\Component;
 
 use Cloudinary\REST_API;
+use Cloudinary\Utils;
 
 /**
  * Ring Component to render components only.
@@ -33,7 +34,7 @@ class Progress_Sync extends Progress_Ring {
 	protected function wrap( $struct ) {
 		$struct = parent::wrap( $struct );
 		if ( true === $this->setting->get_param( 'poll' ) ) {
-			$struct['attributes']['data-url']  = rest_url( REST_API::BASE . '/stats' );
+			$struct['attributes']['data-url']  = Utils::rest_url( REST_API::BASE . '/stats' );
 			$struct['attributes']['data-poll'] = true;
 		}
 

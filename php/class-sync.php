@@ -144,7 +144,7 @@ class Sync implements Setup, Assets {
 	public function enqueue_assets() {
 		if ( $this->plugin->settings->get_param( 'connected' ) ) {
 			$data = array(
-				'restUrl' => esc_url_raw( rest_url() ),
+				'restUrl' => esc_url_raw( Utils::rest_url() ),
 				'nonce'   => wp_create_nonce( 'wp_rest' ),
 			);
 			wp_add_inline_script( 'cloudinary', 'var cloudinaryApi = ' . wp_json_encode( $data ), 'before' );
