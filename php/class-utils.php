@@ -546,11 +546,11 @@ class Utils {
 		}
 
 		$thing = trim( $thing );
-	
+
 		if ( empty( $thing ) ) {
 			return false;
 		}
-	
+
 		if ( ! in_array( $thing[0], array( '{', '[' ), true ) ) {
 			return false;
 		}
@@ -1266,5 +1266,39 @@ class Utils {
 		 * @return {string}
 		 */
 		return apply_filters( 'cloudinary_rest_url', $rest_url, $path, $scheme );
+	}
+
+	/**
+	 * Get the transformations title.
+	 *
+	 * @param string $context The context.
+	 *
+	 * @return string
+	 */
+	public static function get_transformations_title( $context ) {
+		$transformations_title = __( 'Cloudinary global transformations', 'cloudinary' );
+		$taxonomy_slug         = static::get_sanitized_text( 'taxonomy' );
+
+		if ( $taxonomy_slug ) {
+			$taxonomy              = get_taxonomy( $taxonomy_slug );
+			$transformations_title = sprintf(
+				// translators: %1$s is the taxonomy label and the %2$s is the context of the use.
+				__( '%1$s %2$s transformations', 'cloudinary' ),
+				$taxonomy->labels->singular_name,
+				$context
+			);
+
+			$taxonomy_id = static::get_sanitized_text( 'tag_ID' );
+
+			if ( $taxonomy_id ) {
+				$transformations_title = sprintf(
+					// translators: %s is the term name.
+					__( '%s transformations', 'cloudinary' ),
+					get_term( $taxonomy_id )->name
+				);
+			}
+		}
+
+		return $transformations_title;
 	}
 }
