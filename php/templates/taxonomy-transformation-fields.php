@@ -20,10 +20,7 @@ $cloudinary = get_plugin_instance();
 <div class="cloudinary-collapsible">
 	<div class="cloudinary-collapsible__toggle">
 		<h2>
-			<?php
-			// translators: The taxonomy label.
-			echo esc_html( sprintf( __( 'Cloudinary %s transformations', 'cloudinary' ), strtolower( $tax_labels->singular_name ) ) );
-			?>
+			<?php esc_html_e( 'Cloudinary transformations', 'cloudinary' ); ?>
 		</h2>
 		<button type="button"><i class="dashicons dashicons-arrow-down-alt2"></i></button>
 	</div>
