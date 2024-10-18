@@ -3,6 +3,7 @@
 import { __ } from '@wordpress/i18n';
 import { withSelect } from '@wordpress/data';
 import { PanelBody, ToggleControl } from '@wordpress/components';
+import { InspectorControls } from '@wordpress/block-editor';
 
 const Video = {
 	_init() {
@@ -86,7 +87,6 @@ const TransformationsToggle = ( props ) => {
 
 let ImageInspectorControls = ( props ) => {
 	const { setAttributes, media } = props;
-	const { InspectorControls } = wp.editor;
 
 	if ( media && media.transformations ) {
 		setAttributes( { transformations: true } );
