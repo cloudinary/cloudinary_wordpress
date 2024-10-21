@@ -984,7 +984,7 @@ class Api {
 	private function call( $url, $args = array(), $method = 'get' ) {
 		$args['method']             = strtoupper( $method );
 		$args['user-agent']         = 'WordPress/' . get_bloginfo( 'version' ) . '; ' . get_bloginfo( 'url' ) . ' (' . $this->plugin_version . ')';
-		$args['headers']['referer'] = get_site_url();
+		$args['headers']['referer'] = Utils::site_url();
 		if ( 'GET' === $args['method'] ) {
 			$url = 'https://' . $this->credentials['api_key'] . ':' . $this->credentials['api_secret'] . '@' . $url;
 		} else {

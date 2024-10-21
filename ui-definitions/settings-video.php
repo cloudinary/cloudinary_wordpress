@@ -5,7 +5,16 @@
  * @package Cloudinary
  */
 
+use Cloudinary\Utils;
 use function Cloudinary\get_plugin_instance;
+
+$transformations_title = __( 'Cloudinary global transformations', 'cloudinary' );
+
+$taxonomy_slug = Utils::get_sanitized_text( 'taxonomy' );
+
+if ( $taxonomy_slug ) {
+	$transformations_title = __( 'Term transformations', 'cloudinary' );
+}
 
 $settings = array(
 	array(
@@ -46,7 +55,8 @@ $settings = array(
 						'data-context' => 'video',
 					),
 					'readonly'           => static function () {
-						return ! get_plugin_instance()->get_component( 'storage' )->is_local_full();
+						$plugin = get_plugin_instance();
+						return 'on' === $plugin->settings->get_value( 'video_delivery' ) && ! $plugin->get_component( 'storage' )->is_local_full();
 					},
 					'readonly_message'   => sprintf(
 						// translators: %s is a link to the storage settings page.
@@ -235,16 +245,18 @@ $settings = array(
 					array(
 						'type'           => 'text',
 						'slug'           => 'video_freeform',
-						'title'          => __( 'Additional video transformations', 'cloudinary' ),
+						'title'          => $transformations_title,
 						'default'        => '',
 						'tooltip_text'   => sprintf(
 							// translators: The link to transformation reference.
 							__(
-								'A set of additional transformations to apply to all videos. Specify your transformations using Cloudinary URL transformation syntax. See %1$sreference%2$s for all available transformations and syntax.',
+								'A set of additional transformations to apply to all videos. Specify your transformations using Cloudinary URL transformation syntax. See %1$sreference%2$s for all available transformations and syntax.%3$s* The Cloudinary global transformations are only applied to assets managed in the Media Library%4$s.',
 								'cloudinary'
 							),
 							'<a href="https://cloudinary.com/documentation/transformation_reference" target="_blank" rel="noopener noreferrer">',
-							'</a>'
+							'</a>',
+							'<br><br><em>',
+							'</em>'
 						),
 						'link'           => array(
 							'text' => __( 'See examples', 'cloudinary' ),
