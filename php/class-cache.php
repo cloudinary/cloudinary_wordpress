@@ -102,7 +102,7 @@ class Cache extends Settings_Component implements Setup {
 		parent::__construct( $plugin );
 		$this->file_system = new File_System( $plugin );
 		if ( $this->file_system->enabled() ) {
-			$this->cache_folder = wp_parse_url( get_site_url(), PHP_URL_HOST );
+			$this->cache_folder = wp_parse_url( Utils::site_url(), PHP_URL_HOST );
 			$this->media        = $this->plugin->get_component( 'media' );
 			$this->connect      = $this->plugin->get_component( 'connect' );
 			$this->api          = $this->plugin->get_component( 'api' );
@@ -239,7 +239,7 @@ class Cache extends Settings_Component implements Setup {
 	 * @return array
 	 */
 	public function prevent_caching_internal_requests( $args, $url ) {
-		$home    = strtolower( wp_parse_url( home_url(), PHP_URL_HOST ) );
+		$home    = strtolower( wp_parse_url( Utils::home_url(), PHP_URL_HOST ) );
 		$request = strtolower( wp_parse_url( $url, PHP_URL_HOST ) );
 		if ( $home === $request ) {
 			$args['headers']['x-cld-cache'] = time();
