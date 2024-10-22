@@ -8,13 +8,7 @@
 use Cloudinary\Utils;
 use function Cloudinary\get_plugin_instance;
 
-$transformations_title = __( 'Cloudinary global transformations', 'cloudinary' );
-
-$taxonomy_slug = Utils::get_sanitized_text( 'taxonomy' );
-
-if ( $taxonomy_slug ) {
-	$transformations_title = __( 'Term transformations', 'cloudinary' );
-}
+$transformations_title = Utils::get_transformations_title( esc_html__( 'Image', 'cloudinary' ) );
 
 $settings = array(
 	array(
@@ -161,6 +155,7 @@ $settings = array(
 						'slug'           => 'image_freeform',
 						'title'          => $transformations_title,
 						'default'        => '',
+						'anchor'         => true,
 						'tooltip_text'   => sprintf(
 							// translators: The link to transformation reference.
 							__(

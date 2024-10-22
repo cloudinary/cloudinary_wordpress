@@ -44,6 +44,10 @@ class Text extends Component {
 			'cld-input-' . $this->type,
 		);
 
+		if ( $this->setting->has_param( 'anchor' ) ) {
+			$struct['attributes']['id'] = 'text-' . str_replace( '_', '-', $this->setting->get_slug() );
+		}
+
 		return $struct;
 	}
 
