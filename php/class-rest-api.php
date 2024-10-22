@@ -113,6 +113,6 @@ class REST_API {
 		$args['headers']['X-WP-Nonce'] = $params['nonce'];
 
 		// Send request.
-		wp_safe_remote_request( $url, $args );
+		wp_remote_request( $url, $args );
 	}
 }
