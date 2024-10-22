@@ -155,6 +155,7 @@ $settings = array(
 						'slug'           => 'image_freeform',
 						'title'          => $transformations_title,
 						'default'        => '',
+						'anchor'         => true,
 						'tooltip_text'   => sprintf(
 							// translators: The link to transformation reference.
 							__(
