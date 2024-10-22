@@ -9,6 +9,7 @@ namespace Cloudinary\UI\Component;
 
 use Cloudinary\REST_API;
 use Cloudinary\UI\Component;
+use Cloudinary\Utils;
 
 /**
  * Frame Component to render components only.
