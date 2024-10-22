@@ -429,7 +429,7 @@ class Deactivation {
 
 		$url = add_query_arg( array_filter( $args ), CLOUDINARY_ENDPOINTS_DEACTIVATION );
 
-		$response = wp_safe_remote_get( $url );
+		$response = wp_remote_get( $url );
 
 		if ( 'uninstall' === $data ) {
 			$this->cleanup();
