@@ -546,11 +546,11 @@ class Utils {
 		}
 
 		$thing = trim( $thing );
-	
+
 		if ( empty( $thing ) ) {
 			return false;
 		}
-	
+
 		if ( ! in_array( $thing[0], array( '{', '[' ), true ) ) {
 			return false;
 		}
@@ -570,7 +570,7 @@ class Utils {
 		}
 		if ( ! $is ) {
 			// Fallback if rest engine is not setup yet.
-			$rest_base   = wp_parse_url( rest_url( '/' ), PHP_URL_PATH );
+			$rest_base   = wp_parse_url( static::rest_url( '/' ), PHP_URL_PATH );
 			$request_uri = filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_SANITIZE_URL );
 			$is          = strpos( $request_uri, $rest_base ) === 0;
 		}
@@ -1180,5 +1180,125 @@ class Utils {
 		$context = apply_filters( 'cloudinary_media_context', 'default', $attachment_id );
 
 		return sanitize_key( $context );
+	}
+
+	/**
+	 * Get the home URL.
+	 *
+	 * @param string $path   The path to be appended to the home URL.
+	 * @param string $scheme The scheme to give the home URL context. Accepts 'http', 'https', or 'relative'.
+	 *
+	 * @return string
+	 */
+	public static function home_url( $path = '', $scheme = null ) {
+		$blog_id = null;
+		if ( is_multisite() ) {
+			$blog_id = get_current_blog_id();
+		}
+		$home_url = get_home_url( $blog_id, $path, $scheme );
+
+		/**
+		 * Filter the home url.
+		 *
+		 * @hook cloudinary_home_url
+		 * @since 3.2.0
+		 *
+		 * @param $home_url {string} The home url.
+		 * @param $path     {string} The path to be appended to the home URL.
+		 * @param $scheme   {string} The scheme to give the home URL context. Accepts 'http', 'https', or 'relative'.
+		 *
+		 * @return {string}
+		 */
+		return apply_filters( 'cloudinary_home_url', $home_url, $path, $scheme );
+	}
+
+	/**
+	 * Get the site URL.
+	 *
+	 * @param string $path   The path to be appended to the site URL.
+	 * @param string $scheme The scheme to give the site URL context. Accepts 'http', 'https', or 'relative'.
+	 *
+	 * @return string
+	 */
+	public static function site_url( $path = '', $scheme = null ) {
+		$blog_id = null;
+		if ( is_multisite() ) {
+			$blog_id = get_current_blog_id();
+		}
+		$site_url = get_site_url( $blog_id, $path, $scheme );
+
+		/**
+		 * Filter the site URL.
+		 *
+		 * @hook cloudinary_site_url
+		 * @since 3.2.2
+		 *
+		 * @param $site_url {string} The site URL.
+		 * @param $path     {string} The path to be appended to the site URL.
+		 * @param $scheme   {string} The scheme to give the site URL context. Accepts 'http', 'https', or 'relative'.
+		 *
+		 * @return {string}
+		 */
+		return apply_filters( 'cloudinary_site_url', $site_url, $path, $scheme );
+	}
+
+	/**
+	 * Get the rest URL.
+	 *
+	 * @param string $path   The path to be appended to the rest URL.
+	 * @param string $scheme The scheme to give the rest URL context. Accepts 'http', 'https', or 'relative'.
+	 *
+	 * @return string
+	 */
+	public static function rest_url( $path = '', $scheme = null ) {
+		$rest_url = rest_url( $path, $scheme );
+
+		/**
+		 * Filter the rest url.
+		 *
+		 * @hook cloudinary_rest_url
+		 * @since 3.2.2
+		 *
+		 * @param $rest_url {string} The rest url.
+		 * @param $path     {string} The path to be appended to the rest URL.
+		 * @param $scheme   {string} The scheme to give the rest URL context. Accepts 'http', 'https', or 'relative'.
+		 *
+		 * @return {string}
+		 */
+		return apply_filters( 'cloudinary_rest_url', $rest_url, $path, $scheme );
+	}
+
+	/**
+	 * Get the transformations title.
+	 *
+	 * @param string $context The context.
+	 *
+	 * @return string
+	 */
+	public static function get_transformations_title( $context ) {
+		$transformations_title = __( 'Cloudinary global transformations', 'cloudinary' );
+		$taxonomy_slug         = static::get_sanitized_text( 'taxonomy' );
+
+		if ( $taxonomy_slug ) {
+			$taxonomy              = get_taxonomy( $taxonomy_slug );
+			$transformations_title = sprintf(
+				// translators: %1$s is the taxonomy label and the %2$s is the context of the use.
+				__( '%1$s %2$s transformations', 'cloudinary' ),
+				$taxonomy->labels->singular_name,
+				$context
+			);
+
+			$taxonomy_id = static::get_sanitized_text( 'tag_ID' );
+
+			if ( $taxonomy_id ) {
+				$transformations_title = sprintf(
+					// translators: %s is the term name.
+					__( '%s transformations', 'cloudinary' ),
+					get_term( $taxonomy_id )->name
+				);
+			}
+		}
+
+		return $transformations_title;
 	}
 }
