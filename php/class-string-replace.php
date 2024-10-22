@@ -8,7 +8,6 @@
 namespace Cloudinary;
 
 use Cloudinary\Component\Setup;
-use \Traversable;
 
 /**
  * String replace class.
@@ -35,6 +34,13 @@ class String_Replace implements Setup {
 	 * @var array
 	 */
 	protected static $replacements = array();
+
+	/**
+	 * Holds the list of strings and replacements.
+	 *
+	 * @var bool
+	 */
+	protected static $doing_save = false;
 
 	/**
 	 * Site Cache constructor.
@@ -130,7 +136,12 @@ class String_Replace implements Setup {
 	 */
 	public function pre_filter_rest_content( $response, $post, $request ) {
 		$context = $request->get_param( 'context' );
+
 		if ( 'edit' === $context ) {
+			// Updating or creating a post.
+			if ( in_array( $request->get_method(), array( 'PUT', 'POST' ), true ) ) {
+				static::$doing_save = true;
+			}
 			$data = $response->get_data();
 			$data = $this->replace_strings( $data, $context );
 			$response->set_data( $data );
@@ -321,6 +332,16 @@ class String_Replace implements Setup {
 		}
 
 		return $content;
+	}
+
+	/**
+	 * Check if we are currently saving a REST request (i.e. Gutenberg).
+	 * This is used to prevent double replacements.
+	 *
+	 * @return bool
+	 */
+	public function doing_save() {
+		return static::$doing_save;
 	}
 
 	/**

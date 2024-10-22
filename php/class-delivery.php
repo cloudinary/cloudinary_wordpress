@@ -1589,7 +1589,7 @@ class Delivery implements Setup {
 	public function validate_url( $url ) {
 		static $home;
 		if ( ! $home ) {
-			$home = wp_parse_url( home_url( '/' ) );
+			$home = wp_parse_url( Utils::home_url( '/' ) );
 		}
 		$parts = wp_parse_url( $url );
 		if ( empty( $parts['host'] ) ) {
@@ -1819,6 +1819,11 @@ class Delivery implements Setup {
 	 */
 	public function catch_urls( $content, $context = 'view' ) {
 
+		// Check if we are saving. If so, bail.
+		// This is to prevent the replacement from happening in the shutdown, signaling content changes in the editor.
+		if ( $this->plugin->get_component( 'replace' )->doing_save() ) {
+			return;
+		}
 		$this->init_delivery();
 		$this->prepare_delivery( $content );
 

@@ -81,7 +81,7 @@ class Media_Library extends Extension {
 		wp_enqueue_script( 'cloudinary' );
 
 		$params = array(
-			'fetch_url' => rest_url( REST_API::BASE . '/asset' ),
+			'fetch_url' => Utils::rest_url( REST_API::BASE . '/asset' ),
 			'nonce'     => wp_create_nonce( 'wp_rest' ),
 		);
 

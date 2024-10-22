@@ -9,6 +9,7 @@ namespace Cloudinary\UI\Component;
 
 use Cloudinary\REST_API;
 use Cloudinary\UI\Component;
+use Cloudinary\Utils;
 
 /**
  * Frame Component to render components only.
@@ -115,7 +116,7 @@ class Notice extends Component {
 		// Output notice endpoint data only if a dismissible notice has been shown.
 		if ( $this->setting->get_option_parent()->has_param( 'dismissible_notice' ) && ! $this->setting->get_option_parent()->has_param( 'notice_scripts' ) ) {
 			$args = array(
-				'url'   => rest_url( REST_API::BASE . '/dismiss_notice' ),
+				'url'   => Utils::rest_url( REST_API::BASE . '/dismiss_notice' ),
 				'nonce' => wp_create_nonce( 'wp_rest' ),
 			);
 			wp_add_inline_script( 'cloudinary', 'var CLDIS = ' . wp_json_encode( $args ), 'before' );

@@ -11,6 +11,7 @@ use Cloudinary\Plugin;
 use Cloudinary\REST_API;
 use Cloudinary\Settings;
 use Cloudinary\UI;
+use Cloudinary\Utils;
 use function Cloudinary\get_plugin_instance;
 
 /**
@@ -75,7 +76,7 @@ class State {
 	 * Setup the state.
 	 */
 	public function setup_state() {
-		$url = rest_url( REST_API::BASE . '/ui-state' );
+		$url = Utils::rest_url( REST_API::BASE . '/ui-state' );
 		$this->plugin->add_script_data( 'stateURL', $url );
 		$this->plugin->add_script_data( 'stateNonce', $this->nonce );
 		$this->state = get_user_meta( $this->user_id, self::STATE_KEY, true );
