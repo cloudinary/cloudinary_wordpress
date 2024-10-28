@@ -369,7 +369,7 @@ class Delivery implements Setup {
 
 		$svg = $this->plugin->get_component( 'svg' );
 
-		if ( ! $is && wp_attachment_is_image( $attachment_id ) && $svg->is_active() ) {
+		if ( ! $is && $svg->is_active() && $svg::is_svg( $attachment_id ) ) {
 			$is = true;
 		}
 
