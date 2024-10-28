@@ -162,7 +162,7 @@ class SVG extends Delivery_Feature {
 	 * @return array
 	 */
 	public function remove_svg_eagers( $options, $attachment ) {
-		if ( 'image/svg+xml' === $attachment->post_mime_type ) {
+		if ( static::is_svg( $attachment->ID ) ) {
 			unset( $options['eager'], $options['eager_async'] );
 		}
 
@@ -179,7 +179,7 @@ class SVG extends Delivery_Feature {
 	 */
 	public function upload_args( $args, $attachment_id ) {
 
-		if ( 'image/svg+xml' === get_post_mime_type( $attachment_id ) ) {
+		if ( static::is_svg( $attachment_id ) ) {
 			$args['body']['resource_type'] = 'auto';
 			$args['body']['eager']         = 'fl_sanitize';
 		}
@@ -194,7 +194,7 @@ class SVG extends Delivery_Feature {
 	 */
 	public function maybe_setup_metadata( $attachment_id, $result ) {
 
-		if ( is_array( $result ) && 'image/svg+xml' === get_post_mime_type( $attachment_id ) ) {
+		if ( is_array( $result ) && static::is_svg( $attachment_id ) ) {
 			$file_path = get_post_meta( $attachment_id, '_wp_attached_file', true );
 			$meta      = wp_get_attachment_metadata( $attachment_id );
 			if ( empty( $meta ) ) {
@@ -236,5 +236,16 @@ class SVG extends Delivery_Feature {
 
 		// Add actions.
 		add_action( 'cloudinary_uploaded_asset', array( $this, 'maybe_setup_metadata' ), 10, 2 );
+	}
+
+	/**
+	 * Check if an attachment is an SVG.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return bool
+	 */
+	public static function is_svg( $attachment_id ) {
+		return 'image/svg+xml' === get_post_mime_type( $attachment_id );
 	}
 }
