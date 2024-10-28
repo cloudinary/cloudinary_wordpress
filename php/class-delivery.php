@@ -369,7 +369,7 @@ class Delivery implements Setup {
 
 		$svg = $this->plugin->get_component( 'svg' );
 
-		if ( ! $is && $svg->is_active() && $svg::is_svg( $attachment_id ) ) {
+		if ( ! $is && $svg->is_active() && $svg::is_svg( $attachment_id ) && 'on' === $this->plugin->settings->get_value( 'image_delivery' ) ) {
 			$is = true;
 		}
 
