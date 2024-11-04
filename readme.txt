@@ -142,6 +142,17 @@ Your site is now setup to start using Cloudinary.
 == Changelog ==
 
 
+= 3.2.2 (28 October 2024) =
+
+Fixes and improvements:
+
+* Clarified the concept of global transformations across plugin settings and post types
+* Improved CLI sync reliability
+* Fixed PDF files not showing as embedded from the media library
+* Fixed image block errors causing block recovery prompts
+* Added compatibility for password-protected websites
+
+
 = 3.2.1 (18 September 2024) =
 
 Fixes and improvements:
