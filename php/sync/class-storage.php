@@ -5,8 +5,6 @@
  * @package Cloudinary
  */
 
-namespace Cloudinary;
-
 namespace Cloudinary\Sync;
 
 use Cloudinary\Component\Notice;
@@ -467,7 +465,7 @@ class Storage implements Notice {
 			$base['count'] = '-' . $count;
 			$file_path     = path_join( $path, implode( '', $base ) );
 			$filename      = implode( '', $base );
-			$count ++;
+			++$count;
 		}
 
 		return $filename;
@@ -570,5 +568,24 @@ class Storage implements Notice {
 		$sync_media = $this->media->get_settings()->get_value( 'sync_media' );
 
 		return ! empty( $sync_media['offload'] ) && 'dual_full' === $sync_media['offload'];
+	}
+
+	/**
+	 * Get the settings for Storage.
+	 *
+	 * @param string $setting The Setting to get.
+	 *
+	 * @return array|string|null
+	 */
+	public function get_settings( $setting = null ) {
+		if ( is_null( $setting ) ) {
+			return $this->settings;
+		}
+
+		if ( isset( $this->settings[ $setting ] ) ) {
+			return $this->settings[ $setting ];
+		}
+
+		return null;
 	}
 }

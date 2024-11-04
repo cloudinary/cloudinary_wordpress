@@ -2049,6 +2049,7 @@ class Media extends Settings_Component implements Setup {
 		wp_enqueue_style( 'cloudinary' );
 		$params = array(
 			'nonce'     => wp_create_nonce( 'wp_rest' ),
+			'storage'   => $this->plugin->components['storage']->get_settings( 'offload' ),
 			'mloptions' => array(
 				'cloud_name'     => $this->credentials['cloud_name'],
 				'api_key'        => $this->credentials['api_key'],
