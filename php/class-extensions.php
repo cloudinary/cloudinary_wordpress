@@ -251,7 +251,7 @@ class Extensions extends Settings_Component implements Setup {
 	 */
 	public function setup() {
 		$data = array(
-			'url'   => rest_url( REST_API::BASE . '/extension' ),
+			'url'   => Utils::rest_url( REST_API::BASE . '/extension' ),
 			'nonce' => wp_create_nonce( 'wp_rest' ),
 		);
 		foreach ( $this->settings->get_settings() as $setting ) {

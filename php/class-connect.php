@@ -214,8 +214,8 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 
 		if ( ! empty( $url ) ) {
 			// Warm the last uploaded items in the media library.
-			wp_safe_remote_request(
-				rest_url( 'wp/v2/media' ),
+			wp_remote_request(
+				Utils::rest_url( 'wp/v2/media' ),
 				array(
 					'timeout'  => 0.1,
 					'blocking' => false,
@@ -1024,8 +1024,8 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			),
 		);
 
-		$url      = rest_url( REST_API::BASE . '/test_rest_api' );
-		$response = wp_safe_remote_get( $url, $args );
+		$url      = Utils::rest_url( REST_API::BASE . '/test_rest_api' );
+		$response = wp_remote_get( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
 			$result = array(

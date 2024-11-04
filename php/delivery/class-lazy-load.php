@@ -329,7 +329,7 @@ class Lazy_Load extends Delivery_Feature {
 			$loader = 'null;';
 			if ( ! $has_loader && Utils::is_frontend_ajax() ) {
 				$has_loader = true;
-				$url        = add_query_arg( 'cloudinary_lazy_load_loader', true, trailingslashit( home_url() ) );
+				$url        = add_query_arg( 'cloudinary_lazy_load_loader', true, trailingslashit( Utils::home_url() ) );
 				$loader     = 'document.body.appendChild(document.createElement(\'script\')).src=\'' . $url . '\';this.onload=null;';
 			}
 			// Since we're appending to the onload, check it isn't already in, as it may run twice i.e full page caching.

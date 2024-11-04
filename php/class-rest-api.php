@@ -89,7 +89,7 @@ class REST_API {
 	 */
 	public function background_request( $endpoint, $params = array(), $method = 'POST' ) {
 
-		$url = rest_url( static::BASE . '/' . $endpoint );
+		$url = Utils::rest_url( static::BASE . '/' . $endpoint );
 		// Setup a call for a background sync.
 		$params['nonce'] = wp_create_nonce( 'wp_rest' );
 		$args            = array(
@@ -123,6 +123,6 @@ class REST_API {
 		$args['headers']['X-WP-Nonce'] = $params['nonce'];
 
 		// Send request.
-		wp_safe_remote_request( $url, $args );
+		wp_remote_request( $url, $args );
 	}
 }

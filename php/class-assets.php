@@ -425,19 +425,7 @@ class Assets extends Settings_Component {
 	 * @return string
 	 */
 	public function clean_path( $path ) {
-		/**
-		 * Filter the home url.
-		 *
-		 * @hook cloudinary_home_url
-		 * @since 3.2.0
-		 *
-		 * @param $home_url {string} The home url.
-		 *
-		 * @return {string}
-		 */
-		$home_url = apply_filters( 'cloudinary_home_url', home_url() );
-
-		$home = Utils::clean_url( trailingslashit( $home_url ) );
+		$home = Utils::clean_url( trailingslashit( Utils::home_url() ) );
 		$path = str_replace( $home, '', Utils::clean_url( $path ) );
 		if ( empty( Utils::pathinfo( $path, PATHINFO_EXTENSION ) ) ) {
 			$path = urldecode( trailingslashit( $path ) );
@@ -621,7 +609,7 @@ class Assets extends Settings_Component {
 			$url_id = $this->media->local_url( $url_id );
 		}
 		$url    = $this->clean_path( $url_id );
-		$domain = wp_parse_url( home_url(), PHP_URL_HOST );
+		$domain = wp_parse_url( Utils::home_url(), PHP_URL_HOST );
 		$folder = wp_normalize_path( dirname( trim( $url, './' ) ) );
 		if ( ! empty( $domain ) ) {
 			$folder = path_join( $domain, $folder );
@@ -1087,8 +1075,8 @@ class Assets extends Settings_Component {
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 
-		$full_url  = urldecode( home_url() . wp_parse_url( $url, PHP_URL_PATH ) );
-		$file_path = urldecode( str_replace( home_url(), untrailingslashit( ABSPATH ), $full_url ) );
+		$full_url  = urldecode( Utils::home_url() . wp_parse_url( $url, PHP_URL_PATH ) );
+		$file_path = urldecode( str_replace( Utils::home_url(), untrailingslashit( ABSPATH ), $full_url ) );
 		if ( ! file_exists( $file_path ) ) {
 			return false;
 		}
