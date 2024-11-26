@@ -101,15 +101,6 @@ final class Plugin {
 	 * Plugin_Base constructor.
 	 */
 	public function __construct() {
-		require_once ABSPATH . 'wp-admin/includes/plugin.php';
-		$plugin              = get_plugin_data( CLDN_CORE );
-		$location            = $this->locate_plugin();
-		$this->slug          = ! empty( $plugin['TextDomain'] ) ? $plugin['TextDomain'] : $location['dir_basename'];
-		$this->version       = $plugin['Version'];
-		$this->dir_path      = $location['dir_path'];
-		$this->template_path = $this->dir_path . 'php/templates/';
-		$this->dir_url       = $location['dir_url'];
-		$this->plugin_file   = pathinfo( dirname( CLDN_CORE ), PATHINFO_BASENAME ) . '/' . wp_basename( CLDN_CORE );
 		$this->setup_endpoints();
 		spl_autoload_register( array( $this, 'autoload' ) );
 		$this->register_hooks();
@@ -122,7 +113,7 @@ final class Plugin {
 	 * after_setup_theme priority 10. This is especially important for plugins
 	 * that extend the Customizer to ensure resources are available in time.
 	 */
-	public function init() {
+	public function plugins_loaded() {
 		Cron::get_instance();
 		$this->components['admin']                  = new Admin( $this );
 		$this->components['state']                  = new State( $this );
@@ -279,8 +270,9 @@ final class Plugin {
 	 * Register Hooks for the plugin.
 	 */
 	public function register_hooks() {
-		add_action( 'plugins_loaded', array( $this, 'init' ), 9 );
+		add_action( 'plugins_loaded', array( $this, 'plugins_loaded' ), 9 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'register_enqueue_styles' ), 11 );
+		add_action( 'init', array( $this, 'init' ) );
 		// Move to 100 and 200 to allow other plugins/systems to add cloudinary filters and actions that are fired within the init hooks.
 		add_action( 'init', array( $this, 'setup' ), 100 );
 		add_action( 'init', array( $this, 'register_assets' ), 200 );
@@ -421,6 +413,23 @@ final class Plugin {
 	 */
 	private function is_notice_component( $component ) {
 		return $component instanceof Notice;
+	}
+
+	/**
+	 * Init the plugin properties.
+	 *
+	 * @return void
+	 */
+	public function init() {
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		$plugin              = get_plugin_data( CLDN_CORE );
+		$location            = $this->locate_plugin();
+		$this->slug          = ! empty( $plugin['TextDomain'] ) ? $plugin['TextDomain'] : $location['dir_basename'];
+		$this->version       = $plugin['Version'];
+		$this->dir_path      = $location['dir_path'];
+		$this->template_path = $this->dir_path . 'php/templates/';
+		$this->dir_url       = $location['dir_url'];
+		$this->plugin_file   = pathinfo( dirname( CLDN_CORE ), PATHINFO_BASENAME ) . '/' . wp_basename( CLDN_CORE );
 	}
 
 	/**
