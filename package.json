@@ -50,10 +50,6 @@
     ]
   },
   "devDependencies": {
-    "@babel/cli": "^7.12.1",
-    "@babel/core": "^7.12.3",
-    "@babel/plugin-proposal-optional-chaining": "^7.12.1",
-    "@babel/polyfill": "^7.12.1",
     "@release-it/bumper": "^4.0.0",
     "@testing-library/react": "^11.1.0",
     "@tippyjs/react": "^4.2.5",
@@ -80,11 +76,6 @@
     "accessible-autocomplete": "^2.0.3",
     "acorn": "^8.2.4",
     "autoprefixer": "^10.0.1",
-    "babel-eslint": "^10.1.0",
-    "babel-jest": "^29.7.0",
-    "babel-loader": "^8.1.0",
-    "babel-plugin-istanbul": "^6.0.0",
-    "babel-plugin-transform-require-context": "^0.1.1",
     "browserslist": "^4.14.6",
     "chart.js": "^3.5.0",
     "classnames": "^2.3.1",
@@ -152,5 +143,5 @@
     "webpack-cli": "^4.2.0",
     "webpackbar": "^5.0.2"
   },
-  "version": "3.2.2"
+  "version": "3.2.3"
 }
