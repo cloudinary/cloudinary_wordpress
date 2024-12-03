@@ -1,8 +1,8 @@
 === Cloudinary - Deliver Images and Videos at Scale ===
 Contributors: Cloudinary, XWP, Automattic
-Tags: image-optimizer, core-web-vitals, responsive-images, resize, performance
+Tags: image-optimizer, core-web-vitals, video, resize, performance
 Requires at least: 4.7
-Tested up to: 6.6.2
+Tested up to: 6.7.1
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -141,6 +141,15 @@ Your site is now setup to start using Cloudinary.
 
 == Changelog ==
 
+
+= 3.2.3 (03 December 2024) =
+
+Fixes and Improvements:
+
+* Resolved broken dependencies on WordPress 6.7
+* Fixed a file existence check that caused a plugin crash
+* Addressed an issue preventing the activation of the crop and gravity beta feature at the asset level
+* Fixed the timing of when translations are loaded to comply with updated WordPress initialization requirements
 
 = 3.2.2 (28 October 2024) =
 

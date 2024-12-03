@@ -424,18 +424,18 @@ class Sync_Queue {
 		$return = array(
 			// Original sizes.
 			'original_size'           => $total_local_size,
-			'original_size_percent'   => '100%', // The original will always be 100%, as it's the comparison to optimized.
+			'original_size_percent'   => 0 !== $total_assets ? '100%' : '0%', // The original will always be 100%, as it's the comparison to optimized.
 			'original_size_hr'        => size_format( $total_local_size ),
 
 			// Optimized size. We use the `original_size` to determine the percentage between for the progress bar.
 			'optimized_size'          => $total_remote_size,
-			'optimized_size_percent'  => round( abs( $total_remote_size ) / abs( $total_local_size ) * 100 ) . '%', // This is the percentage difference.
-			'optimized_diff_percent'  => round( ( $total_local_size - $total_remote_size ) / $total_local_size * 100 ) . '%', // We use this for the "Size saved.." status text.
+			'optimized_size_percent'  => $total_local_size > 0 ? round( abs( $total_remote_size ) / abs( $total_local_size ) * 100 ) . '%' : '0%', // This is the percentage difference.
+			'optimized_diff_percent'  => $total_local_size > 0 ? round( ( $total_local_size - $total_remote_size ) / $total_local_size * 100 ) . '%' : '0%', // We use this for the "Size saved.." status text.
 			'optimized_size_hr'       => size_format( $total_remote_size ), // This is the formatted byte size.
 
 			// Optimized is the % optimized vs unoptimized.
-			'optimized_percent'       => round( $total_optimized / $total_assets, 4 ),
-			'optimized_percent_hr'    => round( $total_optimized / $total_assets * 100, 1 ) . '%',
+			'optimized_percent'       => $total_assets > 0 ? round( $total_optimized / $total_assets, 4 ) : 0,
+			'optimized_percent_hr'    => $total_assets > 0 ? round( $total_optimized / $total_assets * 100, 1 ) . '%' : '0%',
 			'optimized_info'          => __( 'Optimized assets', 'cloudinary' ),
 
 			// Error size: No mockups on what to display here.

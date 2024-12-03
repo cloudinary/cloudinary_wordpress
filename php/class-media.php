@@ -368,22 +368,16 @@ class Media extends Settings_Component implements Setup {
 		if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
 			return false;
 		}
-		// phpcs:disable WordPress.WP.AlternativeFunctions
-		$ch = curl_init( $url );
-		curl_setopt( $ch, CURLOPT_NOBODY, true );
-		curl_exec( $ch );
-		$code = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
 
-		if ( 200 === $code ) {
-			$status = true;
-		} else {
-			$status = false;
+		$head = wp_safe_remote_head( $url );
+
+		if ( is_wp_error( $head ) ) {
+			return false;
 		}
 
-		curl_close( $ch );
-		// phpcs:enable
+		$code = wp_remote_retrieve_response_code( $head );
 
-		return $status;
+		return 200 === $code;
 	}
 
 	/**
