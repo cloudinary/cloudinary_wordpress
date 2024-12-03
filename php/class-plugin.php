@@ -102,7 +102,7 @@ final class Plugin {
 	 */
 	public function __construct() {
 		require_once ABSPATH . 'wp-admin/includes/plugin.php';
-		$plugin              = get_plugin_data( CLDN_CORE );
+		$plugin              = get_plugin_data( CLDN_CORE, false, false );
 		$location            = $this->locate_plugin();
 		$this->slug          = ! empty( $plugin['TextDomain'] ) ? $plugin['TextDomain'] : $location['dir_basename'];
 		$this->version       = $plugin['Version'];
