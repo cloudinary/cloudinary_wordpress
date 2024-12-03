@@ -1051,7 +1051,13 @@ class Delivery implements Setup {
 					$aliases[ $local_url ] = $cached[ $local_url ];
 					continue;
 				}
-				$cloudinary_url              = $this->media->cloudinary_url( $relation['post_id'], explode( 'x', $size ), $relation['transformations'], $public_id );
+
+				$cloudinary_url = $this->media->cloudinary_url( $relation['post_id'], explode( 'x', $size ), $relation['transformations'], $public_id );
+				// The asset is not ready. Carry on.
+				if ( empty( $cloudinary_url ) ) {
+					continue;
+				}
+
 				$aliases[ $local_url . '?' ] = $cloudinary_url . '&';
 				$aliases[ $local_url ]       = $cloudinary_url;
 

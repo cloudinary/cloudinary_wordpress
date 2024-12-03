@@ -160,11 +160,17 @@ class Relationship {
 	 * @param array $post_ids The post ids.
 	 */
 	public static function preload( $post_ids ) {
+		// Check if the post_ids are objects.
+		$maybe_ids = array_column( $post_ids, 'ID' );
+		if ( ! empty( $maybe_ids ) ) {
+			// If so, make sure to just use the IDs.
+			$post_ids = $maybe_ids;
+		}
 		global $wpdb;
 		$table_name = Utils::get_relationship_table();
 		// Do the public_ids.
 		$list  = implode( ', ', array_fill( 0, count( $post_ids ), '%d' ) );
-		$where = "post_id IN( {$list} )";
+		$where = "post_id IN ( {$list} )";
 
 		$sql   = $wpdb->prepare( "SELECT * FROM {$table_name} WHERE {$where}", $post_ids ); // phpcs:ignore WordPress.DB
 		$posts = $wpdb->get_results( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB
