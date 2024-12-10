@@ -790,7 +790,8 @@ class Utils {
 	/**
 	 * Check if the tag attributes contain possible third party manipulated data, and return found data.
 	 *
-	 * @param array $attributes The tag attributes.
+	 * @param array  $attributes The tag attributes.
+	 * @param string $tag        The tag.
 	 *
 	 * @return string|false
 	 */
@@ -833,6 +834,8 @@ class Utils {
 			$filtered_classes = apply_filters( 'cloudinary_ignored_class_keywords', $lazy_classes );
 		}
 		$is = false;
+
+		// Source tag on Picture tags are not lazy-loaded.
 		if ( 'source' !== $tag ) {
 			if ( ! isset( $attributes['src'] ) ) {
 				$is = __( 'Missing SRC attribute.', 'cloudinary' );
