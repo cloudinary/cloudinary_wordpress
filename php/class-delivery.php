@@ -1424,7 +1424,7 @@ class Delivery implements Setup {
 			}
 		}
 		if ( ! empty( $attributes['class'] ) ) {
-			if ( preg_match( '/wp-post-(\d+)+/', $attributes['class'], $match ) ) {
+			if ( preg_match( '/wp-post-(\d+)/', $attributes['class'], $match ) ) {
 				$tag_element['context'] = (int) $match[1];
 				$post_context           = $tag_element['context'];
 			}
