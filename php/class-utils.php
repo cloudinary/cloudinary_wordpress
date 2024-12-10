@@ -790,11 +790,12 @@ class Utils {
 	/**
 	 * Check if the tag attributes contain possible third party manipulated data, and return found data.
 	 *
-	 * @param array $attributes The tag attributes.
+	 * @param array  $attributes The tag attributes.
+	 * @param string $tag        The tag.
 	 *
 	 * @return string|false
 	 */
-	public static function maybe_get_third_party_changes( $attributes ) {
+	public static function maybe_get_third_party_changes( $attributes, $tag ) {
 		static $filtered_keys, $filtered_classes;
 		$lazy_keys    = array(
 			'src',
@@ -833,14 +834,18 @@ class Utils {
 			$filtered_classes = apply_filters( 'cloudinary_ignored_class_keywords', $lazy_classes );
 		}
 		$is = false;
-		if ( ! isset( $attributes['src'] ) ) {
-			$is = __( 'Missing SRC attribute.', 'cloudinary' );
-		} elseif ( false !== strpos( $attributes['src'], 'data:image' ) ) {
-			$is = $attributes['src'];
-		} elseif ( isset( $attributes['class'] ) ) {
-			$classes = explode( '-', str_replace( ' ', '-', $attributes['class'] ) );
-			if ( ! empty( array_intersect( $filtered_classes, $classes ) ) ) {
-				$is = $attributes['class'];
+
+		// Source tag on Picture tags are not lazy-loaded.
+		if ( 'source' !== $tag ) {
+			if ( ! isset( $attributes['src'] ) ) {
+				$is = __( 'Missing SRC attribute.', 'cloudinary' );
+			} elseif ( false !== strpos( $attributes['src'], 'data:image' ) ) {
+				$is = $attributes['src'];
+			} elseif ( isset( $attributes['class'] ) ) {
+				$classes = explode( '-', str_replace( ' ', '-', $attributes['class'] ) );
+				if ( ! empty( array_intersect( $filtered_classes, $classes ) ) ) {
+					$is = $attributes['class'];
+				}
 			}
 		}
 
