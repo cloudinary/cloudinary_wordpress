@@ -480,6 +480,7 @@ class Deactivation {
 		$this->drop_tables();
 		$this->cleanup_options();
 		$this->cleanup_cron();
+		$this->cleanup_legacy_cron();
 
 		// If we got this far, let's remove the cron event.
 		wp_clear_scheduled_hook( 'cloudinary_cleanup_event' );
@@ -624,5 +625,28 @@ class Deactivation {
 
 		// Delete the cron schedule option saved in database.
 		delete_option( Cron::CRON_META_KEY );
+	}
+
+	/**
+	 * Cleanup legacy cron jobs.
+	 *
+	 * @return void
+	 */
+	protected function cleanup_legacy_cron() {
+		wp_clear_scheduled_hook( 'cloudinary_status' );
+
+		$jobs = array(
+			'cloudinary_rest_api_connectivity',
+			'cloudinary_resume_queue',
+			'cloudinary_resume_upgrade',
+			'cloudinary_sync_items',
+		);
+
+		foreach ( $jobs as $job ) {
+			$time = wp_next_scheduled( $job );
+			if ( false !== $time ) {
+				wp_clear_scheduled_hook( $job );
+			}
+		}
 	}
 }
