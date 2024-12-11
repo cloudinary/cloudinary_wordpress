@@ -448,4 +448,12 @@ class Cron {
 		$this->locker->delete_lock_file( $this->init_time );
 	}
 
+	/**
+	 * Allow cleanup of the locker.
+	 *
+	 * @return void
+	 */
+	public function cleanup_locker() {
+		$this->locker->delete_lock_file();
+	}
 }
