@@ -142,7 +142,7 @@ class Delivery implements Setup {
 		add_action( 'before_delete_post', array( $this, 'delete_size_relationship' ) );
 		add_action( 'delete_attachment', array( $this, 'delete_size_relationship' ) );
 		add_action( 'cloudinary_register_sync_types', array( $this, 'register_sync_type' ), 30 );
-		add_action( 'rest_pre_dispatch', array( $this, 'maybe_unset_attributes' ), 10, 3 );
+		add_action( 'rest_request_before_callbacks', array( $this, 'maybe_unset_attributes' ), 10, 3 );
 		add_action(
 			'the_post',
 			function ( $post ) {
@@ -166,7 +166,7 @@ class Delivery implements Setup {
 	 *
 	 * @return bool True if attributes should be added, false otherwise.
 	 */
-	public function maybe_unset_attributes( $response, $server, $request ) {
+	public function maybe_unset_attributes( $response, $handler, $request ) {
 		$route = $request->get_route();
 
 		if (
@@ -187,6 +187,17 @@ class Delivery implements Setup {
 				'__return_false'
 			);
 
+			add_filter(
+				'cloudinary_parse_element', static function ( $tag_element ) {
+					$tag_element['breakpoints'] = false;
+					return $tag_element;
+				}
+			);
+
+			add_filter(
+				'cloudinary_skip_responsive_breakpoints',
+				'__return_true'
+			);
 
 			if ( ! str_contains( $route, 'wp/v2/blocks/' ) ) {
 				add_filter(
@@ -1238,6 +1249,8 @@ class Delivery implements Setup {
 				$tag_element['atts']['width'],
 				$tag_element['atts']['height'],
 				$tag_element['atts']['data-crop'],
+				$tag_element['atts']['srcset'],
+				$tagelement['atts']['data-responsive']
 			);
 
 			return $tag_element;
