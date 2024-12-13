@@ -1372,7 +1372,7 @@ class Delivery implements Setup {
 
 			return null;
 		}
-		$raw_url                 = 'source' === $tag_element['tag'] ? $attributes['srcset'] : $attributes['src'];
+		$raw_url                 = 'source' === $tag_element['tag'] && ! empty( $attributes['srcset'] ) ? $attributes['srcset'] : $attributes['src'];
 		$url                     = $this->maybe_unsize_url( Utils::clean_url( $this->sanitize_url( $raw_url ) ) );
 		$tag_element['base_url'] = $url;
 		// Track back the found URL.
