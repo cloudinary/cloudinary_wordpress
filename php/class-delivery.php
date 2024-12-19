@@ -162,9 +162,11 @@ class Delivery implements Setup {
 	/**
 	 * Determine if attributes should be added to image tags.
 	 *
+	 * @param WP_REST_Response     $response The response object.
+	 * @param WP_REST_Server       $handler  The request handler.
 	 * @param WP_REST_Request|null $request The request object, if available.
 	 *
-	 * @return bool True if attributes should be added, false otherwise.
+	 * @return void
 	 */
 	public function maybe_unset_attributes( $response, $handler, $request ) {
 		$route = $request->get_route();
@@ -200,14 +202,24 @@ class Delivery implements Setup {
 			);
 
 			if ( ! str_contains( $route, 'wp/v2/blocks/' ) ) {
+
+				// TODO: remove this if it doesn't do anything.
 				add_filter(
 					'cloudinary_html_skip_classes',
-					'__return_true'
+					function ( $skip, $html, $post_id, $attachment_id ) {
+						return true;
+					}
 				);
 
 				add_filter(
 					'cloudinary_tag_skip_classes',
-					'__return_true'
+					function ( $skip, $tag_element ) {
+						// This is very handwaving -- it looks for user uploaded images which will have the post id class added.
+						$is_uploads = (bool) str_contains( $tag_element['atts']['src'], '/uploads/' );
+						return ! $is_uploads;
+					},
+					10,
+					2
 				);
 
 				add_filter(
@@ -1177,8 +1189,23 @@ class Delivery implements Setup {
 		if ( isset( $tag_element['format'] ) ) {
 			$tag_element['atts']['data-format'] = $tag_element['format'];
 		}
+
+		$skip_classes = apply_filters( 'cloudinary_tag_skip_classes', false, $tag_element );
 		// Add wp-{media-type}-{id} class name.
-		if ( ! apply_filters( 'cloudinary_tag_skip_classes', false, $tag_element ) && empty( $tag_element['atts']['class'] ) || ( is_array( $tag_element['atts']['class'] ) && ! in_array( 'wp-' . $tag_element['type'] . '-' . $tag_element['id'], $tag_element['atts']['class'], true ) ) ) {
+		if (
+			! $skip_classes
+			&&
+			(
+			empty( $tag_element['atts']['class'] )
+			||
+			(
+				is_array( $tag_element['atts']['class'] ?? '' )
+				&&
+				! in_array( 'wp-' . $tag_element['type'] . '-' . $tag_element['id'], $tag_element['atts']['class'], true )
+			)
+			)
+		) {
+			$tag_element['atts']['class']   = $tag_element['atts']['class'] ?? array();
 			$tag_element['atts']['class'][] = 'wp-' . $tag_element['type'] . '-' . $tag_element['id'];
 		}
 
@@ -1250,7 +1277,7 @@ class Delivery implements Setup {
 				$tag_element['atts']['height'],
 				$tag_element['atts']['data-crop'],
 				$tag_element['atts']['srcset'],
-				$tagelement['atts']['data-responsive']
+				$tag_element['atts']['data-responsive']
 			);
 
 			return $tag_element;
@@ -1292,6 +1319,7 @@ class Delivery implements Setup {
 			 * @return {string}
 			 */
 			$permalink = apply_filters( 'cloudinary_edit_asset_permalink', add_query_arg( 'asset', $tag_element['id'], $base_url ) );
+
 			$tag_element['atts']['data-permalink'] = $permalink;
 		}
 
