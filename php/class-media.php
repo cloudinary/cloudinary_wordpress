@@ -1870,6 +1870,8 @@ class Media extends Settings_Component implements Setup {
 			return $sources;
 		}
 
+		return $sources;
+
 		$cloudinary_id = isset( $image_meta['cloudinary_id'] ) ? $image_meta['cloudinary_id'] : $this->cloudinary_id( $attachment_id );
 		if ( ! $cloudinary_id ) {
 			return $sources; // Return WordPress default sources.
