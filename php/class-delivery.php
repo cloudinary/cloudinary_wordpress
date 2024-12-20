@@ -142,6 +142,7 @@ class Delivery implements Setup {
 		add_action( 'before_delete_post', array( $this, 'delete_size_relationship' ) );
 		add_action( 'delete_attachment', array( $this, 'delete_size_relationship' ) );
 		add_action( 'cloudinary_register_sync_types', array( $this, 'register_sync_type' ), 30 );
+		add_action( 'rest_request_before_callbacks', array( $this, 'maybe_unset_attributes' ), 10, 3 );
 		add_action(
 			'the_post',
 			function ( $post ) {
@@ -155,6 +156,71 @@ class Delivery implements Setup {
 		// Add relation checking on front.
 		if ( ! is_admin() ) {
 			add_filter( 'wp_get_attachment_url', array( $this, 'ensure_relation' ), 10, 2 );
+		}
+	}
+
+	/**
+	 * Determine if attributes should be added to image tags.
+	 *
+	 * @param WP_REST_Response     $response The response object.
+	 * @param WP_REST_Server       $handler  The request handler.
+	 * @param WP_REST_Request|null $request The request object, if available.
+	 *
+	 * @return void
+	 */
+	public function maybe_unset_attributes( $response, $handler, $request ) {
+		$route = $request->get_route();
+
+		if (
+			(bool) $request->get_header( 'x-cld-fetch-from-editor' )
+			|| (
+				false !== strpos( $route, 'wp/v2/media' )
+				&& 'edit' === $request->get_param( 'context' )
+			)
+		) {
+			// This has a priority of 10 so can be overridden by other filters.
+			add_filter(
+				'cloudinary_unset_attributes',
+				'__return_true'
+			);
+
+			add_filter(
+				'cloudinary_apply_breakpoints',
+				'__return_false'
+			);
+
+			add_filter(
+				'cloudinary_parse_element',
+				static function ( $tag_element ) {
+					$tag_element['breakpoints'] = false;
+					return $tag_element;
+				}
+			);
+
+			add_filter(
+				'cloudinary_skip_responsive_breakpoints',
+				'__return_true'
+			);
+
+			if ( false === strpos( $route, 'wp/v2/blocks/' ) ) {
+				add_filter(
+					'cloudinary_tag_skip_classes',
+					function ( $skip, $tag_element ) {
+						// Bail on additional assets.
+						return $this->plugin->get_component( 'assets' )->is_asset( $tag_element['atts']['src'] );
+					},
+					10,
+					2
+				);
+
+				add_filter(
+					'cloudinary_parse_element',
+					function ( $element ) {
+						unset( $element['atts']['class'] );
+						return $element;
+					}
+				);
+			}
 		}
 	}
 
@@ -816,6 +882,7 @@ class Delivery implements Setup {
 		if ( empty( $html ) ) {
 			return $html; // Ignore empty tags.
 		}
+
 		$tags = $this->get_media_tags( $html, 'img' );
 		$tags = array_map( array( $this, 'parse_element' ), $tags );
 		$tags = array_filter( $tags );
@@ -1109,8 +1176,36 @@ class Delivery implements Setup {
 		if ( isset( $tag_element['format'] ) ) {
 			$tag_element['atts']['data-format'] = $tag_element['format'];
 		}
+
+		/**
+		 * Maybe skip the classes for th tag element.
+		 *
+		 * @hook  cloudinary_tag_skip_classes
+		 * @since 3.2.4
+		 * @default {false}
+		 *
+		 * @param $skip        {bool} True to unset attributes.
+		 * @param $tag_element {array} The tag element.
+		 *
+		 * @retun {bool}
+		 */
+		$skip_classes = apply_filters( 'cloudinary_tag_skip_classes', false, $tag_element );
+
 		// Add wp-{media-type}-{id} class name.
-		if ( empty( $tag_element['atts']['class'] ) || ! in_array( 'wp-' . $tag_element['type'] . '-' . $tag_element['id'], $tag_element['atts']['class'], true ) ) {
+		if (
+			! $skip_classes
+			&&
+			(
+			empty( $tag_element['atts']['class'] )
+			||
+			(
+				is_array( $tag_element['atts']['class'] )
+				&&
+				! in_array( 'wp-' . $tag_element['type'] . '-' . $tag_element['id'], $tag_element['atts']['class'], true )
+			)
+			)
+		) {
+			$tag_element['atts']['class']   = ! empty( $tag_element['atts']['class'] ) ? $tag_element['atts']['class'] : array();
 			$tag_element['atts']['class'][] = 'wp-' . $tag_element['type'] . '-' . $tag_element['id'];
 		}
 
@@ -1171,6 +1266,32 @@ class Delivery implements Setup {
 			$att = implode( ' ', $parts );
 		}
 
+		/**
+		 * Unset the attributes to avoid block errors in the admin.
+		 *
+		 * @hook  cloudinary_unset_attributes
+		 * @since 3.2.4
+		 * @default {false}
+		 *
+		 * @param $unset       {bool} True to unset attributes.
+		 * @param $tag_element {array} The tag element.
+		 *
+		 * @retun {bool}
+		 */
+		if ( apply_filters( 'cloudinary_unset_attributes', false, $tag_element ) ) {
+			unset(
+				$tag_element['atts']['data-public-id'],
+				$tag_element['atts']['data-format'],
+				$tag_element['atts']['width'],
+				$tag_element['atts']['height'],
+				$tag_element['atts']['data-crop'],
+				$tag_element['atts']['srcset'],
+				$tag_element['atts']['data-responsive']
+			);
+
+			return $tag_element;
+		}
+
 		// Add transformations attribute.
 		$transformations = $this->media->get_transformations_from_string( $tag_element['atts']['src'] );
 		if ( false !== $this->media->get_crop_from_transformation( $transformations ) ) {
@@ -1207,6 +1328,7 @@ class Delivery implements Setup {
 			 * @return {string}
 			 */
 			$permalink = apply_filters( 'cloudinary_edit_asset_permalink', add_query_arg( 'asset', $tag_element['id'], $base_url ) );
+
 			$tag_element['atts']['data-permalink'] = $permalink;
 		}
 
@@ -1423,6 +1545,7 @@ class Delivery implements Setup {
 				}
 			}
 		}
+
 		if ( ! empty( $attributes['class'] ) ) {
 			if ( preg_match( '/wp-post-(\d+)/', $attributes['class'], $match ) ) {
 				$tag_element['context'] = (int) $match[1];
@@ -1443,6 +1566,7 @@ class Delivery implements Setup {
 			$attributes['class'][]                    = 'cld-overwrite';
 			$tag_element['overwrite_transformations'] = true;
 		}
+
 		$inline_transformations = $this->get_transformations_maybe( $raw_url );
 		if ( $inline_transformations ) {
 			// Ensure that we don't get duplicated transformations.
