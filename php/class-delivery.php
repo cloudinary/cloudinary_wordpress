@@ -1177,7 +1177,20 @@ class Delivery implements Setup {
 			$tag_element['atts']['data-format'] = $tag_element['format'];
 		}
 
+		/**
+		 * Maybe skip the classes for th tag element.
+		 *
+		 * @hook  cloudinary_tag_skip_classes
+		 * @since 3.2.4
+		 * @default {false}
+		 *
+		 * @param $skip        {bool} True to unset attributes.
+		 * @param $tag_element {array} The tag element.
+		 *
+		 * @retun {bool}
+		 */
 		$skip_classes = apply_filters( 'cloudinary_tag_skip_classes', false, $tag_element );
+
 		// Add wp-{media-type}-{id} class name.
 		if (
 			! $skip_classes
@@ -1255,6 +1268,15 @@ class Delivery implements Setup {
 
 		/**
 		 * Unset the attributes to avoid block errors in the admin.
+		 *
+		 * @hook  cloudinary_unset_attributes
+		 * @since 3.2.4
+		 * @default {false}
+		 *
+		 * @param $unset       {bool} True to unset attributes.
+		 * @param $tag_element {array} The tag element.
+		 *
+		 * @retun {bool}
 		 */
 		if ( apply_filters( 'cloudinary_unset_attributes', false, $tag_element ) ) {
 			unset(
