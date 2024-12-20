@@ -971,7 +971,7 @@ class Delivery implements Setup {
 			$cached = $has_cache[ $type ];
 		}
 
-		$tags = $this->get_media_tags( $content, 'img|video|article' );
+		$tags = $this->get_media_tags( $content, 'img|video|article|source' );
 		$tags = array_map( array( $this, 'parse_element' ), $tags );
 		$tags = array_filter( $tags );
 
@@ -1365,14 +1365,14 @@ class Delivery implements Setup {
 
 			return null;
 		}
-		$tag_element['type'] = 'img' === $tag_element['tag'] ? 'image' : $tag_element['tag'];
-		$third_party_change  = Utils::maybe_get_third_party_changes( $attributes );
+		$tag_element['type'] = in_array( $tag_element['tag'], array( 'img', 'source' ), true ) ? 'image' : $tag_element['tag'];
+		$third_party_change  = Utils::maybe_get_third_party_changes( $attributes, $tag_element['tag'] );
 		if ( ! empty( $third_party_change ) ) {
 			Utils::log( $third_party_change, 'third-party-loading' );
 
 			return null;
 		}
-		$raw_url                 = $attributes['src'];
+		$raw_url                 = 'source' === $tag_element['tag'] && ! empty( $attributes['srcset'] ) ? $attributes['srcset'] : $attributes['src'];
 		$url                     = $this->maybe_unsize_url( Utils::clean_url( $this->sanitize_url( $raw_url ) ) );
 		$tag_element['base_url'] = $url;
 		// Track back the found URL.
@@ -1401,7 +1401,7 @@ class Delivery implements Setup {
 			$attributes['data-public-id'] = $public_id;
 			$tag_element['format']        = $item['format'];
 
-			if ( 'img' === $tag_element['tag'] ) {
+			if ( in_array( $tag_element['tag'], array( 'img', 'source' ), true ) ) {
 				// Check if this is a crop or a scale.
 				$has_size = $this->media->get_size_from_url( $this->sanitize_url( $raw_url ) );
 				if ( ! empty( $has_size ) && ! empty( $item['height'] ) ) {
@@ -1424,7 +1424,7 @@ class Delivery implements Setup {
 			}
 		}
 		if ( ! empty( $attributes['class'] ) ) {
-			if ( preg_match( '/wp-post-(\d+)+/', $attributes['class'], $match ) ) {
+			if ( preg_match( '/wp-post-(\d+)/', $attributes['class'], $match ) ) {
 				$tag_element['context'] = (int) $match[1];
 				$post_context           = $tag_element['context'];
 			}
