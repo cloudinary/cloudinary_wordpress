@@ -214,9 +214,8 @@ class Delivery implements Setup {
 				add_filter(
 					'cloudinary_tag_skip_classes',
 					function ( $skip, $tag_element ) {
-						// This is very handwaving -- it looks for user uploaded images which will have the post id class added.
-						$is_uploads = (bool) str_contains( $tag_element['atts']['src'], '/uploads/' );
-						return ! $is_uploads;
+						// Bail on additional assets.
+						return $this->plugin->get_component( 'assets' )->is_asset( $tag_element['atts']['src'] );
 					},
 					10,
 					2
