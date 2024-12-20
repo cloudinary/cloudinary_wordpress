@@ -172,11 +172,11 @@ class Delivery implements Setup {
 		$route = $request->get_route();
 
 		if (
-			(
-				str_contains( $route, 'wp/v2/media' )
+			(bool) $request->get_header( 'x-cld-fetch-from-editor' )
+			|| (
+				false !== strpos( $route, 'wp/v2/media' )
 				&& 'edit' === $request->get_param( 'context' )
 			)
-			|| (bool) $request->get_header( 'x-cld-fetch-from-editor' )
 		) {
 			// This has a priority of 10 so can be overridden by other filters.
 			add_filter(
@@ -190,7 +190,8 @@ class Delivery implements Setup {
 			);
 
 			add_filter(
-				'cloudinary_parse_element', static function ( $tag_element ) {
+				'cloudinary_parse_element',
+				static function ( $tag_element ) {
 					$tag_element['breakpoints'] = false;
 					return $tag_element;
 				}
@@ -201,16 +202,7 @@ class Delivery implements Setup {
 				'__return_true'
 			);
 
-			if ( ! str_contains( $route, 'wp/v2/blocks/' ) ) {
-
-				// TODO: remove this if it doesn't do anything.
-				add_filter(
-					'cloudinary_html_skip_classes',
-					function ( $skip, $html, $post_id, $attachment_id ) {
-						return true;
-					}
-				);
-
+			if ( false === strpos( $route, 'wp/v2/blocks/' ) ) {
 				add_filter(
 					'cloudinary_tag_skip_classes',
 					function ( $skip, $tag_element ) {
@@ -891,10 +883,6 @@ class Delivery implements Setup {
 			return $html; // Ignore empty tags.
 		}
 
-		if ( apply_filters( 'cloudinary_html_skip_classes', false, $html, $post_id, $attachment_id ) ) {
-			return $html;
-		}
-
 		$tags = $this->get_media_tags( $html, 'img' );
 		$tags = array_map( array( $this, 'parse_element' ), $tags );
 		$tags = array_filter( $tags );
@@ -1198,13 +1186,13 @@ class Delivery implements Setup {
 			empty( $tag_element['atts']['class'] )
 			||
 			(
-				is_array( $tag_element['atts']['class'] ?? '' )
+				is_array( $tag_element['atts']['class'] )
 				&&
 				! in_array( 'wp-' . $tag_element['type'] . '-' . $tag_element['id'], $tag_element['atts']['class'], true )
 			)
 			)
 		) {
-			$tag_element['atts']['class']   = $tag_element['atts']['class'] ?? array();
+			$tag_element['atts']['class']   = ! empty( $tag_element['atts']['class'] ) ? $tag_element['atts']['class'] : array();
 			$tag_element['atts']['class'][] = 'wp-' . $tag_element['type'] . '-' . $tag_element['id'];
 		}
 
