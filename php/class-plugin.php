@@ -422,6 +422,7 @@ final class Plugin {
 	 */
 	public function init() {
 		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+
 		$plugin              = get_plugin_data( CLDN_CORE );
 		$location            = $this->locate_plugin();
 		$this->slug          = ! empty( $plugin['TextDomain'] ) ? $plugin['TextDomain'] : $location['dir_basename'];

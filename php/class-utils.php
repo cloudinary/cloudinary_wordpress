@@ -331,6 +331,8 @@ class Utils {
 	 * Install our custom table.
 	 */
 	public static function install() {
+		// Ensure that the plugin bootstrap is loaded.
+		get_plugin_instance()->init();
 
 		$sql = self::get_table_sql();
 
