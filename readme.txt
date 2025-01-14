@@ -142,6 +142,16 @@ Your site is now setup to start using Cloudinary.
 == Changelog ==
 
 
+= 3.2.4 (14 January 2025) =
+
+Fixes and Improvements:
+
+* Upgraded the Cloudinary Video Player to v2.2.0
+* Fixed image block validation errors in the Block Patterns UI
+* Resolved image block error messages that required recovery
+* De-registered all Cloudinary cron jobs when deactivating the plugin
+
+
 = 3.2.3 (03 December 2024) =
 
 Fixes and Improvements:
@@ -150,6 +160,7 @@ Fixes and Improvements:
 * Fixed a file existence check that caused a plugin crash
 * Addressed an issue preventing the activation of the crop and gravity beta feature at the asset level
 * Fixed the timing of when translations are loaded to comply with updated WordPress initialization requirements
+
 
 = 3.2.2 (28 October 2024) =
 
