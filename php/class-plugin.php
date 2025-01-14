@@ -422,6 +422,7 @@ final class Plugin {
 	 */
 	public function init() {
 		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+
 		$plugin              = get_plugin_data( CLDN_CORE );
 		$location            = $this->locate_plugin();
 		$this->slug          = ! empty( $plugin['TextDomain'] ) ? $plugin['TextDomain'] : $location['dir_basename'];
@@ -586,7 +587,7 @@ final class Plugin {
 		 * The Cloudinary Video Player version.
 		 */
 		if ( ! defined( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION' ) ) {
-			define( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION', '1.11.1' );
+			define( 'CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION', '2.2.0' );
 		}
 	}
 

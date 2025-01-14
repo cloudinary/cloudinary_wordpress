@@ -8,24 +8,44 @@ const Front_Overlay = {
 	init() {
 
 		[ ...document.images ].forEach( ( image ) => {
-			this.wrapImage( image );
-		} );
+			const parent = image.parentNode;
+			if ( parent.tagName === 'PICTURE' ) {
+				this.processPicture( image, parent );
+				image.addEventListener( 'load', this.load.bind( this, image, parent) );
+			} else {
+				this.wrapImage( image );
+			}
+		});
 
 		const tooltips = document.querySelectorAll( '.cld-tag' );
 
-		tippy( tooltips, {
-			placement: 'bottom-start',
-			interactive: true,
-			appendTo: () => document.body,
-			aria: {
-				content: 'auto',
-				expanded: 'auto',
-			},
-			content( reference ) {
-				return reference.template.innerHTML;
-			},
-			allowHTML: true,
-		} );
+		this.tippy( tooltips );
+	},
+	load( image, parent ) {
+		parent.querySelectorAll( '.overlay-tag' ).forEach( tag => tag.remove() );
+		this.processPicture( image, parent );
+		this.tippy( parent.querySelectorAll( '.cld-tag' ) );
+	},
+	processPicture( image, parent ) {
+		const siblings = parent.querySelectorAll( 'source' );
+		if ( siblings.length > 0 ) {
+			siblings.forEach(
+				( sibling ) => {
+					if ( [ sibling.src, sibling.srcset ].some( src => src.includes( image.currentSrc ) )) {
+						[ ...image.attributes ].forEach(
+							attr => {
+								if ( attr.name.startsWith( 'data-' ) ) {
+									image.removeAttribute( attr.name );
+								}
+							}
+						);
+						Object.assign( image.dataset, { ...sibling.dataset } );
+					}
+				}
+			);
+		}
+
+		this.wrapImage( image );
 	},
 	wrapImage( image ) {
 		if ( image.dataset.publicId ) {
@@ -104,6 +124,33 @@ const Front_Overlay = {
 		line.appendChild( title );
 		line.appendChild( detail );
 		return line;
+	},
+	tippy( tooltips ) {
+		tippy( tooltips, {
+			placement: 'bottom-start',
+			interactive: true,
+			appendTo: () => document.body,
+			aria: {
+				content: 'auto',
+				expanded: 'auto',
+			},
+			content( reference ) {
+				return reference.template.innerHTML;
+			},
+			allowHTML: true,
+		} );
+	},
+	debounce( callback, wait ) {
+		let timeoutId = null;
+		return (...args) => {
+			window.clearTimeout( timeoutId );
+			timeoutId = window.setTimeout(
+				() => {
+					callback( ...args );
+				},
+				wait
+			);
+		};
 	}
 };
 
