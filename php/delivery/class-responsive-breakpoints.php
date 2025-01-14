@@ -59,6 +59,22 @@ class Responsive_Breakpoints extends Delivery_Feature {
 			return $tag_element;
 		}
 
+		/**
+		 * Do not add the responsive breakpoint features.
+		 *
+		 * @hook   cloudinary_skip_responsive_breakpoints
+		 * @since  3.2.4
+		 * @default {false}
+		 *
+		 * @param $skip_features {bool}  True to skip adding in the features.
+		 * @param $tag_element   {array} The tag element.
+		 *
+		 * @return {bool}
+		 */
+		if ( apply_filters( 'cloudinary_skip_responsive_breakpoints', false, $tag_element ) ) {
+			return $tag_element;
+		}
+
 		// Bypass file formats that shouldn't have Responsive Images.
 		if (
 			in_array(

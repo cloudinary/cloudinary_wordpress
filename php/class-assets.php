@@ -1250,6 +1250,30 @@ class Assets extends Settings_Component {
 	}
 
 	/**
+	 * Checks if the URL is an asset.
+	 *
+	 * @param string $url The URL to check.
+	 *
+	 * @return bool
+	 */
+	public function is_asset( $url ) {
+		global $wpdb;
+
+		// Bail early if it's not an URL.
+		if ( empty( parse_url( $url, PHP_URL_HOST ) ) ) {
+			return false;
+		}
+
+		$url = Utils::clean_url( $url );
+
+		$wpdb->cld_table = Utils::get_relationship_table();
+		$prepare         = $wpdb->prepare( "SELECT COUNT(*) FROM $wpdb->cld_table WHERE sized_url = %s AND sync_type = 'asset';", $url );
+		$result          = $wpdb->get_var( $prepare ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+
+		return (bool) $result;
+	}
+
+	/**
 	 * Get the plugins table structure.
 	 *
 	 * @return array
