@@ -83,6 +83,11 @@ class Lazy_Load extends Delivery_Feature {
 			$bypass = true;
 		}
 
+		// Sources on Picture tag are not lazyloaded.
+		if ( 'source' === $tag_element['tag'] ) {
+			$bypass = true;
+		}
+
 		/**
 		 * Filter the classes that bypass lazy loading.
 		 *

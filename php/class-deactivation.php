@@ -64,8 +64,6 @@ class Deactivation {
 		add_action( 'init', array( $this, 'load_hooks' ) );
 		add_action( 'current_screen', array( $this, 'maybe_load_hooks' ) );
 		add_action( 'cloudinary_init_settings', array( $this, 'settings_init' ) );
-
-		add_filter( 'plugin_action_links_' . $this->plugin->plugin_file, array( $this, 'tag_deactivate' ) );
 	}
 
 	/**
@@ -78,6 +76,7 @@ class Deactivation {
 	public function load_hooks() {
 		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoint' ) );
 		add_action( 'cloudinary_cleanup_event', array( $this, 'cleanup' ) );
+		add_filter( 'plugin_action_links_' . $this->plugin->plugin_file, array( $this, 'tag_deactivate' ) );
 	}
 
 	/**
