@@ -574,7 +574,7 @@ class Utils {
 			// Fallback if rest engine is not setup yet.
 			$rest_base   = wp_parse_url( static::rest_url( '/' ), PHP_URL_PATH );
 			$request_uri = filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_SANITIZE_URL );
-			$is          = strpos( $request_uri, $rest_base ) === 0;
+			$is          = is_string( $request_uri ) && strpos( $request_uri, $rest_base ) === 0;
 		}
 
 		return $is;
