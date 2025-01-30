@@ -140,7 +140,7 @@ class Responsive_Breakpoints extends Delivery_Feature {
 		$size_transformation = $this->media->get_crop_from_transformation( $this->media->get_transformations_from_string( $src ) );
 		$size_string         = Api::generate_transformation_string( array( $size_transformation ) );
 		$breakpoints         = array();
-		while ( $max > $min ) {
+		while ( $max >= $min ) {
 			if ( $width >= $max ) {
 				$size_transformation['width']  = $max;
 				$size_transformation['height'] = floor( $max / $ratio );
