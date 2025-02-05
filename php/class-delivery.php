@@ -202,6 +202,15 @@ class Delivery implements Setup {
 				'__return_true'
 			);
 
+			add_filter(
+				'cloudinary_prepare_size',
+				function ( $size ) {
+					unset( $size['transformation'] );
+					return $size;
+				}
+			);
+
+			// This is for patterns only, not for patterns in posts.
 			if ( false === strpos( $route, 'wp/v2/blocks/' ) ) {
 				add_filter(
 					'cloudinary_tag_skip_classes',
