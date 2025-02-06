@@ -86,6 +86,12 @@ Your images may be loading locally for a number of reasons:
 
 The Cloudinary lazy loading scripts must be loaded in the page head. Ensure your site or any 3rd party plugins are not setup to move these scripts.
 
+
+**Does Cloudinary work on multilingual sites?**
+
+Absolutely! Cloudinary is fully compatible with WPML, the leading WordPress multilingual plugin, and is officially recommended for seamless media management across multiple languages. Cloudinary ensures that your media assets are efficiently handled on your multilingual site. For more details, visit [WPML's official page](https://wpml.org/plugin/cloudinary/) on Cloudinary compatibility.
+
+
 == About Cloudinary ==
 
 Read more about Cloudinary:
