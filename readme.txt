@@ -63,6 +63,11 @@ To function correctly, the Cloudinary plugin requires an active WordPress REST A
 For more information, see [WordPress’s REST API Handbook](https://developer.wordpress.org/rest-api/).
 
 
+**Does Cloudinary work on multilingual sites?**
+
+Absolutely! Cloudinary is fully compatible with WPML, the leading WordPress multilingual plugin, and is officially recommended for seamless media management across multiple languages. Cloudinary ensures that your media assets are efficiently handled on your multilingual site. For more details, visit [WPML's official page](https://wpml.org/plugin/cloudinary/) on Cloudinary compatibility.
+
+
 **I'm having an incompatibility issue with a theme, plugin, or hosting environment, what can I do?**
 
 We’re compatible with most other plugins so we expect it to work absolutely fine. If you do have any issues, please [contact our support team](https://support.cloudinary.com/hc/en-us/requests/new) who will help resolve your issue.
