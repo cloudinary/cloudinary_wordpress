@@ -121,6 +121,7 @@ module.exports = function ( grunt ) {
 					'!vendor/**/*',
 					'!package/**/*',
 					'!php/media/class-filter.php',
+					'!php/misc/class-image-sizes-no-textdomain.php',
 				],
 			},
 		},
