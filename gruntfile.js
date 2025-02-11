@@ -138,6 +138,7 @@ module.exports = function ( grunt ) {
 						'build/*',
 						'vendor/*',
 						'package/*',
+						'php/misc/class-image-sizes-no-textdomain.php',
 					],
 					mainFile: 'cloudinary.php',
 					potFilename: 'cloudinary.pot',
