@@ -446,9 +446,20 @@ $settings = array(
 					'collapsible' => 'closed',
 					'content'     => sprintf(
 						// translators: The HTML markup.
-						__( ' To function correctly, the Cloudinary plugin requires an active WordPress REST API connection. Ensure your WordPress setup, including multisite or headless configurations, has the REST API enabled and active for seamless plugin operation.%1$sFor more information, see %2$sWordPress’s REST API Handbook%3$s.', 'cloudinary' ),
+						__( 'To function correctly, the Cloudinary plugin requires an active WordPress REST API connection. Ensure your WordPress setup, including multisite or headless configurations, has the REST API enabled and active for seamless plugin operation.%1$sFor more information, see %2$sWordPress’s REST API Handbook%3$s.', 'cloudinary' ),
 						'<br><br>',
 						'<a href="https://developer.wordpress.org/rest-api/" target="_blank" rel="noopener noreferrer">',
+						'</a>'
+					),
+				),
+				array(
+					'type'        => 'panel',
+					'title'       => __( 'Does Cloudinary work on multilingual sites?', 'cloudinary' ),
+					'collapsible' => 'closed',
+					'content'     => sprintf(
+						// translators: The HTML markup.
+						__( 'Absolutely! Cloudinary is fully compatible with WPML, the leading WordPress multilingual plugin, and is officially recommended for seamless media management across multiple languages. Cloudinary ensures that your media assets are efficiently handled on your multilingual site. For more details, visit %1$sWPML\'s official page%2$s on Cloudinary compatibility.', 'cloudinary' ),
+						'<a href="https://wpml.org/plugin/cloudinary/" target="_blank" rel="noopener noreferrer">',
 						'</a>'
 					),
 				),
