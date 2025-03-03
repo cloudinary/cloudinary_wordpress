@@ -1874,6 +1874,12 @@ class Media extends Settings_Component implements Setup {
 		if ( ! $cloudinary_id ) {
 			return $sources; // Return WordPress default sources.
 		}
+
+		// Handle unexpected sources variable type.
+		if ( ! is_array( $sources ) ) {
+			return $sources;
+		}
+
 		// Get transformations if any.
 		$transformations = Relate::get_transformations( $attachment_id );
 
