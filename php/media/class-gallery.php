@@ -628,6 +628,61 @@ class Gallery extends Settings_Component {
 	}
 
 	/**
+	 * Allow GLB files to be delivered from Cloudinary.
+	 *
+	 * @param bool $is Whether the file is deliverable.
+	 * @param int  $attachment_id The attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function allow_glb_delivery_from_cloudinary( $is, $attachment_id ) {
+		if ( self::GALLERY_GLB_MIME_TYPE === get_post_mime_type( $attachment_id ) ) {
+			$is = true;
+		}
+
+		return $is;
+	}
+
+	/**
+	 * Replace image urls from .glb to .png.
+	 *
+	 * This allows the GLB files to be served as PNG files in the image context.
+	 *
+	 * @param string $url The URL.
+	 * @param int    $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function admin_replace_glb_url( $url, $attachment_id ) {
+		if ( ! is_admin() ) {
+			return $url;
+		}
+
+		if ( self::GALLERY_GLB_MIME_TYPE === get_post_mime_type( $attachment_id ) ) {
+			$url = str_replace( '.glb', '.png', $url );
+		}
+		return $url;
+	}
+
+	/**
+	 * We pretend that GLB files are images with dimensions of 512x512.
+	 *
+	 * This allows WordPress to correctly render the GLB files as images in the media library.
+	 *
+	 * @param array $metadata The attachment metadata.
+	 * @param int   $attachment_id The attachment ID.
+	 *
+	 * @return array
+	 */
+	public function inject_glb_metadata( $metadata, $attachment_id ) {
+		if ( self::GALLERY_GLB_MIME_TYPE === get_post_mime_type( $attachment_id ) ) {
+			$metadata['width']  = 512;
+			$metadata['height'] = 512;
+		}
+		return $metadata;
+	}
+
+	/**
 	 * Setup hooks for the gallery.
 	 */
 	public function setup_hooks() {
@@ -639,12 +694,10 @@ class Gallery extends Settings_Component {
 		add_filter( 'cloudinary_admin_pages', array( $this, 'register_settings' ) );
 
 		/**
-		 * Filter to allow GLB files to be uploaded.
+		 * Filter to allow GLB 3D model files to be uploaded.
 		 *
-		 * WARNING: This is an experimental hook. When enabled, the GLB files
-		 *          will become uploadable in the media library, but these files
-		 *          will render no preview. Also, the only place where GLB files
-		 *          can be used is in the Cloudinary Gallery block.
+		 * WARNING: This is an experimental hook. The only place where GLB files can be used
+		 *          is in the Cloudinary Gallery block.
 		 *
 		 * @param bool $allow_glb_upload Whether to allow GLB files to be uploaded.
 		 *
@@ -654,6 +707,9 @@ class Gallery extends Settings_Component {
 			add_filter( 'upload_mimes', array( $this, 'add_glb_mime' ), 20, 1 );
 			add_filter( 'wp_check_filetype_and_ext', array( $this, 'pass_glb_filetype_check' ), 10, 3 );
 			add_filter( 'cloudinary_allowed_extensions', array( $this, 'allow_glb_for_cloudinary' ) );
+			add_filter( 'cloudinary_is_deliverable', array( $this, 'allow_glb_delivery_from_cloudinary' ), 10, 2 );
+			add_filter( 'wp_get_attachment_url', array( $this, 'admin_replace_glb_url' ), 11, 2 );
+			add_filter( 'wp_generate_attachment_metadata', array( $this, 'inject_glb_metadata' ), 10, 2 );
 		}
 	}
 }
