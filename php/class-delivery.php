@@ -1398,7 +1398,18 @@ class Delivery implements Setup {
 	 * @return array|null
 	 */
 	public function parse_element( $element ) {
-
+		/**
+		 * Filter to skip parsing an element.
+		 *
+		 * @hook  cloudinary_skip_parse_element
+		 * @since 3.2.6
+		 * @default {false}
+		 *
+		 * @param $skip    {bool}  True to skip parsing.
+		 * @param $element {string} The element to parse.
+		 *
+		 * @return {bool}
+		 */
 		if ( apply_filters( 'cloudinary_skip_parse_element', false, $element ) ) {
 			return null;
 		}
