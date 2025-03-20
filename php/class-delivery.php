@@ -765,6 +765,8 @@ class Delivery implements Setup {
 	 */
 	public function dns_prefetch( $urls, $relation_type ) {
 
+		$relation_type = apply_filters('cld_dns_prefetch', $relation_type);
+
 		if ( 'dns-prefetch' === $relation_type || 'preconnect' === $relation_type ) {
 			$urls[] = $this->media->base_url;
 		}
