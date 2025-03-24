@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Filter: cloudinary_filter_out_local - Cloudinary Docs</title>
+	<title>Filter: cloudinary_skip_parse_element - Cloudinary Docs</title>
 
 	<script src="scripts/prettify/prettify.js"></script>
 	<script src="scripts/prettify/lang-css.js"></script>
@@ -22,7 +22,7 @@
 <div id="main">
 
 	
-	<h1 class="page-title">Filter: cloudinary_filter_out_local</h1>
+	<h1 class="page-title">Filter: cloudinary_skip_parse_element</h1>
 	
 
 	
@@ -44,14 +44,14 @@
 
     
 
-    <h4 class="name" id="cloudinary_filter_out_local">apply_filters( 'cloudinary_filter_out_local', <span class="signature">$can )</span><span class="type-signature"> &rarr; {bool}</span></h4>
+    <h4 class="name" id="cloudinary_skip_parse_element">apply_filters( 'cloudinary_skip_parse_element', <span class="signature">$skip, $element )</span><span class="type-signature"> &rarr; {bool}</span></h4>
 
     
 
 
 
 <div class="description">
-    Filter to allow stopping filtering out local.
+    Filter to skip parsing an element.
 </div>
 
 
@@ -85,7 +85,7 @@
 
         <tr>
             
-                <td class="name"><code>$can</code></td>
+                <td class="name"><code>$skip</code></td>
             
 
             <td class="type">
@@ -101,7 +101,30 @@
 
             
 
-            <td class="description last">True as default.</td>
+            <td class="description last">True to skip parsing.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>$element</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The element to parse.</td>
         </tr>
 
     
@@ -117,6 +140,9 @@
 
     
 
+    
+    <dt class="tag-since">Since:</dt>
+    <dd class="tag-since"><ul class="dummy"><li>3.2.6</li></ul></dd>
     
 
     
@@ -140,14 +166,14 @@
     
     <dt class="tag-default">Default Value:</dt>
     <dd class="tag-default"><ul class="dummy">
-            <li>true</li>
+            <li>{false}</li>
         </ul></dd>
     
 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="php_class-media.php.html">php/class-media.php</a>, <a href="php_class-media.php.html#line3037">line 3037</a>
+        <a href="php_class-delivery.php.html">php/class-delivery.php</a>, <a href="php_class-delivery.php.html#line1417">line 1417</a>
     </li></ul></dd>
     
 

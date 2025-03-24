@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Filter: cloudinary_filter_out_local - Cloudinary Docs</title>
+	<title>Filter: cloudinary_allow_glb_upload - Cloudinary Docs</title>
 
 	<script src="scripts/prettify/prettify.js"></script>
 	<script src="scripts/prettify/lang-css.js"></script>
@@ -22,7 +22,7 @@
 <div id="main">
 
 	
-	<h1 class="page-title">Filter: cloudinary_filter_out_local</h1>
+	<h1 class="page-title">Filter: cloudinary_allow_glb_upload</h1>
 	
 
 	
@@ -44,14 +44,17 @@
 
     
 
-    <h4 class="name" id="cloudinary_filter_out_local">apply_filters( 'cloudinary_filter_out_local', <span class="signature">$can )</span><span class="type-signature"> &rarr; {bool}</span></h4>
+    <h4 class="name" id="cloudinary_allow_glb_upload">apply_filters( 'cloudinary_allow_glb_upload', <span class="signature">bool )</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    Filter to allow stopping filtering out local.
+    Filter to allow GLB 3D model files to be uploaded.
+
+WARNING: This is an experimental hook. The only place where GLB files can be used
+         is in the Cloudinary Gallery block.
 </div>
 
 
@@ -85,15 +88,10 @@
 
         <tr>
             
-                <td class="name"><code>$can</code></td>
+                <td class="name"><code>bool</code></td>
             
 
             <td class="type">
-            
-                
-<span class="param-type">bool</span>
-
-
             
             </td>
 
@@ -101,7 +99,7 @@
 
             
 
-            <td class="description last">True as default.</td>
+            <td class="description last">$allow_glb_upload Whether to allow GLB files to be uploaded.</td>
         </tr>
 
     
@@ -118,7 +116,8 @@
     
 
     
-
+    <dt class="tag-since">Since:</dt>
+    <dd class="tag-since"><ul class="dummy"><li>3.2.6</li></ul></dd>
     
 
     
@@ -138,16 +137,13 @@
     
 
     
-    <dt class="tag-default">Default Value:</dt>
-    <dd class="tag-default"><ul class="dummy">
-            <li>true</li>
-        </ul></dd>
+
     
 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="php_class-media.php.html">php/class-media.php</a>, <a href="php_class-media.php.html#line3037">line 3037</a>
+        <a href="php_media_class-gallery.php.html">php/media/class-gallery.php</a>, <a href="php_media_class-gallery.php.html#line705">line 705</a>
     </li></ul></dd>
     
 
@@ -173,19 +169,11 @@
 <h5>Returns:</h5>
 
         
+<div class="param-desc">
+    bool
+</div>
 
 
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">bool</span>
-
-
-    </dd>
-</dl>
 
     
 
