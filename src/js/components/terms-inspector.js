@@ -23,6 +23,11 @@ const Terms = {
 	fetchWait: null,
 	_init() {
 		this.wrapper = document.getElementById( 'cld-tax-items' );
+
+		if ( ! this.wrapper ) {
+			return;
+		}
+
 		const { getTaxonomies } = select( 'core' );
 		// At the given time, not enough options are available to detect when core requests are ready.
 		this.fetchWait = setInterval( () => {
