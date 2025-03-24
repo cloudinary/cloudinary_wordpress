@@ -1,14 +1,14 @@
-# Copyright (C) 2024 Cloudinary Ltd., XWP
+# Copyright (C) 2025 Cloudinary Ltd., XWP
 # This file is distributed under the GPLv2+.
 msgid ""
 msgstr ""
 "Project-Id-Version: Cloudinary STABLETAG\n"
 "Report-Msgid-Bugs-To: https://github.com/cloudinary/cloudinary_wordpress\n"
-"POT-Creation-Date: 2024-12-20 16:52:13+00:00\n"
+"POT-Creation-Date: 2025-02-11 09:20:41+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2024-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2025-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: en\n"
@@ -343,127 +343,127 @@ msgstr ""
 msgid "Plan details for @%s"
 msgstr ""
 
-#: php/class-deactivation.php:115
+#: php/class-deactivation.php:114
 msgid "Set up is too difficult"
 msgstr ""
 
-#: php/class-deactivation.php:119
+#: php/class-deactivation.php:118
 msgid "Lack of documentation"
 msgstr ""
 
-#: php/class-deactivation.php:123
+#: php/class-deactivation.php:122
 msgid "Not the features I wanted"
 msgstr ""
 
-#: php/class-deactivation.php:127
+#: php/class-deactivation.php:126
 msgid "Found a better plugin"
 msgstr ""
 
-#: php/class-deactivation.php:131
+#: php/class-deactivation.php:130
 msgid "Incompatible with theme or plugin"
 msgstr ""
 
-#: php/class-deactivation.php:135
+#: php/class-deactivation.php:134
 msgid "Other"
 msgstr ""
 
-#: php/class-deactivation.php:149
+#: php/class-deactivation.php:148
 msgid "Keep plugin data as it is"
 msgstr ""
 
-#: php/class-deactivation.php:154
+#: php/class-deactivation.php:153
 msgid "Remove all plugin data and settings"
 msgstr ""
 
-#: php/class-deactivation.php:178
+#: php/class-deactivation.php:177
 #. translators: The System Report link tag.
 msgid "Share a %s with Cloudinary to help improve the plugin."
 msgstr ""
 
-#: php/class-deactivation.php:183 php/class-report.php:277
+#: php/class-deactivation.php:182 php/class-report.php:277
 #: ui-definitions/settings-pages.php:395
 #. translators: The System Report link and label.
 msgid "System Report"
 msgstr ""
 
-#: php/class-deactivation.php:194
+#: php/class-deactivation.php:193
 msgid ""
 "Caution: Your storage setting is currently set to \"Cloudinary only\", "
 "disabling the plugin will result in broken links to media assets. Are you "
 "sure you want to continue?"
 msgstr ""
 
-#: php/class-deactivation.php:198
+#: php/class-deactivation.php:197
 msgid "I understand and I want to proceed"
 msgstr ""
 
-#: php/class-deactivation.php:204
+#: php/class-deactivation.php:203
 msgid ""
 "Before you deactivate the plugin, would you quickly give us your reason for "
 "doing so?"
 msgstr ""
 
-#: php/class-deactivation.php:214
+#: php/class-deactivation.php:213
 msgid "Additional details:"
 msgstr ""
 
-#: php/class-deactivation.php:221
+#: php/class-deactivation.php:220
 msgid "Please, choose one option what we should do with the plugin’s settings"
 msgstr ""
 
-#: php/class-deactivation.php:248
+#: php/class-deactivation.php:247
 msgid "Allow Cloudinary to contact me regarding deactivation of the plugin."
 msgstr ""
 
-#: php/class-deactivation.php:254
+#: php/class-deactivation.php:253
 msgid "Skip and deactivate"
 msgstr ""
 
-#: php/class-deactivation.php:257 php/class-deactivation.php:300
+#: php/class-deactivation.php:256 php/class-deactivation.php:299
 msgid "Cancel"
 msgstr ""
 
-#: php/class-deactivation.php:260
+#: php/class-deactivation.php:259
 msgid "Submit and deactivate"
 msgstr ""
 
-#: php/class-deactivation.php:263 php/class-deactivation.php:309
+#: php/class-deactivation.php:262 php/class-deactivation.php:308
 msgid "Sending…"
 msgstr ""
 
-#: php/class-deactivation.php:268 php/class-deactivation.php:314
+#: php/class-deactivation.php:267 php/class-deactivation.php:313
 msgid ""
 "Uninstall has been started and the plugin will automatically be deactivated "
 "once complete."
 msgstr ""
 
-#: php/class-deactivation.php:271 php/class-deactivation.php:317
+#: php/class-deactivation.php:270 php/class-deactivation.php:316
 msgid "Close"
 msgstr ""
 
-#: php/class-deactivation.php:290
+#: php/class-deactivation.php:289
 msgid "We noticed you didn't connect your account. Maybe we can help?"
 msgstr ""
 
-#: php/class-deactivation.php:291
+#: php/class-deactivation.php:290
 msgid ""
 "Place your email below and our support will get back to you as soon as "
 "possible."
 msgstr ""
 
-#: php/class-deactivation.php:294 php/class-deactivation.php:295
+#: php/class-deactivation.php:293 php/class-deactivation.php:294
 msgid "Your email address"
 msgstr ""
 
-#: php/class-deactivation.php:303
+#: php/class-deactivation.php:302
 msgid "Deactivate"
 msgstr ""
 
-#: php/class-deactivation.php:306
+#: php/class-deactivation.php:305
 msgid "Contact me"
 msgstr ""
 
-#: php/class-deactivation.php:464
+#: php/class-deactivation.php:463
 msgid "Data clean up. The plugin will self deactivate once complete. "
 msgstr ""
 
@@ -579,7 +579,7 @@ msgstr ""
 msgid "See examples"
 msgstr ""
 
-#: php/class-plugin.php:751
+#: php/class-plugin.php:752
 msgid "Visit plugin site"
 msgstr ""
 
@@ -784,61 +784,41 @@ msgid ""
 "%1$sCloudinary Academy%2$s."
 msgstr ""
 
-#: php/class-utils.php:469
+#: php/class-utils.php:472
 #. translators: The plugin version.
 msgid "I need help with Cloudinary WordPress plugin version %s"
 msgstr ""
 
-#: php/class-utils.php:473
+#: php/class-utils.php:476
 msgid ""
 "Please, provide more details on your request, and if possible, attach a "
 "System Report"
 msgstr ""
 
-#: php/class-utils.php:787
+#: php/class-utils.php:790
 msgid "Debug log is empty"
 msgstr ""
 
-#: php/class-utils.php:841
+#: php/class-utils.php:844
 msgid "Missing SRC attribute."
 msgstr ""
 
-#: php/class-utils.php:879
+#: php/class-utils.php:882
 #. translators: The attachment ID.
 msgid "Clean up sync metadata for %d"
 msgstr ""
 
-#: php/class-utils.php:927
-msgid "Thumbnail"
-msgstr ""
-
-#: php/class-utils.php:928
-msgid "Medium"
-msgstr ""
-
-#: php/class-utils.php:929
-msgid "Medium Large"
-msgstr ""
-
-#: php/class-utils.php:930
-msgid "Large"
-msgstr ""
-
-#: php/class-utils.php:931
-msgid "Full Size"
-msgstr ""
-
-#: php/class-utils.php:1284
+#: php/class-utils.php:1279
 msgid "Cloudinary global transformations"
 msgstr ""
 
-#: php/class-utils.php:1291
+#: php/class-utils.php:1286
 #. translators: %1$s is the taxonomy label and the %2$s is the context of the
 #. use.
 msgid "%1$s %2$s transformations"
 msgstr ""
 
-#: php/class-utils.php:1301
+#: php/class-utils.php:1296
 #. translators: %s is the term name.
 msgid "%s transformations"
 msgstr ""
