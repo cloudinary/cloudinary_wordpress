@@ -71,7 +71,7 @@
     "@wordpress/jest-puppeteer-axe": "^1.10.0",
     "@wordpress/plugins": "^7.10.0",
     "@wordpress/postcss-themes": "^4.0.1",
-    "@wordpress/scripts": "^27.3.0",
+    "@wordpress/scripts": "^30.13.0",
     "@wordpress/server-side-render": "^1.19.1",
     "@wordpress/url": "^2.19.0",
     "accessible-autocomplete": "^2.0.3",
@@ -146,5 +146,5 @@
     "webpackbar": "^5.0.2",
     "wp-hookdoc": "^0.2.0"
   },
-  "version": "3.2.5"
+  "version": "3.2.6"
 }

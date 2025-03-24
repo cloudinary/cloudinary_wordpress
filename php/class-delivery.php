@@ -178,49 +178,7 @@ class Delivery implements Setup {
 				&& 'edit' === $request->get_param( 'context' )
 			)
 		) {
-			// This has a priority of 10 so can be overridden by other filters.
-			add_filter(
-				'cloudinary_unset_attributes',
-				'__return_true'
-			);
-
-			add_filter(
-				'cloudinary_apply_breakpoints',
-				'__return_false'
-			);
-
-			add_filter(
-				'cloudinary_parse_element',
-				static function ( $tag_element ) {
-					$tag_element['breakpoints'] = false;
-					return $tag_element;
-				}
-			);
-
-			add_filter(
-				'cloudinary_skip_responsive_breakpoints',
-				'__return_true'
-			);
-
-			if ( false === strpos( $route, 'wp/v2/blocks/' ) ) {
-				add_filter(
-					'cloudinary_tag_skip_classes',
-					function ( $skip, $tag_element ) {
-						// Bail on additional assets.
-						return $this->plugin->get_component( 'assets' )->is_asset( $tag_element['atts']['src'] );
-					},
-					10,
-					2
-				);
-
-				add_filter(
-					'cloudinary_parse_element',
-					function ( $element ) {
-						unset( $element['atts']['class'] );
-						return $element;
-					}
-				);
-			}
+			add_filter( 'cloudinary_skip_parse_element', '__return_true' );
 		}
 	}
 
@@ -1456,6 +1414,22 @@ class Delivery implements Setup {
 	 * @return array|null
 	 */
 	public function parse_element( $element ) {
+		/**
+		 * Filter to skip parsing an element.
+		 *
+		 * @hook  cloudinary_skip_parse_element
+		 * @since 3.2.6
+		 * @default {false}
+		 *
+		 * @param $skip    {bool}  True to skip parsing.
+		 * @param $element {string} The element to parse.
+		 *
+		 * @return {bool}
+		 */
+		if ( apply_filters( 'cloudinary_skip_parse_element', false, $element ) ) {
+			return null;
+		}
+
 		static $post_context = 0;
 
 		$config = $this->plugin->settings->get_value( 'image_settings' );

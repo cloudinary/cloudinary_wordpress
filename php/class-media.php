@@ -1921,6 +1921,7 @@ class Media extends Settings_Component implements Setup {
 		if ( ! $cloudinary_id ) {
 			return $sources; // Return WordPress default sources.
 		}
+
 		// Get transformations if any.
 		$transformations = Relate::get_transformations( $attachment_id );
 
@@ -1970,6 +1971,11 @@ class Media extends Settings_Component implements Setup {
 
 				return $sources;
 			}
+		}
+
+		// Handle unexpected sources variable type.
+		if ( ! is_array( $sources ) ) {
+			return $sources;
 		}
 
 		// Add the main size as the largest srcset src.

@@ -30,6 +30,15 @@ class Gallery extends Settings_Component {
 	const GALLERY_LIBRARY_HANDLE = 'cld-gallery';
 
 	/**
+	 * This is a "false" mime type for GLB files.
+	 *
+	 * Canonically, the correct mime type for GLB files is `model/gltf-binary`,
+	 * however we need to fake an `image/` mime type to make the gallery
+	 * picker to list GLB files.
+	 */
+	const GALLERY_GLB_MIME_TYPE = 'image/glb';
+
+	/**
 	 * Holds the settings slug.
 	 *
 	 * @var string
@@ -471,6 +480,12 @@ class Gallery extends Settings_Component {
 			if ( ! wp_get_attachment_url( $attachment['attachmentId'] ) ) {
 				continue;
 			}
+
+			// Initialize 3D model support.
+			if ( self::GALLERY_GLB_MIME_TYPE === get_post_mime_type( $attachment['attachmentId'] ) ) {
+				$attachment['mediaType'] = '3d';
+			}
+
 			$transformations = $this->media->get_transformations( $attachment['attachmentId'] );
 			if ( ! empty( $transformations ) ) {
 				$attachment['transformation'] = array( 'transformation' => $transformations );
@@ -578,6 +593,105 @@ class Gallery extends Settings_Component {
 	}
 
 	/**
+	 * Allow GLB files to be uploaded.
+	 *
+	 * @param array $mimes The mime types.
+	 *
+	 * @return array
+	 */
+	public function add_glb_mime( $mimes ) {
+		$mimes['glb'] = self::GALLERY_GLB_MIME_TYPE;
+
+		return $mimes;
+	}
+
+	/**
+	 * Pass the GLB file type check.
+	 *
+	 * @param array  $file_data The file data.
+	 * @param string $file      The file.
+	 * @param string $filename  The filename.
+	 *
+	 * @return array
+	 */
+	public function pass_glb_filetype_check( $file_data, $file, $filename ) {
+		if ( 'glb' === pathinfo( $filename, PATHINFO_EXTENSION ) ) {
+			$file_data['ext']  = 'glb';
+			$file_data['type'] = self::GALLERY_GLB_MIME_TYPE;
+		}
+
+		return $file_data;
+	}
+
+	/**
+	 * Allow GLB files to be uploaded to Cloudinary.
+	 *
+	 * @param array $types The allowed extensions.
+	 *
+	 * @return array
+	 */
+	public function allow_glb_for_cloudinary( $types ) {
+		$types[] = 'glb';
+
+		return $types;
+	}
+
+	/**
+	 * Allow GLB files to be delivered from Cloudinary.
+	 *
+	 * @param bool $is Whether the file is deliverable.
+	 * @param int  $attachment_id The attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function allow_glb_delivery_from_cloudinary( $is, $attachment_id ) {
+		if ( self::GALLERY_GLB_MIME_TYPE === get_post_mime_type( $attachment_id ) ) {
+			$is = true;
+		}
+
+		return $is;
+	}
+
+	/**
+	 * Replace image urls from .glb to .png.
+	 *
+	 * This allows the GLB files to be served as PNG files in the image context.
+	 *
+	 * @param string $url The URL.
+	 * @param int    $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function admin_replace_glb_url( $url, $attachment_id ) {
+		if ( ! is_admin() ) {
+			return $url;
+		}
+
+		if ( self::GALLERY_GLB_MIME_TYPE === get_post_mime_type( $attachment_id ) ) {
+			$url = str_replace( '.glb', '.png', $url );
+		}
+		return $url;
+	}
+
+	/**
+	 * We pretend that GLB files are images with dimensions of 512x512.
+	 *
+	 * This allows WordPress to correctly render the GLB files as images in the media library.
+	 *
+	 * @param array $metadata The attachment metadata.
+	 * @param int   $attachment_id The attachment ID.
+	 *
+	 * @return array
+	 */
+	public function inject_glb_metadata( $metadata, $attachment_id ) {
+		if ( self::GALLERY_GLB_MIME_TYPE === get_post_mime_type( $attachment_id ) ) {
+			$metadata['width']  = 512;
+			$metadata['height'] = 512;
+		}
+		return $metadata;
+	}
+
+	/**
 	 * Setup hooks for the gallery.
 	 */
 	public function setup_hooks() {
@@ -587,5 +701,24 @@ class Gallery extends Settings_Component {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_filter( 'render_block', array( $this, 'prepare_block_render' ), 10, 2 );
 		add_filter( 'cloudinary_admin_pages', array( $this, 'register_settings' ) );
+
+		/**
+		 * Filter to allow GLB 3D model files to be uploaded.
+		 *
+		 * WARNING: This is an experimental hook. The only place where GLB files can be used
+		 *          is in the Cloudinary Gallery block.
+		 *
+		 * @param bool $allow_glb_upload Whether to allow GLB files to be uploaded.
+		 *
+		 * @return bool
+		 */
+		if ( apply_filters( 'cloudinary_allow_glb_upload', false ) ) {
+			add_filter( 'upload_mimes', array( $this, 'add_glb_mime' ), 20, 1 );
+			add_filter( 'wp_check_filetype_and_ext', array( $this, 'pass_glb_filetype_check' ), 10, 3 );
+			add_filter( 'cloudinary_allowed_extensions', array( $this, 'allow_glb_for_cloudinary' ) );
+			add_filter( 'cloudinary_is_deliverable', array( $this, 'allow_glb_delivery_from_cloudinary' ), 10, 2 );
+			add_filter( 'wp_get_attachment_url', array( $this, 'admin_replace_glb_url' ), 11, 2 );
+			add_filter( 'wp_generate_attachment_metadata', array( $this, 'inject_glb_metadata' ), 10, 2 );
+		}
 	}
 }
