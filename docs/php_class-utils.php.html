@@ -41,6 +41,7 @@
 
 namespace Cloudinary;
 
+use Cloudinary\Misc\Image_Sizes_No_Textdomain;
 use Cloudinary\Settings\Setting;
 use Google\Web_Stories\Story_Post_Type;
 use WP_Post;
@@ -506,7 +507,7 @@ class Utils {
 					$plugin->version
 				)
 			),
-			'tf_description'  => esc_attr( __( 'Please, provide more details on your request, and if possible, attach a System Report', 'cloudinary' ) ),
+			'tf_description'               => esc_attr( __( 'Please, provide more details on your request, and if possible, attach a System Report', 'cloudinary' ) ),
 		);
 
 		$args = wp_parse_args(
@@ -608,7 +609,7 @@ class Utils {
 			// Fallback if rest engine is not setup yet.
 			$rest_base   = wp_parse_url( static::rest_url( '/' ), PHP_URL_PATH );
 			$request_uri = filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_SANITIZE_URL );
-			$is          = strpos( $request_uri, $rest_base ) === 0;
+			$is          = is_string( $request_uri ) &amp;&amp; strpos( $request_uri, $rest_base ) === 0;
 		}
 
 		return $is;
@@ -958,15 +959,7 @@ class Utils {
 		/** This filter is documented in wp-admin/includes/media.php */
 		$image_sizes = apply_filters(
 			'image_size_names_choose',
-			array(
-				// phpcs:disable WordPress.WP.I18n.MissingArgDomain
-				'thumbnail'    => __( 'Thumbnail' ),
-				'medium'       => __( 'Medium' ),
-				'medium_large' => __( 'Medium Large' ),
-				'large'        => __( 'Large' ),
-				'full'         => __( 'Full Size' ),
-				// phpcs:enable WordPress.WP.I18n.MissingArgDomain
-			)
+			Image_Sizes_No_Textdomain::get_image_sizes()
 		);
 
 		$labels = wp_parse_args( $labels, $image_sizes );
