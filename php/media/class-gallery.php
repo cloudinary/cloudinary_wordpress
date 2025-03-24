@@ -142,7 +142,12 @@ class Gallery extends Settings_Component {
 		/**
 		 * Filter the gallery HTML container.
 		 *
-		 * @param string $selector The target HTML selector.
+		 * @hook    cloudinary_gallery_html_container
+		 * @default ''
+		 *
+		 * @param $selector {string} The target HTML selector.
+		 *
+		 * @return {string}
 		 */
 		$config['container'] = apply_filters( 'cloudinary_gallery_html_container', '' );
 
@@ -160,7 +165,11 @@ class Gallery extends Settings_Component {
 		/**
 		 * Filter the gallery configuration.
 		 *
-		 * @param array $config The current gallery config.
+		 * @hook cloudinary_gallery_config
+		 *
+		 * @param $config {array} The current gallery config.
+		 *
+		 * @return {array}
 		 */
 		$config = apply_filters( 'cloudinary_gallery_config', $config );
 
@@ -698,6 +707,9 @@ class Gallery extends Settings_Component {
 		 *
 		 * WARNING: This is an experimental hook. The only place where GLB files can be used
 		 *          is in the Cloudinary Gallery block.
+		 *
+		 * @hook   cloudinary_allow_glb_upload
+		 * @since  3.2.6
 		 *
 		 * @param bool $allow_glb_upload Whether to allow GLB files to be uploaded.
 		 *

@@ -25,7 +25,7 @@ Additional resources are available at:
 
 * [Website](https://cloudinary.com)
 * [Documentation](https://cloudinary.com/documentation)
-* [Knowledge Base](https://support.cloudinary.com/forums)
+* [Knowledge Base](https://support.cloudinary.com/hc/en-us)
 
 ## Support
 
