@@ -146,6 +146,14 @@ Your site is now setup to start using Cloudinary.
 
 == Changelog ==
 
+= 3.2.6 (24 March 2025) =
+
+Fixes and Improvements:
+
+* Fixed debug warning message in class-media.php on line 1941
+* Resolved certain block validation errors in the Block Patterns UI
+* Fixed an issue with rendering interactive 3D GLB formats
+
 
 = 3.2.5 (19 February 2025) =
 
