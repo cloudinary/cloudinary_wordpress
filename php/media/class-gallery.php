@@ -703,14 +703,14 @@ class Gallery extends Settings_Component {
 		add_filter( 'cloudinary_admin_pages', array( $this, 'register_settings' ) );
 
 		/**
-		 * Filter to allow GLB 3D model files to be uploaded.
+		 * Filter the media context query.
 		 *
-		 * WARNING: This is an experimental hook. The only place where GLB files can be used
-		 *          is in the Cloudinary Gallery block.
+		 * @hook   cloudinary_media_context_query
+		 * @since  3.2.0
 		 *
-		 * @param bool $allow_glb_upload Whether to allow GLB files to be uploaded.
+		 * @param $media_context_query {string} The default media context query.
 		 *
-		 * @return bool
+		 * @return {string}
 		 */
 		if ( apply_filters( 'cloudinary_allow_glb_upload', false ) ) {
 			add_filter( 'upload_mimes', array( $this, 'add_glb_mime' ), 20, 1 );
