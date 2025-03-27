@@ -782,24 +782,6 @@ class Utils {
 	}
 
 	/**
-	 * Remove a debug message.
-	 *
-	 * @param string $key  The key that holds the message.
-	 */
-	public static function remove_log( $key ) {
-		if ( ! get_plugin_instance()->get_component( 'report' )->enabled() || ! $key ) {
-			return;
-		}
-
-		$messages = get_option( Sync::META_KEYS['debug'], array() );
-
-		if ( isset( $messages[ $key ] ) ) {
-			unset( $messages[ $key ] );
-			update_option( Sync::META_KEYS['debug'], $messages, false );
-		}
-	}
-
-	/**
 	 * Get the debug messages.
 	 *
 	 * @return array

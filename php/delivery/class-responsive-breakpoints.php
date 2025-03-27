@@ -166,8 +166,6 @@ class Responsive_Breakpoints extends Delivery_Feature {
 			$tag_element['atts']['sizes']  = '(max-width: ' . $width . 'px) 100vw, ' . $width . 'px';
 		}
 
-		Utils::remove_log( $debug_key );
-
 		return $tag_element;
 	}
 
