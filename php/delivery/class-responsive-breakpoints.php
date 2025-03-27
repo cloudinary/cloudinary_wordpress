@@ -127,7 +127,7 @@ class Responsive_Breakpoints extends Delivery_Feature {
 	 * @return array
 	 */
 	protected function apply_breakpoints( $tag_element ) {
-		if ( ! $tag_element['id'] ) {
+		if ( empty( $tag_element['id'] ) ) {
 			return $tag_element;
 		}
 
