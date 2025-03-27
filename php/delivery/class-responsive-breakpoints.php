@@ -127,6 +127,10 @@ class Responsive_Breakpoints extends Delivery_Feature {
 	 * @return array
 	 */
 	protected function apply_breakpoints( $tag_element ) {
+		if ( ! $tag_element['id'] ) {
+			return $tag_element;
+		}
+
 		$settings  = $this->settings->get_value( 'media_display' );
 		$max       = $settings['max_width'];
 		$min       = $settings['min_width'];
@@ -135,8 +139,7 @@ class Responsive_Breakpoints extends Delivery_Feature {
 		$debug_key = 'responsive_breakpoints_' . $tag_element['id'];
 
 		if ( ! $width || ! $height ) {
-			// Translators: %s is the ID of the image missing width or height.
-			Utils::log( sprintf( __( 'Missing width or height for image: %s', 'cloudinary' ), $tag_element['id'] ), $debug_key );
+			Utils::log( 'Missing width or height for image with ID: ' . $tag_element['id'], $debug_key );
 			return $tag_element;
 		}
 
