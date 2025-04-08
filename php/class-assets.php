@@ -389,14 +389,32 @@ class Assets extends Settings_Component {
 	}
 
 	/**
+	 * Retrieve the assets settings.
+	 *
+	 * This method fetches the assets settings from the configuration.
+	 * If the assets settings are empty or the settings are locked, it returns an empty array.
+	 *
+	 * @return array The assets settings array.
+	 */
+	public function get_assets_settings() {
+		$assets = $this->settings->get_setting( 'assets' )->get_settings();
+
+		if ( empty( $assets ) || $this->is_locked() ) {
+			return array();
+		}
+
+		return $assets;
+	}
+
+	/**
 	 * Update asset paths.
 	 *
 	 * @return void
 	 */
 	public function update_asset_paths() {
-		$assets = $this->settings->get_setting( 'assets' )->get_settings();
+		$assets = $this->get_assets_settings();
 
-		if ( empty( $assets ) || ! $this->is_locked() ) {
+		if ( empty( $assets ) ) {
 			return;
 		}
 
@@ -411,10 +429,12 @@ class Assets extends Settings_Component {
 					$asset_path = $this->get_asset_parent( $path );
 
 					if ( null === $asset_path ) {
-						$asset_parent_id = $assets->create_asset_parent( $path, $version );
+						$asset_parent_id = $this->create_asset_parent( $path, $version );
+
 						if ( is_wp_error( $asset_parent_id ) ) {
 							return; // Bail.
 						}
+
 						$asset_path = get_post( $asset_parent_id );
 					}
 
@@ -433,9 +453,9 @@ class Assets extends Settings_Component {
 	 * @return void
 	 */
 	protected function activate_parents() {
-		$assets = $this->settings->get_setting( 'assets' )->get_settings();
+		$assets = $this->get_assets_settings();
 
-		if ( empty( $assets ) || $this->is_locked() ) {
+		if ( empty( $assets ) ) {
 			return;
 		}
 
@@ -1204,8 +1224,12 @@ class Assets extends Settings_Component {
 	 * @hook cloudinary_init_settings
 	 */
 	public function setup() {
+		if ( is_user_logged_in() && is_admin() && ! Utils::is_rest_api() ) {
+			$this->update_asset_paths();
+		}
+
+		Cron::register_process( 'update_asset_paths', array( $this, 'update_asset_paths' ), DAY_IN_SECONDS );
 		$this->activate_parents();
-		Cron::register_process( 'update_asset_paths', array( $this, 'update_asset_paths' ), 60 );
 	}
 
 	/**
