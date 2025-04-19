@@ -765,11 +765,17 @@ class Delivery implements Setup {
 	 */
 	public function dns_prefetch( $urls, $relation_type ) {
 
-		$relation_type = apply_filters('cld_dns_prefetch', $relation_type);
+		/**
+		 * Filter to provide option to omit prefetch.
+		 *
+		 * @hook   cloudinary_dns_prefetch_types
+		 * 
+		 */
+        $resource_hints = apply_filters( 'cloudinary_dns_prefetch_types', array ( 'dns-prefetch', 'preconnect' ) );
 
-		if ( 'dns-prefetch' === $relation_type || 'preconnect' === $relation_type ) {
-			$urls[] = $this->media->base_url;
-		}
+        if ( in_array( $relation_type, $resource_hints, true ) {
+            $urls[] = $this->media->base_url;
+        }
 
 		return $urls;
 	}
