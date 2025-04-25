@@ -1376,6 +1376,12 @@ class Delivery implements Setup {
 		// Setup new tag.
 		$replace = HTML::build_tag( $tag_element['tag'], $tag_element['atts'] );
 
+		// If the original tag used single quotes, we need to use them in the new tag.
+		$single_quotes = (bool) preg_match( '/=\s*\'/', $tag_element['original'] );
+		if ( $single_quotes ) {
+			$replace = str_replace( '"', "'", $replace );
+		}
+
 		/**
 		 * Filter the new built tag element.
 		 *
