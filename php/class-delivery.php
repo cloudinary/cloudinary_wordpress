@@ -142,7 +142,7 @@ class Delivery implements Setup {
 		add_action( 'before_delete_post', array( $this, 'delete_size_relationship' ) );
 		add_action( 'delete_attachment', array( $this, 'delete_size_relationship' ) );
 		add_action( 'cloudinary_register_sync_types', array( $this, 'register_sync_type' ), 30 );
-		add_action( 'rest_request_before_callbacks', array( $this, 'maybe_unset_attributes' ), 10, 3 );
+		add_filter( 'rest_request_before_callbacks', array( $this, 'maybe_unset_attributes' ), 10, 3 );
 		add_action(
 			'the_post',
 			function ( $post ) {
@@ -166,7 +166,7 @@ class Delivery implements Setup {
 	 * @param WP_REST_Server       $handler  The request handler.
 	 * @param WP_REST_Request|null $request The request object, if available.
 	 *
-	 * @return void
+	 * @return WP_REST_Response
 	 */
 	public function maybe_unset_attributes( $response, $handler, $request ) {
 		$route = $request->get_route();
@@ -180,6 +180,8 @@ class Delivery implements Setup {
 		) {
 			add_filter( 'cloudinary_skip_parse_element', '__return_true' );
 		}
+
+		return $response;
 	}
 
 	/**
