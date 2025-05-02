@@ -18,7 +18,7 @@ $active_slug = $admin->get_param( 'active_slug' );
 	<div class="cld-ui-wrap cld-row">
 		<?php wp_nonce_field( 'cloudinary-settings', '_cld_nonce' ); ?>
 		<input type="hidden" name="cloudinary-active-slug" value="<?php echo esc_attr( $active_slug ); ?>"/>
-		<div class="cld-column">
+		<div class="cld-column <?php echo esc_html( 'column-' . $active_slug ); ?>">
 			<?php
 			$component->render( true );
 			?>
