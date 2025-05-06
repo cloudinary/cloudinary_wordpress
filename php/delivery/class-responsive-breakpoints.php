@@ -127,12 +127,22 @@ class Responsive_Breakpoints extends Delivery_Feature {
 	 * @return array
 	 */
 	protected function apply_breakpoints( $tag_element ) {
+		if ( empty( $tag_element['id'] ) ) {
+			return $tag_element;
+		}
 
-		$settings            = $this->settings->get_value( 'media_display' );
-		$max                 = $settings['max_width'];
-		$min                 = $settings['min_width'];
-		$width               = $tag_element['width'];
-		$height              = $tag_element['height'];
+		$settings  = $this->settings->get_value( 'media_display' );
+		$max       = $settings['max_width'];
+		$min       = $settings['min_width'];
+		$width     = (int) $tag_element['width'];
+		$height    = (int) $tag_element['height'];
+		$debug_key = 'responsive_breakpoints_' . $tag_element['id'];
+
+		if ( ! $width || ! $height ) {
+			Utils::log( 'Missing width or height for image with ID: ' . $tag_element['id'], $debug_key );
+			return $tag_element;
+		}
+
 		$size_tag            = '-' . $width . 'x' . $height . '.';
 		$step                = $settings['pixel_step'];
 		$ratio               = $width / $height;

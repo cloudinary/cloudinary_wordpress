@@ -60,6 +60,12 @@
 		justify-content: flex-start;
 		flex-grow: 1;
 		align-items: stretch;
+
+		@media only screen and (max-width: $size-small) {
+			flex-direction: column;
+			gap: 20px;
+		}
+
 		.help-box{
 			.large-button {
 				background: rgb(255, 255, 255);

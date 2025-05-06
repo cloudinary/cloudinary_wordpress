@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: image-optimizer, core-web-vitals, video, resize, performance
 Requires at least: 4.7
-Tested up to: 6.7.2
+Tested up to: 6.8.1
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -145,6 +145,17 @@ Your site is now setup to start using Cloudinary.
 
 
 == Changelog ==
+
+= 3.2.7 (06 May 2025) =
+
+Fixes and Improvements:
+
+* Upgraded the Cloudinary Video Player to v2.3.5.
+* Reduced excessive REST API calls.
+* Fixed a compatibility issue with the Next Bricks page builder.
+* Resolved an `Uncaught DivisionByZeroError` related to breakpoints.
+* Fixed an overlay issue where granular position control on the X and Y axes was not respected.
+* Fixed an error related to `rest_request_before_callbacks`.
 
 = 3.2.6 (24 March 2025) =
 

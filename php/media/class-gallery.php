@@ -699,6 +699,9 @@ class Gallery extends Settings_Component {
 		 * WARNING: This is an experimental hook. The only place where GLB files can be used
 		 *          is in the Cloudinary Gallery block.
 		 *
+		 * @hook   cloudinary_allow_glb_upload
+		 * @since  3.2.6
+		 *
 		 * @param bool $allow_glb_upload Whether to allow GLB files to be uploaded.
 		 *
 		 * @return bool
