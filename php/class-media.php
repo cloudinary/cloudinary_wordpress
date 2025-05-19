@@ -157,7 +157,15 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function __construct( Plugin $plugin ) {
 		$this->plugin = $plugin;
+		add_action( 'init', array( $this, 'init_hook' ) );
+	}
 
+	/**
+	 * Initialize WordPress hooks for the Cloudinary media integration.
+	 *
+	 * @return void
+	 */
+	public function init_hook() {
 		/**
 		 * Filter the Cloudinary Media Library filters.
 		 *
