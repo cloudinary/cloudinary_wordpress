@@ -166,9 +166,7 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
-	 * Media constructor.
-	 *
-	 * @param Plugin $plugin The global plugin instance.
+	 * Sets the Cloudinary Media Library filters
 	 */
 	public function set_cloudinary_filters() {
 		/**
