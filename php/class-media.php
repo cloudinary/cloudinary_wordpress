@@ -865,8 +865,8 @@ class Media extends Settings_Component implements Setup {
 					$cropped = ! wp_image_matches_ratio(
 					// PDFs do not always have width and height, but they do have full sizes.
 					// This is important for the thumbnail crops on the media library.
-						! empty( $meta['width'] ) ? $meta['width'] : $meta['sizes']['full']['width'],
-						! empty( $meta['height'] ) ? $meta['height'] : $meta['sizes']['full']['height'],
+						! empty( $meta['width'] ) ? $meta['width'] : ( ! empty( $meta['sizes']['full']['width'] ) ? $meta['sizes']['full']['width'] : 0 ),
+						! empty( $meta['height'] ) ? $meta['height'] : ( ! empty( $meta['sizes']['full']['height'] ) ? $meta['sizes']['full']['height'] : 0 ),
 						$size['width'],
 						$size['height']
 					);
