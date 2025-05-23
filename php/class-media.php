@@ -157,6 +157,7 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function __construct( Plugin $plugin ) {
 		$this->plugin = $plugin;
+
 		add_action( 'init', array( $this, 'init_hook' ) );
 
 		// Add upgrade hook, since setup methods are called after the connect upgrade has run.

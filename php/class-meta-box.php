@@ -42,9 +42,7 @@ class Meta_Box {
 	}
 
 	/**
-	 * Initializes hooks for the meta box.
-	 *
-	 * Hooks into WordPress to add meta boxes and registers necessary handlers.
+	 * Initialize hooks for the meta box.
 	 *
 	 * @return void
 	 */
