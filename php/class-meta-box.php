@@ -35,7 +35,10 @@ class Meta_Box {
 	 */
 	public function __construct( Plugin $plugin ) {
 		$this->plugin = $plugin;
+
 		add_action( 'init', array( $this, 'init_hook' ) );
+
+		$this->register_handlers();
 	}
 
 	/**
@@ -47,7 +50,6 @@ class Meta_Box {
 	 */
 	public function init_hook() {
 		add_action( 'add_meta_boxes', array( $this, 'register_meta_box' ) );
-		$this->register_handlers();
 	}
 
 	/**
