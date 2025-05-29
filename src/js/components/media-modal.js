@@ -37,14 +37,14 @@ if ( wp.media ) {
 	// Intercept ajax post, and send the cld-overwrite flag, and transformations.
 	wp.media.post = function ( action, data ) {
 		if ( 'send-attachment-to-editor' === action ) {
-			const state = wp.media.editor.get().state();
-			const attach = state.get( 'selection' ).get( data.attachment );
-			if ( attach.attributes.transformations ) {
+			const state = wp?.media?.editor?.get()?.state();
+			const attach = state?.get( 'selection' )?.get( data.attachment );
+			if ( attach?.attributes?.transformations ) {
 				data.attachment.transformations =
 					attach.attributes.transformations;
 			}
 			if (
-				data.html.indexOf( 'cld-overwrite' ) > -1 ||
+				data?.html.indexOf( 'cld-overwrite' ) > -1 ||
 				true === currentOverwrite
 			) {
 				data.attachment.cldoverwrite = true;
