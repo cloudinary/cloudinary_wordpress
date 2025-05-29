@@ -158,6 +158,18 @@ class Media extends Settings_Component implements Setup {
 	public function __construct( Plugin $plugin ) {
 		$this->plugin = $plugin;
 
+		add_action( 'init', array( $this, 'init_hook' ) );
+
+		// Add upgrade hook, since setup methods are called after the connect upgrade has run.
+		add_action( 'cloudinary_version_upgrade', array( $this, 'upgrade_media_settings' ) );
+	}
+
+	/**
+	 * Initialize WordPress hooks for the Cloudinary media integration.
+	 *
+	 * @return void
+	 */
+	public function init_hook() {
 		/**
 		 * Filter the Cloudinary Media Library filters.
 		 *
@@ -173,9 +185,6 @@ class Media extends Settings_Component implements Setup {
 				SYNC::META_KEYS['unsynced']   => __( 'Unsynced', 'cloudinary' ),
 			)
 		);
-
-		// Add upgrade hook, since setup methods are called after the connect upgrade has run.
-		add_action( 'cloudinary_version_upgrade', array( $this, 'upgrade_media_settings' ) );
 	}
 
 	/**
@@ -865,8 +874,8 @@ class Media extends Settings_Component implements Setup {
 					$cropped = ! wp_image_matches_ratio(
 					// PDFs do not always have width and height, but they do have full sizes.
 					// This is important for the thumbnail crops on the media library.
-						! empty( $meta['width'] ) ? $meta['width'] : $meta['sizes']['full']['width'],
-						! empty( $meta['height'] ) ? $meta['height'] : $meta['sizes']['full']['height'],
+						! empty( $meta['width'] ) ? $meta['width'] : ( ! empty( $meta['sizes']['full']['width'] ) ? $meta['sizes']['full']['width'] : 0 ),
+						! empty( $meta['height'] ) ? $meta['height'] : ( ! empty( $meta['sizes']['full']['height'] ) ? $meta['sizes']['full']['height'] : 0 ),
 						$size['width'],
 						$size['height']
 					);

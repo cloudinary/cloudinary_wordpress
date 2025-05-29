@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cloudinary STABLETAG\n"
 "Report-Msgid-Bugs-To: https://github.com/cloudinary/cloudinary_wordpress\n"
-"POT-Creation-Date: 2025-04-29 05:25:59+00:00\n"
+"POT-Creation-Date: 2025-05-29 05:42:10+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -498,22 +498,22 @@ msgstr ""
 msgid "Cloudinary Media Library"
 msgstr ""
 
-#: php/class-media.php:172
+#: php/class-media.php:184
 msgid "Error"
 msgstr ""
 
-#: php/class-media.php:173
+#: php/class-media.php:185
 msgid "Unsynced"
 msgstr ""
 
-#: php/class-media.php:449
+#: php/class-media.php:458
 #. translators: variable is file size.
 msgid ""
 "File size exceeds the maximum of %s. This media asset will be served from "
 "WordPress."
 msgstr ""
 
-#: php/class-media.php:2057
+#: php/class-media.php:2066
 msgid "Import"
 msgstr ""
 
@@ -521,43 +521,43 @@ msgstr ""
 msgid "Cloudinary"
 msgstr ""
 
-#: php/class-media.php:2413
+#: php/class-media.php:2422
 msgid "The delivery for this asset is disabled."
 msgstr ""
 
-#: php/class-media.php:2417
+#: php/class-media.php:2426
 msgid "Not syncable. This is an external media."
 msgstr ""
 
-#: php/class-media.php:2421
+#: php/class-media.php:2430
 msgid "This media is Fetch type."
 msgstr ""
 
-#: php/class-media.php:2425
+#: php/class-media.php:2434
 msgid "This media is Sprite type."
 msgstr ""
 
-#: php/class-media.php:2435
+#: php/class-media.php:2444
 msgid "Not Synced"
 msgstr ""
 
-#: php/class-media.php:2440
+#: php/class-media.php:2449
 msgid "Synced"
 msgstr ""
 
-#: php/class-media.php:3091
+#: php/class-media.php:3100
 msgid "No Cloudinary filters"
 msgstr ""
 
-#: php/class-media.php:3191
+#: php/class-media.php:3200
 msgid "Media Settings"
 msgstr ""
 
-#: php/class-media.php:3194
+#: php/class-media.php:3203
 msgid "Media Display"
 msgstr ""
 
-#: php/class-media.php:3198 php/media/class-global-transformations.php:620
+#: php/class-media.php:3207 php/media/class-global-transformations.php:620
 #: php/ui/component/class-asset-preview.php:73
 #: php/ui/component/class-plan-details.php:119
 #: php/ui/component/class-plan-status.php:128
@@ -565,7 +565,7 @@ msgstr ""
 msgid "Transformations"
 msgstr ""
 
-#: php/class-media.php:3199
+#: php/class-media.php:3208
 msgid ""
 "Cloudinary allows you to easily transform your images on-the-fly to any "
 "required format, style and dimension, and also optimizes images for minimal "
@@ -574,8 +574,8 @@ msgid ""
 "transformation and delivery URLs."
 msgstr ""
 
-#: php/class-media.php:3204 ui-definitions/settings-image.php:171
-#: ui-definitions/settings-video.php:257
+#: php/class-media.php:3213 ui-definitions/settings-image.php:174
+#: ui-definitions/settings-video.php:260
 msgid "See examples"
 msgstr ""
 
@@ -771,9 +771,9 @@ msgstr ""
 
 #: php/class-sync.php:1304 php/delivery/class-lazy-load.php:543
 #: php/media/class-gallery.php:425 ui-definitions/components/header.php:19
-#: ui-definitions/settings-image.php:253 ui-definitions/settings-pages.php:206
+#: ui-definitions/settings-image.php:257 ui-definitions/settings-pages.php:206
 #: ui-definitions/settings-pages.php:222 ui-definitions/settings-pages.php:223
-#: ui-definitions/settings-video.php:300
+#: ui-definitions/settings-video.php:306
 msgid "Need help?"
 msgstr ""
 
@@ -855,7 +855,7 @@ msgid "Settings"
 msgstr ""
 
 #: php/delivery/class-lazy-load.php:424 php/delivery/class-lazy-load.php:534
-#: ui-definitions/settings-image.php:27 ui-definitions/settings-image.php:240
+#: ui-definitions/settings-image.php:27 ui-definitions/settings-image.php:244
 #: ui-definitions/settings-pages.php:104 ui-definitions/settings-pages.php:197
 #: ui-definitions/settings-video.php:27
 msgid "Preview"
@@ -921,7 +921,7 @@ msgid "Dominant Color"
 msgstr ""
 
 #: php/delivery/class-lazy-load.php:501 php/delivery/class-lazy-load.php:516
-#: ui-definitions/settings-video.php:142
+#: ui-definitions/settings-video.php:145
 msgid "Off"
 msgstr ""
 
@@ -1099,11 +1099,11 @@ msgid ""
 "storage settings.%2$s"
 msgstr ""
 
-#: php/sync/class-storage.php:412
+#: php/sync/class-storage.php:416
 msgid "Restricted file type"
 msgstr ""
 
-#: php/sync/class-storage.php:546
+#: php/sync/class-storage.php:550
 msgid "Calculating stats"
 msgstr ""
 
@@ -1775,19 +1775,19 @@ msgstr ""
 msgid "Image - Global Settings"
 msgstr ""
 
-#: ui-definitions/settings-image.php:40 ui-definitions/settings-image.php:41
+#: ui-definitions/settings-image.php:43 ui-definitions/settings-image.php:44
 msgid "Image delivery"
 msgstr ""
 
-#: ui-definitions/settings-image.php:42
+#: ui-definitions/settings-image.php:45
 msgid "If you turn this setting off, your images will be delivered from WordPress."
 msgstr ""
 
-#: ui-definitions/settings-image.php:46
+#: ui-definitions/settings-image.php:49
 msgid "Sync and deliver images from Cloudinary."
 msgstr ""
 
-#: ui-definitions/settings-image.php:57
+#: ui-definitions/settings-image.php:60
 #. translators: %s is a link to the storage settings page.
 msgid ""
 "This setting currently can’t be turned off. Your images must be delivered "
@@ -1796,89 +1796,89 @@ msgid ""
 "Settings page that will enable storing your assets also in WordPress."
 msgstr ""
 
-#: ui-definitions/settings-image.php:61 ui-definitions/settings-video.php:61
+#: ui-definitions/settings-image.php:64 ui-definitions/settings-video.php:64
 msgid "Storage setting"
 msgstr ""
 
-#: ui-definitions/settings-image.php:77 ui-definitions/settings-image.php:78
+#: ui-definitions/settings-image.php:80 ui-definitions/settings-image.php:81
 msgid "Image optimization"
 msgstr ""
 
-#: ui-definitions/settings-image.php:79
+#: ui-definitions/settings-image.php:82
 msgid ""
 "Images will be delivered using Cloudinary’s automatic format and quality "
 "algorithms for the best tradeoff between visual quality and file size. Use "
 "Advanced Optimization options to manually tune format and quality."
 msgstr ""
 
-#: ui-definitions/settings-image.php:83
+#: ui-definitions/settings-image.php:86
 msgid "Optimize images on my site."
 msgstr ""
 
-#: ui-definitions/settings-image.php:100
+#: ui-definitions/settings-image.php:103
 msgid "Image format"
 msgstr ""
 
-#: ui-definitions/settings-image.php:101
+#: ui-definitions/settings-image.php:104
 msgid ""
 "The image format to use for delivery. Leave as Auto to automatically "
 "deliver the most optimal format based on the user's browser and device."
 msgstr ""
 
-#: ui-definitions/settings-image.php:107 ui-definitions/settings-image.php:131
-#: ui-definitions/settings-video.php:196 ui-definitions/settings-video.php:215
+#: ui-definitions/settings-image.php:110 ui-definitions/settings-image.php:134
+#: ui-definitions/settings-video.php:199 ui-definitions/settings-video.php:218
 msgid "Not set"
 msgstr ""
 
-#: ui-definitions/settings-image.php:108 ui-definitions/settings-image.php:132
-#: ui-definitions/settings-video.php:197 ui-definitions/settings-video.php:216
+#: ui-definitions/settings-image.php:111 ui-definitions/settings-image.php:135
+#: ui-definitions/settings-video.php:200 ui-definitions/settings-video.php:219
 msgid "Auto"
 msgstr ""
 
-#: ui-definitions/settings-image.php:109
+#: ui-definitions/settings-image.php:112
 msgid "PNG"
 msgstr ""
 
-#: ui-definitions/settings-image.php:110
+#: ui-definitions/settings-image.php:113
 msgid "JPG"
 msgstr ""
 
-#: ui-definitions/settings-image.php:111
+#: ui-definitions/settings-image.php:114
 msgid "GIF"
 msgstr ""
 
-#: ui-definitions/settings-image.php:112
+#: ui-definitions/settings-image.php:115
 msgid "WebP"
 msgstr ""
 
-#: ui-definitions/settings-image.php:123
+#: ui-definitions/settings-image.php:126
 msgid "Image quality"
 msgstr ""
 
-#: ui-definitions/settings-image.php:124
+#: ui-definitions/settings-image.php:127
 msgid ""
 "The compression quality to apply when delivering images. Leave as Auto to "
 "apply an algorithm that finds the best tradeoff between visual quality and "
 "file size."
 msgstr ""
 
-#: ui-definitions/settings-image.php:133 ui-definitions/settings-video.php:217
+#: ui-definitions/settings-image.php:136 ui-definitions/settings-video.php:220
 msgid "Auto best"
 msgstr ""
 
-#: ui-definitions/settings-image.php:134 ui-definitions/settings-video.php:218
+#: ui-definitions/settings-image.php:137 ui-definitions/settings-video.php:221
 msgid "Auto good"
 msgstr ""
 
-#: ui-definitions/settings-image.php:135 ui-definitions/settings-video.php:219
+#: ui-definitions/settings-image.php:138 ui-definitions/settings-video.php:222
 msgid "Auto eco"
 msgstr ""
 
-#: ui-definitions/settings-image.php:136 ui-definitions/settings-video.php:220
+#: ui-definitions/settings-image.php:139 ui-definitions/settings-video.php:223
 msgid "Auto low"
 msgstr ""
 
-#: ui-definitions/settings-image.php:161
+#: ui-definitions/settings-image.php:164
 #. translators: The link to transformation reference.
 msgid ""
 "A set of additional transformations to apply to all images. Specify your "
@@ -1888,34 +1888,34 @@ msgid ""
 "Media Library%4$s."
 msgstr ""
 
-#: ui-definitions/settings-image.php:186 ui-definitions/settings-video.php:272
+#: ui-definitions/settings-image.php:189 ui-definitions/settings-video.php:275
 msgid "What are transformations?"
 msgstr ""
 
-#: ui-definitions/settings-image.php:187 ui-definitions/settings-video.php:273
+#: ui-definitions/settings-image.php:190 ui-definitions/settings-video.php:276
 msgid ""
 "A set of parameters included in a Cloudinary URL to programmatically "
 "transform the visual appearance of the assets on your website."
 msgstr ""
 
-#: ui-definitions/settings-image.php:199 ui-definitions/settings-image.php:200
+#: ui-definitions/settings-image.php:202 ui-definitions/settings-image.php:203
 msgid "SVG Support"
 msgstr ""
 
-#: ui-definitions/settings-image.php:201
+#: ui-definitions/settings-image.php:204
 msgid "Enable Cloudinary's SVG Support."
 msgstr ""
 
-#: ui-definitions/settings-image.php:205
+#: ui-definitions/settings-image.php:208
 msgid "Enable SVG support."
 msgstr ""
 
-#: ui-definitions/settings-image.php:211
+#: ui-definitions/settings-image.php:214
 #: ui-definitions/settings-metaboxes.php:33
 msgid "Crop and Gravity control (beta)"
 msgstr ""
 
-#: ui-definitions/settings-image.php:256
+#: ui-definitions/settings-image.php:260
 #. Translators: The HTML for opening and closing link tags.
 msgid ""
 "Watch free lessons on how to use the Image Global Settings in the "
@@ -2259,19 +2259,19 @@ msgstr ""
 msgid "Video - Global Settings"
 msgstr ""
 
-#: ui-definitions/settings-video.php:40 ui-definitions/settings-video.php:41
+#: ui-definitions/settings-video.php:43 ui-definitions/settings-video.php:44
 msgid "Video delivery"
 msgstr ""
 
-#: ui-definitions/settings-video.php:42
+#: ui-definitions/settings-video.php:45
 msgid "If you turn this setting off, your videos will be delivered from WordPress."
 msgstr ""
 
-#: ui-definitions/settings-video.php:46
+#: ui-definitions/settings-video.php:49
 msgid "Sync and deliver videos from Cloudinary."
 msgstr ""
 
-#: ui-definitions/settings-video.php:57
+#: ui-definitions/settings-video.php:60
 #. translators: %s is a link to the storage settings page.
 msgid ""
 "This setting currently can’t be turned off. Your videos must be delivered "
@@ -2280,27 +2280,27 @@ msgid ""
 "Settings page that will enable storing your assets also in WordPress."
 msgstr ""
 
-#: ui-definitions/settings-video.php:77
+#: ui-definitions/settings-video.php:80
 msgid "Video player"
 msgstr ""
 
-#: ui-definitions/settings-video.php:78
+#: ui-definitions/settings-video.php:81
 msgid "Which video player to use on all videos."
 msgstr ""
 
-#: ui-definitions/settings-video.php:81
+#: ui-definitions/settings-video.php:84
 msgid "WordPress player"
 msgstr ""
 
-#: ui-definitions/settings-video.php:82
+#: ui-definitions/settings-video.php:85
 msgid "Cloudinary player"
 msgstr ""
 
-#: ui-definitions/settings-video.php:92
+#: ui-definitions/settings-video.php:95
 msgid "Adaptive bitrate streaming (beta)"
 msgstr ""
 
-#: ui-definitions/settings-video.php:97
+#: ui-definitions/settings-video.php:100
 #. translators: Placeholders are <a> tags.
 msgid ""
 "Adaptive bitrate streaming is a video delivery technique that adjusts the "
@@ -2308,39 +2308,39 @@ msgid ""
 "CPU capacity.%1$sRead more about Adaptive bitrate streaming%2$s"
 msgstr ""
 
-#: ui-definitions/settings-video.php:107
+#: ui-definitions/settings-video.php:110
 msgid "Streaming protocol"
 msgstr ""
 
-#: ui-definitions/settings-video.php:111
+#: ui-definitions/settings-video.php:114
 msgid "Dynamic adaptive streaming over HTTP (MPEG-DASH)"
 msgstr ""
 
-#: ui-definitions/settings-video.php:112
+#: ui-definitions/settings-video.php:115
 msgid "HTTP live streaming (HLS)"
 msgstr ""
 
-#: ui-definitions/settings-video.php:126
+#: ui-definitions/settings-video.php:129
 msgid "Show controls"
 msgstr ""
 
-#: ui-definitions/settings-video.php:132
+#: ui-definitions/settings-video.php:135
 msgid "Repeat video"
 msgstr ""
 
-#: ui-definitions/settings-video.php:138
+#: ui-definitions/settings-video.php:141
 msgid "Autoplay"
 msgstr ""
 
-#: ui-definitions/settings-video.php:143
+#: ui-definitions/settings-video.php:146
 msgid "Always"
 msgstr ""
 
-#: ui-definitions/settings-video.php:144
+#: ui-definitions/settings-video.php:147
 msgid "On-scroll (autoplay when in view)"
 msgstr ""
 
-#: ui-definitions/settings-video.php:148
+#: ui-definitions/settings-video.php:151
 #. translators: Placeholders are <a> tags.
 msgid ""
 "Please note that when choosing \"always\", the video will autoplay without "
@@ -2348,43 +2348,43 @@ msgid ""
 "browsers.%1$sRead more about muted autoplay%2$s"
 msgstr ""
 
-#: ui-definitions/settings-video.php:166
+#: ui-definitions/settings-video.php:169
 msgid "Video optimization"
 msgstr ""
 
-#: ui-definitions/settings-video.php:167
+#: ui-definitions/settings-video.php:170
 msgid ""
 "Videos will be delivered using Cloudinary’s automatic format and quality "
 "algorithms for the best tradeoff between visual quality and file size. Use "
 "Advanced Optimization options to manually tune format and quality."
 msgstr ""
 
-#: ui-definitions/settings-video.php:171
+#: ui-definitions/settings-video.php:174
 msgid "Optimize videos on my site."
 msgstr ""
 
-#: ui-definitions/settings-video.php:189
+#: ui-definitions/settings-video.php:192
 msgid "Video format"
 msgstr ""
 
-#: ui-definitions/settings-video.php:190
+#: ui-definitions/settings-video.php:193
 msgid ""
 "The video format to use for delivery. Leave as Auto to automatically "
 "deliver the most optimal format based on the user's browser and device."
 msgstr ""
 
-#: ui-definitions/settings-video.php:208
+#: ui-definitions/settings-video.php:211
 msgid "Video quality"
 msgstr ""
 
-#: ui-definitions/settings-video.php:209
+#: ui-definitions/settings-video.php:212
 msgid ""
 "The compression quality to apply when delivering videos. Leave as Auto to "
 "apply an algorithm that finds the best tradeoff between visual quality and "
 "file size."
 msgstr ""
 
-#: ui-definitions/settings-video.php:247
+#: ui-definitions/settings-video.php:250
 #. translators: The link to transformation reference.
 msgid ""
 "A set of additional transformations to apply to all videos. Specify your "
@@ -2394,11 +2394,11 @@ msgid ""
 "Media Library%4$s."
 msgstr ""
 
-#: ui-definitions/settings-video.php:288
+#: ui-definitions/settings-video.php:294
 msgid "Video preview"
 msgstr ""
 
-#: ui-definitions/settings-video.php:303
+#: ui-definitions/settings-video.php:309
 #. Translators: The HTML for opening and closing link tags.
 msgid ""
 "Watch free lessons on how to use the Video Global Settings in the "
