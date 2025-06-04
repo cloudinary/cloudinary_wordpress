@@ -146,16 +146,22 @@ Your site is now setup to start using Cloudinary.
 
 == Changelog ==
 
+= 3.2.8 (04 June 2025) =
+
+Fixes and Improvements:
+
+* Minor bug fixes and improvements
+
 = 3.2.7 (06 May 2025) =
 
 Fixes and Improvements:
 
-* Upgraded the Cloudinary Video Player to v2.3.5.
-* Reduced excessive REST API calls.
-* Fixed a compatibility issue with the Next Bricks page builder.
-* Resolved an `Uncaught DivisionByZeroError` related to breakpoints.
-* Fixed an overlay issue where granular position control on the X and Y axes was not respected.
-* Fixed an error related to `rest_request_before_callbacks`.
+* Upgraded the Cloudinary Video Player to v2.3.5
+* Reduced excessive REST API calls
+* Fixed a compatibility issue with the Next Bricks page builder
+* Resolved an `Uncaught DivisionByZeroError` related to breakpoints
+* Fixed an overlay issue where granular position control on the X and Y axes was not respected
+* Fixed an error related to `rest_request_before_callbacks`
 
 = 3.2.6 (24 March 2025) =
 
