@@ -389,6 +389,10 @@ class Storage implements Notice {
 	 * @param string $public_id     Optional public ID.
 	 */
 	public function size_sync( $attachment_id, $public_id = null ) {
+		if ( empty( $this->media ) ) {
+			$this->setup();
+		}
+
 		if ( is_null( $public_id ) ) {
 			$public_id = $this->media->get_public_id( $attachment_id );
 		}
