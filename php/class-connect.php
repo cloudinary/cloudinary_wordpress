@@ -447,7 +447,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		$return  = array();
 		$history = get_option( self::META_KEYS['history'], array() );
 		$plan    = ! empty( $this->usage['plan'] ) ? $this->usage['plan'] : $this->credentials['cloud_name'];
-		for ( $i = 1; $i <= $days; $i ++ ) {
+		for ( $i = 1; $i <= $days; $i++ ) {
 			$date = date_i18n( 'd-m-Y', strtotime( '- ' . $i . ' days' ) );
 			if ( ! isset( $history[ $plan ][ $date ] ) || is_wp_error( $history[ $plan ][ $date ] ) ) {
 				$history[ $plan ][ $date ] = $this->api->usage( $date );
@@ -696,7 +696,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 * Setup Status cron.
 	 */
 	protected function setup_status_cron() {
-		Cron::register_process( 'check_status', array( $this, 'check_status' ), HOUR_IN_SECONDS );
+		Cron::register_process( 'check_status', array( $this, 'check_status' ), DAY_IN_SECONDS );
 	}
 
 	/**
@@ -705,7 +705,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 * @return void
 	 */
 	protected function setup_rest_api_cron() {
-		Cron::register_process( 'rest_api', array( $this, 'check_rest_api_connectivity' ), HOUR_IN_SECONDS );
+		Cron::register_process( 'rest_api', array( $this, 'check_rest_api_connectivity' ), DAY_IN_SECONDS );
 	}
 
 	/**

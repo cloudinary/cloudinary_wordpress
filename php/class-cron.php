@@ -121,7 +121,11 @@ class Cron {
 					array(
 						'type'    => 'cron',
 						'slug'    => 'tasks',
-						'default' => array(),
+						'default' => array(
+							'update_asset_paths' => 'on',
+							'rest_api'           => 'on',
+							'check_status'       => 'on',
+						),
 						'cron'    => $this,
 					),
 				),
