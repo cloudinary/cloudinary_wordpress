@@ -149,6 +149,7 @@ Your site is now setup to start using Cloudinary.
 = 3.2.9 (24 June 2025) =
 
 Fixes and Improvements:
+
 * Upgraded the Cloudinary Video Player to v3.0.1
 * Improved cronjob stability with a new “enabled by default” check
 * Fixed a relationship table issue affecting the Timber theme
