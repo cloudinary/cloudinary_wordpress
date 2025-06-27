@@ -99,7 +99,7 @@ class Cron {
 	 */
 	public function add_settings( $settings ) {
 
-		$enabled                     = apply_filters( 'cloudinary_feature_cron_manager', false );
+		$enabled                     = apply_filters( 'cloudinary_feature_cron_manager', true );
 		$settings[ self::CRON_SLUG ] = array(
 			'page_title'          => __( 'Cron System', 'cloudinary' ),
 			'requires_connection' => true,
@@ -115,16 +115,16 @@ class Cron {
 					array(
 						'type'    => 'on_off',
 						'title'   => __( 'Enable Cron', 'cloudinary' ),
-						'default' => 'on',
+						'default' => 'off',
 						'slug'    => 'enable_cron',
 					),
 					array(
 						'type'    => 'cron',
 						'slug'    => 'tasks',
 						'default' => array(
-							'update_asset_paths' => 'on',
-							'rest_api'           => 'on',
-							'check_status'       => 'on',
+							'update_asset_paths' => 'off',
+							'rest_api'           => 'off',
+							'check_status'       => 'off',
 						),
 						'cron'    => $this,
 					),
