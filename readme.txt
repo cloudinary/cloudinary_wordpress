@@ -146,6 +146,13 @@ Your site is now setup to start using Cloudinary.
 
 == Changelog ==
 
+= 3.2.11 (30 June 2025) =
+
+Fixes and Improvements:
+
+* Cron jobs now disabled by default to reduce unnecessary requests
+* Updated REST API in FAQ to support enabling/disabling the cron jobs
+
 = 3.2.10 (24 June 2025) =
 
 Fixes and Improvements:

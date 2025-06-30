@@ -446,10 +446,15 @@ $settings = array(
 					'collapsible' => 'closed',
 					'content'     => sprintf(
 						// translators: The HTML markup.
-						__( 'To function correctly, the Cloudinary plugin requires an active WordPress REST API connection. Ensure your WordPress setup, including multisite or headless configurations, has the REST API enabled and active for seamless plugin operation.%1$sFor more information, see %2$sWordPress’s REST API Handbook%3$s.', 'cloudinary' ),
+						__( 'To function correctly, the Cloudinary plugin requires an active WordPress REST API connection. Ensure your WordPress setup, including multisite or headless configurations, has the REST API enabled and active for seamless plugin operation.%1$sFor more information, see %2$sWordPress’s REST API Handbook%3$s.%1$sTo manually verify your REST API connection, you can temporarily enable the %5$sCloudinary Cron%6$s feature from %4$sthe plugin’s Cron admin page%3$s. Once enabled, activate the %8$s task. When the cron runs for the first time, any connectivity issues will trigger an admin notice.%1$s%7$s%5$s Important%6$s: Enabling the Cron feature starts a recurring background process. Unless you’re actively using it for diagnostics or testing, we %5$sstrongly recommend disabling%6$s this feature to avoid generating unnecessary requests or load on your site.', 'cloudinary' ),
 						'<br><br>',
 						'<a href="https://developer.wordpress.org/rest-api/" target="_blank" rel="noopener noreferrer">',
-						'</a>'
+						'</a>',
+						'<a href="' . add_query_arg( array( 'page' => 'cloudinary&section=cron_system' ), admin_url( 'admin.php' ) ) . '">',
+						'<strong>',
+						'</strong>',
+						'<span style="color: #b0b000; font-size: 18px">&#9888;</span>',
+						'<span style="background: #e8e9e8; padding-inline: 2px;">rest_api</span>'
 					),
 				),
 				array(
