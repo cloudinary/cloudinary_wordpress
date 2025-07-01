@@ -41,7 +41,7 @@ const OnOff = {
 			input.addEventListener( 'click', ( ev ) => {
 				const target = ev.target;
 				if ( target.elements ) {
-					this._checkDown( target );
+					this._checkDown( target, true );
 					this._evaluateSize( target );
 				}
 				if ( target.mains ) {
@@ -64,7 +64,7 @@ const OnOff = {
 			input.elements.splice( index, 1 );
 		}
 	},
-	_checkDown( input ) {
+	_checkDown( input, isMainToggleClick = false ) {
 		if ( input.elements ) {
 			input.classList.remove( 'partial' );
 			input.elements.forEach( ( child ) => {
@@ -83,6 +83,10 @@ const OnOff = {
 					this._checkUp( child, input );
 				}
 			} );
+			// Re-evaluate the parent's status only when the main toggle is directly clicked
+			if ( isMainToggleClick ) {
+				this._evaluateCheckStatus( input );
+			}
 		}
 	},
 	_checkUp( input, exclude ) {
