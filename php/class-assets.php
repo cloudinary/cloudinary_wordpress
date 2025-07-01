@@ -440,6 +440,7 @@ class Assets extends Settings_Component {
 
 					// Check and update version if needed.
 					if ( $this->media->get_post_meta( $asset_path->ID, Sync::META_KEYS['version'], true ) !== $version ) {
+						$this->purge_parent( $asset_path->ID );
 						$this->media->update_post_meta( $asset_path->ID, Sync::META_KEYS['version'], $version );
 					}
 				}

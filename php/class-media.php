@@ -7,6 +7,7 @@
 
 namespace Cloudinary;
 
+use Cloudinary\Assets;
 use Cloudinary\Component\Setup;
 use Cloudinary\Connect\Api;
 use Cloudinary\Media\Filter;
@@ -2963,9 +2964,17 @@ class Media extends Settings_Component implements Setup {
 	public function get_cloudinary_version( $attachment_id ) {
 		$version = (int) $this->get_post_meta( $attachment_id, Sync::META_KEYS['version'], true );
 
+		if ( empty( $version ) ) {
+			// This might be also an asset from the hidden post type (Assets::POST_TYPE_SLUG).
+			$attachment = get_post( $attachment_id );
+
+			if ( ! empty( $attachment ) && Assets::POST_TYPE_SLUG === $attachment->post_type && ! empty( $attachment->post_parent ) ) {
+				$version = (int) preg_replace( '/\D/', '', $this->get_post_meta( (int) $attachment->post_parent, Sync::META_KEYS['version'], true ) );
+			}
+		}
+
 		return $version ? $version : 1;
 	}
-
 	/**
 	 * Upgrade media related settings, including global transformations etc.
 	 *
