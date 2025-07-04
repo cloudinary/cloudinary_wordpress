@@ -185,7 +185,6 @@ const CloudinaryLoader = {
 		return width;
 	},
 	scaleSize( image, width, dpr ) {
-
 		const ratio = image.dataset.crop ? parseFloat( image.dataset.crop ) : ( image.originalWidth / image.originalHeight ).toFixed( 2 );
 		const scaledWidth = this.scaleWidth( image, width, ratio );
 		const scaledHeight = Math.round( scaledWidth / ratio );
@@ -195,10 +194,8 @@ const CloudinaryLoader = {
 		if ( image.dataset.transformationCrop ) {
 			newSize.push( image.dataset.transformationCrop );
 		} else if ( ! image.dataset.crop ) {
-			newSize.push( image.dataset.crop ? 'c_fill' : 'c_scale' );
-			if ( image.dataset.crop ) {
-				newSize.push( 'g_auto' );
-			}
+			newSize.push( 'c_fill' );
+			newSize.push( 'g_auto' );
 		}
 
 		newSize.push( 'w_' + scaledWidth );

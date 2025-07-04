@@ -140,13 +140,12 @@ const LazyLoad = {
 		return scaledWidth;
 	},
 	scaleSize( image, dpr ) {
-		const ratio = ( image.originalWidth / image.originalHeight ).toFixed( 3 );
 		const renderedRatio = ( image.width / image.height ).toFixed( 3 );
 		const scaledWidth = this.scaleWidth( image );
 		const newSize = [];
 		if ( image.width !== image.originalWidth ) {
 			// We know it's a different size.
-			newSize.push( ratio === renderedRatio ? 'c_scale' : 'c_fill,g_auto' );
+			newSize.push( 'c_fill,g_auto' );
 		}
 		const scaledHeight = Math.round( scaledWidth / renderedRatio );
 
