@@ -888,7 +888,7 @@ class Media extends Settings_Component implements Setup {
 						'file'           => $size['file'],
 						'width'          => $size['width'],
 						'height'         => $size['height'],
-						'transformation' => 'c_scale',
+						'transformation' => 'c_fill,g_auto',
 					);
 					if ( $cropped ) {
 						// Special thumbnail size.
@@ -999,7 +999,7 @@ class Media extends Settings_Component implements Setup {
 		if ( empty( $transformations[ $key ] ) ) {
 
 			if ( empty( $size['transformation'] ) ) {
-				$size['transformation'] = 'c_scale';
+				$size['transformation'] = 'c_fill,g_auto';
 			}
 			$crops = $this->settings->get_value( 'crop_sizes' );
 			if ( ! empty( $crops[ $size_dim ] ) ) {
