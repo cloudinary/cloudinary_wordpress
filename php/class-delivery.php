@@ -729,13 +729,18 @@ class Delivery implements Setup {
 		 * Filter to provide option to omit prefetch.
 		 *
 		 * @hook   cloudinary_dns_prefetch_types
-		 * 
+		 * @since 3.2.12
+		 * @default array ( 'dns-prefetch', 'preconnect' )
+		 *
+		 * @param $types {array} The types of resource hints to use.
+		 *
+		 * @return {array} The modified resource hints to use.
 		 */
-        $resource_hints = apply_filters( 'cloudinary_dns_prefetch_types', array ( 'dns-prefetch', 'preconnect' ) );
+		$resource_hints = apply_filters( 'cloudinary_dns_prefetch_types', array( 'dns-prefetch', 'preconnect' ) );
 
-        if ( in_array( $relation_type, $resource_hints, true ) {
-            $urls[] = $this->media->base_url;
-        }
+		if ( in_array( $relation_type, $resource_hints, true ) ) {
+			$urls[] = $this->media->base_url;
+		}
 
 		return $urls;
 	}
