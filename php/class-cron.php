@@ -391,16 +391,20 @@ class Cron {
 		$this->init_time = (int) $request->get_param( 'time' );
 		$queue           = $this->locker->get_lock_file( $this->init_time );
 		register_shutdown_function( array( $this, 'cleanup_failed_cron' ) );
-		foreach ( $queue as $name ) {
-			if ( ! isset( $this->processes[ $name ] ) ) {
-				continue;
-			}
-			$process = $this->processes[ $name ];
-			$data    = $process['callback']( $name );
-			// @todo: Log data result.
 
-			$this->unlock_schedule_process( $name );
+		if ( ! empty( $queue ) ) {
+			foreach ( $queue as $name ) {
+				if ( ! isset( $this->processes[ $name ] ) ) {
+					continue;
+				}
+				$process = $this->processes[ $name ];
+				$data    = $process['callback']( $name );
+				// @todo: Log data result.
+
+				$this->unlock_schedule_process( $name );
+			}
 		}
+
 		$this->locker->delete_lock_file( $this->init_time );
 	}
 
