@@ -33,7 +33,13 @@ class Lock_File {
 	 */
 	public function get_lock_file( $file = null ) {
 		$lock_file = $this->get_lock_file_name( $file );
-		$data      = file_get_contents( $lock_file ); // phpcs:ignore WordPressVIPMinimum.Performance.FetchingRemoteData.FileGetContentsUnknown
+
+		if ( ! file_exists( $lock_file ) ) {
+			return '';
+		}
+
+		$data = file_get_contents( $lock_file ); // phpcs:ignore WordPressVIPMinimum.Performance.FetchingRemoteData.FileGetContentsUnknown
+
 		if ( false !== strpos( $data, '[' ) ) {
 			$data = json_decode( $data, true );
 		}
@@ -106,5 +112,4 @@ class Lock_File {
 		$file = $this->get_lock_file_name( $file );
 		wp_delete_file( $file );
 	}
-
 }
