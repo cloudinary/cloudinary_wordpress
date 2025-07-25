@@ -719,7 +719,12 @@ final class Plugin {
 	 * Output script data if set.
 	 */
 	public function print_script_data() {
+		if ( ! isset( $this->settings ) || ! method_exists( $this->settings, 'get_param' ) ) {
+			return;
+		}
+
 		$handles = $this->settings->get_param( '@script' );
+
 		if ( ! empty( $handles ) ) {
 			foreach ( $handles as $handle => $data ) {
 				// We should never be using multiple handles. This is just for cases where data needs to be added where the main script is not loaded.
