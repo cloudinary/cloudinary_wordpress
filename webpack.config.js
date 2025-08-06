@@ -118,6 +118,7 @@ const cldCore = {
 						loader: MiniCssExtractPlugin.loader,
 					},
 					'css-loader',
+					'css-unicode-loader',
 					'sass-loader',
 				],
 			},
