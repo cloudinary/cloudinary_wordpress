@@ -142,7 +142,7 @@ class Delivery implements Setup {
 		add_action( 'before_delete_post', array( $this, 'delete_size_relationship' ) );
 		add_action( 'delete_attachment', array( $this, 'delete_size_relationship' ) );
 		add_action( 'cloudinary_register_sync_types', array( $this, 'register_sync_type' ), 30 );
-		add_action( 'rest_request_before_callbacks', array( $this, 'maybe_unset_attributes' ), 10, 3 );
+		add_filter( 'rest_request_before_callbacks', array( $this, 'maybe_unset_attributes' ), 10, 3 );
 		add_action(
 			'the_post',
 			function ( $post ) {
@@ -166,7 +166,7 @@ class Delivery implements Setup {
 	 * @param WP_REST_Server       $handler  The request handler.
 	 * @param WP_REST_Request|null $request The request object, if available.
 	 *
-	 * @return void
+	 * @return WP_REST_Response
 	 */
 	public function maybe_unset_attributes( $response, $handler, $request ) {
 		$route = $request->get_route();
@@ -180,6 +180,8 @@ class Delivery implements Setup {
 		) {
 			add_filter( 'cloudinary_skip_parse_element', '__return_true' );
 		}
+
+		return $response;
 	}
 
 	/**
@@ -741,7 +743,20 @@ class Delivery implements Setup {
 	 */
 	public function dns_prefetch( $urls, $relation_type ) {
 
-		if ( 'dns-prefetch' === $relation_type || 'preconnect' === $relation_type ) {
+		/**
+		 * Filter to provide option to omit prefetch.
+		 *
+		 * @hook   cloudinary_dns_prefetch_types
+		 * @since 3.2.12
+		 * @default array ( 'dns-prefetch', 'preconnect' )
+		 *
+		 * @param $types {array} The types of resource hints to use.
+		 *
+		 * @return {array} The modified resource hints to use.
+		 */
+		$resource_hints = apply_filters( 'cloudinary_dns_prefetch_types', array( 'dns-prefetch', 'preconnect' ) );
+
+		if ( in_array( $relation_type, $resource_hints, true ) ) {
 			$urls[] = $this->media->base_url;
 		}
 
@@ -897,6 +912,7 @@ class Delivery implements Setup {
 		$dirs    = wp_get_upload_dir();
 		$baseurl = Utils::clean_url( $dirs['baseurl'] );
 		$search  = array();
+
 		foreach ( $this->unknown as $url ) {
 			$url      = ltrim( str_replace( $baseurl, '', $url ), '/' );
 			$search[] = $url;
@@ -914,6 +930,7 @@ class Delivery implements Setup {
 		$key       = md5( $sql );
 		$cached    = wp_cache_get( $key );
 		$auto_sync = $this->sync->is_auto_sync_enabled();
+
 		if ( false === $cached ) {
 			$cached  = array();
 			$results = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared
@@ -931,12 +948,14 @@ class Delivery implements Setup {
 					 * @return {int}
 					 */
 					$post_id = apply_filters( 'cloudinary_contextualized_post_id', $result->post_id );
+
 					if ( ! $this->is_deliverable( $post_id ) ) {
 						continue;
 					}
 					// If we are here, it means that an attachment in the media library doesn't have a delivery for the url.
 					// Reset the signature for delivery and add to sync, to update it.
 					$this->create_delivery( $post_id );
+
 					if ( true === $auto_sync ) {
 						$this->sync->add_to_sync( $post_id );
 					}
@@ -1391,6 +1410,12 @@ class Delivery implements Setup {
 
 		// Setup new tag.
 		$replace = HTML::build_tag( $tag_element['tag'], $tag_element['atts'] );
+
+		// If the original tag used single quotes, we need to use them in the new tag.
+		$single_quotes = (bool) preg_match( '/=\s*\'/', $tag_element['original'] );
+		if ( $single_quotes ) {
+			$replace = str_replace( '"', "'", $replace );
+		}
 
 		/**
 		 * Filter the new built tag element.
@@ -1928,7 +1953,70 @@ class Delivery implements Setup {
 			$this->set_usability( $result, $auto_sync );
 		}
 		// Set unknowns.
-		$this->unknown = array_diff( $urls, array_keys( $this->known ) );
+		$this->unknown = $this->filter_unknown_urls( $urls );
+	}
+
+	/**
+	 * Filter URLs to determine which are truly unknown, considering image size variations.
+	 *
+	 * This method treats image size variations (e.g., example-300x224.png) as "known"
+	 * if their base image (e.g., example.png) exists in the known URLs, while still
+	 * catching genuinely unknown URLs.
+	 *
+	 * @param array $urls All URLs found in content.
+	 *
+	 * @return array Array of genuinely unknown URLs.
+	 */
+	protected function filter_unknown_urls( $urls ) {
+		$known_keys = array_keys( $this->known );
+
+		if ( empty( $known_keys ) ) {
+			return $urls;
+		}
+
+		$known_lookup = array_flip( $known_keys );
+		$potential_unknown = array_diff( $urls, $known_keys );
+
+		if ( empty( $potential_unknown ) ) {
+			return array();
+		}
+
+		$truly_unknown = array();
+
+		foreach ( $potential_unknown as $url ) {
+			// Check if this might be a sized variation of a known image.
+			$base_url = $this->maybe_unsize_url( $url );
+
+			// If base image is known, skip this variation.
+			if ( isset( $known_lookup[ $base_url ] ) ) {
+				continue;
+			}
+
+			// Check scaled version if base wasn't found and URL was actually "unsized".
+			if ( $base_url !== $url ) {
+				$scaled_url = Utils::make_scaled_url( $base_url );
+				if ( isset( $known_lookup[ $scaled_url ] ) ) {
+					continue; // Scaled version is known, skip this variation.
+				}
+			}
+
+			// This URL is genuinely unknown.
+			$truly_unknown[] = $url;
+		}
+
+		/**
+		 * Filter the list of truly unknown URLs after filtering out image size variations.
+		 *
+		 * @hook   cloudinary_filter_unknown_urls
+		 * @since  3.2.12
+		 *
+		 * @param array $truly_unknown The filtered list of unknown URLs.
+		 * @param array $urls          The original list of all URLs.
+		 * @param array $known_keys    The list of known URL keys.
+		 *
+		 * @return array The filtered list of unknown URLs.
+		 */
+		return apply_filters( 'cloudinary_filter_unknown_urls', $truly_unknown, $urls, $known_keys );
 	}
 
 	/**

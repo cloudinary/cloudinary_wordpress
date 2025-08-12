@@ -129,6 +129,8 @@ class Api {
 			'f'   => 'fetch_format',
 			'q'   => 'quality',
 			'if'  => 'if',
+			'y' => 'y_axis',
+			'x' => 'x_axis',
 		),
 	);
 

@@ -10,6 +10,7 @@ namespace Cloudinary;
 use Cloudinary\Assets\Rest_Assets;
 use Cloudinary\Connect\Api;
 use Cloudinary\Sync;
+use Cloudinary\Cron;
 use Cloudinary\Traits\Params_Trait;
 use Cloudinary\Utils;
 use WP_Error;
@@ -155,7 +156,7 @@ class Assets extends Settings_Component {
 		add_filter( 'cloudinary_asset_state', array( $this, 'filter_asset_state' ), 10, 2 );
 		add_filter( 'cloudinary_set_usable_asset', array( $this, 'check_usable_asset' ) );
 		// Actions.
-		add_action( 'cloudinary_init_settings', array( $this, 'setup' ) );
+		add_action( 'cloudinary_ready', array( $this, 'setup' ) );
 		add_action( 'cloudinary_thread_queue_details_query', array( $this, 'connect_post_type' ) );
 		add_action( 'cloudinary_build_queue_query', array( $this, 'connect_post_type' ) );
 		add_action( 'cloudinary_string_replace', array( $this, 'add_url_replacements' ), 20 );
@@ -380,27 +381,96 @@ class Assets extends Settings_Component {
 	}
 
 	/**
-	 * Register an asset path.
+	 * Retrieve the assets settings.
 	 *
-	 * @param string $path    The path/URL to register.
-	 * @param string $version The version.
+	 * This method fetches the assets settings from the configuration.
+	 * If the assets settings are empty or the settings are locked, it returns an empty array.
+	 *
+	 * @return array The assets settings array.
 	 */
-	public static function register_asset_path( $path, $version ) {
-		$assets = self::$instance;
-		if ( $assets && ! $assets->is_locked() ) {
-			$asset_path = $assets->get_asset_parent( $path );
-			if ( null === $asset_path ) {
-				$asset_parent_id = $assets->create_asset_parent( $path, $version );
-				if ( is_wp_error( $asset_parent_id ) ) {
-					return; // Bail.
+	public function get_assets_settings() {
+		$assets = $this->settings->get_setting( 'assets' )->get_settings();
+
+		if ( empty( $assets ) || $this->is_locked() ) {
+			return array();
+		}
+
+		return $assets;
+	}
+
+	/**
+	 * Update asset paths.
+	 *
+	 * @return void
+	 */
+	public function update_asset_paths() {
+		$assets = $this->get_assets_settings();
+
+		if ( empty( $assets ) ) {
+			return;
+		}
+
+		foreach ( $assets as $asset ) {
+			$paths = $asset->get_setting( 'paths' );
+			foreach ( $paths->get_settings() as $path ) {
+				if ( 'on' === $path->get_value() ) {
+					$conf    = $path->get_params();
+					$path    = urldecode( trailingslashit( $conf['url'] ) );
+					$version = $conf['version'];
+
+					$asset_path = $this->get_asset_parent( $path );
+
+					if ( null === $asset_path ) {
+						$asset_parent_id = $this->create_asset_parent( $path, $version );
+
+						if ( is_wp_error( $asset_parent_id ) ) {
+							return; // Bail.
+						}
+
+						$asset_path = get_post( $asset_parent_id );
+					}
+
+					// Check and update version if needed.
+					if ( $this->media->get_post_meta( $asset_path->ID, Sync::META_KEYS['version'], true ) !== $version ) {
+						$this->media->update_post_meta( $asset_path->ID, Sync::META_KEYS['version'], $version );
+						$this->sync_parent( $asset_path->ID );
+					}
 				}
-				$asset_path = get_post( $asset_parent_id );
 			}
-			// Check and update version if needed.
-			if ( $assets->media->get_post_meta( $asset_path->ID, Sync::META_KEYS['version'], true ) !== $version ) {
-				$assets->media->update_post_meta( $asset_path->ID, Sync::META_KEYS['version'], $version );
+		}
+	}
+
+	/**
+	 * Activate parent assets based on the current settings and purges unused parent assets.
+	 *
+	 * @return void
+	 */
+	protected function activate_parents() {
+		$assets = $this->get_assets_settings();
+
+		if ( empty( $assets ) ) {
+			return;
+		}
+
+		foreach ( $assets as $asset ) {
+			$paths = $asset->get_setting( 'paths' );
+
+			foreach ( $paths->get_settings() as $path ) {
+				if ( 'on' === $path->get_value() ) {
+					$conf = $path->get_params();
+					self::activate_parent( urldecode( trailingslashit( $conf['url'] ) ) );
+				}
 			}
-			$assets->activate_parent( $path );
+		}
+
+		// Get the disabled items.
+		foreach ( $this->asset_parents as $url => $parent ) {
+			if ( isset( $this->active_parents[ $url ] ) ) {
+				continue;
+			}
+			$this->purge_parent( $parent->ID );
+			// Remove parent.
+			wp_delete_post( $parent->ID );
 		}
 	}
 
@@ -461,11 +531,12 @@ class Assets extends Settings_Component {
 	}
 
 	/**
-	 * Purge a single asset parent.
+	 * Process all child assets of a parent with a given callback.
 	 *
-	 * @param int $parent_id The Asset parent to purge.
+	 * @param int      $parent_id The Asset parent to process.
+	 * @param callable $callback  The callback function to execute on each post.
 	 */
-	public function purge_parent( $parent_id ) {
+	private function process_parent_assets( $parent_id, $callback ) {
 		$query_args     = array(
 			'post_type'              => self::POST_TYPE_SLUG,
 			'posts_per_page'         => 100,
@@ -477,11 +548,13 @@ class Assets extends Settings_Component {
 		);
 		$query          = new \WP_Query( $query_args );
 		$previous_total = $query->found_posts;
+
 		do {
 			$this->lock_assets();
 			$posts = $query->get_posts();
+
 			foreach ( $posts as $post_id ) {
-				wp_delete_post( $post_id );
+				call_user_func( $callback, $post_id );
 			}
 
 			$query_args = $query->query_vars;
@@ -490,6 +563,40 @@ class Assets extends Settings_Component {
 				break;
 			}
 		} while ( $query->have_posts() );
+	}
+
+	/**
+	 * Sync the assets of a parent.
+	 *
+	 * @param int $parent_id The Asset parent to sync.
+	 */
+	public function sync_parent( $parent_id ) {
+		$this->process_parent_assets(
+			$parent_id,
+			function ( $post_id ) {
+				if ( empty( $this->media->sync ) || ! $this->media->sync->can_sync( $post_id ) ) {
+					return;
+				}
+
+				$this->media->sync->set_signature_item( $post_id, 'file', '' );
+				$this->media->sync->set_signature_item( $post_id, 'cld_asset' );
+				$this->media->sync->add_to_sync( $post_id );
+			}
+		);
+	}
+
+	/**
+	 * Purge a single asset parent.
+	 *
+	 * @param int $parent_id The Asset parent to purge.
+	 */
+	public function purge_parent( $parent_id ) {
+		$this->process_parent_assets(
+			$parent_id,
+			function ( $post_id ) {
+				wp_delete_post( $post_id );
+			}
+		);
 	}
 
 	/**
@@ -1139,30 +1246,12 @@ class Assets extends Settings_Component {
 	 * Setup the class.
 	 */
 	public function setup() {
-
-		$assets = $this->settings->get_setting( 'assets' )->get_settings();
-		$full   = 'on' === $this->settings->get_value( 'cache.enable' );
-		foreach ( $assets as $asset ) {
-
-			$paths = $asset->get_setting( 'paths' );
-
-			foreach ( $paths->get_settings() as $path ) {
-				if ( 'on' === $path->get_value() ) {
-					$conf = $path->get_params();
-					self::register_asset_path( urldecode( trailingslashit( $conf['url'] ) ), $conf['version'] );
-				}
-			}
+		if ( is_user_logged_in() && is_admin() && ! Utils::is_rest_api() ) {
+			$this->update_asset_paths();
 		}
 
-		// Get the disabled items.
-		foreach ( $this->asset_parents as $url => $parent ) {
-			if ( isset( $this->active_parents[ $url ] ) ) {
-				continue;
-			}
-			$this->purge_parent( $parent->ID );
-			// Remove parent.
-			wp_delete_post( $parent->ID );
-		}
+		Cron::register_process( 'update_asset_paths', array( $this, 'update_asset_paths' ), DAY_IN_SECONDS );
+		$this->activate_parents();
 	}
 
 	/**

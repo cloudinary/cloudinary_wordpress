@@ -118,6 +118,19 @@ class Relationship {
 	}
 
 	/**
+	 * Check the existence of a relationship data value.
+	 *
+	 * @param string $key The key.
+	 *
+	 * @return bool
+	 */
+	public function __isset( $key ) {
+		$data_cache = $this->get_data();
+
+		return isset( $data_cache[ $key ] );
+	}
+
+	/**
 	 * Set the save on shutdown flag.
 	 */
 	public function save() {

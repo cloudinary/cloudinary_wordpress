@@ -34,6 +34,9 @@ $settings = array(
 			array(
 				'type'   => 'column',
 				'tab_id' => 'settings',
+				'class'  => array(
+					'column-min-w-50',
+				),
 				array(
 					'type'               => 'on_off',
 					'slug'               => 'video_delivery',
@@ -280,6 +283,9 @@ $settings = array(
 			array(
 				'type'      => 'column',
 				'tab_id'    => 'preview',
+				'class'     => array(
+					'column-min-w-50',
+				),
 				'condition' => array(
 					'video_delivery' => true,
 				),

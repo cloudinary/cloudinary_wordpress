@@ -99,7 +99,7 @@ class Cron {
 	 */
 	public function add_settings( $settings ) {
 
-		$enabled                     = apply_filters( 'cloudinary_feature_cron_manager', false );
+		$enabled                     = apply_filters( 'cloudinary_feature_cron_manager', true );
 		$settings[ self::CRON_SLUG ] = array(
 			'page_title'          => __( 'Cron System', 'cloudinary' ),
 			'requires_connection' => true,
@@ -115,13 +115,17 @@ class Cron {
 					array(
 						'type'    => 'on_off',
 						'title'   => __( 'Enable Cron', 'cloudinary' ),
-						'default' => 'on',
+						'default' => 'off',
 						'slug'    => 'enable_cron',
 					),
 					array(
 						'type'    => 'cron',
 						'slug'    => 'tasks',
-						'default' => array(),
+						'default' => array(
+							'update_asset_paths' => 'off',
+							'rest_api'           => 'off',
+							'check_status'       => 'off',
+						),
 						'cron'    => $this,
 					),
 				),
@@ -387,16 +391,20 @@ class Cron {
 		$this->init_time = (int) $request->get_param( 'time' );
 		$queue           = $this->locker->get_lock_file( $this->init_time );
 		register_shutdown_function( array( $this, 'cleanup_failed_cron' ) );
-		foreach ( $queue as $name ) {
-			if ( ! isset( $this->processes[ $name ] ) ) {
-				continue;
-			}
-			$process = $this->processes[ $name ];
-			$data    = $process['callback']( $name );
-			// @todo: Log data result.
 
-			$this->unlock_schedule_process( $name );
+		if ( ! empty( $queue ) ) {
+			foreach ( $queue as $name ) {
+				if ( ! isset( $this->processes[ $name ] ) ) {
+					continue;
+				}
+				$process = $this->processes[ $name ];
+				$data    = $process['callback']( $name );
+				// @todo: Log data result.
+
+				$this->unlock_schedule_process( $name );
+			}
 		}
+
 		$this->locker->delete_lock_file( $this->init_time );
 	}
 

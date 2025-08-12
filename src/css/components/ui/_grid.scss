@@ -16,10 +16,14 @@
 }
 
 &-column {
-
 	width: 100%;
 	box-sizing: border-box;
 	padding: 0 0 0 $size-padding-column;
+
+	&.column-min-w-50,
+	&.column-video_settings {
+		min-width: 50%;
+	}
 
 	@media only screen and (min-width: $size-small) {
 

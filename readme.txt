@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: image-optimizer, core-web-vitals, video, resize, performance
 Requires at least: 4.7
-Tested up to: 6.7.2
+Tested up to: 6.8.2
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -145,6 +145,52 @@ Your site is now setup to start using Cloudinary.
 
 
 == Changelog ==
+
+= 3.2.12 (12 August 2025) =
+
+Fixes and Improvements:
+
+* Added a filter to remove dns-prefetch or preconnect for improved resource loading control
+* Reduced SQL queries that were causing performance spikes, resulting in better overall performance
+* Fixed assets to sync automatically upon plugin updates
+
+= 3.2.11 (30 June 2025) =
+
+Fixes and Improvements:
+
+* Cron jobs now disabled by default to reduce unnecessary requests
+* Updated REST API in FAQ to support enabling/disabling the cron jobs
+
+= 3.2.10 (24 June 2025) =
+
+Fixes and Improvements:
+
+* Upgraded the Cloudinary Video Player to v3.0.2
+
+= 3.2.9 (24 June 2025) =
+
+Fixes and Improvements:
+
+* Upgraded the Cloudinary Video Player to v3.0.1
+* Improved cronjob stability with a new “enabled by default” check
+* Fixed a relationship table issue affecting the Timber theme
+
+= 3.2.8 (04 June 2025) =
+
+Fixes and Improvements:
+
+* Minor bug fixes and improvements
+
+= 3.2.7 (06 May 2025) =
+
+Fixes and Improvements:
+
+* Upgraded the Cloudinary Video Player to v2.3.5
+* Reduced excessive REST API calls
+* Fixed a compatibility issue with the Next Bricks page builder
+* Resolved an `Uncaught DivisionByZeroError` related to breakpoints
+* Fixed an overlay issue where granular position control on the X and Y axes was not respected
+* Fixed an error related to `rest_request_before_callbacks`
 
 = 3.2.6 (24 March 2025) =
 

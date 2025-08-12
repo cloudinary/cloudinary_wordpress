@@ -34,6 +34,9 @@ $settings = array(
 			array(
 				'type'   => 'column',
 				'tab_id' => 'settings',
+				'class'  => array(
+					'column-min-w-50',
+				),
 				array(
 					'type'               => 'on_off',
 					'slug'               => 'image_delivery',
@@ -231,6 +234,7 @@ $settings = array(
 				'tab_id'    => 'preview',
 				'class'     => array(
 					'cld-ui-preview',
+					'column-min-w-50',
 				),
 				'condition' => array(
 					'image_delivery' => true,
