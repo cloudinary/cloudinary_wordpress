@@ -242,9 +242,12 @@ class Video {
 		if ( 'core/video' === $source_block['blockName'] ) {
 			return true;
 		}
-		foreach ( $source_block['innerBlocks'] as $block ) {
-			if ( $this->has_video_block( $block ) ) {
-				return true;
+
+		if ( ! empty( $source_block['innerBlocks'] ) ) {
+			foreach ( $source_block['innerBlocks'] as $block ) {
+				if ( $this->has_video_block( $block ) ) {
+					return true;
+				}
 			}
 		}
 

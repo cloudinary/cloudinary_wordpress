@@ -156,7 +156,7 @@ class Assets extends Settings_Component {
 		add_filter( 'cloudinary_asset_state', array( $this, 'filter_asset_state' ), 10, 2 );
 		add_filter( 'cloudinary_set_usable_asset', array( $this, 'check_usable_asset' ) );
 		// Actions.
-		add_action( 'cloudinary_init_settings', array( $this, 'setup' ) );
+		add_action( 'cloudinary_ready', array( $this, 'setup' ) );
 		add_action( 'cloudinary_thread_queue_details_query', array( $this, 'connect_post_type' ) );
 		add_action( 'cloudinary_build_queue_query', array( $this, 'connect_post_type' ) );
 		add_action( 'cloudinary_string_replace', array( $this, 'add_url_replacements' ), 20 );
@@ -441,6 +441,7 @@ class Assets extends Settings_Component {
 					// Check and update version if needed.
 					if ( $this->media->get_post_meta( $asset_path->ID, Sync::META_KEYS['version'], true ) !== $version ) {
 						$this->media->update_post_meta( $asset_path->ID, Sync::META_KEYS['version'], $version );
+						$this->sync_parent( $asset_path->ID );
 					}
 				}
 			}
@@ -538,11 +539,12 @@ class Assets extends Settings_Component {
 	}
 
 	/**
-	 * Purge a single asset parent.
+	 * Process all child assets of a parent with a given callback.
 	 *
-	 * @param int $parent_id The Asset parent to purge.
+	 * @param int      $parent_id The Asset parent to process.
+	 * @param callable $callback  The callback function to execute on each post.
 	 */
-	public function purge_parent( $parent_id ) {
+	private function process_parent_assets( $parent_id, $callback ) {
 		$query_args     = array(
 			'post_type'              => self::POST_TYPE_SLUG,
 			'posts_per_page'         => 100,
@@ -554,11 +556,13 @@ class Assets extends Settings_Component {
 		);
 		$query          = new \WP_Query( $query_args );
 		$previous_total = $query->found_posts;
+
 		do {
 			$this->lock_assets();
 			$posts = $query->get_posts();
+
 			foreach ( $posts as $post_id ) {
-				wp_delete_post( $post_id );
+				call_user_func( $callback, $post_id );
 			}
 
 			$query_args = $query->query_vars;
@@ -567,6 +571,40 @@ class Assets extends Settings_Component {
 				break;
 			}
 		} while ( $query->have_posts() );
+	}
+
+	/**
+	 * Sync the assets of a parent.
+	 *
+	 * @param int $parent_id The Asset parent to sync.
+	 */
+	public function sync_parent( $parent_id ) {
+		$this->process_parent_assets(
+			$parent_id,
+			function ( $post_id ) {
+				if ( empty( $this->media->sync ) || ! $this->media->sync->can_sync( $post_id ) ) {
+					return;
+				}
+
+				$this->media->sync->set_signature_item( $post_id, 'file', '' );
+				$this->media->sync->set_signature_item( $post_id, 'cld_asset' );
+				$this->media->sync->add_to_sync( $post_id );
+			}
+		);
+	}
+
+	/**
+	 * Purge a single asset parent.
+	 *
+	 * @param int $parent_id The Asset parent to purge.
+	 */
+	public function purge_parent( $parent_id ) {
+		$this->process_parent_assets(
+			$parent_id,
+			function ( $post_id ) {
+				wp_delete_post( $post_id );
+			}
+		);
 	}
 
 	/**

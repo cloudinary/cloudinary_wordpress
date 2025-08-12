@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: image-optimizer, core-web-vitals, video, resize, performance
 Requires at least: 4.7
-Tested up to: 6.8.1
+Tested up to: 6.8.2
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -145,6 +145,14 @@ Your site is now setup to start using Cloudinary.
 
 
 == Changelog ==
+
+= 3.2.12 (12 August 2025) =
+
+Fixes and Improvements:
+
+* Added a filter to remove dns-prefetch or preconnect for improved resource loading control
+* Reduced SQL queries that were causing performance spikes, resulting in better overall performance
+* Fixed assets to sync automatically upon plugin updates
 
 = 3.2.11 (30 June 2025) =
 

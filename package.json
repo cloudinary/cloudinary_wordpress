@@ -84,6 +84,7 @@
     "cross-env": "^7.0.2",
     "css-loader": "^5.0.1",
     "css-minimizer-webpack-plugin": "^4.2.2",
+    "css-unicode-loader": "^1.0.3",
     "cssnano": "^5.0.2",
     "dot-object": "^2.1.4",
     "dotenv": "^8.2.0",
@@ -143,5 +144,5 @@
     "webpack-cli": "^4.2.0",
     "webpackbar": "^5.0.2"
   },
-  "version": "3.2.11"
+  "version": "3.2.12"
 }
