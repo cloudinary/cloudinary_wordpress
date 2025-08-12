@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Action: cloudinary_id - Cloudinary Docs</title>
+	<title>Filter: cloudinary_dns_prefetch_types - Cloudinary Docs</title>
 
 	<script src="scripts/prettify/prettify.js"></script>
 	<script src="scripts/prettify/lang-css.js"></script>
@@ -22,7 +22,7 @@
 <div id="main">
 
 	
-	<h1 class="page-title">Action: cloudinary_id</h1>
+	<h1 class="page-title">Filter: cloudinary_dns_prefetch_types</h1>
 	
 
 	
@@ -44,14 +44,14 @@
 
     
 
-    <h4 class="name" id="cloudinary_id">do_action( 'cloudinary_id', <span class="signature">$cloudinary_id, $attachment_id )</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="cloudinary_dns_prefetch_types">apply_filters( 'cloudinary_dns_prefetch_types', <span class="signature">$types )</span><span class="type-signature"> &rarr; {array}</span></h4>
 
     
 
 
 
 <div class="description">
-    Action the Cloudinary ID to allow extending it's availability.
+    Filter to provide option to omit prefetch.
 </div>
 
 
@@ -85,16 +85,13 @@
 
         <tr>
             
-                <td class="name"><code>$cloudinary_id</code></td>
+                <td class="name"><code>$types</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">string</span>
-|
-
-<span class="param-type">bool</span>
+<span class="param-type">array</span>
 
 
             
@@ -104,30 +101,7 @@
 
             
 
-            <td class="description last">The public ID from Cloudinary, or false if not found.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>$attachment_id</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">int</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">The id of the asset.</td>
+            <td class="description last">The types of resource hints to use.</td>
         </tr>
 
     
@@ -145,7 +119,7 @@
 
     
     <dt class="tag-since">Since:</dt>
-    <dd class="tag-since"><ul class="dummy"><li>2.1.9</li></ul></dd>
+    <dd class="tag-since"><ul class="dummy"><li>3.2.12</li></ul></dd>
     
 
     
@@ -166,12 +140,17 @@
 
     
 
+    
+    <dt class="tag-default">Default Value:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>array ( 'dns-prefetch', 'preconnect' )</li>
+        </ul></dd>
     
 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="php_class-media.php.html">php/class-media.php</a>, <a href="php_class-media.php.html#line1793">line 1793</a>
+        <a href="php_class-delivery.php.html">php/class-delivery.php</a>, <a href="php_class-delivery.php.html#line746">line 746</a>
     </li></ul></dd>
     
 
@@ -194,6 +173,28 @@
 
 
 
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    The modified resource hints to use.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">array</span>
+
+
+    </dd>
+</dl>
+
+    
 
 
 
