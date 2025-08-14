@@ -258,8 +258,8 @@ class Rest_Assets {
 		$state = $request['state'];
 		foreach ( $ids as $id ) {
 			$where = array(
-				'post_id'    => $id,
-				'post_state' => 'asset',
+				'post_id'   => $id,
+				'sync_type' => 'asset',
 			);
 			if ( 'delete' === $state ) {
 				$data = array(
