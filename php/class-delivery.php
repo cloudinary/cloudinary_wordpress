@@ -387,6 +387,11 @@ class Delivery implements Setup {
 		if ( $is ) {
 			$meta = wp_get_attachment_metadata( $attachment_id, true );
 			$is   = ! empty( $meta['width'] ) && ! empty( $meta['height'] );
+
+			// Webm audio files don't have width and height.
+			if ( ! $is && ! empty( $meta['mime_type'] ) && 'audio/webm' === $meta['mime_type'] ) {
+				$is = true;
+			}
 		}
 
 		if ( ! $is ) {
