@@ -1478,6 +1478,12 @@ class Delivery implements Setup {
 		// Break element up.
 		$attributes         = shortcode_parse_atts( $element );
 		$tag_element['tag'] = array_shift( $attributes );
+
+		// Skip audio source tags.
+		if ( ! empty( $attributes['type'] ) && 0 === strpos( $attributes['type'], 'audio/' ) && 'source' === $tag_element['tag'] ) {
+			return null;
+		}
+
 		// Context Switch Check.
 		if ( 'article' === $tag_element['tag'] ) {
 			if ( ! empty( $attributes['id'] ) && false !== strpos( $attributes['id'], 'post-' ) ) {
