@@ -317,4 +317,13 @@ $settings = array(
 	),
 );
 
+/**
+ * Filter the Cloudinary global transformations tab for video.
+ *
+ * @hook cloudinary_admin_video_settings
+ *
+ * @param $settings {array} The global transformations settings.
+ *
+ * @return {array}
+ */
 return apply_filters( 'cloudinary_admin_video_settings', $settings );

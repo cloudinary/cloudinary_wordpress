@@ -142,7 +142,12 @@ class Gallery extends Settings_Component {
 		/**
 		 * Filter the gallery HTML container.
 		 *
-		 * @param string $selector The target HTML selector.
+		 * @hook    cloudinary_gallery_html_container
+		 * @default ''
+		 *
+		 * @param $selector {string} The target HTML selector.
+		 *
+		 * @return {string}
 		 */
 		$config['container'] = apply_filters( 'cloudinary_gallery_html_container', '' );
 
@@ -160,7 +165,11 @@ class Gallery extends Settings_Component {
 		/**
 		 * Filter the gallery configuration.
 		 *
-		 * @param array $config The current gallery config.
+		 * @hook cloudinary_gallery_config
+		 *
+		 * @param $config {array} The current gallery config.
+		 *
+		 * @return {array}
 		 */
 		$config = apply_filters( 'cloudinary_gallery_config', $config );
 

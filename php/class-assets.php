@@ -211,8 +211,6 @@ class Assets extends Settings_Component {
 	/**
 	 * Get the local url for an asset.
 	 *
-	 * @hook cloudinary_local_url
-	 *
 	 * @param string|false $url      The url to filter.
 	 * @param int          $asset_id The asset ID.
 	 *
@@ -257,8 +255,6 @@ class Assets extends Settings_Component {
 	/**
 	 * Sets the autosync to work on cloudinary_assets even when the autosync is disabled.
 	 *
-	 * @hook cloudinary_can_sync_asset
-	 *
 	 * @param bool $can      The can sync check value.
 	 * @param int  $asset_id The asset ID.
 	 *
@@ -291,8 +287,6 @@ class Assets extends Settings_Component {
 
 	/**
 	 * Filter out sizes for assets.
-	 *
-	 * @hook intermediate_image_sizes_advanced
 	 *
 	 * @param array    $new_sizes     The sizes to remove.
 	 * @param array    $image_meta    The image meta.
@@ -348,8 +342,6 @@ class Assets extends Settings_Component {
 
 	/**
 	 * Set urls to be replaced.
-	 *
-	 * @hook cloudinary_string_replace
 	 */
 	public function add_url_replacements() {
 		// Due to the output buffers, this can be called multiple times.
@@ -778,8 +770,6 @@ class Assets extends Settings_Component {
 	/**
 	 * Register our sync type.
 	 *
-	 * @hook  cloudinary_sync_base_struct
-	 *
 	 * @param array $structs The structure of all sync types.
 	 *
 	 * @return array
@@ -944,8 +934,6 @@ class Assets extends Settings_Component {
 	/**
 	 * Check if the non-local URL should be added as an asset.
 	 *
-	 * @hook cloudinary_is_content_dir
-	 *
 	 * @param bool   $is_local The is_local flag.
 	 * @param string $url      The URL to check.
 	 *
@@ -1032,8 +1020,6 @@ class Assets extends Settings_Component {
 
 	/**
 	 * Check to see if the post is a media item.
-	 *
-	 * @hook cloudinary_is_media
 	 *
 	 * @param bool $is_media      The is_media flag.
 	 * @param int  $attachment_id The attachment ID.
@@ -1258,8 +1244,6 @@ class Assets extends Settings_Component {
 
 	/**
 	 * Setup the class.
-	 *
-	 * @hook cloudinary_init_settings
 	 */
 	public function setup() {
 		if ( is_user_logged_in() && is_admin() && ! Utils::is_rest_api() ) {
