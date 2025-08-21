@@ -51,7 +51,7 @@ class Sync implements Setup, Assets {
 	 *
 	 * @var array
 	 */
-	protected $sync_types;
+	protected $sync_types = array();
 
 	/**
 	 * Holds a list of unsynced images to push on end.
