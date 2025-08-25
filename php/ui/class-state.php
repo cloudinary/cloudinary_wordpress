@@ -61,7 +61,7 @@ class State {
 	 *
 	 * @param Plugin $plugin Instance of the plugin.
 	 */
-	public function __construct( Plugin $plugin ) {
+	public function __construct( Plugin $plugin ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		$this->plugin  = get_plugin_instance();
 		$this->user_id = get_current_user_id();
 
@@ -158,7 +158,7 @@ class State {
 	 *
 	 * @return mixed
 	 */
-	public function get_state( $key, $default = null ) {
+	public function get_state( $key, $default = null ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound
 
 		// Add default if not set yet.
 		if ( empty( $this->state[ $key ] ) ) {

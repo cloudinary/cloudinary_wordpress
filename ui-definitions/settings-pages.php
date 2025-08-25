@@ -283,8 +283,8 @@ $settings = array(
 					),
 				),
 				array(
-					'type'                => 'column',
-					'attributes'          => array(
+					'type'       => 'column',
+					'attributes' => array(
 						'wrap' => array(
 							'class' => array(
 								'help-box',

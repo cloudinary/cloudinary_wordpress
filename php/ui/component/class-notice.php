@@ -109,7 +109,7 @@ class Notice extends Component {
 	 *
 	 * @return string
 	 */
-	public function render( $echo = false ) {
+	public function render( $echo = false ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.echoFound
 		// Render component via parent.
 		$return = parent::render();
 		$this->setting->set_param( 'rendered', true );

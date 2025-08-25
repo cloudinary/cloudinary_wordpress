@@ -195,7 +195,7 @@ class String_Replace implements Setup {
 	 *
 	 * @return bool
 	 */
-	public static function string_set( $string ) {
+	public static function string_set( $string ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.stringFound
 		return isset( self::$replacements[ $string ] );
 	}
 
@@ -206,7 +206,7 @@ class String_Replace implements Setup {
 	 *
 	 * @return bool
 	 */
-	public static function string_not_set( $string ) {
+	public static function string_not_set( $string ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.stringFound
 		return ! self::string_set( $string );
 	}
 

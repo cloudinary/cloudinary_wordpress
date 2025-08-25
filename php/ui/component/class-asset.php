@@ -11,8 +11,8 @@ use Cloudinary\REST_API;
 use Cloudinary\Assets;
 use Cloudinary\UI\Component;
 use Cloudinary\Utils;
-use function Cloudinary\get_plugin_instance;
 use Cloudinary\Settings\Setting;
+use function Cloudinary\get_plugin_instance;
 
 /**
  * HTML Component to render components only.

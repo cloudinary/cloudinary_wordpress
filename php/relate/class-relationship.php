@@ -213,7 +213,7 @@ class Relationship {
 	public function delete() {
 		global $wpdb;
 		$table_name = Utils::get_relationship_table();
-		$wpdb->delete(
+		$wpdb->delete( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			$table_name,
 			array(
 				'post_id'       => $this->post_id,

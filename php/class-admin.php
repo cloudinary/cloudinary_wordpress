@@ -203,7 +203,7 @@ class Admin {
 		$page_handle = add_menu_page(
 			$page['page_title'],
 			$page['menu_title'],
-			$page['capability'],
+			$page['capability'], // phpcs:ignore WordPress.WP.Capabilities.Undetermined
 			$page['slug'],
 			'',
 			$page['icon'],
@@ -245,7 +245,7 @@ class Admin {
 				$page['slug'],
 				$page_title,
 				$menu_title,
-				$capability,
+				$capability, // phpcs:ignore WordPress.WP.Capabilities.Undetermined
 				$render_slug,
 				$render_function,
 				$position

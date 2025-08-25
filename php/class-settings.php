@@ -241,7 +241,7 @@ class Settings {
 	 *
 	 * @return Setting|\WP_Error
 	 */
-	public function add( $slug, $default = array(), $params = array() ) {
+	public function add( $slug, $default = array(), $params = array() ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound
 		$default_params = array(
 			'type'                     => 'tag',
 			self::META_KEYS['storage'] => $slug,
@@ -294,7 +294,7 @@ class Settings {
 	 *
 	 * @return mixed|Setting
 	 */
-	protected function register( $slug, $default, $params ) {
+	protected function register( $slug, $default, $params ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound
 
 		if ( isset( $this->settings[ $slug ] ) ) {
 			return $this->settings[ $slug ];

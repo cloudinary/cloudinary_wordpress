@@ -85,7 +85,7 @@ class Setting {
 	 *
 	 * @param string $parent The slug of the parent setting.
 	 */
-	public function set_parent( $parent ) {
+	public function set_parent( $parent ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.parentFound
 		$this->parent = $parent;
 	}
 

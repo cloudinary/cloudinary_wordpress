@@ -186,7 +186,7 @@ class Api {
 	 *
 	 * @return string
 	 */
-	public function url( $resource, $function = null, $endpoint = false ) {
+	public function url( $resource, $function = null, $endpoint = false ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames
 		$parts = array();
 
 		if ( $endpoint ) {

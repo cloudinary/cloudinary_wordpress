@@ -1365,7 +1365,7 @@ class Assets extends Settings_Component {
 		global $wpdb;
 
 		// Bail early if it's not an URL.
-		if ( empty( parse_url( $url, PHP_URL_HOST ) ) ) {
+		if ( empty( parse_url( $url, PHP_URL_HOST ) ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url
 			return false;
 		}
 
