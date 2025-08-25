@@ -136,7 +136,7 @@ class Upload_Sync {
 					esc_attr__( 'Sync and deliver from Cloudinary', 'cloudinary' ),
 					esc_html__( 'Sync and deliver from Cloudinary', 'cloudinary' )
 				);
-			} else if ( file_exists( get_attached_file( $post->ID ) ) ) {
+			} elseif ( file_exists( get_attached_file( $post->ID ) ) ) {
 				$actions['cloudinary-push'] = sprintf(
 					'<a href="%s" aria-label="%s">%s</a>',
 					$action_url,

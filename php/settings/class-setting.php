@@ -100,7 +100,7 @@ class Setting {
 		$slug = $this->slug;
 		while ( 0 < $depth ) {
 			$slug = substr( $slug, 0, strrpos( $slug, $this->separator ) );
-			$depth --;
+			--$depth;
 		}
 
 		return $this->root->get_setting( $slug );

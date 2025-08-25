@@ -99,4 +99,3 @@ class Connect extends Component {
 		return $struct;
 	}
 }
-

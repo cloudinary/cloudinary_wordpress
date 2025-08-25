@@ -16,5 +16,4 @@ interface Config {
 	 * Retrive config from class.
 	 */
 	public function get_config();
-
 }

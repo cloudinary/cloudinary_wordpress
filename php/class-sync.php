@@ -1108,8 +1108,8 @@ class Sync implements Setup, Assets {
 		wp_redirect(
 			add_query_arg(
 				array(
-					'page'    => 'cloudinary',
-					'action'  => 'cleaned_up',
+					'page'   => 'cloudinary',
+					'action' => 'cleaned_up',
 				),
 				admin_url( 'admin.php' )
 			)

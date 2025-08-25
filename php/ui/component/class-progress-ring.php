@@ -41,5 +41,4 @@ class Progress_Ring extends Component {
 
 		return $struct;
 	}
-
 }

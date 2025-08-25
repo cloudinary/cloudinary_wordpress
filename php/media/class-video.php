@@ -295,7 +295,7 @@ class Video {
 			} elseif ( $this->player_enabled() ) {
 				foreach ( $block['innerContent'] as &$content ) {
 					$urls = Utils::extract_urls( $content );
-					$url = reset( $urls );
+					$url  = reset( $urls );
 
 					if ( wp_http_validate_url( $url ) ) {
 						$video_tags = $this->media->filter->get_media_tags( $content );
