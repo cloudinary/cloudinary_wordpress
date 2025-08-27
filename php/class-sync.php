@@ -372,10 +372,13 @@ class Sync implements Setup, Assets {
 				$signature = array();
 			}
 
-			// Remove any old or outdated signature items. against the expected.
-			$signature                    = array_intersect_key( $signature, $this->sync_types );
 			$signatures[ $attachment_id ] = $return;
-			$return                       = wp_parse_args( $signature, $this->sync_types );
+
+			// Remove any old or outdated signature items. against the expected.
+			if ( ! empty( $this->sync_types ) ) {
+				$signature = array_intersect_key( $signature, $this->sync_types );
+				$return    = wp_parse_args( $signature, $this->sync_types );
+			}
 		}
 
 		/**
@@ -789,9 +792,12 @@ class Sync implements Setup, Assets {
 
 		$return      = array();
 		$asset_state = $this->get_asset_state( $attachment_id );
-		foreach ( array_keys( $this->sync_types ) as $type ) {
-			if ( $asset_state >= $this->sync_base_struct[ $type ]['asset_state'] ) {
-				$return[ $type ] = $this->generate_type_signature( $type, $attachment_id );
+
+		if ( ! empty( $this->sync_types ) ) {
+			foreach ( array_keys( $this->sync_types ) as $type ) {
+				if ( $asset_state >= $this->sync_base_struct[ $type ]['asset_state'] ) {
+					$return[ $type ] = $this->generate_type_signature( $type, $attachment_id );
+				}
 			}
 		}
 
@@ -844,7 +850,7 @@ class Sync implements Setup, Assets {
 		$required_signature   = $this->generate_signature( $attachment_id, $cached );
 		$attachment_signature = $this->get_signature( $attachment_id, $cached );
 		$attachment_signature = array_intersect_key( $attachment_signature, $required_signature );
-		if ( is_array( $required_signature ) ) {
+		if ( is_array( $required_signature ) && ! empty( $this->sync_types ) ) {
 			$sync_items = array_filter(
 				$attachment_signature,
 				function ( $item, $key ) use ( $required_signature ) {
@@ -1108,8 +1114,8 @@ class Sync implements Setup, Assets {
 		wp_redirect(
 			add_query_arg(
 				array(
-					'page'    => 'cloudinary',
-					'action'  => 'cleaned_up',
+					'page'   => 'cloudinary',
+					'action' => 'cleaned_up',
 				),
 				admin_url( 'admin.php' )
 			)
