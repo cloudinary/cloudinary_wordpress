@@ -219,6 +219,7 @@ class SVG extends Delivery_Feature {
 
 	/**
 	 * Disable SVG conversion.
+	 * If SVG support is active, we don't want to convert SVGs to other formats.
 	 *
 	 * @param array $base_types The base types for conversion.
 	 *
