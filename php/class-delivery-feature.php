@@ -157,7 +157,6 @@ abstract class Delivery_Feature implements Assets {
 	 * Enqueue Assets.
 	 */
 	public function enqueue_assets() {
-
 	}
 
 	/**

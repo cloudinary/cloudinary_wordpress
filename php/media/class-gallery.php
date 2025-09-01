@@ -707,7 +707,7 @@ class Gallery extends Settings_Component {
 		 * @return bool
 		 */
 		if ( apply_filters( 'cloudinary_allow_glb_upload', false ) ) {
-			add_filter( 'upload_mimes', array( $this, 'add_glb_mime' ), 20, 1 );
+			add_filter( 'upload_mimes', array( $this, 'add_glb_mime' ), 20, 1 ); // phpcs:ignore WordPressVIPMinimum.Hooks.RestrictedHooks.upload_mimes
 			add_filter( 'wp_check_filetype_and_ext', array( $this, 'pass_glb_filetype_check' ), 10, 3 );
 			add_filter( 'cloudinary_allowed_extensions', array( $this, 'allow_glb_for_cloudinary' ) );
 			add_filter( 'cloudinary_is_deliverable', array( $this, 'allow_glb_delivery_from_cloudinary' ), 10, 2 );

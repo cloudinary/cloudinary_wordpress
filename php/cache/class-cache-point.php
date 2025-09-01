@@ -287,7 +287,6 @@ class Cache_Point {
 			$this->registered_cache_points[ $post->post_title ] = $post;
 		}
 		do_action( 'cloudinary_cache_init_cache_points' );
-
 	}
 
 	/**
@@ -526,7 +525,7 @@ class Cache_Point {
 			do {
 				$found = $posts->get_posts();
 				$items = array_merge( $items, $found );
-				$params['paged'] ++;
+				++$params['paged'];
 				$posts = new \WP_Query( $params );
 			} while ( $posts->have_posts() );
 		}
@@ -884,7 +883,7 @@ class Cache_Point {
 					$found_posts[ $url ] = $meta[ self::META_KEYS['cached_urls'] ][ $url ];
 				}
 			}
-			$params['paged'] ++;
+			++$params['paged'];
 			$posts = new \WP_Query( $params );
 		} while ( $posts->have_posts() );
 

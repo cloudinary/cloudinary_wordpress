@@ -34,7 +34,9 @@
 	</rule>
 
 	<!-- Include WP VIP coding standard checks -->
-	<rule ref="WordPress-VIP-Go" />
+	<rule ref="WordPress-VIP-Go">
+        <exclude name="WordPressVIPMinimum.Functions.RestrictedFunctions.wp_remote_get_wp_remote_get" />
+	</rule>
 
 	<exclude-pattern>/build/</exclude-pattern>
 	<exclude-pattern>/js/</exclude-pattern>

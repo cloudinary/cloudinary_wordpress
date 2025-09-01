@@ -78,7 +78,6 @@ class URL implements Setup {
 	 * Set up the object.
 	 */
 	public function setup() {
-
 	}
 
 	/**

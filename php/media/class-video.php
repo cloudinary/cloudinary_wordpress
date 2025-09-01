@@ -295,7 +295,7 @@ class Video {
 			} elseif ( $this->player_enabled() ) {
 				foreach ( $block['innerContent'] as &$content ) {
 					$urls = Utils::extract_urls( $content );
-					$url = reset( $urls );
+					$url  = reset( $urls );
 
 					if ( wp_http_validate_url( $url ) ) {
 						$video_tags = $this->media->filter->get_media_tags( $content );
@@ -532,7 +532,7 @@ class Video {
 	 *
 	 * @return array
 	 */
-	public function default_video_transformations( $default ) {
+	public function default_video_transformations( $default ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound
 
 		if ( 'on' === $this->config['video_optimization'] ) {
 			if ( 'auto' === $this->config['video_format'] ) {
@@ -555,7 +555,7 @@ class Video {
 	 *
 	 * @return array
 	 */
-	public function default_video_freeform_transformations( $default ) {
+	public function default_video_freeform_transformations( $default ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound
 		if ( ! empty( $this->config['video_freeform'] ) ) {
 			$default[] = trim( $this->config['video_freeform'] );
 		}
@@ -664,7 +664,7 @@ class Video {
 				 *
 				 * @return string
 				 */
-				static function ( $return, $tag, $attr, $m ) {
+				static function ( $return, $tag, $attr, $m ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.returnFound
 					global $shortcode_tags;
 					if ( 'video' === $tag ) {
 						$supported_formats = array_merge(

@@ -258,7 +258,7 @@ class Utils {
 		$capability = apply_filters( 'cloudinary_task_capability', $capability, $task, $context, ...$args );
 		// phpcs:enable WordPress.WhiteSpace.DisallowInlineTabs.NonIndentTabsUsed
 
-		return current_user_can( $capability, ...$args );
+		return current_user_can( $capability, ...$args ); // phpcs:ignore WordPress.WP.Capabilities.Undetermined
 	}
 
 	/**
@@ -758,7 +758,7 @@ class Utils {
 	public static function purge_fragment( $index ) {
 		if ( isset( self::$file_fragments[ $index ] ) ) {
 			fclose( self::$file_fragments[ $index ]['pointer'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fclose
-			unlink( self::$file_fragments[ $index ]['file'] );
+			unlink( self::$file_fragments[ $index ]['file'] ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_unlink
 		}
 	}
 

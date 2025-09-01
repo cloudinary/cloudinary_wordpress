@@ -598,7 +598,7 @@ final class Plugin {
 	 *
 	 * @return void
 	 */
-	public function autoload( $class ) {
+	public function autoload( $class ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.classFound
 		// Assume we're using namespaces (because that's how the plugin is structured).
 		$namespace = explode( '\\', $class );
 		$root      = array_shift( $namespace );
@@ -749,7 +749,7 @@ final class Plugin {
 	 *
 	 * @return array
 	 */
-	public function force_visit_plugin_site_link( $plugin_meta, $plugin_file, $plugin_data, $status ) {
+	public function force_visit_plugin_site_link( $plugin_meta, $plugin_file, $plugin_data, $status ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		if ( 'Cloudinary' === $plugin_data['Name'] ) {
 			$plugin_site_link = sprintf(
 				'<a href="%s">%s</a>',

@@ -1964,7 +1964,7 @@ class Delivery implements Setup {
 			return $urls;
 		}
 
-		$known_lookup = array_flip( $known_keys );
+		$known_lookup      = array_flip( $known_keys );
 		$potential_unknown = array_diff( $urls, $known_keys );
 
 		if ( empty( $potential_unknown ) ) {

@@ -1111,7 +1111,7 @@ class Sync implements Setup, Assets {
 
 		delete_post_meta_by_key( self::META_KEYS['sync_error'] );
 
-		wp_redirect(
+		wp_redirect( // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect
 			add_query_arg(
 				array(
 					'page'   => 'cloudinary',

@@ -130,5 +130,4 @@ class Asset_Preview extends Asset {
 		$plugin = get_plugin_instance();
 		wp_enqueue_script( 'cloudinary-asset-edit', $plugin->dir_url . 'js/asset-edit.js', array(), $plugin->version, true );
 	}
-
 }
