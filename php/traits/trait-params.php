@@ -139,12 +139,11 @@ trait Params_Trait {
 	 *
 	 * @return string
 	 */
-	protected function sanitize_slug( $slug ) {
-
-		$sanitized = array_map( 'sanitize_file_name', explode( $this->separator, $slug ) );
-
-		return implode( $this->separator, $sanitized );
-	}
+    protected function sanitize_slug( $slug ) {
+        // Intentionally return the slug as-is. Sanitization is unnecessary
+        // for internal, code-defined keys and adds overhead.
+        return $slug;
+    }
 
 	/**
 	 * Get a param from a chained lookup.
