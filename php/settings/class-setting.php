@@ -85,7 +85,7 @@ class Setting {
 	 *
 	 * @param string $parent The slug of the parent setting.
 	 */
-	public function set_parent( $parent ) {
+	public function set_parent( $parent ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.parentFound
 		$this->parent = $parent;
 	}
 
@@ -100,7 +100,7 @@ class Setting {
 		$slug = $this->slug;
 		while ( 0 < $depth ) {
 			$slug = substr( $slug, 0, strrpos( $slug, $this->separator ) );
-			$depth --;
+			--$depth;
 		}
 
 		return $this->root->get_setting( $slug );

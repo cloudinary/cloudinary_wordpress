@@ -102,5 +102,4 @@ class Progress_Bar extends Component {
 
 		return $struct;
 	}
-
 }

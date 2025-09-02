@@ -213,7 +213,7 @@ trait Params_Trait {
 	 *
 	 * @return mixed|self
 	 */
-	public function get_param( $param, $default = null ) {
+	public function get_param( $param, $default = null ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound
 		$param = $this->sanitize_slug( $param );
 
 		$value = $this->get_array_param( $param );

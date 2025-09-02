@@ -327,7 +327,7 @@ abstract class Component {
 	 *
 	 * @return string
 	 */
-	public function render( $echo = false ) {
+	public function render( $echo = false ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.echoFound
 		// Setup the component.
 		$this->pre_render();
 

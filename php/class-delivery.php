@@ -387,6 +387,11 @@ class Delivery implements Setup {
 		if ( $is ) {
 			$meta = wp_get_attachment_metadata( $attachment_id, true );
 			$is   = ! empty( $meta['width'] ) && ! empty( $meta['height'] );
+
+			// Webm audio files don't have width and height.
+			if ( ! $is && ! empty( $meta['mime_type'] ) && 'audio/webm' === $meta['mime_type'] ) {
+				$is = true;
+			}
 		}
 
 		if ( ! $is ) {
@@ -1478,6 +1483,12 @@ class Delivery implements Setup {
 		// Break element up.
 		$attributes         = shortcode_parse_atts( $element );
 		$tag_element['tag'] = array_shift( $attributes );
+
+		// Skip audio source tags.
+		if ( ! empty( $attributes['type'] ) && 0 === strpos( $attributes['type'], 'audio/' ) && 'source' === $tag_element['tag'] ) {
+			return null;
+		}
+
 		// Context Switch Check.
 		if ( 'article' === $tag_element['tag'] ) {
 			if ( ! empty( $attributes['id'] ) && false !== strpos( $attributes['id'], 'post-' ) ) {
@@ -1958,7 +1969,7 @@ class Delivery implements Setup {
 			return $urls;
 		}
 
-		$known_lookup = array_flip( $known_keys );
+		$known_lookup      = array_flip( $known_keys );
 		$potential_unknown = array_diff( $urls, $known_keys );
 
 		if ( empty( $potential_unknown ) ) {

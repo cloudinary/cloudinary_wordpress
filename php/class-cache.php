@@ -615,7 +615,6 @@ class Cache extends Settings_Component implements Setup {
 			'title'      => __( 'Plugin', 'cloudinary' ),
 			'root_paths' => $rows,
 		);
-
 	}
 
 	/**
@@ -987,7 +986,7 @@ class Cache extends Settings_Component implements Setup {
 		if ( ! is_admin() ) {
 			// Exclude content replacement in admin.
 			$this->add_cache_paths( 'cache_content', 'content_files', 'cache_all_content' );
-		};
+		}
 	}
 
 	/**

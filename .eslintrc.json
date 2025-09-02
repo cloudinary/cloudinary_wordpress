@@ -24,6 +24,7 @@
     "no-nested-ternary": "off",
     "jsx-a11y/click-events-have-key-events": "off",
     "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn"
+    "react-hooks/exhaustive-deps": "warn",
+    "@wordpress/no-global-event-listener": "off"
   }
 }

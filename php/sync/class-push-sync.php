@@ -275,7 +275,7 @@ class Push_Sync {
 				$action_message = sprintf( __( '%1$s - cycle %3$s: Syncing asset %2$d', 'cloudinary' ), $thread, $attachment_id, $runs );
 				do_action( '_cloudinary_queue_action', $action_message, $thread );
 				$this->process_assets( $attachment_id );
-				$runs ++;
+				++$runs;
 				$last_id = $attachment_id;
 			}
 			$this->queue->stop_maybe( $thread_type );

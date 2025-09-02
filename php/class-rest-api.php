@@ -26,7 +26,7 @@ class REST_API {
 	 *
 	 * @param Plugin $plugin Instance of the global Plugin.
 	 */
-	public function __construct( Plugin $plugin ) {
+	public function __construct( Plugin $plugin ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		add_action( 'rest_api_init', array( $this, 'rest_api_init' ), PHP_INT_MAX );
 	}
 

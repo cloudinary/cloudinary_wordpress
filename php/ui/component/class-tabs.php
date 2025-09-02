@@ -71,5 +71,4 @@ class Tabs extends Page {
 
 		return $tabs;
 	}
-
 }

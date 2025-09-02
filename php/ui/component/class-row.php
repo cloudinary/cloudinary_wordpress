@@ -39,5 +39,4 @@ class Row extends Component {
 
 		return $struct;
 	}
-
 }

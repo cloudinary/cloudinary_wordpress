@@ -54,4 +54,3 @@ class Group extends Panel {
 		return $struct;
 	}
 }
-

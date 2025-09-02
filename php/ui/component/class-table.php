@@ -149,10 +149,10 @@ class Table extends Text {
 						'colspan' => 0,
 					);
 				}
-				$columns[ $previous ]['attributes']['colspan'] ++;
+				++$columns[ $previous ]['attributes']['colspan'];
 				continue;
 			} else {
-				$next_colspan ++;
+				++$next_colspan;
 			}
 
 			$previous = $col_slug;
@@ -163,5 +163,4 @@ class Table extends Text {
 
 		return $params;
 	}
-
 }
