@@ -392,6 +392,7 @@ class Video {
 
 		// If it is an attachment, get the video metadata.
 		if ( $attachment_id ) {
+
 			// Check for transformations.
 			$transformations = $this->media->get_transformations( $attachment_id, array(), $overwrite_transformations );
 			if ( ! empty( $transformations ) ) {
@@ -412,6 +413,12 @@ class Video {
 					),
 				);
 				$params['source']['transformation'] = array_merge( $streaming_transform, $transformations );
+			}
+
+			$meta = wp_get_attachment_metadata( $attachment_id, true );
+
+			if ( ! empty( $meta['mime_type'] ) && 'audio/webm' === $meta['mime_type'] ) {
+				$params['source']['source_types'] = array( 'audio' );
 			}
 		}
 
