@@ -1069,6 +1069,11 @@ class Delivery implements Setup {
 			if ( empty( $relation['public_id'] || $url === $relation['public_id'] ) ) {
 				continue; // We don't need the public_id relation item.
 			}
+
+			if ( 'disable' === $relation['post_state'] ) {
+				continue; // We should not deliver disabled items.
+			}
+
 			$base           = $type . ':' . $url;
 			$public_id      = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
 			$cloudinary_url = $this->media->cloudinary_url( $relation['post_id'], array(), $relation['transformations'], $public_id );
