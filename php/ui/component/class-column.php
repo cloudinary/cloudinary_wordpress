@@ -42,5 +42,4 @@ class Column extends Row {
 
 		return $struct;
 	}
-
 }

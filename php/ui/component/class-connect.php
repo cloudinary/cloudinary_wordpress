@@ -7,9 +7,9 @@
 
 namespace Cloudinary\UI\Component;
 
-use function Cloudinary\get_plugin_instance;
 use Cloudinary\UI\Component;
 use Cloudinary\Settings\Setting;
+use function Cloudinary\get_plugin_instance;
 
 /**
  * Connect Component.
@@ -99,4 +99,3 @@ class Connect extends Component {
 		return $struct;
 	}
 }
-

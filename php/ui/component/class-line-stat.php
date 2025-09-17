@@ -199,5 +199,4 @@ class Line_Stat extends Component {
 
 		return $struct;
 	}
-
 }

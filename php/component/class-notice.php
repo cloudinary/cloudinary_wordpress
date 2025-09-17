@@ -18,5 +18,4 @@ interface Notice {
 	 * @return array
 	 */
 	public function get_notices();
-
 }

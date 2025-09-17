@@ -102,5 +102,4 @@ class Info_Box extends Panel {
 
 		return $struct;
 	}
-
 }

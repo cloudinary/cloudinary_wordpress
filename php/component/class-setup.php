@@ -16,5 +16,4 @@ interface Setup {
 	 * Setup the object.
 	 */
 	public function setup(); // phpcs:ignore
-
 }

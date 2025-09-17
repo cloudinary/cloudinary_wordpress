@@ -1305,7 +1305,7 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @return array
 	 */
-	public function default_image_transformations( $default ) {
+	public function default_image_transformations( $default ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound
 
 		$config = $this->settings->get_value( 'image_settings' );
 
@@ -1330,7 +1330,7 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @return array
 	 */
-	public function default_image_freeform_transformations( $default ) {
+	public function default_image_freeform_transformations( $default ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound
 		$config = $this->settings->get_value( 'image_settings' );
 		if ( ! empty( $config['image_freeform'] ) ) {
 			$default[] = trim( $config['image_freeform'] );
@@ -2559,7 +2559,7 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @return mixed
 	 */
-	public function get_post_meta( $post_id, $key = '', $single = false, $default = null ) {
+	public function get_post_meta( $post_id, $key = '', $single = false, $default = null ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound
 
 		$meta = get_post_meta( $post_id, Sync::META_KEYS['cloudinary'], true );
 		if ( empty( $meta ) ) {

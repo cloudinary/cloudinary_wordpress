@@ -273,7 +273,30 @@ class Assets extends Settings_Component {
 			$can = false;
 		}
 
+		// If the asset is set to a 'disable' state, we do not allow syncing.
+		if ( $can && self::is_asset_type( $asset_id ) && $this->is_disable_state( $asset_id ) ) {
+			$can = false;
+		}
+
 		return $can;
+	}
+
+	/**
+	 * Verify if the asset is set to a 'disable' state.
+	 *
+	 * @param int $asset_id The asset ID to check.
+	 *
+	 * @return bool
+	 */
+	protected function is_disable_state( $asset_id ) {
+		global $wpdb;
+
+		$wpdb->cld_table = Utils::get_relationship_table();
+		$media_context   = Utils::get_media_context( $asset_id );
+		$prepare         = $wpdb->prepare( "SELECT `post_state` FROM $wpdb->cld_table WHERE post_id = %d AND media_context = %s;", (int) $asset_id, $media_context ); // phpcs:ignore WordPress.DB.PreparedSQL
+		$state           = $wpdb->get_var( $prepare ); // phpcs:ignore WordPress.DB
+
+		return 'disable' === $state;
 	}
 
 	/**
@@ -1365,7 +1388,7 @@ class Assets extends Settings_Component {
 		global $wpdb;
 
 		// Bail early if it's not an URL.
-		if ( empty( parse_url( $url, PHP_URL_HOST ) ) ) {
+		if ( empty( parse_url( $url, PHP_URL_HOST ) ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url
 			return false;
 		}
 
