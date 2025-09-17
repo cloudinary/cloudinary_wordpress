@@ -146,6 +146,18 @@ Your site is now setup to start using Cloudinary.
 
 == Changelog ==
 
+= 3.2.13 (17 September 2025) =
+
+Fixes and Improvements:
+
+* Fixed a PHP warning on the Reviews page when using Tags with Customer Reviews for WooCommerce
+* Fixed a conflict with the RankMath SEO plugin
+* Fixed an issue with ignored SVG support. The plugin now preserves SVG format for synced Cloudinary assets
+* Fixed `print_script_data` to prevent errors on the WordPress login page
+* Fixed additional asset sync issues with the Disable/Remove functionality
+* Fixed syncing issue with WebM audio files
+* Fixed an issue where the Classic Editor incorrectly attempted to generate responsive breakpoints for audio files
+
 = 3.2.12 (12 August 2025) =
 
 Fixes and Improvements:
