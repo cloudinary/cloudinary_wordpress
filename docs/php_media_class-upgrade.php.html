@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Source: php/media/class-upgrade.php - Cloudinary Docs</title>
+
+	<script src="scripts/prettify/prettify.js"></script>
+	<script src="scripts/prettify/lang-css.js"></script>
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+	<link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+
+	<link
+			href="https://fonts.googleapis.com/css?family=IBM+Plex+Mono|IBM+Plex+Sans:300,400|Playfair+Display:900&display=swap"
+			rel="stylesheet">
+</head>
+
+<body>
+
+<div id="main">
+
+	
+	<h1 class="page-title">Source: php/media/class-upgrade.php</h1>
+	
+
+	
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>&lt;?php
+/**
+ * Upgrades from a Legecy version of Cloudinary.
+ *
+ * @package Cloudinary
+ */
+
+namespace Cloudinary\Media;
+
+use Cloudinary\Relate;
+use Cloudinary\Sync;
+use Cloudinary\Utils;
+
+/**
+ * Class Filter.
+ *
+ * Handles filtering of HTML content.
+ */
+class Upgrade {
+
+	/**
+	 * Holds the Media instance.
+	 *
+	 * @since   0.1
+	 *
+	 * @var     \Cloudinary\Media Instance of the plugin.
+	 */
+	private $media;
+
+	/**
+	 * Holds the Sync instance.
+	 *
+	 * @since   0.1
+	 *
+	 * @var     \Cloudinary\Sync Instance of the plugin.
+	 */
+	private $sync;
+
+	/**
+	 * Filter constructor.
+	 *
+	 * @param \Cloudinary\Media $media The plugin.
+	 */
+	public function __construct( \Cloudinary\Media $media ) {
+		$this->media = $media;
+		$this->sync  = $media->plugin->components['sync'];
+		$this->setup_hooks();
+	}
+
+	/**
+	 * Convert an image post that was created from Cloudinary v1.
+	 *
+	 * @param int $attachment_id The attachment ID to convert.
+	 *
+	 * @return string Cloudinary ID
+	 */
+	public function convert_cloudinary_version( $attachment_id ) {
+
+		if ( ! empty( get_post_meta( $attachment_id, Sync::META_KEYS['cloudinary'], true ) ) ) {
+			// V2.5 changed the meta. if it had, theres no upgrades needed.
+			/**
+			 * Action to trigger an upgrade on a synced asset.
+			 *
+			 * @hook  cloudinary_upgrade_asset
+			 * @since 3.0.5
+			 *
+			 * @param $attachment_id {int} The attachment ID.
+			 * @param $version       {string} The current plugin version.
+			 */
+			do_action( 'cloudinary_upgrade_asset', $attachment_id, $this->media->plugin->version );
+
+			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['plugin_version'], $this->media->plugin->version );
+			$this->sync->set_signature_item( $attachment_id, 'upgrade' );
+
+			return $this->media->get_public_id( $attachment_id );
+		}
+		$file = get_post_meta( $attachment_id, '_wp_attached_file', true );
+		if ( ! $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true ) &amp;&amp; wp_http_validate_url( $file ) ) {
+			// Version 1 upgrade.
+			$path                  = wp_parse_url( $file, PHP_URL_PATH );
+			$media                 = $this->media;
+			$parts                 = explode( '/', ltrim( $path, '/' ) );
+			$cloud_name            = null;
+			$asset_version         = 1;
+			$asset_transformations = array();
+			$id_parts              = array();
+			$public_id             = $this->get_fetch_public_id( $path, $attachment_id );
+			foreach ( $parts as $val ) {
+				if ( empty( $val ) ) {
+					continue;
+				}
+				if ( is_null( $cloud_name ) ) {
+					// Cloudname will always be the first item.
+					$cloud_name = md5( $val );
+					continue;
+				}
+				if ( in_array( $val, array( 'images', 'image', 'video', 'upload', 'fetch' ), true ) ) {
+					continue;
+				}
+				$transformation_maybe = $media->get_transformations_from_string( $val );
+				if ( ! empty( $transformation_maybe ) ) {
+					$asset_transformations = $transformation_maybe;
+					continue;
+				}
+				if ( substr( $val, 0, 1 ) === 'v' &amp;&amp; is_numeric( substr( $val, 1 ) ) ) {
+					$asset_version = substr( $val, 1 );
+					continue;
+				}
+
+				// Filter out file name.
+				$path = Utils::pathinfo( $val, PATHINFO_FILENAME );
+				if ( ! in_array( $path, $id_parts, true ) ) {
+					$id_parts[] = Utils::pathinfo( $val, PATHINFO_FILENAME );
+				}
+			}
+			// Build public_id.
+			$parts = array_filter( $id_parts );
+			if ( empty( $public_id ) ) {
+				$public_id = implode( '/', $parts );
+			}
+			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
+			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['version'], $asset_version );
+			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['upgrading'], true );
+			if ( ! empty( $asset_transformations ) ) {
+				Relate::update_transformations( $attachment_id, $asset_transformations );
+			}
+			$this->sync->set_signature_item( $attachment_id, 'cloud_name', $cloud_name );
+		} else {
+			// v2 upgrade.
+			$public_id = $this->media->get_public_id( $attachment_id, true );
+			$suffix    = $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['suffix'], true );
+			if ( ! empty( $suffix ) ) {
+				// Has suffix. Get delete and cleanup public ID.
+				if ( false !== strpos( $public_id, $suffix ) ) {
+					$public_id = str_replace( $suffix, '', $public_id );
+				}
+				$public_id .= $suffix;
+				$this->media->delete_post_meta( $attachment_id, Sync::META_KEYS['suffix'] );
+				$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['public_id'], $public_id );
+			}
+			// Check folder sync in order and if it's not a URL.
+			if ( ! wp_http_validate_url( $file ) &amp;&amp; $this->media->is_folder_synced( $attachment_id ) ) {
+				$public_id_folder = ltrim( dirname( $this->media->get_public_id( $attachment_id ) ) );
+				$test_signature   = md5( false );
+				$folder_signature = md5( $public_id_folder );
+				$signature        = $this->sync->get_signature( $attachment_id );
+				if ( $folder_signature !== $test_signature &amp;&amp; $test_signature === $signature['folder'] ) {
+					// The test signature is a hashed false, which is how non-folder-synced items got hashed.
+					// Indicating this is broken link.
+					$this->media->delete_post_meta( $attachment_id, Sync::META_KEYS['folder_sync'] );
+					$this->media->delete_post_meta( $attachment_id, Sync::META_KEYS['sync_error'] ); // Remove any errors from upgrade. they are outdated.
+					delete_post_meta( $attachment_id, Sync::META_KEYS['sync_error'] ); // Remove any errors from upgrade. they are outdated.
+					$this->sync->set_signature_item( $attachment_id, 'folder' );
+				}
+			}
+		}
+		$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['plugin_version'], $this->media->plugin->version );
+		$this->sync->set_signature_item( $attachment_id, 'upgrade' );
+		$this->sync->set_signature_item( $attachment_id, 'public_id' );
+		$this->sync->set_signature_item( $attachment_id, 'storage' );
+		// Update Sync keys.
+		$sync_key        = $public_id;
+		$transformations = $this->media->get_transformation_from_meta( $attachment_id );
+		if ( ! empty( $transformations ) ) {
+			$sync_key .= wp_json_encode( $transformations );
+		}
+		update_post_meta( $attachment_id, '_' . md5( $sync_key ), true );
+		update_post_meta( $attachment_id, '_' . md5( 'base_' . $public_id ), true );
+		// Get a new uncached signature.
+		$this->sync->get_signature( $attachment_id, true );
+
+		return $public_id;
+	}
+
+	/**
+	 * Maybe the upgraded attachment is a fetch image.
+	 *
+	 * @param string $path          The attachment path.
+	 * @param int    $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function get_fetch_public_id( $path, $attachment_id ) {
+		$parts = explode( '/image/fetch/', $path );
+
+		if ( ! empty( $parts[1] ) ) {
+			$this->media->update_post_meta( $attachment_id, Sync::META_KEYS['delivery'], 'fetch' );
+
+			return $parts[1];
+		}
+
+		return '';
+	}
+
+	/**
+	 * Migrate legacy meta data to new meta.
+	 *
+	 * @param int $attachment_id The attachment ID to migrate.
+	 *
+	 * @return array();
+	 */
+	public function migrate_legacy_meta( $attachment_id ) {
+
+		$old_meta = wp_get_attachment_metadata( $attachment_id, true );
+		$v2_meta  = get_post_meta( $attachment_id, Sync::META_KEYS['cloudinary_legacy'], true );
+		$v3_meta  = array();
+
+		// Direct from old meta to v3, create v2 to chain the upgrade path.
+		if ( isset( $old_meta[ Sync::META_KEYS['cloudinary_legacy'] ] ) &amp;&amp; empty( $v2_meta ) ) {
+			$v2_meta = $old_meta[ Sync::META_KEYS['cloudinary_legacy'] ];
+			// Add public ID.
+			$public_id                               = get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
+			$v2_meta[ Sync::META_KEYS['public_id'] ] = $public_id;
+			delete_post_meta( $attachment_id, Sync::META_KEYS['public_id'] );
+		}
+
+		// Handle v2 upgrade.
+		if ( ! empty( $v2_meta ) ) {
+			// Migrate to v3.
+			update_post_meta( $attachment_id, Sync::META_KEYS['cloudinary'], $v2_meta );
+			delete_post_meta( $attachment_id, Sync::META_KEYS['cloudinary_legacy'] );
+			$v3_meta = $v2_meta;
+			if ( ! empty( $v3_meta[ Sync::META_KEYS['public_id'] ] ) ) {
+				// Cleanup from v2.7.7.
+				if ( ! empty( $v3_meta[ Sync::META_KEYS['storage'] ] ) &amp;&amp; 'cld' === $v3_meta[ Sync::META_KEYS['storage'] ] ) {
+					$file = get_post_meta( $attachment_id, '_wp_attached_file', true );
+					if ( $this->media->is_cloudinary_url( $file ) ) {
+						$file = path_join( dirname( $old_meta['file'] ), wp_basename( $file ) );
+						update_post_meta( $attachment_id, '_wp_attached_file', $file );
+						update_post_meta( $attachment_id, '_' . md5( $file ), $file );
+					}
+				}
+			}
+			// Remove old data style.
+			unset( $old_meta[ Sync::META_KEYS['cloudinary_legacy'] ] );
+		}
+
+		// Attempt to update old meta, which will fail if nothing changed.
+		update_post_meta( $attachment_id, '_wp_attachment_metadata', $old_meta );
+
+		// migrate from pre v2 meta.
+		if ( empty( $v2_meta ) &amp;&amp; empty( $v3_meta ) ) {
+			// Attempt old post meta.
+			$public_id = get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
+			if ( ! empty( $public_id ) ) {
+				// Loop through all types and create new meta item.
+				$v3_meta = array(
+					Sync::META_KEYS['public_id'] => $public_id,
+				);
+				update_post_meta( $attachment_id, Sync::META_KEYS['cloudinary'], $v3_meta );
+				foreach ( Sync::META_KEYS as $meta_key ) {
+					if ( Sync::META_KEYS['cloudinary'] === $meta_key ) {
+						// Dont use the root as it will be an infinite loop.
+						continue;
+					}
+					$value = get_post_meta( $attachment_id, $meta_key, true );
+					if ( ! empty( $value ) ) {
+						$v3_meta[ $meta_key ] = $value;
+						$this->media->update_post_meta( $attachment_id, $meta_key, $value );
+					}
+				}
+			}
+		}
+
+		return $v3_meta;
+	}
+
+	/**
+	 * Setup hooks for the filters.
+	 */
+	public function setup_hooks() {
+
+		// Add filter to manage legacy items.
+		// @todo: cleanup `convert_cloudinary_version` by v2 upgrades to here.
+		add_filter( 'cloudinary_migrate_legacy_meta', array( $this, 'migrate_legacy_meta' ) );
+
+		// Add a redirection to the new plugin settings, from the old plugin.
+		if ( is_admin() ) {
+			add_action(
+				'admin_menu',
+				function () {
+					global $plugin_page;
+					if ( ! empty( $plugin_page ) &amp;&amp; false !== strpos( $plugin_page, 'cloudinary-image-management-and-manipulation-in-the-cloud-cdn' ) ) {
+						wp_safe_redirect( admin_url( '?page=cloudinary' ) );
+						die;
+					}
+				}
+			);
+		}
+	}
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+	<h2><a href="index.html">Home</a></h2><h3>Actions</h3><ul><li><a href="cloudinary_connected.html">cloudinary_connected</a></li><li><a href="cloudinary_delete_asset.html">cloudinary_delete_asset</a></li><li><a href="cloudinary_download_asset.html">cloudinary_download_asset</a></li><li><a href="cloudinary_enable_crop_and_gravity_control.html">cloudinary_enable_crop_and_gravity_control</a></li><li><a href="cloudinary_flush_cache.html">cloudinary_flush_cache</a></li><li><a href="cloudinary_id.html">cloudinary_id</a></li><li><a href="cloudinary_init_delivery.html">cloudinary_init_delivery</a></li><li><a href="cloudinary_init_settings.html">cloudinary_init_settings</a></li><li><a href="cloudinary_is_%257B$class_name%257D_active.html">cloudinary_is_{$class_name}_active</a></li><li><a href="cloudinary_lazy_load_bypass.html">cloudinary_lazy_load_bypass</a></li><li><a href="cloudinary_queue_action.html">cloudinary_queue_action</a></li><li><a href="cloudinary_ready.html">cloudinary_ready</a></li><li><a href="cloudinary_register_sync_types.html">cloudinary_register_sync_types</a></li><li><a href="cloudinary_registered_sizes.html">cloudinary_registered_sizes</a></li><li><a href="cloudinary_responsive_images_bypass_formats.html">cloudinary_responsive_images_bypass_formats</a></li><li><a href="cloudinary_string_replace.html">cloudinary_string_replace</a></li><li><a href="cloudinary_tag_skip_classes.html">cloudinary_tag_skip_classes</a></li><li><a href="cloudinary_unset_attributes.html">cloudinary_unset_attributes</a></li><li><a href="cloudinary_unsync_asset.html">cloudinary_unsync_asset</a></li><li><a href="cloudinary_upgrade_asset.html">cloudinary_upgrade_asset</a></li><li><a href="cloudinary_upload_args.html">cloudinary_upload_args</a></li><li><a href="cloudinary_uploaded_asset.html">cloudinary_uploaded_asset</a></li><li><a href="cloudinary_version_upgrade.html">cloudinary_version_upgrade</a></li></ul><h3>Filters</h3><ul><li><a href="cloudinary_admin_image_settings.html">cloudinary_admin_image_settings</a></li><li><a href="cloudinary_admin_pages.html">cloudinary_admin_pages</a></li><li><a href="cloudinary_admin_video_settings.html">cloudinary_admin_video_settings</a></li><li><a href="cloudinary_allow_glb_upload.html">cloudinary_allow_glb_upload</a></li><li><a href="cloudinary_allowed_extensions.html">cloudinary_allowed_extensions</a></li><li><a href="cloudinary_api_rest_endpoints.html">cloudinary_api_rest_endpoints</a></li><li><a href="cloudinary_apply_breakpoints.html">cloudinary_apply_breakpoints</a></li><li><a href="cloudinary_apply_default_transformations.html">cloudinary_apply_default_transformations</a></li><li><a href="cloudinary_asset_payload.html">cloudinary_asset_payload</a></li><li><a href="cloudinary_asset_state.html">cloudinary_asset_state</a></li><li><a href="cloudinary_autosync_threads.html">cloudinary_autosync_threads</a></li><li><a href="cloudinary_build_queue_query.html">cloudinary_build_queue_query</a></li><li><a href="cloudinary_bypass_cache.html">cloudinary_bypass_cache</a></li><li><a href="cloudinary_bypass_seo_url.html">cloudinary_bypass_seo_url</a></li><li><a href="cloudinary_can_sync_asset.html">cloudinary_can_sync_asset</a></li><li><a href="cloudinary_content_url.html">cloudinary_content_url</a></li><li><a href="cloudinary_context_options.html">cloudinary_context_options</a></li><li><a href="cloudinary_contextualized_post_id.html">cloudinary_contextualized_post_id</a></li><li><a href="cloudinary_convert_media_types.html">cloudinary_convert_media_types</a></li><li><a href="cloudinary_converted_url.html">cloudinary_converted_url</a></li><li><a href="cloudinary_cron_frequency.html">cloudinary_cron_frequency</a></li><li><a href="cloudinary_cron_start_offset.html">cloudinary_cron_start_offset</a></li><li><a href="cloudinary_current_post_id.html">cloudinary_current_post_id</a></li><li><a href="cloudinary_default_freeform_transformations_%257B$type%257D.html">cloudinary_default_freeform_transformations_{$type}</a></li><li><a href="cloudinary_default_qf_transformations_%257B$type%257D.html">cloudinary_default_qf_transformations_{$type}</a></li><li><a href="cloudinary_default_transformations.html">cloudinary_default_transformations</a></li><li><a href="cloudinary_delivery_get_id.html">cloudinary_delivery_get_id</a></li><li><a href="cloudinary_delivery_searchable_url.html">cloudinary_delivery_searchable_url</a></li><li><a href="cloudinary_dns_prefetch_types.html">cloudinary_dns_prefetch_types</a></li><li><a href="cloudinary_doing_upload.html">cloudinary_doing_upload</a></li><li><a href="cloudinary_edit_asset_permalink.html">cloudinary_edit_asset_permalink</a></li><li><a href="cloudinary_filter_out_local.html">cloudinary_filter_out_local</a></li><li><a href="cloudinary_filter_unknown_urls.html">cloudinary_filter_unknown_urls</a></li><li><a href="cloudinary_gallery_config.html">cloudinary_gallery_config</a></li><li><a href="cloudinary_gallery_html_container.html">cloudinary_gallery_html_container</a></li><li><a href="cloudinary_get_signature.html">cloudinary_get_signature</a></li><li><a href="cloudinary_home_url.html">cloudinary_home_url</a></li><li><a href="cloudinary_ignored_class_keywords.html">cloudinary_ignored_class_keywords</a></li><li><a href="cloudinary_ignored_data_keywords.html">cloudinary_ignored_data_keywords</a></li><li><a href="cloudinary_is_content_dir.html">cloudinary_is_content_dir</a></li><li><a href="cloudinary_is_deliverable.html">cloudinary_is_deliverable</a></li><li><a href="cloudinary_is_folder_synced.html">cloudinary_is_folder_synced</a></li><li><a href="cloudinary_is_media.html">cloudinary_is_media</a></li><li><a href="cloudinary_is_uploadable_media.html">cloudinary_is_uploadable_media</a></li><li><a href="cloudinary_lazy_load_bypass_classes.html">cloudinary_lazy_load_bypass_classes</a></li><li><a href="cloudinary_lazy_load_bypass_formats.html">cloudinary_lazy_load_bypass_formats</a></li><li><a href="cloudinary_local_url.html">cloudinary_local_url</a></li><li><a href="cloudinary_max_files_import.html">cloudinary_max_files_import</a></li><li><a href="cloudinary_media_context.html">cloudinary_media_context</a></li><li><a href="cloudinary_media_context_query.html">cloudinary_media_context_query</a></li><li><a href="cloudinary_media_context_things.html">cloudinary_media_context_things</a></li><li><a href="cloudinary_media_filters.html">cloudinary_media_filters</a></li><li><a href="cloudinary_media_status.html">cloudinary_media_status</a></li><li><a href="cloudinary_media_types.html">cloudinary_media_types</a></li><li><a href="cloudinary_meta_boxes.html">cloudinary_meta_boxes</a></li><li><a href="cloudinary_migrate_legacy_meta.html">cloudinary_migrate_legacy_meta</a></li><li><a href="cloudinary_on_demand_sync_limit.html">cloudinary_on_demand_sync_limit</a></li><li><a href="cloudinary_parse_element.html">cloudinary_parse_element</a></li><li><a href="cloudinary_plugin_asset_cache_filters.html">cloudinary_plugin_asset_cache_filters</a></li><li><a href="cloudinary_plugin_asset_cache_inline_types.html">cloudinary_plugin_asset_cache_inline_types</a></li><li><a href="cloudinary_prepare_size.html">cloudinary_prepare_size</a></li><li><a href="cloudinary_preview_types.html">cloudinary_preview_types</a></li><li><a href="cloudinary_queue_threads.html">cloudinary_queue_threads</a></li><li><a href="cloudinary_raw_url.html">cloudinary_raw_url</a></li><li><a href="cloudinary_register_extensions.html">cloudinary_register_extensions</a></li><li><a href="cloudinary_resource_type.html">cloudinary_resource_type</a></li><li><a href="cloudinary_rest_url.html">cloudinary_rest_url</a></li><li><a href="cloudinary_seo_public_id.html">cloudinary_seo_public_id</a></li><li><a href="cloudinary_set_usable_asset.html">cloudinary_set_usable_asset</a></li><li><a href="cloudinary_setting_get_value.html">cloudinary_setting_get_value</a></li><li><a href="cloudinary_settings_save_setting.html">cloudinary_settings_save_setting</a></li><li><a href="cloudinary_setup_component_parts.html">cloudinary_setup_component_parts</a></li><li><a href="cloudinary_site_url.html">cloudinary_site_url</a></li><li><a href="cloudinary_skip_parse_element.html">cloudinary_skip_parse_element</a></li><li><a href="cloudinary_skip_responsive_breakpoints.html">cloudinary_skip_responsive_breakpoints</a></li><li><a href="cloudinary_sync_base.html">cloudinary_sync_base</a></li><li><a href="cloudinary_sync_base_struct.html">cloudinary_sync_base_struct</a></li><li><a href="cloudinary_syncable_delivery_types.html">cloudinary_syncable_delivery_types</a></li><li><a href="cloudinary_task_capability.html">cloudinary_task_capability</a></li><li><a href="cloudinary_task_capability_%257Btask%257D.html">cloudinary_task_capability_{task}</a></li><li><a href="cloudinary_thread_queue_details_query.html">cloudinary_thread_queue_details_query</a></li><li><a href="cloudinary_transformations.html">cloudinary_transformations</a></li><li><a href="cloudinary_upgrade_sequence.html">cloudinary_upgrade_sequence</a></li><li><a href="cloudinary_upload_eager_formats.html">cloudinary_upload_eager_formats</a></li><li><a href="cloudinary_upload_options.html">cloudinary_upload_options</a></li><li><a href="cloudinary_use_original_image.html">cloudinary_use_original_image</a></li><li><a href="cloudinary_validate_cloudinary_id.html">cloudinary_validate_cloudinary_id</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+	<a href="https://cloudinary.com/" target="_blank" rel="noopener noreferrer">Cloudinary</a> |
+	<a href="https://github.com/cloudinary/cloudinary_wordpress/" target="_blank" rel="noopener noreferrer">Cloudinary
+		on GitHub</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>

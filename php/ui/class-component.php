@@ -267,12 +267,14 @@ abstract class Component {
 		/**
 		 * Filter the components build parts.
 		 *
-		 * @param array $build_parts The build parts.
-		 * @param self  $type        The component object.
+		 * @hook cloudinary_setup_component_parts
 		 *
-		 * @return array
+		 * @param $build_parts {array} The build parts.
+		 * @param $this        {self}  The component object.
+		 *
+		 * @return {array}
 		 */
-		$structs = apply_filters( 'setup_component_parts', $build_parts, $this );
+		$structs = apply_filters( 'cloudinary_setup_component_parts', $build_parts, $this );
 		foreach ( $structs as $name => $struct ) {
 			$struct['attributes']['class'][] = 'cld-ui-' . $name;
 			$this->register_component_part( $name, $struct );

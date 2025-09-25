@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Source: ui-definitions/settings-pages.php - Cloudinary Docs</title>
+
+	<script src="scripts/prettify/prettify.js"></script>
+	<script src="scripts/prettify/lang-css.js"></script>
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+	<link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+
+	<link
+			href="https://fonts.googleapis.com/css?family=IBM+Plex+Mono|IBM+Plex+Sans:300,400|Playfair+Display:900&display=swap"
+			rel="stylesheet">
+</head>
+
+<body>
+
+<div id="main">
+
+	
+	<h1 class="page-title">Source: ui-definitions/settings-pages.php</h1>
+	
+
+	
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>&lt;?php
+/**
+ * Defines the settings structure for the main pages.
+ *
+ * @package Cloudinary
+ */
+
+use Cloudinary\Utils;
+use Cloudinary\Report;
+use function Cloudinary\get_plugin_instance;
+
+$media    = $this->get_component( 'media' );
+$settings = array(
+	'dashboard'      => array(
+		'page_title'          => __( 'Cloudinary Dashboard', 'cloudinary' ),
+		'menu_title'          => __( 'Dashboard', 'cloudinary' ),
+		'priority'            => 1,
+		'requires_connection' => true,
+		'sidebar'             => true,
+		array(
+			'type' => 'panel',
+			array(
+				'type'  => 'plan',
+				'title' => __( 'Your Current Plan', 'cloudinary' ),
+			),
+			array(
+				'type'    => 'link',
+				'url'     => 'https://cloudinary.com/console/lui/upgrade_options',
+				'content' => __( 'Upgrade Plan', 'cloudinary' ),
+			),
+		),
+		array(
+			'type' => 'panel',
+			array(
+				'type'  => 'plan_status',
+				'title' => __( 'Your Plan Status', 'cloudinary' ),
+			),
+		),
+		array(
+			'type' => 'panel_short',
+			array(
+				'type'  => 'media_status',
+				'title' => __( 'Your Media Sync Status', 'cloudinary' ),
+			),
+		),
+	),
+	'connect'        => array(
+		'page_title'         => __( 'General settings', 'cloudinary' ),
+		'menu_title'         => __( 'General settings', 'cloudinary' ),
+		'disconnected_title' => __( 'Setup', 'cloudinary' ),
+		'priority'           => 5,
+		'sidebar'            => true,
+		'settings'           => array(
+			array(
+				'title'       => __( 'Account Status', 'cloudinary' ),
+				'type'        => 'panel',
+				'collapsible' => 'open',
+				array(
+					'slug' => \Cloudinary\Connect::META_KEYS['url'],
+					'type' => 'connect',
+				),
+			),
+			array(
+				'type' => 'switch_cloud',
+			),
+		),
+	),
+	'image_settings' => array(
+		'page_title'          => __( 'Image settings', 'cloudinary' ),
+		'menu_title'          => __( 'Image settings', 'cloudinary' ),
+		'priority'            => 5,
+		'requires_connection' => true,
+		'sidebar'             => true,
+		'settings'            => include $this->dir_path . 'ui-definitions/settings-image.php', // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
+	),
+	'video_settings' => array(
+		'page_title'          => __( 'Video settings', 'cloudinary' ),
+		'menu_title'          => __( 'Video settings', 'cloudinary' ),
+		'priority'            => 5,
+		'requires_connection' => true,
+		'sidebar'             => true,
+		'settings'            => include $this->dir_path . 'ui-definitions/settings-video.php', // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
+	),
+	'lazy_loading'   => array(),
+	'responsive'     => array(
+		'page_title'          => __( 'Responsive images', 'cloudinary' ),
+		'menu_title'          => __( 'Responsive images', 'cloudinary' ),
+		'priority'            => 5,
+		'requires_connection' => true,
+		'sidebar'             => true,
+		'settings'            => array(
+			array(
+				'type'        => 'panel',
+				'title'       => __( 'Responsive images', 'cloudinary' ),
+				'option_name' => 'media_display',
+				array(
+					'type' => 'tabs',
+					'tabs' => array(
+						'image_setting' => array(
+							'text' => __( 'Settings', 'cloudinary' ),
+							'id'   => 'settings',
+						),
+						'image_preview' => array(
+							'text' => __( 'Preview', 'cloudinary' ),
+							'id'   => 'preview',
+						),
+					),
+				),
+				array(
+					'type' => 'row',
+					array(
+						'type'   => 'column',
+						'tab_id' => 'settings',
+						array(
+							'type'               => 'on_off',
+							'slug'               => 'enable_breakpoints',
+							'title'              => __( 'Breakpoints', 'cloudinary' ),
+							'optimisation_title' => __( 'Responsive images', 'cloudinary' ),
+							'tooltip_text'       => __(
+								'Automatically generate multiple sizes based on the configured breakpoints to enable your images to responsively adjust to different screen sizes. Note that your Cloudinary usage will increase when enabling responsive images.',
+								'cloudinary'
+							),
+							'description'        => __( 'Enable responsive images', 'cloudinary' ),
+							'default'            => 'off',
+						),
+						array(
+							'type'      => 'group',
+							'condition' => array(
+								'enable_breakpoints' => true,
+							),
+							array(
+								'type'         => 'number',
+								'slug'         => 'pixel_step',
+								'priority'     => 9,
+								'title'        => __( 'Breakpoint distance', 'cloudinary' ),
+								'tooltip_text' => __( 'The distance between each generated image. Adjusting this will adjust the number of images generated.', 'cloudinary' ),
+								'suffix'       => __( 'px', 'cloudinary' ),
+								'attributes'   => array(
+									'step' => 50,
+									'min'  => 50,
+								),
+								'default'      => 200,
+							),
+							array(
+								'type'         => 'number',
+								'slug'         => 'breakpoints',
+								'title'        => __( 'Max images', 'cloudinary' ),
+								'tooltip_text' => __(
+									'The maximum number of images to be generated. Note that generating large numbers of images will deliver a more optimal version for a wider range of screen sizes but will result in an increase in your usage.  For smaller images, the responsive algorithm may determine that the ideal number is less than the value you specify.',
+									'cloudinary'
+								),
+								'suffix'       => __( 'Recommended value: 3-40', 'cloudinary' ),
+								'attributes'   => array(
+									'min' => 3,
+									'max' => 100,
+								),
+							),
+							array(
+								'type'        => 'number',
+								'slug'        => 'max_width',
+								'title'       => __( 'Image width limit', 'cloudinary' ),
+								'extra_title' => __(
+									'The minimum and maximum width of an image created as a breakpoint. Leave “max” as empty to automatically detect based on the largest registered size in WordPress.',
+									'cloudinary'
+								),
+								'prefix'      => __( 'Max', 'cloudinary' ),
+								'suffix'      => __( 'px', 'cloudinary' ),
+								'default'     => $media->default_max_width(),
+								'attributes'  => array(
+									'step'         => 50,
+									'data-default' => $media->default_max_width(),
+								),
+							),
+							array(
+								'type'       => 'number',
+								'slug'       => 'min_width',
+								'prefix'     => __( 'Min', 'cloudinary' ),
+								'suffix'     => __( 'px', 'cloudinary' ),
+								'default'    => 200,
+								'attributes' => array(
+									'step' => 50,
+								),
+							),
+						),
+					),
+					array(
+						'type'      => 'column',
+						'tab_id'    => 'preview',
+						'class'     => array(
+							'cld-ui-preview',
+						),
+						'condition' => array(
+							'enable_breakpoints' => true,
+						),
+						array(
+							'type'    => 'breakpoints_preview',
+							'title'   => __( 'Preview', 'cloudinary' ),
+							'slug'    => 'breakpoints_preview',
+							'default' => CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE . 'w_600/sample.jpg',
+						),
+					),
+				),
+				array(
+					'type'  => 'info_box',
+					'icon'  => $this->dir_url . 'css/images/academy-icon.svg',
+					'title' => __( 'Need help?', 'cloudinary' ),
+					'text'  => sprintf(
+						// Translators: The HTML for opening and closing link tags.
+						__(
+							'Watch free lessons on how to use the Responsive Images Settings in the %1$sCloudinary Academy%2$s.',
+							'cloudinary'
+						),
+						'&lt;a href="https://training.cloudinary.com/learn/course/introduction-to-cloudinary-for-wordpress-administrators-70-minute-course-1h85/lessons/lazily-loading-and-delivering-responsive-images-1003?page=1" target="_blank" rel="noopener noreferrer">',
+						'&lt;/a>'
+					),
+				),
+			),
+		),
+	),
+	'gallery'        => array(),
+	'help'           => array(
+		'page_title' => __( 'Need help?', 'cloudinary' ),
+		'menu_title' => __( 'Need help?', 'cloudinary' ),
+		'priority'   => 50,
+		'sidebar'    => true,
+		array(
+			'type'  => 'panel',
+			'title' => __( 'Help Center', 'cloudinary' ),
+			array(
+				'type'    => 'tag',
+				'element' => 'h4',
+				'content' => __( 'How can we help', 'cloudinary' ),
+			),
+			array(
+				'type'    => 'span',
+				'content' => 'This help center is divided into segments, to make sure you will get the right answer and information as fast as possible. Know that we are here for you!',
+			),
+			array(
+				'type'       => 'row',
+				'attributes' => array(
+					'wrap' => array(
+						'class' => array(
+							'help-wrap',
+						),
+					),
+				),
+				array(
+					'type'       => 'column',
+					'attributes' => array(
+						'wrap' => array(
+							'class' => array(
+								'help-box',
+							),
+						),
+					),
+					array(
+						'type'       => 'tag',
+						'element'    => 'a',
+						'attributes' => array(
+							'href'   => 'https://cloudinary.com/documentation/wordpress_integration',
+							'target' => '_blank',
+							'rel'    => 'noopener noreferrer',
+							'class'  => array(
+								'large-button',
+							),
+						),
+						array(
+							'type'       => 'tag',
+							'element'    => 'img',
+							'attributes' => array(
+								'src' => $this->dir_url . 'css/images/documentation.jpg',
+							),
+						),
+						array(
+							'type'    => 'tag',
+							'element' => 'h4',
+							'content' => __( 'Documentation', 'cloudinary' ),
+						),
+						array(
+							'type'    => 'span',
+							'content' => __( 'Learn more about how to use the Cloudinary plugin and get the most out of the functionality.', 'cloudinary' ),
+						),
+					),
+				),
+				array(
+					'type'                => 'column',
+					'attributes'          => array(
+						'wrap' => array(
+							'class' => array(
+								'help-box',
+							),
+						),
+					),
+					array(
+						'type'       => 'tag',
+						'element'    => 'a',
+						'attributes' => array(
+							'href'   => 'https://training.cloudinary.com/courses/introduction-to-cloudinary-for-wordpress-administrators-70-minute-course-zf3x',
+							'target' => '_blank',
+							'rel'    => 'noopener noreferrer',
+							'class'  => array(
+								'large-button',
+							),
+						),
+						array(
+							'type'       => 'tag',
+							'element'    => 'img',
+							'attributes' => array(
+								'src' => $this->dir_url . 'css/images/academy.jpg',
+							),
+						),
+						array(
+							'type'    => 'tag',
+							'element' => 'h4',
+							'content' => __( 'Cloudinary Academy', 'cloudinary' ),
+						),
+						array(
+							'type'    => 'a',
+							'content' => __( "With Cloudinary's plugin, it is easy to enhance your WordPress site's images and videos! In this self-paced course, our expert instructor will show you how to configure the plugin and use its most powerful features - asset management, image and video optimization, product gallery creation and more.", 'cloudinary' ),
+						),
+					),
+				),
+				array(
+					'type'       => 'column',
+					'attributes' => array(
+						'wrap' => array(
+							'class' => array(
+								'help-box',
+							),
+						),
+					),
+					array(
+						'type'       => 'tag',
+						'element'    => 'a',
+						'attributes' => array(
+							'href'   => static function () {
+								$args = array(
+									'tf_360017815680' => '-',
+								);
+								return Utils::get_support_link( $args );
+							},
+							'target' => '_blank',
+							'rel'    => 'noopener noreferrer',
+							'class'  => array(
+								'large-button',
+							),
+						),
+						array(
+							'type'       => 'tag',
+							'element'    => 'img',
+							'attributes' => array(
+								'src' => $this->dir_url . 'css/images/request.jpg',
+							),
+						),
+						array(
+							'type'    => 'tag',
+							'element' => 'h4',
+							'content' => __( 'Submit a request', 'cloudinary' ),
+						),
+						array(
+							'type'    => 'span',
+							'content' => __( 'If you’re encountering an issue or struggling to get the plugin to work, open a ticket to contact our support team. To help us debug your queries, we recommend generating a system report.', 'cloudinary' ),
+						),
+					),
+				),
+				array(
+					'type'                => 'column',
+					'requires_connection' => true,
+					'attributes'          => array(
+						'wrap' => array(
+							'class' => array(
+								'help-box',
+							),
+						),
+					),
+					array(
+						'type'       => 'tag',
+						'element'    => 'a',
+						'attributes' => array(
+							'href'  => add_query_arg( 'section', Report::REPORT_SLUG ),
+							'class' => array(
+								'large-button',
+							),
+						),
+						array(
+							'type'       => 'tag',
+							'element'    => 'img',
+							'attributes' => array(
+								'src' => $this->dir_url . 'css/images/report.jpg',
+							),
+						),
+						array(
+							'type'    => 'tag',
+							'element' => 'h4',
+							'content' => __( 'System Report', 'cloudinary' ),
+						),
+						array(
+							'type'    => 'a',
+							'content' => __( "Generate a system report to help debug any specific issues you're having with your Cloudinary media, our support team will usually ask for this when submitting a support request.", 'cloudinary' ),
+						),
+					),
+				),
+			),
+		),
+		array(
+			'type'  => 'panel',
+			'title' => __( 'FAQ', 'cloudinary' ),
+			array(
+				array(
+					'type'        => 'panel',
+					'title'       => __( 'Do I need a Cloudinary account to use the Cloudinary plugin and can I try it out for free?', 'cloudinary' ),
+					'enabled'     => static function () {
+						return ! get_plugin_instance()->get_component( 'connect' )->is_connected();
+					},
+					'collapsible' => 'closed',
+					'content'     => sprintf(
+						// translators: The HTML markup.
+						__( 'To use the Cloudinary plugin and all the functionality that comes with it, you will need to have a Cloudinary Account. %1$sIf you don’t have an account yet, %2$ssign up%3$s now for a free Cloudinary Programmable Media account%4$s. You’ll start with generous usage limits and when your requirements grow, you can easily upgrade to a plan that best fits your needs.', 'cloudinary' ),
+						'&lt;b>',
+						'&lt;a href="https://cloudinary.com/signup?source=wp&amp;utm_source=wp&amp;utm_medium=wporgmarketplace&amp;utm_campaign=wporgmarketplace" target="_blank" rel="noopener noreferrer">',
+						'&lt;/a>',
+						'&lt;/b>'
+					),
+				),
+				array(
+					'type'        => 'panel',
+					'title'       => __( 'I’ve installed the Cloudinary plugin, what happens now?', 'cloudinary' ),
+					'collapsible' => 'closed',
+					'content'     => __( 'If you left all the settings as default, all your current media will begin syncing with Cloudinary. Once syncing is complete, your media will be optimized and delivered using Cloudinary URLs and you should begin seeing improvements in performance across your site.', 'cloudinary' ),
+				),
+				array(
+					'type'        => 'panel',
+					'title'       => __( 'Which file types are supported?', 'cloudinary' ),
+					'collapsible' => 'closed',
+					'content'     => sprintf(
+						// translators: The HTML markup.
+						__( 'Most common media files are supported for optimization and delivery by Cloudinary. For free accounts, you will not be able to deliver PDF or ZIP files by default for security reasons. If this is a requirement, please contact our support team who can help activate this for you.%1$sTo deliver additional file types via Cloudinary, you can extend the functionality of the plugin using the %2$sactions and filters%3$s the plugin exposes for developers.', 'cloudinary' ),
+						'&lt;br>&lt;br>',
+						'&lt;a href="https://cloudinary.com/documentation/wordpress_integration#actions_and_filters" target="_blank" rel="noopener noreferrer">',
+						'&lt;/a>'
+					),
+				),
+				array(
+					'type'        => 'panel',
+					'title'       => __( 'Does the Cloudinary plugin require an active WordPress REST API connection?', 'cloudinary' ),
+					'collapsible' => 'closed',
+					'content'     => sprintf(
+						// translators: The HTML markup.
+						__( 'To function correctly, the Cloudinary plugin requires an active WordPress REST API connection. Ensure your WordPress setup, including multisite or headless configurations, has the REST API enabled and active for seamless plugin operation.%1$sFor more information, see %2$sWordPress’s REST API Handbook%3$s.%1$sTo manually verify your REST API connection, you can temporarily enable the %5$sCloudinary Cron%6$s feature from %4$sthe plugin’s Cron admin page%3$s. Once enabled, activate the %8$s task. When the cron runs for the first time, any connectivity issues will trigger an admin notice.%1$s%7$s%5$s Important%6$s: Enabling the Cron feature starts a recurring background process. Unless you’re actively using it for diagnostics or testing, we %5$sstrongly recommend disabling%6$s this feature to avoid generating unnecessary requests or load on your site.', 'cloudinary' ),
+						'&lt;br>&lt;br>',
+						'&lt;a href="https://developer.wordpress.org/rest-api/" target="_blank" rel="noopener noreferrer">',
+						'&lt;/a>',
+						'&lt;a href="' . add_query_arg( array( 'page' => 'cloudinary&amp;section=cron_system' ), admin_url( 'admin.php' ) ) . '">',
+						'&lt;strong>',
+						'&lt;/strong>',
+						'&lt;span style="color: #b0b000; font-size: 18px">&amp;#9888;&lt;/span>',
+						'&lt;span style="background: #e8e9e8; padding-inline: 2px;">rest_api&lt;/span>'
+					),
+				),
+				array(
+					'type'        => 'panel',
+					'title'       => __( 'Does Cloudinary work on multilingual sites?', 'cloudinary' ),
+					'collapsible' => 'closed',
+					'content'     => sprintf(
+						// translators: The HTML markup.
+						__( 'Absolutely! Cloudinary is fully compatible with WPML, the leading WordPress multilingual plugin, and is officially recommended for seamless media management across multiple languages. Cloudinary ensures that your media assets are efficiently handled on your multilingual site. For more details, visit %1$sWPML\'s official page%2$s on Cloudinary compatibility.', 'cloudinary' ),
+						'&lt;a href="https://wpml.org/plugin/cloudinary/" target="_blank" rel="noopener noreferrer">',
+						'&lt;/a>'
+					),
+				),
+				array(
+					'type'        => 'panel',
+					'title'       => __( "I'm having an incompatibility issue with a theme, plugin, or hosting environment, what can I do?", 'cloudinary' ),
+					'collapsible' => 'closed',
+					'content'     => static function () {
+						return sprintf(
+							// translators: The HTML markup.
+							__( 'We’re compatible with most other plugins so we expect it to work absolutely fine. If you do have any issues, please %1$scontact our support team%2$s who will help resolve your issue.', 'cloudinary' ),
+							'&lt;a href="' . Utils::get_support_link() . '" target="_blank" rel="noopener noreferrer">',
+							'&lt;/a>'
+						);
+					},
+				),
+				array(
+					'type'        => 'panel',
+					'title'       => __( 'Can I use the Cloudinary plugin for my eCommerce websites?', 'cloudinary' ),
+					'collapsible' => 'closed',
+					'content'     => sprintf(
+						// translators: The HTML markup.
+						__( 'Yes, the Cloudinary plugin has full support for WooCommerce. We also have additional functionality that allows you to add a fully optimized %1$sProduct Gallery%2$s.', 'cloudinary' ),
+						'&lt;a href="' . esc_url( add_query_arg( 'page', 'cloudinary_gallery' ) ) . '">',
+						'&lt;/a>'
+					),
+				),
+				array(
+					'type'        => 'panel',
+					'title'       => __( 'Why are my images loading locally and not from Cloudinary?', 'cloudinary' ),
+					'collapsible' => 'closed',
+					'content'     => sprintf(
+						// translators: The HTML markup.
+						__( 'Your images may be loading locally for a number of reasons:%1$sThe asset has been selected to be delivered from WordPress. You can update this for each asset via the %5$sWordPress Media Library%4$s.%2$sYour asset is %3$sstored outside%4$s of your WordPress storage.%2$sThe asset is not properly synced with Cloudinary. You can find the sync status of your assets in the %5$sWordPress Media Library%4$s.%6$s', 'cloudinary' ),
+						'&lt;ul>&lt;li>',
+						'&lt;/li>&lt;li>',
+						'&lt;a href="' . add_query_arg( array( 'page' => 'cloudinary_connect#connect.cache_external.external_assets' ), admin_url( 'admin.php' ) ) . '">',
+						'&lt;/a>',
+						'&lt;a href="' . admin_url( 'upload.php' ) . '">',
+						'&lt;/li>&lt;/ul>'
+					),
+				),
+				array(
+					'type'        => 'panel',
+					'title'       => __( 'How do I handle a CLDBind error which is causing issues with lazy loading?', 'cloudinary' ),
+					'collapsible' => 'closed',
+					'content'     => __( 'The Cloudinary lazy loading scripts must be loaded in the page head. Ensure your site or any 3rd party plugins are not setup to move these scripts.', 'cloudinary' ),
+				),
+			),
+		),
+	),
+	'wizard'         => array(
+		'section' => 'wizard',
+		'slug'    => 'wizard',
+	),
+	'debug'          => array(
+		'section' => 'debug',
+		'slug'    => 'debug',
+		array(
+			'type'  => 'panel',
+			'title' => __( 'Debug log', 'cloudinary' ),
+			array(
+				'type' => 'debug',
+			),
+		),
+	),
+	'edit_asset'     => array(
+		'page_title'          => __( 'Edit asset', 'cloudinary' ),
+		'section'             => 'edit-asset',
+		'slug'                => 'edit_asset',
+		'requires_connection' => true,
+		array(
+			'type' => 'row',
+			array(
+				'type'       => 'column',
+				'width'      => '950px',
+				'attributes' => array(
+					'wrap' => array(
+						'style' => 'margin: 0 auto;max-width:1200px;',
+					),
+				),
+				array(
+					'type' => 'referrer_link',
+				),
+				array(
+					'type' => 'panel',
+					array(
+						'type' => 'asset_preview',
+					),
+				),
+			),
+		),
+	),
+);
+
+/**
+ * Filter the Cloudinary admin pages.
+ *
+ * @hook cloudinary_admin_pages
+ *
+ * @param $settings {array} The admin pages settings.
+ *
+ * @return {array}
+ */
+return apply_filters( 'cloudinary_admin_pages', $settings );
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+	<h2><a href="index.html">Home</a></h2><h3>Actions</h3><ul><li><a href="cloudinary_connected.html">cloudinary_connected</a></li><li><a href="cloudinary_delete_asset.html">cloudinary_delete_asset</a></li><li><a href="cloudinary_download_asset.html">cloudinary_download_asset</a></li><li><a href="cloudinary_enable_crop_and_gravity_control.html">cloudinary_enable_crop_and_gravity_control</a></li><li><a href="cloudinary_flush_cache.html">cloudinary_flush_cache</a></li><li><a href="cloudinary_id.html">cloudinary_id</a></li><li><a href="cloudinary_init_delivery.html">cloudinary_init_delivery</a></li><li><a href="cloudinary_init_settings.html">cloudinary_init_settings</a></li><li><a href="cloudinary_is_%257B$class_name%257D_active.html">cloudinary_is_{$class_name}_active</a></li><li><a href="cloudinary_lazy_load_bypass.html">cloudinary_lazy_load_bypass</a></li><li><a href="cloudinary_queue_action.html">cloudinary_queue_action</a></li><li><a href="cloudinary_ready.html">cloudinary_ready</a></li><li><a href="cloudinary_register_sync_types.html">cloudinary_register_sync_types</a></li><li><a href="cloudinary_registered_sizes.html">cloudinary_registered_sizes</a></li><li><a href="cloudinary_responsive_images_bypass_formats.html">cloudinary_responsive_images_bypass_formats</a></li><li><a href="cloudinary_string_replace.html">cloudinary_string_replace</a></li><li><a href="cloudinary_tag_skip_classes.html">cloudinary_tag_skip_classes</a></li><li><a href="cloudinary_unset_attributes.html">cloudinary_unset_attributes</a></li><li><a href="cloudinary_unsync_asset.html">cloudinary_unsync_asset</a></li><li><a href="cloudinary_upgrade_asset.html">cloudinary_upgrade_asset</a></li><li><a href="cloudinary_upload_args.html">cloudinary_upload_args</a></li><li><a href="cloudinary_uploaded_asset.html">cloudinary_uploaded_asset</a></li><li><a href="cloudinary_version_upgrade.html">cloudinary_version_upgrade</a></li></ul><h3>Filters</h3><ul><li><a href="cloudinary_admin_image_settings.html">cloudinary_admin_image_settings</a></li><li><a href="cloudinary_admin_pages.html">cloudinary_admin_pages</a></li><li><a href="cloudinary_admin_video_settings.html">cloudinary_admin_video_settings</a></li><li><a href="cloudinary_allow_glb_upload.html">cloudinary_allow_glb_upload</a></li><li><a href="cloudinary_allowed_extensions.html">cloudinary_allowed_extensions</a></li><li><a href="cloudinary_api_rest_endpoints.html">cloudinary_api_rest_endpoints</a></li><li><a href="cloudinary_apply_breakpoints.html">cloudinary_apply_breakpoints</a></li><li><a href="cloudinary_apply_default_transformations.html">cloudinary_apply_default_transformations</a></li><li><a href="cloudinary_asset_payload.html">cloudinary_asset_payload</a></li><li><a href="cloudinary_asset_state.html">cloudinary_asset_state</a></li><li><a href="cloudinary_autosync_threads.html">cloudinary_autosync_threads</a></li><li><a href="cloudinary_build_queue_query.html">cloudinary_build_queue_query</a></li><li><a href="cloudinary_bypass_cache.html">cloudinary_bypass_cache</a></li><li><a href="cloudinary_bypass_seo_url.html">cloudinary_bypass_seo_url</a></li><li><a href="cloudinary_can_sync_asset.html">cloudinary_can_sync_asset</a></li><li><a href="cloudinary_content_url.html">cloudinary_content_url</a></li><li><a href="cloudinary_context_options.html">cloudinary_context_options</a></li><li><a href="cloudinary_contextualized_post_id.html">cloudinary_contextualized_post_id</a></li><li><a href="cloudinary_convert_media_types.html">cloudinary_convert_media_types</a></li><li><a href="cloudinary_converted_url.html">cloudinary_converted_url</a></li><li><a href="cloudinary_cron_frequency.html">cloudinary_cron_frequency</a></li><li><a href="cloudinary_cron_start_offset.html">cloudinary_cron_start_offset</a></li><li><a href="cloudinary_current_post_id.html">cloudinary_current_post_id</a></li><li><a href="cloudinary_default_freeform_transformations_%257B$type%257D.html">cloudinary_default_freeform_transformations_{$type}</a></li><li><a href="cloudinary_default_qf_transformations_%257B$type%257D.html">cloudinary_default_qf_transformations_{$type}</a></li><li><a href="cloudinary_default_transformations.html">cloudinary_default_transformations</a></li><li><a href="cloudinary_delivery_get_id.html">cloudinary_delivery_get_id</a></li><li><a href="cloudinary_delivery_searchable_url.html">cloudinary_delivery_searchable_url</a></li><li><a href="cloudinary_dns_prefetch_types.html">cloudinary_dns_prefetch_types</a></li><li><a href="cloudinary_doing_upload.html">cloudinary_doing_upload</a></li><li><a href="cloudinary_edit_asset_permalink.html">cloudinary_edit_asset_permalink</a></li><li><a href="cloudinary_filter_out_local.html">cloudinary_filter_out_local</a></li><li><a href="cloudinary_filter_unknown_urls.html">cloudinary_filter_unknown_urls</a></li><li><a href="cloudinary_gallery_config.html">cloudinary_gallery_config</a></li><li><a href="cloudinary_gallery_html_container.html">cloudinary_gallery_html_container</a></li><li><a href="cloudinary_get_signature.html">cloudinary_get_signature</a></li><li><a href="cloudinary_home_url.html">cloudinary_home_url</a></li><li><a href="cloudinary_ignored_class_keywords.html">cloudinary_ignored_class_keywords</a></li><li><a href="cloudinary_ignored_data_keywords.html">cloudinary_ignored_data_keywords</a></li><li><a href="cloudinary_is_content_dir.html">cloudinary_is_content_dir</a></li><li><a href="cloudinary_is_deliverable.html">cloudinary_is_deliverable</a></li><li><a href="cloudinary_is_folder_synced.html">cloudinary_is_folder_synced</a></li><li><a href="cloudinary_is_media.html">cloudinary_is_media</a></li><li><a href="cloudinary_is_uploadable_media.html">cloudinary_is_uploadable_media</a></li><li><a href="cloudinary_lazy_load_bypass_classes.html">cloudinary_lazy_load_bypass_classes</a></li><li><a href="cloudinary_lazy_load_bypass_formats.html">cloudinary_lazy_load_bypass_formats</a></li><li><a href="cloudinary_local_url.html">cloudinary_local_url</a></li><li><a href="cloudinary_max_files_import.html">cloudinary_max_files_import</a></li><li><a href="cloudinary_media_context.html">cloudinary_media_context</a></li><li><a href="cloudinary_media_context_query.html">cloudinary_media_context_query</a></li><li><a href="cloudinary_media_context_things.html">cloudinary_media_context_things</a></li><li><a href="cloudinary_media_filters.html">cloudinary_media_filters</a></li><li><a href="cloudinary_media_status.html">cloudinary_media_status</a></li><li><a href="cloudinary_media_types.html">cloudinary_media_types</a></li><li><a href="cloudinary_meta_boxes.html">cloudinary_meta_boxes</a></li><li><a href="cloudinary_migrate_legacy_meta.html">cloudinary_migrate_legacy_meta</a></li><li><a href="cloudinary_on_demand_sync_limit.html">cloudinary_on_demand_sync_limit</a></li><li><a href="cloudinary_parse_element.html">cloudinary_parse_element</a></li><li><a href="cloudinary_plugin_asset_cache_filters.html">cloudinary_plugin_asset_cache_filters</a></li><li><a href="cloudinary_plugin_asset_cache_inline_types.html">cloudinary_plugin_asset_cache_inline_types</a></li><li><a href="cloudinary_prepare_size.html">cloudinary_prepare_size</a></li><li><a href="cloudinary_preview_types.html">cloudinary_preview_types</a></li><li><a href="cloudinary_queue_threads.html">cloudinary_queue_threads</a></li><li><a href="cloudinary_raw_url.html">cloudinary_raw_url</a></li><li><a href="cloudinary_register_extensions.html">cloudinary_register_extensions</a></li><li><a href="cloudinary_resource_type.html">cloudinary_resource_type</a></li><li><a href="cloudinary_rest_url.html">cloudinary_rest_url</a></li><li><a href="cloudinary_seo_public_id.html">cloudinary_seo_public_id</a></li><li><a href="cloudinary_set_usable_asset.html">cloudinary_set_usable_asset</a></li><li><a href="cloudinary_setting_get_value.html">cloudinary_setting_get_value</a></li><li><a href="cloudinary_settings_save_setting.html">cloudinary_settings_save_setting</a></li><li><a href="cloudinary_setup_component_parts.html">cloudinary_setup_component_parts</a></li><li><a href="cloudinary_site_url.html">cloudinary_site_url</a></li><li><a href="cloudinary_skip_parse_element.html">cloudinary_skip_parse_element</a></li><li><a href="cloudinary_skip_responsive_breakpoints.html">cloudinary_skip_responsive_breakpoints</a></li><li><a href="cloudinary_sync_base.html">cloudinary_sync_base</a></li><li><a href="cloudinary_sync_base_struct.html">cloudinary_sync_base_struct</a></li><li><a href="cloudinary_syncable_delivery_types.html">cloudinary_syncable_delivery_types</a></li><li><a href="cloudinary_task_capability.html">cloudinary_task_capability</a></li><li><a href="cloudinary_task_capability_%257Btask%257D.html">cloudinary_task_capability_{task}</a></li><li><a href="cloudinary_thread_queue_details_query.html">cloudinary_thread_queue_details_query</a></li><li><a href="cloudinary_transformations.html">cloudinary_transformations</a></li><li><a href="cloudinary_upgrade_sequence.html">cloudinary_upgrade_sequence</a></li><li><a href="cloudinary_upload_eager_formats.html">cloudinary_upload_eager_formats</a></li><li><a href="cloudinary_upload_options.html">cloudinary_upload_options</a></li><li><a href="cloudinary_use_original_image.html">cloudinary_use_original_image</a></li><li><a href="cloudinary_validate_cloudinary_id.html">cloudinary_validate_cloudinary_id</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+	<a href="https://cloudinary.com/" target="_blank" rel="noopener noreferrer">Cloudinary</a> |
+	<a href="https://github.com/cloudinary/cloudinary_wordpress/" target="_blank" rel="noopener noreferrer">Cloudinary
+		on GitHub</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>

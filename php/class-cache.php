@@ -263,7 +263,7 @@ class Cache extends Settings_Component implements Setup {
 		 *
 		 * @param $bypass {bool} True to bypass, false to not.
 		 *
-		 * @return  {bool}
+		 * @return {bool}
 		 */
 		return apply_filters( 'cloudinary_bypass_cache', ! is_null( $bypass ) );
 	}

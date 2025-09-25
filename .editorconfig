@@ -16,5 +16,5 @@ indent_size = 2
 [*.md]
 trim_trailing_whitespace = false
 
-[{.version,.editorconfig}]
+[{.version,.editorconfig,*.yml}]
 insert_final_newline = false

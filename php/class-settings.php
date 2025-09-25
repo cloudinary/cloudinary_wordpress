@@ -368,6 +368,8 @@ class Settings {
 			 *
 			 * @param $value {mixed} The setting value.
 			 * @param $slug  {string}  The setting slug.
+			 *
+			 * @return {mixed}
 			 */
 			$return[ $slug ] = apply_filters( 'cloudinary_setting_get_value', $value, $slug );
 		}

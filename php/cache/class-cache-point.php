@@ -110,6 +110,8 @@ class Cache_Point {
 		 * @param $value {int} The default number of static assets.
 		 *
 		 * @return {int}
+		 *
+		 * @since 2.8.0
 		 */
 		$this->sync_limit = apply_filters( 'cloudinary_on_demand_sync_limit', 100 );
 		$this->register_post_type();

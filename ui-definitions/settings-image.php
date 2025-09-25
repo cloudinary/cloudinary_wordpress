@@ -268,4 +268,13 @@ $settings = array(
 	),
 );
 
+/**
+ * Filter the Cloudinary global transformations tab for images.
+ *
+ * @hook cloudinary_admin_image_settings
+ *
+ * @param $settings {array} The global transformations settings.
+ *
+ * @return {array}
+ */
 return apply_filters( 'cloudinary_admin_image_settings', $settings );

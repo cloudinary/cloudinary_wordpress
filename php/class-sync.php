@@ -14,8 +14,8 @@ use Cloudinary\Sync\Delete_Sync;
 use Cloudinary\Sync\Download_Sync;
 use Cloudinary\Sync\Push_Sync;
 use Cloudinary\Sync\Sync_Queue;
-use Cloudinary\Sync\Upload_Sync;
 use Cloudinary\Sync\Unsync;
+use Cloudinary\Sync\Upload_Sync;
 use WP_Error;
 
 /**
@@ -330,11 +330,14 @@ class Sync implements Setup, Assets {
 
 		/**
 		 * Filter to allow changing if an asset is allowed to be synced.
-		 * Return a WP Error with reason why it can't be synced.
 		 *
-		 * @param int $attachment_id The attachment post ID.
+		 * @hook cloudinary_can_sync_asset
 		 *
-		 * @return bool|\WP_Error
+		 * @param $can           {bool} Can sync.
+		 * @param $attachment_id {int} The attachment post ID.
+		 * @param $type          {string} The type of sync to attempt.
+		 *
+		 * @return {bool}
 		 */
 		return apply_filters( 'cloudinary_can_sync_asset', $can, $attachment_id, $type );
 	}
@@ -660,9 +663,11 @@ class Sync implements Setup, Assets {
 		/**
 		 * Filter the sync base structure to allow other plugins to sync component callbacks.
 		 *
-		 * @param array $base_struct The base sync structure.
+		 * @hook cloudinary_sync_base_struct
 		 *
-		 * @return array
+		 * @param $base_struct {array} The base sync structure.
+		 *
+		 * @return {array}
 		 */
 		$base_struct = apply_filters( 'cloudinary_sync_base_struct', $base_struct );
 
@@ -674,7 +679,9 @@ class Sync implements Setup, Assets {
 		/**
 		 * Do action for setting up sync types.
 		 *
-		 * @param \Cloudinary\Sync $this The sync object.
+		 * @hook cloudinary_register_sync_types
+		 *
+		 * @param $this {Sync} The sync object.
 		 */
 		do_action( 'cloudinary_register_sync_types', $this );
 	}
@@ -946,6 +953,17 @@ class Sync implements Setup, Assets {
 	 */
 	public function filter_media_states( $media_states, $post ) {
 
+		/**
+		 * Filter the Cloudinary media status.
+		 *
+		 * @hook cloudinary_media_status
+		 * @default array()
+		 *
+		 * @param $status  {array} The media status.
+		 * @param $post_id {int} The Post ID.
+		 *
+		 * @return {array}
+		 */
 		$status = apply_filters( 'cloudinary_media_status', array(), $post->ID );
 		if ( ! empty( $status ) ) {
 			$media_states[] = $status['note'];

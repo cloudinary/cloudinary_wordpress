@@ -273,7 +273,14 @@ class Push_Sync {
 
 				// translators: variable is thread name and asset ID.
 				$action_message = sprintf( __( '%1$s - cycle %3$s: Syncing asset %2$d', 'cloudinary' ), $thread, $attachment_id, $runs );
-				do_action( '_cloudinary_queue_action', $action_message, $thread );
+				/**
+				 * Do action on queue action.
+				 *
+				 * @hook cloudinary_queue_action
+				 *
+				 * @param $action_message {string} The message.
+				 */
+				do_action( 'cloudinary_queue_action', $action_message );
 				$this->process_assets( $attachment_id );
 				++$runs;
 				$last_id = $attachment_id;
@@ -283,6 +290,14 @@ class Push_Sync {
 
 		// translators: variable is thread name.
 		$action_message = sprintf( __( 'Ending thread %s', 'cloudinary' ), $thread );
-		do_action( '_cloudinary_queue_action', $action_message, $thread );
+		/**
+		 * Do action on queue action.
+		 *
+		 * @hook cloudinary_queue_action
+		 *
+		 * @param $action_message {string} The message.
+		 * @param $thread         {string} The thread.
+		 */
+		do_action( 'cloudinary_queue_action', $action_message, $thread );
 	}
 }
