@@ -1009,7 +1009,7 @@ class Utils {
 	 * @return array
 	 */
 	public static function query_relations( $public_ids, $urls = array() ) {
-		$chunk_size = 50; // Number of items per chunk, configurable.
+		$chunk_size = 25;
 		$results    = array();
 		$tablename  = self::get_relationship_table();
 
