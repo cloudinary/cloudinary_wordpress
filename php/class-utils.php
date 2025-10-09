@@ -620,6 +620,9 @@ class Utils {
 	 * @return array
 	 */
 	public static function extract_urls( $content ) {
+		// Remove inline SVG data URIs, as they can cause parsing issues when extracting URLs.
+		$content = self::strip_inline_svg_data_uris( $content );
+
 		preg_match_all(
 			"#([\"']?)("
 				. '(?:[\w-]+:)?//?'
@@ -641,6 +644,25 @@ class Utils {
 
 		return array_values( $post_links );
 	}
+
+	/**
+	 * Strip inline SVG data URIs from content.
+	 *
+	 * @param string $content The content to process.
+	 *
+	 * @return string The content with SVG data URIs removed.
+	 */
+	public static function strip_inline_svg_data_uris( $content ) {
+		// Pattern to match the data URI structure: data:image/svg+xml;base64,<base64-encoded-data>.
+		$svg_data_uri_pattern = '/data:image\/svg\+xml;base64,[a-zA-Z0-9\/\+\=]+/i';
+
+		// Remove all occurrences of SVG data URIs from the content.
+		$cleaned_content = preg_replace( $svg_data_uri_pattern, '', $content );
+
+		// In case an error occurred, we return the original content to avoid data loss.
+		return is_null( $cleaned_content ) ? $content : $cleaned_content;
+	}
+
 
 	/**
 	 * Is saving metadata.
