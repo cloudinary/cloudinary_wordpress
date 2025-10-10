@@ -1464,7 +1464,7 @@ class Delivery implements Setup {
 		 *
 		 * @retrun {bool}
 		 */
-		$enabled_crop_gravity     = apply_filters( 'cloudinary_enable_crop_and_gravity_control', false );
+		$enabled_crop_gravity     = apply_filters( 'cloudinary_enable_crop_and_gravity_control', true );
 		$has_sized_transformation = $enabled_crop_gravity && ! empty( $config['crop_sizes'] );
 
 		$tag_element = array(

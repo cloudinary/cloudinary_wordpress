@@ -16,7 +16,7 @@
  *
  * @retrun {bool}
  */
-if ( ! apply_filters( 'cloudinary_enable_crop_and_gravity_control', false ) ) {
+if ( ! apply_filters( 'cloudinary_enable_crop_and_gravity_control', true ) ) {
 	return array();
 }
 $metaboxes = array(
@@ -30,7 +30,7 @@ $metaboxes = array(
 				array(
 					'type'         => 'on_off',
 					'slug'         => 'enable_crop_and_gravity',
-					'title'        => __( 'Crop and Gravity control (beta)', 'cloudinary' ),
+					'title'        => __( 'Crop and Gravity control', 'cloudinary' ),
 					'tooltip_text' => __(
 						'Enable Crop and Gravity control for registered image sizes.',
 						'cloudinary'
