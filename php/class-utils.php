@@ -1031,16 +1031,19 @@ class Utils {
 	 * @return array
 	 */
 	public static function query_relations( $public_ids, $urls = array() ) {
-		$chunk_size = 25;
-		$results    = array();
-		$tablename  = self::get_relationship_table();
+		global $wpdb;
+
+		$wheres          = array();
+		$searched_things = array();
 
 		/**
 		 * Filter the media context query.
 		 *
 		 * @hook   cloudinary_media_context_query
 		 * @since  3.2.0
+		 *
 		 * @param $media_context_query {string} The default media context query.
+		 *
 		 * @return {string}
 		 */
 		$media_context_query = apply_filters( 'cloudinary_media_context_query', 'media_context = %s' );
@@ -1050,60 +1053,43 @@ class Utils {
 		 *
 		 * @hook   cloudinary_media_context_things
 		 * @since  3.2.0
+		 *
 		 * @param $media_context_things {array} The default media context things.
+		 *
 		 * @return {array}
 		 */
 		$media_context_things = apply_filters( 'cloudinary_media_context_things', array( 'default' ) );
 
-		// Query for urls in chunks.
 		if ( ! empty( $urls ) ) {
-			$results = array_merge( $results, self::run_chunked_query( 'url_hash', $urls, $chunk_size, $tablename, $media_context_query, $media_context_things ) );
+			// Do the URLS.
+			$list            = implode( ', ', array_fill( 0, count( $urls ), '%s' ) );
+			$where           = "(url_hash IN( {$list} ) AND {$media_context_query} )";
+			$searched_things = array_merge( $searched_things, array_map( 'md5', $urls ), $media_context_things );
+			$wheres[]        = $where;
 		}
-		// Query for public_ids in chunks.
 		if ( ! empty( $public_ids ) ) {
-			$results = array_merge( $results, self::run_chunked_query( 'public_hash', $public_ids, $chunk_size, $tablename, $media_context_query, $media_context_things ) );
+			// Do the public_ids.
+			$list            = implode( ', ', array_fill( 0, count( $public_ids ), '%s' ) );
+			$where           = "(public_hash IN( {$list} ) AND {$media_context_query} )";
+			$searched_things = array_merge( $searched_things, array_map( 'md5', $public_ids ), $media_context_things );
+			$wheres[]        = $where;
+		}
+
+		$results = array();
+
+		if ( ! empty( array_filter( $wheres ) ) ) {
+			$tablename = self::get_relationship_table();
+			$sql       = "SELECT * from {$tablename} WHERE " . implode( ' OR ', $wheres );
+			$prepared  = $wpdb->prepare( $sql, $searched_things ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$cache_key = md5( $prepared );
+			$results   = wp_cache_get( $cache_key, 'cld_delivery' );
+			if ( empty( $results ) ) {
+				$results = $wpdb->get_results( $prepared, ARRAY_A );// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
+				wp_cache_add( $cache_key, $results, 'cld_delivery' );
+			}
 		}
 
 		return $results;
-	}
-	/**
-	 * Run a chunked query and merge results.
-	 *
-	 * @param string $field The DB field to query (url_hash or public_hash).
-	 * @param array  $items The items to query.
-	 * @param int    $chunk_size Number of items per chunk.
-	 * @param string $tablename The table name.
-	 * @param string $media_context_query The media context SQL.
-	 * @param array  $media_context_things The media context values.
-	 * @return array
-	 */
-	protected static function run_chunked_query( $field, $items, $chunk_size, $tablename, $media_context_query, $media_context_things ) {
-		global $wpdb;
-
-		$all_results = array();
-		$chunks      = array_chunk( $items, $chunk_size );
-
-		foreach ( $chunks as $chunk ) {
-			$list            = implode( ', ', array_fill( 0, count( $chunk ), '%s' ) );
-			$where           = "({$field} IN( {$list} ) AND {$media_context_query} )";
-			$searched_things = array_merge( array_map( 'md5', $chunk ), $media_context_things );
-			$sql             = "SELECT * from {$tablename} WHERE {$where}";
-			$prepared        = $wpdb->prepare( $sql, $searched_things ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			$cache_key       = md5( $prepared );
-			$chunk_results   = wp_cache_get( $cache_key, 'cld_delivery' );
-
-			if ( empty( $chunk_results ) ) {
-				$chunk_results = $wpdb->get_results( $prepared, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
-
-				wp_cache_add( $cache_key, $chunk_results, 'cld_delivery' );
-			}
-
-			if ( ! empty( $chunk_results ) ) {
-				$all_results = array_merge( $all_results, $chunk_results );
-			}
-		}
-
-		return $all_results;
 	}
 
 	/**
