@@ -117,6 +117,7 @@ class Assets extends Settings_Component {
 	 */
 	public function __construct( Plugin $plugin ) {
 		parent::__construct( $plugin );
+		$this->should_sanitize_slugs = true;
 
 		$this->media    = $plugin->get_component( 'media' );
 		$this->delivery = $plugin->get_component( 'delivery' );
