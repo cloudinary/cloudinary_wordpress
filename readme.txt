@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: image-optimizer, core-web-vitals, video, resize, performance
 Requires at least: 4.7
-Tested up to: 6.8.2
+Tested up to: 6.8.3
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -145,6 +145,15 @@ Your site is now setup to start using Cloudinary.
 
 
 == Changelog ==
+
+= 3.2.14 (22 October 2025) =
+
+Fixes and Improvements:
+
+* Upgraded dependencies: `form-data` and `@babel/traverse` packages updated for improved stability and security
+* Improved SQL queries for enhanced compatibility and performance with WP Engine environments
+* Improved initialization performance by optimizing the `sanitize_slug` method usage to reduce unnecessary processing
+* Fixed incompatibility causing broken media URLs when JetEngine dashboard styles loaded inline SVGs
 
 = 3.2.13 (17 September 2025) =
 
