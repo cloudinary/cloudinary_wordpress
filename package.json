@@ -80,7 +80,6 @@
     "chart.js": "^3.5.0",
     "classnames": "^2.3.1",
     "codemirror": "^5.65.0",
-    "coveralls": "^3.1.0",
     "cross-env": "^7.0.2",
     "css-loader": "^5.0.1",
     "css-minimizer-webpack-plugin": "^4.2.2",
@@ -144,5 +143,5 @@
     "webpack-cli": "^4.2.0",
     "webpackbar": "^5.0.2"
   },
-  "version": "3.2.13"
+  "version": "3.2.14"
 }

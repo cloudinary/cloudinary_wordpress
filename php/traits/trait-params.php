@@ -31,6 +31,13 @@ trait Params_Trait {
 	public $separator = '.';
 
 	/**
+	 * Whether to sanitize slugs.
+	 *
+	 * @var boolean
+	 */
+	protected $should_sanitize_slugs = false;
+
+	/**
 	 * Sets the params recursively.
 	 *
 	 * @param array $parts The parts to set.
@@ -77,7 +84,6 @@ trait Params_Trait {
 	 * @return $this
 	 */
 	public function set_param( $param, $value = null ) {
-
 		$sanitized_param = $this->sanitize_slug( $param );
 		$parts           = explode( $this->separator, $sanitized_param );
 		$param           = array_shift( $parts );
@@ -140,6 +146,9 @@ trait Params_Trait {
 	 * @return string
 	 */
 	protected function sanitize_slug( $slug ) {
+		if ( ! $this->should_sanitize_slugs || ! str_contains( $slug, $this->separator ) ) {
+			return $slug;
+		}
 
 		$sanitized = array_map( 'sanitize_file_name', explode( $this->separator, $slug ) );
 
