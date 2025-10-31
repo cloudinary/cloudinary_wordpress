@@ -79,6 +79,7 @@
     "css-unicode-loader": "^1.0.3",
     "cssnano": "^5.0.2",
     "eslint": "^7.12.1",
+    "eslint-plugin-jest": "^24.1.0",
     "file-loader": "^6.2.0",
     "grunt": "^1.5.2",
     "grunt-contrib-clean": "^2.0.0",
