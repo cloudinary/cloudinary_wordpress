@@ -30,7 +30,7 @@ $metaboxes = array(
 				array(
 					'type'         => 'on_off',
 					'slug'         => 'enable_crop_and_gravity',
-					'title'        => __( 'Crop and Gravity control', 'cloudinary' ),
+					'title'        => __( 'Crop and Gravity control (beta)', 'cloudinary' ),
 					'tooltip_text' => __(
 						'Enable Crop and Gravity control for registered image sizes.',
 						'cloudinary'
