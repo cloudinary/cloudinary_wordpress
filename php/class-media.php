@@ -1022,7 +1022,7 @@ class Media extends Settings_Component implements Setup {
 			 *
 			 * @retrun {bool}
 			 */
-			$enabled_crop_and_gravity = apply_filters( 'cloudinary_enable_crop_and_gravity_control', false );
+			$enabled_crop_and_gravity = apply_filters( 'cloudinary_enable_crop_and_gravity_control', true );
 
 			// Check for custom crop.
 			if ( is_numeric( $attachment_id ) && $enabled_crop_and_gravity ) {
