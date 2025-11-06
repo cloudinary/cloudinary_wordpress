@@ -10,8 +10,8 @@
     "url": "https://github.com/cloudinary/cloudinary_wordpress.git"
   },
   "engines": {
-    "node": ">=12",
-    "npm": ">=6.9"
+    "node": ">=22",
+    "npm": ">=10"
   },
   "scripts": {
     "build": "wp-scripts build",
