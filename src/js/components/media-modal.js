@@ -126,17 +126,17 @@ if ( wp.media ) {
 										if (
 											typeof asset.resync !== 'undefined'
 										) {
-											asset.resync.forEach( function (
-												newUpdateAsset
-											) {
-												const updateAttach =
-													attachment.get(
-														newUpdateAsset.id
+											asset.resync.forEach(
+												function ( newUpdateAsset ) {
+													const updateAttach =
+														attachment.get(
+															newUpdateAsset.id
+														);
+													updateAttach.set(
+														newUpdateAsset
 													);
-												updateAttach.set(
-													newUpdateAsset
-												);
-											} );
+												}
+											);
 										}
 										if (
 											typeof asset.fetch !== 'undefined'
