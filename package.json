@@ -50,7 +50,6 @@
     ]
   },
   "dependencies": {
-    "@tippyjs/react": "^4.2.5",
     "chart.js": "^3.5.0",
     "classnames": "^2.3.1",
     "codemirror": "^5.65.0",
