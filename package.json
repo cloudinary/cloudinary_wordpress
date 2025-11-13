@@ -31,12 +31,8 @@
     "readme": "composer readme",
     "release": "release-it --no-increment",
     "release:ci": "release-it --ci",
-    "release:dry": "release-it --dry-run"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
+    "release:dry": "release-it --dry-run",
+    "prepare": "husky install"
   },
   "lint-staged": {
     "*.php": [
@@ -91,7 +87,7 @@
     "grunt-text-replace": "^0.4.0",
     "grunt-wp-deploy": "^2.1.2",
     "grunt-wp-i18n": "^1.0.3",
-    "husky": "^4.3.8",
+    "husky": "^9.1.7",
     "lint-staged": "^16.2.6",
     "load-grunt-tasks": "^5.1.0",
     "mini-css-extract-plugin": "^2.9.4",
