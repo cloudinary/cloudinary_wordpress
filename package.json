@@ -32,7 +32,7 @@
     "release": "release-it --no-increment",
     "release:ci": "release-it --ci",
     "release:dry": "release-it --dry-run",
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "lint-staged": {
     "*.php": [
