@@ -23,8 +23,6 @@ const sharedConfig = {
 		minimizer: [
 			new TerserPlugin( {
 				parallel: true,
-				sourceMap: true,
-				cache: true,
 				terserOptions: {
 					output: {
 						comments: /translators:/i,
@@ -68,6 +66,10 @@ const sharedConfig = {
 			filename: '../css/[name]-rtl.css',
 		} ),
 	],
+	cache: {
+		type: 'filesystem',
+	},
+	devtool: 'source-map',
 };
 
 const cldCore = {
