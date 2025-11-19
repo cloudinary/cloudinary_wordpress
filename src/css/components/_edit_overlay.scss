@@ -74,5 +74,12 @@
 			}
 		}
 	}
+
+	.cld-asset-edit-button {
+		&.button-primary {
+			margin-right: auto;
+			padding: 7px 14px;
+		}
+	}
 }
 

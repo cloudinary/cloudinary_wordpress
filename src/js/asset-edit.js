@@ -10,8 +10,11 @@ const AssetEdit = {
 	base: null,
 	publicId: null,
 	size: null,
-	transformationsInput: document.getElementById( 'cld-asset-edit-transformations' ),
-	textOverlayTransformations: '',
+	transformationsInput: document.getElementById( 'edit_asset.transformations' ),
+	textOverlayTextInput: document.getElementById( 'edit_asset.text_overlay_text' ),
+	textOverlayPositionInput: document.getElementById( 'edit_asset.text_overlay_position' ),
+	textOverlayXOffsetInput: document.getElementById( 'edit_asset.text_overlay_x_offset' ),
+	textOverlayYOffsetInput: document.getElementById( 'edit_asset.text_overlay_y_offset' ),
 	saveButton: document.getElementById( 'cld-asset-edit-save' ),
 	currentURL: null,
 	init() {
@@ -33,7 +36,10 @@ const AssetEdit = {
 		this.wrap.appendChild( this.preview.createPreview( 500, 400 ) );
 		this.preview.setSrc( this.base + this.transformationsInput.value + this.publicId, true );
 		this.transformationsInput.addEventListener( 'input', ( ev ) => {
-			this.preview.setSrc( this.base + this.transformationsInput.value + this.publicId );
+			this.preview.setSrc( this.getSrc() );
+		} );
+		this.textOverlayTextInput.addEventListener( 'input', ( ev ) => {
+			this.preview.setSrc( this.getSrc() );
 		} );
 		this.transformationsInput.addEventListener( 'keydown', ( ev ) => {
 			if ( 'Enter' === ev.code ) {
@@ -86,6 +92,7 @@ const AssetEdit = {
 			cell.addEventListener( 'click', () => {
 				grid.querySelectorAll( '.edit-overlay-grid__cell--selected' ).forEach( c => c.classList.remove( 'edit-overlay-grid__cell--selected' ) );
 				cell.classList.add( 'edit-overlay-grid__cell--selected' );
+				this.textOverlayPositionInput.value = option;
 			});
 
 			grid.appendChild(cell);
@@ -127,6 +134,20 @@ const AssetEdit = {
 
 			frame.open();
 		} );
+	},
+	getSrc() {
+		let textOverlay = 'l_text:Arial_80:' + this.textOverlayTextInput.value + '/fl_layer_apply';
+		let position = this.textOverlayPositionInput.value;
+		let xOffset = this.textOverlayXOffsetInput.value ? ',x_' + this.textOverlayXOffsetInput.value : '';
+		let yOffset = this.textOverlayYOffsetInput.value ? ',y_' + this.textOverlayYOffsetInput.value : '';
+
+		if ( this.textOverlayTextInput.value ) {
+			textOverlay += ',g_' + position + xOffset + yOffset;
+		} else {
+			textOverlay = '';
+		}
+		let src = this.base + this.transformationsInput.value + textOverlay + this.publicId;
+		return src;
 	}
 };
 

@@ -535,7 +535,6 @@ $settings = array(
 	'edit_asset'     => array(
 		'page_title'          => __( 'Edit asset', 'cloudinary' ),
 		'section'             => 'edit-asset',
-		'slug'                => 'edit_asset',
 		'requires_connection' => true,
 		array(
 			'type'       => 'row',
@@ -565,9 +564,75 @@ $settings = array(
 				array(
 					'type'        => 'panel',
 					'collapsible' => 'open',
+					'title'       => __( 'Transformations', 'cloudinary' ),
+					array(
+						'type'  => 'info_box',
+						'icon'  => $this->dir_url . 'css/images/transformation.svg',
+						'title' => __( 'What are transformations?', 'cloudinary' ),
+						'text'  => __(
+							'A set of parameters included in a Cloudinary URL to programmatically transform the visual appearance of the assets on your website.',
+							'cloudinary'
+						),
+					),
+					array(
+						'type'        => 'text',
+						'title'       => __( 'Asset transformations', 'cloudinary' ),
+						'slug'        => 'transformations',
+						'default'     => '',
+						'anchor'      => true,
+						'tooltip_text' => sprintf(
+							// translators: The link to transformation reference.
+							__(
+								'Specify the asset transformations using Cloudinary URL transformation syntax. See %1$sreference%2$s for all available transformations and syntax.',
+								'cloudinary'
+							),
+							'<a href="https://cloudinary.com/documentation/transformation_reference" target="_blank" rel="noopener noreferrer">',
+							'</a>'
+						),
+						'link'        => array(
+							'text' => __( 'See examples', 'cloudinary' ),
+							'href' => 'https://cloudinary.com/documentation/image_transformations',
+						),
+						'attributes'  => array(
+							'placeholder' => 'w_90,r_max',
+						),
+					),
+					array(
+						'type'       => 'tag',
+						'element'    => 'button',
+						'content'    => __( 'Save Changes', 'cloudinary' ),
+						'attributes' => array(
+							'type'  => 'button',
+							'id'    => 'cld-asset-edit-save',
+							'class' => array(
+								'button',
+								'button-primary',
+								'cld-asset-edit-button',
+							),
+						),
+					),
+				),
+				array(
+					'type'        => 'panel',
+					'collapsible' => 'open',
 					'title'       => __( 'Text Overlay', 'cloudinary' ),
 					array(
-
+						'type' => 'row',
+						array(
+							'type' => 'info_box',
+							'icon' => $this->dir_url . 'css/images/academy-icon.svg',
+							'text' => sprintf(
+								// Translators: The HTML for opening and closing link tags.
+								__(
+									'The text overlay feature allows you to place text on top of an asset. Learn more about %1$stext overlays%2$s and how to use them effectively.',
+									'cloudinary'
+								),
+								'<a href="https://cloudinary.com/documentation/layers#text_overlays" target="_blank" rel="noopener noreferrer">',
+								'</a>'
+							),
+						),
+					),
+					array(
 						'type' => 'row',
 						array(
 							'type'  => 'column',
@@ -577,12 +642,12 @@ $settings = array(
 							array(
 								'type'    => 'text',
 								'title'   => __( 'Text', 'cloudinary' ),
+								'slug'    => 'text_overlay_text',
 								'default' => '',
 							),
 						),
 					),
 					array(
-
 						'type' => 'row',
 						array(
 							'type' => 'column',
@@ -590,6 +655,7 @@ $settings = array(
 								'type'       => 'text',
 								'title'      => __( 'Position', 'cloudinary' ),
 								'default'    => '',
+								'slug'       => 'text_overlay_position',
 								'attributes' => array(
 									'input' => array(
 										'type' => 'hidden',
@@ -614,12 +680,14 @@ $settings = array(
 								'type'    => 'number',
 								'title'   => __( 'X Offset', 'cloudinary' ),
 								'default' => '',
+								'slug'    => 'text_overlay_x_offset',
 								'suffix'  => 'px',
 							),
 							array(
 								'type'    => 'number',
 								'title'   => __( 'Y Offset', 'cloudinary' ),
 								'default' => '',
+								'slug'    => 'text_overlay_y_offset',
 								'suffix'  => 'px',
 							),
 						),
@@ -627,12 +695,25 @@ $settings = array(
 					array(
 						'type' => 'row',
 						array(
-							'type' => 'tag',
+							'type'       => 'tag',
 							'element'    => 'a',
-							'content' => __( 'Remove Overlay', 'cloudinary' ),
+							'content'    => __( 'Save Changes', 'cloudinary' ),
 							'attributes' => array(
-								'href'   => '#',
-								'class'  => array(
+								'href'  => '#',
+								'class' => array(
+									'button',
+									'button-primary',
+									'cld-asset-edit-button',
+								),
+							),
+						),
+						array(
+							'type'       => 'tag',
+							'element'    => 'a',
+							'content'    => __( 'Remove Text Overlay', 'cloudinary' ),
+							'attributes' => array(
+								'href'  => '#',
+								'class' => array(
 									'button',
 									'button--remove',
 								),
@@ -647,6 +728,22 @@ $settings = array(
 					array(
 						'type' => 'row',
 						array(
+							'type' => 'info_box',
+							'icon' => $this->dir_url . 'css/images/academy-icon.svg',
+							'text' => sprintf(
+								// Translators: The HTML for opening and closing link tags.
+								__(
+									'The image overlay feature allows you to place an image on top of an asset. Learn more about %1$simage overlays%2$s and how to use them effectively.',
+									'cloudinary'
+								),
+								'<a href="https://cloudinary.com/documentation/layers#image_overlays" target="_blank" rel="noopener noreferrer">',
+								'</a>'
+							),
+						),
+					),
+					array(
+						'type' => 'row',
+						array(
 							'type'  => 'column',
 							'class' => array(
 								'edit-overlay-offset',
@@ -655,12 +752,13 @@ $settings = array(
 								'type'       => 'tag',
 								'element'    => 'a',
 								'content'    => __( 'Select Image', 'cloudinary' ),
+								'slug'       => 'image_overlay_image',
 								'attributes' => array(
 									'href'  => '#',
 									'class' => array(
 										'button',
 									),
-									'id' => 'edit-overlay-select-image',
+									'id'    => 'edit-overlay-select-image',
 								),
 							),
 							array(
@@ -709,6 +807,7 @@ $settings = array(
 								'type'       => 'text',
 								'title'      => __( 'Position', 'cloudinary' ),
 								'default'    => '',
+								'slug'       => 'image_overlay_position',
 								'attributes' => array(
 									'input' => array(
 										'type' => 'hidden',
@@ -733,12 +832,14 @@ $settings = array(
 								'type'    => 'number',
 								'title'   => __( 'X Offset', 'cloudinary' ),
 								'default' => '',
+								'slug'    => 'image_overlay_x_offset',
 								'suffix'  => 'px',
 							),
 							array(
 								'type'    => 'number',
 								'title'   => __( 'Y Offset', 'cloudinary' ),
 								'default' => '',
+								'slug'    => 'image_overlay_y_offset',
 								'suffix'  => 'px',
 							),
 						),
@@ -746,23 +847,30 @@ $settings = array(
 					array(
 						'type' => 'row',
 						array(
-							'type' => 'tag',
+							'type'       => 'tag',
 							'element'    => 'a',
-							'content' => __( 'Remove Overlay', 'cloudinary' ),
+							'content'    => __( 'Save Changes', 'cloudinary' ),
 							'attributes' => array(
-								'href'   => '#',
-								'class'  => array(
+								'href'  => '#',
+								'class' => array(
+									'button',
+									'button-primary',
+									'cld-asset-edit-button',
+								),
+							),
+						),
+						array(
+							'type'       => 'tag',
+							'element'    => 'a',
+							'content'    => __( 'Remove Image Overlay', 'cloudinary' ),
+							'attributes' => array(
+								'href'  => '#',
+								'class' => array(
 									'button',
 									'button--remove',
 								),
 							),
 						),
-					),
-				),
-				array(
-					'type' => 'panel',
-					array(
-						'type' => 'asset_preview_settings',
 					),
 				),
 			),
