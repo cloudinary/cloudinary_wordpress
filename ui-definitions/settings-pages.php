@@ -7,6 +7,7 @@
 
 use Cloudinary\Utils;
 use Cloudinary\Report;
+use Cloudinary\UI\Component\Asset_Preview;
 use function Cloudinary\get_plugin_instance;
 
 $media    = $this->get_component( 'media' );
@@ -537,20 +538,247 @@ $settings = array(
 		'slug'                => 'edit_asset',
 		'requires_connection' => true,
 		array(
-			'type' => 'row',
+			'type'       => 'row',
+			'attributes' => array(
+				'wrap' => array(
+					'style' => 'margin: 0 auto;max-width:1200px;',
+				),
+			),
 			array(
-				'type'       => 'column',
-				'width'      => '950px',
-				'attributes' => array(
-					'wrap' => array(
-						'style' => 'margin: 0 auto;max-width:1200px;',
+				'type' => 'referrer_link',
+			),
+		),
+		array(
+			'type'       => 'row',
+			'attributes' => array(
+				'wrap' => array(
+					'style' => 'margin: 0 auto;max-width:1200px;',
+				),
+			),
+
+			array(
+				'type'  => 'column',
+				'class' => array(
+					'column-55',
+					'edit-overlay',
+				),
+				array(
+					'type'        => 'panel',
+					'collapsible' => 'open',
+					'title'       => __( 'Text Overlay', 'cloudinary' ),
+					array(
+
+						'type' => 'row',
+						array(
+							'type'  => 'column',
+							'class' => array(
+								'edit-overlay-offset',
+							),
+							array(
+								'type'    => 'text',
+								'title'   => __( 'Text', 'cloudinary' ),
+								'default' => '',
+							),
+						),
+					),
+					array(
+
+						'type' => 'row',
+						array(
+							'type' => 'column',
+							array(
+								'type'       => 'text',
+								'title'      => __( 'Position', 'cloudinary' ),
+								'default'    => '',
+								'attributes' => array(
+									'input' => array(
+										'type' => 'hidden',
+									),
+								),
+							),
+							array(
+								'type'       => 'tag',
+								'element'    => 'div',
+								'attributes' => array(
+									'data-grid-options' => wp_json_encode( Asset_Preview::get_grid_options() ),
+									'id'                => 'edit-overlay-grid-text',
+									'class'             => array(
+										'edit-overlay-grid',
+									),
+								),
+							),
+						),
+						array(
+							'type' => 'column',
+							array(
+								'type'    => 'number',
+								'title'   => __( 'X Offset', 'cloudinary' ),
+								'default' => '',
+								'suffix'  => 'px',
+							),
+							array(
+								'type'    => 'number',
+								'title'   => __( 'Y Offset', 'cloudinary' ),
+								'default' => '',
+								'suffix'  => 'px',
+							),
+						),
+					),
+					array(
+						'type' => 'row',
+						array(
+							'type' => 'tag',
+							'element'    => 'a',
+							'content' => __( 'Remove Overlay', 'cloudinary' ),
+							'attributes' => array(
+								'href'   => '#',
+								'class'  => array(
+									'button',
+									'button--remove',
+								),
+							),
+						),
 					),
 				),
 				array(
-					'type' => 'referrer_link',
+					'type'        => 'panel',
+					'collapsible' => 'open',
+					'title'       => __( 'Image Overlay', 'cloudinary' ),
+					array(
+						'type' => 'row',
+						array(
+							'type'  => 'column',
+							'class' => array(
+								'edit-overlay-offset',
+							),
+							array(
+								'type'       => 'tag',
+								'element'    => 'a',
+								'content'    => __( 'Select Image', 'cloudinary' ),
+								'attributes' => array(
+									'href'  => '#',
+									'class' => array(
+										'button',
+									),
+									'id' => 'edit-overlay-select-image',
+								),
+							),
+							array(
+								'type'       => 'tag',
+								'element'    => 'div',
+								'attributes' => array(
+									'id' => 'edit-overlay-select-image-preview',
+								),
+							),
+						),
+						array(
+							'type'  => 'column',
+							'class' => array(
+								'edit-overlay-offset',
+							),
+							array(
+								'type'       => 'text',
+								'title'      => __( 'Size', 'cloudinary' ),
+								'default'    => 20,
+								'slug'       => 'image_overlay_size',
+								'attributes' => array(
+									'min'  => 0,
+									'max'  => 100,
+									'type' => 'range',
+								),
+							),
+							array(
+								'type'       => 'text',
+								'title'      => __( 'Opacity', 'cloudinary' ),
+								'default'    => 20,
+								'slug'       => 'image_overlay_opacity',
+								'attributes' => array(
+									'min'  => 0,
+									'max'  => 100,
+									'type' => 'range',
+								),
+							),
+						),
+					),
+					array(
+
+						'type' => 'row',
+						array(
+							'type' => 'column',
+							array(
+								'type'       => 'text',
+								'title'      => __( 'Position', 'cloudinary' ),
+								'default'    => '',
+								'attributes' => array(
+									'input' => array(
+										'type' => 'hidden',
+									),
+								),
+							),
+							array(
+								'type'       => 'tag',
+								'element'    => 'div',
+								'attributes' => array(
+									'data-grid-options' => wp_json_encode( Asset_Preview::get_grid_options() ),
+									'id'                => 'edit-overlay-grid-image',
+									'class'             => array(
+										'edit-overlay-grid',
+									),
+								),
+							),
+						),
+						array(
+							'type' => 'column',
+							array(
+								'type'    => 'number',
+								'title'   => __( 'X Offset', 'cloudinary' ),
+								'default' => '',
+								'suffix'  => 'px',
+							),
+							array(
+								'type'    => 'number',
+								'title'   => __( 'Y Offset', 'cloudinary' ),
+								'default' => '',
+								'suffix'  => 'px',
+							),
+						),
+					),
+					array(
+						'type' => 'row',
+						array(
+							'type' => 'tag',
+							'element'    => 'a',
+							'content' => __( 'Remove Overlay', 'cloudinary' ),
+							'attributes' => array(
+								'href'   => '#',
+								'class'  => array(
+									'button',
+									'button--remove',
+								),
+							),
+						),
+					),
 				),
 				array(
 					'type' => 'panel',
+					array(
+						'type' => 'asset_preview_settings',
+					),
+				),
+			),
+			array(
+				'type'  => 'column',
+				'class' => array(
+					'column-45',
+					'cld-ui-preview',
+				),
+				array(
+					'type'       => 'panel',
+					'attributes' => array(
+						'wrap' => array(
+							'style' => 'display: flex; justify-content: center; align-items: center;',
+						),
+					),
 					array(
 						'type' => 'asset_preview',
 					),
