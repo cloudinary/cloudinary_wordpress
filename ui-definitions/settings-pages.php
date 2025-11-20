@@ -636,6 +636,44 @@ $settings = array(
 						'type' => 'row',
 						array(
 							'type'  => 'column',
+							array(
+								'type'        => 'color',
+								'title'       => __( 'Color', 'cloudinary' ),
+								'slug'        => 'text_overlay_color',
+								'default'     => 'rgba(153,153,153,0.5)',
+							),
+						),
+						array(
+							'type'  => 'column',
+							array(
+								'type'         => 'select',
+								'slug'         => 'text_overlay_font_face',
+								'title'        => __( 'Font Face', 'cloudinary' ),
+								'default'      => 'Arial',
+								'options'      => array(
+									'Arial' => __( 'Arial', 'cloudinary' ),
+									'Verdana' => __( 'Verdana', 'cloudinary' ),
+									'Tahoma'  => __( 'Tahoma', 'cloudinary' ),
+									'Georgia'  => __( 'Georgia', 'cloudinary' ),
+									'Garamond'  => __( 'Garamond', 'cloudinary' ),
+								),
+							),
+						),
+						array(
+							'type'  => 'column',
+							array(
+								'type'    => 'number',
+								'title'   => __( 'Font Size', 'cloudinary' ),
+								'default' => 20,
+								'slug'    => 'text_overlay_font_size',
+								'suffix'  => 'px',
+							),
+						),
+					),
+					array(
+						'type' => 'row',
+						array(
+							'type'  => 'column',
 							'class' => array(
 								'edit-overlay-offset',
 							),
@@ -654,7 +692,7 @@ $settings = array(
 							array(
 								'type'       => 'text',
 								'title'      => __( 'Position', 'cloudinary' ),
-								'default'    => '',
+								'default'    => 'center',
 								'slug'       => 'text_overlay_position',
 								'attributes' => array(
 									'input' => array(
@@ -679,14 +717,14 @@ $settings = array(
 							array(
 								'type'    => 'number',
 								'title'   => __( 'X Offset', 'cloudinary' ),
-								'default' => '',
+								'default' => 0,
 								'slug'    => 'text_overlay_x_offset',
 								'suffix'  => 'px',
 							),
 							array(
 								'type'    => 'number',
 								'title'   => __( 'Y Offset', 'cloudinary' ),
-								'default' => '',
+								'default' => 0,
 								'slug'    => 'text_overlay_y_offset',
 								'suffix'  => 'px',
 							),
@@ -713,6 +751,7 @@ $settings = array(
 							'content'    => __( 'Remove Text Overlay', 'cloudinary' ),
 							'attributes' => array(
 								'href'  => '#',
+								'id'    => 'cld-asset-remove-text-overlay',
 								'class' => array(
 									'button',
 									'button--remove',
@@ -762,6 +801,16 @@ $settings = array(
 								),
 							),
 							array(
+								'type'       => 'text',
+								'default'    => '',
+								'slug'       => 'image_overlay_image_id',
+								'attributes' => array(
+									'input' => array(
+										'type' => 'hidden',
+									),
+								),
+							),
+							array(
 								'type'       => 'tag',
 								'element'    => 'div',
 								'attributes' => array(
@@ -777,12 +826,15 @@ $settings = array(
 							array(
 								'type'       => 'text',
 								'title'      => __( 'Size', 'cloudinary' ),
-								'default'    => 20,
+								'default'    => 100,
 								'slug'       => 'image_overlay_size',
 								'attributes' => array(
 									'min'  => 0,
-									'max'  => 100,
+									'max'  => 1000,
 									'type' => 'range',
+									'class' => array(
+										'edit-overlay-range-input',
+									),
 								),
 							),
 							array(
@@ -794,6 +846,9 @@ $settings = array(
 									'min'  => 0,
 									'max'  => 100,
 									'type' => 'range',
+									'class' => array(
+										'edit-overlay-range-input',
+									),
 								),
 							),
 						),
@@ -865,6 +920,7 @@ $settings = array(
 							'content'    => __( 'Remove Image Overlay', 'cloudinary' ),
 							'attributes' => array(
 								'href'  => '#',
+								'id'    => 'cld-asset-remove-image-overlay',
 								'class' => array(
 									'button',
 									'button--remove',

@@ -38,6 +38,12 @@
 		}
 	}
 
+	&-range-input {
+		&.regular-text {
+			padding: 0;
+		}
+	}
+
 	.cld-input-text {
 		margin-bottom: 0;
 	}
@@ -58,7 +64,6 @@
 			border: 1px solid #ccc;
 		}
 	}
-
 
 	.cld-ui-wrap {
 		.button {
