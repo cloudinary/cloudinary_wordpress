@@ -129,7 +129,15 @@ const AssetEdit = {
 		// Add event listeners with appropriate logic for each overlay type
 		secondaryTextInputs.forEach(({ input, event }) => {
 			if (input) {
-				input.addEventListener(event, updatePreviewForTextOverlay);
+				// Special handling for color input to ensure value is updated
+				if (input === this.textOverlayColorInput) {
+					input.addEventListener(event, () => {
+						// Use setTimeout to ensure the input value has been updated
+						setTimeout(updatePreviewForTextOverlay, 0);
+					});
+				} else {
+					input.addEventListener(event, updatePreviewForTextOverlay);
+				}
 			}
 		});
 
@@ -175,7 +183,20 @@ const AssetEdit = {
 			return;
 		}
 
-		gridOptions.forEach( ( option, index ) => {
+		const overlayConfig = {
+			'edit-overlay-grid-text': {
+				positionInput: this.textOverlayPositionInput,
+				contentInput: this.textOverlayTextInput
+			},
+			'edit-overlay-grid-image': {
+				positionInput: this.imageOverlayPositionInput,
+				contentInput: this.imageOverlayImageIdInput
+			}
+		};
+
+		const config = overlayConfig[gridId];
+
+		gridOptions.forEach( ( option ) => {
 			const cell = document.createElement( 'div' );
 			cell.className = 'edit-overlay-grid__cell';
 			cell.dataset.gravity = option;
@@ -184,20 +205,12 @@ const AssetEdit = {
 				grid.querySelectorAll( '.edit-overlay-grid__cell--selected' ).forEach( c => c.classList.remove( 'edit-overlay-grid__cell--selected' ) );
 				cell.classList.add( 'edit-overlay-grid__cell--selected' );
 
-				if (gridId === 'edit-overlay-grid-text') {
-					this.textOverlayPositionInput.value = option;
+				if (config) {
+					config.positionInput.value = option;
 
-					// Update preview only if we have text content
-					const hasText = this.textOverlayTextInput?.value?.trim();
-					if (hasText) {
-						this.preview.setSrc( this.getSrc() );
-					}
-				} else if (gridId === 'edit-overlay-grid-image') {
-					this.imageOverlayPositionInput.value = option;
+					const hasContent = config.contentInput?.value?.trim();
 
-					// Update preview only if we have image ID
-					const hasImageId = this.imageOverlayImageIdInput?.value?.trim();
-					if (hasImageId) {
+					if (hasContent) {
 						this.preview.setSrc( this.getSrc() );
 					}
 				}
