@@ -34,6 +34,8 @@ const AssetEdit = {
 
 	// Buttons
 	saveButton: document.getElementById( 'cld-asset-edit-save' ),
+	saveTextOverlayButton: document.getElementById( 'cld-asset-save-text-overlay' ),
+	saveImageOverlayButton: document.getElementById( 'cld-asset-save-image-overlay' ),
 	removeTextOverlayButton: document.getElementById( 'cld-asset-remove-text-overlay' ),
 	removeImageOverlayButton: document.getElementById( 'cld-asset-remove-image-overlay' ),
 
@@ -42,12 +44,41 @@ const AssetEdit = {
 	imageGrid: document.getElementById( 'edit-overlay-grid-image' ),
 	imagePreviewWrapper: document.getElementById( 'edit-overlay-select-image-preview' ),
 
+	// Mapping
+	textOverlayMap: null,
+	imageOverlayMap: null,
+
 	init() {
 		const item = JSON.parse( this.wrap.dataset.item );
 		this.id = item.ID;
 		this.base = item.base + item.size + '/';
 		this.publicId = item.file;
 		this.transformationsInput.value = item.transformations ? item.transformations : '';
+
+		// Set up centralized text overlay mapping as a property
+		this.textOverlayMap = [
+			{ key: 'text', input: this.textOverlayTextInput, defaultValue: '', event: 'input' },
+			{ key: 'color', input: this.textOverlayColorInput, defaultValue: '', event: 'input' },
+			{ key: 'fontFace', input: this.textOverlayFontFaceInput, defaultValue: 'Arial', event: 'input' },
+			{ key: 'fontSize', input: this.textOverlayFontSizeInput, defaultValue: 20, event: 'input' },
+			{ key: 'position', input: this.textOverlayPositionInput, defaultValue: '', event: 'change' },
+			{ key: 'xOffset', input: this.textOverlayXOffsetInput, defaultValue: 0, event: 'input' },
+			{ key: 'yOffset', input: this.textOverlayYOffsetInput, defaultValue: 0, event: 'input' }
+		];
+
+		// Set up centralized image overlay mapping as a property
+		this.imageOverlayMap = [
+			{ key: 'imageId', input: this.imageOverlayImageIdInput, defaultValue: '', event: 'input' },
+			{ key: 'size', input: this.imageOverlaySizeInput, defaultValue: 100, event: 'input' },
+			{ key: 'opacity', input: this.imageOverlayOpacityInput, defaultValue: 20, event: 'input' },
+			{ key: 'position', input: this.imageOverlayPositionInput, defaultValue: '', event: 'change' },
+			{ key: 'xOffset', input: this.imageOverlayXOffsetInput, defaultValue: 0, event: 'input' },
+			{ key: 'yOffset', input: this.imageOverlayYOffsetInput, defaultValue: 0, event: 'input' }
+		];
+
+		// Set overlay input values from item data using unified helper
+        this.setOverlayInputs(this.textOverlayMap, item.text_overlay);
+        this.setOverlayInputs(this.imageOverlayMap, item.image_overlay);
 
 		// Init components.
 		this.initPreview();
@@ -64,16 +95,7 @@ const AssetEdit = {
 		this.transformationsInput.addEventListener( 'input', ( ev ) => {
 			this.preview.setSrc( this.getSrc() );
 		} );
-
-		// Add overlay preview updates
 		this.addOverlayEventListeners();
-
-		this.transformationsInput.addEventListener( 'keydown', ( ev ) => {
-			if ( 'Enter' === ev.code ) {
-				ev.preventDefault();
-				this.saveButton.dispatchEvent( new Event( 'click' ) );
-			}
-		} );
 	},
 	addOverlayEventListeners() {
 		const updatePreviewForTextOverlay = () => {
@@ -107,24 +129,11 @@ const AssetEdit = {
 			});
 		}
 
-		// Secondary text overlay inputs (only update if text exists)
-		const secondaryTextInputs = [
-			{ input: this.textOverlayColorInput, event: 'input' },
-			{ input: this.textOverlayFontFaceInput, event: 'input' },
-			{ input: this.textOverlayFontSizeInput, event: 'input' },
-			{ input: this.textOverlayPositionInput, event: 'change' },
-			{ input: this.textOverlayXOffsetInput, event: 'input' },
-			{ input: this.textOverlayYOffsetInput, event: 'input' }
-		];
+		// Use textOverlayMap for secondary text overlay inputs (exclude text input)
+		const secondaryTextInputs = this.textOverlayMap.filter(({ key }) => key !== 'text');
 
-		// Secondary image overlay inputs (only update if image exists)
-		const secondaryImageInputs = [
-			{ input: this.imageOverlaySizeInput, event: 'input' },
-			{ input: this.imageOverlayOpacityInput, event: 'input' },
-			{ input: this.imageOverlayPositionInput, event: 'change' },
-			{ input: this.imageOverlayXOffsetInput, event: 'input' },
-			{ input: this.imageOverlayYOffsetInput, event: 'input' }
-		];
+		// Use imageOverlayMap for secondary image overlay inputs (exclude imageId)
+		const secondaryImageInputs = this.imageOverlayMap.filter(({ key }) => key !== 'imageId');
 
 		// Add event listeners with appropriate logic for each overlay type
 		secondaryTextInputs.forEach(({ input, event }) => {
@@ -132,7 +141,6 @@ const AssetEdit = {
 				// Special handling for color input to ensure value is updated
 				if (input === this.textOverlayColorInput) {
 					input.addEventListener(event, () => {
-						// Use setTimeout to ensure the input value has been updated
 						setTimeout(updatePreviewForTextOverlay, 0);
 					});
 				} else {
@@ -151,8 +159,8 @@ const AssetEdit = {
 		this.editor = AssetEditor.init();
 		this.editor.onBefore( () => this.preview.reset() );
 		this.editor.onComplete( ( result ) => {
-			this.transformationsInput.value = result.transformations;
-			this.preview.setSrc( this.base + result.transformations + this.publicId, true );
+			this.preview.setSrc( this.getSrc(), true );
+
 			if ( result.note ) {
 				alert( result.note );
 			}
@@ -164,6 +172,24 @@ const AssetEdit = {
 				transformations: this.transformationsInput.value,
 			} );
 		} );
+
+		this.saveTextOverlayButton.addEventListener('click', () => {
+			const textOverlay = this.getOverlayData(this.textOverlayMap);
+			textOverlay.transformation = this.buildTextOverlay();
+			this.editor.save({
+				ID: this.id,
+				textOverlay
+			});
+		});
+
+		this.saveImageOverlayButton.addEventListener('click', () => {
+			const imageOverlay = this.getOverlayData(this.imageOverlayMap);
+			imageOverlay.transformation = this.buildImageOverlay();
+			this.editor.save({
+				ID: this.id,
+				imageOverlay
+			});
+		});
 	},
 	initGravityGrid( gridId ) {
 		const grid = document.getElementById( gridId );
@@ -282,21 +308,10 @@ const AssetEdit = {
 		}
 	},
 	clearTextOverlay() {
-		// Define text overlay fields with their default values
-		const textFields = [
-			{ input: this.textOverlayTextInput, value: '' },
-			{ input: this.textOverlayColorInput, value: '' },
-			{ input: this.textOverlayFontFaceInput, value: 'Arial' },
-			{ input: this.textOverlayFontSizeInput, value: 20 },
-			{ input: this.textOverlayPositionInput, value: '' },
-			{ input: this.textOverlayXOffsetInput, value: 0 },
-			{ input: this.textOverlayYOffsetInput, value: 0 }
-		];
-
-		// Reset all text overlay fields
-		textFields.forEach(({ input, value }) => {
+		// Use textOverlayMap for text overlay fields and their default values
+		this.textOverlayMap.forEach(({ input, defaultValue }) => {
 			if (input) {
-				input.value = value;
+				input.value = defaultValue;
 			}
 		});
 
@@ -310,20 +325,10 @@ const AssetEdit = {
 		this.preview.setSrc(this.getSrc());
 	},
 	clearImageOverlay() {
-		// Define image overlay fields with their default values
-		const imageFields = [
-			{ input: this.imageOverlayImageIdInput, value: '' },
-			{ input: this.imageOverlaySizeInput, value: 100 },
-			{ input: this.imageOverlayOpacityInput, value: 20 },
-			{ input: this.imageOverlayPositionInput, value: '' },
-			{ input: this.imageOverlayXOffsetInput, value: 0 },
-			{ input: this.imageOverlayYOffsetInput, value: 0 }
-		];
-
-		// Reset all image overlay fields
-		imageFields.forEach(({ input, value }) => {
+		// Use imageOverlayMap for image overlay fields and their default values
+		this.imageOverlayMap.forEach(({ input, defaultValue }) => {
 			if (input) {
-				input.value = value;
+				input.value = defaultValue;
 			}
 		});
 
@@ -456,7 +461,24 @@ const AssetEdit = {
 		urlParts.push(this.publicId);
 
 		return urlParts.join('/').replace(/\/+/g, '/');
-	}
+	},
+	getOverlayData(map) {
+		const overlay = {};
+
+		map.forEach(({ key, input }) => {
+			overlay[key] = input?.value || '';
+		});
+
+		return overlay;
+	},
+
+	setOverlayInputs(map, data) {
+		map.forEach(({ key, input, defaultValue }) => {
+			if (input) {
+				input.value = (data && data[key] !== undefined) ? data[key] : defaultValue;
+			}
+		});
+	},
 };
 
 window.addEventListener( 'load', () => AssetEdit.init() );

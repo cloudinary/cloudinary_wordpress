@@ -366,13 +366,17 @@ class Utils {
 	protected static function get_upgrade_sequence() {
 		$upgrade_sequence = array();
 		$sequences        = array(
-			'3.0.0' => array(
+			'3.0.0'  => array(
 				'range'  => array( '3.0.0' ),
 				'method' => array( 'Cloudinary\Utils', 'upgrade_3_0_1' ),
 			),
-			'3.1.9' => array(
+			'3.1.9'  => array(
 				'range'  => array( '3.0.1', '3.1.9' ),
 				'method' => array( 'Cloudinary\Utils', 'upgrade_3_1_9' ),
+			),
+			'3.2.14' => array(
+				'range'  => array( '3.1.9', '3.2.14' ),
+				'method' => array( 'Cloudinary\Utils', 'upgrade_3_2_14' ),
 			),
 
 		);
@@ -444,6 +448,22 @@ class Utils {
 		// Update indexes.
 		$wpdb->query( "ALTER TABLE {$tablename} DROP INDEX url_hash" ); // phpcs:ignore WordPress.DB
 		$wpdb->query( "ALTER TABLE {$tablename} ADD UNIQUE INDEX media (url_hash, media_context)" ); // phpcs:ignore WordPress.DB
+
+		// Set DB Version.
+		update_option( Sync::META_KEYS['db_version'], get_plugin_instance()->version );
+	}
+
+	/**
+	 * Upgrade DB from v3.1.9 to v3.2.14.
+	 * Adds columns for overlay data.
+	 */
+	public static function upgrade_3_2_14() {
+		global $wpdb;
+		$tablename = self::get_relationship_table();
+
+		// Add new columns for overlays.
+		$wpdb->query( "ALTER TABLE {$tablename} ADD COLUMN `text_overlay` TEXT DEFAULT NULL AFTER `transformations`" ); // phpcs:ignore WordPress.DB
+		$wpdb->query( "ALTER TABLE {$tablename} ADD COLUMN `image_overlay` TEXT DEFAULT NULL AFTER `text_overlay`" ); // phpcs:ignore WordPress.DB
 
 		// Set DB Version.
 		update_option( Sync::META_KEYS['db_version'], get_plugin_instance()->version );

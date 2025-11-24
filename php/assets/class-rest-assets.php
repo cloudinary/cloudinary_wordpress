@@ -105,23 +105,70 @@ class Rest_Assets {
 	 * @return WP_Error|WP_HTTP_Response|WP_REST_Response
 	 */
 	public function rest_save_asset( $request ) {
+		$media         = $this->assets->media;
+		$attachment_id = $request->get_param( 'ID' );
+		$type          = $media->get_resource_type( $attachment_id );
 
-		$media                = $this->assets->media;
-		$attachment_id        = $request->get_param( 'ID' );
-		$transformations      = $request->get_param( 'transformations' );
-		$type                 = $media->get_resource_type( $attachment_id );
-		$transformation_array = $media->get_transformations_from_string( $transformations, $type );
-		$cleaned              = Api::generate_transformation_string( $transformation_array, $type );
-		Relate::update_transformations( $attachment_id, $cleaned );
-		$return = array(
-			'transformations' => $cleaned,
-		);
+		$return = array();
 
-		if ( $cleaned !== $transformations ) {
-			$return['note'] = __( 'Some transformations were invalid and were removed.', 'cloudinary' );
+		// Save transformations if present.
+		$transformations = $request->get_param( 'transformations' );
+
+		if ( isset( $transformations ) ) {
+			$result = $this->save_transformation_type( $attachment_id, $transformations, $type, 'transformations' );
+			$return = array_merge( $return, $result );
+		}
+
+		// Save text overlay even if empty (allow clearing).
+		$text_overlay = $request->get_param( 'textOverlay' );
+
+		if ( isset( $text_overlay ) && array_key_exists( 'transformation', (array) $text_overlay ) ) {
+			$result = $this->save_transformation_type( $attachment_id, $text_overlay['transformation'], $type, 'text_overlay' );
+			$return = array_merge( $return, $result );
+		}
+
+		// Save image overlay even if empty (allow clearing).
+		$image_overlay = $request->get_param( 'imageOverlay' );
+
+		if ( isset( $image_overlay ) && array_key_exists( 'transformation', (array) $image_overlay ) ) {
+			$result = $this->save_transformation_type( $attachment_id, $image_overlay['transformation'], $type, 'image_overlay' );
+			$return = array_merge( $return, $result );
 		}
 
 		return rest_ensure_response( $return );
+	}
+
+	/**
+	 * Shared helper to save a transformation type (main, text overlay, image overlay).
+	 *
+	 * @param int    $attachment_id Attachment ID.
+	 * @param string $transformation Transformation string.
+	 * @param string $type Resource type.
+	 * @param string $save_type Type to save (transformations, text_overlay, image_overlay).
+	 * @return array
+	 */
+	protected function save_transformation_type( $attachment_id, $transformation, $type, $save_type ) {
+		$media                = $this->assets->media;
+		$transformation_array = $media->get_transformations_from_string( $transformation, $type );
+		$cleaned              = Api::generate_transformation_string( $transformation_array, $type );
+
+		switch ( $save_type ) {
+			case 'transformations':
+				Relate::update_transformations( $attachment_id, $cleaned );
+				break;
+			case 'text_overlay':
+				break;
+			case 'image_overlay':
+				break;
+		}
+
+		$result = array( $save_type => $cleaned );
+
+		if ( $cleaned !== $transformation ) {
+			$result['note'] = __( 'Some transformations were invalid and were removed.', 'cloudinary' );
+		}
+
+		return $result;
 	}
 
 	/**

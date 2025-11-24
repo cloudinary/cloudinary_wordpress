@@ -575,11 +575,11 @@ $settings = array(
 						),
 					),
 					array(
-						'type'        => 'text',
-						'title'       => __( 'Asset transformations', 'cloudinary' ),
-						'slug'        => 'transformations',
-						'default'     => '',
-						'anchor'      => true,
+						'type'         => 'text',
+						'title'        => __( 'Asset transformations', 'cloudinary' ),
+						'slug'         => 'transformations',
+						'default'      => '',
+						'anchor'       => true,
 						'tooltip_text' => sprintf(
 							// translators: The link to transformation reference.
 							__(
@@ -589,11 +589,11 @@ $settings = array(
 							'<a href="https://cloudinary.com/documentation/transformation_reference" target="_blank" rel="noopener noreferrer">',
 							'</a>'
 						),
-						'link'        => array(
+						'link'         => array(
 							'text' => __( 'See examples', 'cloudinary' ),
 							'href' => 'https://cloudinary.com/documentation/image_transformations',
 						),
-						'attributes'  => array(
+						'attributes'   => array(
 							'placeholder' => 'w_90,r_max',
 						),
 					),
@@ -635,32 +635,32 @@ $settings = array(
 					array(
 						'type' => 'row',
 						array(
-							'type'  => 'column',
+							'type' => 'column',
 							array(
-								'type'        => 'color',
-								'title'       => __( 'Color', 'cloudinary' ),
-								'slug'        => 'text_overlay_color',
-								'default'     => 'rgba(153,153,153,0.5)',
+								'type'    => 'color',
+								'title'   => __( 'Color', 'cloudinary' ),
+								'slug'    => 'text_overlay_color',
+								'default' => 'rgba(153,153,153,0.5)',
 							),
 						),
 						array(
-							'type'  => 'column',
+							'type' => 'column',
 							array(
-								'type'         => 'select',
-								'slug'         => 'text_overlay_font_face',
-								'title'        => __( 'Font Face', 'cloudinary' ),
-								'default'      => 'Arial',
-								'options'      => array(
-									'Arial' => __( 'Arial (sans-serif)', 'cloudinary' ),
-									'Verdana' => __( 'Verdana (sans-serif)', 'cloudinary' ),
+								'type'    => 'select',
+								'slug'    => 'text_overlay_font_face',
+								'title'   => __( 'Font Face', 'cloudinary' ),
+								'default' => 'Arial',
+								'options' => array(
+									'Arial'           => __( 'Arial (sans-serif)', 'cloudinary' ),
+									'Verdana'         => __( 'Verdana (sans-serif)', 'cloudinary' ),
 									'Times New Roman' => __( 'Times New Roman (serif)', 'cloudinary' ),
-									'Courier New' => __( 'Courier New (monospace)', 'cloudinary' ),
-									'Georgia'  => __( 'Georgia (serif)', 'cloudinary' ),
+									'Courier New'     => __( 'Courier New (monospace)', 'cloudinary' ),
+									'Georgia'         => __( 'Georgia (serif)', 'cloudinary' ),
 								),
 							),
 						),
 						array(
-							'type'  => 'column',
+							'type' => 'column',
 							array(
 								'type'    => 'number',
 								'title'   => __( 'Font Size', 'cloudinary' ),
@@ -738,6 +738,7 @@ $settings = array(
 							'content'    => __( 'Save Changes', 'cloudinary' ),
 							'attributes' => array(
 								'href'  => '#',
+								'id'    => 'cld-asset-save-text-overlay',
 								'class' => array(
 									'button',
 									'button-primary',
@@ -829,9 +830,9 @@ $settings = array(
 								'default'    => 100,
 								'slug'       => 'image_overlay_size',
 								'attributes' => array(
-									'min'  => 0,
-									'max'  => 1000,
-									'type' => 'range',
+									'min'   => 0,
+									'max'   => 1000,
+									'type'  => 'range',
 									'class' => array(
 										'edit-overlay-range-input',
 									),
@@ -843,9 +844,9 @@ $settings = array(
 								'default'    => 20,
 								'slug'       => 'image_overlay_opacity',
 								'attributes' => array(
-									'min'  => 0,
-									'max'  => 100,
-									'type' => 'range',
+									'min'   => 0,
+									'max'   => 100,
+									'type'  => 'range',
 									'class' => array(
 										'edit-overlay-range-input',
 									),
@@ -907,6 +908,7 @@ $settings = array(
 							'content'    => __( 'Save Changes', 'cloudinary' ),
 							'attributes' => array(
 								'href'  => '#',
+								'id'    => 'cld-asset-save-image-overlay',
 								'class' => array(
 									'button',
 									'button-primary',

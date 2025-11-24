@@ -1202,6 +1202,8 @@ class Assets extends Settings_Component {
 			'file'            => ! empty( $parts[1] ) ? $parts[1] : wp_basename( $item['sized_url'] ),
 			'size'            => $break,
 			'transformations' => $item['transformations'] ? $item['transformations'] : null,
+			'text_overlay'    => $item['text_overlay'] ? $item['text_overlay'] : null,
+			'image_overlay'   => $item['image_overlay'] ? $item['image_overlay'] : null,
 			'edit_url'        => admin_url( add_query_arg( $args, 'admin.php' ) ),
 		);
 

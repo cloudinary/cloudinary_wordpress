@@ -19,6 +19,8 @@ use function Cloudinary\get_plugin_instance;
  * @property string|null $public_id
  * @property string|null $signature
  * @property string|null $transformations
+ * @property string|null $text_overlay
+ * @property string|null $image_overlay
  * @property string|null $sized_url
  * @property string|null $media_context
  */
