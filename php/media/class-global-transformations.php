@@ -617,7 +617,7 @@ class Global_Transformations {
 	public function transformations_column( $cols ) {
 
 		$custom = array(
-			'cld_transformations' => __( 'Transformations', 'cloudinary' ),
+			'cld_transformations' => __( 'Transformation Effects', 'cloudinary' ),
 		);
 		$offset = array_search( 'parent', array_keys( $cols ), true );
 		if ( empty( $offset ) ) {
@@ -660,8 +660,18 @@ class Global_Transformations {
 			if ( ! empty( $item['data']['public_id'] ) ) {
 				$text            = __( 'Add transformations', 'cloudinary' );
 				$transformations = Relate::get_transformations( $attachment_id, true );
+				$text_overlay    = Relate::get_overlay( $attachment_id, 'text_overlay' );
+				$image_overlay   = Relate::get_overlay( $attachment_id, 'image_overlay' );
+
 				if ( ! empty( $transformations ) ) {
 					$text = $transformations;
+
+					if ( ! empty( $text_overlay ) ) {
+						$text .= '/' . $text_overlay;
+					}
+					if ( ! empty( $image_overlay ) ) {
+						$text .= '/' . $image_overlay;
+					}
 				}
 				$args = array(
 					'page'    => 'cloudinary',

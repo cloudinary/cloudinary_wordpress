@@ -107,7 +107,7 @@ class Relate {
 			return;
 		}
 
-		$relationship->$save_type = json_encode( $overlay_data );
+		$relationship->$save_type = wp_json_encode( $overlay_data );
 		$relationship->save();
 	}
 
@@ -132,5 +132,27 @@ class Relate {
 		}
 
 		return $transformations;
+	}
+
+	/**
+	 * Get overlay data for an asset.
+	 *
+	 * @param int    $attachment_id The attachment ID.
+	 * @param string $overlay_type  The type of overlay ('text_overlay' or 'image_overlay').
+	 *
+	 * @return string
+	 */
+	public static function get_overlay( $attachment_id, $overlay_type ) {
+		$relationship = Relationship::get_relationship( $attachment_id );
+		$overlay_data = $relationship->$overlay_type;
+
+		if ( ! empty( $overlay_data ) ) {
+			$decoded = json_decode( $overlay_data, true );
+			if ( is_array( $decoded ) && isset( $decoded['transformation'] ) ) {
+				return $decoded['transformation'];
+			}
+		}
+
+		return '';
 	}
 }
