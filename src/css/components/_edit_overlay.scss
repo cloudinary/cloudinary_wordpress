@@ -90,5 +90,48 @@
 	.cld-ui-suffix {
 		margin-left: 0;
 	}
+
+	.cld-ui-preview {
+		box-sizing: border-box;
+	}
 }
 
+#asset-preview-transformation-string {
+	box-sizing: border-box;
+	display: block;
+	max-width: 100%;
+	overflow-wrap: normal;
+	word-break: break-all;
+	background: $color-transformations-background;
+	padding: 10px;
+
+	text-decoration: none;
+
+	&:hover {
+		span {
+			text-decoration: underline;
+		}
+	}
+
+	.string-preview {
+		&-base {
+			word-break: break-all;
+		}
+
+		&-transformations {
+			color: $color-white;
+		}
+
+		&-image-overlay {
+			color: $color-transformations-blue;
+		}
+
+		&-text-overlay {
+			color: $color-transformations-cyan;
+		}
+
+		&-public-id {
+			color: $color-transformations-yellow;
+		}
+	}
+}

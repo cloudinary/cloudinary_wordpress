@@ -749,7 +749,7 @@ $settings = array(
 						array(
 							'type'       => 'tag',
 							'element'    => 'a',
-							'content'    => __( 'Remove Text Overlay', 'cloudinary' ),
+							'content'    => __( 'Reset All', 'cloudinary' ),
 							'attributes' => array(
 								'href'  => '#',
 								'id'    => 'cld-asset-remove-text-overlay',
@@ -812,6 +812,16 @@ $settings = array(
 								),
 							),
 							array(
+								'type'       => 'text',
+								'default'    => '',
+								'slug'       => 'image_overlay_public_id',
+								'attributes' => array(
+									'input' => array(
+										'type' => 'hidden',
+									),
+								),
+							),
+							array(
 								'type'       => 'tag',
 								'element'    => 'div',
 								'attributes' => array(
@@ -855,7 +865,6 @@ $settings = array(
 						),
 					),
 					array(
-
 						'type' => 'row',
 						array(
 							'type' => 'column',
@@ -919,7 +928,7 @@ $settings = array(
 						array(
 							'type'       => 'tag',
 							'element'    => 'a',
-							'content'    => __( 'Remove Image Overlay', 'cloudinary' ),
+							'content'    => __( 'Reset All', 'cloudinary' ),
 							'attributes' => array(
 								'href'  => '#',
 								'id'    => 'cld-asset-remove-image-overlay',
@@ -939,14 +948,37 @@ $settings = array(
 					'cld-ui-preview',
 				),
 				array(
-					'type'       => 'panel',
-					'attributes' => array(
-						'wrap' => array(
-							'style' => 'display: flex; justify-content: center; align-items: center;',
+					'type' => 'row',
+					array(
+						'type'       => 'panel',
+						'attributes' => array(
+							'wrap' => array(
+								'style' => 'width: 100%; display: flex; justify-content: center; align-items: center;',
+							),
+						),
+						array(
+							'type' => 'asset_preview',
 						),
 					),
+				),
+				array(
+					'type' => 'row',
 					array(
-						'type' => 'asset_preview',
+						'type'       => 'panel',
+						'attributes' => array(
+							'wrap' => array(
+								'style' => 'width: 100%;',
+							),
+						),
+						array(
+							'type'       => 'tag',
+							'element'    => 'a',
+							'attributes' => array(
+								'id'     => 'asset-preview-transformation-string',
+								'href'   => '#',
+								'target' => '_blank',
+							),
+						),
 					),
 				),
 			),

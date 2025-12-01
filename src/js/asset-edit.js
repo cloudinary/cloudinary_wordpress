@@ -26,6 +26,7 @@ const AssetEdit = {
 
 	// Image Overlay Inputs
 	imageOverlayImageIdInput: document.getElementById( 'edit_asset.image_overlay_image_id' ),
+	imageOverlayPublicIdInput: document.getElementById( 'edit_asset.image_overlay_public_id' ),
 	imageOverlaySizeInput: document.getElementById( 'edit_asset.image_overlay_size' ),
 	imageOverlayOpacityInput: document.getElementById( 'edit_asset.image_overlay_opacity' ),
 	imageOverlayPositionInput: document.getElementById( 'edit_asset.image_overlay_position' ),
@@ -43,6 +44,7 @@ const AssetEdit = {
 	textGrid: document.getElementById( 'edit-overlay-grid-text' ),
 	imageGrid: document.getElementById( 'edit-overlay-grid-image' ),
 	imagePreviewWrapper: document.getElementById( 'edit-overlay-select-image-preview' ),
+	assetPreviewTransformationString: document.getElementById( 'asset-preview-transformation-string' ),
 
 	// Mapping
 	textOverlayMap: null,
@@ -69,6 +71,7 @@ const AssetEdit = {
 		// Set up centralized image overlay mapping as a property
 		this.imageOverlayMap = [
 			{ key: 'imageId', input: this.imageOverlayImageIdInput, defaultValue: '', event: 'input' },
+			{ key: 'publicId', input: this.imageOverlayPublicIdInput, defaultValue: '', event: 'input' },
 			{ key: 'size', input: this.imageOverlaySizeInput, defaultValue: 100, event: 'input' },
 			{ key: 'opacity', input: this.imageOverlayOpacityInput, defaultValue: 20, event: 'input' },
 			{ key: 'position', input: this.imageOverlayPositionInput, defaultValue: '', event: 'change' },
@@ -76,25 +79,29 @@ const AssetEdit = {
 			{ key: 'yOffset', input: this.imageOverlayYOffsetInput, defaultValue: 0, event: 'input' }
 		];
 
-		// Set overlay input values from item data using unified helper
-        this.setOverlayInputs(this.textOverlayMap, item.text_overlay);
-        this.setOverlayInputs(this.imageOverlayMap, item.image_overlay);
+		const textOverlayData = this.parseJsonOverlay( item.text_overlay );
+		const imageOverlayData = this.parseJsonOverlay( item.image_overlay );
 
+		// Set overlay input values from item data using unified helper
+        this.setOverlayInputs(this.textOverlayMap, textOverlayData);
+        this.setOverlayInputs(this.imageOverlayMap, imageOverlayData);
 		// Init components.
 		this.initPreview();
 		this.initEditor();
-		this.initGravityGrid( 'edit-overlay-grid-text' );
-		this.initGravityGrid( 'edit-overlay-grid-image' );
+		this.initGravityGrid( 'edit-overlay-grid-text', textOverlayData );
+		this.initGravityGrid( 'edit-overlay-grid-image', imageOverlayData );
 		this.initImageSelect();
 		this.initRemoveOverlayButtons();
 	},
 	initPreview() {
 		this.preview = AssetPreview.init();
-		this.wrap.appendChild( this.preview.createPreview( 500, 400 ) );
-		this.preview.setSrc( this.base + this.transformationsInput.value + this.publicId, true );
+		this.wrap.appendChild( this.preview.createPreview( '100%', 'auto' ) );
+		this.preview.setSrc( this.buildSrc(), true );
+
 		this.transformationsInput.addEventListener( 'input', ( ev ) => {
-			this.preview.setSrc( this.getSrc() );
+			this.preview.setSrc( this.buildSrc() );
 		} );
+
 		this.addOverlayEventListeners();
 	},
 	addOverlayEventListeners() {
@@ -103,29 +110,29 @@ const AssetEdit = {
 			const hasText = this.textOverlayTextInput?.value?.trim();
 
 			if (hasText) {
-				this.preview.setSrc( this.getSrc() );
+				this.preview.setSrc( this.buildSrc() );
 			}
 		};
 
 		const updatePreviewForImageOverlay = () => {
 			// Only update preview if we have image ID
-			const hasImageId = this.imageOverlayImageIdInput?.value?.trim();
+			const hasImageId = this.imageOverlayPublicIdInput?.value?.trim();
 
 			if (hasImageId) {
-				this.preview.setSrc( this.getSrc() );
+				this.preview.setSrc( this.buildSrc() );
 			}
 		};
 
 		// Primary content inputs (always update preview to handle empty states)
 		if (this.textOverlayTextInput) {
 			this.textOverlayTextInput.addEventListener('input', () => {
-				this.preview.setSrc( this.getSrc() );
+				this.preview.setSrc( this.buildSrc() );
 			});
 		}
 
-		if (this.imageOverlayImageIdInput) {
-			this.imageOverlayImageIdInput.addEventListener('input', () => {
-				this.preview.setSrc( this.getSrc() );
+		if (this.imageOverlayPublicIdInput) {
+			this.imageOverlayPublicIdInput.addEventListener('input', () => {
+				this.preview.setSrc( this.buildSrc() );
 			});
 		}
 
@@ -159,7 +166,7 @@ const AssetEdit = {
 		this.editor = AssetEditor.init();
 		this.editor.onBefore( () => this.preview.reset() );
 		this.editor.onComplete( ( result ) => {
-			this.preview.setSrc( this.getSrc(), true );
+			this.preview.setSrc( this.buildSrc(), true );
 
 			if ( result.note ) {
 				alert( result.note );
@@ -191,7 +198,7 @@ const AssetEdit = {
 			});
 		});
 	},
-	initGravityGrid( gridId ) {
+	initGravityGrid( gridId, overlayData ) {
 		const grid = document.getElementById( gridId );
 		let gridOptions = [];
 
@@ -201,7 +208,6 @@ const AssetEdit = {
 
 		try {
 			gridOptions = JSON.parse( grid.dataset.gridOptions );
-
 			if( gridOptions.length < 1 ) {
 				return;
 			}
@@ -216,7 +222,7 @@ const AssetEdit = {
 			},
 			'edit-overlay-grid-image': {
 				positionInput: this.imageOverlayPositionInput,
-				contentInput: this.imageOverlayImageIdInput
+				contentInput: this.imageOverlayPublicIdInput
 			}
 		};
 
@@ -226,6 +232,10 @@ const AssetEdit = {
 			const cell = document.createElement( 'div' );
 			cell.className = 'edit-overlay-grid__cell';
 			cell.dataset.gravity = option;
+
+			if (overlayData && overlayData.position && overlayData.position === option) {
+				cell.classList.add('edit-overlay-grid__cell--selected');
+			}
 
 			cell.addEventListener( 'click', () => {
 				grid.querySelectorAll( '.edit-overlay-grid__cell--selected' ).forEach( c => c.classList.remove( 'edit-overlay-grid__cell--selected' ) );
@@ -237,7 +247,7 @@ const AssetEdit = {
 					const hasContent = config.contentInput?.value?.trim();
 
 					if (hasContent) {
-						this.preview.setSrc( this.getSrc() );
+						this.preview.setSrc( this.buildSrc() );
 					}
 				}
 			});
@@ -252,45 +262,65 @@ const AssetEdit = {
 			return;
 		}
 
-		imageSelect.addEventListener( 'click', ( ev ) => {
+		const updateImageSelectLabel = (label) => {
+			imageSelect.textContent = label;
+		};
+
+		const SELECT_IMAGE_LABEL = __('Select Image', 'cloudinary');
+		const REPLACE_IMAGE_LABEL = __('Replace Image', 'cloudinary');
+
+		imageSelect.addEventListener('click', (ev) => {
 			ev.preventDefault();
 
 			const frame = wp.media({
-				title: __( 'Select Image', 'cloudinary' ),
+				title: SELECT_IMAGE_LABEL,
 				button: {
-					text: __( 'Select Image', 'cloudinary' ),
+					text: SELECT_IMAGE_LABEL,
 				},
 				library: { type: 'image' },
 				multiple: false
 			});
 
-			frame.on( 'select', () => {
+			frame.on('select', () => {
 				const attachment = frame.state().get('selection').first().toJSON();
-				// Remove existing preview image if any
-				if (this.imagePreviewWrapper && this.imagePreviewWrapper.firstChild) {
-					this.imagePreviewWrapper.removeChild(this.imagePreviewWrapper.firstChild);
-				}
+				this.renderImageOverlay(attachment);
 
-				// Create and insert new preview image
-				if (this.imagePreviewWrapper) {
-					const img = document.createElement('img');
-					img.src = attachment.url;
-					img.alt = attachment.alt || '';
-					this.imagePreviewWrapper.appendChild(img);
-				}
-
-				if ( attachment?.public_id ) {
-					this.imageOverlayImageIdInput.value = attachment.public_id;
+				if (attachment?.public_id) {
+					this.imageOverlayImageIdInput.value = attachment.id;
+					this.imageOverlayPublicIdInput.value = attachment.public_id;
+					updateImageSelectLabel(REPLACE_IMAGE_LABEL);
 				} else {
 					this.imageOverlayImageIdInput.value = '';
+					this.imageOverlayPublicIdInput.value = '';
+					updateImageSelectLabel(SELECT_IMAGE_LABEL);
 				}
 
-				// Update preview with new image overlay
-				this.preview.setSrc( this.getSrc() );
+				this.preview.setSrc(this.buildSrc());
 			});
 
 			frame.open();
-		} );
+		});
+
+		// Set initial label if image already selected
+		if (this.imageOverlayPublicIdInput?.value) {
+			updateImageSelectLabel(REPLACE_IMAGE_LABEL);
+		} else {
+			updateImageSelectLabel(SELECT_IMAGE_LABEL);
+		}
+	},
+	renderImageOverlay(attachment) {
+		// Remove existing preview image if any
+		if (this.imagePreviewWrapper && this.imagePreviewWrapper.firstChild) {
+			this.imagePreviewWrapper.removeChild(this.imagePreviewWrapper.firstChild);
+		}
+
+		// Create and insert new preview image
+		if (this.imagePreviewWrapper && ( attachment?.url || attachment?.source_url )) {
+			const img = document.createElement('img');
+			img.src = attachment.url || attachment.source_url;
+			img.alt = attachment.alt || '';
+			this.imagePreviewWrapper.appendChild(img);
+		}
 	},
 	initRemoveOverlayButtons() {
 		if (this.removeTextOverlayButton) {
@@ -322,7 +352,7 @@ const AssetEdit = {
 		}
 
 		// Update preview to remove text overlay
-		this.preview.setSrc(this.getSrc());
+		this.preview.setSrc(this.buildSrc());
 	},
 	clearImageOverlay() {
 		// Use imageOverlayMap for image overlay fields and their default values
@@ -344,7 +374,7 @@ const AssetEdit = {
 		}
 
 		// Update preview to remove image overlay
-		this.preview.setSrc(this.getSrc());
+		this.preview.setSrc(this.buildSrc());
 	},
 	buildPlacementQualifiers(positionInput, xOffsetInput, yOffsetInput) {
 		let placementQualifiers = [];
@@ -364,11 +394,11 @@ const AssetEdit = {
 		return placementQualifiers.length > 0 ? ',' + placementQualifiers.join(',') : '';
 	},
 	buildImageOverlay() {
-		if (!this.imageOverlayImageIdInput || !this.imageOverlayImageIdInput.value.trim()) {
+		if (!this.imageOverlayPublicIdInput || !this.imageOverlayPublicIdInput.value.trim()) {
 			return '';
 		}
 
-		const imageId = this.imageOverlayImageIdInput.value.trim().replace(/\//g, ':');
+		const imageId = this.imageOverlayPublicIdInput.value.trim().replace(/\//g, ':');
 		let imageLayerDefinition = `l_${imageId}`;
 
 		let transformations = [];
@@ -441,26 +471,38 @@ const AssetEdit = {
 
 		return `${textLayerDefinition}/fl_layer_apply${placementString}`;
 	},
-	getSrc() {
+	buildSrc() {
 		const imageOverlay = this.buildImageOverlay();
 		const textOverlay = this.buildTextOverlay();
-		let urlParts = [this.base];
+		const urlParts = [this.base];
+		const htmlParts = [];
 
+		const addPart = (value, cssClass, displayValue = value, addSlash = true) => {
+			if (value) {
+				const cleanValue = value.replace(/\/$/, '');
+				urlParts.push(cleanValue);
+				const suffix = addSlash ? '/' : '';
+				htmlParts.push(`<span class="${cssClass} string-preview-base">${suffix}${displayValue}</span>`);
+			}
+		};
+
+		// Add transformations
 		if (this.transformationsInput.value) {
-			urlParts.push(this.transformationsInput.value);
+			addPart(this.transformationsInput.value, 'string-preview-transformations', `.../${this.transformationsInput.value}`, false);
+		} else {
+			htmlParts.push(`<span class="string-preview-transformations string-preview-base">...</span>`);
 		}
 
-		if (imageOverlay) {
-			urlParts.push(imageOverlay.replace(/\/$/, ''));
-		}
+		// Add overlays
+		addPart(imageOverlay, 'string-preview-image-overlay');
+		addPart(textOverlay, 'string-preview-text-overlay');
+		addPart(this.publicId, 'string-preview-public-id', this.publicId, false);
 
-		if (textOverlay) {
-			urlParts.push(textOverlay.replace(/\/$/, ''));
-		}
+		const previewUrl = urlParts.join('/').replace(/\/+/g, '/');
+		this.assetPreviewTransformationString.innerHTML = htmlParts.join('');
+		this.assetPreviewTransformationString.href = previewUrl;
 
-		urlParts.push(this.publicId);
-
-		return urlParts.join('/').replace(/\/+/g, '/');
+		return previewUrl;
 	},
 	getOverlayData(map) {
 		const overlay = {};
@@ -472,12 +514,44 @@ const AssetEdit = {
 		return overlay;
 	},
 
+	parseJsonOverlay(data) {
+		if (typeof data === 'string') {
+			try {
+				data = JSON.parse(data);
+			} catch (e) {
+				data = {};
+			}
+		}
+
+		return data;
+	},
+
 	setOverlayInputs(map, data) {
 		map.forEach(({ key, input, defaultValue }) => {
 			if (input) {
 				input.value = (data && data[key] !== undefined) ? data[key] : defaultValue;
+
+				// Special handling for color input to initialize color picker
+				if (key === 'color' && input.value) {
+					jQuery(this.textOverlayColorInput).iris({ color: input.value });
+				}
+				if (key === 'imageId' && input.value) {
+					console.log( input.value );
+					this.fetchImageById(input.value).then(attachment => {
+						console.log( AssetEdit.renderImageOverlay );
+						console.log(attachment);
+						AssetEdit.renderImageOverlay(attachment);
+					});
+				}
 			}
 		});
+	},
+	fetchImageById(id) {
+		return fetch(`/wp-json/wp/v2/media/${id}`)
+			.then(response => {
+				if (!response.ok) throw new Error(__('Image not found', 'cloudinary'));
+				return response.json();
+			});
 	},
 };
 

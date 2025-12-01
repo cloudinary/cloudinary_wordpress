@@ -94,6 +94,24 @@ class Relate {
 	}
 
 	/**
+	 * Update transformations for an asset.
+	 *
+	 * @param int        $attachment_id   The attachment ID.
+	 * @param array|null $overlay_data    The overlay transformations.
+	 * @param string     $save_type       The type of overlay.
+	 */
+	public static function update_transformations_overlay( $attachment_id, $overlay_data, $save_type ) {
+		$relationship = Relationship::get_relationship( $attachment_id );
+
+		if ( ! in_array( $save_type, array( 'text_overlay', 'image_overlay' ), true ) ) {
+			return;
+		}
+
+		$relationship->$save_type = json_encode( $overlay_data );
+		$relationship->save();
+	}
+
+	/**
 	 * Get the transformations for an asset.
 	 *
 	 * @param int  $attachment_id The attachment ID.

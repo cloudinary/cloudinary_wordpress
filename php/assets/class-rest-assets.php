@@ -123,7 +123,7 @@ class Rest_Assets {
 		$text_overlay = $request->get_param( 'textOverlay' );
 
 		if ( isset( $text_overlay ) && array_key_exists( 'transformation', (array) $text_overlay ) ) {
-			$result = $this->save_transformation_type( $attachment_id, $text_overlay['transformation'], $type, 'text_overlay' );
+			$result = $this->save_transformation_type( $attachment_id, $text_overlay['transformation'], $type, 'text_overlay', $text_overlay );
 			$return = array_merge( $return, $result );
 		}
 
@@ -131,7 +131,7 @@ class Rest_Assets {
 		$image_overlay = $request->get_param( 'imageOverlay' );
 
 		if ( isset( $image_overlay ) && array_key_exists( 'transformation', (array) $image_overlay ) ) {
-			$result = $this->save_transformation_type( $attachment_id, $image_overlay['transformation'], $type, 'image_overlay' );
+			$result = $this->save_transformation_type( $attachment_id, $image_overlay['transformation'], $type, 'image_overlay', $image_overlay );
 			$return = array_merge( $return, $result );
 		}
 
@@ -145,27 +145,32 @@ class Rest_Assets {
 	 * @param string $transformation Transformation string.
 	 * @param string $type Resource type.
 	 * @param string $save_type Type to save (transformations, text_overlay, image_overlay).
+	 * @param array  $full_data Full data for the transformation type.
 	 * @return array
 	 */
-	protected function save_transformation_type( $attachment_id, $transformation, $type, $save_type ) {
+	protected function save_transformation_type( $attachment_id, $transformation, $type, $save_type, $full_data = null ) {
 		$media                = $this->assets->media;
 		$transformation_array = $media->get_transformations_from_string( $transformation, $type );
 		$cleaned              = Api::generate_transformation_string( $transformation_array, $type );
+
+		if ( ! empty( $full_data ) ) {
+			$full_data['transformation'] = $cleaned;
+		}
 
 		switch ( $save_type ) {
 			case 'transformations':
 				Relate::update_transformations( $attachment_id, $cleaned );
 				break;
 			case 'text_overlay':
-				break;
 			case 'image_overlay':
+				Relate::update_transformations_overlay( $attachment_id, $full_data, $save_type );
 				break;
 		}
 
 		$result = array( $save_type => $cleaned );
 
 		if ( $cleaned !== $transformation ) {
-			$result['note'] = __( 'Some transformations were invalid and were removed.', 'cloudinary' );
+			$result['note'] = __( 'There are incorrect transformations, please set correct ones.', 'cloudinary' );
 		}
 
 		return $result;
