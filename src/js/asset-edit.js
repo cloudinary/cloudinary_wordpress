@@ -54,8 +54,13 @@ const AssetEdit = {
 		const item = JSON.parse( this.wrap.dataset.item );
 		this.id = item.ID;
 		this.base = item.base + item.size + '/';
-		this.publicId = item.file;
 		this.transformationsInput.value = item.transformations ? item.transformations : '';
+
+		if(!item?.file) {
+			return;
+		}
+
+		this.publicId = '/' + item.file.split('/').slice(-2).join('/');
 
 		// Set up centralized text overlay mapping as a property
 		this.textOverlayMap = [
@@ -536,10 +541,7 @@ const AssetEdit = {
 					jQuery(this.textOverlayColorInput).iris({ color: input.value });
 				}
 				if (key === 'imageId' && input.value) {
-					console.log( input.value );
 					this.fetchImageById(input.value).then(attachment => {
-						console.log( AssetEdit.renderImageOverlay );
-						console.log(attachment);
 						AssetEdit.renderImageOverlay(attachment);
 					});
 				}

@@ -1434,8 +1434,6 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		$pre_args['transformation'] = $this->get_transformations( $attachment_id, $transformations, $overwrite_transformations );
-		$pre_args['text_overlay']   = $this->get_text_overlay( $attachment_id );
-		$pre_args['image_overlay']  = $this->get_image_overlay( $attachment_id );
 
 		// Make a copy as not to destroy the options in \Cloudinary::cloudinary_url().
 		$args = $pre_args;

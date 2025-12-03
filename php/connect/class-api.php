@@ -369,14 +369,6 @@ class Api {
 			$url_parts[] = self::generate_transformation_string( $args['transformation'], $args['resource_type'] );
 		}
 
-		if ( ! empty( $args['text_overlay'] ) ) {
-			$url_parts[] = $args['text_overlay'];
-		}
-
-		if ( ! empty( $args['image_overlay'] ) ) {
-			$url_parts[] = $args['image_overlay'];
-		}
-
 		if ( $attachment_id ) {
 			$public_id = $this->get_public_id( $attachment_id, $args, $public_id );
 		}

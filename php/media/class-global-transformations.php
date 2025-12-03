@@ -658,7 +658,7 @@ class Global_Transformations {
 
 			$item = $this->media->plugin->get_component( 'assets' )->get_asset( $attachment_id, 'dataset' );
 			if ( ! empty( $item['data']['public_id'] ) ) {
-				$text            = __( 'Add transformations', 'cloudinary' );
+				$text            = __( 'Add transformation effects', 'cloudinary' );
 				$transformations = Relate::get_transformations( $attachment_id, true );
 				$text_overlay    = Relate::get_overlay( $attachment_id, 'text_overlay' );
 				$image_overlay   = Relate::get_overlay( $attachment_id, 'image_overlay' );

@@ -120,16 +120,35 @@ class Relate {
 	 * @return array|string
 	 */
 	public static function get_transformations( $attachment_id, $as_string = false ) {
-		static $media;
+		static $media, $cache = array();
 		if ( ! $media ) {
 			$media = get_plugin_instance()->get_component( 'media' );
 		}
 
+		// Create cache key based on attachment ID and return type.
+		$cache_key = $attachment_id . '_' . ( $as_string ? 'string' : 'array' );
+
+		// Return cached value if available.
+		if ( isset( $cache[ $cache_key ] ) ) {
+			return $cache[ $cache_key ];
+		}
+
 		$relationship    = Relationship::get_relationship( $attachment_id );
 		$transformations = $relationship->transformations;
+
+		$text_overlay    = self::get_overlay( $attachment_id, 'text_overlay' );
+		$image_overlay   = self::get_overlay( $attachment_id, 'image_overlay' );
+
+		// Merge transformations with overlays.
+		$parts = array_filter( array( $transformations, $image_overlay, $text_overlay ) );
+		$transformations = ! empty( $parts ) ? implode( '/', $parts ) : '';
+
 		if ( ! $as_string ) {
 			$transformations = ! empty( $transformations ) ? $media->get_transformations_from_string( $transformations, $relationship->asset_type ) : array();
 		}
+
+		// Cache the result.
+		$cache[ $cache_key ] = $transformations;
 
 		return $transformations;
 	}
@@ -152,7 +171,7 @@ class Relate {
 		if ( ! empty( $overlay_data ) ) {
 			$decoded = json_decode( $overlay_data, true );
 			if ( is_array( $decoded ) && isset( $decoded['transformation'] ) ) {
-				return rawurlencode( $decoded['transformation'] );
+				return $decoded['transformation'];
 			}
 		}
 

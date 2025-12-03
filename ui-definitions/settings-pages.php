@@ -948,12 +948,13 @@ $settings = array(
 					'cld-ui-preview',
 				),
 				array(
-					'type' => 'row',
+					'type'       => 'panel',
+					'title'      => __( 'Preview', 'cloudinary' ),
 					array(
-						'type'       => 'panel',
+						'type' => 'row',
 						'attributes' => array(
 							'wrap' => array(
-								'style' => 'width: 100%; display: flex; justify-content: center; align-items: center;',
+								'style' => 'display: flex; justify-content: center; align-items: center;',
 							),
 						),
 						array(
