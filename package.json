@@ -58,7 +58,6 @@
     "loading-attribute-polyfill": "^2.1.1",
     "lodash": "^4.17.21",
     "progressbar.js": "^1.1.1",
-    "react": "^18.3.1",
     "tippy.js": "^6.3.1"
   },
   "devDependencies": {
@@ -105,8 +104,8 @@
   },
   "overrides": {
     "react-autosize-textarea": {
-      "react": "$react",
-      "react-dom": "$react"
+      "react": "^18.0.0",
+      "react-dom": "^18.0.0"
     }
   },
   "version": "3.2.14"

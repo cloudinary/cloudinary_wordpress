@@ -1,10 +1,15 @@
+/**
+ * External dependencies
+ */
 import Dot from 'dot-object';
-import { useState } from 'react';
-import { __ } from '@wordpress/i18n';
 import cloneDeep from 'lodash/cloneDeep';
 
+/**
+ * WordPress dependencies
+ */
+import { useState } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 import '@wordpress/components/build-style/style.css';
-
 import {
 	Button,
 	ButtonGroup,
@@ -14,9 +19,11 @@ import {
 	TextareaControl,
 	ToggleControl,
 } from '@wordpress/components';
-
 import { ColorPalette } from '@wordpress/block-editor';
 
+/**
+ * Internal dependencies
+ */
 import {
 	ASPECT_RATIOS,
 	CAROUSEL_LOCATION,
