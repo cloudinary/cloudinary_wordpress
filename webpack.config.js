@@ -23,8 +23,6 @@ const sharedConfig = {
 		minimizer: [
 			new TerserPlugin( {
 				parallel: true,
-				sourceMap: true,
-				cache: true,
 				terserOptions: {
 					output: {
 						comments: /translators:/i,
@@ -68,6 +66,10 @@ const sharedConfig = {
 			filename: '../css/[name]-rtl.css',
 		} ),
 	],
+	cache: {
+		type: 'filesystem',
+	},
+	devtool: 'source-map',
 };
 
 const cldCore = {
@@ -89,27 +91,17 @@ const cldCore = {
 		rules: [
 			{
 				test: /\.(png|svg|jpg|gif|webp)$/,
-				use: [
-					{
-						loader: 'file-loader',
-						options: {
-							name: '[name].[ext]',
-							outputPath: '../css/images/',
-						},
-					},
-				],
+				type: 'asset/resource',
+				generator: {
+					filename: '../css/images/[name].[ext]',
+				},
 			},
 			{
 				test: /\.(woff|woff2|eot|ttf|otf)$/,
-				use: [
-					{
-						loader: 'file-loader',
-						options: {
-							name: '[name].[contenthash].[ext]',
-							outputPath: '../css/fonts/',
-						},
-					},
-				],
+				type: 'asset/resource',
+				generator: {
+					filename: '../css/fonts/[name].[contenthash].[ext]',
+				},
 			},
 			{
 				test: /\.(sa|sc|c)ss$/,

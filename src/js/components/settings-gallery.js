@@ -1,10 +1,19 @@
 /*global CLD_THEME_COLORS, CLD_GALLERY_CONFIG */
 
-import React from 'react';
+/**
+ * External dependencies
+ */
 import Dot from 'dot-object';
-import { render, useEffect, useState } from '@wordpress/element';
-import GalleryControls from '../gallery-block/controls';
 
+/**
+ * WordPress dependencies
+ */
+import { render, useEffect, useState } from '@wordpress/element';
+
+/**
+ * Internal dependencies
+ */
+import GalleryControls from '../gallery-block/controls';
 import {
 	convertColors,
 	setupAttributesForRendering,
