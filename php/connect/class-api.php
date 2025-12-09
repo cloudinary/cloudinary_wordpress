@@ -128,6 +128,8 @@ class Api {
 			'fl'  => 'flags',
 			'f'   => 'fetch_format',
 			'q'   => 'quality',
+			'r'   => 'radius',
+			'o'   => 'opacity',
 			'if'  => 'if',
 			'y'   => 'y_axis',
 			'x'   => 'x_axis',

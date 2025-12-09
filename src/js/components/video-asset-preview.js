@@ -112,6 +112,9 @@ const VideoAssetPreview = {
 		this.player.source( sourceConfig );
 		this.preview.style.opacity = 1;
 	},
+	reset( src ) {
+		this.setSrc( src, false );
+	},
 };
 
 export default VideoAssetPreview;
