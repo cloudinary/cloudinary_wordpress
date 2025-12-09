@@ -1,9 +1,11 @@
 import { __ } from '@wordpress/i18n';
 import AssetPreview from './components/asset-preview';
+import VideoAssetPreview from './components/video-asset-preview';
 import AssetEditor from './components/asset-editor';
 
 const AssetEdit = {
 	wrap: document.getElementById( 'cld-asset-edit' ),
+	isVideo: false,
 	preview: null,
 	id: null,
 	editor: null,
@@ -60,7 +62,13 @@ const AssetEdit = {
 			return;
 		}
 
-		this.publicId = '/' + item.file.split('/').slice(-2).join('/');
+		this.isVideo = item?.type === 'video';
+
+		if( this.isVideo ) {
+			this.publicId = item?.data?.public_id;
+		} else {
+			this.publicId = '/' + item.file.split('/').slice(-2).join('/');
+		}
 
 		// Set up centralized text overlay mapping as a property
 		this.textOverlayMap = [
@@ -99,9 +107,16 @@ const AssetEdit = {
 		this.initRemoveOverlayButtons();
 	},
 	initPreview() {
-		this.preview = AssetPreview.init();
-		this.wrap.appendChild( this.preview.createPreview( '100%', 'auto' ) );
-		this.preview.setSrc( this.buildSrc(), true );
+		if ( this.isVideo ) {
+			this.preview = VideoAssetPreview.init();
+			this.wrap.appendChild( this.preview.createPreview( 480, 360 ) );
+			this.preview.setPublicId( this.publicId );
+			this.preview.setSrc( this.buildSrc(), true );
+		} else {
+			this.preview = AssetPreview.init();
+			this.wrap.appendChild( this.preview.createPreview( '100%', 'auto' ) );
+			this.preview.setSrc( this.buildSrc(), true );
+		}
 
 		this.transformationsInput.addEventListener( 'input', ( ev ) => {
 			this.preview.setSrc( this.buildSrc() );
@@ -479,6 +494,9 @@ const AssetEdit = {
 	buildSrc() {
 		const imageOverlay = this.buildImageOverlay();
 		const textOverlay = this.buildTextOverlay();
+		const transformations = this.transformationsInput.value;
+
+		// For images, build the full URL
 		const urlParts = [this.base];
 		const htmlParts = [];
 
@@ -492,8 +510,8 @@ const AssetEdit = {
 		};
 
 		// Add transformations
-		if (this.transformationsInput.value) {
-			addPart(this.transformationsInput.value, 'string-preview-transformations', `.../${this.transformationsInput.value}`, false);
+		if (transformations) {
+			addPart(transformations, 'string-preview-transformations', `.../${transformations}`, false);
 		} else {
 			htmlParts.push(`<span class="string-preview-transformations string-preview-base">...</span>`);
 		}
@@ -501,13 +519,36 @@ const AssetEdit = {
 		// Add overlays
 		addPart(imageOverlay, 'string-preview-image-overlay');
 		addPart(textOverlay, 'string-preview-text-overlay');
+
 		addPart(this.publicId, 'string-preview-public-id', this.publicId, false);
 
 		const previewUrl = urlParts.join('/').replace(/\/+/g, '/');
 		this.assetPreviewTransformationString.innerHTML = htmlParts.join('');
 		this.assetPreviewTransformationString.href = previewUrl;
 
+		// For videos, return only the transformation string (without base and publicId)
+		if ( this.isVideo ) {
+			return this.videoTransformations( transformations, imageOverlay, textOverlay );
+		}
+
 		return previewUrl;
+	},
+	videoTransformations(transformations, imageOverlay, textOverlay) {
+		const transformationParts = [];
+
+		if (transformations) {
+			transformationParts.push(transformations);
+		}
+
+		if (imageOverlay) {
+			transformationParts.push(imageOverlay);
+		}
+
+		if (textOverlay) {
+			transformationParts.push(textOverlay);
+		}
+
+		return transformationParts.join('/');
 	},
 	getOverlayData(map) {
 		const overlay = {};
