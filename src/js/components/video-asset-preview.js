@@ -77,11 +77,6 @@ const VideoAssetPreview = {
 				fluid: true,
 				controls: true,
 			} );
-
-			// Set initial source immediately
-			if ( this.publicId ) {
-				this.player.source( this.publicId );
-			}
 		}
 	},
 
@@ -89,6 +84,12 @@ const VideoAssetPreview = {
 		this.preview.style.opacity = 0.6;
 		if ( load ) {
 			this.apply.style.display = 'none';
+
+			// Ensure player is initialized before updating
+			if ( ! this.player ) {
+				this.initPlayer();
+			}
+
 			this.updatePlayer( src );
 		} else {
 			this.apply.style.display = 'block';
@@ -112,6 +113,7 @@ const VideoAssetPreview = {
 		this.player.source( sourceConfig );
 		this.preview.style.opacity = 1;
 	},
+
 	reset( src ) {
 		this.setSrc( src, false );
 	},

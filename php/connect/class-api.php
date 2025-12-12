@@ -112,6 +112,7 @@ class Api {
 			'e'   => 'effect',
 			'l'   => 'overlay',
 			'so'  => 'start_offset',
+			'co'  => 'color',
 			'eo'  => 'end_offset',
 			'du'  => 'duration',
 			'a'   => 'angle',

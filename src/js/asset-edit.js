@@ -63,12 +63,7 @@ const AssetEdit = {
 		}
 
 		this.isVideo = item?.type === 'video';
-
-		if( this.isVideo ) {
-			this.publicId = item?.data?.public_id;
-		} else {
-			this.publicId = '/' + item.file.split('/').slice(-2).join('/');
-		}
+		this.publicId = '/' + item.file.split('/').slice(-2).join('/');
 
 		// Set up centralized text overlay mapping as a property
 		this.textOverlayMap = [
@@ -99,18 +94,18 @@ const AssetEdit = {
         this.setOverlayInputs(this.textOverlayMap, textOverlayData);
         this.setOverlayInputs(this.imageOverlayMap, imageOverlayData);
 		// Init components.
-		this.initPreview();
+		this.initPreview(item);
 		this.initEditor();
 		this.initGravityGrid( 'edit-overlay-grid-text', textOverlayData );
 		this.initGravityGrid( 'edit-overlay-grid-image', imageOverlayData );
 		this.initImageSelect();
 		this.initRemoveOverlayButtons();
 	},
-	initPreview() {
+	initPreview(item) {
 		if ( this.isVideo ) {
 			this.preview = VideoAssetPreview.init();
 			this.wrap.appendChild( this.preview.createPreview( 480, 360 ) );
-			this.preview.setPublicId( this.publicId );
+			this.preview.setPublicId( item?.data?.public_id );
 			this.preview.setSrc( this.buildSrc(), true );
 		} else {
 			this.preview = AssetPreview.init();
@@ -414,11 +409,12 @@ const AssetEdit = {
 		return placementQualifiers.length > 0 ? ',' + placementQualifiers.join(',') : '';
 	},
 	buildImageOverlay() {
-		if (!this.imageOverlayPublicIdInput || !this.imageOverlayPublicIdInput.value.trim()) {
+		const imageId = this.imageOverlayPublicIdInput.value.trim().replace(/\//g, ':');
+
+		if ( !imageId ) {
 			return '';
 		}
 
-		const imageId = this.imageOverlayPublicIdInput.value.trim().replace(/\//g, ':');
 		let imageLayerDefinition = `l_${imageId}`;
 
 		let transformations = [];

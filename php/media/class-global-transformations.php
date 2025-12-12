@@ -658,7 +658,7 @@ class Global_Transformations {
 
 			$item = $this->media->plugin->get_component( 'assets' )->get_asset( $attachment_id, 'dataset' );
 			if ( ! empty( $item['data']['public_id'] ) ) {
-				$text            = __( 'Add effects', 'cloudinary' );
+				$text            = __( 'Add Effects', 'cloudinary' );
 				$transformations = Relate::get_transformations( $attachment_id, true );
 				$text_overlay    = Relate::get_overlay( $attachment_id, 'text_overlay' );
 				$image_overlay   = Relate::get_overlay( $attachment_id, 'image_overlay' );
@@ -670,7 +670,7 @@ class Global_Transformations {
 				$link            = add_query_arg( $args, 'admin.php' );
 
 				if ( ! empty( $transformations ) || ! empty( $text_overlay ) || ! empty( $image_overlay ) ) {
-					$text = __( 'Edit effects', 'cloudinary' );
+					$text = __( 'Edit Effects', 'cloudinary' );
 				}
 				?>
 				<a href="<?php echo esc_url( $link ); ?>" class="cld_transformations__icons">
