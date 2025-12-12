@@ -980,6 +980,19 @@ $settings = array(
 								'target' => '_blank',
 							),
 						),
+						array(
+							'type'       => 'tag',
+							'element'    => 'div',
+							'attributes' => array(
+								'id'     => 'asset-preview-success-message',
+								'style'  => 'display: none;',
+							),
+							array(
+								'type'       => 'tag',
+								'element'    => 'p',
+								'content'    => __( 'Effects applied successfully!', 'cloudinary' ),
+							),
+						),
 					),
 				),
 			),

@@ -47,6 +47,7 @@ const AssetEdit = {
 	imageGrid: document.getElementById( 'edit-overlay-grid-image' ),
 	imagePreviewWrapper: document.getElementById( 'edit-overlay-select-image-preview' ),
 	assetPreviewTransformationString: document.getElementById( 'asset-preview-transformation-string' ),
+	assetPreviewSuccessMessage: document.getElementById( 'asset-preview-success-message' ),
 
 	// Mapping
 	textOverlayMap: null,
@@ -185,28 +186,44 @@ const AssetEdit = {
 
 			if ( result.note ) {
 				alert( result.note );
+			} else {
+				this.assetPreviewSuccessMessage.style.display = 'block';
+
+				setTimeout(() => {
+					this.assetPreviewSuccessMessage.style.display = 'none';
+				}, 2000);
 			}
 		} );
 
-		this.saveButton.addEventListener( 'click', () => {
+		this.saveButton.addEventListener( 'click', (e) => {
+			e.preventDefault();
+
 			this.editor.save( {
 				ID: this.id,
 				transformations: this.transformationsInput.value,
 			} );
 		} );
 
-		this.saveTextOverlayButton.addEventListener('click', () => {
+		this.saveTextOverlayButton.addEventListener('click', (e) => {
+			e.preventDefault();
+
 			const textOverlay = this.getOverlayData(this.textOverlayMap);
+
 			textOverlay.transformation = this.buildTextOverlay();
+
 			this.editor.save({
 				ID: this.id,
 				textOverlay
 			});
 		});
 
-		this.saveImageOverlayButton.addEventListener('click', () => {
+		this.saveImageOverlayButton.addEventListener('click', (e) => {
+			e.preventDefault();
+
 			const imageOverlay = this.getOverlayData(this.imageOverlayMap);
+
 			imageOverlay.transformation = this.buildImageOverlay();
+
 			this.editor.save({
 				ID: this.id,
 				imageOverlay
