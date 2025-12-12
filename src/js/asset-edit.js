@@ -64,7 +64,7 @@ const AssetEdit = {
 		}
 
 		this.isVideo = item?.type === 'video';
-		this.publicId = '/' + item.file.split('/').slice(-2).join('/');
+		this.publicId = item.file;
 
 		// Set up centralized text overlay mapping as a property
 		this.textOverlayMap = [
