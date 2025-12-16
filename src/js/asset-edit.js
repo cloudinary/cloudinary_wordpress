@@ -126,7 +126,6 @@ const AssetEdit = {
 	},
 	addOverlayEventListeners() {
 		const updatePreviewForTextOverlay = () => {
-			// Only update preview if we have text content
 			const hasText = this.textOverlayTextInput?.value?.trim();
 
 			if (hasText) {
@@ -135,7 +134,6 @@ const AssetEdit = {
 		};
 
 		const updatePreviewForImageOverlay = () => {
-			// Only update preview if we have image ID
 			const hasImageId = this.imageOverlayPublicIdInput?.value?.trim();
 
 			if (hasImageId) {
@@ -143,7 +141,6 @@ const AssetEdit = {
 			}
 		};
 
-		// Primary content inputs (always update preview to handle empty states)
 		if (this.textOverlayTextInput) {
 			this.textOverlayTextInput.addEventListener('input', () => {
 				this.preview.setSrc( this.buildSrc() );
@@ -185,6 +182,7 @@ const AssetEdit = {
 	initEditor() {
 		this.editor = AssetEditor.init();
 		this.editor.onBefore( () => this.preview.reset() );
+
 		this.editor.onComplete( ( result ) => {
 			this.preview.setSrc( this.buildSrc(), true );
 
@@ -244,6 +242,7 @@ const AssetEdit = {
 
 		try {
 			gridOptions = JSON.parse( grid.dataset.gridOptions );
+
 			if( gridOptions.length < 1 ) {
 				return;
 			}
@@ -574,7 +573,6 @@ const AssetEdit = {
 
 		return overlay;
 	},
-
 	parseJsonOverlay(data) {
 		if (typeof data === 'string') {
 			try {
@@ -586,7 +584,6 @@ const AssetEdit = {
 
 		return data;
 	},
-
 	setOverlayInputs(map, data) {
 		map.forEach(({ key, input, defaultValue }) => {
 			if (input) {
