@@ -943,28 +943,6 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
-	 * Get the image overlay transformation for an asset.
-	 *
-	 * @param int $attachment_id The attachment ID.
-	 *
-	 * @return string The image overlay transformation string.
-	 */
-	public function get_image_overlay( $attachment_id ) {
-		return (string) Relate::get_overlay( $attachment_id, 'image_overlay' );
-	}
-
-	/**
-	 * Get the text overlay transformation for an asset.
-	 *
-	 * @param int $attachment_id The attachment ID.
-	 *
-	 * @return string The text overlay transformation string.
-	 */
-	public function get_text_overlay( $attachment_id ) {
-		return (string) Relate::get_overlay( $attachment_id, 'text_overlay' );
-	}
-
-	/**
 	 * Get transformations for an attachment to use in a final URL.
 	 *
 	 * @param int   $attachment_id             The attachment ID.

@@ -374,9 +374,9 @@ class Utils {
 				'range'  => array( '3.0.1', '3.1.9' ),
 				'method' => array( 'Cloudinary\Utils', 'upgrade_3_1_9' ),
 			),
-			'3.2.14' => array(
-				'range'  => array( '3.1.9', '3.2.14' ),
-				'method' => array( 'Cloudinary\Utils', 'upgrade_3_2_14' ),
+			'3.2.15' => array(
+				'range'  => array( '3.1.9', '3.2.15' ),
+				'method' => array( 'Cloudinary\Utils', 'upgrade_3_2_15' ),
 			),
 
 		);
@@ -454,10 +454,10 @@ class Utils {
 	}
 
 	/**
-	 * Upgrade DB from v3.1.9 to v3.2.14.
+	 * Upgrade DB from v3.1.9 to v3.2.15.
 	 * Adds columns for overlay data.
 	 */
-	public static function upgrade_3_2_14() {
+	public static function upgrade_3_2_15() {
 		global $wpdb;
 		$tablename = self::get_relationship_table();
 
