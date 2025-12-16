@@ -535,7 +535,7 @@ const AssetEdit = {
 
 		addPart(this.publicId, 'string-preview-public-id', this.publicId, false);
 
-		const previewUrl = urlParts.join('/').replace(/\/+/g, '/');
+		const previewUrl = urlParts.join('/').replace(/([^:]\/)\/+/g, '$1');
 		this.assetPreviewTransformationString.innerHTML = htmlParts.join('');
 		this.assetPreviewTransformationString.href = previewUrl;
 
