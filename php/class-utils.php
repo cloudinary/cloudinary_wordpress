@@ -296,6 +296,8 @@ class Utils {
 	  sync_type varchar(45) DEFAULT NULL,
 	  post_state varchar(12) DEFAULT NULL,
 	  transformations text DEFAULT NULL,
+	  text_overlay text DEFAULT NULL,
+	  image_overlay text DEFAULT NULL,
 	  signature varchar(45) DEFAULT NULL,
 	  public_hash varchar(45) DEFAULT NULL,
 	  url_hash varchar(45) DEFAULT NULL,
