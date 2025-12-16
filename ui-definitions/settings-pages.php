@@ -567,7 +567,7 @@ $settings = array(
 					'title'       => __( 'Transformations', 'cloudinary' ),
 					array(
 						'type'  => 'info_box',
-						'icon'  => $this->dir_url . 'css/images/transformation.svg',
+						'icon'  => $this->dir_url . 'css/images/transformation_edit.svg',
 						'title' => __( 'What are transformations?', 'cloudinary' ),
 						'text'  => __(
 							'A set of parameters included in a Cloudinary URL to programmatically transform the visual appearance of the assets on your website.',
@@ -620,7 +620,7 @@ $settings = array(
 						'type' => 'row',
 						array(
 							'type' => 'info_box',
-							'icon' => $this->dir_url . 'css/images/academy-icon.svg',
+							'icon' => $this->dir_url . 'css/images/text_overlay.svg',
 							'text' => sprintf(
 								// Translators: The HTML for opening and closing link tags.
 								__(
@@ -769,7 +769,7 @@ $settings = array(
 						'type' => 'row',
 						array(
 							'type' => 'info_box',
-							'icon' => $this->dir_url . 'css/images/academy-icon.svg',
+							'icon' => $this->dir_url . 'css/images/image_overlay.svg',
 							'text' => sprintf(
 								// Translators: The HTML for opening and closing link tags.
 								__(
