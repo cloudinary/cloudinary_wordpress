@@ -3,6 +3,9 @@ import AssetPreview from './components/asset-preview';
 import VideoAssetPreview from './components/video-asset-preview';
 import AssetEditor from './components/asset-editor';
 
+const SELECT_IMAGE_LABEL = __('Select Image', 'cloudinary');
+const REPLACE_IMAGE_LABEL = __('Replace Image', 'cloudinary');
+
 const AssetEdit = {
 	wrap: document.getElementById( 'cld-asset-edit' ),
 	isVideo: false,
@@ -48,6 +51,7 @@ const AssetEdit = {
 	imagePreviewWrapper: document.getElementById( 'edit-overlay-select-image-preview' ),
 	assetPreviewTransformationString: document.getElementById( 'asset-preview-transformation-string' ),
 	assetPreviewSuccessMessage: document.getElementById( 'asset-preview-success-message' ),
+	imageSelect: document.getElementById( 'edit-overlay-select-image' ),
 
 	// Mapping
 	textOverlayMap: null,
@@ -287,21 +291,18 @@ const AssetEdit = {
 			grid.appendChild(cell);
 		});
 	},
+	updateImageSelectLabel(label) {
+		if ( this.imageSelect ) {
+			this.imageSelect.textContent = label;
+		}
+	},
 	initImageSelect() {
-		const imageSelect = document.getElementById( 'edit-overlay-select-image' );
 
-		if ( ! imageSelect ) {
+		if ( ! this.imageSelect ) {
 			return;
 		}
 
-		const updateImageSelectLabel = (label) => {
-			imageSelect.textContent = label;
-		};
-
-		const SELECT_IMAGE_LABEL = __('Select Image', 'cloudinary');
-		const REPLACE_IMAGE_LABEL = __('Replace Image', 'cloudinary');
-
-		imageSelect.addEventListener('click', (ev) => {
+		this.imageSelect.addEventListener('click', (ev) => {
 			ev.preventDefault();
 
 			const frame = wp.media({
@@ -320,11 +321,11 @@ const AssetEdit = {
 				if (attachment?.public_id) {
 					this.imageOverlayImageIdInput.value = attachment.id;
 					this.imageOverlayPublicIdInput.value = attachment.public_id;
-					updateImageSelectLabel(REPLACE_IMAGE_LABEL);
+					this.updateImageSelectLabel(REPLACE_IMAGE_LABEL);
 				} else {
 					this.imageOverlayImageIdInput.value = '';
 					this.imageOverlayPublicIdInput.value = '';
-					updateImageSelectLabel(SELECT_IMAGE_LABEL);
+					this.updateImageSelectLabel(SELECT_IMAGE_LABEL);
 				}
 
 				this.preview.setSrc(this.buildSrc());
@@ -335,9 +336,9 @@ const AssetEdit = {
 
 		// Set initial label if image already selected
 		if (this.imageOverlayPublicIdInput?.value) {
-			updateImageSelectLabel(REPLACE_IMAGE_LABEL);
+			this.updateImageSelectLabel(REPLACE_IMAGE_LABEL);
 		} else {
-			updateImageSelectLabel(SELECT_IMAGE_LABEL);
+			this.updateImageSelectLabel(SELECT_IMAGE_LABEL);
 		}
 	},
 	renderImageOverlay(attachment) {
@@ -397,6 +398,7 @@ const AssetEdit = {
 		// Clear image preview
 		if (this.imagePreviewWrapper && this.imagePreviewWrapper.firstChild) {
 			this.imagePreviewWrapper.removeChild(this.imagePreviewWrapper.firstChild);
+			this.updateImageSelectLabel(SELECT_IMAGE_LABEL);
 		}
 
 		// Clear selected gravity grid for image
