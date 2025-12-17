@@ -142,7 +142,7 @@ class Relate {
 			$image_overlay = self::get_overlay( $attachment_id, 'image_overlay' );
 
 			// Merge transformations with overlays.
-			$parts           = array_filter( array( $transformations, $image_overlay, $text_overlay ) );
+			$parts           = array_filter( array( $transformations, $text_overlay, $image_overlay ) );
 			$transformations = ! empty( $parts ) ? implode( '/', $parts ) : '';
 		}
 

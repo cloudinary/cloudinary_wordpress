@@ -506,9 +506,10 @@ const AssetEdit = {
 		return `${textLayerDefinition}/fl_layer_apply${placementString}`;
 	},
 	buildSrc() {
-		const imageOverlay = this.buildImageOverlay();
-		const textOverlay = this.buildTextOverlay();
 		const transformations = this.transformationsInput.value;
+		const textOverlay = this.buildTextOverlay();
+		const imageOverlay = this.buildImageOverlay();
+
 
 		// For images, build the full URL
 		const urlParts = [this.base];
@@ -531,8 +532,8 @@ const AssetEdit = {
 		}
 
 		// Add overlays
-		addPart(imageOverlay, 'string-preview-image-overlay');
 		addPart(textOverlay, 'string-preview-text-overlay');
+		addPart(imageOverlay, 'string-preview-image-overlay');
 
 		addPart(this.publicId, 'string-preview-public-id', this.publicId, false);
 
@@ -554,12 +555,12 @@ const AssetEdit = {
 			transformationParts.push(transformations);
 		}
 
-		if (imageOverlay) {
-			transformationParts.push(imageOverlay);
-		}
-
 		if (textOverlay) {
 			transformationParts.push(textOverlay);
+		}
+
+		if (imageOverlay) {
+			transformationParts.push(imageOverlay);
 		}
 
 		return transformationParts.join('/');
