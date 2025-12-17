@@ -315,16 +315,18 @@ const AssetEdit = {
 
 			frame.on('select', () => {
 				const attachment = frame.state().get('selection').first().toJSON();
-				this.renderImageOverlay(attachment);
 
 				if (attachment?.public_id) {
 					this.imageOverlayImageIdInput.value = attachment.id;
 					this.imageOverlayPublicIdInput.value = attachment.public_id;
 					this.updateImageSelectLabel(REPLACE_IMAGE_LABEL);
+					this.renderImageOverlay(attachment);
 				} else {
 					this.imageOverlayImageIdInput.value = '';
 					this.imageOverlayPublicIdInput.value = '';
 					this.updateImageSelectLabel(SELECT_IMAGE_LABEL);
+					this.renderImageOverlay({});
+					alert( __('Please select an image that is synced to Cloudinary.', 'cloudinary') );
 				}
 
 				this.preview.setSrc(this.buildSrc());
