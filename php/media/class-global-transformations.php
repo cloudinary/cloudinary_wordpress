@@ -672,32 +672,21 @@ class Global_Transformations {
 				if ( ! empty( $transformations ) || ! empty( $text_overlay ) || ! empty( $image_overlay ) ) {
 					$text = __( 'Edit Effects', 'cloudinary' );
 				}
+
+				$transformation_active_class = ! empty( $transformations ) ? 'cld_transformations__icon--active' : '';
+				$text_overlay_active_class   = ! empty( $text_overlay ) ? 'cld_transformations__icon--active' : '';
+				$image_overlay_active_class  = ! empty( $image_overlay ) ? 'cld_transformations__icon--active' : '';
 				?>
 				<a href="<?php echo esc_url( $link ); ?>" class="cld_transformations__icons">
-					<span class="cld_transformations__icon
-					<?php
-					if ( ! empty( $transformations ) ) {
-						echo 'cld_transformations__icon--active';}
-					?>
-					">
+					<span class="cld_transformations__icon <?php echo esc_attr( $transformation_active_class ); ?>">
 						<?php Utils::get_inline_svg( 'css/images/transformation_edit.svg', true ); ?>
 					</span>
 
-					<span class="cld_transformations__icon
-					<?php
-					if ( ! empty( $text_overlay ) ) {
-						echo 'cld_transformations__icon--active';}
-					?>
-					">
+					<span class="cld_transformations__icon <?php echo esc_attr( $text_overlay_active_class ); ?>">
 						<?php Utils::get_inline_svg( 'css/images/text_overlay.svg', true ); ?>
 					</span>
 
-					<span class="cld_transformations__icon
-					<?php
-					if ( ! empty( $image_overlay ) ) {
-						echo 'cld_transformations__icon--active';}
-					?>
-					">
+					<span class="cld_transformations__icon <?php echo esc_attr( $image_overlay_active_class ); ?>">
 						<?php Utils::get_inline_svg( 'css/images/image_overlay.svg', true ); ?>
 					</span>
 				</a>

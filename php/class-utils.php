@@ -1377,14 +1377,14 @@ class Utils {
 
 		// Check if file exists and is an SVG.
 		if ( ! file_exists( $file_path ) || 'svg' !== pathinfo( $file_path, PATHINFO_EXTENSION ) ) {
-			return $echo ? '' : '';
+			return '';
 		}
 
 		// Get the SVG content.
 		$svg_content = file_get_contents( $file_path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 
 		if ( false === $svg_content ) {
-			return $echo ? '' : '';
+			return '';
 		}
 
 		// Sanitize SVG content to prevent XSS attacks.

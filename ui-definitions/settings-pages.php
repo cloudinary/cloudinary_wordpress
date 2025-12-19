@@ -946,12 +946,13 @@ $settings = array(
 				'class' => array(
 					'column-45',
 					'cld-ui-preview',
+					'asset-edit-preview',
 				),
 				array(
-					'type'       => 'panel',
-					'title'      => __( 'Preview', 'cloudinary' ),
+					'type'  => 'panel',
+					'title' => __( 'Preview', 'cloudinary' ),
 					array(
-						'type' => 'row',
+						'type'       => 'row',
 						'attributes' => array(
 							'wrap' => array(
 								'style' => 'display: flex; justify-content: center; align-items: center;',
@@ -984,13 +985,13 @@ $settings = array(
 							'type'       => 'tag',
 							'element'    => 'div',
 							'attributes' => array(
-								'id'     => 'asset-preview-success-message',
-								'style'  => 'display: none;',
+								'id'    => 'asset-preview-success-message',
+								'style' => 'display: none;',
 							),
 							array(
-								'type'       => 'tag',
-								'element'    => 'p',
-								'content'    => __( 'Effects applied successfully!', 'cloudinary' ),
+								'type'    => 'tag',
+								'element' => 'p',
+								'content' => __( 'Effects applied successfully!', 'cloudinary' ),
 							),
 						),
 					),
