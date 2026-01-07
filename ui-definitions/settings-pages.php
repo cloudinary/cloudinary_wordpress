@@ -196,7 +196,7 @@ $settings = array(
 							'type'    => 'breakpoints_preview',
 							'title'   => __( 'Preview', 'cloudinary' ),
 							'slug'    => 'breakpoints_preview',
-							'default' => CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE . 'w_600/sample.jpg',
+							'default' => CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE . 'w_600/leather_bag.jpg',
 						),
 					),
 				),
