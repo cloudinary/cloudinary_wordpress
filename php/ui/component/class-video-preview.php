@@ -28,7 +28,7 @@ class Video_Preview extends Image_Preview {
 	 *
 	 * @var string
 	 */
-	protected $demo_file = '/dog.mp4';
+	protected $demo_file = '/sailing_boat.mp4';
 
 	/**
 	 * Enqueue scripts and styles.
@@ -61,7 +61,7 @@ class Video_Preview extends Image_Preview {
 	protected function pre_render() {
 		$url         = CLOUDINARY_ENDPOINTS_PREVIEW_VIDEO;
 		$preview_src = $url . 'w_600/';
-		$sample      = '/dog.mp4';
+		$sample      = '/sailing_boat.mp4';
 		$script_data = array(
 			'url'         => $url,
 			'preview_url' => $preview_src,
