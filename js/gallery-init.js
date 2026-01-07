@@ -1,1 +1,1 @@
-(()=>{const{galleryWidget:e}=cloudinary;window.addEventListener("load",(function(){document.querySelector(".woocommerce-page")&&CLD_GALLERY_CONFIG&&CLD_GALLERY_CONFIG?.mediaAssets?.length&&e(CLD_GALLERY_CONFIG).render()}))})();
+(()=>{const{galleryWidget:e}=cloudinary;window.addEventListener("load",function(){document.querySelector(".woocommerce-page")&&CLD_GALLERY_CONFIG&&CLD_GALLERY_CONFIG?.mediaAssets?.length&&e(CLD_GALLERY_CONFIG).render()})})();
