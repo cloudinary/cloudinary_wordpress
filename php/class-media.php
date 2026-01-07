@@ -1022,7 +1022,7 @@ class Media extends Settings_Component implements Setup {
 			 *
 			 * @retrun {bool}
 			 */
-			$enabled_crop_and_gravity = apply_filters( 'cloudinary_enable_crop_and_gravity_control', false );
+			$enabled_crop_and_gravity = apply_filters( 'cloudinary_enable_crop_and_gravity_control', true );
 
 			// Check for custom crop.
 			if ( is_numeric( $attachment_id ) && $enabled_crop_and_gravity ) {
@@ -1410,6 +1410,7 @@ class Media extends Settings_Component implements Setup {
 		if ( ! empty( $transformations ) && is_string( $transformations ) ) {
 			$transformations = $this->get_transformations_from_string( $transformations, $resource_type );
 		}
+
 		$pre_args['transformation'] = $this->get_transformations( $attachment_id, $transformations, $overwrite_transformations );
 
 		// Make a copy as not to destroy the options in \Cloudinary::cloudinary_url().
@@ -1431,6 +1432,8 @@ class Media extends Settings_Component implements Setup {
 		 * @return string
 		 */
 		$url = apply_filters( 'cloudinary_converted_url', $url, $attachment_id, $pre_args );
+
+
 
 		// Early bail for admin AJAX requests.
 		if ( defined( 'DOING_AJAX' ) && DOING_AJAX && is_admin() ) {

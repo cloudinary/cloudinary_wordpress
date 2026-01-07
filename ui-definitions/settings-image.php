@@ -224,7 +224,7 @@ $settings = array(
 							 *
 							 * @retrun {bool}
 							 */
-							return apply_filters( 'cloudinary_enable_crop_and_gravity_control', false );
+							return apply_filters( 'cloudinary_enable_crop_and_gravity_control', true );
 						},
 					),
 				),
