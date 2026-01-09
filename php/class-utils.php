@@ -376,9 +376,9 @@ class Utils {
 				'range'  => array( '3.0.1', '3.1.9' ),
 				'method' => array( 'Cloudinary\Utils', 'upgrade_3_1_9' ),
 			),
-			'3.2.15' => array(
-				'range'  => array( '3.1.9', '3.2.15' ),
-				'method' => array( 'Cloudinary\Utils', 'upgrade_3_2_15' ),
+			'3.3.0' => array(
+				'range'  => array( '3.1.9', '3.3.0' ),
+				'method' => array( 'Cloudinary\Utils', 'upgrade_3_3_0' ),
 			),
 
 		);
@@ -459,13 +459,34 @@ class Utils {
 	 * Upgrade DB from v3.1.9 to v3.2.15.
 	 * Adds columns for overlay data.
 	 */
-	public static function upgrade_3_2_15() {
+	public static function upgrade_3_3_0() {
 		global $wpdb;
 		$tablename = self::get_relationship_table();
 
 		// Add new columns for overlays.
 		$wpdb->query( "ALTER TABLE {$tablename} ADD COLUMN `text_overlay` TEXT DEFAULT NULL AFTER `transformations`" ); // phpcs:ignore WordPress.DB
 		$wpdb->query( "ALTER TABLE {$tablename} ADD COLUMN `image_overlay` TEXT DEFAULT NULL AFTER `text_overlay`" ); // phpcs:ignore WordPress.DB
+
+		// Update sample.jpg to leather_bag.jpg in media_display settings.
+		$media_display = get_option( 'cloudinary_media_display', array() );
+
+		if ( ! empty( $media_display ) && is_array( $media_display ) ) {
+			$updated = false;
+			$fields  = array( 'image_preview', 'lazyload_preview', 'breakpoints_preview' );
+
+			foreach ( $fields as $field ) {
+				if ( isset( $media_display[ $field ] ) && is_string( $media_display[ $field ] ) ) {
+					if ( false !== strpos( $media_display[ $field ], 'sample.jpg' ) ) {
+						$media_display[ $field ] = str_replace( 'sample.jpg', 'leather_bag.jpg', $media_display[ $field ] );
+						$updated                 = true;
+					}
+				}
+			}
+
+			if ( $updated ) {
+				update_option( 'cloudinary_media_display', $media_display );
+			}
+		}
 
 		// Set DB Version.
 		update_option( Sync::META_KEYS['db_version'], get_plugin_instance()->version );
