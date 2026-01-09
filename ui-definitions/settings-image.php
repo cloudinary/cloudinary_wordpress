@@ -224,7 +224,7 @@ $settings = array(
 							 *
 							 * @retrun {bool}
 							 */
-							return apply_filters( 'cloudinary_enable_crop_and_gravity_control', false );
+							return apply_filters( 'cloudinary_enable_crop_and_gravity_control', true );
 						},
 					),
 				),
@@ -243,7 +243,7 @@ $settings = array(
 					'type'           => 'image_preview',
 					'title'          => __( 'Preview', 'cloudinary' ),
 					'slug'           => 'image_preview',
-					'default'        => CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE . 'w_600/sample.jpg',
+					'default'        => CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE . 'w_600/leather_bag.jpg',
 					'taxonomy_field' => array(
 						'context'  => 'image',
 						'priority' => 10,

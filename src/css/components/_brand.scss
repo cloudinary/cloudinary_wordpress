@@ -151,3 +151,34 @@
 		color: $color-blue;
 	}
 }
+
+.cld_transformations {
+	&__icons {
+		display: flex;
+		gap: 20px;
+		color: $color-transformations-asset;
+		margin-block: 5px;
+
+		&:hover {
+			color: $color-transformations-asset;
+		}
+	}
+
+	&__icon {
+		opacity: 0.5;
+
+		&--active {
+			color: $color-blue;
+			opacity: 1;
+		}
+
+		svg {
+			width: 18px;
+			height: 18px;
+
+			path {
+				fill: currentColor;
+			}
+		}
+	}
+}
