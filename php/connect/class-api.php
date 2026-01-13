@@ -358,7 +358,6 @@ class Api {
 		);
 
 		$base = Utils::pathinfo( $public_id );
-
 		// Add size.
 		if ( ! empty( $size ) && is_array( $size ) ) {
 			if ( ! empty( $size['transformation'] ) ) {
