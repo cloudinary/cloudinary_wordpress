@@ -298,7 +298,7 @@ class Admin {
 			$page = $this->get_param( 'current_section' );
 		}
 
-		$this->set_param( 'active_slug', $page['slug'] );
+		$this->set_param( 'active_slug', isset( $page['slug'] ) ? $page['slug'] : '' );
 		$setting         = $this->init_components( $page, $screen->id );
 		$this->component = $setting->get_component();
 		$template        = $this->section;
