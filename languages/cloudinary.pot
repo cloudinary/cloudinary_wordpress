@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cloudinary STABLETAG\n"
 "Report-Msgid-Bugs-To: https://github.com/cloudinary/cloudinary_wordpress\n"
-"POT-Creation-Date: 2026-01-09 13:06:24+00:00\n"
+"POT-Creation-Date: 2026-01-13 17:50:39+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -855,7 +855,7 @@ msgstr ""
 #: php/delivery/class-lazy-load.php:424 php/delivery/class-lazy-load.php:534
 #: ui-definitions/settings-image.php:27 ui-definitions/settings-image.php:244
 #: ui-definitions/settings-pages.php:105 ui-definitions/settings-pages.php:198
-#: ui-definitions/settings-pages.php:953 ui-definitions/settings-video.php:27
+#: ui-definitions/settings-pages.php:977 ui-definitions/settings-video.php:27
 msgid "Preview"
 msgstr ""
 
@@ -1339,8 +1339,8 @@ msgid "Apply Changes"
 msgstr ""
 
 #: php/ui/component/class-button.php:36 php/ui/component/class-panel.php:58
-#: ui-definitions/settings-pages.php:603 ui-definitions/settings-pages.php:738
-#: ui-definitions/settings-pages.php:917
+#: ui-definitions/settings-pages.php:603 ui-definitions/settings-pages.php:748
+#: ui-definitions/settings-pages.php:941
 msgid "Save Changes"
 msgstr ""
 
@@ -2260,7 +2260,7 @@ msgid ""
 msgstr ""
 
 #: ui-definitions/settings-pages.php:618
-msgid "Text Overlay"
+msgid "Text overlay"
 msgstr ""
 
 #: ui-definitions/settings-pages.php:626
@@ -2306,46 +2306,46 @@ msgstr ""
 msgid "Text"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:694 ui-definitions/settings-pages.php:873
+#: ui-definitions/settings-pages.php:694 ui-definitions/settings-pages.php:887
 msgid "Position"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:719 ui-definitions/settings-pages.php:898
+#: ui-definitions/settings-pages.php:719 ui-definitions/settings-pages.php:912
 msgid "X Offset"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:726 ui-definitions/settings-pages.php:905
+#: ui-definitions/settings-pages.php:731 ui-definitions/settings-pages.php:924
 msgid "Y Offset"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:752 ui-definitions/settings-pages.php:931
+#: ui-definitions/settings-pages.php:762 ui-definitions/settings-pages.php:955
 msgid "Reset All"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:767
-msgid "Image Overlay"
+#: ui-definitions/settings-pages.php:777
+msgid "Image overlay"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:775
+#: ui-definitions/settings-pages.php:785
 #. Translators: The HTML for opening and closing link tags.
 msgid ""
 "The image overlay feature allows you to place an image on top of an asset. "
 "Learn more about %1$simage overlays%2$s and how to use them effectively."
 msgstr ""
 
-#: ui-definitions/settings-pages.php:794
+#: ui-definitions/settings-pages.php:804
 msgid "Select Image"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:839
+#: ui-definitions/settings-pages.php:849
 msgid "Size"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:853
+#: ui-definitions/settings-pages.php:865
 msgid "Opacity"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:994
+#: ui-definitions/settings-pages.php:1018
 msgid "Effects applied successfully!"
 msgstr ""
 
