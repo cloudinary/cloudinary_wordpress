@@ -615,7 +615,7 @@ $settings = array(
 				array(
 					'type'        => 'panel',
 					'collapsible' => 'open',
-					'title'       => __( 'Text Overlay', 'cloudinary' ),
+					'title'       => __( 'Text overlay', 'cloudinary' ),
 					array(
 						'type' => 'row',
 						array(
@@ -719,14 +719,24 @@ $settings = array(
 								'title'   => __( 'X Offset', 'cloudinary' ),
 								'default' => 0,
 								'slug'    => 'text_overlay_x_offset',
-								'suffix'  => 'px',
+								'suffix'  => '%',
+								'attributes' => array(
+									'max' => 100,
+									'min' => -100,
+									'step'  => 1,
+								),
 							),
 							array(
 								'type'    => 'number',
 								'title'   => __( 'Y Offset', 'cloudinary' ),
 								'default' => 0,
 								'slug'    => 'text_overlay_y_offset',
-								'suffix'  => 'px',
+								'suffix'  => '%',
+								'attributes' => array(
+									'max' => 100,
+									'min' => -100,
+									'step'  => 1,
+								),
 							),
 						),
 					),
@@ -764,7 +774,7 @@ $settings = array(
 				array(
 					'type'        => 'panel',
 					'collapsible' => 'open',
-					'title'       => __( 'Image Overlay', 'cloudinary' ),
+					'title'       => __( 'Image overlay', 'cloudinary' ),
 					array(
 						'type' => 'row',
 						array(
@@ -837,11 +847,13 @@ $settings = array(
 							array(
 								'type'       => 'text',
 								'title'      => __( 'Size', 'cloudinary' ),
-								'default'    => 100,
+								'default'    => 20,
 								'slug'       => 'image_overlay_size',
+								'suffix'     => '@value %',
 								'attributes' => array(
-									'min'   => 0,
-									'max'   => 1000,
+									'min'   => 1,
+									'max'   => 100,
+									'step'  => 1,
 									'type'  => 'range',
 									'class' => array(
 										'edit-overlay-range-input',
@@ -853,9 +865,11 @@ $settings = array(
 								'title'      => __( 'Opacity', 'cloudinary' ),
 								'default'    => 20,
 								'slug'       => 'image_overlay_opacity',
+								'suffix'     => '@value %',
 								'attributes' => array(
-									'min'   => 0,
+									'min'   => 1,
 									'max'   => 100,
+									'step'  => 1,
 									'type'  => 'range',
 									'class' => array(
 										'edit-overlay-range-input',
@@ -898,14 +912,24 @@ $settings = array(
 								'title'   => __( 'X Offset', 'cloudinary' ),
 								'default' => 0,
 								'slug'    => 'image_overlay_x_offset',
-								'suffix'  => 'px',
+								'suffix'  => '%',
+								'attributes' => array(
+									'max' => 100,
+									'min' => -100,
+									'step'  => 1,
+								),
 							),
 							array(
 								'type'    => 'number',
 								'title'   => __( 'Y Offset', 'cloudinary' ),
 								'default' => 0,
 								'slug'    => 'image_overlay_y_offset',
-								'suffix'  => 'px',
+								'suffix'  => '%',
+								'attributes' => array(
+									'max' => 100,
+									'min' => -100,
+									'step'  => 1,
+								),
 							),
 						),
 					),

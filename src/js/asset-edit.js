@@ -85,7 +85,7 @@ const AssetEdit = {
 		this.imageOverlayMap = [
 			{ key: 'imageId', input: this.imageOverlayImageIdInput, defaultValue: '', event: 'input' },
 			{ key: 'publicId', input: this.imageOverlayPublicIdInput, defaultValue: '', event: 'input' },
-			{ key: 'size', input: this.imageOverlaySizeInput, defaultValue: 100, event: 'input' },
+			{ key: 'size', input: this.imageOverlaySizeInput, defaultValue: 20, event: 'input' },
 			{ key: 'opacity', input: this.imageOverlayOpacityInput, defaultValue: 20, event: 'input' },
 			{ key: 'position', input: this.imageOverlayPositionInput, defaultValue: '', event: 'change' },
 			{ key: 'xOffset', input: this.imageOverlayXOffsetInput, defaultValue: 0, event: 'input' },
@@ -376,6 +376,7 @@ const AssetEdit = {
 		this.textOverlayMap.forEach(({ input, defaultValue }) => {
 			if (input) {
 				input.value = defaultValue;
+				input.dispatchEvent(new Event('change'));
 			}
 		});
 
@@ -393,6 +394,7 @@ const AssetEdit = {
 		this.imageOverlayMap.forEach(({ input, defaultValue }) => {
 			if (input) {
 				input.value = defaultValue;
+				input.dispatchEvent(new Event('change'));
 			}
 		});
 
@@ -411,6 +413,10 @@ const AssetEdit = {
 		// Update preview to remove image overlay
 		this.preview.setSrc(this.buildSrc());
 	},
+	getFormattedPercentageValue( value ) {
+		const val = value / 100;
+		return val % 1 === 0 ? val.toFixed(1) : val;
+	},
 	buildPlacementQualifiers(positionInput, xOffsetInput, yOffsetInput) {
 		let placementQualifiers = [];
 
@@ -419,11 +425,11 @@ const AssetEdit = {
 		}
 
 		if (xOffsetInput?.value) {
-			placementQualifiers.push(`x_${xOffsetInput.value}`);
+			placementQualifiers.push(`x_${this.getFormattedPercentageValue(xOffsetInput.value)}`);
 		}
 
 		if (yOffsetInput?.value) {
-			placementQualifiers.push(`y_${yOffsetInput.value}`);
+			placementQualifiers.push(`y_${this.getFormattedPercentageValue(yOffsetInput.value)}`);
 		}
 
 		return placementQualifiers.length > 0 ? ',' + placementQualifiers.join(',') : '';
@@ -440,7 +446,7 @@ const AssetEdit = {
 		let transformations = [];
 
 		if (this.imageOverlaySizeInput?.value) {
-			transformations.push(`c_scale,w_${this.imageOverlaySizeInput.value}`);
+			transformations.push(`c_scale,w_${this.getFormattedPercentageValue(this.imageOverlaySizeInput.value)}`);
 		}
 
 		if (this.imageOverlayOpacityInput?.value) {
@@ -457,7 +463,7 @@ const AssetEdit = {
 			this.imageOverlayYOffsetInput
 		);
 
-		return `${imageLayerDefinition}/fl_layer_apply${placementString}`;
+		return `${imageLayerDefinition}/c_limit,w_1.0,fl_relative/fl_layer_apply${placementString}`;
 	},
 	buildTextOverlay() {
 		if (!this.textOverlayTextInput || !this.textOverlayTextInput.value.trim()) {
@@ -505,7 +511,7 @@ const AssetEdit = {
 			this.textOverlayYOffsetInput
 		);
 
-		return `${textLayerDefinition}/fl_layer_apply${placementString}`;
+		return `${textLayerDefinition}/c_limit,w_0.9,fl_relative/fl_layer_apply${placementString}`;
 	},
 	buildSrc() {
 		const transformations = this.transformationsInput.value;
@@ -591,11 +597,13 @@ const AssetEdit = {
 		map.forEach(({ key, input, defaultValue }) => {
 			if (input) {
 				input.value = (data && data[key] !== undefined) ? data[key] : defaultValue;
+				input.dispatchEvent(new Event('change'));
 
 				// Special handling for color input to initialize color picker
 				if (key === 'color' && input.value) {
 					jQuery(this.textOverlayColorInput).iris({ color: input.value });
 				}
+
 				if (key === 'imageId' && input.value) {
 					this.fetchImageById(input.value).then(attachment => {
 						AssetEdit.renderImageOverlay(attachment);
