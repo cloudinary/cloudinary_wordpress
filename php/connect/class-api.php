@@ -358,9 +358,6 @@ class Api {
 		);
 
 		$base = Utils::pathinfo( $public_id );
-		if ( ! empty( $args['transformation'] ) ) {
-			$url_parts[] = self::generate_transformation_string( $args['transformation'], $args['resource_type'] );
-		}
 
 		// Add size.
 		if ( ! empty( $size ) && is_array( $size ) ) {
@@ -371,6 +368,9 @@ class Api {
 			if ( ! empty( $size['file'] ) ) {
 				$public_id = str_replace( $base['basename'], $size['file'], $public_id );
 			}
+		}
+		if ( ! empty( $args['transformation'] ) ) {
+			$url_parts[] = self::generate_transformation_string( $args['transformation'], $args['resource_type'] );
 		}
 
 		if ( $attachment_id ) {
