@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cloudinary STABLETAG\n"
 "Report-Msgid-Bugs-To: https://github.com/cloudinary/cloudinary_wordpress\n"
-"POT-Creation-Date: 2026-01-13 17:50:39+00:00\n"
+"POT-Creation-Date: 2026-01-14 08:33:58+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -559,7 +559,7 @@ msgstr ""
 
 #: php/class-media.php:3219 php/ui/component/class-plan-details.php:119
 #: php/ui/component/class-plan-status.php:128
-#: ui-definitions/settings-pages.php:567 ui-definitions/settings-sidebar.php:44
+#: ui-definitions/settings-pages.php:568 ui-definitions/settings-sidebar.php:44
 msgid "Transformations"
 msgstr ""
 
@@ -573,7 +573,7 @@ msgid ""
 msgstr ""
 
 #: php/class-media.php:3225 ui-definitions/settings-image.php:174
-#: ui-definitions/settings-pages.php:593 ui-definitions/settings-video.php:260
+#: ui-definitions/settings-pages.php:594 ui-definitions/settings-video.php:260
 msgid "See examples"
 msgstr ""
 
@@ -855,7 +855,7 @@ msgstr ""
 #: php/delivery/class-lazy-load.php:424 php/delivery/class-lazy-load.php:534
 #: ui-definitions/settings-image.php:27 ui-definitions/settings-image.php:244
 #: ui-definitions/settings-pages.php:105 ui-definitions/settings-pages.php:198
-#: ui-definitions/settings-pages.php:977 ui-definitions/settings-video.php:27
+#: ui-definitions/settings-pages.php:958 ui-definitions/settings-video.php:27
 msgid "Preview"
 msgstr ""
 
@@ -1339,8 +1339,8 @@ msgid "Apply Changes"
 msgstr ""
 
 #: php/ui/component/class-button.php:36 php/ui/component/class-panel.php:58
-#: ui-definitions/settings-pages.php:603 ui-definitions/settings-pages.php:748
-#: ui-definitions/settings-pages.php:941
+#: ui-definitions/settings-pages.php:604 ui-definitions/settings-pages.php:739
+#: ui-definitions/settings-pages.php:922
 msgid "Save Changes"
 msgstr ""
 
@@ -1893,12 +1893,12 @@ msgid ""
 "Media Library%4$s."
 msgstr ""
 
-#: ui-definitions/settings-image.php:189 ui-definitions/settings-pages.php:571
+#: ui-definitions/settings-image.php:189 ui-definitions/settings-pages.php:572
 #: ui-definitions/settings-video.php:275
 msgid "What are transformations?"
 msgstr ""
 
-#: ui-definitions/settings-image.php:190 ui-definitions/settings-pages.php:572
+#: ui-definitions/settings-image.php:190 ui-definitions/settings-pages.php:573
 #: ui-definitions/settings-video.php:276
 msgid ""
 "A set of parameters included in a Cloudinary URL to programmatically "
@@ -2248,104 +2248,104 @@ msgstr ""
 msgid "Edit asset"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:579
+#: ui-definitions/settings-pages.php:580
 msgid "Asset transformations"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:585
+#: ui-definitions/settings-pages.php:586
 #. translators: The link to transformation reference.
 msgid ""
 "Specify the asset transformations using Cloudinary URL transformation "
 "syntax. See %1$sreference%2$s for all available transformations and syntax."
 msgstr ""
 
-#: ui-definitions/settings-pages.php:618
+#: ui-definitions/settings-pages.php:619
 msgid "Text overlay"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:626
+#: ui-definitions/settings-pages.php:627
 #. Translators: The HTML for opening and closing link tags.
 msgid ""
 "The text overlay feature allows you to place text on top of an asset. Learn "
 "more about %1$stext overlays%2$s and how to use them effectively."
 msgstr ""
 
-#: ui-definitions/settings-pages.php:641
+#: ui-definitions/settings-pages.php:642
 msgid "Color"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:651
+#: ui-definitions/settings-pages.php:652
 msgid "Font Face"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:654
+#: ui-definitions/settings-pages.php:655
 msgid "Arial (sans-serif)"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:655
+#: ui-definitions/settings-pages.php:656
 msgid "Verdana (sans-serif)"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:656
+#: ui-definitions/settings-pages.php:657
 msgid "Times New Roman (serif)"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:657
+#: ui-definitions/settings-pages.php:658
 msgid "Courier New (monospace)"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:658
+#: ui-definitions/settings-pages.php:659
 msgid "Georgia (serif)"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:666
+#: ui-definitions/settings-pages.php:667
 msgid "Font Size"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:682
+#: ui-definitions/settings-pages.php:683
 msgid "Text"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:694 ui-definitions/settings-pages.php:887
+#: ui-definitions/settings-pages.php:695 ui-definitions/settings-pages.php:878
 msgid "Position"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:719 ui-definitions/settings-pages.php:912
+#: ui-definitions/settings-pages.php:720 ui-definitions/settings-pages.php:903
 msgid "X Offset"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:731 ui-definitions/settings-pages.php:924
+#: ui-definitions/settings-pages.php:727 ui-definitions/settings-pages.php:910
 msgid "Y Offset"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:762 ui-definitions/settings-pages.php:955
+#: ui-definitions/settings-pages.php:753 ui-definitions/settings-pages.php:936
 msgid "Reset All"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:777
+#: ui-definitions/settings-pages.php:768
 msgid "Image overlay"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:785
+#: ui-definitions/settings-pages.php:776
 #. Translators: The HTML for opening and closing link tags.
 msgid ""
 "The image overlay feature allows you to place an image on top of an asset. "
 "Learn more about %1$simage overlays%2$s and how to use them effectively."
 msgstr ""
 
-#: ui-definitions/settings-pages.php:804
+#: ui-definitions/settings-pages.php:795
 msgid "Select Image"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:849
+#: ui-definitions/settings-pages.php:840
 msgid "Size"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:865
+#: ui-definitions/settings-pages.php:856
 msgid "Opacity"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:1018
+#: ui-definitions/settings-pages.php:999
 msgid "Effects applied successfully!"
 msgstr ""
 
