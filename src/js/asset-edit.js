@@ -18,25 +18,25 @@ const AssetEdit = {
 	currentURL: null,
 
 	// Transformations Input
-	transformationsInput: document.getElementById( 'edit_asset.transformations' ),
+	transformationsInput: document.getElementById( 'edit_asset.edit_affects.transformations' ),
 
 	// Text Overlay Inputs
-	textOverlayColorInput: document.getElementById( 'edit_asset.text_overlay_color' ),
-	textOverlayFontFaceInput: document.getElementById( 'edit_asset.text_overlay_font_face' ),
-	textOverlayFontSizeInput: document.getElementById( 'edit_asset.text_overlay_font_size' ),
-	textOverlayTextInput: document.getElementById( 'edit_asset.text_overlay_text' ),
-	textOverlayPositionInput: document.getElementById( 'edit_asset.text_overlay_position' ),
-	textOverlayXOffsetInput: document.getElementById( 'edit_asset.text_overlay_x_offset' ),
-	textOverlayYOffsetInput: document.getElementById( 'edit_asset.text_overlay_y_offset' ),
+	textOverlayColorInput: document.getElementById( 'edit_asset.edit_affects.text_overlay_color' ),
+	textOverlayFontFaceInput: document.getElementById( 'edit_asset.edit_affects.text_overlay_font_face' ),
+	textOverlayFontSizeInput: document.getElementById( 'edit_asset.edit_affects.text_overlay_font_size' ),
+	textOverlayTextInput: document.getElementById( 'edit_asset.edit_affects.text_overlay_text' ),
+	textOverlayPositionInput: document.getElementById( 'edit_asset.edit_affects.text_overlay_position' ),
+	textOverlayXOffsetInput: document.getElementById( 'edit_asset.edit_affects.text_overlay_x_offset' ),
+	textOverlayYOffsetInput: document.getElementById( 'edit_asset.edit_affects.text_overlay_y_offset' ),
 
 	// Image Overlay Inputs
-	imageOverlayImageIdInput: document.getElementById( 'edit_asset.image_overlay_image_id' ),
-	imageOverlayPublicIdInput: document.getElementById( 'edit_asset.image_overlay_public_id' ),
-	imageOverlaySizeInput: document.getElementById( 'edit_asset.image_overlay_size' ),
-	imageOverlayOpacityInput: document.getElementById( 'edit_asset.image_overlay_opacity' ),
-	imageOverlayPositionInput: document.getElementById( 'edit_asset.image_overlay_position' ),
-	imageOverlayXOffsetInput: document.getElementById( 'edit_asset.image_overlay_x_offset' ),
-	imageOverlayYOffsetInput: document.getElementById( 'edit_asset.image_overlay_y_offset' ),
+	imageOverlayImageIdInput: document.getElementById( 'edit_asset.edit_affects.image_overlay_image_id' ),
+	imageOverlayPublicIdInput: document.getElementById( 'edit_asset.edit_affects.image_overlay_public_id' ),
+	imageOverlaySizeInput: document.getElementById( 'edit_asset.edit_affects.image_overlay_size' ),
+	imageOverlayOpacityInput: document.getElementById( 'edit_asset.edit_affects.image_overlay_opacity' ),
+	imageOverlayPositionInput: document.getElementById( 'edit_asset.edit_affects.image_overlay_position' ),
+	imageOverlayXOffsetInput: document.getElementById( 'edit_asset.edit_affects.image_overlay_x_offset' ),
+	imageOverlayYOffsetInput: document.getElementById( 'edit_asset.edit_affects.image_overlay_y_offset' ),
 
 	// Buttons
 	saveButton: document.getElementById( 'cld-asset-edit-save' ),
@@ -85,7 +85,7 @@ const AssetEdit = {
 		this.imageOverlayMap = [
 			{ key: 'imageId', input: this.imageOverlayImageIdInput, defaultValue: '', event: 'input' },
 			{ key: 'publicId', input: this.imageOverlayPublicIdInput, defaultValue: '', event: 'input' },
-			{ key: 'size', input: this.imageOverlaySizeInput, defaultValue: 20, event: 'input' },
+			{ key: 'size', input: this.imageOverlaySizeInput, defaultValue: 100, event: 'input' },
 			{ key: 'opacity', input: this.imageOverlayOpacityInput, defaultValue: 20, event: 'input' },
 			{ key: 'position', input: this.imageOverlayPositionInput, defaultValue: '', event: 'change' },
 			{ key: 'xOffset', input: this.imageOverlayXOffsetInput, defaultValue: 0, event: 'input' },
@@ -425,11 +425,11 @@ const AssetEdit = {
 		}
 
 		if (xOffsetInput?.value) {
-			placementQualifiers.push(`x_${this.getFormattedPercentageValue(xOffsetInput.value)}`);
+			placementQualifiers.push(`x_${xOffsetInput.value}`);
 		}
 
 		if (yOffsetInput?.value) {
-			placementQualifiers.push(`y_${this.getFormattedPercentageValue(yOffsetInput.value)}`);
+			placementQualifiers.push(`y_${yOffsetInput.value}`);
 		}
 
 		return placementQualifiers.length > 0 ? ',' + placementQualifiers.join(',') : '';
@@ -446,7 +446,7 @@ const AssetEdit = {
 		let transformations = [];
 
 		if (this.imageOverlaySizeInput?.value) {
-			transformations.push(`c_scale,w_${this.getFormattedPercentageValue(this.imageOverlaySizeInput.value)}`);
+			transformations.push(`c_scale,w_${this.imageOverlaySizeInput.value}`);
 		}
 
 		if (this.imageOverlayOpacityInput?.value) {
