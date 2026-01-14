@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: image-optimizer, core-web-vitals, video, resize, performance
 Requires at least: 4.7
-Tested up to: 6.8.3
+Tested up to: 6.9
 Requires PHP: 5.6
 Stable tag: STABLETAG
 License: GPLv2
@@ -145,6 +145,15 @@ Your site is now setup to start using Cloudinary.
 
 
 == Changelog ==
+
+= 3.3.0 (14 January 2026) =
+
+Fixes and Improvements:
+
+* Introduced a new **Transformation Effects** column, replacing the previous **Transformations** column. Transformation Effects now includes the transformation field as well as image overlays and text overlays
+* Added a new **Crop and Gravity** feature (beta), available under **Image Settings** and directly on individual images within the WordPress Media Library
+* Replaced legacy sample image and video with updated assets
+* Minor bug fixes and general improvements
 
 = 3.2.14 (22 October 2025) =
 
