@@ -535,6 +535,7 @@ $settings = array(
 	'edit_asset'     => array(
 		'page_title'          => __( 'Edit asset', 'cloudinary' ),
 		'section'             => 'edit-asset',
+		'slug'                => 'edit_affects',
 		'requires_connection' => true,
 		array(
 			'type'       => 'row',
@@ -615,7 +616,7 @@ $settings = array(
 				array(
 					'type'        => 'panel',
 					'collapsible' => 'open',
-					'title'       => __( 'Text Overlay', 'cloudinary' ),
+					'title'       => __( 'Text overlay', 'cloudinary' ),
 					array(
 						'type' => 'row',
 						array(
@@ -764,7 +765,7 @@ $settings = array(
 				array(
 					'type'        => 'panel',
 					'collapsible' => 'open',
-					'title'       => __( 'Image Overlay', 'cloudinary' ),
+					'title'       => __( 'Image overlay', 'cloudinary' ),
 					array(
 						'type' => 'row',
 						array(
@@ -839,9 +840,11 @@ $settings = array(
 								'title'      => __( 'Size', 'cloudinary' ),
 								'default'    => 100,
 								'slug'       => 'image_overlay_size',
+								'suffix'     => '@value px',
 								'attributes' => array(
-									'min'   => 0,
+									'min'   => 1,
 									'max'   => 1000,
+									'step'  => 1,
 									'type'  => 'range',
 									'class' => array(
 										'edit-overlay-range-input',
@@ -853,9 +856,11 @@ $settings = array(
 								'title'      => __( 'Opacity', 'cloudinary' ),
 								'default'    => 20,
 								'slug'       => 'image_overlay_opacity',
+								'suffix'     => '@value %',
 								'attributes' => array(
-									'min'   => 0,
+									'min'   => 1,
 									'max'   => 100,
+									'step'  => 1,
 									'type'  => 'range',
 									'class' => array(
 										'edit-overlay-range-input',

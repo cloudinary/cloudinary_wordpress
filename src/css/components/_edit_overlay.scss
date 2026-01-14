@@ -51,6 +51,12 @@
 	&-offset {
 		margin-bottom: 20px;
 
+		.suffixed {
+			width: 70%;
+			position: relative;
+			top: 5px;
+		}
+
 		.cld-input-text {
 			margin-bottom: 10px;
 		}

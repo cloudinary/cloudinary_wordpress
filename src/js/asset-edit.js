@@ -18,25 +18,25 @@ const AssetEdit = {
 	currentURL: null,
 
 	// Transformations Input
-	transformationsInput: document.getElementById( 'edit_asset.transformations' ),
+	transformationsInput: document.getElementById( 'edit_asset.edit_affects.transformations' ),
 
 	// Text Overlay Inputs
-	textOverlayColorInput: document.getElementById( 'edit_asset.text_overlay_color' ),
-	textOverlayFontFaceInput: document.getElementById( 'edit_asset.text_overlay_font_face' ),
-	textOverlayFontSizeInput: document.getElementById( 'edit_asset.text_overlay_font_size' ),
-	textOverlayTextInput: document.getElementById( 'edit_asset.text_overlay_text' ),
-	textOverlayPositionInput: document.getElementById( 'edit_asset.text_overlay_position' ),
-	textOverlayXOffsetInput: document.getElementById( 'edit_asset.text_overlay_x_offset' ),
-	textOverlayYOffsetInput: document.getElementById( 'edit_asset.text_overlay_y_offset' ),
+	textOverlayColorInput: document.getElementById( 'edit_asset.edit_affects.text_overlay_color' ),
+	textOverlayFontFaceInput: document.getElementById( 'edit_asset.edit_affects.text_overlay_font_face' ),
+	textOverlayFontSizeInput: document.getElementById( 'edit_asset.edit_affects.text_overlay_font_size' ),
+	textOverlayTextInput: document.getElementById( 'edit_asset.edit_affects.text_overlay_text' ),
+	textOverlayPositionInput: document.getElementById( 'edit_asset.edit_affects.text_overlay_position' ),
+	textOverlayXOffsetInput: document.getElementById( 'edit_asset.edit_affects.text_overlay_x_offset' ),
+	textOverlayYOffsetInput: document.getElementById( 'edit_asset.edit_affects.text_overlay_y_offset' ),
 
 	// Image Overlay Inputs
-	imageOverlayImageIdInput: document.getElementById( 'edit_asset.image_overlay_image_id' ),
-	imageOverlayPublicIdInput: document.getElementById( 'edit_asset.image_overlay_public_id' ),
-	imageOverlaySizeInput: document.getElementById( 'edit_asset.image_overlay_size' ),
-	imageOverlayOpacityInput: document.getElementById( 'edit_asset.image_overlay_opacity' ),
-	imageOverlayPositionInput: document.getElementById( 'edit_asset.image_overlay_position' ),
-	imageOverlayXOffsetInput: document.getElementById( 'edit_asset.image_overlay_x_offset' ),
-	imageOverlayYOffsetInput: document.getElementById( 'edit_asset.image_overlay_y_offset' ),
+	imageOverlayImageIdInput: document.getElementById( 'edit_asset.edit_affects.image_overlay_image_id' ),
+	imageOverlayPublicIdInput: document.getElementById( 'edit_asset.edit_affects.image_overlay_public_id' ),
+	imageOverlaySizeInput: document.getElementById( 'edit_asset.edit_affects.image_overlay_size' ),
+	imageOverlayOpacityInput: document.getElementById( 'edit_asset.edit_affects.image_overlay_opacity' ),
+	imageOverlayPositionInput: document.getElementById( 'edit_asset.edit_affects.image_overlay_position' ),
+	imageOverlayXOffsetInput: document.getElementById( 'edit_asset.edit_affects.image_overlay_x_offset' ),
+	imageOverlayYOffsetInput: document.getElementById( 'edit_asset.edit_affects.image_overlay_y_offset' ),
 
 	// Buttons
 	saveButton: document.getElementById( 'cld-asset-edit-save' ),
@@ -376,6 +376,7 @@ const AssetEdit = {
 		this.textOverlayMap.forEach(({ input, defaultValue }) => {
 			if (input) {
 				input.value = defaultValue;
+				input.dispatchEvent(new Event('change'));
 			}
 		});
 
@@ -393,6 +394,7 @@ const AssetEdit = {
 		this.imageOverlayMap.forEach(({ input, defaultValue }) => {
 			if (input) {
 				input.value = defaultValue;
+				input.dispatchEvent(new Event('change'));
 			}
 		});
 
@@ -410,6 +412,10 @@ const AssetEdit = {
 
 		// Update preview to remove image overlay
 		this.preview.setSrc(this.buildSrc());
+	},
+	getFormattedPercentageValue( value ) {
+		const val = value / 100;
+		return val % 1 === 0 ? val.toFixed(1) : val;
 	},
 	buildPlacementQualifiers(positionInput, xOffsetInput, yOffsetInput) {
 		let placementQualifiers = [];
@@ -457,7 +463,7 @@ const AssetEdit = {
 			this.imageOverlayYOffsetInput
 		);
 
-		return `${imageLayerDefinition}/fl_layer_apply${placementString}`;
+		return `${imageLayerDefinition}/c_limit,w_1.0,fl_relative/fl_layer_apply${placementString}`;
 	},
 	buildTextOverlay() {
 		if (!this.textOverlayTextInput || !this.textOverlayTextInput.value.trim()) {
@@ -505,7 +511,7 @@ const AssetEdit = {
 			this.textOverlayYOffsetInput
 		);
 
-		return `${textLayerDefinition}/fl_layer_apply${placementString}`;
+		return `${textLayerDefinition}/c_limit,w_0.9,fl_relative/fl_layer_apply${placementString}`;
 	},
 	buildSrc() {
 		const transformations = this.transformationsInput.value;
@@ -591,11 +597,13 @@ const AssetEdit = {
 		map.forEach(({ key, input, defaultValue }) => {
 			if (input) {
 				input.value = (data && data[key] !== undefined) ? data[key] : defaultValue;
+				input.dispatchEvent(new Event('change'));
 
 				// Special handling for color input to initialize color picker
 				if (key === 'color' && input.value) {
 					jQuery(this.textOverlayColorInput).iris({ color: input.value });
 				}
+
 				if (key === 'imageId' && input.value) {
 					this.fetchImageById(input.value).then(attachment => {
 						AssetEdit.renderImageOverlay(attachment);
