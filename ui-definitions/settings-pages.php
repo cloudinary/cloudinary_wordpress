@@ -535,6 +535,7 @@ $settings = array(
 	'edit_asset'     => array(
 		'page_title'          => __( 'Edit asset', 'cloudinary' ),
 		'section'             => 'edit-asset',
+		'slug'                => 'edit_affects',
 		'requires_connection' => true,
 		array(
 			'type'       => 'row',
@@ -719,24 +720,14 @@ $settings = array(
 								'title'   => __( 'X Offset', 'cloudinary' ),
 								'default' => 0,
 								'slug'    => 'text_overlay_x_offset',
-								'suffix'  => '%',
-								'attributes' => array(
-									'max' => 100,
-									'min' => -100,
-									'step'  => 1,
-								),
+								'suffix'  => 'px',
 							),
 							array(
 								'type'    => 'number',
 								'title'   => __( 'Y Offset', 'cloudinary' ),
 								'default' => 0,
 								'slug'    => 'text_overlay_y_offset',
-								'suffix'  => '%',
-								'attributes' => array(
-									'max' => 100,
-									'min' => -100,
-									'step'  => 1,
-								),
+								'suffix'  => 'px',
 							),
 						),
 					),
@@ -847,12 +838,12 @@ $settings = array(
 							array(
 								'type'       => 'text',
 								'title'      => __( 'Size', 'cloudinary' ),
-								'default'    => 20,
+								'default'    => 100,
 								'slug'       => 'image_overlay_size',
-								'suffix'     => '@value %',
+								'suffix'     => '@value px',
 								'attributes' => array(
 									'min'   => 1,
-									'max'   => 100,
+									'max'   => 1000,
 									'step'  => 1,
 									'type'  => 'range',
 									'class' => array(
@@ -912,24 +903,14 @@ $settings = array(
 								'title'   => __( 'X Offset', 'cloudinary' ),
 								'default' => 0,
 								'slug'    => 'image_overlay_x_offset',
-								'suffix'  => '%',
-								'attributes' => array(
-									'max' => 100,
-									'min' => -100,
-									'step'  => 1,
-								),
+								'suffix'  => 'px',
 							),
 							array(
 								'type'    => 'number',
 								'title'   => __( 'Y Offset', 'cloudinary' ),
 								'default' => 0,
 								'slug'    => 'image_overlay_y_offset',
-								'suffix'  => '%',
-								'attributes' => array(
-									'max' => 100,
-									'min' => -100,
-									'step'  => 1,
-								),
+								'suffix'  => 'px',
 							),
 						),
 					),
