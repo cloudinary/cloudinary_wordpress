@@ -6,9 +6,9 @@
  */
 
 $url         = CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE;
-$src         = $url . '/sample.jpg';
+$src         = $url . '/leather_bag.jpg';
 $preview_src = $url . 'w_600/';
-$sample      = '/sample.jpg';
+$sample      = '/leather_bag.jpg';
 $script_data = array(
 	'url'         => $url,
 	'preview_url' => $preview_src,

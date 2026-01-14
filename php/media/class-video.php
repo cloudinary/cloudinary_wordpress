@@ -192,6 +192,7 @@ class Video {
 		$requiring_screens = array(
 			'cloudinary_page_cloudinary_video_settings',
 			'edit-tags',
+			'toplevel_page_cloudinary',
 			'term',
 		);
 

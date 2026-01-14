@@ -30,7 +30,7 @@ class Image_Preview extends Component {
 	 *
 	 * @var string
 	 */
-	protected $demo_file = '/sample.jpg';
+	protected $demo_file = '/leather_bag.jpg';
 
 	/**
 	 * Preview type.
@@ -204,7 +204,7 @@ class Image_Preview extends Component {
 	protected function pre_render() {
 		$url         = CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE;
 		$preview_src = $url . 'w_600/';
-		$sample      = '/sample.jpg';
+		$sample      = '/leather_bag.jpg';
 		$script_data = array(
 			'url'         => $url,
 			'preview_url' => $preview_src,

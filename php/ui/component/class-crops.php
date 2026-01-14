@@ -24,7 +24,7 @@ class Crops extends Select {
 	 * @var string
 	 */
 	protected $demo_files = array(
-		'sample.jpg',
+		'leather_bag.jpg',
 		'lady.jpg',
 		'horses.jpg',
 	);

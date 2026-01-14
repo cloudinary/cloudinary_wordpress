@@ -171,7 +171,7 @@ const GlobalTransformations = {
 				type
 			);
 			samplePlayer.source( {
-				publicId: 'dog',
+				publicId: 'sailing_boat',
 				transformation: transformations,
 			} );
 			self._clearLoading( type );

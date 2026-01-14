@@ -105,7 +105,7 @@ const Front_Overlay = {
 		const link = document.createElement( 'a' );
 		link.classList.add( 'edit-link' );
 		link.href = image.dataset.permalink;
-		link.innerText = __( 'Edit asset', 'cloudinary' );
+		link.innerText = __( 'Edit Effects', 'cloudinary' );
 		box.appendChild( this.makeLine( '', '', link ) );
 
 		return box;

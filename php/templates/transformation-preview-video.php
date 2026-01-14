@@ -6,9 +6,9 @@
  */
 
 $url         = CLOUDINARY_ENDPOINTS_PREVIEW_VIDEO;
-$src         = $url . '/dog.mp4';
+$src         = $url . '/sailing_boat.mp4';
 $preview_src = $url . 'w_600/';
-$sample      = '/dog.mp4';
+$sample      = '/sailing_boat.mp4';
 $script_data = array(
 	'url'         => $url,
 	'preview_url' => $preview_src,

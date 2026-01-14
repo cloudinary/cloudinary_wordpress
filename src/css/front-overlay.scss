@@ -26,6 +26,7 @@
 	.tippy-content{
 		background-color: #333;
 		min-width: 250px;
+		max-width: 600px;
 		width: auto;
 		div{
 			display: flex;
@@ -41,6 +42,10 @@
 			color: $color-white;
 			width: 100%;
 			text-align: right;
+		}
+
+		span:not(:first-child) {
+			word-break: break-all;
 		}
 	}
 }

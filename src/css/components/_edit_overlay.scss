@@ -1,0 +1,159 @@
+@import '../variables';
+
+.edit-overlay {
+	&-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 30px);
+		grid-template-rows: repeat(3, 30px);
+		gap: 6px;
+		margin-bottom: 20px;
+
+		&__cell {
+			border: 1px solid #ccc;
+			background: $color-white;
+			cursor: pointer;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			height: 30px;
+			width: 30px;
+
+
+			&:hover {
+				opacity: 0.8;
+			}
+
+			&--selected {
+				border: 2px solid $color-cld-blue;
+				position: relative;
+
+				// Checkmark icon
+				&::after {
+					content: '✔';
+					color: $color-cld-blue;
+					font-size: 16px;
+					position: absolute;
+				}
+			}
+		}
+	}
+
+	&-range-input {
+		&.regular-text {
+			padding: 0;
+		}
+	}
+
+	.cld-input-text {
+		margin-bottom: 0;
+	}
+
+	&-offset {
+		margin-bottom: 20px;
+
+		.suffixed {
+			width: 70%;
+			position: relative;
+			top: 5px;
+		}
+
+		.cld-input-text {
+			margin-bottom: 10px;
+		}
+	}
+
+	#edit-overlay-select-image-preview {
+		margin-top: 10px;
+		img {
+			max-width: 50%;
+			height: auto;
+			border: 1px solid #ccc;
+		}
+	}
+
+	.cld-ui-wrap {
+		.button {
+			&--remove {
+				background-color: transparent;
+				color: $color-red;
+				border: 2px solid $color-red;
+
+				&:hover {
+					background-color: darken($color-red, 5%);
+					color: $color-white;
+				}
+			}
+		}
+	}
+
+	.cld-asset-edit-button {
+		&.button-primary {
+			margin-right: auto;
+			padding: 7px 14px;
+		}
+	}
+
+	.cld-ui-suffix {
+		margin-inline-start: 0;
+	}
+
+	.cld-ui-preview {
+		box-sizing: border-box;
+	}
+}
+
+.asset-edit-preview {
+	@media only screen and (min-width: $size-small) {
+		position: sticky;
+		top: 20px;
+		align-self: flex-start;
+	}
+}
+
+#asset-preview-transformation-string {
+	box-sizing: border-box;
+	display: block;
+	max-width: 100%;
+	overflow-wrap: normal;
+	word-break: break-all;
+	background: $color-transformations-background;
+	padding: 10px;
+
+	text-decoration: none;
+
+	&:hover {
+		span {
+			text-decoration: underline;
+		}
+	}
+
+	.string-preview {
+		&-base {
+			word-break: break-all;
+		}
+
+		&-transformations {
+			color: $color-white;
+		}
+
+		&-image-overlay {
+			color: $color-transformations-blue;
+		}
+
+		&-text-overlay {
+			color: $color-transformations-cyan;
+		}
+
+		&-public-id {
+			color: $color-transformations-yellow;
+		}
+	}
+}
+
+#asset-preview-success-message {
+	color: $color-green;
+
+	p {
+		margin-bottom: 0;
+	}
+}
