@@ -50,7 +50,7 @@
     ]
   },
   "devDependencies": {
-    "@release-it/bumper": "^4.0.0",
+    "@release-it/bumper": "^7.0.5",
     "@testing-library/react": "^11.1.0",
     "@tippyjs/react": "^4.2.5",
     "@wordpress/api-fetch": "^3.23.1",
@@ -130,7 +130,7 @@
     "puppeteer": "npm:puppeteer-core@^3.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "release-it": "15.6.0",
+    "release-it": "19.2.4",
     "rtlcss": "^2.6.1",
     "rtlcss-webpack-plugin": "^4.0.4",
     "semver": "^7.3.2",
