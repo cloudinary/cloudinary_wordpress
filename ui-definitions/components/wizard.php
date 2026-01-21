@@ -118,7 +118,7 @@ $advanced->set_value( 'on' );
 			<p>
 				<?php esc_html_e( 'Alternatively, choose lower quality settings to save on bandwidth and speed up delivery times.', 'cloudinary' ); ?>
 			</p>
-			<a href="https://cloudinary.com/signup" class="button button-primary" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Signup', 'cloudinary' ); ?></a>
+			<a href="https://cloudinary.com/signup?utm_source=wordpress-plugin-wizard&utm_medium=affiliate&utm_content=sign-up&utm_campaign=1976" class="button button-primary" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Signup', 'cloudinary' ); ?></a>
 			<div class="cld-wizard-intro-welcome">
 				<img src="<?php echo esc_url( $cloudinary->dir_url . 'css/images/wizard-welcome.jpg' ); ?>" width="650px"/>
 			</div>

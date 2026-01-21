@@ -19,7 +19,7 @@ $dir_url = Cloudinary\get_plugin_instance()->dir_url;
 				// translators: Link to create a Cloudinary account.
 					esc_html__( '%1$sCloudinary account%2$s', 'cloudinary' ),
 					sprintf(
-						'<a href="https://cloudinary.com/users/register/free" target="_blank" title="%s">',
+						'<a href="https://cloudinary.com/users/register/free?utm_source=wordpress-plugin-wizard&utm_medium=affiliate&utm_content=sign-up&utm_campaign=1976" target="_blank" title="%s">',
 						esc_attr__( 'Create here a free Cloudinary account', 'cloudinary' )
 					),
 					'</a>'
