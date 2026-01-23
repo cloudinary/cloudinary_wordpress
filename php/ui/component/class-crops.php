@@ -313,8 +313,8 @@ class Crops extends Select {
 		$clear_button['attributes']['type']    = 'button';
 		$clear_button['attributes']['class'][] = 'button';
 		$clear_button['attributes']['class'][] = 'clear-crop-input';
-		$clear_button['attributes']['title']   = __( 'Clear input', 'cloudinary' );
-		$clear_button['content']               = __( 'Clear', 'cloudinary' );
+		$clear_button['attributes']['title']   = __( 'Reset input', 'cloudinary' );
+		$clear_button['content']               = Utils::get_inline_svg( 'css/images/undo.svg', false ) . '<span>' . __( 'Reset', 'cloudinary' ) . '</span>';
 
 		$wrapper['children']['input']  = $input;
 		$wrapper['children']['button'] = $clear_button;

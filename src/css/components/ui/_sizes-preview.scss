@@ -89,15 +89,52 @@
 		opacity: 0.5;
 	}
 
+	.disable-toggle {
+		margin: 0;
+	}
+
+	.button.clear-crop-input {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		background: transparent;
+		border: none;
+		color: $color-cld-blue;
+		padding: 0;
+		cursor: pointer;
+		box-shadow: none;
+		font-size: 14px;
+		font-weight: 600;
+		margin-right: 40px;
+
+		svg {
+			width: 16px;
+			height: 16px;
+			fill: currentColor;
+		}
+
+		&:hover {
+			background: transparent;
+			opacity: 0.8;
+		}
+
+		&:focus {
+			box-shadow: none;
+			outline: none;
+		}
+	}
+
 }
 
 &-size-selector {
 	display: flex;
 	flex-wrap: nowrap;
-	overflow-y: scroll;
+	overflow-x: scroll;
 	scrollbar-width: thin;
 	border: 1px solid $color-light-grey;
 	border-radius: 4px;
+	width: fit-content;
+	max-width: 100%;
 
 	margin-bottom: 42px;
 	padding: 4px;
