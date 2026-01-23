@@ -105,6 +105,16 @@ const CropSizes = {
 			} );
 			disable.bound = true;
 		}
+
+		// Bind reset button
+		const resetButton = sizeContent.querySelector( '.clear-crop-input' );
+		if ( resetButton && ! resetButton.bound ) {
+			resetButton.addEventListener( 'click', () => {
+				input.value = '';
+				this.buildImages( wrapper, sizeContent );
+			} );
+			resetButton.bound = true;
+		}
 	},
 };
 
