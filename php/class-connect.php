@@ -90,8 +90,9 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 
 	/**
 	 * Regex to match Cloudinary environment variable.
+	 * Updated to support cloud names with underscores, hyphens, and numbers.
 	 */
-	const CLOUDINARY_VARIABLE_REGEX = '^(?:CLOUDINARY_URL=)?cloudinary://[0-9]+:[A-Za-z_\-0-9]+@[A-Za-z]+';
+	const CLOUDINARY_VARIABLE_REGEX = '^(?:CLOUDINARY_URL=)?cloudinary://[0-9]+:[A-Za-z0-9_\-]+@[A-Za-z0-9_\-]+';
 
 	/**
 	 * Initiate the plugin resources.
@@ -272,12 +273,23 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			return $data;
 		}
 
-		$data['cloudinary_url'] = str_replace( 'CLOUDINARY_URL=', '', $data['cloudinary_url'] );
+		$data['cloudinary_url'] = $this->normalize_cloudinary_url( $data['cloudinary_url'] );
 		$current                = $this->plugin->settings->find_setting( 'connect' )->get_value();
 
 		// Same URL, return original data.
 		if ( $current['cloudinary_url'] === $data['cloudinary_url'] ) {
 			return $data;
+		}
+
+		// Check for angle brackets early with helpful message.
+		if ( preg_match( '/[<>]/', $data['cloudinary_url'] ) ) {
+			$admin->add_admin_notice(
+				'angle_brackets',
+				__( 'Your connection string contains angle brackets (< or >). Replace the placeholder values like <your_api_key> with your actual credentials.', 'cloudinary' ),
+				'error'
+			);
+
+			return $current;
 		}
 
 		// Pattern match to ensure validity of the provided url.
@@ -377,6 +389,27 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	}
 
 	/**
+	 * Normalize a Cloudinary URL by trimming whitespace, quotes, and removing the CLOUDINARY_URL= prefix.
+	 *
+	 * @param string $url The URL to normalize.
+	 *
+	 * @return string The normalized URL.
+	 */
+	protected function normalize_cloudinary_url( $url ) {
+		if ( ! is_string( $url ) ) {
+			return $url;
+		}
+		// Trim whitespace.
+		$url = trim( $url );
+		// Trim surrounding quotes (single or double).
+		$url = trim( $url, " \t\n\r\0\x0B\"'" );
+		// Remove CLOUDINARY_URL= prefix if present.
+		$url = preg_replace( '/^CLOUDINARY_URL=/', '', $url );
+
+		return $url;
+	}
+
+	/**
 	 * Test the connection url.
 	 *
 	 * @param string $url The url to test.
@@ -384,6 +417,21 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 * @return array
 	 */
 	public function test_connection( $url ) {
+		// Normalize the URL first.
+		$url = $this->normalize_cloudinary_url( $url );
+
+		// Check for angle brackets - common copy-paste error from Cloudinary dashboard.
+		if ( is_string( $url ) && preg_match( '/[<>]/', $url ) ) {
+			return array(
+				'type'    => 'invalid_url',
+				'message' => __(
+					'Your connection string contains angle brackets (< or >). Replace the placeholder values like <your_api_key> with your actual credentials. The format should be: cloudinary://API_KEY:API_SECRET@CLOUD_NAME',
+					'cloudinary'
+				),
+				'url'     => $url,
+			);
+		}
+
 		$result = array(
 			'type'    => 'connection_success',
 			'message' => null,
@@ -903,7 +951,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		}
 
 		// Test upgraded details.
-		$data['cloudinary_url'] = str_replace( 'CLOUDINARY_URL=', '', $data['cloudinary_url'] );
+		$data['cloudinary_url'] = $this->normalize_cloudinary_url( $data['cloudinary_url'] );
 		$test                   = $this->test_connection( $data['cloudinary_url'] );
 
 		if ( 'connection_success' === $test['type'] ) {
@@ -942,7 +990,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		static $url = null;
 
 		if ( empty( $url ) ) {
-			$url = str_replace( 'CLOUDINARY_URL=', '', CLOUDINARY_CONNECTION_STRING );
+			$url = $this->normalize_cloudinary_url( CLOUDINARY_CONNECTION_STRING );
 		}
 
 		if ( 'cloudinary_url' === $setting ) {
