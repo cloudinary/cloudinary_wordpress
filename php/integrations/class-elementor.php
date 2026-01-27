@@ -63,7 +63,7 @@ class Elementor extends Integrations {
 	 * @return void
 	 */
 	public function register_hooks() {
-		add_action( 'elementor/element/parse_css', array( $this, 'replace_bg_images_in_css' ), 10, 2 );
+		add_action( 'elementor/element/parse_css', array( $this, 'replace_background_images_in_css' ), 10, 2 );
 		add_action( 'cloudinary_flush_cache', array( $this, 'clear_elementor_css_cache' ) );
 	}
 
@@ -74,7 +74,7 @@ class Elementor extends Integrations {
 	 * @param Element_Base $element  The Elementor element.
 	 * @return void
 	 */
-	public function replace_bg_images_in_css( $post_css, $element ) {
+	public function replace_background_images_in_css( $post_css, $element ) {
 		$settings = $element->get_settings_for_display();
 		$media    = $this->plugin->get_component( 'media' );
 		$delivery = $this->plugin->get_component( 'delivery' );
@@ -84,24 +84,21 @@ class Elementor extends Integrations {
 		}
 
 		foreach ( self::ELEMENTOR_BACKGROUND_IMAGES as $background_key => $background_data ) {
-			// We need to have both URL and ID from the image to proceed.
-			if ( ! isset( $settings[ $background_key ]['url'], $settings[ $background_key ]['id'] ) ) {
+			// We need to have the ID from the image to proceed.
+			if ( ! isset( $settings[ $background_key ]['id'] ) ) {
 				continue;
 			}
 
-			$original_url = $settings[ $background_key ]['url'];
-			$media_id     = $settings[ $background_key ]['id'];
-			$media_size   = isset( $settings[ $background_key ]['size'] ) ? $settings[ $background_key ]['size'] : array();
+			$media_id   = $settings[ $background_key ]['id'];
+			$media_size = isset( $settings[ $background_key ]['size'] ) ? $settings[ $background_key ]['size'] : array();
 
 			// Skip if the media is not deliverable via Cloudinary.
 			if ( ! $delivery->is_deliverable( $media_id ) ) {
 				continue;
 			}
 
-			// If the original URL is already a Cloudinary URL, use it directly; otherwise, generate the Cloudinary URL.
-			$cloudinary_url = $media->is_cloudinary_url( $original_url )
-				? $original_url
-				: $media->cloudinary_url( $media_id, $media_size );
+			// Generate the Cloudinary URL.
+			$cloudinary_url = $media->cloudinary_url( $media_id, $media_size );
 
 			// Build the CSS selector and rule.
 			$css_selector = $post_css->get_element_unique_selector( $element ) . $background_data['suffix'];
@@ -109,11 +106,11 @@ class Elementor extends Integrations {
 
 			// Retrieve the specific media query rule for non-desktop devices.
 			$media_query = null;
-			$device      = $background_data['device']; // either 'desktop', 'tablet' or 'mobile'.
-			if ( 'desktop' !== $device ) {
-				$media_query = array( 'max' => $device );
+			if ( 'desktop' !== $background_data['device'] ) {
+				$media_query = array( 'max' => $background_data['device'] );
 			}
 
+			// Override the CSS rule in Elementor.
 			$post_css->get_stylesheet()->add_rules( $css_selector, $css_rule, $media_query );
 		}
 	}
