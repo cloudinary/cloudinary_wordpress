@@ -64,6 +64,7 @@ class Elementor extends Integrations {
 	 */
 	public function register_hooks() {
 		add_action( 'elementor/element/parse_css', array( $this, 'replace_bg_images_in_css' ), 10, 2 );
+		add_action( 'cloudinary_flush_cache', array( $this, 'clear_elementor_css_cache' ) );
 	}
 
 	/**
@@ -114,6 +115,19 @@ class Elementor extends Integrations {
 			}
 
 			$post_css->get_stylesheet()->add_rules( $css_selector, $css_rule, $media_query );
+		}
+	}
+
+	/**
+	 * Clear Elementor CSS cache.
+	 * This is called when Cloudinary cache is flushed, so that any change in media URLs is reflected in Elementor CSS files.
+	 *
+	 * @return void
+	 */
+	public function clear_elementor_css_cache() {
+		if ( class_exists( 'Elementor\Plugin' ) ) {
+			$elementor = Plugin::instance();
+			$elementor->files_manager->clear_cache();
 		}
 	}
 }
