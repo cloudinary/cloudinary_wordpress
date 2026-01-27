@@ -14,6 +14,7 @@ use Cloudinary\Component\Setup;
 use Cloudinary\Delivery\Lazy_Load;
 use Cloudinary\Delivery\Responsive_Breakpoints;
 use Cloudinary\Assets as CLD_Assets;
+use Cloudinary\Integrations\Elementor;
 use Cloudinary\Integrations\WPML;
 use Cloudinary\Media\Gallery;
 use Cloudinary\Sync\Storage;
@@ -31,7 +32,7 @@ final class Plugin {
 	 *
 	 * @since   0.1
 	 *
-	 * @var     Admin|CLD_Assets|Connect|Dashboard|Deactivation|Delivery|Extensions|Gallery|Lazy_Load|Media|Meta_Box|Relate|Report|Responsive_Breakpoints|REST_API|State|Storage|SVG|Sync|URL[]|WPML|null
+	 * @var     Admin|CLD_Assets|Connect|Dashboard|Deactivation|Delivery|Extensions|Gallery|Lazy_Load|Media|Meta_Box|Relate|Report|Responsive_Breakpoints|REST_API|State|Storage|SVG|Sync|URL[]|WPML|Elementor|null
 	 */
 	public $components;
 	/**
@@ -136,6 +137,7 @@ final class Plugin {
 		$this->components['metabox']                = new Meta_Box( $this );
 		$this->components['url']                    = new URL( $this );
 		$this->components['wpml']                   = new WPML( $this );
+		$this->components['elementor']              = new Elementor( $this );
 		$this->components['special_offer']          = new Special_Offer( $this );
 	}
 
