@@ -288,9 +288,11 @@ class Crops extends Select {
 			'crop-size-inputs',
 		);
 
-		$label                      = $this->get_part( 'label' );
-		$label['attributes']['for'] = $name;
-		$label['content']           = __( 'Disable', 'cloudinary' );
+		// Disable toggle control.
+		$control                          = $this->get_part( 'label' );
+		$control['attributes']['class'][] = 'cld-input-on-off-control';
+		$control['attributes']['class'][] = 'medium';
+		$control['attributes']['for']     = $name;
 
 		$check                          = $this->get_part( 'input' );
 		$check['attributes']['type']    = 'checkbox';
@@ -302,6 +304,17 @@ class Crops extends Select {
 		if ( '--' === $value ) {
 			$check['attributes']['checked'] = 'checked';
 		}
+
+		$slider                          = $this->get_part( 'span' );
+		$slider['attributes']['class'][] = 'cld-input-on-off-control-slider';
+		$slider['render']                = true;
+
+		$control['children']['input']  = $check;
+		$control['children']['slider'] = $slider;
+
+		$label          = $this->get_part( 'span' );
+		$label['attributes']['class'] = 'cld-input-on-off-control-label';
+		$label['content']             = __( 'Disable', 'cloudinary' );
 
 		$input                          = $this->get_part( 'input' );
 		$input['attributes']['type']    = 'text';
@@ -316,10 +329,10 @@ class Crops extends Select {
 		$clear_button['attributes']['title']   = __( 'Reset input', 'cloudinary' );
 		$clear_button['content']               = Utils::get_inline_svg( 'css/images/undo.svg', false ) . '<span>' . __( 'Reset', 'cloudinary' ) . '</span>';
 
-		$wrapper['children']['input']  = $input;
-		$wrapper['children']['button'] = $clear_button;
-		$wrapper['children']['label']  = $label;
-		$wrapper['children']['check']  = $check;
+		$wrapper['children']['input']   = $input;
+		$wrapper['children']['button']  = $clear_button;
+		$wrapper['children']['control'] = $control;
+		$wrapper['children']['label']   = $label;
 
 		return $wrapper;
 	}
