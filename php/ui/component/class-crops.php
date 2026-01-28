@@ -24,9 +24,9 @@ class Crops extends Select {
 	 * @var string
 	 */
 	protected $demo_files = array(
-		'leather_bag.jpg',
-		'lady.jpg',
-		'horses.jpg',
+		'docs/addons/objectdetection/dirt-road-1851258_1280.jpg',
+		'docs/model-993911_640.jpg',
+		'docs/shoppable_bag.png',
 	);
 
 	/**
@@ -96,7 +96,6 @@ class Crops extends Select {
 	 * @return array
 	 */
 	protected function input( $struct ) {
-
 		$mode                             = $this->setting->get_param( 'mode', 'demos' );
 		$wrapper                          = $this->get_part( 'div' );
 		$wrapper['attributes']['class'][] = 'cld-size-items';
@@ -112,57 +111,12 @@ class Crops extends Select {
 		}
 		$sizes = Utils::get_registered_sizes();
 
-		$selector                                = $this->make_selector();
-		$wrapper['children']['control-selector'] = $selector;
-		foreach ( $sizes as $size => $details ) {
-			if ( empty( $details['crop'] ) ) {
-				continue;
-			}
-			$row                          = $this->get_part( 'div' );
-			$row['attributes']['class'][] = 'cld-size-items-item';
-			$row['attributes']['class'][] = 'crop-preview';
-			$row['content']               = $size;
+		// Create size selector (tabs).
+		$size_selector                        = $this->make_size_selector( $sizes );
+		$wrapper['children']['size-selector'] = $size_selector;
 
-			$image            = $this->get_part( 'img' );
-			$image['content'] = $size;
-			$size_array       = array();
-			if ( ! empty( $details['width'] ) ) {
-				$size_array[]                 = 'w_' . $details['width'];
-				$image['attributes']['width'] = $details['width'];
-			}
-			if ( ! empty( $details['height'] ) ) {
-				$size_array[]                  = 'h_' . $details['height'];
-				$image['attributes']['height'] = $details['height'];
-			}
-			$image['attributes']['data-size'] = implode( ',', $size_array );
-			$size_key                         = $details['width'] . 'x' . $details['height'];
-			if ( empty( $value[ $size_key ] ) ) {
-				$value[ $size_key ] = '';
-			}
-			$row['children']['size']  = $image;
-			$row['children']['input'] = $this->make_input( $this->get_name() . '[' . $size_key . ']', $value[ $size_key ] );
-			// Set the placeholder.
-			$placeholder = 'c_fill,g_auto';
-
-			if ( 'thumbnail' === $size ) {
-				$placeholder = 'c_thumb,g_auto';
-			}
-			$row['children']['input']['children']['input']['attributes']['placeholder'] = $placeholder;
-
-			$wrapper['children'][ $size ] = $row;
-
-		}
-
-		return $wrapper;
-	}
-
-	/**
-	 * Make an image selector.
-	 */
-	protected function make_selector() {
-		$selector                          = $this->get_part( 'div' );
-		$selector['attributes']['class'][] = 'cld-image-selector';
-		$mode                              = $this->setting->get_param( 'mode', 'demos' );
+		// Get demo files.
+		$mode = $this->setting->get_param( 'mode', 'demos' );
 
 		/**
 		 * Filter the demo files.
@@ -175,26 +129,112 @@ class Crops extends Select {
 		 * @return {array}
 		 */
 		$examples = apply_filters( 'cloudinary_demo_crop_files', $this->demo_files );
+
 		if ( 'full' === $mode ) {
 			$public_id = $this->setting->get_root_setting()->get_param( 'preview_id' );
 			if ( ! empty( $public_id ) ) {
-				$examples = array(
-					$public_id,
-				);
+				$examples = array( $public_id );
 			}
 		}
-		foreach ( $examples as $index => $file ) {
-			$name                             = pathinfo( $file, PATHINFO_FILENAME );
-			$item                             = $this->get_part( 'span' );
-			$item['attributes']['data-image'] = $file;
+
+		// Create content area for each size.
+		foreach ( $sizes as $size => $details ) {
+			if ( empty( $details['crop'] ) ) {
+				continue;
+			}
+
+			$size_content                            = $this->get_part( 'div' );
+			$size_content['attributes']['class'][]   = 'cld-size-content';
+			$size_content['attributes']['data-size'] = $size;
+			$size_content['render']                  = true;
+
+			$size_array = array();
+			if ( ! empty( $details['width'] ) ) {
+				$size_array[] = 'w_' . $details['width'];
+			}
+			if ( ! empty( $details['height'] ) ) {
+				$size_array[] = 'h_' . $details['height'];
+			}
+			$size_dimensions = implode( ',', $size_array );
+
+			// Create image previews container.
+			$images_container                          = $this->get_part( 'div' );
+			$images_container['attributes']['class'][] = 'cld-size-images';
+			$images_container['render']                = true;
+
+			foreach ( $examples as $index => $file ) {
+				$image_wrapper                          = $this->get_part( 'div' );
+				$image_wrapper['attributes']['class'][] = 'cld-size-image-wrapper';
+				$image_wrapper['render']                = true;
+
+				$image                            = $this->get_part( 'img' );
+				$image['attributes']['data-size'] = $size_dimensions;
+				$image['attributes']['data-file'] = $file;
+				$image['render']                  = true;
+				if ( ! empty( $details['width'] ) ) {
+					$image['attributes']['width'] = $details['width'];
+				}
+				if ( ! empty( $details['height'] ) ) {
+					$image['attributes']['height'] = $details['height'];
+				}
+
+				$image_wrapper['children']['image']                = $image;
+				$images_container['children'][ 'image-' . $index ] = $image_wrapper;
+			}
+
+			// Create single input field with disable checkbox.
+			$size_key = $details['width'] . 'x' . $details['height'];
+			if ( empty( $value[ $size_key ] ) ) {
+				$value[ $size_key ] = '';
+			}
+
+			$input_wrapper = $this->make_input( $this->get_name() . '[' . $size_key . ']', $value[ $size_key ] );
+
+			// Set the placeholder.
+			$placeholder = 'c_fill,g_auto';
+			if ( 'thumbnail' === $size ) {
+				$placeholder = 'c_thumb,g_auto';
+			}
+			$input_wrapper['children']['input']['attributes']['placeholder'] = $placeholder;
+
+			$size_content['children']['input']  = $input_wrapper;
+			$size_content['children']['images'] = $images_container;
+
+			$wrapper['children'][ 'content-' . $size ] = $size_content;
+		}
+
+		return $wrapper;
+	}
+
+	/**
+	 * Make a size selector (tabs).
+	 *
+	 * @param array $sizes The registered sizes.
+	 * @return array
+	 */
+	protected function make_size_selector( $sizes ) {
+		$selector                          = $this->get_part( 'div' );
+		$selector['attributes']['class'][] = 'cld-size-selector';
+		$selector['render']                = true;
+
+		$index = 0;
+		foreach ( $sizes as $size => $details ) {
+			if ( empty( $details['crop'] ) ) {
+				continue;
+			}
+
+			$item                            = $this->get_part( 'span' );
+			$item['attributes']['data-size'] = $size;
+			$item['attributes']['class'][]   = 'cld-size-selector-item';
+			$item['render']                  = true;
+
 			if ( 0 === $index ) {
 				$item['attributes']['data-selected'] = true;
-
 			}
-			$item['attributes']['class'][] = 'cld-image-selector-item';
 
-			$item['content']                           = $name;
-			$selector['children'][ 'image-' . $index ] = $item;
+			$item['content']                         = $size;
+			$selector['children'][ 'size-' . $size ] = $item;
+			++$index;
 		}
 
 		return $selector;
@@ -215,9 +255,11 @@ class Crops extends Select {
 			'crop-size-inputs',
 		);
 
-		$label                      = $this->get_part( 'label' );
-		$label['attributes']['for'] = $name;
-		$label['content']           = __( 'Disable', 'cloudinary' );
+		// Disable toggle control.
+		$control                          = $this->get_part( 'label' );
+		$control['attributes']['class'][] = 'cld-input-on-off-control';
+		$control['attributes']['class'][] = 'medium';
+		$control['attributes']['for']     = $name;
 
 		$check                          = $this->get_part( 'input' );
 		$check['attributes']['type']    = 'checkbox';
@@ -230,15 +272,34 @@ class Crops extends Select {
 			$check['attributes']['checked'] = 'checked';
 		}
 
+		$slider                          = $this->get_part( 'span' );
+		$slider['attributes']['class'][] = 'cld-input-on-off-control-slider';
+		$slider['render']                = true;
+
+		$control['children']['input']  = $check;
+		$control['children']['slider'] = $slider;
+
+		$label          = $this->get_part( 'span' );
+		$label['attributes']['class'] = 'cld-input-on-off-control-label';
+		$label['content']             = __( 'Disable', 'cloudinary' );
+
 		$input                          = $this->get_part( 'input' );
 		$input['attributes']['type']    = 'text';
 		$input['attributes']['name']    = $name;
 		$input['attributes']['value']   = '--' !== $value ? $value : '';
 		$input['attributes']['class'][] = 'regular-text';
 
-		$wrapper['children']['input'] = $input;
-		$wrapper['children']['label'] = $label;
-		$wrapper['children']['check'] = $check;
+		$clear_button                          = $this->get_part( 'button' );
+		$clear_button['attributes']['type']    = 'button';
+		$clear_button['attributes']['class'][] = 'button';
+		$clear_button['attributes']['class'][] = 'clear-crop-input';
+		$clear_button['attributes']['title']   = __( 'Reset input', 'cloudinary' );
+		$clear_button['content']               = Utils::get_inline_svg( 'css/images/undo.svg', false ) . '<span>' . __( 'Reset', 'cloudinary' ) . '</span>';
+
+		$wrapper['children']['input']   = $input;
+		$wrapper['children']['button']  = $clear_button;
+		$wrapper['children']['control'] = $control;
+		$wrapper['children']['label']   = $label;
 
 		return $wrapper;
 	}
