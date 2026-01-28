@@ -96,7 +96,6 @@ class Crops extends Select {
 	 * @return array
 	 */
 	protected function input( $struct ) {
-
 		$mode                             = $this->setting->get_param( 'mode', 'demos' );
 		$wrapper                          = $this->get_part( 'div' );
 		$wrapper['attributes']['class'][] = 'cld-size-items';
@@ -115,6 +114,28 @@ class Crops extends Select {
 		// Create size selector (tabs).
 		$size_selector                        = $this->make_size_selector( $sizes );
 		$wrapper['children']['size-selector'] = $size_selector;
+
+		// Get demo files.
+		$mode = $this->setting->get_param( 'mode', 'demos' );
+
+		/**
+		 * Filter the demo files.
+		 *
+		 * @hook   cloudinary_registered_sizes
+		 * @since  3.1.3
+		 *
+		 * @param $demo_files {array} array of demo files.
+		 *
+		 * @return {array}
+		 */
+		$examples = apply_filters( 'cloudinary_demo_crop_files', $this->demo_files );
+
+		if ( 'full' === $mode ) {
+			$public_id = $this->setting->get_root_setting()->get_param( 'preview_id' );
+			if ( ! empty( $public_id ) ) {
+				$examples = array( $public_id );
+			}
+		}
 
 		// Create content area for each size.
 		foreach ( $sizes as $size => $details ) {
@@ -135,16 +156,6 @@ class Crops extends Select {
 				$size_array[] = 'h_' . $details['height'];
 			}
 			$size_dimensions = implode( ',', $size_array );
-
-			// Get demo files.
-			$mode     = $this->setting->get_param( 'mode', 'demos' );
-			$examples = apply_filters( 'cloudinary_demo_crop_files', $this->demo_files );
-			if ( 'full' === $mode ) {
-				$public_id = $this->setting->get_root_setting()->get_param( 'preview_id' );
-				if ( ! empty( $public_id ) ) {
-					$examples = array( $public_id );
-				}
-			}
 
 			// Create image previews container.
 			$images_container                          = $this->get_part( 'div' );
@@ -224,50 +235,6 @@ class Crops extends Select {
 			$item['content']                         = $size;
 			$selector['children'][ 'size-' . $size ] = $item;
 			++$index;
-		}
-
-		return $selector;
-	}
-
-	/**
-	 * Make an image selector.
-	 */
-	protected function make_selector() {
-		$selector                          = $this->get_part( 'div' );
-		$selector['attributes']['class'][] = 'cld-image-selector';
-		$mode                              = $this->setting->get_param( 'mode', 'demos' );
-
-		/**
-		 * Filter the demo files.
-		 *
-		 * @hook   cloudinary_registered_sizes
-		 * @since  3.1.3
-		 *
-		 * @param $demo_files {array} array of demo files.
-		 *
-		 * @return {array}
-		 */
-		$examples = apply_filters( 'cloudinary_demo_crop_files', $this->demo_files );
-		if ( 'full' === $mode ) {
-			$public_id = $this->setting->get_root_setting()->get_param( 'preview_id' );
-			if ( ! empty( $public_id ) ) {
-				$examples = array(
-					$public_id,
-				);
-			}
-		}
-		foreach ( $examples as $index => $file ) {
-			$name                             = pathinfo( $file, PATHINFO_FILENAME );
-			$item                             = $this->get_part( 'span' );
-			$item['attributes']['data-image'] = $file;
-			if ( 0 === $index ) {
-				$item['attributes']['data-selected'] = true;
-
-			}
-			$item['attributes']['class'][] = 'cld-image-selector-item';
-
-			$item['content']                           = $name;
-			$selector['children'][ 'image-' . $index ] = $item;
 		}
 
 		return $selector;
