@@ -73,11 +73,19 @@ const LazyLoad = {
 			return 1;
 		}
 		let deviceDensity = this.deviceDensity;
+
+		// Round to nearest 0.5 to reduce URL variations
+		if ( 'auto' !== deviceDensity ) {
+			deviceDensity = Math.round( deviceDensity * 2 ) / 2;
+		}
+
 		if (
 			'max' !== maxDensity &&
 			'auto' !== deviceDensity
 		) {
 			maxDensity = parseFloat( maxDensity );
+			// Round maxDensity to nearest 0.5 to maintain consistency
+			maxDensity = Math.round( maxDensity * 2 ) / 2;
 			deviceDensity =
 				deviceDensity > Math.ceil( maxDensity )
 					? maxDensity
