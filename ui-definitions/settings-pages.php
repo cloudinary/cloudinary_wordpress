@@ -155,6 +155,7 @@ $settings = array(
 									'min' => 3,
 									'max' => 100,
 								),
+								'default'      => 21,
 							),
 							array(
 								'type'        => 'number',
