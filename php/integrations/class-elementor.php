@@ -75,6 +75,10 @@ class Elementor extends Integrations {
 	 * @return void
 	 */
 	public function replace_background_images_in_css( $post_css, $element ) {
+		if ( ! method_exists( $element, 'get_settings_for_display' ) ) {
+			return;
+		}
+
 		$settings = $element->get_settings_for_display();
 		$media    = $this->plugin->get_component( 'media' );
 		$delivery = $this->plugin->get_component( 'delivery' );
@@ -117,8 +121,11 @@ class Elementor extends Integrations {
 				continue;
 			}
 
-			// Build the CSS selector and rule.
-			$unique_selector = $post_css->get_element_unique_selector( $element );
+			$unique_selector = $this->find_unique_selector( $post_css, $element );
+			// If we can't find a unique selector via Elementor's internal API, we can't do any replacement.
+			if ( null === $unique_selector ) {
+				return;
+			}
 
 			// Elementor applies this suffix rule to container background images to avoid conflicts with motion effects backgrounds.
 			$default_suffix = $is_container ? ':not(.elementor-motion-effects-element-type-background)' : '';
@@ -131,8 +138,11 @@ class Elementor extends Integrations {
 				$media_query = array( 'max' => $background_data['device'] );
 			}
 
-			// Override the CSS rule in Elementor.
-			$post_css->get_stylesheet()->add_rules( $css_selector, $css_rule, $media_query );
+			$success = $this->override_elementor_css_rule( $post_css, $css_selector, $css_rule, $media_query );
+			if ( ! $success ) {
+				// If we couldn't override the CSS rule, likely due to Elementor internal API changes, we should stop further processing.
+				return;
+			}
 		}
 	}
 
@@ -147,5 +157,47 @@ class Elementor extends Integrations {
 			$elementor = Plugin::instance();
 			$elementor->files_manager->clear_cache();
 		}
+	}
+
+	/**
+	 * Find the unique selector for an Elementor element.
+	 * Double-checks if the method exists before calling it, to ensure compatibility with different Elementor versions.
+	 *
+	 * @param Post         $post_css The post CSS object.
+	 * @param Element_Base $element  The Elementor element.
+	 *
+	 * @return string|null
+	 */
+	private function find_unique_selector( $post_css, $element ) {
+		if ( ! method_exists( $element, 'get_unique_selector' ) ) {
+			return null;
+		}
+
+		return $post_css->get_element_unique_selector( $element );
+	}
+
+	/**
+	 * Override the Elementor CSS rule for a specific selector.
+	 * Double-checks if the method exists before calling it, to ensure compatibility with different Elementor versions.
+	 *
+	 * @param Post       $post_css     The post CSS object.
+	 * @param string     $css_selector The CSS selector.
+	 * @param array      $css_rule     The CSS rule to apply.
+	 * @param array|null $media_query  The media query conditions. Null for default (desktop) styles.
+	 *
+	 * @return bool True if the rule could be overridden, false if the internal Elementor methods aren't available.
+	 */
+	private function override_elementor_css_rule( $post_css, $css_selector, $css_rule, $media_query ) {
+		if ( ! method_exists( $post_css, 'get_stylesheet' ) ) {
+			return false;
+		}
+
+		$stylesheet = $post_css->get_stylesheet();
+		if ( ! method_exists( $stylesheet, 'add_rules' ) ) {
+			return false;
+		}
+
+		$stylesheet->add_rules( $css_selector, $css_rule, $media_query );
+		return true;
 	}
 }
