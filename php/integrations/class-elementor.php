@@ -84,18 +84,20 @@ class Elementor extends Integrations {
 		}
 
 		foreach ( self::ELEMENTOR_BACKGROUND_IMAGES as $background_key => $background_data ) {
-			$background = null;
+			$background   = null;
+			$is_container = false;
 
 			if ( isset( $settings[ $background_key ] ) ) {
 				// Elementor section/column elements store background settings without a leading underscore.
-				$background = $settings[ $background_key ];
+				$background   = $settings[ $background_key ];
+				$is_container = true;
 			} elseif ( isset( $settings[ '_' . $background_key ] ) ) {
 				// Elementor basic elements (e.g. heading) store background settings with a leading underscore.
 				$background = $settings[ '_' . $background_key ];
 			}
 
 			// If this specific background setting is not set, we can skip it and check for the next setting.
-			if ( empty( $background ) || ! isset( $background['id'] ) ) {
+			if ( empty( $background ) || empty( $background['id'] ) ) {
 				continue;
 			}
 
@@ -110,9 +112,18 @@ class Elementor extends Integrations {
 			// Generate the Cloudinary URL.
 			$cloudinary_url = $media->cloudinary_url( $media_id, $media_size );
 
+			// If URL generation failed, we should leave the original URL within the CSS.
+			if ( empty( $cloudinary_url ) ) {
+				continue;
+			}
+
 			// Build the CSS selector and rule.
-			$css_selector = $post_css->get_element_unique_selector( $element ) . $background_data['suffix'];
-			$css_rule     = array( 'background-image' => "url('$cloudinary_url')" );
+			$unique_selector = $post_css->get_element_unique_selector( $element );
+
+			// Elementor applies this suffix rule to container background images to avoid conflicts with motion effects backgrounds.
+			$default_suffix = $is_container ? ':not(.elementor-motion-effects-element-type-background)' : '';
+			$css_selector   = $unique_selector . $default_suffix . $background_data['suffix'];
+			$css_rule       = array( 'background-image' => "url('$cloudinary_url')" );
 
 			// Retrieve the specific media query rule for non-desktop devices.
 			$media_query = null;
