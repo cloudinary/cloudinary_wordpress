@@ -22,27 +22,27 @@ class Elementor extends Integrations {
 	 * @var array
 	 */
 	const ELEMENTOR_BACKGROUND_IMAGES = array(
-		'_background_image'              => array(
+		'background_image'              => array(
 			'device' => 'desktop',
 			'suffix' => '',
 		),
-		'_background_hover_image'        => array(
+		'background_hover_image'        => array(
 			'device' => 'desktop',
 			'suffix' => ':hover',
 		),
-		'_background_image_tablet'       => array(
+		'background_image_tablet'       => array(
 			'device' => 'tablet',
 			'suffix' => '',
 		),
-		'_background_hover_image_tablet' => array(
+		'background_hover_image_tablet' => array(
 			'device' => 'tablet',
 			'suffix' => ':hover',
 		),
-		'_background_image_mobile'       => array(
+		'background_image_mobile'       => array(
 			'device' => 'mobile',
 			'suffix' => '',
 		),
-		'_background_hover_image_mobile' => array(
+		'background_hover_image_mobile' => array(
 			'device' => 'mobile',
 			'suffix' => ':hover',
 		),
@@ -84,13 +84,23 @@ class Elementor extends Integrations {
 		}
 
 		foreach ( self::ELEMENTOR_BACKGROUND_IMAGES as $background_key => $background_data ) {
-			// We need to have the ID from the image to proceed.
-			if ( ! isset( $settings[ $background_key ]['id'] ) ) {
+			$background = null;
+
+			if ( isset( $settings[ $background_key ] ) ) {
+				// Elementor section/column elements store background settings without a leading underscore.
+				$background = $settings[ $background_key ];
+			} elseif ( isset( $settings[ '_' . $background_key ] ) ) {
+				// Elementor basic elements (e.g. heading) store background settings with a leading underscore.
+				$background = $settings[ '_' . $background_key ];
+			}
+
+			// If this specific background setting is not set, we can skip it and check for the next setting.
+			if ( empty( $background ) || ! isset( $background['id'] ) ) {
 				continue;
 			}
 
-			$media_id   = $settings[ $background_key ]['id'];
-			$media_size = isset( $settings[ $background_key ]['size'] ) ? $settings[ $background_key ]['size'] : array();
+			$media_id   = $background['id'];
+			$media_size = isset( $background['size'] ) ? $background['size'] : array();
 
 			// Skip if the media is not deliverable via Cloudinary.
 			if ( ! $delivery->is_deliverable( $media_id ) ) {
