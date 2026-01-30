@@ -1,3 +1,5 @@
+import { roundToHalf } from './utils';
+
 const CloudinaryLoader = {
 	deviceDensity: window.devicePixelRatio ? window.devicePixelRatio : 'auto',
 	density: null,
@@ -154,7 +156,7 @@ const CloudinaryLoader = {
 
 		// Round to nearest 0.5 to reduce URL variations
 		if ( 'auto' !== deviceDensity ) {
-			deviceDensity = Math.round( deviceDensity * 2 ) / 2;
+			deviceDensity = roundToHalf( deviceDensity );
 		}
 
 		if (
@@ -164,7 +166,7 @@ const CloudinaryLoader = {
 			maxDensity = parseFloat( maxDensity );
 
 			// Round maxDensity to nearest 0.5 to maintain consistency
-			maxDensity = Math.round( maxDensity * 2 ) / 2;
+			maxDensity = roundToHalf( maxDensity );
 			deviceDensity =
 				deviceDensity > Math.ceil( maxDensity )
 					? maxDensity
