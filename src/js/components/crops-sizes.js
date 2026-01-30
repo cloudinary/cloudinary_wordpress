@@ -87,12 +87,12 @@ const CropSizes = {
 
 		// Bind input events once
 		if ( ! input.bound ) {
-			let timout = null;
+			let timeout = null;
 			input.addEventListener( 'input', () => {
-				if ( timout ) {
-					clearTimeout( timout );
+				if ( timeout ) {
+					clearTimeout( timeout );
 				}
-				timout = setTimeout( () => {
+				timeout = setTimeout( () => {
 					this.buildImages( wrapper, sizeContent );
 				}, 1000 );
 			} );
