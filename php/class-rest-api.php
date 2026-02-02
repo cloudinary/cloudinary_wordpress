@@ -12,6 +12,11 @@ namespace Cloudinary;
  */
 class REST_API {
 
+	/**
+	 * Base path for the REST API endpoints.
+	 *
+	 * @var string
+	 */
 	const BASE = 'cloudinary/v1';
 
 	/**
@@ -20,6 +25,13 @@ class REST_API {
 	 * @var array
 	 */
 	public $endpoints;
+
+	/**
+	 * The nonce key used for WordPress REST API authentication.
+	 *
+	 * @var string
+	 */
+	const NONCE_KEY = 'wp_rest';
 
 	/**
 	 * REST_API constructor.
@@ -81,7 +93,7 @@ class REST_API {
 
 		$url = Utils::rest_url( static::BASE . '/' . $endpoint );
 		// Setup a call for a background sync.
-		$params['nonce'] = wp_create_nonce( 'wp_rest' );
+		$params['nonce'] = wp_create_nonce( static::NONCE_KEY );
 		$args            = array(
 			'timeout'   => 0.1,
 			'blocking'  => false,
@@ -114,5 +126,16 @@ class REST_API {
 
 		// Send request.
 		wp_remote_request( $url, $args );
+	}
+
+	/**
+	 * Validation for request.
+	 *
+	 * @param \WP_REST_Request $request The original request.
+	 *
+	 * @return bool
+	 */
+	public static function validate_request( $request ) {
+		return wp_verify_nonce( $request->get_header( 'x_wp_nonce' ), self::NONCE_KEY );
 	}
 }
