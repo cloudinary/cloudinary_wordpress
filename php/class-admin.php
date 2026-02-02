@@ -108,9 +108,10 @@ class Admin {
 	public function rest_endpoints( $endpoints ) {
 
 		$endpoints['dismiss_notice'] = array(
-			'method'   => WP_REST_Server::CREATABLE,
-			'callback' => array( $this, 'rest_dismiss_notice' ),
-			'args'     => array(),
+			'method'              => WP_REST_Server::CREATABLE,
+			'callback'            => array( $this, 'rest_dismiss_notice' ),
+			'args'                => array(),
+			'permission_callback' => array( 'Cloudinary\REST_API', 'validate_request' ),
 		);
 
 		$endpoints['save_settings'] = array(

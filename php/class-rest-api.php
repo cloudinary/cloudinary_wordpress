@@ -51,13 +51,14 @@ class REST_API {
 			'method'              => \WP_REST_Server::READABLE,
 			'callback'            => __return_empty_array(),
 			'args'                => array(),
-			'permission_callback' => '__return_true',
+			'permission_callback' => array( __CLASS__, 'validate_request' ),
 		);
 
 		$this->endpoints = apply_filters( 'cloudinary_api_rest_endpoints', array() );
 
 		foreach ( $this->endpoints as $route => $endpoint ) {
 			$endpoint = wp_parse_args( $endpoint, $defaults );
+
 			register_rest_route(
 				static::BASE,
 				$route,
@@ -137,5 +138,17 @@ class REST_API {
 	 */
 	public static function validate_request( $request ) {
 		return wp_verify_nonce( $request->get_header( 'x_wp_nonce' ), self::NONCE_KEY );
+	}
+
+	/**
+	 * Permission callback for public health check endpoints.
+	 *
+	 * Intentionally allows unauthenticated access for REST API connectivity testing.
+	 * This endpoint is read-only and returns no sensitive data.
+	 *
+	 * @return bool Always returns true to allow public access.
+	 */
+	public static function allow_public_health_check() {
+		return true;
 	}
 }

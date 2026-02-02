@@ -117,7 +117,7 @@ class Notice extends Component {
 		if ( $this->setting->get_option_parent()->has_param( 'dismissible_notice' ) && ! $this->setting->get_option_parent()->has_param( 'notice_scripts' ) ) {
 			$args = array(
 				'url'   => Utils::rest_url( REST_API::BASE . '/dismiss_notice' ),
-				'nonce' => wp_create_nonce( 'wp_rest' ),
+				'nonce' => wp_create_nonce( REST_API::NONCE_KEY ),
 			);
 			wp_add_inline_script( 'cloudinary', 'var CLDIS = ' . wp_json_encode( $args ), 'before' );
 			$this->setting->get_option_parent()->set_param( 'notice_scripts', true ); // Prevent repeated rendering.
