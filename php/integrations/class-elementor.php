@@ -17,35 +17,17 @@ use Elementor\Plugin;
 class Elementor extends Integrations {
 
 	/**
-	 * List of Elementor background image settings keys, along with their device and CSS suffix.
+	 * List of Elementor background image settings keys.
 	 *
 	 * @var array
 	 */
 	const ELEMENTOR_BACKGROUND_IMAGES = array(
-		'background_image'              => array(
-			'device' => 'desktop',
-			'suffix' => '',
-		),
-		'background_hover_image'        => array(
-			'device' => 'desktop',
-			'suffix' => ':hover',
-		),
-		'background_image_tablet'       => array(
-			'device' => 'tablet',
-			'suffix' => '',
-		),
-		'background_hover_image_tablet' => array(
-			'device' => 'tablet',
-			'suffix' => ':hover',
-		),
-		'background_image_mobile'       => array(
-			'device' => 'mobile',
-			'suffix' => '',
-		),
-		'background_hover_image_mobile' => array(
-			'device' => 'mobile',
-			'suffix' => ':hover',
-		),
+		'background_image',
+		'background_hover_image',
+		'background_image_tablet',
+		'background_hover_image_tablet',
+		'background_image_mobile',
+		'background_hover_image_mobile',
 	);
 
 	/**
@@ -87,7 +69,7 @@ class Elementor extends Integrations {
 			return;
 		}
 
-		foreach ( self::ELEMENTOR_BACKGROUND_IMAGES as $background_key => $background_data ) {
+		foreach ( self::ELEMENTOR_BACKGROUND_IMAGES as $background_key ) {
 			$background   = null;
 			$is_container = false;
 
@@ -127,15 +109,18 @@ class Elementor extends Integrations {
 				return;
 			}
 
-			// Elementor applies this suffix rule to container background images to avoid conflicts with motion effects backgrounds.
-			$default_suffix = $is_container ? ':not(.elementor-motion-effects-element-type-background)' : '';
-			$css_selector   = $unique_selector . $default_suffix . $background_data['suffix'];
-			$css_rule       = array( 'background-image' => "url('$cloudinary_url')" );
+			// Determine if it's a hover background.
+			$is_hover = ( strpos( $background_key, 'hover' ) !== false );
 
-			// Retrieve the specific media query rule for non-desktop devices.
+			$css_selector = $this->build_background_image_css_selector( $unique_selector, $is_container, $is_hover );
+			$css_rule     = array( 'background-image' => "url('$cloudinary_url')" );
+
+			// Retrieve the specific media query rule for non-desktop devices based on the setting key.
 			$media_query = null;
-			if ( 'desktop' !== $background_data['device'] ) {
-				$media_query = array( 'max' => $background_data['device'] );
+			if ( strpos( $background_key, 'tablet' ) !== false ) {
+				$media_query = array( 'max' => 'tablet' );
+			} elseif ( strpos( $background_key, 'mobile' ) !== false ) {
+				$media_query = array( 'max' => 'mobile' );
 			}
 
 			$success = $this->override_elementor_css_rule( $post_css, $css_selector, $css_rule, $media_query );
@@ -199,5 +184,32 @@ class Elementor extends Integrations {
 
 		$stylesheet->add_rules( $css_selector, $css_rule, $media_query );
 		return true;
+	}
+
+	/**
+	 * Build the full CSS selector for background image replacement.
+	 *
+	 * @param string $unique_selector The unique selector for the element.
+	 * @param bool   $is_container    Whether the element is a container (section/column).
+	 * @param bool   $is_hover        Whether the background is for hover state.
+	 *
+	 * @return string
+	 */
+	private function build_background_image_css_selector( $unique_selector, $is_container, $is_hover ) {
+		// For hover backgrounds, we simply append :hover to the unique selector.
+		if ( $is_hover ) {
+			return $unique_selector . ':hover';
+		}
+
+		// For non-container elements, we can return the unique selector as is.
+		if ( ! $is_container ) {
+			return $unique_selector;
+		}
+
+		// For container elements, we need to replicate the specific selector Elementor uses for background images.
+		return sprintf(
+			'%1$s:not(.elementor-motion-effects-element-type-background), %1$s > .elementor-motion-effects-container > .elementor-motion-effects-layer',
+			$unique_selector
+		);
 	}
 }
