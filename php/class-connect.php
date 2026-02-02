@@ -129,7 +129,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			'method'              => WP_REST_Server::CREATABLE,
 			'callback'            => array( $this, 'rest_save_wizard' ),
 			'args'                => array(),
-			'permission_callback' => array( 'Cloudinary\REST_API', 'validate_request' ),
+			'permission_callback' => array( 'Cloudinary\REST_API', 'rest_can_connect' ),
 		);
 		$endpoints['test_rest_api']   = array(
 			'method'              => WP_REST_Server::READABLE,
