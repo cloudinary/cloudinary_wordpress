@@ -1,3 +1,5 @@
+import { roundToHalf } from './utils';
+
 const LazyLoad = {
 	deviceDensity: window.devicePixelRatio ? window.devicePixelRatio : 'auto',
 	density: null,
@@ -73,11 +75,19 @@ const LazyLoad = {
 			return 1;
 		}
 		let deviceDensity = this.deviceDensity;
+
+		// Round to nearest 0.5 to reduce URL variations
+		if ( 'auto' !== deviceDensity ) {
+			deviceDensity = roundToHalf( deviceDensity );
+		}
+
 		if (
 			'max' !== maxDensity &&
 			'auto' !== deviceDensity
 		) {
 			maxDensity = parseFloat( maxDensity );
+			// Round maxDensity to nearest 0.5 to maintain consistency
+			maxDensity = roundToHalf( maxDensity );
 			deviceDensity =
 				deviceDensity > Math.ceil( maxDensity )
 					? maxDensity
