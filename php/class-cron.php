@@ -187,12 +187,12 @@ class Cron {
 		$endpoints['cron_watch']   = array(
 			'method'              => \WP_REST_Server::READABLE,
 			'callback'            => array( $this, 'daemon_watcher' ),
-			'permission_callback' => '__return_true',
+			'permission_callback' => array( 'Cloudinary\REST_API', 'validate_request' ),
 		);
 		$endpoints['cron_process'] = array(
 			'method'              => \WP_REST_Server::READABLE,
 			'callback'            => array( $this, 'run_queue' ),
-			'permission_callback' => '__return_true',
+			'permission_callback' => array( 'Cloudinary\REST_API', 'validate_request' ),
 		);
 
 		return $endpoints;
