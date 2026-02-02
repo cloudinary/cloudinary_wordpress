@@ -28,6 +28,12 @@ class Elementor extends Integrations {
 		'background_hover_image_tablet',
 		'background_image_mobile',
 		'background_hover_image_mobile',
+		'background_overlay_image',
+		'background_overlay_hover_image',
+		'background_overlay_image_tablet',
+		'background_overlay_hover_image_tablet',
+		'background_overlay_image_mobile',
+		'background_overlay_hover_image_mobile',
 	);
 
 	/**
@@ -109,10 +115,10 @@ class Elementor extends Integrations {
 				return;
 			}
 
-			// Determine if it's a hover background.
-			$is_hover = ( strpos( $background_key, 'hover' ) !== false );
-
-			$css_selector = $this->build_background_image_css_selector( $unique_selector, $is_container, $is_hover );
+			// Build the CSS selector and rule for background image replacement.
+			$is_hover     = ( strpos( $background_key, 'hover' ) !== false );
+			$is_overlay   = ( strpos( $background_key, 'overlay' ) !== false );
+			$css_selector = $this->build_background_image_css_selector( $unique_selector, $is_container, $is_hover, $is_overlay );
 			$css_rule     = array( 'background-image' => "url('$cloudinary_url')" );
 
 			// Retrieve the specific media query rule for non-desktop devices based on the setting key.
@@ -188,14 +194,42 @@ class Elementor extends Integrations {
 
 	/**
 	 * Build the full CSS selector for background image replacement.
+	 * We try to match the exact Elementor formatting and rules, so that our CSS overrides the previous rules,
+	 * instead of adding new rules within the CSS which may not apply for specific edge cases (e.g. specific child elements).
 	 *
 	 * @param string $unique_selector The unique selector for the element.
 	 * @param bool   $is_container    Whether the element is a container (section/column).
 	 * @param bool   $is_hover        Whether the background is for hover state.
+	 * @param bool   $is_overlay      Whether the background is for an overlay.
 	 *
 	 * @return string
 	 */
-	private function build_background_image_css_selector( $unique_selector, $is_container, $is_hover ) {
+	private function build_background_image_css_selector( $unique_selector, $is_container, $is_hover, $is_overlay ) {
+		if ( $is_overlay ) {
+			// Overlay backgrounds need to target multiple pseudo-elements and child elements.
+			$overlay_selector = sprintf(
+				'%1$s%2$s::before,
+				%1$s%2$s > .elementor-background-video-container::before,
+				%1$s%2$s > .e-con-inner > .elementor-background-video-container::before,
+				%1$s > .elementor-background-slideshow%2$s::before,
+				%1$s > .e-con-inner > .elementor-background-slideshow%2$s::before',
+				$unique_selector,
+				$is_hover ? ':hover' : ''
+			);
+
+			// For non-hover overlays, we need to also target motion effects layers.
+			if ( ! $is_hover ) {
+				$overlay_selector = sprintf(
+					'%1$s,
+					%2$s > .elementor-motion-effects-container > .elementor-motion-effects-layer::before',
+					$overlay_selector,
+					$unique_selector
+				);
+			}
+
+			// Replace any newline and extra spaces to match the exact Elementor formatting.
+			return preg_replace( '/\s+/', ' ', $overlay_selector );
+		}
 		// For hover backgrounds, we simply append :hover to the unique selector.
 		if ( $is_hover ) {
 			return $unique_selector . ':hover';
@@ -206,7 +240,7 @@ class Elementor extends Integrations {
 			return $unique_selector;
 		}
 
-		// For container elements, we need to replicate the specific selector Elementor uses for background images.
+		// For container elements, we need to target both the element itself and its motion effects layers.
 		return sprintf(
 			'%1$s:not(.elementor-motion-effects-element-type-background), %1$s > .elementor-motion-effects-container > .elementor-motion-effects-layer',
 			$unique_selector
