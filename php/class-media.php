@@ -2285,8 +2285,7 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function down_sync_asset() {
 		$nonce = Utils::get_sanitized_text( 'nonce', INPUT_POST );
-		if ( wp_verify_nonce( $nonce, 'wp_rest' ) ) {
-
+		if ( is_user_logged_in() && wp_verify_nonce( $nonce, 'wp_rest' ) && current_user_can( 'upload_files' ) ) {
 			$asset = $this->get_asset_payload();
 			// Set a base array for pulling an asset if needed.
 			$base_return = array(
