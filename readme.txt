@@ -3,7 +3,7 @@ Contributors: Cloudinary, XWP, Automattic
 Tags: image-optimizer, core-web-vitals, video, resize, performance
 Requires at least: 4.7
 Tested up to: 6.9
-Requires PHP: 5.6
+Requires PHP: 7.4
 Stable tag: STABLETAG
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -145,6 +145,16 @@ Your site is now setup to start using Cloudinary.
 
 
 == Changelog ==
+
+= 3.3.1 (05 February 2026) =
+
+Fixes and Improvements:
+
+* Refreshed the user interface for the Crop and Gravity feature
+* Standardized `permission_callback` handling across all REST endpoints, enforcing capability checks and default nonce validation
+* Improved lazy-load logic by normalizing DPR values to reduce unnecessary derived asset generation
+* Fixed issues with front-end background images from page builders when assets aren’t delivered via Cloudinary
+* Improved deletion handling for parent assets
 
 = 3.3.0 (14 January 2026) =
 

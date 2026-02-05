@@ -108,9 +108,12 @@ class Admin {
 	public function rest_endpoints( $endpoints ) {
 
 		$endpoints['dismiss_notice'] = array(
-			'method'   => WP_REST_Server::CREATABLE,
-			'callback' => array( $this, 'rest_dismiss_notice' ),
-			'args'     => array(),
+			'method'              => WP_REST_Server::CREATABLE,
+			'callback'            => array( $this, 'rest_dismiss_notice' ),
+			'args'                => array(),
+			'permission_callback' => function () {
+				return Utils::user_can( 'manage_settings' );
+			},
 		);
 
 		$endpoints['save_settings'] = array(

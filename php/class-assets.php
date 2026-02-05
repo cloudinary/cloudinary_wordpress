@@ -494,16 +494,35 @@ class Assets extends Settings_Component {
 				}
 			}
 		}
-
 		// Get the disabled items.
 		foreach ( $this->asset_parents as $url => $parent ) {
 			if ( isset( $this->active_parents[ $url ] ) ) {
 				continue;
 			}
+
+			if ( ! $this->is_post_cloudinary_asset( $parent->ID ) ) {
+				continue;
+			}
+
 			$this->purge_parent( $parent->ID );
 			// Remove parent.
 			wp_delete_post( $parent->ID );
 		}
+	}
+
+	/**
+	 * Check if a post is a Cloudinary asset.
+	 *
+	 * @param int $post_id The post ID to check.
+	 *
+	 * @return bool
+	 */
+	public function is_post_cloudinary_asset( $post_id ) {
+		if ( get_post_type( $post_id ) === self::POST_TYPE_SLUG ) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -569,6 +588,10 @@ class Assets extends Settings_Component {
 	 * @param callable $callback  The callback function to execute on each post.
 	 */
 	private function process_parent_assets( $parent_id, $callback ) {
+		if ( ! $this->is_post_cloudinary_asset( $parent_id ) ) {
+			return;
+		}
+
 		$query_args     = array(
 			'post_type'              => self::POST_TYPE_SLUG,
 			'posts_per_page'         => 100,
@@ -626,6 +649,10 @@ class Assets extends Settings_Component {
 		$this->process_parent_assets(
 			$parent_id,
 			function ( $post_id ) {
+				if ( ! $this->is_post_cloudinary_asset( $post_id ) ) {
+					return;
+				}
+
 				wp_delete_post( $post_id );
 			}
 		);

@@ -73,10 +73,17 @@
 		}
 	}
 
-	.crop-size-inputs{
+	.crop-size-inputs {
 		display: flex;
 		align-items: center;
 		gap: 10px;
+		margin-bottom: 16px;
+		max-width: 400px;
+		flex-wrap: wrap;
+	}
+
+	.cld-ui-input.regular-text {
+		max-width: 260px;
 	}
 
 	.cld-ui-input.regular-text[disabled]{
@@ -84,19 +91,100 @@
 		opacity: 0.5;
 	}
 
-}
+	.disable-toggle {
+		margin: 0;
+	}
 
-&-image-selector {
-	display: flex;
+	// Medium size toggle (between mini and standard)
+	.cld-input-on-off-control.medium {
+		width: 25px;
+		height: 13px;
+		margin-right: 0;
 
-	&-item {
-		border: 1px solid $color-light-grey;
-		padding: 3px 6px;
-		margin: 0 3px -1px 0;
-		cursor: pointer;
+		.cld-input-on-off-control-slider::before {
+			height: 9px;
+			width: 9px;
+			left: 2px;
+			bottom: 2px;
+		}
 
-		&[data-selected] {
-			background-color: $color-light-grey;
+		input:checked + .cld-input-on-off-control-slider::before {
+			transform: translateX(12px);
 		}
 	}
+
+	.cld-input-on-off-control-label {
+		font-size: 12px;
+	}
+
+	.button.clear-crop-input {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		background: transparent;
+		border: none;
+		color: $color-cld-blue;
+		padding: 0;
+		cursor: pointer;
+		box-shadow: none;
+		font-size: 14px;
+		font-weight: 600;
+		margin-right: 40px;
+
+		svg {
+			width: 16px;
+			height: 16px;
+			fill: currentColor;
+		}
+
+		&:hover {
+			background: transparent;
+			opacity: 0.8;
+		}
+
+		&:focus {
+			box-shadow: none;
+			outline: none;
+		}
+	}
+
+}
+
+&-size-selector {
+	display: flex;
+	flex-wrap: nowrap;
+	overflow-x: scroll;
+	scrollbar-width: thin;
+	border: 1px solid $color-light-grey;
+	border-radius: 4px;
+	width: fit-content;
+	max-width: 100%;
+
+	margin-bottom: 42px;
+	padding: 4px;
+
+	&-item {
+		flex-shrink: 0;
+		white-space: nowrap;
+		padding: 8px;
+		margin: 0 3px -1px 0;
+		cursor: pointer;
+		color: $color-transformations-asset;
+		background-color: transparent;
+
+		font-weight: 600;
+
+		&[data-selected] {
+			color: $color-cld-blue;
+			background-color: rgba(52, 72, 197, 0.06);
+		}
+	}
+}
+
+&-size-images {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+
+	margin-bottom: 42px;
 }
