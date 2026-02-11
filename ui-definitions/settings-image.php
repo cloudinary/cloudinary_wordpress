@@ -108,11 +108,12 @@ $settings = array(
 							'default'      => 'auto',
 							'options'      => array(
 								'none' => __( 'Not set', 'cloudinary' ),
-								'auto' => __( 'Auto', 'cloudinary' ),
+								'auto' => __( 'Auto (Recommended)', 'cloudinary' ),
 								'png'  => __( 'PNG', 'cloudinary' ),
 								'jpg'  => __( 'JPG', 'cloudinary' ),
 								'gif'  => __( 'GIF', 'cloudinary' ),
 								'webp' => __( 'WebP', 'cloudinary' ),
+								'avif' => __( 'AVIF', 'cloudinary' ),
 							),
 							'suffix'       => 'f_@value',
 							'attributes'   => array(
