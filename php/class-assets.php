@@ -584,7 +584,7 @@ class Assets extends Settings_Component {
 			$this->media->update_post_meta( $parent_id, Sync::META_KEYS['version'], $version );
 			$this->media->update_post_meta( $parent_id, self::META_KEYS['excludes'], array() );
 
-			$this->assign_asset_parent( get_post( $parent_id ) );
+			$this->add_asset_parent( get_post( $parent_id ) );
 		}
 
 		return $parent_id;
@@ -993,7 +993,7 @@ class Assets extends Settings_Component {
 
 		do {
 			foreach ( $query->get_posts() as $post ) {
-				$this->assign_asset_parent( $post );
+				$this->add_asset_parent( $post );
 			}
 			$args = $query->query_vars;
 			++$args['paged'];
@@ -1790,7 +1790,7 @@ class Assets extends Settings_Component {
 	 * @param \WP_Post $post The post to assign.
 	 * @return void
 	 */
-	protected function assign_asset_parent( $post ) {
+	protected function add_asset_parent( $post ) {
 		if ( is_multisite() ) {
 			$post->blog_id = get_current_blog_id();
 		}
