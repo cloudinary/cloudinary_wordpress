@@ -98,22 +98,13 @@ class State {
 			'method'              => \WP_REST_Server::CREATABLE,
 			'callback'            => array( $this, 'set_state' ),
 			'args'                => array(),
-			'permission_callback' => array( $this, 'validate_request' ),
+			'permission_callback' => array( 'Cloudinary\REST_API', 'validate_request' ),
 		);
 
 		return $endpoints;
 	}
 
-	/**
-	 * Validation for request.
-	 *
-	 * @param \WP_REST_Request $request The original request.
-	 *
-	 * @return bool
-	 */
-	public function validate_request( $request ) {
-		return wp_verify_nonce( $request->get_header( 'x_wp_nonce' ), 'wp_rest' );
-	}
+
 
 	/**
 	 * Set the UI state.

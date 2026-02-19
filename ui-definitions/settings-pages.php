@@ -7,6 +7,7 @@
 
 use Cloudinary\Utils;
 use Cloudinary\Report;
+use Cloudinary\UI\Component\Asset_Preview;
 use function Cloudinary\get_plugin_instance;
 
 $media    = $this->get_component( 'media' );
@@ -196,7 +197,7 @@ $settings = array(
 							'type'    => 'breakpoints_preview',
 							'title'   => __( 'Preview', 'cloudinary' ),
 							'slug'    => 'breakpoints_preview',
-							'default' => CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE . 'w_600/sample.jpg',
+							'default' => CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE . 'w_600/leather_bag.jpg',
 						),
 					),
 				),
@@ -534,25 +535,470 @@ $settings = array(
 	'edit_asset'     => array(
 		'page_title'          => __( 'Edit asset', 'cloudinary' ),
 		'section'             => 'edit-asset',
-		'slug'                => 'edit_asset',
+		'slug'                => 'edit_affects',
 		'requires_connection' => true,
 		array(
-			'type' => 'row',
+			'type'       => 'row',
+			'attributes' => array(
+				'wrap' => array(
+					'style' => 'margin: 0 auto;max-width:1200px;',
+				),
+			),
 			array(
-				'type'       => 'column',
-				'width'      => '950px',
-				'attributes' => array(
-					'wrap' => array(
-						'style' => 'margin: 0 auto;max-width:1200px;',
+				'type' => 'referrer_link',
+			),
+		),
+		array(
+			'type'       => 'row',
+			'attributes' => array(
+				'wrap' => array(
+					'style' => 'margin: 0 auto;max-width:1200px;',
+				),
+			),
+
+			array(
+				'type'  => 'column',
+				'class' => array(
+					'column-55',
+					'edit-overlay',
+				),
+				array(
+					'type'        => 'panel',
+					'collapsible' => 'open',
+					'title'       => __( 'Transformations', 'cloudinary' ),
+					array(
+						'type'  => 'info_box',
+						'icon'  => $this->dir_url . 'css/images/transformation_edit.svg',
+						'title' => __( 'What are transformations?', 'cloudinary' ),
+						'text'  => __(
+							'A set of parameters included in a Cloudinary URL to programmatically transform the visual appearance of the assets on your website.',
+							'cloudinary'
+						),
+					),
+					array(
+						'type'         => 'text',
+						'title'        => __( 'Asset transformations', 'cloudinary' ),
+						'slug'         => 'transformations',
+						'default'      => '',
+						'anchor'       => true,
+						'tooltip_text' => sprintf(
+							// translators: The link to transformation reference.
+							__(
+								'Specify the asset transformations using Cloudinary URL transformation syntax. See %1$sreference%2$s for all available transformations and syntax.',
+								'cloudinary'
+							),
+							'<a href="https://cloudinary.com/documentation/transformation_reference" target="_blank" rel="noopener noreferrer">',
+							'</a>'
+						),
+						'link'         => array(
+							'text' => __( 'See examples', 'cloudinary' ),
+							'href' => 'https://cloudinary.com/documentation/image_transformations',
+						),
+						'attributes'   => array(
+							'placeholder' => 'w_90,r_max',
+						),
+					),
+					array(
+						'type'       => 'tag',
+						'element'    => 'button',
+						'content'    => __( 'Save Changes', 'cloudinary' ),
+						'attributes' => array(
+							'type'  => 'button',
+							'id'    => 'cld-asset-edit-save',
+							'class' => array(
+								'button',
+								'button-primary',
+								'cld-asset-edit-button',
+							),
+						),
 					),
 				),
 				array(
-					'type' => 'referrer_link',
+					'type'        => 'panel',
+					'collapsible' => 'open',
+					'title'       => __( 'Text overlay', 'cloudinary' ),
+					array(
+						'type' => 'row',
+						array(
+							'type' => 'info_box',
+							'icon' => $this->dir_url . 'css/images/text_overlay.svg',
+							'text' => sprintf(
+								// Translators: The HTML for opening and closing link tags.
+								__(
+									'The text overlay feature allows you to place text on top of an asset. Learn more about %1$stext overlays%2$s and how to use them effectively.',
+									'cloudinary'
+								),
+								'<a href="https://cloudinary.com/documentation/layers#text_overlays" target="_blank" rel="noopener noreferrer">',
+								'</a>'
+							),
+						),
+					),
+					array(
+						'type' => 'row',
+						array(
+							'type' => 'column',
+							array(
+								'type'    => 'color',
+								'title'   => __( 'Color', 'cloudinary' ),
+								'slug'    => 'text_overlay_color',
+								'default' => 'rgba(153,153,153,0.5)',
+							),
+						),
+						array(
+							'type' => 'column',
+							array(
+								'type'    => 'select',
+								'slug'    => 'text_overlay_font_face',
+								'title'   => __( 'Font Face', 'cloudinary' ),
+								'default' => 'Arial',
+								'options' => array(
+									'Arial'           => __( 'Arial (sans-serif)', 'cloudinary' ),
+									'Verdana'         => __( 'Verdana (sans-serif)', 'cloudinary' ),
+									'Times New Roman' => __( 'Times New Roman (serif)', 'cloudinary' ),
+									'Courier New'     => __( 'Courier New (monospace)', 'cloudinary' ),
+									'Georgia'         => __( 'Georgia (serif)', 'cloudinary' ),
+								),
+							),
+						),
+						array(
+							'type' => 'column',
+							array(
+								'type'    => 'number',
+								'title'   => __( 'Font Size', 'cloudinary' ),
+								'default' => 20,
+								'slug'    => 'text_overlay_font_size',
+								'suffix'  => 'px',
+							),
+						),
+					),
+					array(
+						'type' => 'row',
+						array(
+							'type'  => 'column',
+							'class' => array(
+								'edit-overlay-offset',
+							),
+							array(
+								'type'    => 'text',
+								'title'   => __( 'Text', 'cloudinary' ),
+								'slug'    => 'text_overlay_text',
+								'default' => '',
+							),
+						),
+					),
+					array(
+						'type' => 'row',
+						array(
+							'type' => 'column',
+							array(
+								'type'       => 'text',
+								'title'      => __( 'Position', 'cloudinary' ),
+								'default'    => 'center',
+								'slug'       => 'text_overlay_position',
+								'attributes' => array(
+									'input' => array(
+										'type' => 'hidden',
+									),
+								),
+							),
+							array(
+								'type'       => 'tag',
+								'element'    => 'div',
+								'attributes' => array(
+									'data-grid-options' => wp_json_encode( Asset_Preview::get_grid_options() ),
+									'id'                => 'edit-overlay-grid-text',
+									'class'             => array(
+										'edit-overlay-grid',
+									),
+								),
+							),
+						),
+						array(
+							'type' => 'column',
+							array(
+								'type'    => 'number',
+								'title'   => __( 'X Offset', 'cloudinary' ),
+								'default' => 0,
+								'slug'    => 'text_overlay_x_offset',
+								'suffix'  => 'px',
+							),
+							array(
+								'type'    => 'number',
+								'title'   => __( 'Y Offset', 'cloudinary' ),
+								'default' => 0,
+								'slug'    => 'text_overlay_y_offset',
+								'suffix'  => 'px',
+							),
+						),
+					),
+					array(
+						'type' => 'row',
+						array(
+							'type'       => 'tag',
+							'element'    => 'a',
+							'content'    => __( 'Save Changes', 'cloudinary' ),
+							'attributes' => array(
+								'href'  => '#',
+								'id'    => 'cld-asset-save-text-overlay',
+								'class' => array(
+									'button',
+									'button-primary',
+									'cld-asset-edit-button',
+								),
+							),
+						),
+						array(
+							'type'       => 'tag',
+							'element'    => 'a',
+							'content'    => __( 'Reset All', 'cloudinary' ),
+							'attributes' => array(
+								'href'  => '#',
+								'id'    => 'cld-asset-remove-text-overlay',
+								'class' => array(
+									'button',
+									'button--remove',
+								),
+							),
+						),
+					),
 				),
 				array(
-					'type' => 'panel',
+					'type'        => 'panel',
+					'collapsible' => 'open',
+					'title'       => __( 'Image overlay', 'cloudinary' ),
 					array(
-						'type' => 'asset_preview',
+						'type' => 'row',
+						array(
+							'type' => 'info_box',
+							'icon' => $this->dir_url . 'css/images/image_overlay.svg',
+							'text' => sprintf(
+								// Translators: The HTML for opening and closing link tags.
+								__(
+									'The image overlay feature allows you to place an image on top of an asset. Learn more about %1$simage overlays%2$s and how to use them effectively.',
+									'cloudinary'
+								),
+								'<a href="https://cloudinary.com/documentation/layers#image_overlays" target="_blank" rel="noopener noreferrer">',
+								'</a>'
+							),
+						),
+					),
+					array(
+						'type' => 'row',
+						array(
+							'type'  => 'column',
+							'class' => array(
+								'edit-overlay-offset',
+							),
+							array(
+								'type'       => 'tag',
+								'element'    => 'a',
+								'content'    => __( 'Select Image', 'cloudinary' ),
+								'slug'       => 'image_overlay_image',
+								'attributes' => array(
+									'href'  => '#',
+									'class' => array(
+										'button',
+									),
+									'id'    => 'edit-overlay-select-image',
+								),
+							),
+							array(
+								'type'       => 'text',
+								'default'    => '',
+								'slug'       => 'image_overlay_image_id',
+								'attributes' => array(
+									'input' => array(
+										'type' => 'hidden',
+									),
+								),
+							),
+							array(
+								'type'       => 'text',
+								'default'    => '',
+								'slug'       => 'image_overlay_public_id',
+								'attributes' => array(
+									'input' => array(
+										'type' => 'hidden',
+									),
+								),
+							),
+							array(
+								'type'       => 'tag',
+								'element'    => 'div',
+								'attributes' => array(
+									'id' => 'edit-overlay-select-image-preview',
+								),
+							),
+						),
+						array(
+							'type'  => 'column',
+							'class' => array(
+								'edit-overlay-offset',
+							),
+							array(
+								'type'       => 'text',
+								'title'      => __( 'Size', 'cloudinary' ),
+								'default'    => 100,
+								'slug'       => 'image_overlay_size',
+								'suffix'     => '@value px',
+								'attributes' => array(
+									'min'   => 1,
+									'max'   => 1000,
+									'step'  => 1,
+									'type'  => 'range',
+									'class' => array(
+										'edit-overlay-range-input',
+									),
+								),
+							),
+							array(
+								'type'       => 'text',
+								'title'      => __( 'Opacity', 'cloudinary' ),
+								'default'    => 20,
+								'slug'       => 'image_overlay_opacity',
+								'suffix'     => '@value %',
+								'attributes' => array(
+									'min'   => 1,
+									'max'   => 100,
+									'step'  => 1,
+									'type'  => 'range',
+									'class' => array(
+										'edit-overlay-range-input',
+									),
+								),
+							),
+						),
+					),
+					array(
+						'type' => 'row',
+						array(
+							'type' => 'column',
+							array(
+								'type'       => 'text',
+								'title'      => __( 'Position', 'cloudinary' ),
+								'default'    => '',
+								'slug'       => 'image_overlay_position',
+								'attributes' => array(
+									'input' => array(
+										'type' => 'hidden',
+									),
+								),
+							),
+							array(
+								'type'       => 'tag',
+								'element'    => 'div',
+								'attributes' => array(
+									'data-grid-options' => wp_json_encode( Asset_Preview::get_grid_options() ),
+									'id'                => 'edit-overlay-grid-image',
+									'class'             => array(
+										'edit-overlay-grid',
+									),
+								),
+							),
+						),
+						array(
+							'type' => 'column',
+							array(
+								'type'    => 'number',
+								'title'   => __( 'X Offset', 'cloudinary' ),
+								'default' => 0,
+								'slug'    => 'image_overlay_x_offset',
+								'suffix'  => 'px',
+							),
+							array(
+								'type'    => 'number',
+								'title'   => __( 'Y Offset', 'cloudinary' ),
+								'default' => 0,
+								'slug'    => 'image_overlay_y_offset',
+								'suffix'  => 'px',
+							),
+						),
+					),
+					array(
+						'type' => 'row',
+						array(
+							'type'       => 'tag',
+							'element'    => 'a',
+							'content'    => __( 'Save Changes', 'cloudinary' ),
+							'attributes' => array(
+								'href'  => '#',
+								'id'    => 'cld-asset-save-image-overlay',
+								'class' => array(
+									'button',
+									'button-primary',
+									'cld-asset-edit-button',
+								),
+							),
+						),
+						array(
+							'type'       => 'tag',
+							'element'    => 'a',
+							'content'    => __( 'Reset All', 'cloudinary' ),
+							'attributes' => array(
+								'href'  => '#',
+								'id'    => 'cld-asset-remove-image-overlay',
+								'class' => array(
+									'button',
+									'button--remove',
+								),
+							),
+						),
+					),
+				),
+			),
+			array(
+				'type'  => 'column',
+				'class' => array(
+					'column-45',
+					'cld-ui-preview',
+					'asset-edit-preview',
+				),
+				array(
+					'type'  => 'panel',
+					'title' => __( 'Preview', 'cloudinary' ),
+					array(
+						'type'       => 'row',
+						'attributes' => array(
+							'wrap' => array(
+								'style' => 'display: flex; justify-content: center; align-items: center;',
+							),
+						),
+						array(
+							'type' => 'asset_preview',
+						),
+					),
+				),
+				array(
+					'type' => 'row',
+					array(
+						'type'       => 'panel',
+						'attributes' => array(
+							'wrap' => array(
+								'style' => 'width: 100%;',
+							),
+						),
+						array(
+							'type'       => 'tag',
+							'element'    => 'a',
+							'attributes' => array(
+								'id'     => 'asset-preview-transformation-string',
+								'href'   => '#',
+								'target' => '_blank',
+							),
+						),
+						array(
+							'type'       => 'tag',
+							'element'    => 'div',
+							'attributes' => array(
+								'id'    => 'asset-preview-success-message',
+								'style' => 'display: none;',
+							),
+							array(
+								'type'    => 'tag',
+								'element' => 'p',
+								'content' => __( 'Effects applied successfully!', 'cloudinary' ),
+							),
+						),
 					),
 				),
 			),

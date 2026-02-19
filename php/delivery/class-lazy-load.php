@@ -533,7 +533,7 @@ class Lazy_Load extends Delivery_Feature {
 								'type'    => 'lazyload_preview',
 								'title'   => __( 'Preview', 'cloudinary' ),
 								'slug'    => 'lazyload_preview',
-								'default' => CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE . 'w_600/sample.jpg',
+								'default' => CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE . 'w_600/leather_bag.jpg',
 							),
 						),
 					),

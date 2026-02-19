@@ -34,8 +34,9 @@ class Progress_Sync extends Progress_Ring {
 	protected function wrap( $struct ) {
 		$struct = parent::wrap( $struct );
 		if ( true === $this->setting->get_param( 'poll' ) ) {
-			$struct['attributes']['data-url']  = Utils::rest_url( REST_API::BASE . '/stats' );
-			$struct['attributes']['data-poll'] = true;
+			$struct['attributes']['data-url']   = Utils::rest_url( REST_API::BASE . '/stats' );
+			$struct['attributes']['data-poll']  = true;
+			$struct['attributes']['data-nonce'] = wp_create_nonce( REST_API::NONCE_KEY );
 		}
 
 		return $struct;

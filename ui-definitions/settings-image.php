@@ -208,25 +208,6 @@ $settings = array(
 						'description'        => __( 'Enable SVG support.', 'cloudinary' ),
 						'default'            => 'off',
 					),
-					array(
-						'type'    => 'crops',
-						'slug'    => 'crop_sizes',
-						'title'   => __( 'Crop and Gravity control (beta)', 'cloudinary' ),
-						'enabled' => static function () {
-							/**
-							 * Enable the Crop and Gravity control settings.
-							 *
-							 * @hook  cloudinary_enable_crop_and_gravity_control
-							 * @since 3.1.3
-							 * @default {false}
-							 *
-							 * @param $enabeld {bool} Is the Crop and Gravity control enabled?
-							 *
-							 * @retrun {bool}
-							 */
-							return apply_filters( 'cloudinary_enable_crop_and_gravity_control', false );
-						},
-					),
 				),
 			),
 			array(
@@ -243,13 +224,37 @@ $settings = array(
 					'type'           => 'image_preview',
 					'title'          => __( 'Preview', 'cloudinary' ),
 					'slug'           => 'image_preview',
-					'default'        => CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE . 'w_600/sample.jpg',
+					'default'        => CLOUDINARY_ENDPOINTS_PREVIEW_IMAGE . 'w_600/leather_bag.jpg',
 					'taxonomy_field' => array(
 						'context'  => 'image',
 						'priority' => 10,
 					),
 				),
 			),
+		),
+		array(
+			'type'       => 'crops',
+			'slug'       => 'crop_sizes',
+			'title'      => __( 'Crop and Gravity control (beta)', 'cloudinary' ),
+			'attributes' => array(
+				'wrap' => array(
+					'style' => 'max-width: 1000px;',
+				),
+			),
+			'enabled'    => static function () {
+				/**
+				 * Enable the Crop and Gravity control settings.
+				 *
+				 * @hook  cloudinary_enable_crop_and_gravity_control
+				 * @since 3.1.3
+				 * @default {false}
+				 *
+				 * @param $enabeld {bool} Is the Crop and Gravity control enabled?
+				 *
+				 * @retrun {bool}
+				 */
+				return apply_filters( 'cloudinary_enable_crop_and_gravity_control', true );
+			},
 		),
 		array(
 			'type'  => 'info_box',

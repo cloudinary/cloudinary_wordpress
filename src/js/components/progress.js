@@ -6,6 +6,7 @@ import { __ } from '@wordpress/i18n';
 
 const Progress = {
 	data: {},
+	nonce: '',
 	context: null,
 	init( context ) {
 		this.context = context;
@@ -25,6 +26,10 @@ const Progress = {
 				this.line( item );
 			} else if ( 'circle' === item.dataset.progress ) {
 				this.circle( item );
+			}
+
+			if ( ! this.nonce ) {
+				this.nonce = item.dataset?.nonce;
 			}
 		} );
 
@@ -143,6 +148,9 @@ const Progress = {
 		apiFetch( {
 			path: url,
 			method: 'GET',
+			headers: {
+				'X-WP-Nonce': this.nonce,
+			},
 		} ).then( ( result ) => {
 			this.data[ url ].items.forEach( ( item ) => {
 				if ( typeof result[ item.dataset.basetext ] !== 'undefined' ) {

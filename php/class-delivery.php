@@ -286,8 +286,10 @@ class Delivery implements Setup {
 			}
 
 			$original_url = $urls[ $result['public_id'] ];
-			if ( ! empty( $result['transformations'] ) ) {
-				$original_url = str_replace( $result['transformations'] . '/', '/', $original_url );
+			// Get merged transformations including overlays.
+			$merged_transformations = Relate::get_transformations( $result['post_id'], true );
+			if ( ! empty( $merged_transformations ) ) {
+				$original_url = str_replace( $merged_transformations . '/', '/', $original_url );
 			}
 			$size            = $this->media->get_size_from_url( $original_url );
 			$transformations = $this->media->get_transformations_from_string( $original_url );
@@ -427,8 +429,10 @@ class Delivery implements Setup {
 		$transformations = null;
 		// Preserve pre-existing transformations.
 		if ( $relationship instanceof Relationship ) {
-			$data            = $relationship->get_data();
-			$transformations = isset( $data['transformations'] ) ? $data['transformations'] : null;
+			$transformations = Relate::get_transformations( $attachment_id, true );
+			if ( empty( $transformations ) ) {
+				$transformations = null;
+			}
 		}
 		$this->delete_size_relationship( $attachment_id );
 		$size      = $this->get_sized( $attachment_id );
@@ -1076,7 +1080,9 @@ class Delivery implements Setup {
 
 			$base           = $type . ':' . $url;
 			$public_id      = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
-			$cloudinary_url = $this->media->cloudinary_url( $relation['post_id'], array(), $relation['transformations'], $public_id );
+			// Get merged transformations including overlays.
+			$merged_transformations = Relate::get_transformations( $relation['post_id'], true );
+			$cloudinary_url = $this->media->cloudinary_url( $relation['post_id'], array(), $merged_transformations, $public_id );
 			if ( empty( $cloudinary_url ) ) {
 				continue;
 			}
@@ -1099,6 +1105,8 @@ class Delivery implements Setup {
 			$base      = $type . ':' . $url;
 			$relation  = $this->known[ $url ];
 			$public_id = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
+			// Get merged transformations including overlays.
+			$merged_transformations = Relate::get_transformations( $relation['post_id'], true );
 			foreach ( $sizes as $size => $file_name ) {
 				$local_url = path_join( dirname( $base ), $file_name );
 				if ( isset( $cached[ $local_url ] ) ) {
@@ -1106,7 +1114,7 @@ class Delivery implements Setup {
 					continue;
 				}
 
-				$cloudinary_url = $this->media->cloudinary_url( $relation['post_id'], explode( 'x', $size ), $relation['transformations'], $public_id );
+				$cloudinary_url = $this->media->cloudinary_url( $relation['post_id'], explode( 'x', $size ), $merged_transformations, $public_id );
 				// The asset is not ready. Carry on.
 				if ( empty( $cloudinary_url ) ) {
 					continue;
@@ -1464,7 +1472,7 @@ class Delivery implements Setup {
 		 *
 		 * @retrun {bool}
 		 */
-		$enabled_crop_gravity     = apply_filters( 'cloudinary_enable_crop_and_gravity_control', false );
+		$enabled_crop_gravity     = apply_filters( 'cloudinary_enable_crop_and_gravity_control', true );
 		$has_sized_transformation = $enabled_crop_gravity && ! empty( $config['crop_sizes'] );
 
 		$tag_element = array(
@@ -1524,8 +1532,10 @@ class Delivery implements Setup {
 		$tag_element['context'] = $post_context;
 		if ( ! empty( $this->known[ $url ] ) && ! empty( $this->known[ $url ]['public_id'] ) ) {
 			$item = $this->known[ $url ];
-			if ( ! empty( $item['transformations'] ) ) {
-				$tag_element['transformations'] = $this->media->get_transformations_from_string( $item['transformations'], $tag_element['type'] );
+			// Get merged transformations including overlays.
+			$merged_transformations = Relate::get_transformations( $item['post_id'], true );
+			if ( ! empty( $merged_transformations ) ) {
+				$tag_element['transformations'] = $this->media->get_transformations_from_string( $merged_transformations, $tag_element['type'] );
 			}
 			// Get the public ID and append the extension if it's missing.
 			$public_id = $item['public_id'];
