@@ -64,7 +64,7 @@
     "@release-it/bumper": "^7.0.5",
     "@typescript-eslint/eslint-plugin": "^8.46.3",
     "@wordpress/api-fetch": "^7.34.0",
-    "@wordpress/block-editor": "^15.7.0",
+    "@wordpress/block-editor": "~15.12.0",
     "@wordpress/blocks": "^15.7.0",
     "@wordpress/browserslist-config": "^6.34.0",
     "@wordpress/components": "^30.7.0",
