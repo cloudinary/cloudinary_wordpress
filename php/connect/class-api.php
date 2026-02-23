@@ -112,6 +112,7 @@ class Api {
 			'e'   => 'effect',
 			'l'   => 'overlay',
 			'so'  => 'start_offset',
+			'co'  => 'color',
 			'eo'  => 'end_offset',
 			'du'  => 'duration',
 			'a'   => 'angle',
@@ -128,9 +129,11 @@ class Api {
 			'fl'  => 'flags',
 			'f'   => 'fetch_format',
 			'q'   => 'quality',
+			'r'   => 'radius',
+			'o'   => 'opacity',
 			'if'  => 'if',
-			'y' => 'y_axis',
-			'x' => 'x_axis',
+			'y'   => 'y_axis',
+			'x'   => 'x_axis',
 		),
 	);
 
@@ -186,7 +189,7 @@ class Api {
 	 *
 	 * @return string
 	 */
-	public function url( $resource, $function = null, $endpoint = false ) {
+	public function url( $resource, $function = null, $endpoint = false ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames
 		$parts = array();
 
 		if ( $endpoint ) {

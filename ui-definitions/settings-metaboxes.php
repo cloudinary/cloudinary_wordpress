@@ -16,7 +16,7 @@
  *
  * @retrun {bool}
  */
-if ( ! apply_filters( 'cloudinary_enable_crop_and_gravity_control', false ) ) {
+if ( ! apply_filters( 'cloudinary_enable_crop_and_gravity_control', true ) ) {
 	return array();
 }
 $metaboxes = array(

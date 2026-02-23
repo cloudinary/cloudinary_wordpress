@@ -14,6 +14,7 @@ use Cloudinary\Component\Setup;
 use Cloudinary\Delivery\Lazy_Load;
 use Cloudinary\Delivery\Responsive_Breakpoints;
 use Cloudinary\Assets as CLD_Assets;
+use Cloudinary\Integrations\Elementor;
 use Cloudinary\Integrations\WPML;
 use Cloudinary\Media\Gallery;
 use Cloudinary\Sync\Storage;
@@ -31,7 +32,7 @@ final class Plugin {
 	 *
 	 * @since   0.1
 	 *
-	 * @var     Admin|CLD_Assets|Connect|Dashboard|Deactivation|Delivery|Extensions|Gallery|Lazy_Load|Media|Meta_Box|Relate|Report|Responsive_Breakpoints|REST_API|State|Storage|SVG|Sync|URL[]|WPML|null
+	 * @var     Admin|CLD_Assets|Connect|Dashboard|Deactivation|Delivery|Extensions|Gallery|Lazy_Load|Media|Meta_Box|Relate|Report|Responsive_Breakpoints|REST_API|State|Storage|SVG|Sync|URL[]|WPML|Elementor|null
 	 */
 	public $components;
 	/**
@@ -136,6 +137,7 @@ final class Plugin {
 		$this->components['metabox']                = new Meta_Box( $this );
 		$this->components['url']                    = new URL( $this );
 		$this->components['wpml']                   = new WPML( $this );
+		$this->components['elementor']              = new Elementor( $this );
 		$this->components['special_offer']          = new Special_Offer( $this );
 	}
 
@@ -598,7 +600,7 @@ final class Plugin {
 	 *
 	 * @return void
 	 */
-	public function autoload( $class ) {
+	public function autoload( $class ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.classFound
 		// Assume we're using namespaces (because that's how the plugin is structured).
 		$namespace = explode( '\\', $class );
 		$root      = array_shift( $namespace );
@@ -719,7 +721,12 @@ final class Plugin {
 	 * Output script data if set.
 	 */
 	public function print_script_data() {
+		if ( ! isset( $this->settings ) || ! method_exists( $this->settings, 'get_param' ) ) {
+			return;
+		}
+
 		$handles = $this->settings->get_param( '@script' );
+
 		if ( ! empty( $handles ) ) {
 			foreach ( $handles as $handle => $data ) {
 				// We should never be using multiple handles. This is just for cases where data needs to be added where the main script is not loaded.
@@ -744,7 +751,7 @@ final class Plugin {
 	 *
 	 * @return array
 	 */
-	public function force_visit_plugin_site_link( $plugin_meta, $plugin_file, $plugin_data, $status ) {
+	public function force_visit_plugin_site_link( $plugin_meta, $plugin_file, $plugin_data, $status ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		if ( 'Cloudinary' === $plugin_data['Name'] ) {
 			$plugin_site_link = sprintf(
 				'<a href="%s">%s</a>',

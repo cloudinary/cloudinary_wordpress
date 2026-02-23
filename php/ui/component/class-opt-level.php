@@ -210,7 +210,7 @@ class Opt_Level extends Line_Stat {
 				}
 			}
 			if ( $meet_depends && 'on' === $this->plugin_settings->get_value( $slug ) ) {
-				$enabled ++;
+				++$enabled;
 			}
 		}
 

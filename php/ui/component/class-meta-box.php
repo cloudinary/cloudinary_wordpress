@@ -82,4 +82,3 @@ class Meta_Box extends Page {
 		return $inputs;
 	}
 }
-

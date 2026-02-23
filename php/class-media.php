@@ -1045,7 +1045,7 @@ class Media extends Settings_Component implements Setup {
 			 *
 			 * @retrun {bool}
 			 */
-			$enabled_crop_and_gravity = apply_filters( 'cloudinary_enable_crop_and_gravity_control', false );
+			$enabled_crop_and_gravity = apply_filters( 'cloudinary_enable_crop_and_gravity_control', true );
 
 			// Check for custom crop.
 			if ( is_numeric( $attachment_id ) && $enabled_crop_and_gravity ) {
@@ -1342,7 +1342,7 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @return array
 	 */
-	public function default_image_transformations( $default ) {
+	public function default_image_transformations( $default ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound
 
 		$config = $this->settings->get_value( 'image_settings' );
 
@@ -1367,7 +1367,7 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @return array
 	 */
-	public function default_image_freeform_transformations( $default ) {
+	public function default_image_freeform_transformations( $default ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound
 		$config = $this->settings->get_value( 'image_settings' );
 		if ( ! empty( $config['image_freeform'] ) ) {
 			$default[] = trim( $config['image_freeform'] );
@@ -1447,6 +1447,7 @@ class Media extends Settings_Component implements Setup {
 		if ( ! empty( $transformations ) && is_string( $transformations ) ) {
 			$transformations = $this->get_transformations_from_string( $transformations, $resource_type );
 		}
+
 		$pre_args['transformation'] = $this->get_transformations( $attachment_id, $transformations, $overwrite_transformations );
 
 		// Make a copy as not to destroy the options in \Cloudinary::cloudinary_url().
@@ -1470,6 +1471,8 @@ class Media extends Settings_Component implements Setup {
 		 * @return {string}
 		 */
 		$url = apply_filters( 'cloudinary_converted_url', $url, $attachment_id, $pre_args );
+
+
 
 		// Early bail for admin AJAX requests.
 		if ( defined( 'DOING_AJAX' ) && DOING_AJAX && is_admin() ) {
@@ -2025,7 +2028,7 @@ class Media extends Settings_Component implements Setup {
 		$test_parts = wp_parse_url( $url );
 		$cld_url    = wp_parse_url( $this->base_url, PHP_URL_HOST );
 
-		return isset( $test_parts['path'] ) && false !== strpos( $test_parts['host'], $cld_url );
+		return isset( $test_parts['path'], $test_parts['host'] ) && false !== strpos( $test_parts['host'], $cld_url );
 	}
 
 	/**
@@ -2329,8 +2332,7 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function down_sync_asset() {
 		$nonce = Utils::get_sanitized_text( 'nonce', INPUT_POST );
-		if ( wp_verify_nonce( $nonce, 'wp_rest' ) ) {
-
+		if ( is_user_logged_in() && wp_verify_nonce( $nonce, 'wp_rest' ) && current_user_can( 'upload_files' ) ) {
 			$asset = $this->get_asset_payload();
 			// Set a base array for pulling an asset if needed.
 			$base_return = array(
@@ -2606,7 +2608,7 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @return mixed
 	 */
-	public function get_post_meta( $post_id, $key = '', $single = false, $default = null ) {
+	public function get_post_meta( $post_id, $key = '', $single = false, $default = null ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound
 
 		$meta = get_post_meta( $post_id, Sync::META_KEYS['cloudinary'], true );
 		if ( empty( $meta ) ) {

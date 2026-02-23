@@ -13,8 +13,24 @@ wp_enqueue_script( 'cld-player' );
 
 wp_add_inline_script( 'cloudinary', 'var CLD_GLOBAL_TRANSFORMATIONS = CLD_GLOBAL_TRANSFORMATIONS ? CLD_GLOBAL_TRANSFORMATIONS : {};', 'before' );
 
-$tax_slug   = Utils::get_sanitized_text( 'taxonomy' );
-$tax_labels = get_taxonomy_labels( get_taxonomy( $tax_slug ) );
+$tax_slug = Utils::get_sanitized_text( 'taxonomy' );
+
+if ( empty( $tax_slug ) ) {
+	return;
+}
+
+$current_taxonomy = get_taxonomy( $tax_slug );
+
+if ( ! $current_taxonomy instanceof WP_Taxonomy ) {
+	return;
+}
+
+$tax_labels = get_taxonomy_labels( $current_taxonomy );
+
+if ( empty( $tax_labels ) ) {
+	return;
+}
+
 $cloudinary = get_plugin_instance();
 ?>
 <div class="cloudinary-collapsible">

@@ -216,4 +216,3 @@ class Panel extends Component {
 		return $struct;
 	}
 }
-

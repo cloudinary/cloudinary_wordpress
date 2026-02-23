@@ -359,5 +359,4 @@ class Branch {
 
 		return $ids;
 	}
-
 }

@@ -7,10 +7,10 @@
 
 namespace Cloudinary\UI\Component;
 
-use function Cloudinary\get_plugin_instance;
 use Cloudinary\UI\Component;
 use Cloudinary\Settings\Setting;
 use Cloudinary\Connect;
+use function Cloudinary\get_plugin_instance;
 
 /**
  * Plan Component to render plan status.

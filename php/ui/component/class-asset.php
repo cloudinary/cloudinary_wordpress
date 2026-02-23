@@ -11,8 +11,8 @@ use Cloudinary\REST_API;
 use Cloudinary\Assets;
 use Cloudinary\UI\Component;
 use Cloudinary\Utils;
-use function Cloudinary\get_plugin_instance;
 use Cloudinary\Settings\Setting;
+use function Cloudinary\get_plugin_instance;
 
 /**
  * HTML Component to render components only.
@@ -137,8 +137,8 @@ class Asset extends Panel {
 		$item_container['children']['row'] = $row;
 
 		// Content Row.
-		$row                                                   = $this->get_part( 'tr' );
-		$row['children']['assets']                             = $this->get_part( 'td' );
+		$row                       = $this->get_part( 'tr' );
+		$row['children']['assets'] = $this->get_part( 'td' );
 		$row['children']['assets']['attributes']['id']         = $item->get_slug() . '.viewer';
 		$row['children']['assets']['attributes']['data-state'] = $state;
 		$row['children']['assets']['attributes']['class']      = array(
@@ -216,11 +216,11 @@ class Asset extends Panel {
 		$header_search['children']['search_input']  = $search_box;
 		$header_search['children']['search_button'] = $search_button;
 
-		$header_row['children']['search']                      = $header_search;
-		$header_row['children']['action']                      = $this->get_part( 'th' );
-		$apply                                                 = $this->get_part( 'button' );
-		$apply['content']                                      = __( 'Apply Changes', 'cloudinary' );
-		$apply['attributes']                                   = array(
+		$header_row['children']['search'] = $header_search;
+		$header_row['children']['action'] = $this->get_part( 'th' );
+		$apply                            = $this->get_part( 'button' );
+		$apply['content']                 = __( 'Apply Changes', 'cloudinary' );
+		$apply['attributes']              = array(
 			'id'           => 'apply_' . $slug,
 			'data-changes' => array(),
 			'class'        => array(
@@ -231,7 +231,7 @@ class Asset extends Panel {
 				'float: right; margin-left: 6px;',
 			),
 		);
-		$apply['render']                                       = true;
+		$apply['render']                  = true;
 		$header_row['children']['action']['children']['apply'] = $apply;
 		$header['children']['row']                             = $header_row;
 		$manager['children']['header']                         = $header;

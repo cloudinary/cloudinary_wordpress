@@ -778,7 +778,7 @@ class Filter {
 	 *
 	 * @return bool
 	 */
-	public function edit_match_src( $match, $image_location, $image_meta, $attachment_id ) {
+	public function edit_match_src( $match, $image_location, $image_meta, $attachment_id ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.matchFound
 		if ( $this->media->is_cloudinary_url( $image_location ) ) {
 			$test_id   = $this->media->get_public_id_from_url( $image_location );
 			$public_id = $this->media->get_public_id( $attachment_id );

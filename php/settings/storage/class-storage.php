@@ -115,5 +115,4 @@ abstract class Storage {
 	 * @return bool
 	 */
 	abstract public function save( $slug );
-
 }

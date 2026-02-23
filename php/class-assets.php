@@ -117,6 +117,7 @@ class Assets extends Settings_Component {
 	 */
 	public function __construct( Plugin $plugin ) {
 		parent::__construct( $plugin );
+		$this->should_sanitize_slugs = true;
 
 		$this->media    = $plugin->get_component( 'media' );
 		$this->delivery = $plugin->get_component( 'delivery' );
@@ -269,7 +270,30 @@ class Assets extends Settings_Component {
 			$can = false;
 		}
 
+		// If the asset is set to a 'disable' state, we do not allow syncing.
+		if ( $can && self::is_asset_type( $asset_id ) && $this->is_disable_state( $asset_id ) ) {
+			$can = false;
+		}
+
 		return $can;
+	}
+
+	/**
+	 * Verify if the asset is set to a 'disable' state.
+	 *
+	 * @param int $asset_id The asset ID to check.
+	 *
+	 * @return bool
+	 */
+	protected function is_disable_state( $asset_id ) {
+		global $wpdb;
+
+		$wpdb->cld_table = Utils::get_relationship_table();
+		$media_context   = Utils::get_media_context( $asset_id );
+		$prepare         = $wpdb->prepare( "SELECT `post_state` FROM $wpdb->cld_table WHERE post_id = %d AND media_context = %s;", (int) $asset_id, $media_context ); // phpcs:ignore WordPress.DB.PreparedSQL
+		$state           = $wpdb->get_var( $prepare ); // phpcs:ignore WordPress.DB
+
+		return 'disable' === $state;
 	}
 
 	/**
@@ -462,16 +486,35 @@ class Assets extends Settings_Component {
 				}
 			}
 		}
-
 		// Get the disabled items.
 		foreach ( $this->asset_parents as $url => $parent ) {
 			if ( isset( $this->active_parents[ $url ] ) ) {
 				continue;
 			}
+
+			if ( ! $this->is_post_cloudinary_asset( $parent->ID ) ) {
+				continue;
+			}
+
 			$this->purge_parent( $parent->ID );
 			// Remove parent.
 			wp_delete_post( $parent->ID );
 		}
+	}
+
+	/**
+	 * Check if a post is a Cloudinary asset.
+	 *
+	 * @param int $post_id The post ID to check.
+	 *
+	 * @return bool
+	 */
+	public function is_post_cloudinary_asset( $post_id ) {
+		if ( get_post_type( $post_id ) === self::POST_TYPE_SLUG ) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -537,6 +580,10 @@ class Assets extends Settings_Component {
 	 * @param callable $callback  The callback function to execute on each post.
 	 */
 	private function process_parent_assets( $parent_id, $callback ) {
+		if ( ! $this->is_post_cloudinary_asset( $parent_id ) ) {
+			return;
+		}
+
 		$query_args     = array(
 			'post_type'              => self::POST_TYPE_SLUG,
 			'posts_per_page'         => 100,
@@ -594,6 +641,10 @@ class Assets extends Settings_Component {
 		$this->process_parent_assets(
 			$parent_id,
 			function ( $post_id ) {
+				if ( ! $this->is_post_cloudinary_asset( $post_id ) ) {
+					return;
+				}
+
 				wp_delete_post( $post_id );
 			}
 		);
@@ -1164,6 +1215,8 @@ class Assets extends Settings_Component {
 			'file'            => ! empty( $parts[1] ) ? $parts[1] : wp_basename( $item['sized_url'] ),
 			'size'            => $break,
 			'transformations' => $item['transformations'] ? $item['transformations'] : null,
+			'text_overlay'    => $item['text_overlay'] ? $item['text_overlay'] : null,
+			'image_overlay'   => $item['image_overlay'] ? $item['image_overlay'] : null,
 			'edit_url'        => admin_url( add_query_arg( $args, 'admin.php' ) ),
 		);
 
@@ -1349,7 +1402,7 @@ class Assets extends Settings_Component {
 		global $wpdb;
 
 		// Bail early if it's not an URL.
-		if ( empty( parse_url( $url, PHP_URL_HOST ) ) ) {
+		if ( empty( parse_url( $url, PHP_URL_HOST ) ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url
 			return false;
 		}
 

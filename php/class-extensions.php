@@ -115,7 +115,7 @@ class Extensions extends Settings_Component implements Setup {
 		$active = 0;
 		foreach ( $this->settings->get_value( $this->settings_slug ) as $value ) {
 			if ( 'on' === $value ) {
-				$active ++;
+				++$active;
 			}
 		}
 

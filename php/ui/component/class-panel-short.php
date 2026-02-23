@@ -13,4 +13,3 @@ namespace Cloudinary\UI\Component;
  * @package Cloudinary\UI
  */
 class Panel_Short extends Panel {}
-

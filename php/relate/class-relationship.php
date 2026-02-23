@@ -19,6 +19,8 @@ use function Cloudinary\get_plugin_instance;
  * @property string|null $public_id
  * @property string|null $signature
  * @property string|null $transformations
+ * @property string|null $text_overlay
+ * @property string|null $image_overlay
  * @property string|null $sized_url
  * @property string|null $media_context
  */
@@ -213,7 +215,7 @@ class Relationship {
 	public function delete() {
 		global $wpdb;
 		$table_name = Utils::get_relationship_table();
-		$wpdb->delete(
+		$wpdb->delete( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			$table_name,
 			array(
 				'post_id'       => $this->post_id,

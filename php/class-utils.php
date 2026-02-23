@@ -258,7 +258,7 @@ class Utils {
 		$capability = apply_filters( 'cloudinary_task_capability', $capability, $task, $context, ...$args );
 		// phpcs:enable WordPress.WhiteSpace.DisallowInlineTabs.NonIndentTabsUsed
 
-		return current_user_can( $capability, ...$args );
+		return current_user_can( $capability, ...$args ); // phpcs:ignore WordPress.WP.Capabilities.Undetermined
 	}
 
 	/**
@@ -296,6 +296,8 @@ class Utils {
 	  sync_type varchar(45) DEFAULT NULL,
 	  post_state varchar(12) DEFAULT NULL,
 	  transformations text DEFAULT NULL,
+	  text_overlay text DEFAULT NULL,
+	  image_overlay text DEFAULT NULL,
 	  signature varchar(45) DEFAULT NULL,
 	  public_hash varchar(45) DEFAULT NULL,
 	  url_hash varchar(45) DEFAULT NULL,
@@ -366,13 +368,17 @@ class Utils {
 	protected static function get_upgrade_sequence() {
 		$upgrade_sequence = array();
 		$sequences        = array(
-			'3.0.0' => array(
+			'3.0.0'  => array(
 				'range'  => array( '3.0.0' ),
 				'method' => array( 'Cloudinary\Utils', 'upgrade_3_0_1' ),
 			),
-			'3.1.9' => array(
+			'3.1.9'  => array(
 				'range'  => array( '3.0.1', '3.1.9' ),
 				'method' => array( 'Cloudinary\Utils', 'upgrade_3_1_9' ),
+			),
+			'3.3.0' => array(
+				'range'  => array( '3.1.9', '3.3.0' ),
+				'method' => array( 'Cloudinary\Utils', 'upgrade_3_3_0' ),
 			),
 
 		);
@@ -444,6 +450,43 @@ class Utils {
 		// Update indexes.
 		$wpdb->query( "ALTER TABLE {$tablename} DROP INDEX url_hash" ); // phpcs:ignore WordPress.DB
 		$wpdb->query( "ALTER TABLE {$tablename} ADD UNIQUE INDEX media (url_hash, media_context)" ); // phpcs:ignore WordPress.DB
+
+		// Set DB Version.
+		update_option( Sync::META_KEYS['db_version'], get_plugin_instance()->version );
+	}
+
+	/**
+	 * Upgrade DB from v3.1.9 to v3.2.15.
+	 * Adds columns for overlay data.
+	 */
+	public static function upgrade_3_3_0() {
+		global $wpdb;
+		$tablename = self::get_relationship_table();
+
+		// Add new columns for overlays.
+		$wpdb->query( "ALTER TABLE {$tablename} ADD COLUMN `text_overlay` TEXT DEFAULT NULL AFTER `transformations`" ); // phpcs:ignore WordPress.DB
+		$wpdb->query( "ALTER TABLE {$tablename} ADD COLUMN `image_overlay` TEXT DEFAULT NULL AFTER `text_overlay`" ); // phpcs:ignore WordPress.DB
+
+		// Update sample.jpg to leather_bag.jpg in media_display settings.
+		$media_display = get_option( 'cloudinary_media_display', array() );
+
+		if ( ! empty( $media_display ) && is_array( $media_display ) ) {
+			$updated = false;
+			$fields  = array( 'image_preview', 'lazyload_preview', 'breakpoints_preview' );
+
+			foreach ( $fields as $field ) {
+				if ( isset( $media_display[ $field ] ) && is_string( $media_display[ $field ] ) ) {
+					if ( false !== strpos( $media_display[ $field ], 'sample.jpg' ) ) {
+						$media_display[ $field ] = str_replace( 'sample.jpg', 'leather_bag.jpg', $media_display[ $field ] );
+						$updated                 = true;
+					}
+				}
+			}
+
+			if ( $updated ) {
+				update_option( 'cloudinary_media_display', $media_display );
+			}
+		}
 
 		// Set DB Version.
 		update_option( Sync::META_KEYS['db_version'], get_plugin_instance()->version );
@@ -620,6 +663,9 @@ class Utils {
 	 * @return array
 	 */
 	public static function extract_urls( $content ) {
+		// Remove inline SVG data URIs, as they can cause parsing issues when extracting URLs.
+		$content = self::strip_inline_svg_data_uris( $content );
+
 		preg_match_all(
 			"#([\"']?)("
 				. '(?:[\w-]+:)?//?'
@@ -641,6 +687,25 @@ class Utils {
 
 		return array_values( $post_links );
 	}
+
+	/**
+	 * Strip inline SVG data URIs from content.
+	 *
+	 * @param string $content The content to process.
+	 *
+	 * @return string The content with SVG data URIs removed.
+	 */
+	public static function strip_inline_svg_data_uris( $content ) {
+		// Pattern to match the data URI structure: data:image/svg+xml;base64,<base64-encoded-data>.
+		$svg_data_uri_pattern = '/data:image\/svg\+xml;base64,[a-zA-Z0-9\/\+\=]+/i';
+
+		// Remove all occurrences of SVG data URIs from the content.
+		$cleaned_content = preg_replace( $svg_data_uri_pattern, '', $content );
+
+		// In case an error occurred, we return the original content to avoid data loss.
+		return is_null( $cleaned_content ) ? $content : $cleaned_content;
+	}
+
 
 	/**
 	 * Is saving metadata.
@@ -758,7 +823,7 @@ class Utils {
 	public static function purge_fragment( $index ) {
 		if ( isset( self::$file_fragments[ $index ] ) ) {
 			fclose( self::$file_fragments[ $index ]['pointer'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fclose
-			unlink( self::$file_fragments[ $index ]['file'] );
+			unlink( self::$file_fragments[ $index ]['file'] ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_unlink
 		}
 	}
 
@@ -1009,19 +1074,16 @@ class Utils {
 	 * @return array
 	 */
 	public static function query_relations( $public_ids, $urls = array() ) {
-		global $wpdb;
-
-		$wheres          = array();
-		$searched_things = array();
+		$chunk_size = 25;
+		$results    = array();
+		$tablename  = self::get_relationship_table();
 
 		/**
 		 * Filter the media context query.
 		 *
 		 * @hook   cloudinary_media_context_query
 		 * @since  3.2.0
-		 *
 		 * @param $media_context_query {string} The default media context query.
-		 *
 		 * @return {string}
 		 */
 		$media_context_query = apply_filters( 'cloudinary_media_context_query', 'media_context = %s' );
@@ -1031,43 +1093,60 @@ class Utils {
 		 *
 		 * @hook   cloudinary_media_context_things
 		 * @since  3.2.0
-		 *
 		 * @param $media_context_things {array} The default media context things.
-		 *
 		 * @return {array}
 		 */
 		$media_context_things = apply_filters( 'cloudinary_media_context_things', array( 'default' ) );
 
+		// Query for urls in chunks.
 		if ( ! empty( $urls ) ) {
-			// Do the URLS.
-			$list            = implode( ', ', array_fill( 0, count( $urls ), '%s' ) );
-			$where           = "(url_hash IN( {$list} ) AND {$media_context_query} )";
-			$searched_things = array_merge( $searched_things, array_map( 'md5', $urls ), $media_context_things );
-			$wheres[]        = $where;
+			$results = array_merge( $results, self::run_chunked_query( 'url_hash', $urls, $chunk_size, $tablename, $media_context_query, $media_context_things ) );
 		}
+		// Query for public_ids in chunks.
 		if ( ! empty( $public_ids ) ) {
-			// Do the public_ids.
-			$list            = implode( ', ', array_fill( 0, count( $public_ids ), '%s' ) );
-			$where           = "(public_hash IN( {$list} ) AND {$media_context_query} )";
-			$searched_things = array_merge( $searched_things, array_map( 'md5', $public_ids ), $media_context_things );
-			$wheres[]        = $where;
-		}
-
-		$results = array();
-
-		if ( ! empty( array_filter( $wheres ) ) ) {
-			$tablename = self::get_relationship_table();
-			$sql       = "SELECT * from {$tablename} WHERE " . implode( ' OR ', $wheres );
-			$prepared  = $wpdb->prepare( $sql, $searched_things ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			$cache_key = md5( $prepared );
-			$results   = wp_cache_get( $cache_key, 'cld_delivery' );
-			if ( empty( $results ) ) {
-				$results = $wpdb->get_results( $prepared, ARRAY_A );// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
-				wp_cache_add( $cache_key, $results, 'cld_delivery' );
-			}
+			$results = array_merge( $results, self::run_chunked_query( 'public_hash', $public_ids, $chunk_size, $tablename, $media_context_query, $media_context_things ) );
 		}
 
 		return $results;
+	}
+	/**
+	 * Run a chunked query and merge results.
+	 *
+	 * @param string $field The DB field to query (url_hash or public_hash).
+	 * @param array  $items The items to query.
+	 * @param int    $chunk_size Number of items per chunk.
+	 * @param string $tablename The table name.
+	 * @param string $media_context_query The media context SQL.
+	 * @param array  $media_context_things The media context values.
+	 * @return array
+	 */
+	protected static function run_chunked_query( $field, $items, $chunk_size, $tablename, $media_context_query, $media_context_things ) {
+		global $wpdb;
+
+		$all_results = array();
+		$chunks      = array_chunk( $items, $chunk_size );
+
+		foreach ( $chunks as $chunk ) {
+			$list            = implode( ', ', array_fill( 0, count( $chunk ), '%s' ) );
+			$where           = "({$field} IN( {$list} ) AND {$media_context_query} )";
+			$searched_things = array_merge( array_map( 'md5', $chunk ), $media_context_things );
+			$sql             = "SELECT * from {$tablename} WHERE {$where}";
+			$prepared        = $wpdb->prepare( $sql, $searched_things ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$cache_key       = md5( $prepared );
+			$chunk_results   = wp_cache_get( $cache_key, 'cld_delivery' );
+
+			if ( empty( $chunk_results ) ) {
+				$chunk_results = $wpdb->get_results( $prepared, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
+
+				wp_cache_add( $cache_key, $chunk_results, 'cld_delivery' );
+			}
+
+			if ( ! empty( $chunk_results ) ) {
+				$all_results = array_merge( $all_results, $chunk_results );
+			}
+		}
+
+		return $all_results;
 	}
 
 	/**
@@ -1300,5 +1379,213 @@ class Utils {
 		}
 
 		return $transformations_title;
+	}
+
+	/**
+	 * Get inline SVG content safely.
+	 *
+	 * @param string $file_path The absolute or relative path to the SVG file.
+	 * @param bool   $echo      Whether to echo the SVG content or return it. Default true.
+	 *
+	 * @return string|void The SVG content if $echo is false, void otherwise.
+	 */
+	public static function get_inline_svg( $file_path, $echo = true ) {
+		// If relative path, make it absolute from plugin root.
+		if ( ! file_exists( $file_path ) ) {
+			$plugin_dir = dirname( __DIR__ );
+			$file_path  = $plugin_dir . '/' . ltrim( $file_path, '/' );
+		}
+
+		// Check if file exists and is an SVG.
+		if ( ! file_exists( $file_path ) || 'svg' !== pathinfo( $file_path, PATHINFO_EXTENSION ) ) {
+			return '';
+		}
+
+		// Get the SVG content.
+		$svg_content = file_get_contents( $file_path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+
+		if ( false === $svg_content ) {
+			return '';
+		}
+
+		// Sanitize SVG content to prevent XSS attacks.
+		$svg_content = self::sanitize_svg( $svg_content );
+
+		if ( $echo ) {
+			echo $svg_content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Sanitized by sanitize_svg.
+		} else {
+			return $svg_content;
+		}
+	}
+
+	/**
+	 * Sanitize SVG content to prevent XSS attacks.
+	 *
+	 * @param string $svg_content The SVG content to sanitize.
+	 *
+	 * @return string The sanitized SVG content.
+	 */
+	public static function sanitize_svg( $svg_content ) {
+		// Define allowed SVG tags and attributes.
+		$allowed_tags = array(
+			'svg'            => array(
+				'class'           => true,
+				'aria-hidden'     => true,
+				'aria-labelledby' => true,
+				'role'            => true,
+				'xmlns'           => true,
+				'width'           => true,
+				'height'          => true,
+				'viewbox'         => true,
+				'fill'            => true,
+				'stroke'          => true,
+			),
+			'g'              => array(
+				'fill'      => true,
+				'stroke'    => true,
+				'transform' => true,
+				'class'     => true,
+			),
+			'title'          => array( 'title' => true ),
+			'desc'           => array(),
+			'path'           => array(
+				'd'               => true,
+				'fill'            => true,
+				'stroke'          => true,
+				'stroke-width'    => true,
+				'stroke-linecap'  => true,
+				'stroke-linejoin' => true,
+				'transform'       => true,
+				'class'           => true,
+			),
+			'rect'           => array(
+				'x'            => true,
+				'y'            => true,
+				'width'        => true,
+				'height'       => true,
+				'rx'           => true,
+				'ry'           => true,
+				'fill'         => true,
+				'stroke'       => true,
+				'stroke-width' => true,
+				'transform'    => true,
+				'class'        => true,
+			),
+			'circle'         => array(
+				'cx'           => true,
+				'cy'           => true,
+				'r'            => true,
+				'fill'         => true,
+				'stroke'       => true,
+				'stroke-width' => true,
+				'transform'    => true,
+				'class'        => true,
+			),
+			'ellipse'        => array(
+				'cx'           => true,
+				'cy'           => true,
+				'rx'           => true,
+				'ry'           => true,
+				'fill'         => true,
+				'stroke'       => true,
+				'stroke-width' => true,
+				'transform'    => true,
+				'class'        => true,
+			),
+			'line'           => array(
+				'x1'           => true,
+				'y1'           => true,
+				'x2'           => true,
+				'y2'           => true,
+				'stroke'       => true,
+				'stroke-width' => true,
+				'transform'    => true,
+				'class'        => true,
+			),
+			'polyline'       => array(
+				'points'       => true,
+				'fill'         => true,
+				'stroke'       => true,
+				'stroke-width' => true,
+				'transform'    => true,
+				'class'        => true,
+			),
+			'polygon'        => array(
+				'points'       => true,
+				'fill'         => true,
+				'stroke'       => true,
+				'stroke-width' => true,
+				'transform'    => true,
+				'class'        => true,
+			),
+			'defs'           => array(),
+			'lineargradient' => array(
+				'id'            => true,
+				'x1'            => true,
+				'y1'            => true,
+				'x2'            => true,
+				'y2'            => true,
+				'gradientunits' => true,
+			),
+			'radialgradient' => array(
+				'id'            => true,
+				'cx'            => true,
+				'cy'            => true,
+				'r'             => true,
+				'gradientunits' => true,
+			),
+			'stop'           => array(
+				'offset'       => true,
+				'stop-color'   => true,
+				'stop-opacity' => true,
+			),
+			'use'            => array(
+				'xlink:href' => true,
+				'href'       => true,
+			),
+			'clippath'       => array( 'id' => true ),
+			'mask'           => array( 'id' => true ),
+			'pattern'        => array(
+				'id'           => true,
+				'x'            => true,
+				'y'            => true,
+				'width'        => true,
+				'height'       => true,
+				'patternunits' => true,
+			),
+			'text'           => array(
+				'x'           => true,
+				'y'           => true,
+				'fill'        => true,
+				'font-size'   => true,
+				'font-family' => true,
+				'text-anchor' => true,
+				'transform'   => true,
+				'class'       => true,
+			),
+			'tspan'          => array(
+				'x'           => true,
+				'y'           => true,
+				'fill'        => true,
+				'font-size'   => true,
+				'font-family' => true,
+				'class'       => true,
+			),
+		);
+
+		/**
+		 * Filter the allowed SVG tags and attributes.
+		 *
+		 * @hook   cloudinary_allowed_svg_tags
+		 * @since  3.2.15
+		 *
+		 * @param $allowed_tags {array} The allowed SVG tags and their attributes.
+		 *
+		 * @return {array}
+		 */
+		$allowed_tags = apply_filters( 'cloudinary_allowed_svg_tags', $allowed_tags );
+
+		// Use wp_kses to sanitize the SVG content.
+		return wp_kses( $svg_content, $allowed_tags );
 	}
 }

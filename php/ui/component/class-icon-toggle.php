@@ -31,5 +31,4 @@ class Icon_Toggle extends On_Off {
 
 		return $struct;
 	}
-
 }

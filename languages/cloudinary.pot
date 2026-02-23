@@ -1,14 +1,14 @@
-# Copyright (C) 2025 Cloudinary Ltd., XWP
+# Copyright (C) 2026 Cloudinary Ltd., XWP
 # This file is distributed under the GPLv2+.
 msgid ""
 msgstr ""
 "Project-Id-Version: Cloudinary STABLETAG\n"
 "Report-Msgid-Bugs-To: https://github.com/cloudinary/cloudinary_wordpress\n"
-"POT-Creation-Date: 2025-08-06 09:40:15+00:00\n"
+"POT-Creation-Date: 2026-02-12 14:31:19+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2025-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: en\n"
@@ -22,7 +22,7 @@ msgstr ""
 "X-Poedit-SearchPath-0: .\n"
 "X-Poedit-Bookmarks: \n"
 "X-Textdomain-Support: yes\n"
-"X-Generator: grunt-wp-i18n 1.0.3\n"
+"X-Generator: grunt-wp-i18n 1.0.4\n"
 
 #: cloudinary.php:63
 msgid ""
@@ -38,226 +38,226 @@ msgstr ""
 msgid "The state to update."
 msgstr ""
 
-#: php/assets/class-rest-assets.php:121
-msgid "Some transformations were invalid and were removed."
+#: php/assets/class-rest-assets.php:173
+msgid "There are incorrect transformations, please set correct ones."
 msgstr ""
 
-#: php/assets/class-rest-assets.php:333 php/assets/class-rest-assets.php:361
-#: php/cache/class-cache-point.php:601
+#: php/assets/class-rest-assets.php:385 php/assets/class-rest-assets.php:413
+#: php/cache/class-cache-point.php:600
 msgid "No items cached."
 msgstr ""
 
-#: php/assets/class-rest-assets.php:345 php/cache/class-cache-point.php:585
+#: php/assets/class-rest-assets.php:397 php/cache/class-cache-point.php:584
 #. translators: The current page and total pages.
 msgid "Page %1$d of %2$d"
 msgstr ""
 
-#: php/assets/class-rest-assets.php:348 php/cache/class-cache-point.php:588
+#: php/assets/class-rest-assets.php:400 php/cache/class-cache-point.php:587
 #. translators: The number of files.
 msgid "%d cached file"
 msgid_plural "%d cached files"
 msgstr[0] ""
 msgstr[1] ""
 
-#: php/assets/class-rest-assets.php:359 php/cache/class-cache-point.php:599
+#: php/assets/class-rest-assets.php:411 php/cache/class-cache-point.php:598
 msgid "No items found."
 msgstr ""
 
-#: php/cache/class-cache-point.php:962 php/class-assets.php:1239
+#: php/cache/class-cache-point.php:961 php/class-assets.php:1292
 msgid "Cloudinary Asset"
 msgstr ""
 
-#: php/cache/class-cache-point.php:963 php/class-assets.php:1240
+#: php/cache/class-cache-point.php:962 php/class-assets.php:1293
 msgid "Post type to represent a non-media library asset."
 msgstr ""
 
-#: php/class-admin.php:454
+#: php/class-admin.php:457
 msgid "Settings updated successfully"
 msgstr ""
 
-#: php/class-admin.php:457
+#: php/class-admin.php:460
 msgid "No changes to save"
 msgstr ""
 
-#: php/class-assets.php:240
+#: php/class-assets.php:241
 msgid "Disable Cloudinary status"
 msgstr ""
 
-#: php/class-assets.php:242
+#: php/class-assets.php:243
 msgid "Enable Cloudinary status"
 msgstr ""
 
-#: php/class-assets.php:794
+#: php/class-assets.php:845
 msgid "Caching"
 msgstr ""
 
-#: php/class-assets.php:805
+#: php/class-assets.php:856
 msgid "Creating shadow assets"
 msgstr ""
 
-#: php/class-assets.php:816
+#: php/class-assets.php:867
 msgid "Updating asset storage"
 msgstr ""
 
-#: php/class-assets.php:1283
+#: php/class-assets.php:1336
 msgid "Additional Asset Sync Settings"
 msgstr ""
 
-#: php/class-assets.php:1303
+#: php/class-assets.php:1356
 msgid "Additional asset sync settings"
 msgstr ""
 
-#: php/class-assets.php:1304
+#: php/class-assets.php:1357
 msgid ""
 "Enabling additional asset syncing will sync the toggled assets with "
 "Cloudinary to make use of advanced optimization and CDN delivery "
 "functionality."
 msgstr ""
 
-#: php/class-assets.php:1305
+#: php/class-assets.php:1358
 msgid "Enable additional asset syncing"
 msgstr ""
 
-#: php/class-assets.php:1344
+#: php/class-assets.php:1397
 msgid "External Asset Sync Settings"
 msgstr ""
 
-#: php/class-assets.php:1393 php/class-cache.php:615
+#: php/class-assets.php:1446 php/class-cache.php:617
 msgid "Plugin"
 msgstr ""
 
-#: php/class-assets.php:1429 php/class-cache.php:792
+#: php/class-assets.php:1482 php/class-cache.php:793
 msgid "Plugins"
 msgstr ""
 
-#: php/class-assets.php:1447 php/class-cache.php:809
+#: php/class-assets.php:1500 php/class-cache.php:810
 msgid "Deliver assets from all plugin folders"
 msgstr ""
 
-#: php/class-assets.php:1479 php/class-cache.php:652
+#: php/class-assets.php:1532 php/class-cache.php:653
 msgid "Theme"
 msgstr ""
 
-#: php/class-assets.php:1511 php/class-cache.php:843
+#: php/class-assets.php:1564 php/class-cache.php:844
 msgid "Themes"
 msgstr ""
 
-#: php/class-assets.php:1529 php/class-cache.php:860
+#: php/class-assets.php:1582 php/class-cache.php:861
 msgid "Deliver all assets from active theme."
 msgstr ""
 
-#: php/class-assets.php:1554 php/class-assets.php:1589 php/class-cache.php:684
-#: php/class-cache.php:895
+#: php/class-assets.php:1607 php/class-assets.php:1642 php/class-cache.php:685
+#: php/class-cache.php:896
 msgid "WordPress"
 msgstr ""
 
-#: php/class-assets.php:1563 php/class-cache.php:668
+#: php/class-assets.php:1616 php/class-cache.php:669
 msgid "WordPress Admin"
 msgstr ""
 
-#: php/class-assets.php:1570 php/class-cache.php:675
+#: php/class-assets.php:1623 php/class-cache.php:676
 msgid "WordPress Includes"
 msgstr ""
 
-#: php/class-assets.php:1607 php/class-cache.php:912
+#: php/class-assets.php:1660 php/class-cache.php:913
 msgid "Deliver all assets from WordPress core."
 msgstr ""
 
-#: php/class-assets.php:1633 php/class-assets.php:1659 php/class-cache.php:708
-#: php/class-cache.php:947
+#: php/class-assets.php:1686 php/class-assets.php:1712 php/class-cache.php:709
+#: php/class-cache.php:948
 msgid "Content"
 msgstr ""
 
-#: php/class-assets.php:1640 php/class-cache.php:699
+#: php/class-assets.php:1693 php/class-cache.php:700
 msgid "Uploads"
 msgstr ""
 
-#: php/class-assets.php:1677 php/class-cache.php:964
+#: php/class-assets.php:1730 php/class-cache.php:965
 msgid "Deliver all content assets from WordPress Media Library."
 msgstr ""
 
-#: php/class-assets.php:1701
+#: php/class-assets.php:1754
 msgid "Enable external assets"
 msgstr ""
 
-#: php/class-assets.php:1702
+#: php/class-assets.php:1755
 msgid ""
 "Enabling external assets allows you to sync assets from specific external "
 "sources with Cloudinary."
 msgstr ""
 
-#: php/class-assets.php:1712
+#: php/class-assets.php:1765
 msgid "Domains for each external source."
 msgstr ""
 
-#: php/class-assets.php:1715
+#: php/class-assets.php:1768
 msgid "Enter a domain"
 msgstr ""
 
-#: php/class-assets.php:1716
+#: php/class-assets.php:1769
 msgid "Press ENTER or SPACE or type comma or tab to continue."
 msgstr ""
 
-#: php/class-cache.php:1016 php/class-cache.php:1019
+#: php/class-cache.php:1017 php/class-cache.php:1020
 msgid "Site Cache"
 msgstr ""
 
-#: php/class-cache.php:1023
+#: php/class-cache.php:1024
 msgid "Cache Settings"
 msgstr ""
 
-#: php/class-cache.php:1039
+#: php/class-cache.php:1040
 msgid "Full CDN"
 msgstr ""
 
-#: php/class-cache.php:1040
+#: php/class-cache.php:1041
 msgid "Deliver all assets from Cloudinary."
 msgstr ""
 
-#: php/class-cache.php:1044
+#: php/class-cache.php:1045
 msgid "Enable caching site assets."
 msgstr ""
 
-#: php/class-connect.php:266
+#: php/class-connect.php:267
 msgid "Connection to Cloudinary has been removed."
 msgstr ""
 
-#: php/class-connect.php:287
+#: php/class-connect.php:288
 msgid ""
 "The environment variable URL must be in this format: "
 "cloudinary://API_KEY:API_SECRET@CLOUD_NAME"
 msgstr ""
 
-#: php/class-connect.php:308
+#: php/class-connect.php:309
 msgid "Successfully connected to Cloudinary."
 msgstr ""
 
-#: php/class-connect.php:352
+#: php/class-connect.php:353
 #. translators: Placeholder refers the error from API.
 msgid "Cloudinary Error: %s"
 msgstr ""
 
-#: php/class-connect.php:360
+#: php/class-connect.php:361
 #. translators: Placeholders are <a> tags.
 msgid ""
 "Cloudinary Account Disabled. %1$s Upgrade your plan %3$s or %2$s submit a "
 "support request %3$s for assistance."
 msgstr ""
 
-#: php/class-connect.php:405
+#: php/class-connect.php:406
 #. translators: Placeholder refers to the expected URL format.
 msgid "Incorrect Format. Expecting: %s"
 msgstr ""
 
-#: php/class-connect.php:417
+#: php/class-connect.php:418
 msgid "CNAME is not a valid domain name."
 msgstr ""
 
-#: php/class-connect.php:807
+#: php/class-connect.php:808
 msgid "upgrade your account"
 msgstr ""
 
-#: php/class-connect.php:822
+#: php/class-connect.php:823
 #. translators: %1$s quota size, %2$s amount in percent, %3$s link URL, %4$s
 #. link anchor text.
 msgid ""
@@ -269,11 +269,11 @@ msgid ""
 "full functionality."
 msgstr ""
 
-#: php/class-connect.php:1017
+#: php/class-connect.php:1018
 msgid "Cloudinary was able to connect to the WordPress REST API."
 msgstr ""
 
-#: php/class-connect.php:1034 php/class-connect.php:1044
+#: php/class-connect.php:1035 php/class-connect.php:1045
 #. translators: 1: The WordPress error message. 2: The WordPress error code.
 msgid "The Cloudinary REST API endpoints are not available. Error: %1$s (%2$s)"
 msgstr ""
@@ -290,11 +290,11 @@ msgstr ""
 msgid "Enable Cron"
 msgstr ""
 
-#: php/class-dashboard.php:67 ui-definitions/settings-pages.php:15
+#: php/class-dashboard.php:67 ui-definitions/settings-pages.php:16
 msgid "Cloudinary Dashboard"
 msgstr ""
 
-#: php/class-dashboard.php:68 ui-definitions/settings-pages.php:16
+#: php/class-dashboard.php:68 ui-definitions/settings-pages.php:17
 msgid "Dashboard"
 msgstr ""
 
@@ -381,7 +381,7 @@ msgid "Share a %s with Cloudinary to help improve the plugin."
 msgstr ""
 
 #: php/class-deactivation.php:182 php/class-report.php:277
-#: ui-definitions/settings-pages.php:395
+#: ui-definitions/settings-pages.php:396
 #. translators: The System Report link and label.
 msgid "System Report"
 msgstr ""
@@ -513,7 +513,7 @@ msgid ""
 "WordPress."
 msgstr ""
 
-#: php/class-media.php:2067
+#: php/class-media.php:2070
 msgid "Import"
 msgstr ""
 
@@ -521,51 +521,49 @@ msgstr ""
 msgid "Cloudinary"
 msgstr ""
 
-#: php/class-media.php:2423
+#: php/class-media.php:2425
 msgid "The delivery for this asset is disabled."
 msgstr ""
 
-#: php/class-media.php:2427
+#: php/class-media.php:2429
 msgid "Not syncable. This is an external media."
 msgstr ""
 
-#: php/class-media.php:2431
+#: php/class-media.php:2433
 msgid "This media is Fetch type."
 msgstr ""
 
-#: php/class-media.php:2435
+#: php/class-media.php:2437
 msgid "This media is Sprite type."
 msgstr ""
 
-#: php/class-media.php:2445
+#: php/class-media.php:2447
 msgid "Not Synced"
 msgstr ""
 
-#: php/class-media.php:2450
+#: php/class-media.php:2452
 msgid "Synced"
 msgstr ""
 
-#: php/class-media.php:3109
+#: php/class-media.php:3111
 msgid "No Cloudinary filters"
 msgstr ""
 
-#: php/class-media.php:3209
+#: php/class-media.php:3211
 msgid "Media Settings"
 msgstr ""
 
-#: php/class-media.php:3212
+#: php/class-media.php:3214
 msgid "Media Display"
 msgstr ""
 
-#: php/class-media.php:3216 php/media/class-global-transformations.php:620
-#: php/ui/component/class-asset-preview.php:73
-#: php/ui/component/class-plan-details.php:119
+#: php/class-media.php:3218 php/ui/component/class-plan-details.php:119
 #: php/ui/component/class-plan-status.php:128
-#: ui-definitions/settings-sidebar.php:44
+#: ui-definitions/settings-pages.php:568 ui-definitions/settings-sidebar.php:44
 msgid "Transformations"
 msgstr ""
 
-#: php/class-media.php:3217
+#: php/class-media.php:3219
 msgid ""
 "Cloudinary allows you to easily transform your images on-the-fly to any "
 "required format, style and dimension, and also optimizes images for minimal "
@@ -574,12 +572,12 @@ msgid ""
 "transformation and delivery URLs."
 msgstr ""
 
-#: php/class-media.php:3222 ui-definitions/settings-image.php:174
-#: ui-definitions/settings-video.php:260
+#: php/class-media.php:3224 ui-definitions/settings-image.php:175
+#: ui-definitions/settings-pages.php:594 ui-definitions/settings-video.php:260
 msgid "See examples"
 msgstr ""
 
-#: php/class-plugin.php:752
+#: php/class-plugin.php:759
 msgid "Visit plugin site"
 msgstr ""
 
@@ -658,56 +656,56 @@ msgid ""
 "purchase?<br><br>Thank you!"
 msgstr ""
 
-#: php/class-sync.php:480
+#: php/class-sync.php:483
 msgid "Synchronizing asset with Cloudinary"
 msgstr ""
 
-#: php/class-sync.php:500
+#: php/class-sync.php:503
 msgid "Upgrading from previous version"
 msgstr ""
 
-#: php/class-sync.php:511
+#: php/class-sync.php:514
 msgid "Downloading from Cloudinary"
 msgstr ""
 
-#: php/class-sync.php:526 php/class-sync.php:543
+#: php/class-sync.php:529 php/class-sync.php:546
 msgid "Uploading to Cloudinary"
 msgstr ""
 
-#: php/class-sync.php:556
+#: php/class-sync.php:559
 #. translators: %s folder name
 msgid "Copying to folder %s."
 msgstr ""
 
-#: php/class-sync.php:571 php/class-sync.php:598
+#: php/class-sync.php:574 php/class-sync.php:601
 msgid "Updating metadata"
 msgstr ""
 
-#: php/class-sync.php:584
+#: php/class-sync.php:587
 msgid "Updating breakpoints"
 msgstr ""
 
-#: php/class-sync.php:619
+#: php/class-sync.php:622
 msgid "Uploading to new cloud name."
 msgstr ""
 
-#: php/class-sync.php:1091
+#: php/class-sync.php:1097
 msgid "Sync errors cleaned up"
 msgstr ""
 
-#: php/class-sync.php:1181
+#: php/class-sync.php:1187
 msgid "Is Cloudinary synced."
 msgstr ""
 
-#: php/class-sync.php:1238
+#: php/class-sync.php:1244
 msgid "Media Library Sync Settings"
 msgstr ""
 
-#: php/class-sync.php:1243
+#: php/class-sync.php:1249
 msgid "Sync method"
 msgstr ""
 
-#: php/class-sync.php:1246
+#: php/class-sync.php:1252
 #. translators: The HTML break line, the link to Cloudinary documentation and
 #. closing tag.
 msgid ""
@@ -716,35 +714,35 @@ msgid ""
 "Media Library.%3$s%4$sLearn more%5$s"
 msgstr ""
 
-#: php/class-sync.php:1257
+#: php/class-sync.php:1263
 msgid "Auto sync"
 msgstr ""
 
-#: php/class-sync.php:1258
+#: php/class-sync.php:1264
 msgid "Manual sync"
 msgstr ""
 
-#: php/class-sync.php:1264
+#: php/class-sync.php:1270
 msgid "Cloudinary folder path"
 msgstr ""
 
-#: php/class-sync.php:1268
+#: php/class-sync.php:1274
 msgid "e.g.: wordpress_assets/"
 msgstr ""
 
-#: php/class-sync.php:1271
+#: php/class-sync.php:1277
 msgid ""
 "The folder in your Cloudinary account that WordPress assets are uploaded "
 "to. Leave blank to use the root of your Cloudinary library."
 msgstr ""
 
-#: php/class-sync.php:1280 php/ui/component/class-plan-details.php:118
+#: php/class-sync.php:1286 php/ui/component/class-plan-details.php:118
 #: php/ui/component/class-plan-status.php:94
 #: ui-definitions/settings-sidebar.php:38
 msgid "Storage"
 msgstr ""
 
-#: php/class-sync.php:1283
+#: php/class-sync.php:1289
 #. translators: the HTML for opening and closing list and its items.
 msgid ""
 "Choose where your assets are stored.%1$sCloudinary and WordPress: Stores "
@@ -757,82 +755,82 @@ msgid ""
 "compatibility.%4$s%5$sLearn more%6$s"
 msgstr ""
 
-#: php/class-sync.php:1296
+#: php/class-sync.php:1302
 msgid "Cloudinary and WordPress"
 msgstr ""
 
-#: php/class-sync.php:1297
+#: php/class-sync.php:1303
 msgid "Cloudinary and WordPress (low resolution)"
 msgstr ""
 
-#: php/class-sync.php:1298
+#: php/class-sync.php:1304
 msgid "Cloudinary only"
 msgstr ""
 
-#: php/class-sync.php:1304 php/delivery/class-lazy-load.php:543
+#: php/class-sync.php:1310 php/delivery/class-lazy-load.php:543
 #: php/media/class-gallery.php:425 ui-definitions/components/header.php:19
-#: ui-definitions/settings-image.php:257 ui-definitions/settings-pages.php:206
-#: ui-definitions/settings-pages.php:222 ui-definitions/settings-pages.php:223
+#: ui-definitions/settings-image.php:263 ui-definitions/settings-pages.php:207
+#: ui-definitions/settings-pages.php:223 ui-definitions/settings-pages.php:224
 #: ui-definitions/settings-video.php:306
 msgid "Need help?"
 msgstr ""
 
-#: php/class-sync.php:1307
+#: php/class-sync.php:1313
 #. Translators: The HTML for opening and closing link tags.
 msgid ""
 "Watch free lessons on how to use the Media Library Sync Settings in the "
 "%1$sCloudinary Academy%2$s."
 msgstr ""
 
-#: php/class-utils.php:472
+#: php/class-utils.php:515
 #. translators: The plugin version.
 msgid "I need help with Cloudinary WordPress plugin version %s"
 msgstr ""
 
-#: php/class-utils.php:476
+#: php/class-utils.php:519
 msgid ""
 "Please, provide more details on your request, and if possible, attach a "
 "System Report"
 msgstr ""
 
-#: php/class-utils.php:790
+#: php/class-utils.php:855
 msgid "Debug log is empty"
 msgstr ""
 
-#: php/class-utils.php:844
+#: php/class-utils.php:909
 msgid "Missing SRC attribute."
 msgstr ""
 
-#: php/class-utils.php:882
+#: php/class-utils.php:947
 #. translators: The attachment ID.
 msgid "Clean up sync metadata for %d"
 msgstr ""
 
-#: php/class-utils.php:1279
+#: php/class-utils.php:1358
 msgid "Cloudinary global transformations"
 msgstr ""
 
-#: php/class-utils.php:1286
+#: php/class-utils.php:1365
 #. translators: %1$s is the taxonomy label and the %2$s is the context of the
 #. use.
 msgid "%1$s %2$s transformations"
 msgstr ""
 
-#: php/class-utils.php:1296
+#: php/class-utils.php:1375
 #. translators: %s is the term name.
 msgid "%s transformations"
 msgstr ""
 
-#: php/connect/class-api.php:429
+#: php/connect/class-api.php:432
 msgid "No direct access to file system."
 msgstr ""
 
-#: php/connect/class-api.php:540
+#: php/connect/class-api.php:543
 #. translators: variable is thread name and queue size.
 msgid "Uploading remote url:  %1$s."
 msgstr ""
 
-#: php/connect/class-api.php:671
+#: php/connect/class-api.php:674
 msgid "Could not get VIP file content"
 msgstr ""
 
@@ -850,14 +848,14 @@ msgid "Lazy Loading"
 msgstr ""
 
 #: php/delivery/class-lazy-load.php:420 ui-definitions/settings-image.php:23
-#: ui-definitions/settings-pages.php:100 ui-definitions/settings-video.php:23
+#: ui-definitions/settings-pages.php:101 ui-definitions/settings-video.php:23
 msgid "Settings"
 msgstr ""
 
 #: php/delivery/class-lazy-load.php:424 php/delivery/class-lazy-load.php:534
-#: ui-definitions/settings-image.php:27 ui-definitions/settings-image.php:244
-#: ui-definitions/settings-pages.php:104 ui-definitions/settings-pages.php:197
-#: ui-definitions/settings-video.php:27
+#: ui-definitions/settings-image.php:27 ui-definitions/settings-image.php:226
+#: ui-definitions/settings-pages.php:105 ui-definitions/settings-pages.php:198
+#: ui-definitions/settings-pages.php:958 ui-definitions/settings-video.php:27
 msgid "Preview"
 msgstr ""
 
@@ -1017,8 +1015,16 @@ msgstr ""
 msgid "Flag on whether transformation should be overwritten for a featured image."
 msgstr ""
 
+#: php/media/class-global-transformations.php:620
+msgid "Transformation Effects"
+msgstr ""
+
 #: php/media/class-global-transformations.php:661
-msgid "Add transformations"
+msgid "Add Effects"
+msgstr ""
+
+#: php/media/class-global-transformations.php:673
+msgid "Edit Effects"
 msgstr ""
 
 #: php/sync/class-delete-sync.php:71
@@ -1031,25 +1037,25 @@ msgstr ""
 msgid "Could not download the Cloudinary asset."
 msgstr ""
 
-#: php/sync/class-push-sync.php:218
+#: php/sync/class-push-sync.php:220
 #. translators: variable is sync type.
 msgid "Sync type: %s"
 msgstr ""
 
-#: php/sync/class-push-sync.php:243
+#: php/sync/class-push-sync.php:245
 msgid "Starting new thread."
 msgstr ""
 
-#: php/sync/class-push-sync.php:269
+#: php/sync/class-push-sync.php:271
 msgid "Asset in sync loop."
 msgstr ""
 
-#: php/sync/class-push-sync.php:275
+#: php/sync/class-push-sync.php:277
 #. translators: variable is thread name and asset ID.
 msgid "%1$s - cycle %3$s: Syncing asset %2$d"
 msgstr ""
 
-#: php/sync/class-push-sync.php:285
+#: php/sync/class-push-sync.php:287
 #. translators: variable is thread name.
 msgid "Ending thread %s"
 msgstr ""
@@ -1290,12 +1296,12 @@ msgstr ""
 msgid "Cloudinary %1$s %2$s Transformations"
 msgstr ""
 
-#: php/templates/taxonomy-transformation-fields.php:25
+#: php/templates/taxonomy-transformation-fields.php:41
 #. translators: The taxonomy label.
 msgid "Cloudinary %s transformations"
 msgstr ""
 
-#: php/templates/taxonomy-transformation-fields.php:35
+#: php/templates/taxonomy-transformation-fields.php:51
 #. translators: %1$s is the taxonomy label, %2$s is the image settings link,
 #. %4$s is the video settings link. The %3$s is the closing tags for the links.
 msgid ""
@@ -1305,6 +1311,7 @@ msgstr ""
 
 #: php/templates/transformation-preview-video.php:16
 #: php/templates/transformation-preview.php:16
+#: php/ui/component/class-asset-preview.php:80
 #: php/ui/component/class-image-preview.php:212
 #: php/ui/component/class-video-preview.php:69
 msgid "Invalid transformations or error loading preview."
@@ -1322,10 +1329,6 @@ msgstr ""
 msgid "Preview cannot be generated because %s transformation was used."
 msgstr ""
 
-#: php/ui/component/class-asset-preview.php:116
-msgid "Save"
-msgstr ""
-
 #: php/ui/component/class-asset.php:192
 #: php/ui/component/class-folder-table.php:202
 msgid "Search"
@@ -1336,6 +1339,8 @@ msgid "Apply Changes"
 msgstr ""
 
 #: php/ui/component/class-button.php:36 php/ui/component/class-panel.php:58
+#: ui-definitions/settings-pages.php:604 ui-definitions/settings-pages.php:739
+#: ui-definitions/settings-pages.php:922
 msgid "Save Changes"
 msgstr ""
 
@@ -1403,12 +1408,20 @@ msgstr ""
 msgid "Gravity"
 msgstr ""
 
-#: php/ui/component/class-crops.php:220
+#: php/ui/component/class-crops.php:270
+msgid "Disable gravity and crops"
+msgstr ""
+
+#: php/ui/component/class-crops.php:284
 msgid "Disable"
 msgstr ""
 
-#: php/ui/component/class-crops.php:228
-msgid "Disable gravity and crops"
+#: php/ui/component/class-crops.php:296
+msgid "Reset input"
+msgstr ""
+
+#: php/ui/component/class-crops.php:297
+msgid "Reset"
 msgstr ""
 
 #: php/ui/component/class-folder-table.php:139
@@ -1825,14 +1838,13 @@ msgid ""
 "deliver the most optimal format based on the user's browser and device."
 msgstr ""
 
-#: ui-definitions/settings-image.php:110 ui-definitions/settings-image.php:134
+#: ui-definitions/settings-image.php:110 ui-definitions/settings-image.php:135
 #: ui-definitions/settings-video.php:199 ui-definitions/settings-video.php:218
 msgid "Not set"
 msgstr ""
 
-#: ui-definitions/settings-image.php:111 ui-definitions/settings-image.php:135
-#: ui-definitions/settings-video.php:200 ui-definitions/settings-video.php:219
-msgid "Auto"
+#: ui-definitions/settings-image.php:111
+msgid "Auto (Recommended)"
 msgstr ""
 
 #: ui-definitions/settings-image.php:112
@@ -1851,34 +1863,43 @@ msgstr ""
 msgid "WebP"
 msgstr ""
 
-#: ui-definitions/settings-image.php:126
-msgid "Image quality"
+#: ui-definitions/settings-image.php:116
+msgid "AVIF"
 msgstr ""
 
 #: ui-definitions/settings-image.php:127
+msgid "Image quality"
+msgstr ""
+
+#: ui-definitions/settings-image.php:128
 msgid ""
 "The compression quality to apply when delivering images. Leave as Auto to "
 "apply an algorithm that finds the best tradeoff between visual quality and "
 "file size."
 msgstr ""
 
-#: ui-definitions/settings-image.php:136 ui-definitions/settings-video.php:220
+#: ui-definitions/settings-image.php:136 ui-definitions/settings-video.php:200
+#: ui-definitions/settings-video.php:219
+msgid "Auto"
+msgstr ""
+
+#: ui-definitions/settings-image.php:137 ui-definitions/settings-video.php:220
 msgid "Auto best"
 msgstr ""
 
-#: ui-definitions/settings-image.php:137 ui-definitions/settings-video.php:221
+#: ui-definitions/settings-image.php:138 ui-definitions/settings-video.php:221
 msgid "Auto good"
 msgstr ""
 
-#: ui-definitions/settings-image.php:138 ui-definitions/settings-video.php:222
+#: ui-definitions/settings-image.php:139 ui-definitions/settings-video.php:222
 msgid "Auto eco"
 msgstr ""
 
-#: ui-definitions/settings-image.php:139 ui-definitions/settings-video.php:223
+#: ui-definitions/settings-image.php:140 ui-definitions/settings-video.php:223
 msgid "Auto low"
 msgstr ""
 
-#: ui-definitions/settings-image.php:164
+#: ui-definitions/settings-image.php:165
 #. translators: The link to transformation reference.
 msgid ""
 "A set of additional transformations to apply to all images. Specify your "
@@ -1888,34 +1909,36 @@ msgid ""
 "Media Library%4$s."
 msgstr ""
 
-#: ui-definitions/settings-image.php:189 ui-definitions/settings-video.php:275
+#: ui-definitions/settings-image.php:190 ui-definitions/settings-pages.php:572
+#: ui-definitions/settings-video.php:275
 msgid "What are transformations?"
 msgstr ""
 
-#: ui-definitions/settings-image.php:190 ui-definitions/settings-video.php:276
+#: ui-definitions/settings-image.php:191 ui-definitions/settings-pages.php:573
+#: ui-definitions/settings-video.php:276
 msgid ""
 "A set of parameters included in a Cloudinary URL to programmatically "
 "transform the visual appearance of the assets on your website."
 msgstr ""
 
-#: ui-definitions/settings-image.php:202 ui-definitions/settings-image.php:203
+#: ui-definitions/settings-image.php:203 ui-definitions/settings-image.php:204
 msgid "SVG Support"
 msgstr ""
 
-#: ui-definitions/settings-image.php:204
+#: ui-definitions/settings-image.php:205
 msgid "Enable Cloudinary's SVG Support."
 msgstr ""
 
-#: ui-definitions/settings-image.php:208
+#: ui-definitions/settings-image.php:209
 msgid "Enable SVG support."
 msgstr ""
 
-#: ui-definitions/settings-image.php:214
+#: ui-definitions/settings-image.php:239
 #: ui-definitions/settings-metaboxes.php:33
 msgid "Crop and Gravity control (beta)"
 msgstr ""
 
-#: ui-definitions/settings-image.php:260
+#: ui-definitions/settings-image.php:266
 #. Translators: The HTML for opening and closing link tags.
 msgid ""
 "Watch free lessons on how to use the Image Global Settings in the "
@@ -1934,52 +1957,52 @@ msgstr ""
 msgid "Enable Crop and Gravity"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:24
+#: ui-definitions/settings-pages.php:25
 msgid "Your Current Plan"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:29
+#: ui-definitions/settings-pages.php:30
 msgid "Upgrade Plan"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:36
+#: ui-definitions/settings-pages.php:37
 msgid "Your Plan Status"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:43
+#: ui-definitions/settings-pages.php:44
 msgid "Your Media Sync Status"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:48 ui-definitions/settings-pages.php:49
+#: ui-definitions/settings-pages.php:49 ui-definitions/settings-pages.php:50
 msgid "General settings"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:50
+#: ui-definitions/settings-pages.php:51
 msgid "Setup"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:55
+#: ui-definitions/settings-pages.php:56
 msgid "Account Status"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:69 ui-definitions/settings-pages.php:70
+#: ui-definitions/settings-pages.php:70 ui-definitions/settings-pages.php:71
 msgid "Image settings"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:77 ui-definitions/settings-pages.php:78
+#: ui-definitions/settings-pages.php:78 ui-definitions/settings-pages.php:79
 msgid "Video settings"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:86 ui-definitions/settings-pages.php:87
-#: ui-definitions/settings-pages.php:94 ui-definitions/settings-pages.php:118
+#: ui-definitions/settings-pages.php:87 ui-definitions/settings-pages.php:88
+#: ui-definitions/settings-pages.php:95 ui-definitions/settings-pages.php:119
 msgid "Responsive images"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:117
+#: ui-definitions/settings-pages.php:118
 msgid "Breakpoints"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:119
+#: ui-definitions/settings-pages.php:120
 msgid ""
 "Automatically generate multiple sizes based on the configured breakpoints "
 "to enable your images to responsively adjust to different screen sizes. "
@@ -1987,30 +2010,30 @@ msgid ""
 "images."
 msgstr ""
 
-#: ui-definitions/settings-pages.php:123
+#: ui-definitions/settings-pages.php:124
 msgid "Enable responsive images"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:135
+#: ui-definitions/settings-pages.php:136
 msgid "Breakpoint distance"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:136
+#: ui-definitions/settings-pages.php:137
 msgid ""
 "The distance between each generated image. Adjusting this will adjust the "
 "number of images generated."
 msgstr ""
 
-#: ui-definitions/settings-pages.php:137 ui-definitions/settings-pages.php:167
-#: ui-definitions/settings-pages.php:178
+#: ui-definitions/settings-pages.php:138 ui-definitions/settings-pages.php:168
+#: ui-definitions/settings-pages.php:179
 msgid "px"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:147
+#: ui-definitions/settings-pages.php:148
 msgid "Max images"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:148
+#: ui-definitions/settings-pages.php:149
 msgid ""
 "The maximum number of images to be generated. Note that generating large "
 "numbers of images will deliver a more optimal version for a wider range of "
@@ -2019,59 +2042,59 @@ msgid ""
 "less than the value you specify."
 msgstr ""
 
-#: ui-definitions/settings-pages.php:152
+#: ui-definitions/settings-pages.php:153
 msgid "Recommended value: 3-40"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:161
+#: ui-definitions/settings-pages.php:162
 msgid "Image width limit"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:162
+#: ui-definitions/settings-pages.php:163
 msgid ""
 "The minimum and maximum width of an image created as a breakpoint. Leave "
 "“max” as empty to automatically detect based on the largest registered size "
 "in WordPress."
 msgstr ""
 
-#: ui-definitions/settings-pages.php:166
+#: ui-definitions/settings-pages.php:167
 msgid "Max"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:177
+#: ui-definitions/settings-pages.php:178
 msgid "Min"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:209
+#: ui-definitions/settings-pages.php:210
 #. Translators: The HTML for opening and closing link tags.
 msgid ""
 "Watch free lessons on how to use the Responsive Images Settings in the "
 "%1$sCloudinary Academy%2$s."
 msgstr ""
 
-#: ui-definitions/settings-pages.php:228
+#: ui-definitions/settings-pages.php:229
 msgid "Help Center"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:232
+#: ui-definitions/settings-pages.php:233
 msgid "How can we help"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:277
+#: ui-definitions/settings-pages.php:278
 msgid "Documentation"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:281
+#: ui-definitions/settings-pages.php:282
 msgid ""
 "Learn more about how to use the Cloudinary plugin and get the most out of "
 "the functionality."
 msgstr ""
 
-#: ui-definitions/settings-pages.php:315
+#: ui-definitions/settings-pages.php:316
 msgid "Cloudinary Academy"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:319
+#: ui-definitions/settings-pages.php:320
 msgid ""
 "With Cloudinary's plugin, it is easy to enhance your WordPress site's "
 "images and videos! In this self-paced course, our expert instructor will "
@@ -2080,35 +2103,35 @@ msgid ""
 "and more."
 msgstr ""
 
-#: ui-definitions/settings-pages.php:358
+#: ui-definitions/settings-pages.php:359
 msgid "Submit a request"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:362
+#: ui-definitions/settings-pages.php:363
 msgid ""
 "If you’re encountering an issue or struggling to get the plugin to work, "
 "open a ticket to contact our support team. To help us debug your queries, "
 "we recommend generating a system report."
 msgstr ""
 
-#: ui-definitions/settings-pages.php:399
+#: ui-definitions/settings-pages.php:400
 msgid ""
 "Generate a system report to help debug any specific issues you're having "
 "with your Cloudinary media, our support team will usually ask for this when "
 "submitting a support request."
 msgstr ""
 
-#: ui-definitions/settings-pages.php:407
+#: ui-definitions/settings-pages.php:408
 msgid "FAQ"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:411
+#: ui-definitions/settings-pages.php:412
 msgid ""
 "Do I need a Cloudinary account to use the Cloudinary plugin and can I try "
 "it out for free?"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:418
+#: ui-definitions/settings-pages.php:419
 #. translators: The HTML markup.
 msgid ""
 "To use the Cloudinary plugin and all the functionality that comes with it, "
@@ -2119,11 +2142,11 @@ msgid ""
 "needs."
 msgstr ""
 
-#: ui-definitions/settings-pages.php:427
+#: ui-definitions/settings-pages.php:428
 msgid "I’ve installed the Cloudinary plugin, what happens now?"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:429
+#: ui-definitions/settings-pages.php:430
 msgid ""
 "If you left all the settings as default, all your current media will begin "
 "syncing with Cloudinary. Once syncing is complete, your media will be "
@@ -2131,11 +2154,11 @@ msgid ""
 "improvements in performance across your site."
 msgstr ""
 
-#: ui-definitions/settings-pages.php:433
+#: ui-definitions/settings-pages.php:434
 msgid "Which file types are supported?"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:437
+#: ui-definitions/settings-pages.php:438
 #. translators: The HTML markup.
 msgid ""
 "Most common media files are supported for optimization and delivery by "
@@ -2147,11 +2170,11 @@ msgid ""
 "developers."
 msgstr ""
 
-#: ui-definitions/settings-pages.php:445
+#: ui-definitions/settings-pages.php:446
 msgid "Does the Cloudinary plugin require an active WordPress REST API connection?"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:449
+#: ui-definitions/settings-pages.php:450
 #. translators: The HTML markup.
 msgid ""
 "To function correctly, the Cloudinary plugin requires an active WordPress "
@@ -2168,11 +2191,11 @@ msgid ""
 "feature to avoid generating unnecessary requests or load on your site."
 msgstr ""
 
-#: ui-definitions/settings-pages.php:462
+#: ui-definitions/settings-pages.php:463
 msgid "Does Cloudinary work on multilingual sites?"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:466
+#: ui-definitions/settings-pages.php:467
 #. translators: The HTML markup.
 msgid ""
 "Absolutely! Cloudinary is fully compatible with WPML, the leading WordPress "
@@ -2182,13 +2205,13 @@ msgid ""
 "visit %1$sWPML's official page%2$s on Cloudinary compatibility."
 msgstr ""
 
-#: ui-definitions/settings-pages.php:473
+#: ui-definitions/settings-pages.php:474
 msgid ""
 "I'm having an incompatibility issue with a theme, plugin, or hosting "
 "environment, what can I do?"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:478
+#: ui-definitions/settings-pages.php:479
 #. translators: The HTML markup.
 msgid ""
 "We’re compatible with most other plugins so we expect it to work absolutely "
@@ -2196,11 +2219,11 @@ msgid ""
 "who will help resolve your issue."
 msgstr ""
 
-#: ui-definitions/settings-pages.php:486
+#: ui-definitions/settings-pages.php:487
 msgid "Can I use the Cloudinary plugin for my eCommerce websites?"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:490
+#: ui-definitions/settings-pages.php:491
 #. translators: The HTML markup.
 msgid ""
 "Yes, the Cloudinary plugin has full support for WooCommerce. We also have "
@@ -2208,11 +2231,11 @@ msgid ""
 "%1$sProduct Gallery%2$s."
 msgstr ""
 
-#: ui-definitions/settings-pages.php:497
+#: ui-definitions/settings-pages.php:498
 msgid "Why are my images loading locally and not from Cloudinary?"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:501
+#: ui-definitions/settings-pages.php:502
 #. translators: The HTML markup.
 msgid ""
 "Your images may be loading locally for a number of reasons:%1$sThe asset "
@@ -2223,22 +2246,123 @@ msgid ""
 "assets in the %5$sWordPress Media Library%4$s.%6$s"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:512
+#: ui-definitions/settings-pages.php:513
 msgid "How do I handle a CLDBind error which is causing issues with lazy loading?"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:514
+#: ui-definitions/settings-pages.php:515
 msgid ""
 "The Cloudinary lazy loading scripts must be loaded in the page head. Ensure "
 "your site or any 3rd party plugins are not setup to move these scripts."
 msgstr ""
 
-#: ui-definitions/settings-pages.php:528
+#: ui-definitions/settings-pages.php:529
 msgid "Debug log"
 msgstr ""
 
-#: ui-definitions/settings-pages.php:535
+#: ui-definitions/settings-pages.php:536
 msgid "Edit asset"
+msgstr ""
+
+#: ui-definitions/settings-pages.php:580
+msgid "Asset transformations"
+msgstr ""
+
+#: ui-definitions/settings-pages.php:586
+#. translators: The link to transformation reference.
+msgid ""
+"Specify the asset transformations using Cloudinary URL transformation "
+"syntax. See %1$sreference%2$s for all available transformations and syntax."
+msgstr ""
+
+#: ui-definitions/settings-pages.php:619
+msgid "Text overlay"
+msgstr ""
+
+#: ui-definitions/settings-pages.php:627
+#. Translators: The HTML for opening and closing link tags.
+msgid ""
+"The text overlay feature allows you to place text on top of an asset. Learn "
+"more about %1$stext overlays%2$s and how to use them effectively."
+msgstr ""
+
+#: ui-definitions/settings-pages.php:642
+msgid "Color"
+msgstr ""
+
+#: ui-definitions/settings-pages.php:652
+msgid "Font Face"
+msgstr ""
+
+#: ui-definitions/settings-pages.php:655
+msgid "Arial (sans-serif)"
+msgstr ""
+
+#: ui-definitions/settings-pages.php:656
+msgid "Verdana (sans-serif)"
+msgstr ""
+
+#: ui-definitions/settings-pages.php:657
+msgid "Times New Roman (serif)"
+msgstr ""
+
+#: ui-definitions/settings-pages.php:658
+msgid "Courier New (monospace)"
+msgstr ""
+
+#: ui-definitions/settings-pages.php:659
+msgid "Georgia (serif)"
+msgstr ""
+
+#: ui-definitions/settings-pages.php:667
+msgid "Font Size"
+msgstr ""
+
+#: ui-definitions/settings-pages.php:683
+msgid "Text"
+msgstr ""
+
+#: ui-definitions/settings-pages.php:695 ui-definitions/settings-pages.php:878
+msgid "Position"
+msgstr ""
+
+#: ui-definitions/settings-pages.php:720 ui-definitions/settings-pages.php:903
+msgid "X Offset"
+msgstr ""
+
+#: ui-definitions/settings-pages.php:727 ui-definitions/settings-pages.php:910
+msgid "Y Offset"
+msgstr ""
+
+#: ui-definitions/settings-pages.php:753 ui-definitions/settings-pages.php:936
+msgid "Reset All"
+msgstr ""
+
+#: ui-definitions/settings-pages.php:768
+msgid "Image overlay"
+msgstr ""
+
+#: ui-definitions/settings-pages.php:776
+#. Translators: The HTML for opening and closing link tags.
+msgid ""
+"The image overlay feature allows you to place an image on top of an asset. "
+"Learn more about %1$simage overlays%2$s and how to use them effectively."
+msgstr ""
+
+#: ui-definitions/settings-pages.php:795
+msgid "Select Image"
+msgstr ""
+
+#: ui-definitions/settings-pages.php:840
+msgid "Size"
+msgstr ""
+
+#: ui-definitions/settings-pages.php:856
+msgid "Opacity"
+msgstr ""
+
+#: ui-definitions/settings-pages.php:999
+msgid "Effects applied successfully!"
 msgstr ""
 
 #: ui-definitions/settings-sidebar.php:21

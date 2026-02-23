@@ -132,9 +132,10 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			'permission_callback' => array( 'Cloudinary\REST_API', 'rest_can_connect' ),
 		);
 		$endpoints['test_rest_api']   = array(
-			'method'   => WP_REST_Server::READABLE,
-			'callback' => array( $this, 'rest_test_rest_api_connectivity' ),
-			'args'     => array(),
+			'method'              => WP_REST_Server::READABLE,
+			'callback'            => array( $this, 'rest_test_rest_api_connectivity' ),
+			'args'                => array(),
+			'permission_callback' => array( 'Cloudinary\REST_API', 'allow_public_health_check' ),
 		);
 
 		return $endpoints;

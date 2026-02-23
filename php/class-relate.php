@@ -94,25 +94,90 @@ class Relate {
 	}
 
 	/**
+	 * Update transformations for an asset.
+	 *
+	 * @param int        $attachment_id   The attachment ID.
+	 * @param array|null $overlay_data    The overlay transformations.
+	 * @param string     $save_type       The type of overlay.
+	 */
+	public static function update_transformations_overlay( $attachment_id, $overlay_data, $save_type ) {
+		$relationship = Relationship::get_relationship( $attachment_id );
+
+		if ( ! in_array( $save_type, array( 'text_overlay', 'image_overlay' ), true ) ) {
+			return;
+		}
+
+		$relationship->$save_type = wp_json_encode( $overlay_data );
+		$relationship->save();
+	}
+
+	/**
 	 * Get the transformations for an asset.
 	 *
 	 * @param int  $attachment_id The attachment ID.
 	 * @param bool $as_string     Set the output to a string.
+	 * @param bool $free_transformations_only If true, only return the base transformations without overlays.
 	 *
 	 * @return array|string
 	 */
-	public static function get_transformations( $attachment_id, $as_string = false ) {
-		static $media;
+	public static function get_transformations( $attachment_id, $as_string = false, $free_transformations_only = false ) {
+		static $media, $cache = array();
 		if ( ! $media ) {
 			$media = get_plugin_instance()->get_component( 'media' );
 		}
 
+		// Create cache key based on attachment ID and return type.
+		$cache_key = $attachment_id . '_' . ( $as_string ? 'string' : 'array' );
+
+		// Return cached value if available.
+		if ( isset( $cache[ $cache_key ] ) ) {
+			return $cache[ $cache_key ];
+		}
+
 		$relationship    = Relationship::get_relationship( $attachment_id );
 		$transformations = $relationship->transformations;
+
+		if ( ! $free_transformations_only ) {
+			$text_overlay  = self::get_overlay( $attachment_id, 'text_overlay' );
+			$image_overlay = self::get_overlay( $attachment_id, 'image_overlay' );
+
+			// Merge transformations with overlays.
+			$parts           = array_filter( array( $transformations, $text_overlay, $image_overlay ) );
+			$transformations = ! empty( $parts ) ? implode( '/', $parts ) : '';
+		}
+
 		if ( ! $as_string ) {
 			$transformations = ! empty( $transformations ) ? $media->get_transformations_from_string( $transformations, $relationship->asset_type ) : array();
 		}
 
+		// Cache the result.
+		$cache[ $cache_key ] = $transformations;
+
 		return $transformations;
+	}
+
+	/**
+	 * Get overlay transformation string for an asset.
+	 *
+	 * Retrieves the transformation string from the stored overlay JSON data.
+	 * Returns URL-encoded transformation string ready to be used in Cloudinary URLs.
+	 *
+	 * @param int    $attachment_id The attachment ID.
+	 * @param string $overlay_type  The type of overlay ('text_overlay' or 'image_overlay').
+	 *
+	 * @return string URL-encoded transformation string, or empty string if no overlay exists.
+	 */
+	public static function get_overlay( $attachment_id, $overlay_type ) {
+		$relationship = Relationship::get_relationship( $attachment_id );
+		$overlay_data = $relationship->$overlay_type;
+
+		if ( ! empty( $overlay_data ) ) {
+			$decoded = json_decode( $overlay_data, true );
+			if ( is_array( $decoded ) && isset( $decoded['transformation'] ) ) {
+				return $decoded['transformation'];
+			}
+		}
+
+		return '';
 	}
 }

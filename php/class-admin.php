@@ -108,9 +108,12 @@ class Admin {
 	public function rest_endpoints( $endpoints ) {
 
 		$endpoints['dismiss_notice'] = array(
-			'method'   => WP_REST_Server::CREATABLE,
-			'callback' => array( $this, 'rest_dismiss_notice' ),
-			'args'     => array(),
+			'method'              => WP_REST_Server::CREATABLE,
+			'callback'            => array( $this, 'rest_dismiss_notice' ),
+			'args'                => array(),
+			'permission_callback' => function () {
+				return Utils::user_can( 'manage_settings' );
+			},
 		);
 
 		$endpoints['save_settings'] = array(
@@ -203,7 +206,7 @@ class Admin {
 		$page_handle = add_menu_page(
 			$page['page_title'],
 			$page['menu_title'],
-			$page['capability'],
+			$page['capability'], // phpcs:ignore WordPress.WP.Capabilities.Undetermined
 			$page['slug'],
 			'',
 			$page['icon'],
@@ -245,7 +248,7 @@ class Admin {
 				$page['slug'],
 				$page_title,
 				$menu_title,
-				$capability,
+				$capability, // phpcs:ignore WordPress.WP.Capabilities.Undetermined
 				$render_slug,
 				$render_function,
 				$position
@@ -298,7 +301,7 @@ class Admin {
 			$page = $this->get_param( 'current_section' );
 		}
 
-		$this->set_param( 'active_slug', $page['slug'] );
+		$this->set_param( 'active_slug', isset( $page['slug'] ) ? $page['slug'] : '' );
 		$setting         = $this->init_components( $page, $screen->id );
 		$this->component = $setting->get_component();
 		$template        = $this->section;

@@ -137,7 +137,6 @@ class Cron extends Text {
 		$tr['children']['next_run'] = $next_run;
 
 		return $tr;
-
 	}
 
 	/**

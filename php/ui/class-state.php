@@ -61,7 +61,7 @@ class State {
 	 *
 	 * @param Plugin $plugin Instance of the plugin.
 	 */
-	public function __construct( Plugin $plugin ) {
+	public function __construct( Plugin $plugin ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		$this->plugin  = get_plugin_instance();
 		$this->user_id = get_current_user_id();
 
@@ -98,22 +98,13 @@ class State {
 			'method'              => \WP_REST_Server::CREATABLE,
 			'callback'            => array( $this, 'set_state' ),
 			'args'                => array(),
-			'permission_callback' => array( $this, 'validate_request' ),
+			'permission_callback' => array( 'Cloudinary\REST_API', 'validate_request' ),
 		);
 
 		return $endpoints;
 	}
 
-	/**
-	 * Validation for request.
-	 *
-	 * @param \WP_REST_Request $request The original request.
-	 *
-	 * @return bool
-	 */
-	public function validate_request( $request ) {
-		return wp_verify_nonce( $request->get_header( 'x_wp_nonce' ), 'wp_rest' );
-	}
+
 
 	/**
 	 * Set the UI state.
@@ -158,7 +149,7 @@ class State {
 	 *
 	 * @return mixed
 	 */
-	public function get_state( $key, $default = null ) {
+	public function get_state( $key, $default = null ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.defaultFound
 
 		// Add default if not set yet.
 		if ( empty( $this->state[ $key ] ) ) {

@@ -84,7 +84,7 @@ class Download_Sync {
 	 *
 	 * @return bool
 	 */
-	public function rest_can_upload_files( \WP_REST_Request $request ) {
+	public function rest_can_upload_files( \WP_REST_Request $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 
 		// This would have been from an ajax call. Therefore verify based on capability.
 		return Utils::user_can( 'manage_assets', 'upload_files', 'download' );

@@ -501,7 +501,7 @@ trait CLI_Trait {
 	protected function export_csv( $data, $type ) {
 		$upload   = wp_get_upload_dir();
 		$filename = trailingslashit( $upload['path'] ) . sanitize_file_name( 'cloudinary-' . $type . '-' . time() . '.csv' );
-		$fp       = fopen( $filename, 'wb+' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fopen
+		$fp       = fopen( $filename, 'wb+' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fopen,WordPress.WP.AlternativeFunctions.file_system_operations_fopen
 
 		foreach ( $data as $fields ) {
 			fputcsv( $fp, $fields ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_fputcsv

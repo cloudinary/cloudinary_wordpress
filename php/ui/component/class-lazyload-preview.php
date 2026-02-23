@@ -147,7 +147,7 @@ class Lazyload_Preview extends Breakpoints_Preview {
 	protected function makePlaceholder( $type ) {
 		$placeholder                      = $this->get_part( 'img' );
 		$transformation                   = Api::generate_transformation_string( $this->lazyload->get_placeholder_transformations( $type ), 'image' );
-		$placeholder['attributes']['src'] = str_replace( 'sample', $transformation . '/sample', $this->config['lazyload_preview'] );
+		$placeholder['attributes']['src'] = str_replace( 'leather_bag', $transformation . '/leather_bag', $this->config['lazyload_preview'] );
 		$placeholder['render']            = true;
 		$box                              = $this->make_sized_image_box( 100, $placeholder );
 		$box['attributes']['id']          = 'placeholder-' . $type;

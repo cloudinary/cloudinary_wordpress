@@ -250,4 +250,3 @@ class Page extends Panel {
 		return parent::settings( $struct );
 	}
 }
-

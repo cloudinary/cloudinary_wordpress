@@ -22,5 +22,4 @@ class Frame extends Component {
 	 * @var string
 	 */
 	protected $blueprint = 'settings';
-
 }

@@ -189,6 +189,5 @@ class Tags_Input extends Text {
 		}
 
 		return wp_parse_url( $value, PHP_URL_HOST );
-
 	}
 }

@@ -83,5 +83,4 @@ class Lock_Object extends Lock_File {
 	public function delete_lock_file( $file = null ) {
 		delete_transient( self::PREFIX . $this->get_lock_file_name( $file ) );
 	}
-
 }

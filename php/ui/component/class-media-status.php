@@ -7,13 +7,13 @@
 
 namespace Cloudinary\UI\Component;
 
-use function Cloudinary\get_plugin_instance;
 use Cloudinary\UI\Component;
 use Cloudinary\Settings\Setting;
 use Cloudinary\Sync;
 use Cloudinary\Media;
 use Cloudinary\Cache;
 use Cloudinary\Plugin;
+use function Cloudinary\get_plugin_instance;
 
 /**
  * Media Sync Status Component to render plan status.

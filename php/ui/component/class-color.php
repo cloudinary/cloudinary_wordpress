@@ -50,7 +50,7 @@ class Color extends Text {
 	 *
 	 * @return string|null
 	 */
-	public function render( $echo = false ) {
+	public function render( $echo = false ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.echoFound
 		$return = parent::render( $echo );
 		?>
 		<script>

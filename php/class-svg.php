@@ -218,6 +218,22 @@ class SVG extends Delivery_Feature {
 	}
 
 	/**
+	 * Disable SVG conversion.
+	 * If SVG support is active, we don't want to convert SVGs to other formats.
+	 *
+	 * @param array $base_types The base types for conversion.
+	 *
+	 * @return array
+	 */
+	public function disable_svg_conversion( $base_types ) {
+		if ( $this->is_active() && ! empty( $base_types['svg'] ) ) {
+			unset( $base_types['svg'] );
+		}
+
+		return $base_types;
+	}
+
+	/**
 	 * Setup the component
 	 */
 	public function setup_hooks() {
@@ -233,6 +249,7 @@ class SVG extends Delivery_Feature {
 		add_filter( 'cloudinary_allowed_extensions', array( $this, 'allow_svg_for_cloudinary' ) );
 		add_filter( 'cloudinary_upload_options', array( $this, 'remove_svg_eagers' ), 10, 2 );
 		add_filter( 'cloudinary_upload_args', array( $this, 'upload_args' ), 10, 2 );
+		add_filter( 'cloudinary_convert_media_types', array( $this, 'disable_svg_conversion' ) );
 
 		// Add actions.
 		add_action( 'cloudinary_uploaded_asset', array( $this, 'maybe_setup_metadata' ), 10, 2 );

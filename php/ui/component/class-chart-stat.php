@@ -89,5 +89,4 @@ class Chart_Stat extends Component {
 
 		return $struct;
 	}
-
 }

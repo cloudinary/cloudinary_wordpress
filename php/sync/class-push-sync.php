@@ -124,14 +124,16 @@ class Push_Sync {
 		);
 
 		$endpoints['queue'] = array(
-			'method'   => \WP_REST_Server::CREATABLE,
-			'callback' => array( $this, 'process_queue' ),
-			'args'     => array(),
+			'method'              => \WP_REST_Server::CREATABLE,
+			'callback'            => array( $this, 'process_queue' ),
+			'args'                => array(),
+			'permission_callback' => array( 'Cloudinary\REST_API', 'validate_request' ),
 		);
 		$endpoints['stats'] = array(
-			'method'   => \WP_REST_Server::READABLE,
-			'callback' => array( $this->queue, 'get_total_synced_media' ),
-			'args'     => array(),
+			'method'              => \WP_REST_Server::READABLE,
+			'callback'            => array( $this->queue, 'get_total_synced_media' ),
+			'args'                => array(),
+			'permission_callback' => array( 'Cloudinary\REST_API', 'validate_request' ),
 		);
 
 		return $endpoints;
@@ -282,7 +284,7 @@ class Push_Sync {
 				 */
 				do_action( 'cloudinary_queue_action', $action_message );
 				$this->process_assets( $attachment_id );
-				$runs ++;
+				++$runs;
 				$last_id = $attachment_id;
 			}
 			$this->queue->stop_maybe( $thread_type );
