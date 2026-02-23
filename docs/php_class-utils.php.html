@@ -292,7 +292,7 @@ class Utils {
 		$capability = apply_filters( 'cloudinary_task_capability', $capability, $task, $context, ...$args );
 		// phpcs:enable WordPress.WhiteSpace.DisallowInlineTabs.NonIndentTabsUsed
 
-		return current_user_can( $capability, ...$args );
+		return current_user_can( $capability, ...$args ); // phpcs:ignore WordPress.WP.Capabilities.Undetermined
 	}
 
 	/**
@@ -330,6 +330,8 @@ class Utils {
 	  sync_type varchar(45) DEFAULT NULL,
 	  post_state varchar(12) DEFAULT NULL,
 	  transformations text DEFAULT NULL,
+	  text_overlay text DEFAULT NULL,
+	  image_overlay text DEFAULT NULL,
 	  signature varchar(45) DEFAULT NULL,
 	  public_hash varchar(45) DEFAULT NULL,
 	  url_hash varchar(45) DEFAULT NULL,
@@ -400,13 +402,17 @@ class Utils {
 	protected static function get_upgrade_sequence() {
 		$upgrade_sequence = array();
 		$sequences        = array(
-			'3.0.0' => array(
+			'3.0.0'  => array(
 				'range'  => array( '3.0.0' ),
 				'method' => array( 'Cloudinary\Utils', 'upgrade_3_0_1' ),
 			),
-			'3.1.9' => array(
+			'3.1.9'  => array(
 				'range'  => array( '3.0.1', '3.1.9' ),
 				'method' => array( 'Cloudinary\Utils', 'upgrade_3_1_9' ),
+			),
+			'3.3.0' => array(
+				'range'  => array( '3.1.9', '3.3.0' ),
+				'method' => array( 'Cloudinary\Utils', 'upgrade_3_3_0' ),
 			),
 
 		);
@@ -478,6 +484,43 @@ class Utils {
 		// Update indexes.
 		$wpdb->query( "ALTER TABLE {$tablename} DROP INDEX url_hash" ); // phpcs:ignore WordPress.DB
 		$wpdb->query( "ALTER TABLE {$tablename} ADD UNIQUE INDEX media (url_hash, media_context)" ); // phpcs:ignore WordPress.DB
+
+		// Set DB Version.
+		update_option( Sync::META_KEYS['db_version'], get_plugin_instance()->version );
+	}
+
+	/**
+	 * Upgrade DB from v3.1.9 to v3.2.15.
+	 * Adds columns for overlay data.
+	 */
+	public static function upgrade_3_3_0() {
+		global $wpdb;
+		$tablename = self::get_relationship_table();
+
+		// Add new columns for overlays.
+		$wpdb->query( "ALTER TABLE {$tablename} ADD COLUMN `text_overlay` TEXT DEFAULT NULL AFTER `transformations`" ); // phpcs:ignore WordPress.DB
+		$wpdb->query( "ALTER TABLE {$tablename} ADD COLUMN `image_overlay` TEXT DEFAULT NULL AFTER `text_overlay`" ); // phpcs:ignore WordPress.DB
+
+		// Update sample.jpg to leather_bag.jpg in media_display settings.
+		$media_display = get_option( 'cloudinary_media_display', array() );
+
+		if ( ! empty( $media_display ) &amp;&amp; is_array( $media_display ) ) {
+			$updated = false;
+			$fields  = array( 'image_preview', 'lazyload_preview', 'breakpoints_preview' );
+
+			foreach ( $fields as $field ) {
+				if ( isset( $media_display[ $field ] ) &amp;&amp; is_string( $media_display[ $field ] ) ) {
+					if ( false !== strpos( $media_display[ $field ], 'sample.jpg' ) ) {
+						$media_display[ $field ] = str_replace( 'sample.jpg', 'leather_bag.jpg', $media_display[ $field ] );
+						$updated                 = true;
+					}
+				}
+			}
+
+			if ( $updated ) {
+				update_option( 'cloudinary_media_display', $media_display );
+			}
+		}
 
 		// Set DB Version.
 		update_option( Sync::META_KEYS['db_version'], get_plugin_instance()->version );
@@ -654,6 +697,9 @@ class Utils {
 	 * @return array
 	 */
 	public static function extract_urls( $content ) {
+		// Remove inline SVG data URIs, as they can cause parsing issues when extracting URLs.
+		$content = self::strip_inline_svg_data_uris( $content );
+
 		preg_match_all(
 			"#([\"']?)("
 				. '(?:[\w-]+:)?//?'
@@ -675,6 +721,25 @@ class Utils {
 
 		return array_values( $post_links );
 	}
+
+	/**
+	 * Strip inline SVG data URIs from content.
+	 *
+	 * @param string $content The content to process.
+	 *
+	 * @return string The content with SVG data URIs removed.
+	 */
+	public static function strip_inline_svg_data_uris( $content ) {
+		// Pattern to match the data URI structure: data:image/svg+xml;base64,&lt;base64-encoded-data>.
+		$svg_data_uri_pattern = '/data:image\/svg\+xml;base64,[a-zA-Z0-9\/\+\=]+/i';
+
+		// Remove all occurrences of SVG data URIs from the content.
+		$cleaned_content = preg_replace( $svg_data_uri_pattern, '', $content );
+
+		// In case an error occurred, we return the original content to avoid data loss.
+		return is_null( $cleaned_content ) ? $content : $cleaned_content;
+	}
+
 
 	/**
 	 * Is saving metadata.
@@ -792,7 +857,7 @@ class Utils {
 	public static function purge_fragment( $index ) {
 		if ( isset( self::$file_fragments[ $index ] ) ) {
 			fclose( self::$file_fragments[ $index ]['pointer'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_fclose
-			unlink( self::$file_fragments[ $index ]['file'] );
+			unlink( self::$file_fragments[ $index ]['file'] ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_unlink
 		}
 	}
 
@@ -1043,19 +1108,16 @@ class Utils {
 	 * @return array
 	 */
 	public static function query_relations( $public_ids, $urls = array() ) {
-		global $wpdb;
-
-		$wheres          = array();
-		$searched_things = array();
+		$chunk_size = 25;
+		$results    = array();
+		$tablename  = self::get_relationship_table();
 
 		/**
 		 * Filter the media context query.
 		 *
 		 * @hook   cloudinary_media_context_query
 		 * @since  3.2.0
-		 *
 		 * @param $media_context_query {string} The default media context query.
-		 *
 		 * @return {string}
 		 */
 		$media_context_query = apply_filters( 'cloudinary_media_context_query', 'media_context = %s' );
@@ -1065,43 +1127,60 @@ class Utils {
 		 *
 		 * @hook   cloudinary_media_context_things
 		 * @since  3.2.0
-		 *
 		 * @param $media_context_things {array} The default media context things.
-		 *
 		 * @return {array}
 		 */
 		$media_context_things = apply_filters( 'cloudinary_media_context_things', array( 'default' ) );
 
+		// Query for urls in chunks.
 		if ( ! empty( $urls ) ) {
-			// Do the URLS.
-			$list            = implode( ', ', array_fill( 0, count( $urls ), '%s' ) );
-			$where           = "(url_hash IN( {$list} ) AND {$media_context_query} )";
-			$searched_things = array_merge( $searched_things, array_map( 'md5', $urls ), $media_context_things );
-			$wheres[]        = $where;
+			$results = array_merge( $results, self::run_chunked_query( 'url_hash', $urls, $chunk_size, $tablename, $media_context_query, $media_context_things ) );
 		}
+		// Query for public_ids in chunks.
 		if ( ! empty( $public_ids ) ) {
-			// Do the public_ids.
-			$list            = implode( ', ', array_fill( 0, count( $public_ids ), '%s' ) );
-			$where           = "(public_hash IN( {$list} ) AND {$media_context_query} )";
-			$searched_things = array_merge( $searched_things, array_map( 'md5', $public_ids ), $media_context_things );
-			$wheres[]        = $where;
-		}
-
-		$results = array();
-
-		if ( ! empty( array_filter( $wheres ) ) ) {
-			$tablename = self::get_relationship_table();
-			$sql       = "SELECT * from {$tablename} WHERE " . implode( ' OR ', $wheres );
-			$prepared  = $wpdb->prepare( $sql, $searched_things ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			$cache_key = md5( $prepared );
-			$results   = wp_cache_get( $cache_key, 'cld_delivery' );
-			if ( empty( $results ) ) {
-				$results = $wpdb->get_results( $prepared, ARRAY_A );// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
-				wp_cache_add( $cache_key, $results, 'cld_delivery' );
-			}
+			$results = array_merge( $results, self::run_chunked_query( 'public_hash', $public_ids, $chunk_size, $tablename, $media_context_query, $media_context_things ) );
 		}
 
 		return $results;
+	}
+	/**
+	 * Run a chunked query and merge results.
+	 *
+	 * @param string $field The DB field to query (url_hash or public_hash).
+	 * @param array  $items The items to query.
+	 * @param int    $chunk_size Number of items per chunk.
+	 * @param string $tablename The table name.
+	 * @param string $media_context_query The media context SQL.
+	 * @param array  $media_context_things The media context values.
+	 * @return array
+	 */
+	protected static function run_chunked_query( $field, $items, $chunk_size, $tablename, $media_context_query, $media_context_things ) {
+		global $wpdb;
+
+		$all_results = array();
+		$chunks      = array_chunk( $items, $chunk_size );
+
+		foreach ( $chunks as $chunk ) {
+			$list            = implode( ', ', array_fill( 0, count( $chunk ), '%s' ) );
+			$where           = "({$field} IN( {$list} ) AND {$media_context_query} )";
+			$searched_things = array_merge( array_map( 'md5', $chunk ), $media_context_things );
+			$sql             = "SELECT * from {$tablename} WHERE {$where}";
+			$prepared        = $wpdb->prepare( $sql, $searched_things ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$cache_key       = md5( $prepared );
+			$chunk_results   = wp_cache_get( $cache_key, 'cld_delivery' );
+
+			if ( empty( $chunk_results ) ) {
+				$chunk_results = $wpdb->get_results( $prepared, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery
+
+				wp_cache_add( $cache_key, $chunk_results, 'cld_delivery' );
+			}
+
+			if ( ! empty( $chunk_results ) ) {
+				$all_results = array_merge( $all_results, $chunk_results );
+			}
+		}
+
+		return $all_results;
 	}
 
 	/**
@@ -1335,6 +1414,214 @@ class Utils {
 
 		return $transformations_title;
 	}
+
+	/**
+	 * Get inline SVG content safely.
+	 *
+	 * @param string $file_path The absolute or relative path to the SVG file.
+	 * @param bool   $echo      Whether to echo the SVG content or return it. Default true.
+	 *
+	 * @return string|void The SVG content if $echo is false, void otherwise.
+	 */
+	public static function get_inline_svg( $file_path, $echo = true ) {
+		// If relative path, make it absolute from plugin root.
+		if ( ! file_exists( $file_path ) ) {
+			$plugin_dir = dirname( __DIR__ );
+			$file_path  = $plugin_dir . '/' . ltrim( $file_path, '/' );
+		}
+
+		// Check if file exists and is an SVG.
+		if ( ! file_exists( $file_path ) || 'svg' !== pathinfo( $file_path, PATHINFO_EXTENSION ) ) {
+			return '';
+		}
+
+		// Get the SVG content.
+		$svg_content = file_get_contents( $file_path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+
+		if ( false === $svg_content ) {
+			return '';
+		}
+
+		// Sanitize SVG content to prevent XSS attacks.
+		$svg_content = self::sanitize_svg( $svg_content );
+
+		if ( $echo ) {
+			echo $svg_content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Sanitized by sanitize_svg.
+		} else {
+			return $svg_content;
+		}
+	}
+
+	/**
+	 * Sanitize SVG content to prevent XSS attacks.
+	 *
+	 * @param string $svg_content The SVG content to sanitize.
+	 *
+	 * @return string The sanitized SVG content.
+	 */
+	public static function sanitize_svg( $svg_content ) {
+		// Define allowed SVG tags and attributes.
+		$allowed_tags = array(
+			'svg'            => array(
+				'class'           => true,
+				'aria-hidden'     => true,
+				'aria-labelledby' => true,
+				'role'            => true,
+				'xmlns'           => true,
+				'width'           => true,
+				'height'          => true,
+				'viewbox'         => true,
+				'fill'            => true,
+				'stroke'          => true,
+			),
+			'g'              => array(
+				'fill'      => true,
+				'stroke'    => true,
+				'transform' => true,
+				'class'     => true,
+			),
+			'title'          => array( 'title' => true ),
+			'desc'           => array(),
+			'path'           => array(
+				'd'               => true,
+				'fill'            => true,
+				'stroke'          => true,
+				'stroke-width'    => true,
+				'stroke-linecap'  => true,
+				'stroke-linejoin' => true,
+				'transform'       => true,
+				'class'           => true,
+			),
+			'rect'           => array(
+				'x'            => true,
+				'y'            => true,
+				'width'        => true,
+				'height'       => true,
+				'rx'           => true,
+				'ry'           => true,
+				'fill'         => true,
+				'stroke'       => true,
+				'stroke-width' => true,
+				'transform'    => true,
+				'class'        => true,
+			),
+			'circle'         => array(
+				'cx'           => true,
+				'cy'           => true,
+				'r'            => true,
+				'fill'         => true,
+				'stroke'       => true,
+				'stroke-width' => true,
+				'transform'    => true,
+				'class'        => true,
+			),
+			'ellipse'        => array(
+				'cx'           => true,
+				'cy'           => true,
+				'rx'           => true,
+				'ry'           => true,
+				'fill'         => true,
+				'stroke'       => true,
+				'stroke-width' => true,
+				'transform'    => true,
+				'class'        => true,
+			),
+			'line'           => array(
+				'x1'           => true,
+				'y1'           => true,
+				'x2'           => true,
+				'y2'           => true,
+				'stroke'       => true,
+				'stroke-width' => true,
+				'transform'    => true,
+				'class'        => true,
+			),
+			'polyline'       => array(
+				'points'       => true,
+				'fill'         => true,
+				'stroke'       => true,
+				'stroke-width' => true,
+				'transform'    => true,
+				'class'        => true,
+			),
+			'polygon'        => array(
+				'points'       => true,
+				'fill'         => true,
+				'stroke'       => true,
+				'stroke-width' => true,
+				'transform'    => true,
+				'class'        => true,
+			),
+			'defs'           => array(),
+			'lineargradient' => array(
+				'id'            => true,
+				'x1'            => true,
+				'y1'            => true,
+				'x2'            => true,
+				'y2'            => true,
+				'gradientunits' => true,
+			),
+			'radialgradient' => array(
+				'id'            => true,
+				'cx'            => true,
+				'cy'            => true,
+				'r'             => true,
+				'gradientunits' => true,
+			),
+			'stop'           => array(
+				'offset'       => true,
+				'stop-color'   => true,
+				'stop-opacity' => true,
+			),
+			'use'            => array(
+				'xlink:href' => true,
+				'href'       => true,
+			),
+			'clippath'       => array( 'id' => true ),
+			'mask'           => array( 'id' => true ),
+			'pattern'        => array(
+				'id'           => true,
+				'x'            => true,
+				'y'            => true,
+				'width'        => true,
+				'height'       => true,
+				'patternunits' => true,
+			),
+			'text'           => array(
+				'x'           => true,
+				'y'           => true,
+				'fill'        => true,
+				'font-size'   => true,
+				'font-family' => true,
+				'text-anchor' => true,
+				'transform'   => true,
+				'class'       => true,
+			),
+			'tspan'          => array(
+				'x'           => true,
+				'y'           => true,
+				'fill'        => true,
+				'font-size'   => true,
+				'font-family' => true,
+				'class'       => true,
+			),
+		);
+
+		/**
+		 * Filter the allowed SVG tags and attributes.
+		 *
+		 * @hook   cloudinary_allowed_svg_tags
+		 * @since  3.2.15
+		 *
+		 * @param $allowed_tags {array} The allowed SVG tags and their attributes.
+		 *
+		 * @return {array}
+		 */
+		$allowed_tags = apply_filters( 'cloudinary_allowed_svg_tags', $allowed_tags );
+
+		// Use wp_kses to sanitize the SVG content.
+		return wp_kses( $svg_content, $allowed_tags );
+	}
 }
 </code></pre>
         </article>
@@ -1346,7 +1633,7 @@ class Utils {
 </div>
 
 <nav>
-	<h2><a href="index.html">Home</a></h2><h3>Actions</h3><ul><li><a href="cloudinary_connected.html">cloudinary_connected</a></li><li><a href="cloudinary_delete_asset.html">cloudinary_delete_asset</a></li><li><a href="cloudinary_download_asset.html">cloudinary_download_asset</a></li><li><a href="cloudinary_enable_crop_and_gravity_control.html">cloudinary_enable_crop_and_gravity_control</a></li><li><a href="cloudinary_flush_cache.html">cloudinary_flush_cache</a></li><li><a href="cloudinary_id.html">cloudinary_id</a></li><li><a href="cloudinary_init_delivery.html">cloudinary_init_delivery</a></li><li><a href="cloudinary_init_settings.html">cloudinary_init_settings</a></li><li><a href="cloudinary_is_%257B$class_name%257D_active.html">cloudinary_is_{$class_name}_active</a></li><li><a href="cloudinary_lazy_load_bypass.html">cloudinary_lazy_load_bypass</a></li><li><a href="cloudinary_queue_action.html">cloudinary_queue_action</a></li><li><a href="cloudinary_ready.html">cloudinary_ready</a></li><li><a href="cloudinary_register_sync_types.html">cloudinary_register_sync_types</a></li><li><a href="cloudinary_registered_sizes.html">cloudinary_registered_sizes</a></li><li><a href="cloudinary_responsive_images_bypass_formats.html">cloudinary_responsive_images_bypass_formats</a></li><li><a href="cloudinary_string_replace.html">cloudinary_string_replace</a></li><li><a href="cloudinary_tag_skip_classes.html">cloudinary_tag_skip_classes</a></li><li><a href="cloudinary_unset_attributes.html">cloudinary_unset_attributes</a></li><li><a href="cloudinary_unsync_asset.html">cloudinary_unsync_asset</a></li><li><a href="cloudinary_upgrade_asset.html">cloudinary_upgrade_asset</a></li><li><a href="cloudinary_upload_args.html">cloudinary_upload_args</a></li><li><a href="cloudinary_uploaded_asset.html">cloudinary_uploaded_asset</a></li><li><a href="cloudinary_version_upgrade.html">cloudinary_version_upgrade</a></li></ul><h3>Filters</h3><ul><li><a href="cloudinary_admin_image_settings.html">cloudinary_admin_image_settings</a></li><li><a href="cloudinary_admin_pages.html">cloudinary_admin_pages</a></li><li><a href="cloudinary_admin_video_settings.html">cloudinary_admin_video_settings</a></li><li><a href="cloudinary_allow_glb_upload.html">cloudinary_allow_glb_upload</a></li><li><a href="cloudinary_allowed_extensions.html">cloudinary_allowed_extensions</a></li><li><a href="cloudinary_api_rest_endpoints.html">cloudinary_api_rest_endpoints</a></li><li><a href="cloudinary_apply_breakpoints.html">cloudinary_apply_breakpoints</a></li><li><a href="cloudinary_apply_default_transformations.html">cloudinary_apply_default_transformations</a></li><li><a href="cloudinary_asset_payload.html">cloudinary_asset_payload</a></li><li><a href="cloudinary_asset_state.html">cloudinary_asset_state</a></li><li><a href="cloudinary_autosync_threads.html">cloudinary_autosync_threads</a></li><li><a href="cloudinary_build_queue_query.html">cloudinary_build_queue_query</a></li><li><a href="cloudinary_bypass_cache.html">cloudinary_bypass_cache</a></li><li><a href="cloudinary_bypass_seo_url.html">cloudinary_bypass_seo_url</a></li><li><a href="cloudinary_can_sync_asset.html">cloudinary_can_sync_asset</a></li><li><a href="cloudinary_content_url.html">cloudinary_content_url</a></li><li><a href="cloudinary_context_options.html">cloudinary_context_options</a></li><li><a href="cloudinary_contextualized_post_id.html">cloudinary_contextualized_post_id</a></li><li><a href="cloudinary_convert_media_types.html">cloudinary_convert_media_types</a></li><li><a href="cloudinary_converted_url.html">cloudinary_converted_url</a></li><li><a href="cloudinary_cron_frequency.html">cloudinary_cron_frequency</a></li><li><a href="cloudinary_cron_start_offset.html">cloudinary_cron_start_offset</a></li><li><a href="cloudinary_current_post_id.html">cloudinary_current_post_id</a></li><li><a href="cloudinary_default_freeform_transformations_%257B$type%257D.html">cloudinary_default_freeform_transformations_{$type}</a></li><li><a href="cloudinary_default_qf_transformations_%257B$type%257D.html">cloudinary_default_qf_transformations_{$type}</a></li><li><a href="cloudinary_default_transformations.html">cloudinary_default_transformations</a></li><li><a href="cloudinary_delivery_get_id.html">cloudinary_delivery_get_id</a></li><li><a href="cloudinary_delivery_searchable_url.html">cloudinary_delivery_searchable_url</a></li><li><a href="cloudinary_dns_prefetch_types.html">cloudinary_dns_prefetch_types</a></li><li><a href="cloudinary_doing_upload.html">cloudinary_doing_upload</a></li><li><a href="cloudinary_edit_asset_permalink.html">cloudinary_edit_asset_permalink</a></li><li><a href="cloudinary_filter_out_local.html">cloudinary_filter_out_local</a></li><li><a href="cloudinary_filter_unknown_urls.html">cloudinary_filter_unknown_urls</a></li><li><a href="cloudinary_gallery_config.html">cloudinary_gallery_config</a></li><li><a href="cloudinary_gallery_html_container.html">cloudinary_gallery_html_container</a></li><li><a href="cloudinary_get_signature.html">cloudinary_get_signature</a></li><li><a href="cloudinary_home_url.html">cloudinary_home_url</a></li><li><a href="cloudinary_ignored_class_keywords.html">cloudinary_ignored_class_keywords</a></li><li><a href="cloudinary_ignored_data_keywords.html">cloudinary_ignored_data_keywords</a></li><li><a href="cloudinary_is_content_dir.html">cloudinary_is_content_dir</a></li><li><a href="cloudinary_is_deliverable.html">cloudinary_is_deliverable</a></li><li><a href="cloudinary_is_folder_synced.html">cloudinary_is_folder_synced</a></li><li><a href="cloudinary_is_media.html">cloudinary_is_media</a></li><li><a href="cloudinary_is_uploadable_media.html">cloudinary_is_uploadable_media</a></li><li><a href="cloudinary_lazy_load_bypass_classes.html">cloudinary_lazy_load_bypass_classes</a></li><li><a href="cloudinary_lazy_load_bypass_formats.html">cloudinary_lazy_load_bypass_formats</a></li><li><a href="cloudinary_local_url.html">cloudinary_local_url</a></li><li><a href="cloudinary_max_files_import.html">cloudinary_max_files_import</a></li><li><a href="cloudinary_media_context.html">cloudinary_media_context</a></li><li><a href="cloudinary_media_context_query.html">cloudinary_media_context_query</a></li><li><a href="cloudinary_media_context_things.html">cloudinary_media_context_things</a></li><li><a href="cloudinary_media_filters.html">cloudinary_media_filters</a></li><li><a href="cloudinary_media_status.html">cloudinary_media_status</a></li><li><a href="cloudinary_media_types.html">cloudinary_media_types</a></li><li><a href="cloudinary_meta_boxes.html">cloudinary_meta_boxes</a></li><li><a href="cloudinary_migrate_legacy_meta.html">cloudinary_migrate_legacy_meta</a></li><li><a href="cloudinary_on_demand_sync_limit.html">cloudinary_on_demand_sync_limit</a></li><li><a href="cloudinary_parse_element.html">cloudinary_parse_element</a></li><li><a href="cloudinary_plugin_asset_cache_filters.html">cloudinary_plugin_asset_cache_filters</a></li><li><a href="cloudinary_plugin_asset_cache_inline_types.html">cloudinary_plugin_asset_cache_inline_types</a></li><li><a href="cloudinary_prepare_size.html">cloudinary_prepare_size</a></li><li><a href="cloudinary_preview_types.html">cloudinary_preview_types</a></li><li><a href="cloudinary_queue_threads.html">cloudinary_queue_threads</a></li><li><a href="cloudinary_raw_url.html">cloudinary_raw_url</a></li><li><a href="cloudinary_register_extensions.html">cloudinary_register_extensions</a></li><li><a href="cloudinary_resource_type.html">cloudinary_resource_type</a></li><li><a href="cloudinary_rest_url.html">cloudinary_rest_url</a></li><li><a href="cloudinary_seo_public_id.html">cloudinary_seo_public_id</a></li><li><a href="cloudinary_set_usable_asset.html">cloudinary_set_usable_asset</a></li><li><a href="cloudinary_setting_get_value.html">cloudinary_setting_get_value</a></li><li><a href="cloudinary_settings_save_setting.html">cloudinary_settings_save_setting</a></li><li><a href="cloudinary_setup_component_parts.html">cloudinary_setup_component_parts</a></li><li><a href="cloudinary_site_url.html">cloudinary_site_url</a></li><li><a href="cloudinary_skip_parse_element.html">cloudinary_skip_parse_element</a></li><li><a href="cloudinary_skip_responsive_breakpoints.html">cloudinary_skip_responsive_breakpoints</a></li><li><a href="cloudinary_sync_base.html">cloudinary_sync_base</a></li><li><a href="cloudinary_sync_base_struct.html">cloudinary_sync_base_struct</a></li><li><a href="cloudinary_syncable_delivery_types.html">cloudinary_syncable_delivery_types</a></li><li><a href="cloudinary_task_capability.html">cloudinary_task_capability</a></li><li><a href="cloudinary_task_capability_%257Btask%257D.html">cloudinary_task_capability_{task}</a></li><li><a href="cloudinary_thread_queue_details_query.html">cloudinary_thread_queue_details_query</a></li><li><a href="cloudinary_transformations.html">cloudinary_transformations</a></li><li><a href="cloudinary_upgrade_sequence.html">cloudinary_upgrade_sequence</a></li><li><a href="cloudinary_upload_eager_formats.html">cloudinary_upload_eager_formats</a></li><li><a href="cloudinary_upload_options.html">cloudinary_upload_options</a></li><li><a href="cloudinary_use_original_image.html">cloudinary_use_original_image</a></li><li><a href="cloudinary_validate_cloudinary_id.html">cloudinary_validate_cloudinary_id</a></li></ul>
+	<h2><a href="index.html">Home</a></h2><h3>Actions</h3><ul><li><a href="cloudinary_connected.html">cloudinary_connected</a></li><li><a href="cloudinary_delete_asset.html">cloudinary_delete_asset</a></li><li><a href="cloudinary_download_asset.html">cloudinary_download_asset</a></li><li><a href="cloudinary_enable_crop_and_gravity_control.html">cloudinary_enable_crop_and_gravity_control</a></li><li><a href="cloudinary_flush_cache.html">cloudinary_flush_cache</a></li><li><a href="cloudinary_id.html">cloudinary_id</a></li><li><a href="cloudinary_init_delivery.html">cloudinary_init_delivery</a></li><li><a href="cloudinary_init_settings.html">cloudinary_init_settings</a></li><li><a href="cloudinary_is_%257B$class_name%257D_active.html">cloudinary_is_{$class_name}_active</a></li><li><a href="cloudinary_lazy_load_bypass.html">cloudinary_lazy_load_bypass</a></li><li><a href="cloudinary_queue_action.html">cloudinary_queue_action</a></li><li><a href="cloudinary_ready.html">cloudinary_ready</a></li><li><a href="cloudinary_register_sync_types.html">cloudinary_register_sync_types</a></li><li><a href="cloudinary_registered_sizes.html">cloudinary_registered_sizes</a></li><li><a href="cloudinary_responsive_images_bypass_formats.html">cloudinary_responsive_images_bypass_formats</a></li><li><a href="cloudinary_string_replace.html">cloudinary_string_replace</a></li><li><a href="cloudinary_tag_skip_classes.html">cloudinary_tag_skip_classes</a></li><li><a href="cloudinary_unset_attributes.html">cloudinary_unset_attributes</a></li><li><a href="cloudinary_unsync_asset.html">cloudinary_unsync_asset</a></li><li><a href="cloudinary_upgrade_asset.html">cloudinary_upgrade_asset</a></li><li><a href="cloudinary_upload_args.html">cloudinary_upload_args</a></li><li><a href="cloudinary_uploaded_asset.html">cloudinary_uploaded_asset</a></li><li><a href="cloudinary_version_upgrade.html">cloudinary_version_upgrade</a></li></ul><h3>Filters</h3><ul><li><a href="cloudinary_admin_image_settings.html">cloudinary_admin_image_settings</a></li><li><a href="cloudinary_admin_pages.html">cloudinary_admin_pages</a></li><li><a href="cloudinary_admin_video_settings.html">cloudinary_admin_video_settings</a></li><li><a href="cloudinary_allow_glb_upload.html">cloudinary_allow_glb_upload</a></li><li><a href="cloudinary_allowed_extensions.html">cloudinary_allowed_extensions</a></li><li><a href="cloudinary_allowed_svg_tags.html">cloudinary_allowed_svg_tags</a></li><li><a href="cloudinary_api_rest_endpoints.html">cloudinary_api_rest_endpoints</a></li><li><a href="cloudinary_apply_breakpoints.html">cloudinary_apply_breakpoints</a></li><li><a href="cloudinary_apply_default_transformations.html">cloudinary_apply_default_transformations</a></li><li><a href="cloudinary_asset_payload.html">cloudinary_asset_payload</a></li><li><a href="cloudinary_asset_state.html">cloudinary_asset_state</a></li><li><a href="cloudinary_autosync_threads.html">cloudinary_autosync_threads</a></li><li><a href="cloudinary_build_queue_query.html">cloudinary_build_queue_query</a></li><li><a href="cloudinary_bypass_cache.html">cloudinary_bypass_cache</a></li><li><a href="cloudinary_bypass_seo_url.html">cloudinary_bypass_seo_url</a></li><li><a href="cloudinary_can_sync_asset.html">cloudinary_can_sync_asset</a></li><li><a href="cloudinary_content_url.html">cloudinary_content_url</a></li><li><a href="cloudinary_context_options.html">cloudinary_context_options</a></li><li><a href="cloudinary_contextualized_post_id.html">cloudinary_contextualized_post_id</a></li><li><a href="cloudinary_convert_media_types.html">cloudinary_convert_media_types</a></li><li><a href="cloudinary_converted_url.html">cloudinary_converted_url</a></li><li><a href="cloudinary_cron_frequency.html">cloudinary_cron_frequency</a></li><li><a href="cloudinary_cron_start_offset.html">cloudinary_cron_start_offset</a></li><li><a href="cloudinary_current_post_id.html">cloudinary_current_post_id</a></li><li><a href="cloudinary_default_freeform_transformations_%257B$type%257D.html">cloudinary_default_freeform_transformations_{$type}</a></li><li><a href="cloudinary_default_qf_transformations_%257B$type%257D.html">cloudinary_default_qf_transformations_{$type}</a></li><li><a href="cloudinary_default_transformations.html">cloudinary_default_transformations</a></li><li><a href="cloudinary_delivery_get_id.html">cloudinary_delivery_get_id</a></li><li><a href="cloudinary_delivery_searchable_url.html">cloudinary_delivery_searchable_url</a></li><li><a href="cloudinary_dns_prefetch_types.html">cloudinary_dns_prefetch_types</a></li><li><a href="cloudinary_doing_upload.html">cloudinary_doing_upload</a></li><li><a href="cloudinary_edit_asset_permalink.html">cloudinary_edit_asset_permalink</a></li><li><a href="cloudinary_filter_out_local.html">cloudinary_filter_out_local</a></li><li><a href="cloudinary_filter_unknown_urls.html">cloudinary_filter_unknown_urls</a></li><li><a href="cloudinary_gallery_config.html">cloudinary_gallery_config</a></li><li><a href="cloudinary_gallery_html_container.html">cloudinary_gallery_html_container</a></li><li><a href="cloudinary_get_signature.html">cloudinary_get_signature</a></li><li><a href="cloudinary_home_url.html">cloudinary_home_url</a></li><li><a href="cloudinary_ignored_class_keywords.html">cloudinary_ignored_class_keywords</a></li><li><a href="cloudinary_ignored_data_keywords.html">cloudinary_ignored_data_keywords</a></li><li><a href="cloudinary_is_content_dir.html">cloudinary_is_content_dir</a></li><li><a href="cloudinary_is_deliverable.html">cloudinary_is_deliverable</a></li><li><a href="cloudinary_is_folder_synced.html">cloudinary_is_folder_synced</a></li><li><a href="cloudinary_is_media.html">cloudinary_is_media</a></li><li><a href="cloudinary_is_uploadable_media.html">cloudinary_is_uploadable_media</a></li><li><a href="cloudinary_lazy_load_bypass_classes.html">cloudinary_lazy_load_bypass_classes</a></li><li><a href="cloudinary_lazy_load_bypass_formats.html">cloudinary_lazy_load_bypass_formats</a></li><li><a href="cloudinary_local_url.html">cloudinary_local_url</a></li><li><a href="cloudinary_max_files_import.html">cloudinary_max_files_import</a></li><li><a href="cloudinary_media_context.html">cloudinary_media_context</a></li><li><a href="cloudinary_media_context_query.html">cloudinary_media_context_query</a></li><li><a href="cloudinary_media_context_things.html">cloudinary_media_context_things</a></li><li><a href="cloudinary_media_filters.html">cloudinary_media_filters</a></li><li><a href="cloudinary_media_status.html">cloudinary_media_status</a></li><li><a href="cloudinary_media_types.html">cloudinary_media_types</a></li><li><a href="cloudinary_meta_boxes.html">cloudinary_meta_boxes</a></li><li><a href="cloudinary_migrate_legacy_meta.html">cloudinary_migrate_legacy_meta</a></li><li><a href="cloudinary_on_demand_sync_limit.html">cloudinary_on_demand_sync_limit</a></li><li><a href="cloudinary_parse_element.html">cloudinary_parse_element</a></li><li><a href="cloudinary_plugin_asset_cache_filters.html">cloudinary_plugin_asset_cache_filters</a></li><li><a href="cloudinary_plugin_asset_cache_inline_types.html">cloudinary_plugin_asset_cache_inline_types</a></li><li><a href="cloudinary_prepare_size.html">cloudinary_prepare_size</a></li><li><a href="cloudinary_preview_types.html">cloudinary_preview_types</a></li><li><a href="cloudinary_queue_threads.html">cloudinary_queue_threads</a></li><li><a href="cloudinary_raw_url.html">cloudinary_raw_url</a></li><li><a href="cloudinary_register_extensions.html">cloudinary_register_extensions</a></li><li><a href="cloudinary_resource_type.html">cloudinary_resource_type</a></li><li><a href="cloudinary_rest_url.html">cloudinary_rest_url</a></li><li><a href="cloudinary_seo_public_id.html">cloudinary_seo_public_id</a></li><li><a href="cloudinary_set_usable_asset.html">cloudinary_set_usable_asset</a></li><li><a href="cloudinary_setting_get_value.html">cloudinary_setting_get_value</a></li><li><a href="cloudinary_settings_save_setting.html">cloudinary_settings_save_setting</a></li><li><a href="cloudinary_setup_component_parts.html">cloudinary_setup_component_parts</a></li><li><a href="cloudinary_site_url.html">cloudinary_site_url</a></li><li><a href="cloudinary_skip_parse_element.html">cloudinary_skip_parse_element</a></li><li><a href="cloudinary_skip_responsive_breakpoints.html">cloudinary_skip_responsive_breakpoints</a></li><li><a href="cloudinary_sync_base.html">cloudinary_sync_base</a></li><li><a href="cloudinary_sync_base_struct.html">cloudinary_sync_base_struct</a></li><li><a href="cloudinary_syncable_delivery_types.html">cloudinary_syncable_delivery_types</a></li><li><a href="cloudinary_task_capability.html">cloudinary_task_capability</a></li><li><a href="cloudinary_task_capability_%257Btask%257D.html">cloudinary_task_capability_{task}</a></li><li><a href="cloudinary_thread_queue_details_query.html">cloudinary_thread_queue_details_query</a></li><li><a href="cloudinary_transformations.html">cloudinary_transformations</a></li><li><a href="cloudinary_upgrade_sequence.html">cloudinary_upgrade_sequence</a></li><li><a href="cloudinary_upload_eager_formats.html">cloudinary_upload_eager_formats</a></li><li><a href="cloudinary_upload_options.html">cloudinary_upload_options</a></li><li><a href="cloudinary_use_original_image.html">cloudinary_use_original_image</a></li><li><a href="cloudinary_validate_cloudinary_id.html">cloudinary_validate_cloudinary_id</a></li></ul>
 </nav>
 
 <br class="clear">
