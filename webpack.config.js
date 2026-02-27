@@ -6,6 +6,7 @@ const MiniCssExtractPlugin = require( 'mini-css-extract-plugin' );
 const CssMinimizerPlugin = require( 'css-minimizer-webpack-plugin' );
 const RtlCssPlugin = require( 'rtlcss-webpack-plugin' );
 const TerserPlugin = require( 'terser-webpack-plugin' );
+const CopyPlugin = require( 'copy-webpack-plugin' );
 
 /**
  * WordPress dependencies
@@ -119,6 +120,14 @@ const cldCore = {
 	plugins: [
 		new MiniCssExtractPlugin( {
 			filename: '../css/[name].css',
+		} ),
+		new CopyPlugin( {
+			patterns: [
+				{
+					from: path.resolve( process.cwd(), 'src/css/images' ),
+					to: path.resolve( process.cwd(), 'css/images' ),
+				},
+			],
 		} ),
 	],
 	optimization: {

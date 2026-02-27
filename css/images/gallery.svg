@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="24px" viewBox="0 0 18 18" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>crop </title>
+    <g id="Wordpress" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Product-gallery" transform="translate(-160.000000, -183.000000)" fill="#7C4DFF">
+            <g id="Group-4" transform="translate(138.000000, 142.000000)">
+                <g id="crop-" transform="translate(19.000000, 38.000000)">
+                    <path d="M3,13 L11,13 L11,3 L3,3 L3,13 Z M3,21 L11,21 L11,15 L3,15 L3,21 Z M13,21 L21,21 L21,11 L13,11 L13,21 Z M13,3 L13,9 L21,9 L21,3 L13,3 Z" id="shape"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>
