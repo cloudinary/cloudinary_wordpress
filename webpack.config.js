@@ -93,14 +93,14 @@ const cldCore = {
 				test: /\.(png|svg|jpg|gif|webp)$/,
 				type: 'asset/resource',
 				generator: {
-					filename: '../css/images/[name].[ext]',
+					filename: '../css/images/[name][ext]',
 				},
 			},
 			{
 				test: /\.(woff|woff2|eot|ttf|otf)$/,
 				type: 'asset/resource',
 				generator: {
-					filename: '../css/fonts/[name].[contenthash].[ext]',
+					filename: '../css/fonts/[name].[contenthash][ext]',
 				},
 			},
 			{
