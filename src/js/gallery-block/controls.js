@@ -1,11 +1,15 @@
+/**
+ * External dependencies
+ */
 import Dot from 'dot-object';
-import { useState } from 'react';
-import { __ } from '@wordpress/i18n';
 import cloneDeep from 'lodash/cloneDeep';
-import Tippy from '@tippyjs/react';
 
+/**
+ * WordPress dependencies
+ */
+import { useState } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 import '@wordpress/components/build-style/style.css';
-
 import {
 	Button,
 	ButtonGroup,
@@ -15,9 +19,11 @@ import {
 	TextareaControl,
 	ToggleControl,
 } from '@wordpress/components';
-
 import { ColorPalette } from '@wordpress/block-editor';
 
+/**
+ * Internal dependencies
+ */
 import {
 	ASPECT_RATIOS,
 	CAROUSEL_LOCATION,
@@ -39,6 +45,7 @@ import {
 
 import Radio from './radio';
 import { convertColors } from './utils';
+import { useTippyTooltip } from '../hooks/use-tippy-tooltip';
 
 const ColorPaletteLabel = ( { children, value } ) => (
 	<div className="colorpalette-color-label">
@@ -94,6 +101,13 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 			} );
 		}
 	};
+
+	const tooltipRef = useTippyTooltip(
+		__(
+			'How to resize or crop images to fit the gallery. Pad adds padding around the image using the specified padding style. Fill crops the image from the center so it fills as much of the available space as possible.',
+			'cloudinary'
+		)
+	);
 
 	return (
 		<>
@@ -183,24 +197,14 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 					}
 				/>
 				<p>
-					<Tippy
-						content={
-							<span>
-								{ __(
-									'How to resize or crop images to fit the gallery. Pad adds padding around the image using the specified padding style. Fill crops the image from the center so it fills as much of the available space as possible.',
-									'cloudinary'
-								) }
-							</span>
-						}
-						theme={ 'cloudinary' }
-						arrow={ false }
-						placement={ 'bottom-start' }
-					>
-						<div className="cld-ui-title">
-							{ __( 'Resize/Crop Mode', 'cloudinary' ) }
-							<span className="dashicons dashicons-info cld-tooltip"></span>
-						</div>
-					</Tippy>
+					<div className="cld-ui-title">
+						{ __( 'Resize/Crop Mode', 'cloudinary' ) }
+						<span
+							className="dashicons dashicons-info cld-tooltip"
+							ref={ tooltipRef }
+						></span>
+					</div>
+
 					<ButtonGroup>
 						{ RESIZE_CROP.map( ( type ) => (
 							<Button

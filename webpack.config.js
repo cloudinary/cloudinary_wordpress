@@ -6,6 +6,7 @@ const MiniCssExtractPlugin = require( 'mini-css-extract-plugin' );
 const CssMinimizerPlugin = require( 'css-minimizer-webpack-plugin' );
 const RtlCssPlugin = require( 'rtlcss-webpack-plugin' );
 const TerserPlugin = require( 'terser-webpack-plugin' );
+const CopyPlugin = require( 'copy-webpack-plugin' );
 
 /**
  * WordPress dependencies
@@ -23,8 +24,6 @@ const sharedConfig = {
 		minimizer: [
 			new TerserPlugin( {
 				parallel: true,
-				sourceMap: true,
-				cache: true,
 				terserOptions: {
 					output: {
 						comments: /translators:/i,
@@ -68,6 +67,10 @@ const sharedConfig = {
 			filename: '../css/[name]-rtl.css',
 		} ),
 	],
+	cache: {
+		type: 'filesystem',
+	},
+	devtool: 'source-map',
 };
 
 const cldCore = {
@@ -89,27 +92,17 @@ const cldCore = {
 		rules: [
 			{
 				test: /\.(png|svg|jpg|gif|webp)$/,
-				use: [
-					{
-						loader: 'file-loader',
-						options: {
-							name: '[name].[ext]',
-							outputPath: '../css/images/',
-						},
-					},
-				],
+				type: 'asset/resource',
+				generator: {
+					filename: '../css/images/[name][ext]',
+				},
 			},
 			{
 				test: /\.(woff|woff2|eot|ttf|otf)$/,
-				use: [
-					{
-						loader: 'file-loader',
-						options: {
-							name: '[name].[contenthash].[ext]',
-							outputPath: '../css/fonts/',
-						},
-					},
-				],
+				type: 'asset/resource',
+				generator: {
+					filename: '../css/fonts/[name].[contenthash][ext]',
+				},
 			},
 			{
 				test: /\.(sa|sc|c)ss$/,
@@ -127,6 +120,14 @@ const cldCore = {
 	plugins: [
 		new MiniCssExtractPlugin( {
 			filename: '../css/[name].css',
+		} ),
+		new CopyPlugin( {
+			patterns: [
+				{
+					from: path.resolve( process.cwd(), 'src/css/images' ),
+					to: path.resolve( process.cwd(), 'css/images' ),
+				},
+			],
 		} ),
 	],
 	optimization: {
