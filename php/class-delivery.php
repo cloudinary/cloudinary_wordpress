@@ -1007,6 +1007,62 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Get the size dimensions from the parent figure class if available.
+	 *
+	 * @param string $element The img tag element.
+	 * @param string $content The full HTML content.
+	 *
+	 * @return array|null An array with width and height, or null if not found.
+	 */
+	private function get_size_from_parent( $element, $content ) {
+		$size_slug = $this->get_size_slug_from_parent_figure_class( $element, $content );
+
+		// If no size slug is found in the parent class, there's no specific size to use for transformation.
+		if ( empty( $size_slug ) ) {
+			return null;
+		}
+
+		// Get the dimensions of the WordPress size from options.
+		$size_width  = get_option( $size_slug . '_size_w' );
+		$size_height = get_option( $size_slug . '_size_h' );
+
+		// Check if we have valid dimensions. If not, return null to indicate no specific size.
+		if ( empty( $size_width ) || empty( $size_height ) ) {
+			return null;
+		}
+
+		return array( (int) $size_width, (int) $size_height );
+	}
+
+	/**
+	 * Extract WordPress image size from parent figure element.
+	 *
+	 * @param string $element The img tag element.
+	 * @param string $content The full HTML content.
+	 *
+	 * @return string|null The WordPress size slug (e.g., 'thumbnail', 'medium'), or null if not found.
+	 */
+	private function get_size_slug_from_parent_figure_class( $element, $content ) {
+		// If content is empty, we can't find a parent figure, so return null.
+		if ( empty( $content ) ) {
+			return null;
+		}
+
+		// Escape the element for use in regex.
+		$escaped_element = preg_quote( $element, '#' );
+
+		// Pattern: <figure class="...size-{size}...">...img element...[optional figcaption]</figure> .
+		$pattern = '#<figure\s+[^>]*class="[^"]*\bsize-(\w+)\b[^"]*"[^>]*>.*?' . $escaped_element . '.*?</figure>#is';
+
+		// Look for the parent figure tag that contains this img element.
+		if ( preg_match( $pattern, $content, $matches ) ) {
+			return $matches[1];
+		}
+
+		return null;
+	}
+
+	/**
 	 * Convert media tags from Local to Cloudinary, and register with String_Replace.
 	 *
 	 * @param string $content The HTML to find tags and prep replacement in.
@@ -1025,7 +1081,12 @@ class Delivery implements Setup {
 		}
 
 		$tags = $this->get_media_tags( $content, 'img|video|article|source' );
-		$tags = array_map( array( $this, 'parse_element' ), $tags );
+		$tags = array_map(
+			function ( $tag ) use ( $content ) {
+				return $this->parse_element( $tag, $content );
+			},
+			$tags
+		);
 		$tags = array_filter( $tags );
 
 		$replacements = array();
@@ -1437,10 +1498,11 @@ class Delivery implements Setup {
 	 * Parse an html element into tag, and attributes.
 	 *
 	 * @param string $element The HTML element.
+	 * @param string $content Optional full HTML content for parent context.
 	 *
 	 * @return array|null
 	 */
-	public function parse_element( $element ) {
+	public function parse_element( $element, $content = '' ) {
 		/**
 		 * Filter to skip parsing an element.
 		 *
@@ -1551,6 +1613,12 @@ class Delivery implements Setup {
 			if ( in_array( $tag_element['tag'], array( 'img', 'source' ), true ) ) {
 				// Check if this is a crop or a scale.
 				$has_size = $this->media->get_size_from_url( $this->sanitize_url( $raw_url ) );
+
+				// If no size found in URL, try to extract from parent figure element so we can apply cropping if needed.
+				if ( empty( $has_size ) && $has_sized_transformation ) {
+					$has_size = $this->get_size_from_parent( $tag_element['original'], $content );
+				}
+
 				if ( ! empty( $has_size ) && ! empty( $item['height'] ) ) {
 					$file_ratio     = round( $has_size[0] / $has_size[1], 2 );
 					$original_ratio = round( $item['width'] / $item['height'], 2 );
