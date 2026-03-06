@@ -1007,20 +1007,45 @@ class Delivery implements Setup {
 	}
 
 	/**
-	 * Get the size dimensions from the parent figure class if available.
+	 * Get the image size dimensions from the tags if available.
 	 *
-	 * @param string $element The img tag element.
-	 * @param string $content The full HTML content.
+	 * @param array $tags     The media tags found in the content.
+	 * @param array $relation The relation data for the media item.
+	 *
+	 * @return array An array with width and height, or empty if not found.
+	 */
+	private function get_image_size_within_tags( $tags, $relation ) {
+		// If we don't have a post ID, we can't find a size, so return empty.
+		if ( empty( $relation['post_id'] ) ) {
+			return array();
+		}
+		$post_id = intval( $relation['post_id'] );
+
+		// Look through the tags to find one that matches our post ID and has a size slug, then get the size from that slug.
+		foreach ( $tags as $set ) {
+			// If this set doesn't have a size slug, skip.
+			if ( empty( $set['atts']['data-size-slug'] ) ) {
+				continue;
+			}
+
+			// If this tag's post ID matches our relation's post ID, get the size from the slug and return it.
+			if ( $post_id === $set['id'] ) {
+				$size = $this->get_size_from_slug( $set['atts']['data-size-slug'] );
+				return ( empty( $size ) ) ? array() : $size; // Return the size if found, otherwise return empty array.
+			}
+		}
+
+		return array();
+	}
+
+	/**
+	 * Get the size dimensions based on the size slug.
+	 *
+	 * @param string $size_slug The WordPress size slug (e.g., 'thumbnail', 'medium', 'large').
 	 *
 	 * @return array|null An array with width and height, or null if not found.
 	 */
-	private function get_size_from_parent( $element, $content ) {
-		$size_slug = $this->get_size_slug_from_parent_figure_class( $element, $content );
-
-		// If no size slug is found in the parent class, there's no specific size to use for transformation.
-		if ( empty( $size_slug ) ) {
-			return null;
-		}
+	private function get_size_from_slug( $size_slug ) {
 
 		// Get the dimensions of the WordPress size from options.
 		$size_width  = get_option( $size_slug . '_size_w' );
@@ -1143,7 +1168,9 @@ class Delivery implements Setup {
 			$public_id      = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
 			// Get merged transformations including overlays.
 			$merged_transformations = Relate::get_transformations( $relation['post_id'], true );
-			$cloudinary_url = $this->media->cloudinary_url( $relation['post_id'], array(), $merged_transformations, $public_id );
+
+			$size           = $this->get_image_size_within_tags( $tags, $relation );
+			$cloudinary_url = $this->media->cloudinary_url( $relation['post_id'], $size, $merged_transformations, $public_id );
 			if ( empty( $cloudinary_url ) ) {
 				continue;
 			}
@@ -1281,6 +1308,15 @@ class Delivery implements Setup {
 				$size = $has_wp_size;
 			}
 		}
+
+		// Retrieve size from the parent figure class of the image if it exists.
+		if ( ! empty( $tag_element['atts']['data-size-slug'] ) && 'img' === $tag_element['tag'] ) {
+			$slug_size = $this->get_size_from_slug( $tag_element['atts']['data-size-slug'] );
+			if ( ! empty( $slug_size ) ) {
+				$size = $slug_size;
+			}
+		}
+
 		// Unset srcset and sizes.
 		unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 
@@ -1616,7 +1652,17 @@ class Delivery implements Setup {
 
 				// If no size found in URL, try to extract from parent figure element so we can apply cropping if needed.
 				if ( empty( $has_size ) && $has_sized_transformation ) {
-					$has_size = $this->get_size_from_parent( $tag_element['original'], $content );
+					$size_slug = $this->get_size_slug_from_parent_figure_class( $tag_element['original'], $content );
+
+					if ( ! empty( $size_slug ) ) {
+						$has_size = $this->get_size_from_slug( $size_slug );
+						if ( ! empty( $has_size ) ) {
+							$attributes['data-size-slug'] = $size_slug;
+							$tag_element['width']         = $has_size[0];
+							$tag_element['height']        = $has_size[1];
+
+						}
+					}
 				}
 
 				if ( ! empty( $has_size ) && ! empty( $item['height'] ) ) {
