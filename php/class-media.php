@@ -3272,22 +3272,32 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Get the size dimensions based on the size slug.
 	 *
+	 * Uses WordPress core API to retrieve registered image subsizes, which handles both
+	 * built-in sizes (thumbnail, medium, large, etc.) and custom registered sizes.
+	 *
 	 * @param string $size_slug The WordPress size slug (e.g., 'thumbnail', 'medium', 'large').
 	 *
 	 * @return array|null An array with width and height, or null if not found.
 	 */
 	public function get_size_from_slug( $size_slug ) {
-		// Get the dimensions of the WordPress size from options.
-		$size_width  = get_option( $size_slug . '_size_w' );
-		$size_height = get_option( $size_slug . '_size_h' );
+		// Use WordPress core API to get all registered image subsizes.
+		$image_subsizes = wp_get_registered_image_subsizes();
 
-		// Check if we have valid dimensions. If not, return null to indicate no specific size.
-		if ( empty( $size_width ) || empty( $size_height ) ) {
+		// Check if the requested size exists in registered subsizes.
+		if ( ! isset( $image_subsizes[ $size_slug ] ) ) {
 			return null;
 		}
 
-		return array( (int) $size_width, (int) $size_height );
+		$size_data = $image_subsizes[ $size_slug ];
+
+		// Return width and height if both are present and valid.
+		if ( ! empty( $size_data['width'] ) && ! empty( $size_data['height'] ) ) {
+			return array( (int) $size_data['width'], (int) $size_data['height'] );
+		}
+
+		return null;
 	}
+
 
 	/**
 	 * Extract WordPress image size from parent figure element.
