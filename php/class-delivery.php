@@ -1030,61 +1030,12 @@ class Delivery implements Setup {
 
 			// If this tag's post ID matches our relation's post ID, get the size from the slug and return it.
 			if ( $post_id === $set['id'] ) {
-				$size = $this->get_size_from_slug( $set['atts']['data-size-slug'] );
+				$size = $this->media->get_size_from_slug( $set['atts']['data-size-slug'] );
 				return ( empty( $size ) ) ? array() : $size; // Return the size if found, otherwise return empty array.
 			}
 		}
 
 		return array();
-	}
-
-	/**
-	 * Get the size dimensions based on the size slug.
-	 *
-	 * @param string $size_slug The WordPress size slug (e.g., 'thumbnail', 'medium', 'large').
-	 *
-	 * @return array|null An array with width and height, or null if not found.
-	 */
-	private function get_size_from_slug( $size_slug ) {
-
-		// Get the dimensions of the WordPress size from options.
-		$size_width  = get_option( $size_slug . '_size_w' );
-		$size_height = get_option( $size_slug . '_size_h' );
-
-		// Check if we have valid dimensions. If not, return null to indicate no specific size.
-		if ( empty( $size_width ) || empty( $size_height ) ) {
-			return null;
-		}
-
-		return array( (int) $size_width, (int) $size_height );
-	}
-
-	/**
-	 * Extract WordPress image size from parent figure element.
-	 *
-	 * @param string $element The img tag element.
-	 * @param string $content The full HTML content.
-	 *
-	 * @return string|null The WordPress size slug (e.g., 'thumbnail', 'medium'), or null if not found.
-	 */
-	private function get_size_slug_from_parent_figure_class( $element, $content ) {
-		// If content is empty, we can't find a parent figure, so return null.
-		if ( empty( $content ) ) {
-			return null;
-		}
-
-		// Escape the element for use in regex.
-		$escaped_element = preg_quote( $element, '#' );
-
-		// Pattern: <figure class="...size-{size}...">...img element...[optional figcaption]</figure> .
-		$pattern = '#<figure\s+[^>]*class="[^"]*\bsize-(\w+)\b[^"]*"[^>]*>.*?' . $escaped_element . '.*?</figure>#is';
-
-		// Look for the parent figure tag that contains this img element.
-		if ( preg_match( $pattern, $content, $matches ) ) {
-			return $matches[1];
-		}
-
-		return null;
 	}
 
 	/**
@@ -1311,7 +1262,7 @@ class Delivery implements Setup {
 
 		// Retrieve size from the parent figure class of the image if it exists.
 		if ( ! empty( $tag_element['atts']['data-size-slug'] ) && 'img' === $tag_element['tag'] ) {
-			$slug_size = $this->get_size_from_slug( $tag_element['atts']['data-size-slug'] );
+			$slug_size = $this->media->get_size_from_slug( $tag_element['atts']['data-size-slug'] );
 			if ( ! empty( $slug_size ) ) {
 				$size = $slug_size;
 			}
@@ -1652,15 +1603,14 @@ class Delivery implements Setup {
 
 				// If no size found in URL, try to extract from parent figure element so we can apply cropping if needed.
 				if ( empty( $has_size ) && $has_sized_transformation ) {
-					$size_slug = $this->get_size_slug_from_parent_figure_class( $tag_element['original'], $content );
+					$size_slug = $this->media->get_size_slug_from_parent_figure_class( $tag_element['original'], $content );
 
 					if ( ! empty( $size_slug ) ) {
-						$has_size = $this->get_size_from_slug( $size_slug );
+						$has_size = $this->media->get_size_from_slug( $size_slug );
 						if ( ! empty( $has_size ) ) {
 							$attributes['data-size-slug'] = $size_slug;
 							$tag_element['width']         = $has_size[0];
 							$tag_element['height']        = $has_size[1];
-
 						}
 					}
 				}
