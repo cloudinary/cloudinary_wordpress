@@ -40,8 +40,8 @@ coverage/html/
 # ENV files
 .env
 
-# wp-env
-.wp-env.json
+# wp-env personal overrides
+.wp-env.override.json
 
 # IDE
 .vscode
