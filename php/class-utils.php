@@ -1088,15 +1088,7 @@ class Utils {
 		 */
 		$media_context_query = apply_filters( 'cloudinary_media_context_query', 'media_context = %s' );
 
-		/**
-		 * Filter the media context things.
-		 *
-		 * @hook   cloudinary_media_context_things
-		 * @since  3.2.0
-		 * @param $media_context_things {array} The default media context things.
-		 * @return {array}
-		 */
-		$media_context_things = apply_filters( 'cloudinary_media_context_things', array( 'default' ) );
+		$media_context_things = self::get_media_context_things();
 
 		// Query for urls in chunks.
 		if ( ! empty( $urls ) ) {
@@ -1259,6 +1251,28 @@ class Utils {
 		$context = apply_filters( 'cloudinary_media_context', 'default', $attachment_id );
 
 		return sanitize_key( $context );
+	}
+
+	/**
+	 * Get the media context things.
+	 *
+	 * @param array $media_context_things The media context things to query for. Defaults to array( 'default' ).
+	 *
+	 * @return array
+	 */
+	public static function get_media_context_things( $media_context_things = array( 'default' ) ) {
+
+		/**
+		 * Filter the media context things.
+		 *
+		 * @hook   cloudinary_media_context_things
+		 * @since  3.2.0
+		 * @param $media_context_things {array} The default media context things.
+		 * @return {array}
+		 */
+		$media_context_things = apply_filters( 'cloudinary_media_context_things', $media_context_things );
+
+		return $media_context_things;
 	}
 
 	/**
