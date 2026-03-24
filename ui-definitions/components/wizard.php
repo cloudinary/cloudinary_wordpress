@@ -149,6 +149,9 @@ $advanced->set_value( 'on' );
 					<span id="connection-error" class="cld-wizard-connect-status error">
 						<span class="dashicons dashicons-warning"></span> <?php esc_html_e( 'Incorrect connection string', 'cloudinary' ); ?>
 					</span>
+					<p id="connection-format-hint" class="cld-wizard-connect-format-hint hidden">
+						<?php esc_html_e( 'Expected format:', 'cloudinary' ); ?> <code>cloudinary://API_KEY:API_SECRET@CLOUD_NAME</code>
+					</p>
 					<span id="connection-working" class="cld-wizard-connect-status working">
 						<span class="spinner"></span>
 					</span>

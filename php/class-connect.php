@@ -94,6 +94,22 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	const CLOUDINARY_VARIABLE_REGEX = '^(?:CLOUDINARY_URL=)?cloudinary://[0-9]+:[A-Za-z_\-0-9]+@[A-Za-z]+';
 
 	/**
+	 * Sanitize a raw connection URL input.
+	 *
+	 * Strips leading/trailing whitespace and the optional CLOUDINARY_URL= prefix
+	 * (case-insensitive), which users sometimes copy verbatim from their dashboard.
+	 *
+	 * @param string $url The raw URL string.
+	 *
+	 * @return string
+	 */
+	public static function sanitize_connection_url( $url ) {
+		$url = trim( (string) $url );
+		$url = preg_replace( '/^CLOUDINARY_URL=/i', '', $url );
+		return trim( $url );
+	}
+
+	/**
 	 * Initiate the plugin resources.
 	 *
 	 * @param \Cloudinary\Plugin $plugin Instance of the plugin.
@@ -150,7 +166,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 */
 	public function rest_test_connection( WP_REST_Request $request ) {
 
-		$url    = $request->get_param( 'cloudinary_url' );
+		$url    = self::sanitize_connection_url( (string) $request->get_param( 'cloudinary_url' ) );
 		$result = $this->test_connection( $url );
 
 		return rest_ensure_response( $result );
@@ -273,7 +289,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			return $data;
 		}
 
-		$data['cloudinary_url'] = str_replace( 'CLOUDINARY_URL=', '', $data['cloudinary_url'] );
+		$data['cloudinary_url'] = self::sanitize_connection_url( $data['cloudinary_url'] );
 		$current                = $this->plugin->settings->find_setting( 'connect' )->get_value();
 
 		// Same URL, return original data.
@@ -904,7 +920,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		}
 
 		// Test upgraded details.
-		$data['cloudinary_url'] = str_replace( 'CLOUDINARY_URL=', '', $data['cloudinary_url'] );
+		$data['cloudinary_url'] = self::sanitize_connection_url( $data['cloudinary_url'] );
 		$test                   = $this->test_connection( $data['cloudinary_url'] );
 
 		if ( 'connection_success' === $test['type'] ) {
@@ -943,7 +959,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		static $url = null;
 
 		if ( empty( $url ) ) {
-			$url = str_replace( 'CLOUDINARY_URL=', '', CLOUDINARY_CONNECTION_STRING );
+			$url = self::sanitize_connection_url( CLOUDINARY_CONNECTION_STRING );
 		}
 
 		if ( 'cloudinary_url' === $setting ) {
