@@ -1,5 +1,8 @@
+@use "../../../variables" as *;
 
-&-connect {
+
+
+.cld-wizard-connect {
 	&-connection {
 		display: flex;
 		flex-direction: row;

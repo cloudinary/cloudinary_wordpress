@@ -1,5 +1,8 @@
+@use "../../variables" as *;
+
+
 // Plan.
-&-plan {
+.cld-plan {
 	display: flex;
 	flex-wrap: wrap;
 	&-item{

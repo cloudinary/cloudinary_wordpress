@@ -1,4 +1,7 @@
-&-lock {
+@use "../../../variables" as *;
+
+
+.cld-wizard-lock {
 	display: flex;
 	cursor: pointer;
 	&.hidden{
@@ -13,7 +16,7 @@
 		color: $color-cld-blue;
 	}
 }
-&-optimize {
+.cld-wizard-optimize {
 	&-settings {
 		&.disabled {
 			opacity: 0.4;
