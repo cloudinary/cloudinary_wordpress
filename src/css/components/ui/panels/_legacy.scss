@@ -1,3 +1,4 @@
+@use "sass:color";
 @use "../../../variables" as *;
 
 .cld-panel {
@@ -101,7 +102,7 @@
 		padding: 1.5rem;
 
 		&-success {
-			background-color: transparentize($color-notification-success, 0.8);
+			background-color: color.adjust($color-notification-success, $alpha: -0.8);
 			border: 2px solid $color-notification-success;
 
 			&::before {
@@ -110,7 +111,7 @@
 		}
 
 		&-syncing {
-			background-color: transparentize($color-wp-blue, 0.8);
+			background-color: color.adjust($color-wp-blue, $alpha: -0.8);
 			border: 2px solid $color-wp-blue;
 			text-decoration: none;
 			color: #444;
