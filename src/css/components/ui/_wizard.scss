@@ -1,12 +1,6 @@
 // Wizard.
 
-&-wizard {
-	@import "wizard/tabs";
-	@import "wizard/intro";
-	@import "wizard/connect";
-	@import "wizard/optimize";
-	@import "wizard/complete";
-
+.cld-wizard {
 	max-width: 1100px;
 	margin-right: auto;
 	margin-left: auto;
