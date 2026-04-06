@@ -1,10 +1,12 @@
+@use "../../variables" as *;
+
+
 // Main page. Headers/Footers.
-&-settings {
+.cld-settings {
 	margin-left: -20px;
 }
 
-&-page {
-	@import "tabs";
+.cld-page {
 
 	&-header {
 		background-color: $color-cld-blue;

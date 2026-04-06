@@ -52,3 +52,6 @@ cloudinary-image-management-and-manipulation-in-the-cloud-cdn.zip
 cloudinary-wordpress-v2.zip
 cloudinary-wordpress-v3.zip
 package/dist
+
+# AI generated files
+.claude/
