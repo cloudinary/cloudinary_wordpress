@@ -89,11 +89,17 @@ class Relationship {
 		// Create the context query placeholders by filling an array with the correct number of %s placeholders and then imploding it into a string.
 		$context_query = implode( ', ', array_fill( 0, count( $contexts ), '%s' ) );
 
+		// Prepare arguments for the SQL query.
+		$query_args = array_merge(
+			array( $this->post_id ),
+			$contexts,
+			array( $this->context )
+		);
+
 		// phpcs:ignore WordPress.DB
 		$sql  = $wpdb->prepare(
-			"SELECT * FROM {$table_name} WHERE `post_id` = %d AND `media_context` IN ({$context_query})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared
-			$this->post_id,
-			...$contexts
+			"SELECT * FROM {$table_name} WHERE `post_id` = %d AND `media_context` IN ({$context_query}) ORDER BY FIELD(`media_context`, %s) DESC LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared
+			$query_args
 		);
 		$data = $wpdb->get_row( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB
 
