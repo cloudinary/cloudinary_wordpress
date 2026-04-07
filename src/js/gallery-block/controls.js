@@ -214,7 +214,6 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 							<Button
 								key={ type.value + '-look-and-feel' }
 								variant="secondary"
-								isSecondary
 								isPressed={
 									type.value ===
 									attributes.transformation_crop
@@ -252,7 +251,6 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 							<Button
 								key={ navType.value + '-navigation' }
 								variant="secondary"
-								isSecondary
 								isPressed={
 									navType.value === attributes.navigation
 								}
@@ -285,7 +283,6 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 										<Button
 											key={ item.value + '-zoom-type' }
 											variant="secondary"
-											isSecondary
 											isPressed={
 												item.value ===
 												attributes.zoomProps_type
@@ -334,7 +331,6 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 														'-zoom-trigger'
 													}
 													variant="secondary"
-													isSecondary
 													isPressed={
 														item.value ===
 														attributes.zoomProps_trigger
@@ -368,7 +364,6 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 							<Button
 								key={ item.value + '-carousel-location' }
 								variant="secondary"
-								isSecondary
 								isPressed={
 									item.value === attributes.carouselLocation
 								}
@@ -401,7 +396,6 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 							<Button
 								key={ item.value + '-carousel-style' }
 								variant="secondary"
-								isSecondary
 								isPressed={
 									item.value === attributes.carouselStyle
 								}
