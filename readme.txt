@@ -1,7 +1,7 @@
 === Cloudinary - Deliver Images and Videos at Scale ===
 Contributors: Cloudinary, XWP, Automattic
 Tags: image-optimizer, core-web-vitals, video, resize, performance
-Requires at least: 6.3
+Requires at least: 5.6
 Tested up to: 7.0
 Requires PHP: 7.4
 Stable tag: STABLETAG
