@@ -1398,7 +1398,7 @@ class Delivery implements Setup {
 			'resource_type' => $resource_type,
 		);
 
-		$tag_element['atts']['data-public-id'] = $this->plugin->get_component( 'connect' )->api->get_public_id( $tag_element['id'], $args );
+		$tag_element['atts']['data-public-id'] = $this->plugin->get_component( 'connect' )->api->get_public_id( $tag_element['id'], $args, $public_id );
 
 		return $tag_element;
 	}
