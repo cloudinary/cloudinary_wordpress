@@ -1115,8 +1115,8 @@ class Delivery implements Setup {
 				continue; // We should not deliver disabled items.
 			}
 
-			$base           = $type . ':' . $url;
-			$public_id      = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
+			$base      = $type . ':' . $url;
+			$public_id = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
 			// Get merged transformations including overlays.
 			$merged_transformations = Relate::get_transformations( $relation['post_id'], true );
 
