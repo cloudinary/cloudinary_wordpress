@@ -5,7 +5,25 @@
 	<rule ref="PHPCompatibilityWP"/>
 	<!-- For help in understanding this testVersion:
 		https://github.com/PHPCompatibility/PHPCompatibility#sniffing-your-code-for-compatibility-with-specific-php-versions -->
-	<config name="testVersion" value="5.6-"/>
+	<config name="testVersion" value="7.4-"/>
+
+    <!-- Re-enable PHP 8.0 function checks excluded by PHPCompatibilityWP.
+         Their WP polyfills only exist in WP 5.9+, but we support WP 5.6+. -->
+    <rule ref="PHPCompatibility.FunctionUse.NewFunctions.str_containsFound">
+        <severity>5</severity>
+    </rule>
+    <rule ref="PHPCompatibility.FunctionUse.NewFunctions.str_starts_withFound">
+        <severity>5</severity>
+    </rule>
+    <rule ref="PHPCompatibility.FunctionUse.NewFunctions.str_ends_withFound">
+        <severity>5</severity>
+    </rule>
+    <rule ref="PHPCompatibility.FunctionUse.NewFunctions.array_key_firstFound">
+        <severity>5</severity>
+    </rule>
+    <rule ref="PHPCompatibility.FunctionUse.NewFunctions.array_key_lastFound">
+        <severity>5</severity>
+    </rule>
 
 	<config name="ignore_warnings_on_exit" value="1" /><!-- Ignore warnings for now. -->
 
