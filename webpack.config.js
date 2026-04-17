@@ -7,6 +7,7 @@ const CssMinimizerPlugin = require( 'css-minimizer-webpack-plugin' );
 const RtlCssPlugin = require( 'rtlcss-webpack-plugin' );
 const TerserPlugin = require( 'terser-webpack-plugin' );
 const CopyPlugin = require( 'copy-webpack-plugin' );
+const webpack = require( 'webpack' );
 
 /**
  * WordPress dependencies
@@ -38,9 +39,44 @@ const sharedConfig = {
 		...defaultConfig.module,
 		rules: [
 			// Remove the css/postcss loaders from `@wordpress/scripts` due to version conflicts.
-			...defaultConfig.module.rules.filter(
-				( rule ) => ! rule.test.toString().match( '.css' )
-			),
+			// Also patch the babel-loader rule to use the classic JSX transform so the build does
+			// not depend on the `react-jsx-runtime` WP script handle (only available in WP 6.6+).
+			...defaultConfig.module.rules
+				.filter( ( rule ) => ! rule.test.toString().match( '.css' ) )
+				.map( ( rule ) => {
+					const uses = Array.isArray( rule.use )
+						? rule.use
+						: [ rule.use ];
+					const hasBabelLoader = uses.some( ( use ) =>
+						use?.loader?.includes( 'babel-loader' )
+					);
+					if ( ! hasBabelLoader ) {
+						return rule;
+					}
+					return {
+						...rule,
+						use: uses.map( ( use ) => {
+							if ( ! use?.loader?.includes( 'babel-loader' ) ) {
+								return use;
+							}
+							return {
+								...use,
+								options: {
+									...use.options,
+									plugins: [
+										...( use.options?.plugins ?? [] ),
+										[
+											require.resolve(
+												'@babel/plugin-transform-react-jsx'
+											),
+											{ runtime: 'classic' },
+										],
+									],
+								},
+							};
+						} ),
+					};
+				} ),
 			{
 				test: /\.css$/,
 				use: [
@@ -150,6 +186,15 @@ const cldExtras = {
 		'media-modal': './src/js/components/media-modal.js',
 		'terms-order': './src/js/terms-order.js',
 	},
+	plugins: [
+		...sharedConfig.plugins,
+		// Inject React from wp-element into every module using JSX, so the
+		// classic transform (React.createElement) works without explicit imports
+		// on all WP versions (wp-element has been available since WP 5.0).
+		new webpack.ProvidePlugin( {
+			React: '@wordpress/element',
+		} ),
+	],
 };
 
 module.exports = [ cldCore, cldExtras ];
