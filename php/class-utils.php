@@ -368,11 +368,11 @@ class Utils {
 	protected static function get_upgrade_sequence() {
 		$upgrade_sequence = array();
 		$sequences        = array(
-			'3.0.0'  => array(
+			'3.0.0' => array(
 				'range'  => array( '3.0.0' ),
 				'method' => array( 'Cloudinary\Utils', 'upgrade_3_0_1' ),
 			),
-			'3.1.9'  => array(
+			'3.1.9' => array(
 				'range'  => array( '3.0.1', '3.1.9' ),
 				'method' => array( 'Cloudinary\Utils', 'upgrade_3_1_9' ),
 			),
@@ -1088,15 +1088,7 @@ class Utils {
 		 */
 		$media_context_query = apply_filters( 'cloudinary_media_context_query', 'media_context = %s' );
 
-		/**
-		 * Filter the media context things.
-		 *
-		 * @hook   cloudinary_media_context_things
-		 * @since  3.2.0
-		 * @param $media_context_things {array} The default media context things.
-		 * @return {array}
-		 */
-		$media_context_things = apply_filters( 'cloudinary_media_context_things', array( 'default' ) );
+		$media_context_things = self::get_media_context_things();
 
 		// Query for urls in chunks.
 		if ( ! empty( $urls ) ) {
@@ -1262,6 +1254,28 @@ class Utils {
 	}
 
 	/**
+	 * Get the media context things.
+	 *
+	 * @param array $media_context_things The media context things to query for. Defaults to array( 'default' ).
+	 *
+	 * @return array
+	 */
+	public static function get_media_context_things( $media_context_things = array( 'default' ) ) {
+
+		/**
+		 * Filter the media context things.
+		 *
+		 * @hook   cloudinary_media_context_things
+		 * @since  3.2.0
+		 * @param $media_context_things {array} The default media context things.
+		 * @return {array}
+		 */
+		$media_context_things = apply_filters( 'cloudinary_media_context_things', $media_context_things );
+
+		return $media_context_things;
+	}
+
+	/**
 	 * Get the home URL.
 	 *
 	 * @param string $path   The path to be appended to the home URL.
@@ -1384,12 +1398,12 @@ class Utils {
 	/**
 	 * Get inline SVG content safely.
 	 *
-	 * @param string $file_path The absolute or relative path to the SVG file.
-	 * @param bool   $echo      Whether to echo the SVG content or return it. Default true.
+	 * @param string $file_path      The absolute or relative path to the SVG file.
+	 * @param bool   $output_content Whether to echo the SVG content or return it. Default true.
 	 *
 	 * @return string|void The SVG content if $echo is false, void otherwise.
 	 */
-	public static function get_inline_svg( $file_path, $echo = true ) {
+	public static function get_inline_svg( $file_path, $output_content = true ) {
 		// If relative path, make it absolute from plugin root.
 		if ( ! file_exists( $file_path ) ) {
 			$plugin_dir = dirname( __DIR__ );
@@ -1402,7 +1416,7 @@ class Utils {
 		}
 
 		// Get the SVG content.
-		$svg_content = file_get_contents( $file_path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		$svg_content = file_get_contents( $file_path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents, WordPressVIPMinimum.Performance.FetchingRemoteData.FileGetContentsUnknown
 
 		if ( false === $svg_content ) {
 			return '';
@@ -1411,7 +1425,7 @@ class Utils {
 		// Sanitize SVG content to prevent XSS attacks.
 		$svg_content = self::sanitize_svg( $svg_content );
 
-		if ( $echo ) {
+		if ( $output_content ) {
 			echo $svg_content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Sanitized by sanitize_svg.
 		} else {
 			return $svg_content;

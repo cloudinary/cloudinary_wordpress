@@ -1,3 +1,6 @@
+@use "../../variables" as *;
+
+
 // Inputs for forms etc.
 @mixin input {
 	margin: 0 0 23px;
@@ -31,15 +34,8 @@
 	}
 }
 
-&-input {
+.cld-input {
 	@include input;
-
-	@import "controls/text";
-	@import "controls/select";
-	@import "controls/on-off";
-	@import "controls/icon-toggle";
-	@import "controls/excluded_types";
-	@import "controls/input-tags";
 
 	.prefixed {
 		width: 40%;

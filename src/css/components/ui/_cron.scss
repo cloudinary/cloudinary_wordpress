@@ -1,6 +1,8 @@
+@use "panel" as panel;
+
 // Cron.
-&-cron {
-	@extend .cld-panel;
+.cld-cron {
+	@include panel.panel-base;
 
 	padding-inline: 16px;
 	padding-block: 13px;

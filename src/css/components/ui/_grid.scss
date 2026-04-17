@@ -1,5 +1,8 @@
+@use "../../variables" as *;
+
+
 // Grid : rows and columns.
-&-row {
+.cld-row {
 	margin: 0;
 	clear: both;
 	display: flex;
@@ -15,7 +18,7 @@
 	}
 }
 
-&-column {
+.cld-column {
 	width: 100%;
 	box-sizing: border-box;
 	padding: 0 0 0 $size-padding-column;
@@ -65,7 +68,7 @@
 	}
 }
 
-&-center {
+.cld-center {
 	&-column {
 		&.cld-info-text {
 			padding-left: 2em;

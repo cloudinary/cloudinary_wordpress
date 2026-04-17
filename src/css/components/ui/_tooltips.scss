@@ -1,5 +1,8 @@
+@use "../../variables" as *;
+
+
 // Tooltips.
-&-tooltip {
+.cld-tooltip {
 	color: #999;
 	font-size: $size-panel-content;
 	line-height: 1.3em;

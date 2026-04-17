@@ -1,8 +1,8 @@
 === Cloudinary - Deliver Images and Videos at Scale ===
 Contributors: Cloudinary, XWP, Automattic
 Tags: image-optimizer, core-web-vitals, video, resize, performance
-Requires at least: 4.7
-Tested up to: 6.9
+Requires at least: 5.6
+Tested up to: 7.0
 Requires PHP: 7.4
 Stable tag: STABLETAG
 License: GPLv2
@@ -146,6 +146,15 @@ Your site is now setup to start using Cloudinary.
 
 == Changelog ==
 
+= 3.3.2 (23 February 2026) =
+
+Fixes and Improvements:
+
+* Added AVIF as a selectable image format in the Image Optimization settings
+* Fixed a PHP warning caused by an incorrect relative path in `class-media.php`
+* Removed the legacy PHP 5.6 GitHub Action from CI to align with currently supported PHP versions
+
+
 = 3.3.1 (05 February 2026) =
 
 Fixes and Improvements:
@@ -154,7 +163,7 @@ Fixes and Improvements:
 * Standardized `permission_callback` handling across all REST endpoints, enforcing capability checks and default nonce validation
 * Improved lazy-load logic by normalizing DPR values to reduce unnecessary derived asset generation
 * Fixed issues with front-end background images from page builders when assets aren’t delivered via Cloudinary
-* Improved deletion handling for parent assets
+* Improved deletion handling for Cloudinary parent assets
 
 = 3.3.0 (14 January 2026) =
 
