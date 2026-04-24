@@ -3147,7 +3147,7 @@ class Media extends Settings_Component implements Setup {
 			// Internal components.
 			$this->global_transformations = new Global_Transformations( $this );
 			$this->gallery                = $this->plugin->get_component( 'gallery' );
-			$this->woocommerce_gallery    = new WooCommerceGallery( $this->gallery );
+			$this->woocommerce_gallery    = new WooCommerceGallery( $this->gallery, $this );
 			$this->filter                 = new Filter( $this );
 			$this->upgrade                = new Upgrade( $this );
 			$this->video                  = new Video( $this );
