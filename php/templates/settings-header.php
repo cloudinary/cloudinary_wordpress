@@ -15,7 +15,7 @@ settings_errors( $setting_slug );
 <div class="wrap">
 	<h1><?php echo esc_html( $this->ui['page_title'] ); ?></h1>
 	<?php if ( ! empty( $current_tab ) ) : ?>
-	<form method="post" action="options.php" novalidate="novalidate" class="render-trigger" data-event="tabs.init">
+	<form method="post" action="options.php" novalidate="novalidate" class="render-trigger cld-settings-form" data-event="tabs.init" data-cld-settings-form="true">
 		<input type="hidden" name="tab" value="<?php echo esc_attr( $current_tab ); ?>"/>
 		<?php settings_fields( $setting_slug ); ?>
 		<?php endif; ?>
