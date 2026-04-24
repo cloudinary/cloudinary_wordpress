@@ -78,6 +78,7 @@ const TransformationsToggle = ( props ) => {
 				onChange={ ( value ) => {
 					setAttributes( { overwrite_transformations: value } );
 				} }
+				__nextHasNoMarginBottom={ true }
 			/>
 		</PanelBody>
 	);

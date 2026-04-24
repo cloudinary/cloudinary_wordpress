@@ -1,6 +1,9 @@
+@use "../../variables" as *;
+
+
 // Links - button styled.
 
-&-link {
+.cld-link {
 	&-button {
 		background-color: $color-cld-blue;
 		color: #fff;

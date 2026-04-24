@@ -1,4 +1,7 @@
-&-tabs {
+@use "../../../variables" as *;
+
+
+.cld-wizard-tabs {
 	width: 50%;
 	display: flex;
 	flex-direction: row;

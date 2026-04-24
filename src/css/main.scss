@@ -1,14 +1,12 @@
 @charset "UTF-8";
 
-// Vars
-@import "variables";
-// Components
-@import "components/brand";
-@import "components/settings";
-@import "components/sync";
-@import "components/widget";
-@import "components/global_transformations";
-@import "components/terms_order";
-@import "components/media_library";
-@import "components/ui";
-@import "components/edit_overlay";
+// Components - using @use for module-based imports
+@use "components/brand";
+@use "components/settings";
+@use "components/sync";
+@use "components/widget";
+@use "components/global_transformations";
+@use "components/terms_order";
+@use "components/media_library";
+@use "components/ui";
+@use "components/edit_overlay";

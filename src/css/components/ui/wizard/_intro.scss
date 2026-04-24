@@ -1,4 +1,7 @@
-&-intro {
+@use "../../../variables" as *;
+
+
+.cld-wizard-intro {
 	text-align: center;
 
 	&-welcome {

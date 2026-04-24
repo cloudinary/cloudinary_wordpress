@@ -1,19 +1,17 @@
+@use "../../../variables" as *;
+
+
 // Submit panel & Switch Cloud.
 
-&-submit,
-&-switch-cloud {
+.cld-submit,
+.cld-switch-cloud {
 	background-color: #fff;
 	border: 1px solid $color-cld-grey-blue;
 	border-top: 0;
 	padding: 1.2rem 1.75rem;
 }
 
-&-panel.closed + &-submit,
-&-panel.closed + &-switch-cloud{
-	display: none;
-}
-
-&-panel.closed + &-submit,
-&-panel.closed + &-switch-cloud{
+.cld-panel.closed + .cld-submit,
+.cld-panel.closed + .cld-switch-cloud{
 	display: none;
 }

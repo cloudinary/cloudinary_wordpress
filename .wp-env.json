@@ -1,0 +1,26 @@
+{
+  "core": "WordPress/WordPress#6.9.4",
+  "phpVersion": "8.2",
+  "plugins": ["."],
+  "config": {
+    "WP_DEBUG": true,
+    "WP_DEBUG_LOG": true,
+    "SCRIPT_DEBUG": true
+  },
+  "mappings": {
+    "wp-content/mu-plugins": "./.wp-env/mu-plugins"
+  },
+  "lifecycleScripts": {
+    "afterStart": "./.wp-env/scripts/fix-loopback.sh"
+  },
+  "env": {
+    "tests": {
+      "phpVersion": "8.2",
+      "config": {
+        "WP_DEBUG": true,
+        "WP_DEBUG_LOG": true,
+        "SCRIPT_DEBUG": true
+      }
+    }
+  }
+}

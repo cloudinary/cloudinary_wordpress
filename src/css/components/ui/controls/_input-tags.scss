@@ -1,5 +1,8 @@
+@use "../../../variables" as *;
+
+
 // Input tags
-&-tags {
+.cld-input-tags {
 
 	align-items: center;
 	display: flex;

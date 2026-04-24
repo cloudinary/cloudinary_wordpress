@@ -19,6 +19,7 @@ let FeaturedTransformationsToggle = ( props ) => {
 					checked={ props.overwrite_featured_transformations }
 					onChange={ ( value ) => props.setOverwrite( value ) }
 					className="cloudinary-overwrite-transformations"
+					__nextHasNoMarginBottom={ true }
 				/>
 			) }
 		</>

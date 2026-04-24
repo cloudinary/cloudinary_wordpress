@@ -70,7 +70,7 @@ const Tabs = {
 	/**
 	 * Filter the active button.
 	 *
-	 * @param  {Array} buttons All the buttons.
+	 * @param {Array} buttons All the buttons.
 	 * @return {*}             The active button.
 	 */
 	filterActive( buttons ) {

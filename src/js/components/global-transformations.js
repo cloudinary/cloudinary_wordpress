@@ -180,7 +180,7 @@ const GlobalTransformations = {
 	/**
 	 * Get's the Global Transformation Elements string by Type.
 	 *
-	 * @param  {string} type The type of Elements.
+	 * @param {string} type The type of Elements.
 	 * @return {string}      A string with the Elements
 	 * @private
 	 */
