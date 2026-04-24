@@ -13,7 +13,7 @@ $component   = $admin->get_component();
 $connected   = $cloudinary->settings->get_param( 'connected' );
 $active_slug = $admin->get_param( 'active_slug' );
 ?>
-<form method="post" novalidate="novalidate">
+<form method="post" novalidate="novalidate" class="cld-settings-form" data-cld-settings-form="true">
 	<?php $admin->render_notices(); ?>
 	<div class="cld-ui-wrap cld-row">
 		<?php wp_nonce_field( 'cloudinary-settings', '_cld_nonce' ); ?>

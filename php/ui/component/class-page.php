@@ -57,8 +57,12 @@ class Page extends Panel {
 			'method'     => 'post',
 			'action'     => 'options.php',
 			'novalidate' => 'novalidate',
+			'data-cld-settings-form' => 'true',
 		);
 		$struct['attributes'] = wp_parse_args( $struct['attributes'], $form_atts );
+		$classes              = isset( $struct['attributes']['class'] ) ? (array) $struct['attributes']['class'] : array();
+		$classes[]            = 'cld-settings-form';
+		$struct['attributes']['class'] = array_unique( $classes );
 
 		// Don't run action if page has tabs, since the page actions will be different for each tab.
 		$struct['children'] = $this->page_actions();

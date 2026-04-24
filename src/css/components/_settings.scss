@@ -272,6 +272,11 @@
 	margin: 0;
 }
 
+.cld-settings-submit-dirty {
+	outline: 2px solid #dba617 !important;
+	outline-offset: 2px;
+}
+
 .cloudinary-collapsible {
 	width: 95%;
 	padding: 10px;
