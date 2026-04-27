@@ -79,8 +79,9 @@ class Relationship {
 			return $cache_data;
 		}
 		global $wpdb;
-		$table_name       = Utils::get_relationship_table();
-		$default_contexts = Utils::get_media_context_things();
+		$table_name = Utils::get_relationship_table();
+		// method_exists guard handles the case where Utils was autoloaded from the old plugin version during a plugin update request.
+		$default_contexts = method_exists( Utils::class, 'get_media_context_things' ) ? Utils::get_media_context_things() : array( 'default' );
 
 		// If the context is in the default contexts, we want to query for all of them.
 		// This ensures that a media uploaded with a previous default context will still be found, even if the default context has changed since it was uploaded.
