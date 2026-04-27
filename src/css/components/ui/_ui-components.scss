@@ -1,5 +1,8 @@
+@use "../../variables" as *;
+
+
 // UI sub components.
-&-ui {
+.cld-ui {
 	&-suffix {
 		display: inline-block;
 		padding: 4px 6px;
@@ -106,7 +109,7 @@
 	}
 }
 
-&-referrer {
+.cld-referrer {
 	&-link {
 		margin: 12px 0 0;
 		display: inline-block;
@@ -118,7 +121,7 @@
 	}
 }
 
-&-special-offer {
+.cld-special-offer {
 	background-color: $color-cld-coral;
 	color: #fff;
 	text-decoration: none;

@@ -1,7 +1,14 @@
-// Add panels
-&-panel {
+@use "../../variables" as *;
+
+
+// Mixin for base panel styles.
+@mixin panel-base {
 	background-color: #fff;
 	border: 1px solid $color-cld-grey-blue;
+}
+
+.cld-panel {
+	@include panel-base;
 
 	&.full-width {
 		max-width: 100%;
@@ -51,8 +58,6 @@
 		margin: 19px 0 20px;
 		clear: both;
 	}
-	// Include the legacy styles that might not be needed anymore.
-	@import "panels/legacy";
 
 	.help-wrap{
 		display: flex;
@@ -95,8 +100,3 @@
 	}
 
 }
-// Include other types of panels.
-@import "panels/panel-short";
-@import "panels/infobox";
-@import "panels/submit-switch-cloud";
-@import "panels/optimize";

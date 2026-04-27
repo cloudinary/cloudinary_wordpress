@@ -1115,8 +1115,8 @@ class Delivery implements Setup {
 				continue; // We should not deliver disabled items.
 			}
 
-			$base           = $type . ':' . $url;
-			$public_id      = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
+			$base      = $type . ':' . $url;
+			$public_id = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
 			// Get merged transformations including overlays.
 			$merged_transformations = Relate::get_transformations( $relation['post_id'], true );
 
@@ -1398,7 +1398,7 @@ class Delivery implements Setup {
 			'resource_type' => $resource_type,
 		);
 
-		$tag_element['atts']['data-public-id'] = $this->plugin->get_component( 'connect' )->api->get_public_id( $tag_element['id'], $args );
+		$tag_element['atts']['data-public-id'] = $this->plugin->get_component( 'connect' )->api->get_public_id( $tag_element['id'], $args, $public_id );
 
 		return $tag_element;
 	}

@@ -2058,7 +2058,7 @@ class Media extends Settings_Component implements Setup {
 		// External assets.
 		wp_enqueue_script( 'cloudinary-media-modal', $this->plugin->dir_url . '/js/media-modal.js', null, $this->plugin->version, true );
 		wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, $deps, $this->plugin->version, true );
-		wp_enqueue_script( 'cloudinary-terms-order', $this->plugin->dir_url . '/js/terms-order.js', array( 'jquery' ), $this->plugin->version, true );
+		wp_enqueue_script( 'cloudinary-terms-order', $this->plugin->dir_url . '/js/terms-order.js', array( 'jquery', 'wp-i18n' ), $this->plugin->version, true );
 		wp_enqueue_style( 'cloudinary' );
 		$params = array(
 			'nonce'     => wp_create_nonce( 'wp_rest' ),
@@ -3147,7 +3147,7 @@ class Media extends Settings_Component implements Setup {
 			// Internal components.
 			$this->global_transformations = new Global_Transformations( $this );
 			$this->gallery                = $this->plugin->get_component( 'gallery' );
-			$this->woocommerce_gallery    = new WooCommerceGallery( $this->gallery );
+			$this->woocommerce_gallery    = new WooCommerceGallery( $this->gallery, $this );
 			$this->filter                 = new Filter( $this );
 			$this->upgrade                = new Upgrade( $this );
 			$this->video                  = new Video( $this );

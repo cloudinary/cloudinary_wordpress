@@ -8,7 +8,7 @@ import Dot from 'dot-object';
 /**
  * WordPress dependencies
  */
-import { render, useEffect, useState } from '@wordpress/element';
+import { createRoot, render, useEffect, useState } from '@wordpress/element';
 
 /**
  * Internal dependencies
@@ -127,7 +127,9 @@ const StatefulGalleryControls = () => {
 	);
 };
 
-render(
-	<StatefulGalleryControls />,
-	document.getElementById( 'app_gallery_gallery_config' )
-);
+const container = document.getElementById( 'app_gallery_gallery_config' );
+if ( createRoot ) {
+	createRoot( container ).render( <StatefulGalleryControls /> );
+} else {
+	render( <StatefulGalleryControls />, container );
+}

@@ -494,9 +494,17 @@ class Assets extends Settings_Component {
 				}
 			}
 		}
+
+		$blog_id = get_current_blog_id();
+
 		// Get the disabled items.
 		foreach ( $this->asset_parents as $url => $parent ) {
 			if ( isset( $this->active_parents[ $url ] ) ) {
+				continue;
+			}
+
+			// If the parent is from another site on a multisite instance, skip it.
+			if ( isset( $parent->blog_id ) && $parent->blog_id !== $blog_id ) {
 				continue;
 			}
 
@@ -575,7 +583,8 @@ class Assets extends Settings_Component {
 		if ( $parent_id ) {
 			$this->media->update_post_meta( $parent_id, Sync::META_KEYS['version'], $version );
 			$this->media->update_post_meta( $parent_id, self::META_KEYS['excludes'], array() );
-			$this->asset_parents[ $path ] = get_post( $parent_id );
+
+			$this->add_asset_parent( get_post( $parent_id ) );
 		}
 
 		return $parent_id;
@@ -984,7 +993,7 @@ class Assets extends Settings_Component {
 
 		do {
 			foreach ( $query->get_posts() as $post ) {
-				$this->asset_parents[ $post->post_title ] = $post;
+				$this->add_asset_parent( $post );
 			}
 			$args = $query->query_vars;
 			++$args['paged'];
@@ -1772,5 +1781,20 @@ class Assets extends Settings_Component {
 		);
 
 		return $params;
+	}
+
+	/**
+	 * Assign a parent asset to the asset parents array.
+	 * If this is a multisite installation, also assign the current blog ID to the post object for later checks.
+	 *
+	 * @param \WP_Post $post The post to assign.
+	 * @return void
+	 */
+	protected function add_asset_parent( $post ) {
+		if ( is_multisite() ) {
+			$post->blog_id = get_current_blog_id();
+		}
+
+		$this->asset_parents[ $post->post_title ] = $post;
 	}
 }

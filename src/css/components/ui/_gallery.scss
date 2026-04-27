@@ -1,5 +1,8 @@
+@use "../../variables" as *;
+
+
 // Gallery styles.
-&-gallery-settings {
+.cld-gallery-settings {
 	width: 100%;
 	display: flex;
 	flex-wrap: wrap;

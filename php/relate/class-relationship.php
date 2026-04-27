@@ -80,8 +80,28 @@ class Relationship {
 		}
 		global $wpdb;
 		$table_name = Utils::get_relationship_table();
+		// method_exists guard handles the case where Utils was autoloaded from the old plugin version during a plugin update request.
+		$default_contexts = method_exists( Utils::class, 'get_media_context_things' ) ? Utils::get_media_context_things() : array( 'default' );
 
-		$sql  = $wpdb->prepare( "SELECT * FROM {$table_name} WHERE post_id = %d AND media_context = %s", $this->post_id, $this->context ); // phpcs:ignore WordPress.DB
+		// If the context is in the default contexts, we want to query for all of them.
+		// This ensures that a media uploaded with a previous default context will still be found, even if the default context has changed since it was uploaded.
+		$contexts = in_array( $this->context, $default_contexts, true ) ? $default_contexts : array( $this->context );
+
+		// Create the context query placeholders by filling an array with the correct number of %s placeholders and then imploding it into a string.
+		$context_query = implode( ', ', array_fill( 0, count( $contexts ), '%s' ) );
+
+		// Prepare arguments for the SQL query.
+		$query_args = array_merge(
+			array( $this->post_id ),
+			$contexts,
+			array( $this->context )
+		);
+
+		// phpcs:ignore WordPress.DB
+		$sql  = $wpdb->prepare(
+			"SELECT * FROM {$table_name} WHERE `post_id` = %d AND `media_context` IN ({$context_query}) ORDER BY FIELD(`media_context`, %s) DESC LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared
+			$query_args
+		);
 		$data = $wpdb->get_row( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB
 
 		self::set_cache( $this->post_id, $this->context, $data );

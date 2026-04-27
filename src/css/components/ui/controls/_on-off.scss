@@ -1,6 +1,9 @@
+@use "../../../variables" as *;
+
+
 // On/Off toggle.
 
-&-on-off {
+.cld-input-on-off {
 
 	.description {
 		margin: 0;

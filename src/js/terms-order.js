@@ -3,9 +3,7 @@
 const TermsOrder = {
 	template: '',
 	tags: jQuery( '#cld-tax-items' ),
-	tagDelimiter:
-		( window.tagsSuggestL10n && window.tagsSuggestL10n.tagDelimiter ) ||
-		',',
+	tagDelimiter: wp.i18n._x( ',', 'tag delimiter' ) || ',',
 	startId: null,
 	_init() {
 		// Check that we found the tax-items.

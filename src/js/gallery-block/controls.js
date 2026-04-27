@@ -181,6 +181,8 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 						onChange={ ( value ) =>
 							setAttributes( { transition: value } )
 						}
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 				</PanelBody>
 			) }
@@ -195,6 +197,8 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 					onChange={ ( value ) =>
 						setAttributes( { aspectRatio: value } )
 					}
+					__next40pxDefaultSize={ true }
+					__nextHasNoMarginBottom={ true }
 				/>
 				<p>
 					<div className="cld-ui-title">
@@ -209,7 +213,8 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 						{ RESIZE_CROP.map( ( type ) => (
 							<Button
 								key={ type.value + '-look-and-feel' }
-								isDefault
+								variant="secondary"
+								isSecondary
 								isPressed={
 									type.value ===
 									attributes.transformation_crop
@@ -236,6 +241,8 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 								transformation_background: value,
 							} );
 						} }
+						__next40pxDefaultSize={ true }
+						__nextHasNoMarginBottom={ true }
 					/>
 				) }
 				<p>{ __( 'Navigation', 'cloudinary' ) }</p>
@@ -244,7 +251,8 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 						{ NAVIGATION.map( ( navType ) => (
 							<Button
 								key={ navType.value + '-navigation' }
-								isDefault
+								variant="secondary"
+								isSecondary
 								isPressed={
 									navType.value === attributes.navigation
 								}
@@ -266,6 +274,7 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 						onChange={ () =>
 							setAttributes( { zoom: ! attributes.zoom } )
 						}
+						__nextHasNoMarginBottom={ true }
 					/>
 					{ attributes.zoom && (
 						<>
@@ -275,7 +284,8 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 									{ ZOOM_TYPE.map( ( item ) => (
 										<Button
 											key={ item.value + '-zoom-type' }
-											isDefault
+											variant="secondary"
+											isSecondary
 											isPressed={
 												item.value ===
 												attributes.zoomProps_type
@@ -306,6 +316,8 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 											zoomProps_viewerPosition: value,
 										} )
 									}
+									__next40pxDefaultSize={ true }
+									__nextHasNoMarginBottom={ true }
 								/>
 							) }
 							{ attributes.zoomProps_type !== 'popup' && (
@@ -321,7 +333,8 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 														item.value +
 														'-zoom-trigger'
 													}
-													isDefault
+													variant="secondary"
+													isSecondary
 													isPressed={
 														item.value ===
 														attributes.zoomProps_trigger
@@ -354,7 +367,8 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 						{ CAROUSEL_LOCATION.map( ( item ) => (
 							<Button
 								key={ item.value + '-carousel-location' }
-								isDefault
+								variant="secondary"
+								isSecondary
 								isPressed={
 									item.value === attributes.carouselLocation
 								}
@@ -377,6 +391,8 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 					}
 					min={ 0 }
 					max={ 100 }
+					__next40pxDefaultSize={ true }
+					__nextHasNoMarginBottom={ true }
 				/>
 				<p>{ __( 'Carousel Style', 'cloudinary' ) }</p>
 				<p>
@@ -384,7 +400,8 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 						{ CAROUSEL_STYLE.map( ( item ) => (
 							<Button
 								key={ item.value + '-carousel-style' }
-								isDefault
+								variant="secondary"
+								isSecondary
 								isPressed={
 									item.value === attributes.carouselStyle
 								}
@@ -411,6 +428,8 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 							}
 							min={ 5 }
 							max={ 300 }
+							__next40pxDefaultSize={ true }
+							__nextHasNoMarginBottom={ true }
 						/>
 						<RangeControl
 							label={ __( 'Height', 'cloudinary' ) }
@@ -422,6 +441,8 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 							}
 							min={ 5 }
 							max={ 300 }
+							__next40pxDefaultSize={ true }
+							__nextHasNoMarginBottom={ true }
 						/>
 						<p>{ __( 'Navigation Button Shape', 'cloudinary' ) }</p>
 						{ NAVIGATION_BUTTON_SHAPE.map( ( item ) => (
@@ -447,7 +468,8 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 								{ SELECTED_STYLE.map( ( item ) => (
 									<Button
 										key={ item.value + '-selected-style' }
-										isDefault
+										variant="secondary"
+										isSecondary
 										isPressed={
 											item.value ===
 											attributes.thumbnailProps_selectedStyle
@@ -479,6 +501,8 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 										value,
 								} )
 							}
+							__next40pxDefaultSize={ true }
+							__nextHasNoMarginBottom={ true }
 						/>
 						<RangeControl
 							label={ __(
@@ -495,6 +519,8 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 							}
 							min={ 0 }
 							max={ 10 }
+							__next40pxDefaultSize={ true }
+							__nextHasNoMarginBottom={ true }
 						/>
 						<p>{ __( 'Media Shape Icon', 'cloudinary' ) }</p>
 						{ MEDIA_ICON_SHAPE.map( ( item ) => (
@@ -549,6 +575,7 @@ const Controls = ( { attributes, setAttributes, colors } ) => {
 					) }
 					value={ customSettingsPreview }
 					onChange={ onChangeCustomSettings }
+					__nextHasNoMarginBottom={ true }
 				/>
 			</PanelBody>
 		</>
