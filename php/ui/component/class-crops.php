@@ -279,7 +279,7 @@ class Crops extends Select {
 		$control['children']['input']  = $check;
 		$control['children']['slider'] = $slider;
 
-		$label          = $this->get_part( 'span' );
+		$label                        = $this->get_part( 'span' );
 		$label['attributes']['class'] = 'cld-input-on-off-control-label';
 		$label['content']             = __( 'Disable', 'cloudinary' );
 

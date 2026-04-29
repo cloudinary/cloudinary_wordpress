@@ -1,5 +1,8 @@
+@use "../../variables" as *;
+
+
 // Notices and alerts.
-&-notice-box {
+.cld-notice-box {
 	box-shadow: 0 0 2px rgba(0, 0, 0, 0.1);
 	position: relative;
 	margin-right: 20px;
@@ -81,7 +84,7 @@
 	}
 }
 
-&-connection {
+.cld-connection {
 	&-box {
 		display: flex;
 		max-width: 500px;

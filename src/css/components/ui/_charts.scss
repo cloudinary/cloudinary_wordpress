@@ -1,6 +1,9 @@
+@use "../../variables" as *;
+
+
 // Chart & Lines styles.
 
-&-chart {
+.cld-chart {
 	&-stat {
 		padding-bottom: 2em;
 
@@ -11,7 +14,7 @@
 	}
 }
 
-&-progress {
+.cld-progress {
 	&-circular {
 		display: block;
 		width: 160px;
@@ -97,7 +100,7 @@
 	}
 }
 
-&-line {
+.cld-line {
 	&-stat {
 		margin-bottom: 15px;
 	}

@@ -1,7 +1,9 @@
+@use "../panel" as panel;
+
 // Panel short
 
-&-panel-short {
-	@extend .cld-panel;
+.cld-panel-short {
+	@include panel.panel-base;
 	min-width: 270px;
 	width: auto;
 	display: inline-block;

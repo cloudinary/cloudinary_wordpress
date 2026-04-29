@@ -1007,6 +1007,38 @@ class Delivery implements Setup {
 	}
 
 	/**
+	 * Get the image size dimensions from the tags if available.
+	 *
+	 * @param array $tags     The media tags found in the content.
+	 * @param array $relation The relation data for the media item.
+	 *
+	 * @return array An array with width and height, or empty if not found.
+	 */
+	private function get_image_size_within_tags( $tags, $relation ) {
+		// If we don't have a post ID, we can't find a size, so return empty.
+		if ( empty( $relation['post_id'] ) ) {
+			return array();
+		}
+		$post_id = intval( $relation['post_id'] );
+
+		// Look through the tags to find one that matches our post ID and has a size slug, then get the size from that slug.
+		foreach ( $tags as $set ) {
+			// If this set doesn't have a size slug, skip.
+			if ( empty( $set['atts']['data-size-slug'] ) ) {
+				continue;
+			}
+
+			// If this tag's post ID matches our relation's post ID, get the size from the slug and return it.
+			if ( $post_id === $set['id'] ) {
+				$size = $this->media->get_size_from_slug( $set['atts']['data-size-slug'] );
+				return ( empty( $size ) ) ? array() : $size; // Return the size if found, otherwise return empty array.
+			}
+		}
+
+		return array();
+	}
+
+	/**
 	 * Convert media tags from Local to Cloudinary, and register with String_Replace.
 	 *
 	 * @param string $content The HTML to find tags and prep replacement in.
@@ -1025,7 +1057,12 @@ class Delivery implements Setup {
 		}
 
 		$tags = $this->get_media_tags( $content, 'img|video|article|source' );
-		$tags = array_map( array( $this, 'parse_element' ), $tags );
+		$tags = array_map(
+			function ( $tag ) use ( $content ) {
+				return $this->parse_element( $tag, $content );
+			},
+			$tags
+		);
 		$tags = array_filter( $tags );
 
 		$replacements = array();
@@ -1078,11 +1115,13 @@ class Delivery implements Setup {
 				continue; // We should not deliver disabled items.
 			}
 
-			$base           = $type . ':' . $url;
-			$public_id      = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
+			$base      = $type . ':' . $url;
+			$public_id = ! is_admin() ? $relation['public_id'] . '.' . $relation['format'] : null;
 			// Get merged transformations including overlays.
 			$merged_transformations = Relate::get_transformations( $relation['post_id'], true );
-			$cloudinary_url = $this->media->cloudinary_url( $relation['post_id'], array(), $merged_transformations, $public_id );
+
+			$size           = $this->get_image_size_within_tags( $tags, $relation );
+			$cloudinary_url = $this->media->cloudinary_url( $relation['post_id'], $size, $merged_transformations, $public_id );
 			if ( empty( $cloudinary_url ) ) {
 				continue;
 			}
@@ -1220,6 +1259,15 @@ class Delivery implements Setup {
 				$size = $has_wp_size;
 			}
 		}
+
+		// Retrieve size from the parent figure class of the image if it exists.
+		if ( ! empty( $tag_element['atts']['data-size-slug'] ) && 'img' === $tag_element['tag'] ) {
+			$slug_size = $this->media->get_size_from_slug( $tag_element['atts']['data-size-slug'] );
+			if ( ! empty( $slug_size ) ) {
+				$size = $slug_size;
+			}
+		}
+
 		// Unset srcset and sizes.
 		unset( $tag_element['atts']['srcset'], $tag_element['atts']['sizes'] );
 
@@ -1350,7 +1398,7 @@ class Delivery implements Setup {
 			'resource_type' => $resource_type,
 		);
 
-		$tag_element['atts']['data-public-id'] = $this->plugin->get_component( 'connect' )->api->get_public_id( $tag_element['id'], $args );
+		$tag_element['atts']['data-public-id'] = $this->plugin->get_component( 'connect' )->api->get_public_id( $tag_element['id'], $args, $public_id );
 
 		return $tag_element;
 	}
@@ -1437,10 +1485,11 @@ class Delivery implements Setup {
 	 * Parse an html element into tag, and attributes.
 	 *
 	 * @param string $element The HTML element.
+	 * @param string $content Optional full HTML content for parent context.
 	 *
 	 * @return array|null
 	 */
-	public function parse_element( $element ) {
+	public function parse_element( $element, $content = '' ) {
 		/**
 		 * Filter to skip parsing an element.
 		 *
@@ -1551,6 +1600,21 @@ class Delivery implements Setup {
 			if ( in_array( $tag_element['tag'], array( 'img', 'source' ), true ) ) {
 				// Check if this is a crop or a scale.
 				$has_size = $this->media->get_size_from_url( $this->sanitize_url( $raw_url ) );
+
+				// If no size found in URL, try to extract from parent figure element so we can apply cropping if needed.
+				if ( empty( $has_size ) && $has_sized_transformation ) {
+					$size_slug = $this->media->get_size_slug_from_parent_figure_class( $tag_element['original'], $content );
+
+					if ( ! empty( $size_slug ) ) {
+						$has_size = $this->media->get_size_from_slug( $size_slug );
+						if ( ! empty( $has_size ) ) {
+							$attributes['data-size-slug'] = $size_slug;
+							$tag_element['width']         = $has_size[0];
+							$tag_element['height']        = $has_size[1];
+						}
+					}
+				}
+
 				if ( ! empty( $has_size ) && ! empty( $item['height'] ) ) {
 					$file_ratio     = round( $has_size[0] / $has_size[1], 2 );
 					$original_ratio = round( $item['width'] / $item['height'], 2 );

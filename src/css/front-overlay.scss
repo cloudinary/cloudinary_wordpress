@@ -1,5 +1,5 @@
 // Vars
-@import "variables";
+@use "variables" as *;
 
 .overlay-tag {
 	font-size: 0.8rem;

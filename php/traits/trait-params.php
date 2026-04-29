@@ -146,7 +146,7 @@ trait Params_Trait {
 	 * @return string
 	 */
 	protected function sanitize_slug( $slug ) {
-		if ( ! $this->should_sanitize_slugs || ! str_contains( $slug, $this->separator ) ) {
+		if ( ! $this->should_sanitize_slugs || false === strpos( $slug, $this->separator ) ) {
 			return $slug;
 		}
 

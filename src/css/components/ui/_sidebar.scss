@@ -1,5 +1,8 @@
+@use "../../variables" as *;
+
+
 // Sidebar.
-&-optimisation {
+.cld-optimisation {
 	&:first-child {
 		margin-top: 7px;
 	}
@@ -38,7 +41,7 @@
 	}
 }
 
-&-ui-sidebar {
+.cld-ui-sidebar {
 	width: 100%;
 
 	@media only screen and (min-width: $size-small) {
