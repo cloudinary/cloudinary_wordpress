@@ -123,6 +123,118 @@ We ask that you update to our latest WordPress Plugin v2.x before the August 1st
 <p>Contact us <a href="https://cloudinary.com/contact">https://cloudinary.com/contact</a></p>
 <p>Stay tuned for updates, tips and tutorials: <a href="https://cloudinary.com/blog">Blog</a>, <a href="https://twitter.com/cloudinary">Twitter</a>, <a href="https://www.facebook.com/Cloudinary">Facebook</a>.</p>
 <h2>Development</h2>
+<h3>Prerequisites</h3>
+<ul>
+<li><a href="https://nodejs.org/">Node.js</a> v16+ (see <code>.nvmrc</code>)</li>
+<li><a href="https://www.npmjs.com/">npm</a> v6.9+</li>
+<li><a href="https://getcomposer.org/">Composer</a></li>
+<li><a href="https://www.docker.com/">Docker</a> (required for the WordPress local environment via <code>wp-env</code>)</li>
+</ul>
+<h3>Local Development Setup</h3>
+<ol>
+<li>
+<p><strong>Clone the repository:</strong></p>
+<pre class="prettyprint source lang-bash"><code>git clone https://github.com/cloudinary/cloudinary_wordpress.git
+cd cloudinary_wordpress
+</code></pre>
+</li>
+<li>
+<p><strong>Set the correct Node version</strong> (if using <a href="https://github.com/nvm-sh/nvm">nvm</a>):</p>
+<pre class="prettyprint source lang-bash"><code>nvm install
+nvm use
+</code></pre>
+</li>
+<li>
+<p><strong>Install dependencies:</strong></p>
+<pre class="prettyprint source lang-bash"><code>npm install
+</code></pre>
+<p>This will also run <code>composer install</code> automatically via the <code>postinstall</code> script, setting up PHP dependencies and linting tools.</p>
+</li>
+<li>
+<p><strong>Start the local WordPress environment:</strong></p>
+<p>Make sure Docker is running, then:</p>
+<pre class="prettyprint source lang-bash"><code>npm run env:start
+</code></pre>
+<p>This spins up a WordPress instance at <a href="http://localhost:8888">http://localhost:8888</a> with the plugin activated and <code>WP_DEBUG</code> enabled. A loopback fix is applied automatically so REST API self-requests work inside the container.</p>
+</li>
+<li>
+<p><strong>Build front-end assets:</strong></p>
+<pre class="prettyprint source lang-bash"><code>npm run build        # One-time production build
+npm run dev          # Watch mode for development
+</code></pre>
+</li>
+</ol>
+<h3>Useful Commands</h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>npm run env:start</code></td>
+<td>Start the local WordPress environment</td>
+</tr>
+<tr>
+<td><code>npm run env:stop</code></td>
+<td>Stop the local WordPress environment</td>
+</tr>
+<tr>
+<td><code>npm run env:destroy</code></td>
+<td>Remove the local environment completely</td>
+</tr>
+<tr>
+<td><code>npm run env:logs</code></td>
+<td>View container logs</td>
+</tr>
+<tr>
+<td><code>npm run env:cli</code></td>
+<td>Run WP-CLI commands inside the container</td>
+</tr>
+<tr>
+<td><code>npm run env:clean</code></td>
+<td>Reset the environment (removes all data)</td>
+</tr>
+<tr>
+<td><code>npm run build</code></td>
+<td>Build front-end assets for production</td>
+</tr>
+<tr>
+<td><code>npm run dev</code></td>
+<td>Build front-end assets in watch mode</td>
+</tr>
+<tr>
+<td><code>npm run lint</code></td>
+<td>Run all linters (PHP, JS, CSS)</td>
+</tr>
+<tr>
+<td><code>npm run lint:php</code></td>
+<td>Run PHP CodeSniffer</td>
+</tr>
+<tr>
+<td><code>npm run lint:php:fix</code></td>
+<td>Auto-fix PHP linting issues</td>
+</tr>
+<tr>
+<td><code>npm run lint:js</code></td>
+<td>Run ESLint on JavaScript files</td>
+</tr>
+<tr>
+<td><code>npm run lint:js:fix</code></td>
+<td>Auto-fix JS linting issues</td>
+</tr>
+<tr>
+<td><code>npm run lint:style</code></td>
+<td>Run stylelint on SCSS files</td>
+</tr>
+<tr>
+<td><code>npm run i18n</code></td>
+<td>Generate translation files</td>
+</tr>
+</tbody>
+</table>
 <h3>Create a Plugin Release Package</h3>
 <p>Run <code>npm run package</code> to create the plugin release in the <code>/build</code> directory and package it as <code>cloudinary-image-management-and-manipulation-in-the-cloud-cdn.zip</code> in the root directory.</p>
 <p>Files included in the release package are defined in the <code>gruntfile.js</code> under the <code>copy</code> task. Be sure to update this list of files and directories when you add new files to the project.</p>
