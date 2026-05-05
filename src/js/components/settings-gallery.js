@@ -1,10 +1,19 @@
 /*global CLD_THEME_COLORS, CLD_GALLERY_CONFIG */
 
-import React from 'react';
+/**
+ * External dependencies
+ */
 import Dot from 'dot-object';
-import { render, useEffect, useState } from '@wordpress/element';
-import GalleryControls from '../gallery-block/controls';
 
+/**
+ * WordPress dependencies
+ */
+import { createRoot, render, useEffect, useState } from '@wordpress/element';
+
+/**
+ * Internal dependencies
+ */
+import GalleryControls from '../gallery-block/controls';
 import {
 	convertColors,
 	setupAttributesForRendering,
@@ -118,7 +127,9 @@ const StatefulGalleryControls = () => {
 	);
 };
 
-render(
-	<StatefulGalleryControls />,
-	document.getElementById( 'app_gallery_gallery_config' )
-);
+const container = document.getElementById( 'app_gallery_gallery_config' );
+if ( createRoot ) {
+	createRoot( container ).render( <StatefulGalleryControls /> );
+} else {
+	render( <StatefulGalleryControls />, container );
+}

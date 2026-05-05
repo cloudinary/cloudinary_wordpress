@@ -1,30 +1,45 @@
-.cld {
-	@import "ui/ui-components";
-	@import "ui/grid";
-	@import "ui/page";
-	@import "ui/panel";
-	@import "ui/loading";
-	@import "ui/sidebar";
-	@import "ui/charts";
-	@import "ui/asset-table";
-	@import "ui/links";
-	@import "ui/tooltips";
-	@import "ui/notice";
-	@import "ui/grid";
-	@import "ui/media";
-	@import "ui/group";
-	@import "ui/input";
-	@import "ui/gallery";
-	@import "ui/tables";
-	@import "ui/modal";
-	@import "ui/sidebar";
-	@import "ui/plan";
-	@import "ui/wizard";
-	@import "ui/import";
-	@import "ui/sizes-preview";
-	@import "ui/cron";
-}
+@use "../variables" as *;
 
+// UI Components - using @forward to re-export all UI modules.
+@forward "ui/ui-components";
+@forward "ui/grid";
+@forward "ui/page";
+@forward "ui/tabs";
+@forward "ui/panel";
+@forward "ui/panels/legacy";
+@forward "ui/panels/panel-short";
+@forward "ui/panels/infobox";
+@forward "ui/panels/submit-switch-cloud";
+@forward "ui/panels/optimize";
+@forward "ui/loading";
+@forward "ui/sidebar";
+@forward "ui/charts";
+@forward "ui/asset-table";
+@forward "ui/links";
+@forward "ui/tooltips";
+@forward "ui/notice";
+@forward "ui/media";
+@forward "ui/group";
+@forward "ui/input";
+@forward "ui/controls/text";
+@forward "ui/controls/select";
+@forward "ui/controls/on-off";
+@forward "ui/controls/icon-toggle";
+@forward "ui/controls/excluded_types";
+@forward "ui/controls/input-tags";
+@forward "ui/gallery";
+@forward "ui/tables";
+@forward "ui/modal";
+@forward "ui/plan";
+@forward "ui/wizard";
+@forward "ui/wizard/tabs";
+@forward "ui/wizard/intro";
+@forward "ui/wizard/connect";
+@forward "ui/wizard/optimize";
+@forward "ui/wizard/complete";
+@forward "ui/import";
+@forward "ui/sizes-preview";
+@forward "ui/cron";
 
 // Extras.
 .tippy-box[data-theme~="cloudinary"] {

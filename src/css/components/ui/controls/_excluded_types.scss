@@ -1,5 +1,8 @@
+@use "../../../variables" as *;
+
+
 // excluded types.
-&-excluded-types {
+.cld-input-excluded-types {
 	div{
 		display: flex;
 	}

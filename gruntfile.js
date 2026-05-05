@@ -2,7 +2,8 @@ module.exports = function ( grunt ) {
 	// Load all Grunt plugins.
 	require( 'load-grunt-tasks' )( grunt );
 
-	const pluginVersion = grunt.file.read( '.version' );
+	// Trim whitespace and newlines from pluginVersion.
+	const pluginVersion = grunt.file.read( '.version' ).trim();
 
 	const options = {
 		plugin_slug:

@@ -1,8 +1,11 @@
+@use "../../variables" as *;
+
+
 // Media styles : Images, breakpoints ,and videos previews
-&-image,
-&-video,
-&-breakpoints,
-&-lazyload{
+.cld-image,
+.cld-video,
+.cld-breakpoints,
+.cld-lazyload {
 
 
 	&-preview {
@@ -27,11 +30,11 @@
 	}
 }
 
-&.cld-ui-preview {
+.cld.cld-ui-preview {
 	max-width: 322px;
 }
 
-&-breakpoints, &-lazyload {
+.cld-breakpoints, .cld-lazyload {
 	&-preview {
 		.cld-image-preview-wrapper:hover{
 			.preview-image {
@@ -81,7 +84,7 @@
 		}
 	}
 }
-&-lazyload{
+.cld-lazyload {
 	&-preview {
 		.progress-bar{
 			height: 2px;

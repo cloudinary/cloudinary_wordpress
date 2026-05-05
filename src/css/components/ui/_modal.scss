@@ -1,4 +1,7 @@
-&-modal {
+@use "../../variables" as *;
+
+
+.cld-modal {
 	visibility: hidden;
 	background-color: rgba(0, 0, 0, 0.8);
 	position: fixed;

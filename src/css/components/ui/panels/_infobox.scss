@@ -1,7 +1,11 @@
+@use "../../../variables" as *;
+@use "../panel" as panel;
+
+
 // Infobox.
 
-&-info-box {
-	@extend .cld-panel;
+.cld-info-box {
+	@include panel.panel-base;
 	display: flex;
 	padding: 0;
 	margin: 0 0 19px;

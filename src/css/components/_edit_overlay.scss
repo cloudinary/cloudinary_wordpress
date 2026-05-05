@@ -1,4 +1,5 @@
-@import '../variables';
+@use "sass:color";
+@use "../variables" as *;
 
 .edit-overlay {
 	&-grid {
@@ -79,7 +80,7 @@
 				border: 2px solid $color-red;
 
 				&:hover {
-					background-color: darken($color-red, 5%);
+					background-color: color.adjust($color-red, $lightness: -5%);
 					color: $color-white;
 				}
 			}
