@@ -69,6 +69,7 @@
     "tippy.js": "^6.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@release-it/bumper": "^7.0.5",
     "@typescript-eslint/eslint-plugin": "^8.46.3",
     "@wordpress/api-fetch": "^7.34.0",
@@ -77,11 +78,10 @@
     "@wordpress/browserslist-config": "^6.34.0",
     "@wordpress/components": "^30.7.0",
     "@wordpress/data": "^10.34.0",
-    "@wordpress/element": "^6.34.0",
     "@wordpress/e2e-test-utils-playwright": "^1.44.0",
+    "@wordpress/element": "^6.34.0",
     "@wordpress/env": "^10.12.0",
     "@wordpress/eslint-plugin": "^22.20.0",
-    "@playwright/test": "^1.59.1",
     "@wordpress/i18n": "^6.7.0",
     "@wordpress/scripts": "^31.0.0",
     "copy-webpack-plugin": "^13.0.1",
@@ -89,6 +89,7 @@
     "css-minimizer-webpack-plugin": "^7.0.2",
     "css-unicode-loader": "^1.0.3",
     "cssnano": "^7.1.2",
+    "dotenv": "^17.3.1",
     "eslint": "^8.57.1",
     "eslint-plugin-jest": "^29.0.1",
     "eslint-plugin-react-hooks": "^7.0.1",
