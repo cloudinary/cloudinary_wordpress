@@ -29,7 +29,7 @@ const SEL = {
 	wizardWrap: '.cld-wizard',
 };
 
-test.describe( 'Cloudinary wizard setup (WPP-1201)', () => {
+test.describe( 'Cloudinary wizard setup', () => {
 	test.beforeEach( async ( { context } ) => {
 		// Clear server-side state via WP-CLI.
 		resetCloudinaryConnection();
