@@ -66,6 +66,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Prepare build directory
+        run: npx grunt prepare
+
       - name: WordPress Plugin Deploy
         # This is used to get the zip-path later.
         id: deploy
@@ -75,8 +78,10 @@ jobs:
           # In case of a pre-release, do not commit to WP.org.
           dry-run: ${{ github.event.release.prerelease }}
 
-        # Use secrets to authenticate with WP.org.
         env:
+          BUILD_DIR: 'build'
+          SLUG: 'cloudinary-image-management-and-manipulation-in-the-cloud-cdn'
+          # Use secrets to authenticate with WP.org.
           SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
 

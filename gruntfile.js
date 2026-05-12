@@ -168,7 +168,5 @@ module.exports = function ( grunt ) {
 		'compress:package',
 	] );
 
-	grunt.registerTask( 'deploy', [ 'prepare', 'wp_deploy:default' ] );
-
 	grunt.registerTask( 'deploy-assets', [ 'wp_deploy:assets' ] );
 };

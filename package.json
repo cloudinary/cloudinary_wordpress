@@ -15,7 +15,6 @@
   },
   "scripts": {
     "build": "wp-scripts build",
-    "deploy": "npm run build && grunt deploy && npm run release",
     "deploy-assets": "grunt deploy-assets",
     "dev": "wp-scripts start",
     "env:start": "wp-env start",
@@ -35,9 +34,6 @@
     "package:build": "npm run build && grunt package",
     "postinstall": "composer install",
     "readme": "composer readme",
-    "release": "release-it --no-increment",
-    "release:ci": "release-it --ci",
-    "release:dry": "release-it --dry-run",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -67,7 +63,6 @@
     "tippy.js": "^6.3.1"
   },
   "devDependencies": {
-    "@release-it/bumper": "^7.0.5",
     "@typescript-eslint/eslint-plugin": "^8.46.3",
     "@wordpress/api-fetch": "^7.34.0",
     "@wordpress/block-editor": "^15.12.0",
@@ -104,7 +99,6 @@
     "npm-run-all": "^4.1.5",
     "postcss-loader": "^8.2.0",
     "prettier": "npm:wp-prettier@^3.0.0",
-    "release-it": "^19.0.6",
     "rtlcss-webpack-plugin": "^4.0.4",
     "terser-webpack-plugin": "^5.3.14",
     "webpack": "^5.94.0",
