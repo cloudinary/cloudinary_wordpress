@@ -21,6 +21,29 @@ let cloudName;
  */
 let created = null;
 
+/**
+ * Assert that a given image URL is served by Cloudinary under the
+ * expected cloud name. We intentionally do not assert specific
+ * transformations — those are an implementation detail of the plugin
+ * and may change.
+ *
+ * @param {string} rawUrl        The src or srcset candidate.
+ * @param {string} expectedCloud The cloud name parsed from CLOUDINARY_E2E_URL.
+ */
+function expectCloudinaryUrl( rawUrl, expectedCloud ) {
+	let parsed;
+	try {
+		parsed = new URL( rawUrl );
+	} catch ( e ) {
+		throw new Error( `Image URL is not parseable: ${ rawUrl }` );
+	}
+	expect( parsed.host, `host of ${ rawUrl }` ).toBe( 'res.cloudinary.com' );
+	expect(
+		parsed.pathname.startsWith( `/${ expectedCloud }/` ),
+		`pathname of ${ rawUrl } should start with /${ expectedCloud }/`
+	).toBe( true );
+}
+
 test.describe( 'Cloudinary image delivery', () => {
 	test.beforeAll( () => {
 		( { cloudName } = ensureCloudinaryConnected() );
@@ -97,10 +120,56 @@ test.describe( 'Cloudinary image delivery', () => {
 		}
 	} );
 
-	test( 'serves featured image and inline image via Cloudinary', async () => {
-		// Placeholder — assertions added in Task 5.
+	test( 'serves featured image and inline image via Cloudinary', async ( {
+		page,
+	} ) => {
 		expect( created, 'post + attachment should be created' ).not.toBeNull();
-		expect( created.postLink ).toMatch( /^https?:\/\// );
-		expect( false, 'placeholder — to be implemented' ).toBe( true );
+
+		await page.goto( created.postLink );
+
+		// Featured image: most core themes mark it with .wp-post-image
+		// inside the post header. Use a tolerant selector.
+		const featured = page
+			.locator( 'img.wp-post-image, .post-thumbnail img' )
+			.first();
+		await expect(
+			featured,
+			'featured image should render on the post page'
+		).toBeVisible();
+
+		// Inline image from the_content: the block editor adds
+		// `wp-image-<ID>` to embedded images.
+		const inline = page.locator(
+			`article img.wp-image-${ created.attachmentId }`
+		);
+		await expect(
+			inline,
+			'inline image block should render in post content'
+		).toHaveCount( 1 );
+
+		// Read attributes from both and assert delivery URLs point at
+		// Cloudinary under the configured cloud name.
+		const candidates = [];
+
+		for ( const loc of [ featured, inline ] ) {
+			const src = await loc.getAttribute( 'src' );
+			expect( src, 'image element should have a src' ).toBeTruthy();
+			candidates.push( src );
+
+			const srcset = await loc.getAttribute( 'srcset' );
+			if ( srcset ) {
+				const firstCandidate = srcset
+					.split( ',' )[ 0 ]
+					.trim()
+					.split( /\s+/ )[ 0 ];
+				if ( firstCandidate ) {
+					candidates.push( firstCandidate );
+				}
+			}
+		}
+
+		for ( const url of candidates ) {
+			expectCloudinaryUrl( url, cloudName );
+		}
 	} );
 } );
