@@ -23,10 +23,13 @@ $settings = array(
 			$plugin     = get_plugin_instance();
 			$data       = $plugin->settings->get_value( 'last_usage' );
 			$cloud_name = $plugin->components['connect']->get_cloud_name();
+			// `last_usage` may be a string when no successful usage API
+			// response has been recorded yet; fall back to an empty plan name.
+			$plan_name  = is_array( $data ) && isset( $data['plan'] ) ? $data['plan'] : '';
 
 			ob_start();
 			?>
-				<?php echo esc_html( $data['plan'] ); ?>
+				<?php echo esc_html( $plan_name ); ?>
 				<br />
 				<span class="cld-ui-description-cloudname cloudname">@<?php echo esc_html( $cloud_name ); ?></span>
 			<?php

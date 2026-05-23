@@ -68,10 +68,20 @@ class Plan_Details extends Component {
 			return $struct;
 		}
 
+		// `last_usage` can be a string when the usage API has never returned a
+		// valid response (e.g. fresh install or API error). Without this
+		// guard, PHP 8.x fatals on string-offset access below.
+		if ( ! is_array( $data ) ) {
+			$data = array();
+		}
+
+		$plan_name = isset( $data['plan'] ) ? $data['plan'] : '';
+		$requests  = isset( $data['requests'] ) ? $data['requests'] : 0;
+
 		$struct['element']               = 'div';
 		$struct['attributes']['class'][] = 'cld-plan';
 
-		$struct['children']['plan'] = $this->make_item( __( 'Plan', 'cloudinary' ), $data['plan'], $this->dir_url . 'css/images/star.svg' );
+		$struct['children']['plan'] = $this->make_item( __( 'Plan', 'cloudinary' ), $plan_name, $this->dir_url . 'css/images/star.svg' );
 
 		if ( $connection->get_usage_stat( 'credits', 'limit' ) ) {
 			$struct = $this->plan_credit( $struct, $connection );
@@ -79,7 +89,7 @@ class Plan_Details extends Component {
 			$struct = $this->plan_classic( $struct, $connection );
 		}
 
-		$struct['children']['requests'] = $this->make_item( __( 'Total Requests', 'cloudinary' ), number_format_i18n( $data['requests'] ), $this->dir_url . 'css/images/requests.svg' );
+		$struct['children']['requests'] = $this->make_item( __( 'Total Requests', 'cloudinary' ), number_format_i18n( $requests ), $this->dir_url . 'css/images/requests.svg' );
 		$struct['children']['assets']   = $this->make_item( __( 'Optimized assets', 'cloudinary' ), number_format_i18n( Sync_Queue::get_optimized_assets() ), $this->dir_url . 'css/images/image.svg' );
 
 		return $struct;
