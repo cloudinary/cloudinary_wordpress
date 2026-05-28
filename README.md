@@ -117,6 +117,59 @@ Files included in the release package are defined in the `gruntfile.js` under th
 
 3. Run `npm run deploy-assets` to deploy just the WP.org plugin assets such as screenshots, icons and banners.
 
+## End-to-end testing
+
+E2E tests run against a wp-env site using Playwright.
+
+### One-time setup
+
+```bash
+npm install
+npx playwright install --with-deps chromium
+npm run env:start
+```
+
+### Running the tests
+
+```bash
+npm run test:e2e
+```
+
+### Wizard test credentials
+
+`tests/e2e/wizard-setup.spec.js` exercises the live Cloudinary connection flow, so it needs a real connection string. Provide one of two ways:
+
+**Option 1 — `.env` file (recommended for sustained local development).** Copy `.env.example` to `.env` and fill in the value. `.env` is gitignored. Playwright loads it automatically at startup.
+
+```bash
+cp .env.example .env
+# edit .env, set CLOUDINARY_E2E_URL=cloudinary://...
+npm run test:e2e
+```
+
+**Option 2 — shell export (good for one-off runs and CI).**
+
+```bash
+export CLOUDINARY_E2E_URL='cloudinary://API_KEY:API_SECRET@CLOUD_NAME'
+npm run test:e2e
+```
+
+A real shell env var takes precedence over the `.env` file.
+
+The variable is intentionally named `CLOUDINARY_E2E_URL` (not `CLOUDINARY_URL`) so it cannot be confused with the Cloudinary SDK convention or with anything you might define in `.wp-env.override.json` for local dev. Use a dedicated test Cloudinary account — never production credentials.
+
+> **Note:** Do **not** set `CLOUDINARY_URL` or `CLOUDINARY_CONNECTION_STRING` as PHP constants via `.wp-env.override.json` while running this spec. The plugin treats a constant-defined connection string as already-configured and hides the wizard's connection input, which makes the test impossible.
+
+CI will provide `CLOUDINARY_E2E_URL` via a GitHub Actions secret (wired separately under WPP-1195's CI subtask).
+
+### Debugging a failing e2e test
+
+```bash
+npm run test:e2e:debug -- wizard-setup
+```
+
+This opens Playwright's UI runner where you can step through actions, inspect the DOM, and view the network panel.
+
 ## License
 
 Released under the GPL license.
