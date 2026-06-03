@@ -186,14 +186,44 @@ test.describe( 'Cloudinary video delivery', () => {
 			] );
 		} );
 
-		test( 'renders a Cloudinary player iframe pointing at our cloud', async () => {
-			// Sentinel — replaced in Task 3. Confirms beforeAll/afterAll
-			// hooks fire and that wpCli is in scope here.
+		test( 'renders a Cloudinary player iframe pointing at our cloud', async ( {
+			page,
+		} ) => {
 			expect(
 				created,
 				'post + attachment should be created'
 			).not.toBeNull();
-			expect( false, 'placeholder — to be implemented' ).toBe( true );
+
+			await page.goto( created.postLink );
+
+			// With video_player=cld, the plugin substitutes the
+			// native <video> markup for an iframe pointing at the
+			// Cloudinary player. See build_video_embed() in
+			// php/media/class-video.php.
+			const iframe = page
+				.locator( 'figure.wp-block-embed.is-type-video iframe' )
+				.first();
+			await expect(
+				iframe,
+				'Cloudinary player iframe should be emitted in place of <video>'
+			).toBeAttached();
+
+			const src = await iframe.getAttribute( 'src' );
+			expect( src, 'iframe should have a src' ).toBeTruthy();
+
+			const parsed = new URL( src );
+			expect( parsed.host, `host of ${ src }` ).toBe(
+				'player.cloudinary.com'
+			);
+			expect( parsed.pathname, `pathname of ${ src }` ).toBe( '/embed/' );
+			expect(
+				parsed.searchParams.get( 'cloud_name' ),
+				'iframe src cloud_name param'
+			).toBe( cloudName );
+			expect(
+				parsed.searchParams.get( 'public_id' ),
+				'iframe src public_id param should be non-empty'
+			).toBeTruthy();
 		} );
 	} );
 } );
