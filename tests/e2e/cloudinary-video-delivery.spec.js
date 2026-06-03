@@ -22,6 +22,28 @@ let cloudName;
  */
 let created = null;
 
+/**
+ * Assert that a given URL is served by Cloudinary under the expected
+ * cloud name. We intentionally do not assert specific transformations —
+ * those are an implementation detail of the plugin and may change.
+ *
+ * @param {string} rawUrl        The URL to validate.
+ * @param {string} expectedCloud The cloud name parsed from CLOUDINARY_E2E_URL.
+ */
+function expectCloudinaryUrl( rawUrl, expectedCloud ) {
+	let parsed;
+	try {
+		parsed = new URL( rawUrl );
+	} catch ( e ) {
+		throw new Error( `URL is not parseable: ${ rawUrl }` );
+	}
+	expect( parsed.host, `host of ${ rawUrl }` ).toBe( 'res.cloudinary.com' );
+	expect(
+		parsed.pathname.startsWith( `/${ expectedCloud }/` ),
+		`pathname of ${ rawUrl } should start with /${ expectedCloud }/`
+	).toBe( true );
+}
+
 test.describe( 'Cloudinary video delivery', () => {
 	test.beforeAll( () => {
 		( { cloudName } = ensureCloudinaryConnected() );
@@ -96,10 +118,39 @@ test.describe( 'Cloudinary video delivery', () => {
 		}
 	} );
 
-	test( 'serves video from a core/video block via Cloudinary', async () => {
-		// Placeholder — assertions added in Task 4.
+	test( 'serves video from a core/video block via Cloudinary', async ( {
+		page,
+	} ) => {
 		expect( created, 'post + attachment should be created' ).not.toBeNull();
-		expect( created.postLink ).toMatch( /^https?:\/\// );
-		expect( false, 'placeholder — to be implemented' ).toBe( true );
+
+		await page.goto( created.postLink );
+
+		// Locate the core/video block on the rendered page.
+		const video = page.locator( 'figure.wp-block-video video' ).first();
+		await expect(
+			video,
+			'core/video block should render a <video> element'
+		).toBeAttached();
+
+		// With video_player=wp (the default), the plugin rewrites the
+		// video URL server-side via str_replace on the rendered block
+		// HTML. The URL lands in either:
+		//   - the <video src="..."> attribute, or
+		//   - a <source src="..."> child element.
+		// Read both and validate whichever is present.
+		const videoSrc = await video.getAttribute( 'src' );
+		const sourceSrc = await video
+			.locator( 'source' )
+			.first()
+			.getAttribute( 'src' )
+			.catch( () => null );
+
+		const url = videoSrc || sourceSrc;
+		expect(
+			url,
+			'video element should expose a src on <video> or <source>'
+		).toBeTruthy();
+
+		expectCloudinaryUrl( url, cloudName );
 	} );
 } );
