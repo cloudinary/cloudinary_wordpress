@@ -158,4 +158,42 @@ test.describe( 'Cloudinary video delivery', () => {
 			expectCloudinaryUrl( url, cloudName );
 		} );
 	} );
+
+	test.describe( 'with Cloudinary player', () => {
+		test.beforeAll( () => {
+			// Flip the video_player setting from 'wp' (default) to
+			// 'cld' so the plugin renders a player.cloudinary.com
+			// iframe instead of a native <video>. Reverted in afterAll
+			// so subsequent specs see the original setting.
+			wpCli( [
+				'option',
+				'patch',
+				'update',
+				'cloudinary_media_display',
+				'video_player',
+				'cld',
+			] );
+		} );
+
+		test.afterAll( () => {
+			wpCli( [
+				'option',
+				'patch',
+				'update',
+				'cloudinary_media_display',
+				'video_player',
+				'wp',
+			] );
+		} );
+
+		test( 'renders a Cloudinary player iframe pointing at our cloud', async () => {
+			// Sentinel — replaced in Task 3. Confirms beforeAll/afterAll
+			// hooks fire and that wpCli is in scope here.
+			expect(
+				created,
+				'post + attachment should be created'
+			).not.toBeNull();
+			expect( false, 'placeholder — to be implemented' ).toBe( true );
+		} );
+	} );
 } );
