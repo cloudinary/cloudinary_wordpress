@@ -118,39 +118,44 @@ test.describe( 'Cloudinary video delivery', () => {
 		}
 	} );
 
-	test( 'serves video from a core/video block via Cloudinary', async ( {
-		page,
-	} ) => {
-		expect( created, 'post + attachment should be created' ).not.toBeNull();
+	test.describe( 'with default WP player', () => {
+		test( 'serves video from a core/video block via Cloudinary', async ( {
+			page,
+		} ) => {
+			expect(
+				created,
+				'post + attachment should be created'
+			).not.toBeNull();
 
-		await page.goto( created.postLink );
+			await page.goto( created.postLink );
 
-		// Locate the core/video block on the rendered page.
-		const video = page.locator( 'figure.wp-block-video video' ).first();
-		await expect(
-			video,
-			'core/video block should render a <video> element'
-		).toBeAttached();
+			// Locate the core/video block on the rendered page.
+			const video = page.locator( 'figure.wp-block-video video' ).first();
+			await expect(
+				video,
+				'core/video block should render a <video> element'
+			).toBeAttached();
 
-		// With video_player=wp (the default), the plugin rewrites the
-		// video URL server-side via str_replace on the rendered block
-		// HTML. The URL lands in either:
-		//   - the <video src="..."> attribute, or
-		//   - a <source src="..."> child element.
-		// Read both and validate whichever is present.
-		const videoSrc = await video.getAttribute( 'src' );
-		const sourceSrc = await video
-			.locator( 'source' )
-			.first()
-			.getAttribute( 'src' )
-			.catch( () => null );
+			// With video_player=wp (the default), the plugin rewrites the
+			// video URL server-side via str_replace on the rendered block
+			// HTML. The URL lands in either:
+			//   - the <video src="..."> attribute, or
+			//   - a <source src="..."> child element.
+			// Read both and validate whichever is present.
+			const videoSrc = await video.getAttribute( 'src' );
+			const sourceSrc = await video
+				.locator( 'source' )
+				.first()
+				.getAttribute( 'src' )
+				.catch( () => null );
 
-		const url = videoSrc || sourceSrc;
-		expect(
-			url,
-			'video element should expose a src on <video> or <source>'
-		).toBeTruthy();
+			const url = videoSrc || sourceSrc;
+			expect(
+				url,
+				'video element should expose a src on <video> or <source>'
+			).toBeTruthy();
 
-		expectCloudinaryUrl( url, cloudName );
+			expectCloudinaryUrl( url, cloudName );
+		} );
 	} );
 } );
