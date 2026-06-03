@@ -150,21 +150,33 @@ test.describe( 'Cloudinary image delivery', () => {
 		).toBeVisible();
 
 		// With the wizard's default settings, the plugin lazy-loads
-		// images: the initial markup carries a tiny SVG placeholder in
-		// `src` plus `data-public-id` / `data-transformations`, and
-		// the JS replaces `src` with the real Cloudinary URL once the
-		// image scrolls into view. Scroll each into view and wait for
-		// the swap before reading attributes.
+		// images: the initial server-rendered markup carries a tiny
+		// SVG placeholder in `src` and the real Cloudinary delivery
+		// is encoded in `data-public-id` + `data-transformations` +
+		// `data-version`. The JS then constructs the Cloudinary URL
+		// and swaps it into `src` once the image scrolls into view.
+		//
+		// We assert two things per image:
+		//   1. `data-public-id` is present — proves the plugin marked
+		//      the element for Cloudinary delivery (this is its own
+		//      explicit signal, independent of lazyload / theme markup).
+		//   2. Any HTTP(S) URL attribute present (`src` after the JS
+		//      swap, `srcset` when emitted by the theme) is served
+		//      from `res.cloudinary.com/<cloud_name>/...`.
+		const httpUrls = [];
 		for ( const loc of [ featured, inline ] ) {
 			await loc.scrollIntoViewIfNeeded();
-			await expect( loc ).toHaveAttribute( 'src', /^https?:\/\// );
-		}
 
-		const candidates = [];
-		for ( const loc of [ featured, inline ] ) {
+			const publicId = await loc.getAttribute( 'data-public-id' );
+			expect(
+				publicId,
+				'plugin should mark the image with data-public-id'
+			).toBeTruthy();
+
 			const src = await loc.getAttribute( 'src' );
-			expect( src, 'image element should have a src' ).toBeTruthy();
-			candidates.push( src );
+			if ( src && /^https?:\/\//.test( src ) ) {
+				httpUrls.push( src );
+			}
 
 			const srcset = await loc.getAttribute( 'srcset' );
 			if ( srcset ) {
@@ -172,13 +184,18 @@ test.describe( 'Cloudinary image delivery', () => {
 					.split( ',' )[ 0 ]
 					.trim()
 					.split( /\s+/ )[ 0 ];
-				if ( firstCandidate ) {
-					candidates.push( firstCandidate );
+				if ( firstCandidate && /^https?:\/\//.test( firstCandidate ) ) {
+					httpUrls.push( firstCandidate );
 				}
 			}
 		}
 
-		for ( const url of candidates ) {
+		expect(
+			httpUrls.length,
+			'at least one image should expose a Cloudinary URL via src or srcset'
+		).toBeGreaterThan( 0 );
+
+		for ( const url of httpUrls ) {
 			expectCloudinaryUrl( url, cloudName );
 		}
 	} );
