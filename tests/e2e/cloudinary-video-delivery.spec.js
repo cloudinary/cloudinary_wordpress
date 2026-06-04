@@ -3,13 +3,14 @@
  */
 const fs = require( 'fs' );
 const path = require( 'path' );
+const { execSync } = require( 'child_process' );
 const { test, expect } = require( '@wordpress/e2e-test-utils-playwright' );
 
 /**
  * Internal dependencies
  */
 const { ensureCloudinaryConnected } = require( './utils/connection' );
-const { wpCli } = require( './utils/wizard' );
+const { wpCli, getCliContainer } = require( './utils/wizard' );
 
 const FIXTURE_PATH = path.join( __dirname, 'fixtures', 'test-video.mp4' );
 
@@ -42,6 +43,39 @@ function expectCloudinaryUrl( rawUrl, expectedCloud ) {
 		parsed.pathname.startsWith( `/${ expectedCloud }/` ),
 		`pathname of ${ rawUrl } should start with /${ expectedCloud }/`
 	).toBe( true );
+}
+
+/**
+ * Set cloudinary_media_display.video_player without disturbing other
+ * keys, bootstrapping the option if it does not yet exist.
+ *
+ * We cannot use `wp option patch` here: in a fresh wp-env the
+ * `cloudinary_media_display` option is unset, so `get_option` returns
+ * boolean false and `patch` errors with "Cannot create key ... on data
+ * type boolean". A merge-based `update_option` handles the missing,
+ * boolean, and populated-array cases uniformly — `(array) false` is [].
+ *
+ * The PHP snippet contains spaces and quotes, so it cannot go through
+ * the space-joined `wpCli` helper; we build the docker command here.
+ *
+ * @param {string} value 'wp' or 'cld'.
+ */
+function setVideoPlayer( value ) {
+	const php =
+		'update_option("cloudinary_media_display", array_merge((array) get_option("cloudinary_media_display", array()), array("video_player" => "' +
+		value +
+		'")));';
+	const cmd = [
+		'docker',
+		'exec',
+		getCliContainer(),
+		'wp',
+		'eval',
+		`'${ php }'`,
+		'--allow-root',
+	].join( ' ' );
+
+	execSync( cmd, { encoding: 'utf8', stdio: [ 'ignore', 'pipe', 'pipe' ] } );
 }
 
 test.describe( 'Cloudinary video delivery', () => {
@@ -165,31 +199,11 @@ test.describe( 'Cloudinary video delivery', () => {
 			// 'cld' so the plugin renders a player.cloudinary.com
 			// iframe instead of a native <video>. Reverted in afterAll
 			// so subsequent specs see the original setting.
-			//
-			// `patch insert` (not `update`) because in a fresh wp-env
-			// the `video_player` key may not exist yet — the wizard
-			// spec, which would persist plugin defaults, runs after
-			// this one in CI. `insert` upserts: it creates the key if
-			// missing and overwrites it if present.
-			wpCli( [
-				'option',
-				'patch',
-				'insert',
-				'cloudinary_media_display',
-				'video_player',
-				'cld',
-			] );
+			setVideoPlayer( 'cld' );
 		} );
 
 		test.afterAll( () => {
-			wpCli( [
-				'option',
-				'patch',
-				'insert',
-				'cloudinary_media_display',
-				'video_player',
-				'wp',
-			] );
+			setVideoPlayer( 'wp' );
 		} );
 
 		test( 'renders a Cloudinary player iframe pointing at our cloud', async ( {
