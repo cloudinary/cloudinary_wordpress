@@ -165,10 +165,16 @@ test.describe( 'Cloudinary video delivery', () => {
 			// 'cld' so the plugin renders a player.cloudinary.com
 			// iframe instead of a native <video>. Reverted in afterAll
 			// so subsequent specs see the original setting.
+			//
+			// `patch insert` (not `update`) because in a fresh wp-env
+			// the `video_player` key may not exist yet — the wizard
+			// spec, which would persist plugin defaults, runs after
+			// this one in CI. `insert` upserts: it creates the key if
+			// missing and overwrites it if present.
 			wpCli( [
 				'option',
 				'patch',
-				'update',
+				'insert',
 				'cloudinary_media_display',
 				'video_player',
 				'cld',
@@ -179,7 +185,7 @@ test.describe( 'Cloudinary video delivery', () => {
 			wpCli( [
 				'option',
 				'patch',
-				'update',
+				'insert',
 				'cloudinary_media_display',
 				'video_player',
 				'wp',
