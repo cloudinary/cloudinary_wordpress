@@ -69,6 +69,16 @@ jobs:
       - name: Prepare build directory
         run: npx grunt prepare
 
+      # Ensure the version in the .version file matches the tag of the release.
+      - name: Verify version matches tag
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          FILE_VERSION=$(cat .version | tr -d '[:space:]')
+          if [ "$TAG" != "$FILE_VERSION" ]; then
+            echo "::error::Tag $TAG does not match .version $FILE_VERSION"
+            exit 1
+          fi
+
       - name: WordPress Plugin Deploy
         # This is used to get the zip-path later.
         id: deploy
