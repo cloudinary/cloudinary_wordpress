@@ -4,6 +4,16 @@
 const { defineConfig, devices } = require( '@playwright/test' );
 const path = require( 'path' );
 
+// Load env vars from a project-root .env file so devs don't have to
+// re-export CLOUDINARY_E2E_URL in every shell. The file is gitignored.
+// Real shell env vars take precedence (override: false). `quiet: true`
+// suppresses dotenv's promotional banner.
+require( 'dotenv' ).config( {
+	path: path.join( process.cwd(), '.env' ),
+	override: false,
+	quiet: true,
+} );
+
 const STORAGE_STATE_PATH =
 	process.env.STORAGE_STATE_PATH ||
 	path.join( process.cwd(), 'artifacts/storage-states/admin.json' );
