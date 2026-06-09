@@ -57,7 +57,7 @@ jobs:
 
       # Install dependencies.
       - name: Install NPM dependencies
-        run: npm install
+        run: npm ci
 
       - name: Install Composer dependencies
         run: composer install --no-dev
