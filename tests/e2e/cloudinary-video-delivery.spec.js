@@ -175,15 +175,15 @@ test.describe( 'Cloudinary video delivery', () => {
 			// HTML. The URL lands in either:
 			//   - the <video src="..."> attribute, or
 			//   - a <source src="..."> child element.
-			// Read both and validate whichever is present.
-			const videoSrc = await video.getAttribute( 'src' );
-			const sourceSrc = await video
-				.locator( 'source' )
-				.first()
-				.getAttribute( 'src' )
-				.catch( () => null );
-
-			const url = videoSrc || sourceSrc;
+			// Read both in a single evaluate so a missing <source> does
+			// not trigger Playwright's actionability wait (and so real
+			// errors are not swallowed by a blanket catch).
+			const url = await video.evaluate(
+				( el ) =>
+					el.getAttribute( 'src' ) ||
+					el.querySelector( 'source' )?.getAttribute( 'src' ) ||
+					null
+			);
 			expect(
 				url,
 				'video element should expose a src on <video> or <source>'
