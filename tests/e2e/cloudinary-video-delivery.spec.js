@@ -75,7 +75,14 @@ function setVideoPlayer( value ) {
 		'--allow-root',
 	].join( ' ' );
 
-	execSync( cmd, { encoding: 'utf8', stdio: [ 'ignore', 'pipe', 'pipe' ] } );
+	// `timeout` matters: execSync blocks the worker's event loop, so
+	// Playwright's own test timeout cannot interrupt a hung docker/wp
+	// call. Without it a wedged container hangs the whole suite.
+	execSync( cmd, {
+		encoding: 'utf8',
+		stdio: [ 'ignore', 'pipe', 'pipe' ],
+		timeout: 30_000,
+	} );
 }
 
 test.describe( 'Cloudinary video delivery', () => {
