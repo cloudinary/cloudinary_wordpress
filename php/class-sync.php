@@ -1152,12 +1152,13 @@ class Sync implements Setup, Assets {
 		wp_update_attachment_metadata( $attachment_id, $meta );
 
 		// Cleanup postmeta.
-		$queued = get_post_meta( $attachment_id, self::META_KEYS['queued'] );
+		$queued = get_post_meta( $attachment_id, self::META_KEYS['queued'], true );
 		delete_post_meta( $attachment_id, self::META_KEYS['sync_error'] );
 		delete_post_meta( $attachment_id, self::META_KEYS['pending'] );
 		delete_post_meta( $attachment_id, self::META_KEYS['queued'] );
 		delete_post_meta( $attachment_id, self::META_KEYS['suffix'] );
 		delete_post_meta( $attachment_id, self::META_KEYS['public_id'] );
+		delete_post_meta( $attachment_id, self::META_KEYS['syncing'] );
 		delete_post_meta( $attachment_id, $queued );
 
 		// Signatures cleanup.
