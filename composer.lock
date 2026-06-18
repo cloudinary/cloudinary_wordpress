@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "64047cd473a04d8d667619c032394823",
+    "content-hash": "b8cd5a14604ce418e38204b454e4447a",
     "packages": [],
     "packages-dev": [
         {
@@ -138,16 +138,16 @@
         },
         {
             "name": "php-stubs/woocommerce-stubs",
-            "version": "dev-master",
+            "version": "v9.9.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-stubs/woocommerce-stubs.git",
-                "reference": "9d59e65dcabc18153c243cb9acd85fc88ef40589"
+                "reference": "3f4d4e14afe6150569bd96cf14e8a17a84812447"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-stubs/woocommerce-stubs/zipball/9d59e65dcabc18153c243cb9acd85fc88ef40589",
-                "reference": "9d59e65dcabc18153c243cb9acd85fc88ef40589",
+                "url": "https://api.github.com/repos/php-stubs/woocommerce-stubs/zipball/3f4d4e14afe6150569bd96cf14e8a17a84812447",
+                "reference": "3f4d4e14afe6150569bd96cf14e8a17a84812447",
                 "shasum": ""
             },
             "require": {
@@ -161,7 +161,6 @@
                 "symfony/polyfill-php73": "Symfony polyfill backporting some PHP 7.3+ features to lower PHP versions",
                 "szepeviktor/phpstan-wordpress": "WordPress extensions for PHPStan"
             },
-            "default-branch": true,
             "type": "library",
             "notification-url": "https://packagist.org/downloads/",
             "license": [
@@ -177,9 +176,9 @@
             ],
             "support": {
                 "issues": "https://github.com/php-stubs/woocommerce-stubs/issues",
-                "source": "https://github.com/php-stubs/woocommerce-stubs/tree/master"
+                "source": "https://github.com/php-stubs/woocommerce-stubs/tree/v9.9.5"
             },
-            "time": "2026-05-27T11:46:50+00:00"
+            "time": "2025-07-14T17:12:48+00:00"
         },
         {
             "name": "php-stubs/wordpress-stubs",
@@ -964,7 +963,6 @@
     ],
     "minimum-stability": "dev",
     "stability-flags": {
-        "php-stubs/woocommerce-stubs": 20,
         "phpcompatibility/php-compatibility": 20,
         "phpcompatibility/phpcompatibility-wp": 20
     },
