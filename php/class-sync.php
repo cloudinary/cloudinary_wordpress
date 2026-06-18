@@ -332,7 +332,9 @@ class Sync implements Setup, Assets {
 		 * Filter to allow changing if an asset is allowed to be synced.
 		 * Return a WP Error with reason why it can't be synced.
 		 *
-		 * @param int $attachment_id The attachment post ID.
+		 * @param bool|\WP_Error $can           Whether the asset can be synced.
+		 * @param int            $attachment_id The attachment post ID.
+		 * @param string         $type          The sync type.
 		 *
 		 * @return bool|\WP_Error
 		 */
@@ -386,10 +388,10 @@ class Sync implements Setup, Assets {
 		 *
 		 * @hook   cloudinary_get_signature
 		 *
-		 * @param $return        {array} The attachment signature.
-		 * @param $attachment_id {int}   The attachment ID.
+		 * @param array $return The attachment signature.
+		 * @param int $attachment_id   The attachment ID.
 		 *
-		 * @return {array}
+		 * @return array
 		 */
 		$return = apply_filters( 'cloudinary_get_signature', $return, $attachment_id );
 
@@ -674,7 +676,7 @@ class Sync implements Setup, Assets {
 		/**
 		 * Do action for setting up sync types.
 		 *
-		 * @param \Cloudinary\Sync $this The sync object.
+		 * @param \Cloudinary\Sync $sync The sync object.
 		 */
 		do_action( 'cloudinary_register_sync_types', $this );
 	}
@@ -772,10 +774,10 @@ class Sync implements Setup, Assets {
 		 *
 		 * @hook   cloudinary_asset_state
 		 *
-		 * @param $state         {int} The attachment state.
-		 * @param $attachment_id {int}   The attachment ID.
+		 * @param int $state The attachment state.
+		 * @param int $attachment_id   The attachment ID.
 		 *
-		 * @return {array}
+		 * @return array
 		 */
 		return apply_filters( 'cloudinary_asset_state', $state, $attachment_id );
 	}
@@ -806,11 +808,11 @@ class Sync implements Setup, Assets {
 		 *
 		 * @hook   cloudinary_sync_base
 		 *
-		 * @param $signatures {array}   The attachments required signatures.
-		 * @param $post       {WP_Post} The attachment post.
-		 * @param $sync       {Sync}    The sync object instance.
+		 * @param array $signatures   The attachments required signatures.
+		 * @param WP_Post $post The attachment post.
+		 * @param Sync $sync    The sync object instance.
 		 *
-		 * @return {array}
+		 * @return array
 		 */
 		$return = apply_filters( 'cloudinary_sync_base', $return, get_post( $attachment_id ), $this );
 
@@ -1220,7 +1222,7 @@ class Sync implements Setup, Assets {
 			add_filter( 'cloudinary_setting_get_value', array( $this, 'filter_get_cloudinary_folder' ), 10, 2 );
 			add_filter( 'cloudinary_get_signature', array( $this, 'get_signature_syncable_type' ), 10, 2 );
 
-			add_action( 'admin_init', array( $this, 'maybe_cleanup_errored' ), 10, 2 );
+			add_action( 'admin_init', array( $this, 'maybe_cleanup_errored' ) );
 
 			add_action( 'rest_api_init', array( $this, 'rest_api_is_synced_field' ) );
 		}

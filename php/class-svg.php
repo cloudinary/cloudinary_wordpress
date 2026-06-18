@@ -245,7 +245,7 @@ class SVG extends Delivery_Feature {
 		// Add filters.
 		add_filter( 'upload_mimes', array( $this, 'add_svg_mime' ) ); // phpcs:ignore WordPressVIPMinimum.Hooks.RestrictedHooks.upload_mimes
 		add_filter( 'ext2type', array( $this, 'add_svg_ext_type' ) );
-		add_filter( 'wp_check_filetype_and_ext', array( $this, 'check_svg_type' ), 10, 4 );
+		add_filter( 'wp_check_filetype_and_ext', array( $this, 'check_svg_type' ), 10, 3 );
 		add_filter( 'cloudinary_allowed_extensions', array( $this, 'allow_svg_for_cloudinary' ) );
 		add_filter( 'cloudinary_upload_options', array( $this, 'remove_svg_eagers' ), 10, 2 );
 		add_filter( 'cloudinary_upload_args', array( $this, 'upload_args' ), 10, 2 );

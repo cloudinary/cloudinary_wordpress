@@ -217,12 +217,12 @@ class Utils {
 		 *     2
 		 * );
 		 *
-		 * @param $capability {string} The capability.
-		 * @param $context    {string} The context for the task.
-		 * @param $args       {mixed}  The optional arguments.
+		 * @param string $capability The capability.
+		 * @param string $context The context for the task.
+		 * @param mixed $args  The optional arguments.
 		 *
 		 * @default 'manage_options'
-		 * @return  {string}
+		 * @return  string
 		 */
 		$capability = apply_filters( "cloudinary_task_capability_{$task}", $capability, $context, ...$args );
 
@@ -248,12 +248,12 @@ class Utils {
 		 *     3
 		 * );
 		 *
-		 * @param $capability {string} The current capability for the task.
-		 * @param $task       {string} The task.
-		 * @param $context    {string} The context for the task.
-		 * @param $args       {mixed}  The optional arguments.
+		 * @param string $capability The current capability for the task.
+		 * @param string $task The task.
+		 * @param string $context The context for the task.
+		 * @param mixed $args  The optional arguments.
 		 *
-		 * @return  {string}
+		 * @return  string
 		 */
 		$capability = apply_filters( 'cloudinary_task_capability', $capability, $task, $context, ...$args );
 		// phpcs:enable WordPress.WhiteSpace.DisallowInlineTabs.NonIndentTabsUsed
@@ -400,9 +400,9 @@ class Utils {
 		 * @hook   cloudinary_upgrade_sequence
 		 * @since  3.0.1
 		 *
-		 * @param $upgrade_sequence {array} The default sequence.
+		 * @param array $upgrade_sequence The default sequence.
 		 *
-		 * @return {array}
+		 * @return array
 		 */
 		return apply_filters( 'cloudinary_upgrade_sequence', $upgrade_sequence );
 	}
@@ -634,7 +634,7 @@ class Utils {
 		$admin_base = admin_url();
 		$is_admin   = $referer ? 0 === strpos( $referer, $admin_base ) : false;
 		// Check if this is a frontend ajax request.
-		$is_frontend_ajax = ! $is_admin && defined( 'DOING_AJAX' ) && DOING_AJAX;
+		$is_frontend_ajax = ! $is_admin && wp_doing_ajax();
 		// If it's not an obvious WP ajax request, check if it's a custom frontend ajax request.
 		if ( ! $is_frontend_ajax && ! $is_admin ) {
 			// Catch the content type of the $_SERVER['CONTENT_TYPE'] variable.
@@ -883,9 +883,9 @@ class Utils {
 			 * @hook   cloudinary_ignored_data_keywords
 			 * @since  3.0.8
 			 *
-			 * @param $lazy_keys {array} The built-in ignore data-* keywords.
+			 * @param array $lazy_keys The built-in ignore data-* keywords.
 			 *
-			 * @return {array}
+			 * @return array
 			 */
 			$filtered_keys = apply_filters( 'cloudinary_ignored_data_keywords', $lazy_keys );
 
@@ -895,9 +895,9 @@ class Utils {
 			 * @hook   cloudinary_ignored_class_keywords
 			 * @since  3.0.8
 			 *
-			 * @param $lazy_classes {array} The built-in ignore class keywords.
+			 * @param array $lazy_classes The built-in ignore class keywords.
 			 *
-			 * @return {array}
+			 * @return array
 			 */
 			$filtered_classes = apply_filters( 'cloudinary_ignored_class_keywords', $lazy_classes );
 		}
@@ -1083,8 +1083,8 @@ class Utils {
 		 *
 		 * @hook   cloudinary_media_context_query
 		 * @since  3.2.0
-		 * @param $media_context_query {string} The default media context query.
-		 * @return {string}
+		 * @param string $media_context_query The default media context query.
+		 * @return string
 		 */
 		$media_context_query = apply_filters( 'cloudinary_media_context_query', 'media_context = %s' );
 
@@ -1243,10 +1243,10 @@ class Utils {
 		 * @since   3.1.9
 		 * @default {'default'}
 		 *
-		 * @param $media_context {string}   The media context.
-		 * @param $attachment_id {int|null} The attachment ID.
+		 * @param string $media_context   The media context.
+		 * @param int|null $attachment_id The attachment ID.
 		 *
-		 * @return {string}
+		 * @return string
 		 */
 		$context = apply_filters( 'cloudinary_media_context', 'default', $attachment_id );
 
@@ -1267,8 +1267,8 @@ class Utils {
 		 *
 		 * @hook   cloudinary_media_context_things
 		 * @since  3.2.0
-		 * @param $media_context_things {array} The default media context things.
-		 * @return {array}
+		 * @param array $media_context_things The default media context things.
+		 * @return array
 		 */
 		$media_context_things = apply_filters( 'cloudinary_media_context_things', $media_context_things );
 
@@ -1296,11 +1296,11 @@ class Utils {
 		 * @hook cloudinary_home_url
 		 * @since 3.2.0
 		 *
-		 * @param $home_url {string} The home url.
-		 * @param $path     {string} The path to be appended to the home URL.
-		 * @param $scheme   {string} The scheme to give the home URL context. Accepts 'http', 'https', or 'relative'.
+		 * @param string $home_url The home url.
+		 * @param string $path The path to be appended to the home URL.
+		 * @param string $scheme The scheme to give the home URL context. Accepts 'http', 'https', or 'relative'.
 		 *
-		 * @return {string}
+		 * @return string
 		 */
 		return apply_filters( 'cloudinary_home_url', $home_url, $path, $scheme );
 	}
@@ -1326,11 +1326,11 @@ class Utils {
 		 * @hook cloudinary_site_url
 		 * @since 3.2.2
 		 *
-		 * @param $site_url {string} The site URL.
-		 * @param $path     {string} The path to be appended to the site URL.
-		 * @param $scheme   {string} The scheme to give the site URL context. Accepts 'http', 'https', or 'relative'.
+		 * @param string $site_url The site URL.
+		 * @param string $path The path to be appended to the site URL.
+		 * @param string $scheme The scheme to give the site URL context. Accepts 'http', 'https', or 'relative'.
 		 *
-		 * @return {string}
+		 * @return string
 		 */
 		return apply_filters( 'cloudinary_site_url', $site_url, $path, $scheme );
 	}
@@ -1352,11 +1352,11 @@ class Utils {
 		 * @hook cloudinary_rest_url
 		 * @since 3.2.2
 		 *
-		 * @param $rest_url {string} The rest url.
-		 * @param $path     {string} The path to be appended to the rest URL.
-		 * @param $scheme   {string} The scheme to give the rest URL context. Accepts 'http', 'https', or 'relative'.
+		 * @param string $rest_url The rest url.
+		 * @param string $path The path to be appended to the rest URL.
+		 * @param string $scheme The scheme to give the rest URL context. Accepts 'http', 'https', or 'relative'.
 		 *
-		 * @return {string}
+		 * @return string
 		 */
 		return apply_filters( 'cloudinary_rest_url', $rest_url, $path, $scheme );
 	}
@@ -1593,9 +1593,9 @@ class Utils {
 		 * @hook   cloudinary_allowed_svg_tags
 		 * @since  3.2.15
 		 *
-		 * @param $allowed_tags {array} The allowed SVG tags and their attributes.
+		 * @param array $allowed_tags The allowed SVG tags and their attributes.
 		 *
-		 * @return {array}
+		 * @return array
 		 */
 		$allowed_tags = apply_filters( 'cloudinary_allowed_svg_tags', $allowed_tags );
 

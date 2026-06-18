@@ -596,7 +596,7 @@ class Global_Transformations {
 		 * @hook    cloudinary_current_post_id
 		 * @default null
 		 *
-		 * @return  {WP_Post|null}
+		 * @return  WP_Post|null
 		 */
 		$post_id = apply_filters( 'cloudinary_current_post_id', null );
 
@@ -717,7 +717,7 @@ class Global_Transformations {
 		// Add ordering metaboxes and featured overwrite.
 		add_action( 'add_meta_boxes', array( $this, 'taxonomy_ordering' ), 10, 2 );
 		add_action( 'save_post', array( $this, 'save_taxonomy_ordering' ), 10, 1 );
-		add_action( 'save_post', array( $this, 'save_overwrite_transformations_featured_image' ), 10, 3 );
+		add_action( 'save_post', array( $this, 'save_overwrite_transformations_featured_image' ), 10, 1 );
 		add_filter( 'admin_post_thumbnail_html', array( $this, 'classic_overwrite_transformations_featured_image' ), 10, 3 );
 
 		// Filter and action the custom column.

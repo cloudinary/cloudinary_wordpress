@@ -16,7 +16,7 @@ use Cloudinary\Utils;
  *
  * @package Cloudinary\UI
  */
-class Cache_Status extends media_status {
+class Cache_Status extends Media_Status {
 
 	/** Holds the cache point instance.
 	 *

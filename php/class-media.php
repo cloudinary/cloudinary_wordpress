@@ -177,13 +177,13 @@ class Media extends Settings_Component implements Setup {
 		 * @hook  cloudinary_media_filters
 		 * @since 3.0.0
 		 *
-		 * @param $filters {array} The default filters.
+		 * @param array $filters The default filters.
 		 */
 		$this->cloudinary_filters = apply_filters(
 			'cloudinary_media_filters',
 			array(
-				SYNC::META_KEYS['sync_error'] => __( 'Error', 'cloudinary' ),
-				SYNC::META_KEYS['unsynced']   => __( 'Unsynced', 'cloudinary' ),
+				Sync::META_KEYS['sync_error'] => __( 'Error', 'cloudinary' ),
+				Sync::META_KEYS['unsynced']   => __( 'Unsynced', 'cloudinary' ),
 			)
 		);
 	}
@@ -323,10 +323,10 @@ class Media extends Settings_Component implements Setup {
 		 * @since   2.7.6
 		 * @default false
 		 *
-		 * @param $is_media      {bool} Flag if is media.
-		 * @param $attachment_id {int}  The attachment ID.
+		 * @param bool $is_media Flag if is media.
+		 * @param int $attachment_id  The attachment ID.
 		 *
-		 * @return  {bool}
+		 * @return  bool
 		 */
 		return apply_filters( 'cloudinary_is_media', $is_media, $attachment_id );
 	}
@@ -423,10 +423,10 @@ class Media extends Settings_Component implements Setup {
 		 * @hook   cloudinary_is_uploadable_media
 		 * @since  2.7.7
 		 *
-		 * @param $is_local   {bool}   The attachment ID.
-		 * @param $media_host {string} The html tag.
+		 * @param bool $is_local   The attachment ID.
+		 * @param string $media_host The html tag.
 		 *
-		 * @return {bool}
+		 * @return bool
 		 */
 		return apply_filters( 'cloudinary_is_uploadable_media', $is_uploadable, $media_host );
 	}
@@ -1018,7 +1018,7 @@ class Media extends Settings_Component implements Setup {
 			 * @since 3.1.3
 			 * @default {false}
 			 *
-			 * @param $enabeld {bool} Is the Crop and Gravity control enabled?
+			 * @param bool $enabeld Is the Crop and Gravity control enabled?
 			 *
 			 * @retrun {bool}
 			 */
@@ -1436,7 +1436,7 @@ class Media extends Settings_Component implements Setup {
 
 
 		// Early bail for admin AJAX requests.
-		if ( defined( 'DOING_AJAX' ) && DOING_AJAX && is_admin() ) {
+		if ( wp_doing_ajax() && is_admin() ) {
 			$cache[ $key ] = $url;
 
 			return $cache[ $key ];
@@ -1475,10 +1475,10 @@ class Media extends Settings_Component implements Setup {
 		 * @hook    cloudinary_local_url
 		 * @since   3.0.0
 		 *
-		 * @param $url           {string|false} The local URL
-		 * @param $attachment_id {int}  The attachment ID.
+		 * @param string|false $url The local URL
+		 * @param int $attachment_id  The attachment ID.
 		 *
-		 * @return  {string|false}
+		 * @return  string|false
 		 */
 		return apply_filters( 'cloudinary_local_url', $urls[ $attachment_id ], $attachment_id );
 	}
@@ -1530,10 +1530,10 @@ class Media extends Settings_Component implements Setup {
 		 * @hook    cloudinary_raw_url
 		 * @since   3.0.0
 		 *
-		 * @param $url           {string|false} The local URL
-		 * @param $attachment_id {int}  The attachment ID.
+		 * @param string|false $url The local URL
+		 * @param int $attachment_id  The attachment ID.
 		 *
-		 * @return  {string|false}
+		 * @return  string|false
 		 */
 		return apply_filters( 'cloudinary_raw_url', $url, $attachment_id );
 	}
@@ -2036,11 +2036,11 @@ class Media extends Settings_Component implements Setup {
 		 * @hook    cloudinary_max_files_import
 		 * @since   3.1.3
 		 *
-		 * @param $max_files {int} The maximum number of files that can be imported from Cloudinary.
+		 * @param int $max_files The maximum number of files that can be imported from Cloudinary.
 		 *
 		 * @default 20
 		 *
-		 * @return  {int}
+		 * @return  int
 		 *
 		 * @example
 		 * <?php
@@ -2242,10 +2242,10 @@ class Media extends Settings_Component implements Setup {
 		 * @hook   cloudinary_asset_payload
 		 * @since  3.1.3
 		 *
-		 * @param $asset {array} The asset payload.
-		 * @param $data  {array} The raw data from the request.
+		 * @param array $asset The asset payload.
+		 * @param array $data The raw data from the request.
 		 *
-		 * @return {array}
+		 * @return array
 		 *
 		 * @example
 		 * <?php
@@ -2359,8 +2359,8 @@ class Media extends Settings_Component implements Setup {
 			 * @hook  cloudinary_download_asset
 			 * @since 3.1.3
 			 *
-			 * @param $asset  {array} The default filters.
-			 * @param $return {array} The return payload.
+			 * @param array $asset The default filters.
+			 * @param array $return The return payload.
 			 *
 			 * @example
 			 * <?php
@@ -2571,9 +2571,9 @@ class Media extends Settings_Component implements Setup {
 			 * @hook   cloudinary_migrate_legacy_meta
 			 * @since  2.7.5
 			 *
-			 * @param $attachment_id {int} The attachment ID.
+			 * @param int $attachment_id The attachment ID.
 			 *
-			 * @return {array}
+			 * @return array
 			 */
 			$meta = apply_filters( 'cloudinary_migrate_legacy_meta', $post_id );
 		}
@@ -2796,7 +2796,7 @@ class Media extends Settings_Component implements Setup {
 		 *
 		 * @param array    $options The options array.
 		 * @param \WP_Post $post    The attachment post.
-		 * @param \Cloudinary\Sync The sync object instance.
+		 * @param Media    $media   The media instance.
 		 *
 		 * @return array
 		 */
@@ -2867,7 +2867,7 @@ class Media extends Settings_Component implements Setup {
 		 *
 		 * @param array    $options The options array.
 		 * @param \WP_Post $post    The attachment post.
-		 * @param \Cloudinary\Sync The sync object instance.
+		 * @param Media    $media   The media instance.
 		 *
 		 * @return array
 		 */
@@ -3067,7 +3067,7 @@ class Media extends Settings_Component implements Setup {
 		if ( is_admin() && $query->is_main_query() ) {
 			$request = Utils::get_sanitized_text( 'cloudinary-filter' );
 
-			if ( SYNC::META_KEYS['sync_error'] === $request ) {
+			if ( Sync::META_KEYS['sync_error'] === $request ) {
 				$meta_query = $query->get( 'meta_query' );
 				if ( ! is_array( $meta_query ) ) {
 					$meta_query = array();
@@ -3082,7 +3082,7 @@ class Media extends Settings_Component implements Setup {
 				$query->set( 'meta_query', $meta_query );
 			}
 
-			if ( SYNC::META_KEYS['unsynced'] === $request ) {
+			if ( Sync::META_KEYS['unsynced'] === $request ) {
 				global $wpdb;
 				$wpdb->cld_table = Utils::get_relationship_table();
 				$result          = $wpdb->get_col( "SELECT post_id FROM $wpdb->cld_table WHERE public_id IS NULL" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching

@@ -15,6 +15,10 @@ use function Cloudinary\get_plugin_instance;
  * Abstract Component.
  *
  * @package Cloudinary\UI
+ *
+ * @method array wrap( array $struct )   Filter the wrap part structure.
+ * @method array header( array $struct ) Filter the header part structure.
+ * @method array hr( array $struct )     Filter the hr part structure.
  */
 abstract class Component {
 
@@ -325,7 +329,7 @@ abstract class Component {
 	 *
 	 * @param bool $echo Flag to echo output or return it.
 	 *
-	 * @return string
+	 * @return string|null
 	 */
 	public function render( $echo = false ) { // phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.echoFound
 		// Setup the component.
@@ -353,6 +357,8 @@ abstract class Component {
 			return $return;
 		}
 		echo $return; // phpcs:ignore WordPress.Security.EscapeOutput
+
+		return null;
 	}
 
 	/**

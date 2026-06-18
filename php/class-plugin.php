@@ -212,7 +212,7 @@ final class Plugin {
 			 * @hook  cloudinary_connected
 			 * @since 3.0.0
 			 *
-			 * @param $plugin {Plugin} The core plugin object.
+			 * @param Plugin $plugin The core plugin object.
 			 */
 			do_action( 'cloudinary_connected', $this );
 		}
@@ -222,7 +222,7 @@ final class Plugin {
 		 * @hook  cloudinary_init_settings
 		 * @since 2.7.5
 		 *
-		 * @param $plugin {Plugin} The core plugin object.
+		 * @param Plugin $plugin The core plugin object.
 		 */
 		do_action( 'cloudinary_init_settings', $this );
 
@@ -464,7 +464,7 @@ final class Plugin {
 		 * @hook  cloudinary_ready
 		 * @since 3.0.0
 		 *
-		 * @param $plugin {Plugin} The core plugin object.
+		 * @param Plugin $plugin The core plugin object.
 		 */
 		do_action( 'cloudinary_ready', $this );
 	}

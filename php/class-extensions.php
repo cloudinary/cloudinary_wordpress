@@ -174,8 +174,8 @@ class Extensions extends Settings_Component implements Setup {
 		 * @hook  cloudinary_register_extensions
 		 * @since 3.0.0
 		 *
-		 * @param $extensions {array) The list of extensions to register.
-		 * @param $plugin     {Plugin} The core plugin object.
+		 * @param array  $extensions The list of extensions to register.
+		 * @param Plugin $plugin     The core plugin object.
 		 */
 		$extensions = apply_filters( 'cloudinary_register_extensions', $extensions, $this->plugin );
 		foreach ( $extensions as $slug => $extension ) {

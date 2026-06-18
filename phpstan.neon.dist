@@ -1,0 +1,30 @@
+includes:
+	- vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+	# The HookCallbackRule "action callback should not return anything" check is
+	# too strict for dual-purpose methods that are both called directly (return
+	# value used) and registered on a real action (return value harmlessly
+	# discarded). Genuine filter-vs-action bugs are caught during review. The
+	# rule's argument-count checks (arguments.count) remain active.
+	ignoreErrors:
+		-
+			identifier: return.void
+			message: '#^Action callback returns .+ but should not return anything\.$#'
+	level: 0
+	paths:
+		- php
+		- cloudinary.php
+	scanFiles:
+		- instance.php
+		- vendor/php-stubs/wp-cli-stubs/wp-cli-stubs.php
+		- vendor/php-stubs/wp-cli-stubs/wp-cli-commands-stubs.php
+		- vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
+		- tests/phpstan/stubs/wpml.php
+		- tests/phpstan/stubs/wpcom-vip.php
+	excludePaths:
+		- build/*
+		- node_modules/*
+		- vendor/*
+		# Extends WPCOM_VIP_CLI_Command, only available on the WordPress VIP platform.
+		- php/class-cli-vip.php

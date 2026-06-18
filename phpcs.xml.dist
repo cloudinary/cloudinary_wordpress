@@ -58,5 +58,7 @@
 	<exclude-pattern>/js/</exclude-pattern>
 	<exclude-pattern>/node_modules/</exclude-pattern>
 	<exclude-pattern>/vendor/</exclude-pattern>
+	<!-- Static analysis stub files intentionally mirror third-party APIs. -->
+	<exclude-pattern>/tests/phpstan/stubs/</exclude-pattern>
 	<exclude-pattern>*.js</exclude-pattern>
 </ruleset>
