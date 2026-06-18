@@ -67,6 +67,13 @@ class Elementor extends Integrations {
 			return;
 		}
 
+		// Bail if the plugin isn't connected; Media::setup() hasn't run, so its
+		// dependencies (e.g. sync) are not initialized and calling cloudinary_url()
+		// would fatal.
+		if ( ! $this->plugin->settings->get_param( 'connected' ) ) {
+			return;
+		}
+
 		$settings = $element->get_settings_for_display();
 		$media    = $this->plugin->get_component( 'media' );
 		$delivery = $this->plugin->get_component( 'delivery' );

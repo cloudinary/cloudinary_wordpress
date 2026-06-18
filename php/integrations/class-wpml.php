@@ -102,6 +102,11 @@ class WPML extends Integrations {
 
 		$original_attachment_id = $attachment_id;
 		$data                   = get_transient( self::TRANSIENT_KEY );
+		// Cast to array to avoid string-offset fatals on PHP 8.x when the
+		// transient holds an unexpected scalar.
+		if ( ! is_array( $data ) ) {
+			$data = array();
+		}
 
 		// This is a duplicated attachment. Let's restore the metadata via WPML.
 		if ( ! empty( $data[ $original_attachment_id ] ) ) {
