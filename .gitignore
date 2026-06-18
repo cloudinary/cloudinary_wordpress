@@ -58,3 +58,6 @@ package/dist
 
 # AI generated files
 .claude/
+
+# PHPStan result cache
+/.phpstan-cache/

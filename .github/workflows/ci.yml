@@ -66,6 +66,15 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-interaction --no-progress
 
+      - name: Cache PHPStan result cache
+        uses: actions/cache@v4
+        with:
+          path: .phpstan-cache
+          key: ${{ runner.os }}-phpstan-${{ hashFiles('**/composer.lock', 'phpstan.neon.dist') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-phpstan-${{ hashFiles('**/composer.lock', 'phpstan.neon.dist') }}-
+            ${{ runner.os }}-phpstan-
+
       - name: Run PHPStan
         run: composer phpstan
 

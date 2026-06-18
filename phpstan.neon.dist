@@ -2,6 +2,9 @@ includes:
 	- vendor/szepeviktor/phpstan-wordpress/extension.neon
 
 parameters:
+	# Persist the result cache in a known project-relative path so CI can cache
+	# it between runs for faster analysis.
+	tmpDir: .phpstan-cache
 	# The HookCallbackRule "action callback should not return anything" check is
 	# too strict for dual-purpose methods that are both called directly (return
 	# value used) and registered on a real action (return value harmlessly
