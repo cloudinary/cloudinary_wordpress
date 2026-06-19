@@ -19,6 +19,7 @@ on:
 jobs:
   lint_and_test:
     uses: ./.github/workflows/ci.yml
+    secrets: inherit
 
   deploy_to_wp_repository:
     needs: lint_and_test
