@@ -36,6 +36,9 @@ js/*.map
 tests/data/
 tests/includes/
 coverage/html/
+/artifacts/
+/playwright-report/
+/test-results/
 
 # ENV files
 .env

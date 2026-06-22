@@ -1,29 +1,36 @@
-const toggler = document.querySelector( '.cloudinary-collapsible__toggle' );
+const togglers = document.querySelectorAll( '.cloudinary-collapsible__toggle' );
 
-if ( toggler ) {
+togglers.forEach( function ( toggler ) {
 	toggler.addEventListener( 'click', function () {
-		const content = document.querySelector(
-			'.cloudinary-collapsible__content'
-		);
-		const isHidden =
-			window
-				.getComputedStyle( content, null )
-				.getPropertyValue( 'display' ) === 'none';
-		const arrowIcon = document.querySelector(
-			'.cloudinary-collapsible__toggle button i'
-		);
+		const targetId = toggler.dataset.collapsibleTarget;
+		if ( ! targetId ) {
+			return;
+		}
 
-		content.style.display = isHidden ? 'block' : 'none';
+		const content = document.getElementById( targetId );
+		if ( ! content ) {
+			return;
+		}
 
-		const arrowDown = 'dashicons-arrow-down-alt2';
-		const arrowUp = 'dashicons-arrow-up-alt2';
+		// Toggle the content visibility.
+		content.hidden = ! content.hidden;
 
-		if ( arrowIcon.classList.contains( arrowDown ) ) {
-			arrowIcon.classList.remove( arrowDown );
-			arrowIcon.classList.add( arrowUp );
-		} else {
-			arrowIcon.classList.remove( arrowUp );
-			arrowIcon.classList.add( arrowDown );
+		const button = toggler.querySelector( 'button' );
+		const arrowIcon = toggler.querySelector( 'button i' );
+
+		if ( button ) {
+			button.setAttribute( 'aria-expanded', String( ! content.hidden ) );
+		}
+
+		if ( arrowIcon ) {
+			arrowIcon.classList.toggle(
+				'dashicons-arrow-down-alt2',
+				content.hidden
+			);
+			arrowIcon.classList.toggle(
+				'dashicons-arrow-up-alt2',
+				! content.hidden
+			);
 		}
 	} );
-}
+} );
