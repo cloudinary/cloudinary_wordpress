@@ -15,6 +15,7 @@ import Wizard from './components/wizard';
 import Storage from "./components/storage";
 import Extensions from "./components/extensions";
 import Tabs from "./components/tabs";
+import Analytics from "./components/analytics";
 
 import '../css/main.scss';
 
@@ -62,5 +63,6 @@ export const cloudinary = {
 	Wizard,
 	Storage,
 	Extensions,
-	Tabs
+	Tabs,
+	Analytics
 };
