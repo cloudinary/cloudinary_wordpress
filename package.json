@@ -15,7 +15,7 @@
   },
   "scripts": {
     "build": "wp-scripts build",
-    "deploy": "npm run build && grunt deploy && npm run release",
+    "deploy": "npm run build && grunt deploy",
     "deploy-assets": "grunt deploy-assets",
     "dev": "wp-scripts start",
     "env:start": "wp-env start",
