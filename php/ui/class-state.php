@@ -61,8 +61,8 @@ class State {
 	 *
 	 * @param Plugin $plugin Instance of the plugin.
 	 */
-	public function __construct( Plugin $plugin ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
-		$this->plugin  = get_plugin_instance();
+	public function __construct( Plugin $plugin ) {
+		$this->plugin  = $plugin;
 		$this->user_id = get_current_user_id();
 
 		if ( ! empty( $this->user_id ) ) {
