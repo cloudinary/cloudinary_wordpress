@@ -64,6 +64,143 @@ class Analytics {
 		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_script_data' ) );
 		add_action( 'admin_init', array( $this, 'maybe_send_smoke_event' ) );
+		add_action( 'admin_init', array( $this, 'maybe_send_pending_activation' ) );
+		add_action( 'cloudinary_uploaded_asset', array( $this, 'maybe_first_api_consumption' ), 10, 2 );
+	}
+
+	/**
+	 * Option/transient keys used by the activation funnel.
+	 */
+	const PENDING_ACTIVATION = '_cloudinary_pending_activation';
+	const LAST_ACTIVE        = '_cloudinary_last_active';
+	const FIRST_API_FLAG     = '_cloudinary_first_api_emitted';
+
+	/**
+	 * Records the activation type on plugin activation (funnel step 1).
+	 *
+	 * Runs from the activation hook (`Utils::install`). Detects fresh install /
+	 * reactivation / upgrade / downgrade from the persisted install marker
+	 * (`db_version`) vs. the current version, then stashes a transient that the
+	 * next admin load turns into a `plugin_activated` event — by which point the
+	 * full mandatory params and `session_id` are available.
+	 *
+	 * @return void
+	 */
+	public static function stash_activation() {
+		try {
+			$current    = get_plugin_instance()->version;
+			$db_version = get_option( Sync::META_KEYS['db_version'] );
+
+			if ( empty( $db_version ) ) {
+				$type     = 'fresh_install';
+				$previous = null;
+			} elseif ( version_compare( $db_version, $current, '<' ) ) {
+				$type     = 'upgrade';
+				$previous = $db_version;
+			} elseif ( version_compare( $db_version, $current, '>' ) ) {
+				$type     = 'downgrade';
+				$previous = $db_version;
+			} else {
+				$type     = 'reactivation';
+				$previous = $db_version;
+			}
+
+			$days_since_last_active = null;
+			if ( 'reactivation' === $type ) {
+				$last = (int) get_option( self::LAST_ACTIVE );
+				if ( $last > 0 ) {
+					$days_since_last_active = (int) floor( ( time() - $last ) / DAY_IN_SECONDS );
+				}
+			}
+
+			set_transient(
+				self::PENDING_ACTIVATION,
+				array(
+					'activation_type'        => $type,
+					'previous_version'       => $previous,
+					'new_version'            => $current,
+					'days_since_last_active' => $days_since_last_active,
+				),
+				HOUR_IN_SECONDS
+			);
+		} catch ( \Throwable $e ) {
+			// Fail silent: activation must never break.
+			return;
+		}
+	}
+
+	/**
+	 * Persists a last-active timestamp on deactivation.
+	 *
+	 * Feeds `days_since_last_active` on the next reactivation. Runs from the
+	 * deactivation hook.
+	 *
+	 * @return void
+	 */
+	public static function record_deactivation() {
+		update_option( self::LAST_ACTIVE, time(), false );
+	}
+
+	/**
+	 * Emits the stashed `plugin_activated` event on the next admin load.
+	 *
+	 * @return void
+	 */
+	public function maybe_send_pending_activation() {
+		$pending = get_transient( self::PENDING_ACTIVATION );
+		if ( empty( $pending ) || ! is_array( $pending ) ) {
+			return;
+		}
+		delete_transient( self::PENDING_ACTIVATION );
+
+		$params = array(
+			'activation_type' => $pending['activation_type'],
+			'new_version'     => $pending['new_version'],
+		);
+		if ( ! empty( $pending['previous_version'] ) ) {
+			$params['previous_version'] = $pending['previous_version'];
+		}
+		if ( isset( $pending['days_since_last_active'] ) && null !== $pending['days_since_last_active'] ) {
+			$params['days_since_last_active'] = $pending['days_since_last_active'];
+		}
+
+		$this->track( 'plugin_activated', 'activation_funnel', 1, $params );
+	}
+
+	/**
+	 * Emits the one-time `first_api_consumption` activation marker (funnel step 9).
+	 *
+	 * Hooked to `cloudinary_uploaded_asset`, which fires after an asset upload.
+	 * Emitted once on the first successful upload, then suppressed.
+	 *
+	 * @param int             $attachment_id The attachment ID.
+	 * @param array|\WP_Error $result       The upload result.
+	 *
+	 * @return void
+	 */
+	public function maybe_first_api_consumption( $attachment_id, $result ) {
+		if ( empty( $result ) || is_wp_error( $result ) ) {
+			return;
+		}
+		if ( get_option( self::FIRST_API_FLAG ) ) {
+			return;
+		}
+		update_option( self::FIRST_API_FLAG, true, false );
+
+		$asset_type = '';
+		if ( is_array( $result ) && ! empty( $result['resource_type'] ) ) {
+			$asset_type = $result['resource_type'];
+		}
+
+		$this->track(
+			'first_api_consumption',
+			'activation_funnel',
+			9,
+			array(
+				'api_endpoint' => 'upload',
+				'asset_type'   => $asset_type,
+			)
+		);
 	}
 
 	/**

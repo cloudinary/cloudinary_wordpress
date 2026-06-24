@@ -201,6 +201,18 @@ class Push_Sync {
 		// If a single specified ID, push and return response.
 		$ids    = array_map( 'intval', (array) $attachments );
 		$thread = $this->plugin->settings->get_param( 'current_sync_thread' );
+
+		// Activation funnel: first sync started (emitted once).
+		$analytics = $this->plugin->get_component( 'analytics' );
+		if ( $analytics && ! get_option( '_cloudinary_first_sync_emitted' ) ) {
+			update_option( '_cloudinary_first_sync_emitted', true, false );
+			$analytics->track(
+				'first_sync_started',
+				'activation_funnel',
+				8,
+				array( 'asset_count' => count( $ids ) )
+			);
+		}
 		// Handle based on Sync Type.
 		foreach ( $ids as $attachment_id ) {
 

@@ -12,6 +12,9 @@ const Analytics = {
 	config: null,
 
 	init() {
+		if ( this.config ) {
+			return;
+		}
 		if (
 			typeof cldData === 'undefined' ||
 			! cldData.analytics ||
@@ -38,6 +41,10 @@ const Analytics = {
 		category = 'activation_funnel',
 		funnelStep = null
 	) {
+		// Lazy-init so call-sites work regardless of listener order.
+		if ( ! this.config ) {
+			this.init();
+		}
 		if ( ! this.config || ! this.config.enabled || ! eventName ) {
 			return;
 		}

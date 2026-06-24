@@ -153,6 +153,21 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		$url    = $request->get_param( 'cloudinary_url' );
 		$result = $this->test_connection( $url );
 
+		$analytics = $this->plugin->get_component( 'analytics' );
+		if ( $analytics ) {
+			$success = 'connection_success' === $result['type'];
+			$analytics->track(
+				'connection_test_result',
+				'activation_funnel',
+				3,
+				array(
+					'status'         => $success ? 'success' : 'error',
+					'error_type'     => $success ? '' : $result['type'],
+					'attempt_number' => (int) $request->get_param( 'attempt_number' ),
+				)
+			);
+		}
+
 		return rest_ensure_response( $result );
 	}
 
@@ -220,6 +235,21 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 				array(
 					'timeout'  => 0.1,
 					'blocking' => false,
+				)
+			);
+		}
+
+		$analytics = $this->plugin->get_component( 'analytics' );
+		if ( $analytics ) {
+			$analytics->track(
+				'wizard_setup_submitted',
+				'activation_funnel',
+				5,
+				array(
+					'media_library' => 'on' === $media,
+					'non_media'     => 'on' === $nonmedia,
+					'advanced'      => 'on' === $advanced,
+					'status'        => 'success',
 				)
 			);
 		}
