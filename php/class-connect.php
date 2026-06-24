@@ -447,7 +447,13 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	public function history( $days = 1 ) {
 		$return  = array();
 		$history = get_option( self::META_KEYS['history'], array() );
-		$plan    = ! empty( $this->usage['plan'] ) ? $this->usage['plan'] : $this->credentials['cloud_name'];
+		// Stored option can be a non-array if it was corrupted by a previous
+		// failed write. Reset to empty array to avoid string-offset fatals.
+		if ( ! is_array( $history ) ) {
+			$history = array();
+		}
+		$plan_source = is_array( $this->usage ) && ! empty( $this->usage['plan'] ) ? $this->usage['plan'] : '';
+		$plan        = '' !== $plan_source ? $plan_source : ( isset( $this->credentials['cloud_name'] ) ? $this->credentials['cloud_name'] : '' );
 		for ( $i = 1; $i <= $days; $i++ ) {
 			$date = date_i18n( 'd-m-Y', strtotime( '- ' . $i . ' days' ) );
 			if ( ! isset( $history[ $plan ][ $date ] ) || is_wp_error( $history[ $plan ][ $date ] ) ) {
@@ -720,9 +726,14 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			$last_usage = $this->settings->get_setting( 'last_usage' );
 			// Get users plan.
 			$stats = $this->api->usage();
-			if ( ! is_wp_error( $stats ) && ! empty( $stats['media_limits'] ) ) {
-				$stats['max_image_size'] = $stats['media_limits']['image_max_size_bytes'];
-				$stats['max_video_size'] = $stats['media_limits']['video_max_size_bytes'];
+			if (
+				! is_wp_error( $stats )
+				&& is_array( $stats )
+				&& isset( $stats['media_limits'] )
+				&& is_array( $stats['media_limits'] )
+			) {
+				$stats['max_image_size'] = isset( $stats['media_limits']['image_max_size_bytes'] ) ? $stats['media_limits']['image_max_size_bytes'] : 0;
+				$stats['max_video_size'] = isset( $stats['media_limits']['video_max_size_bytes'] ) ? $stats['media_limits']['video_max_size_bytes'] : 0;
 				$last_usage->save_value( $stats );// Save the last successful call to prevgent crashing.
 			} else {
 				// Handle error by logging and fetching the last success.

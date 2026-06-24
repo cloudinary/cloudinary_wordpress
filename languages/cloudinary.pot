@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cloudinary STABLETAG\n"
 "Report-Msgid-Bugs-To: https://github.com/cloudinary/cloudinary_wordpress\n"
-"POT-Creation-Date: 2026-04-27 07:42:18+00:00\n"
+"POT-Creation-Date: 2026-06-22 09:16:52+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -253,11 +253,11 @@ msgstr ""
 msgid "CNAME is not a valid domain name."
 msgstr ""
 
-#: php/class-connect.php:808
+#: php/class-connect.php:819
 msgid "upgrade your account"
 msgstr ""
 
-#: php/class-connect.php:823
+#: php/class-connect.php:834
 #. translators: %1$s quota size, %2$s amount in percent, %3$s link URL, %4$s
 #. link anchor text.
 msgid ""
@@ -269,11 +269,11 @@ msgid ""
 "full functionality."
 msgstr ""
 
-#: php/class-connect.php:1018
+#: php/class-connect.php:1029
 msgid "Cloudinary was able to connect to the WordPress REST API."
 msgstr ""
 
-#: php/class-connect.php:1035 php/class-connect.php:1045
+#: php/class-connect.php:1046 php/class-connect.php:1056
 #. translators: 1: The WordPress error message. 2: The WordPress error code.
 msgid "The Cloudinary REST API endpoints are not available. Error: %1$s (%2$s)"
 msgstr ""
@@ -506,14 +506,14 @@ msgstr ""
 msgid "Unsynced"
 msgstr ""
 
-#: php/class-media.php:459
+#: php/class-media.php:470
 #. translators: variable is file size.
 msgid ""
 "File size exceeds the maximum of %s. This media asset will be served from "
 "WordPress."
 msgstr ""
 
-#: php/class-media.php:2070
+#: php/class-media.php:2081
 msgid "Import"
 msgstr ""
 
@@ -521,49 +521,49 @@ msgstr ""
 msgid "Cloudinary"
 msgstr ""
 
-#: php/class-media.php:2425
+#: php/class-media.php:2436
 msgid "The delivery for this asset is disabled."
 msgstr ""
 
-#: php/class-media.php:2429
+#: php/class-media.php:2440
 msgid "Not syncable. This is an external media."
 msgstr ""
 
-#: php/class-media.php:2433
+#: php/class-media.php:2444
 msgid "This media is Fetch type."
 msgstr ""
 
-#: php/class-media.php:2437
+#: php/class-media.php:2448
 msgid "This media is Sprite type."
 msgstr ""
 
-#: php/class-media.php:2447
+#: php/class-media.php:2458
 msgid "Not Synced"
 msgstr ""
 
-#: php/class-media.php:2452
+#: php/class-media.php:2463
 msgid "Synced"
 msgstr ""
 
-#: php/class-media.php:3111
+#: php/class-media.php:3122
 msgid "No Cloudinary filters"
 msgstr ""
 
-#: php/class-media.php:3211
+#: php/class-media.php:3222
 msgid "Media Settings"
 msgstr ""
 
-#: php/class-media.php:3214
+#: php/class-media.php:3225
 msgid "Media Display"
 msgstr ""
 
-#: php/class-media.php:3218 php/ui/component/class-plan-details.php:119
+#: php/class-media.php:3229 php/ui/component/class-plan-details.php:129
 #: php/ui/component/class-plan-status.php:128
-#: ui-definitions/settings-pages.php:568 ui-definitions/settings-sidebar.php:44
+#: ui-definitions/settings-pages.php:568 ui-definitions/settings-sidebar.php:47
 msgid "Transformations"
 msgstr ""
 
-#: php/class-media.php:3219
+#: php/class-media.php:3230
 msgid ""
 "Cloudinary allows you to easily transform your images on-the-fly to any "
 "required format, style and dimension, and also optimizes images for minimal "
@@ -572,7 +572,7 @@ msgid ""
 "transformation and delivery URLs."
 msgstr ""
 
-#: php/class-media.php:3224 ui-definitions/settings-image.php:175
+#: php/class-media.php:3235 ui-definitions/settings-image.php:175
 #: ui-definitions/settings-pages.php:594 ui-definitions/settings-video.php:260
 msgid "See examples"
 msgstr ""
@@ -736,9 +736,9 @@ msgid ""
 "to. Leave blank to use the root of your Cloudinary library."
 msgstr ""
 
-#: php/class-sync.php:1286 php/ui/component/class-plan-details.php:118
+#: php/class-sync.php:1286 php/ui/component/class-plan-details.php:128
 #: php/ui/component/class-plan-status.php:94
-#: ui-definitions/settings-sidebar.php:38
+#: ui-definitions/settings-sidebar.php:41
 msgid "Storage"
 msgstr ""
 
@@ -1130,7 +1130,7 @@ msgstr ""
 msgid "Optimizing assets."
 msgstr ""
 
-#: php/sync/class-sync-queue.php:409 php/ui/component/class-plan-details.php:83
+#: php/sync/class-sync-queue.php:409 php/ui/component/class-plan-details.php:93
 msgid "Optimized assets"
 msgstr ""
 
@@ -1186,11 +1186,11 @@ msgstr ""
 msgid "Starting thread %s."
 msgstr ""
 
-#: php/sync/class-sync-queue.php:907
+#: php/sync/class-sync-queue.php:909
 msgid "Resuming Maybe"
 msgstr ""
 
-#: php/sync/class-sync-queue.php:916
+#: php/sync/class-sync-queue.php:918
 #. translators: variable is thread name.
 msgid "Thread %s Stopped."
 msgstr ""
@@ -1291,9 +1291,16 @@ msgstr ""
 msgid "60 monthly credits"
 msgstr ""
 
-#: php/templates/taxonomy-term-transformation-fields.php:28
+#: php/templates/taxonomy-term-transformation-fields.php:25
 #. translators: The taxonomy label and the context.
 msgid "Cloudinary %1$s %2$s Transformations"
+msgstr ""
+
+#: php/templates/taxonomy-term-transformation-fields.php:30
+#: php/templates/taxonomy-transformation-fields.php:46
+#. translators: The transformation context (e.g. Image, Video).
+#. translators: The taxonomy singular label (e.g. Category, Tag).
+msgid "Toggle %s transformations"
 msgstr ""
 
 #: php/templates/taxonomy-transformation-fields.php:41
@@ -1301,7 +1308,7 @@ msgstr ""
 msgid "Cloudinary %s transformations"
 msgstr ""
 
-#: php/templates/taxonomy-transformation-fields.php:51
+#: php/templates/taxonomy-transformation-fields.php:60
 #. translators: %1$s is the taxonomy label, %2$s is the image settings link,
 #. %4$s is the video settings link. The %3$s is the closing tags for the links.
 msgid ""
@@ -1500,25 +1507,25 @@ msgstr ""
 msgid "%s unoptimized"
 msgstr ""
 
-#: php/ui/component/class-plan-details.php:74
+#: php/ui/component/class-plan-details.php:84
 msgid "Plan"
 msgstr ""
 
-#: php/ui/component/class-plan-details.php:82
+#: php/ui/component/class-plan-details.php:92
 msgid "Total Requests"
 msgstr ""
 
-#: php/ui/component/class-plan-details.php:103
+#: php/ui/component/class-plan-details.php:113
 msgid "Plan Units"
 msgstr ""
 
-#: php/ui/component/class-plan-details.php:104
+#: php/ui/component/class-plan-details.php:114
 msgid "Remaining Units"
 msgstr ""
 
-#: php/ui/component/class-plan-details.php:120
+#: php/ui/component/class-plan-details.php:130
 #: php/ui/component/class-plan-status.php:161
-#: ui-definitions/settings-sidebar.php:49
+#: ui-definitions/settings-sidebar.php:52
 msgid "Bandwidth"
 msgstr ""
 
@@ -2369,15 +2376,15 @@ msgstr ""
 msgid "Account status"
 msgstr ""
 
-#: ui-definitions/settings-sidebar.php:56
+#: ui-definitions/settings-sidebar.php:59
 msgid "View my account status"
 msgstr ""
 
-#: ui-definitions/settings-sidebar.php:69
+#: ui-definitions/settings-sidebar.php:72
 msgid "Optimization level"
 msgstr ""
 
-#: ui-definitions/settings-sidebar.php:75
+#: ui-definitions/settings-sidebar.php:78
 #. translators: %s is the percentage optimized.
 msgid "%s Optimized"
 msgstr ""

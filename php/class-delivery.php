@@ -1582,7 +1582,10 @@ class Delivery implements Setup {
 
 			return null;
 		}
-		$raw_url                 = 'source' === $tag_element['tag'] && ! empty( $attributes['srcset'] ) ? $attributes['srcset'] : $attributes['src'];
+		$raw_url = 'source' === $tag_element['tag'] && ! empty( $attributes['srcset'] ) ? $attributes['srcset'] : ( $attributes['src'] ?? '' );
+		if ( '' === $raw_url ) {
+			return null;
+		}
 		$url                     = $this->maybe_unsize_url( Utils::clean_url( $this->sanitize_url( $raw_url ) ) );
 		$tag_element['base_url'] = $url;
 		// Track back the found URL.
@@ -1958,6 +1961,11 @@ class Delivery implements Setup {
 	 * @return string|null
 	 */
 	protected function sanitize_url( $url ) {
+
+		// Bail early on empty or non-string URLs.
+		if ( ! is_string( $url ) || '' === $url ) {
+			return null;
+		}
 
 		// Catch mixed URLs.
 		if ( 5 < strlen( $url ) && false !== strpos( $url, 'https://', 5 ) ) {

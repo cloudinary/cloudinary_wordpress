@@ -766,8 +766,10 @@ class Sync_Queue {
 			);
 			wp_cache_delete( $thread_option, 'options' );
 			$return = get_option( $thread_option );
-			if ( empty( $return ) ) {
-				// Set option to remove notoption and default fro  cache.
+			if ( empty( $return ) || ! is_array( $return ) ) {
+				// Reset to default when missing or corrupted (e.g. a string was
+				// previously stored). Without the is_array check, array_merge
+				// below would fatal on PHP 8.x.
 				$this->set_thread_queue( $thread, $default );
 				$return = $default;
 			}
