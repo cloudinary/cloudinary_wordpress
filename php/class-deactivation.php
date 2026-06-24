@@ -7,8 +7,6 @@
 
 namespace Cloudinary;
 
-use Cloudinary\Media\Global_Transformations;
-use Cloudinary\Sync\Storage;
 use WP_Error;
 use WP_HTTP_Response;
 use WP_REST_Request;
@@ -45,13 +43,6 @@ class Deactivation {
 	 * @var Settings
 	 */
 	protected $settings;
-
-	/**
-	 * Cleaning data key.
-	 *
-	 * @var string
-	 */
-	const CLEANING_KEY = 'cloudinary_cleaning_up';
 
 	/**
 	 * Initiate the plugin deactivation.
@@ -459,7 +450,7 @@ class Deactivation {
 			$actions['deactivate'] = str_replace( '<a ', '<a class="cld-deactivate-link" ', $actions['deactivate'] );
 		}
 
-		if ( get_option( self::CLEANING_KEY ) ) {
+		if ( get_option( Cleanup::CLEANING_KEY ) ) {
 			$actions['deactivate'] = __( 'Data clean up. The plugin will self deactivate once complete. ', 'cloudinary' );
 		}
 
@@ -470,182 +461,8 @@ class Deactivation {
 	 * Cleanup Cloudinary data.
 	 */
 	protected function cleanup() {
-		wp_schedule_single_event( time() + 5 * MINUTE_IN_SECONDS, 'cloudinary_cleanup_event' );
-		add_option( self::CLEANING_KEY, true, '', false );
-		$this->cleanup_user_data();
-		$this->cleanup_post_meta();
-		$this->cleanup_term_meta();
-		$this->cleanup_post_type();
-		$this->drop_tables();
-		$this->cleanup_options();
-		$this->cleanup_cron();
-		$this->cleanup_legacy_cron();
-
-		// If we got this far, let's remove the cron event.
+		add_option( Cleanup::CLEANING_KEY, true, '', false );
+		Cleanup::run( $this->plugin, $this->settings );
 		wp_clear_scheduled_hook( 'cloudinary_cleanup_event' );
-	}
-
-	/**
-	 * Cleanup Cloudinary's user data related.
-	 */
-	protected function cleanup_user_data() {
-		$user_meta_keys = array(
-			'_cld_ui_state',
-		);
-
-		foreach ( $user_meta_keys as $key ) {
-			// Inspired on https://developer.wordpress.org/reference/functions/delete_post_meta_by_key/.
-			delete_metadata( 'user', null, $key, '', true );
-		}
-	}
-
-	/**
-	 * Cleanup Cloudinary's post meta related.
-	 */
-	protected function cleanup_post_meta() {
-		$post_meta_keys = array_merge(
-			Sync::META_KEYS,
-			array(
-				Global_Transformations::META_FEATURED_IMAGE_KEY,
-				Global_Transformations::META_ORDER_KEY . '_terms',
-				Delivery::META_CACHE_KEY,
-			)
-		);
-
-		foreach ( $post_meta_keys as $key ) {
-			delete_post_meta_by_key( $key );
-		}
-	}
-
-	/**
-	 * Cleanup Cloudinary's term meta related.
-	 */
-	protected function cleanup_term_meta() {
-		$term_meta_keys = array(
-			'cloudinary_transformations_image_freeform',
-			'cloudinary_transformations_video_freeform',
-		);
-
-		foreach ( $term_meta_keys as $key ) {
-			// Inspired on https://developer.wordpress.org/reference/functions/delete_post_meta_by_key/.
-			delete_metadata( 'term', null, $key, '', true );
-		}
-	}
-
-	/**
-	 * Drop Cloudinary's tables.
-	 */
-	protected function drop_tables() {
-		global $wpdb;
-
-		$tables = array(
-			Utils::get_relationship_table(),
-		);
-
-		foreach ( $tables as $table ) {
-			$wpdb->query( "DROP TABLE IF EXISTS {$table};" ); // phpcs:ignore WordPress.DB
-		}
-	}
-
-	/**
-	 * Cleanup Cloudinary's post types related.
-	 */
-	protected function cleanup_post_type() {
-		global $wpdb;
-
-		$post_types = array(
-			Assets::POST_TYPE_SLUG,
-		);
-
-		foreach ( $post_types as $type ) {
-			$wpdb->delete( //phpcs:ignore WordPress.DB.DirectDatabaseQuery
-				$wpdb->posts,
-				array( 'post_type' => $type ),
-				array( '%s' )
-			);
-		}
-	}
-
-	/**
-	 * Cleanup Cloudinary's options related.
-	 */
-	protected function cleanup_options() {
-		$all = $this->settings->get_param( 'settings' );
-		foreach ( $all as $slug => $setting ) {
-			$this->settings->delete( $slug );
-		}
-
-		$queue       = $this->plugin->get_component( 'sync' )->managers['queue'];
-		$all_threads = $queue->get_threads( 'all' );
-		foreach ( $all_threads as $threads ) {
-			foreach ( $threads as $thread ) {
-				$queue->reset_thread_queue( $thread );
-				delete_post_meta_by_key( $thread );
-			}
-		}
-
-		$option_keys = array_merge(
-			$this->settings->get_storage_keys(),
-			array(
-				'cloudinary_setup',
-				'cloudinary_main_cache_page',
-				'_cld_disable_http_upload',
-				Report::REPORT_KEY,
-				Media::GLOBAL_VIDEO_TRANSFORMATIONS,
-				self::CLEANING_KEY,
-			)
-		);
-
-		foreach ( $option_keys as $key ) {
-			delete_option( $key );
-			delete_transient( $key );
-		}
-	}
-
-	/**
-	 * Remove all cron-related tasks.
-	 *
-	 * @return void
-	 */
-	protected function cleanup_cron() {
-		// Get the Cron instance.
-		$cron_instance = Cron::get_instance();
-		$schedule      = $cron_instance->get_schedule();
-
-		// Unregister all registered schedules.
-		if ( ! empty( $schedule ) ) {
-			foreach ( array_keys( $schedule ) as $schedule_name ) {
-				$cron_instance->unregister_schedule( $schedule_name );
-			}
-		}
-
-		// Remove any lock files or objects used by the Locker instance.
-		$cron_instance->cleanup_locker();
-
-		// Delete the cron schedule option saved in database.
-		delete_option( Cron::CRON_META_KEY );
-	}
-
-	/**
-	 * Cleanup legacy cron jobs.
-	 *
-	 * @return void
-	 */
-	protected function cleanup_legacy_cron() {
-		wp_clear_scheduled_hook( 'cloudinary_status' );
-
-		$jobs = array(
-			'cloudinary_rest_api_connectivity',
-			'cloudinary_resume_queue',
-			'cloudinary_resume_upgrade',
-			'cloudinary_sync_items',
-		);
-
-		foreach ( $jobs as $job ) {
-			$time = wp_next_scheduled( $job );
-			if ( false !== $time ) {
-				wp_clear_scheduled_hook( $job );
-			}
-		}
 	}
 }
