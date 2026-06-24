@@ -139,6 +139,7 @@ final class Plugin {
 		$this->components['wpml']                   = new WPML( $this );
 		$this->components['elementor']              = new Elementor( $this );
 		$this->components['special_offer']          = new Special_Offer( $this );
+		$this->components['analytics']              = new Analytics( $this );
 	}
 
 	/**
@@ -532,6 +533,13 @@ final class Plugin {
 		 */
 		if ( ! defined( 'CLOUDINARY_ENDPOINTS_DEACTIVATION' ) ) {
 			define( 'CLOUDINARY_ENDPOINTS_DEACTIVATION', 'https://analytics-api.cloudinary.com/wp_deactivate_reason' );
+		}
+
+		/**
+		 * The Cloudinary custom-events collector endpoint for plugin analytics.
+		 */
+		if ( ! defined( 'CLOUDINARY_ENDPOINTS_ANALYTICS' ) ) {
+			define( 'CLOUDINARY_ENDPOINTS_ANALYTICS', 'https://analytics-api.cloudinary.com/wp_plugin_event' );
 		}
 
 		/**
