@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Filter: cloudinary_upload_eager_formats - Cloudinary Docs</title>
+	<title>Filter: cloudinary_elementor_replace_background_images_in_css - Cloudinary Docs</title>
 
 	<script src="scripts/prettify/prettify.js"></script>
 	<script src="scripts/prettify/lang-css.js"></script>
@@ -22,7 +22,7 @@
 <div id="main">
 
 	
-	<h1 class="page-title">Filter: cloudinary_upload_eager_formats</h1>
+	<h1 class="page-title">Filter: cloudinary_elementor_replace_background_images_in_css</h1>
 	
 
 	
@@ -44,14 +44,14 @@
 
     
 
-    <h4 class="name" id="cloudinary_upload_eager_formats">apply_filters( 'cloudinary_upload_eager_formats', <span class="signature">$formats, $type )</span><span class="type-signature"> &rarr; {array}</span></h4>
+    <h4 class="name" id="cloudinary_elementor_replace_background_images_in_css">apply_filters( 'cloudinary_elementor_replace_background_images_in_css', <span class="signature">$replace, $post_css, $element )</span><span class="type-signature"> &rarr; {bool}</span></h4>
 
     
 
 
 
 <div class="description">
-    Filter the upload eager formats.
+    Filter whether Cloudinary should replace background image URLs in Elementor's generated CSS.
 </div>
 
 
@@ -85,13 +85,13 @@
 
         <tr>
             
-                <td class="name"><code>$formats</code></td>
+                <td class="name"><code>$replace</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">array</span>
+<span class="param-type">bool</span>
 
 
             
@@ -101,20 +101,20 @@
 
             
 
-            <td class="description last">The default formats.</td>
+            <td class="description last">Whether to replace background images. Default true.</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>$type</code></td>
+                <td class="name"><code>$post_css</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">string</span>
+<span class="param-type">Post</span>
 
 
             
@@ -124,7 +124,30 @@
 
             
 
-            <td class="description last">The asset type.</td>
+            <td class="description last">The post CSS object.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>$element</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Element_Base</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The Elementor element being processed.</td>
         </tr>
 
     
@@ -142,7 +165,7 @@
 
     
     <dt class="tag-since">Since:</dt>
-    <dd class="tag-since"><ul class="dummy"><li>3.1.6</li></ul></dd>
+    <dd class="tag-since"><ul class="dummy"><li>3.3.4</li></ul></dd>
     
 
     
@@ -163,12 +186,17 @@
 
     
 
+    
+    <dt class="tag-default">Default Value:</dt>
+    <dd class="tag-default"><ul class="dummy">
+            <li>{true}</li>
+        </ul></dd>
     
 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="php_connect_class-api.php.html">php/connect/class-api.php</a>, <a href="php_connect_class-api.php.html#line291">line 291</a>
+        <a href="php_integrations_class-elementor.php.html">php/integrations/class-elementor.php</a>, <a href="php_integrations_class-elementor.php.html#line77">line 77</a>
     </li></ul></dd>
     
 
@@ -202,7 +230,7 @@
     </dt>
     <dd>
         
-<span class="param-type">array</span>
+<span class="param-type">bool</span>
 
 
     </dd>
