@@ -22,6 +22,7 @@ use function Cloudinary\get_plugin_instance;
  * @property string|null $text_overlay
  * @property string|null $image_overlay
  * @property string|null $sized_url
+ * @property string|null $url_hash
  * @property string|null $media_context
  */
 class Relationship {

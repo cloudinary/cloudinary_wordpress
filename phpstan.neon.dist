@@ -14,7 +14,7 @@ parameters:
 		-
 			identifier: return.void
 			message: '#^Action callback returns .+ but should not return anything\.$#'
-	level: 0
+	level: 1
 	paths:
 		- php
 		- cloudinary.php
@@ -25,9 +25,13 @@ parameters:
 		- vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
 		- tests/phpstan/stubs/wpml.php
 		- tests/phpstan/stubs/wpcom-vip.php
+		- tests/phpstan/stubs/constants.php
 	excludePaths:
 		- build/*
 		- node_modules/*
 		- vendor/*
 		# Extends WPCOM_VIP_CLI_Command, only available on the WordPress VIP platform.
 		- php/class-cli-vip.php
+		# View templates are included into a class scope (so $this is bound at
+		# runtime), which PHPStan cannot model when analysing them standalone.
+		- php/templates/*

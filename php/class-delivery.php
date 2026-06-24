@@ -1744,7 +1744,7 @@ class Delivery implements Setup {
 			$dirname = trim( substr( $path, strlen( $base ), 8 ), DIRECTORY_SEPARATOR );
 			if ( empty( $dirname ) || preg_match( '/\d{4}\/\d{2}/', $dirname ) ) {
 				$is_local = true;
-			} elseif ( ! empty( $dirname ) ) {
+			} else {
 				$is_local = false;
 			}
 		}
