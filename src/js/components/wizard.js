@@ -28,6 +28,7 @@ const Wizard = {
 		error: document.getElementById( 'connection-error' ),
 		success: document.getElementById( 'connection-success' ),
 		working: document.getElementById( 'connection-working' ),
+		formatHint: document.getElementById( 'connection-format-hint' ),
 	},
 	debounceConnect: null,
 	updateConnection: document.getElementById( 'update-connection' ),
@@ -93,13 +94,13 @@ const Wizard = {
 		} );
 		connectionInput.addEventListener( 'input', ( ev ) => {
 			this.lockNext();
-			const value = connectionInput.value.replace(
-				'CLOUDINARY_URL=',
-				''
-			);
+			const value = connectionInput.value
+				.replace( /^CLOUDINARY_URL=/i, '' )
+				.trim();
 			this.connection.error.classList.remove( 'active' );
 			this.connection.success.classList.remove( 'active' );
 			this.connection.working.classList.remove( 'active' );
+			this.connection.formatHint.classList.add( 'hidden' );
 			if ( value.length ) {
 				this.testing = value;
 				if ( this.debounceConnect ) {
@@ -258,10 +259,12 @@ const Wizard = {
 	showError() {
 		this.connection.error.classList.add( 'active' );
 		this.connection.success.classList.remove( 'active' );
+		this.connection.formatHint.classList.remove( 'hidden' );
 	},
 	showSuccess() {
 		this.connection.error.classList.remove( 'active' );
 		this.connection.success.classList.add( 'active' );
+		this.connection.formatHint.classList.add( 'hidden' );
 	},
 	show( item ) {
 		item.classList.remove( 'hidden' );

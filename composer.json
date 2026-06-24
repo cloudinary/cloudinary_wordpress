@@ -11,7 +11,8 @@
     "phpcompatibility/phpcompatibility-wp": "dev-master",
     "phpcompatibility/php-compatibility": "dev-develop as 9.99.99",
     "automattic/vipwpcs": "^3.0",
-    "wp-coding-standards/wpcs": "^3.0"
+    "wp-coding-standards/wpcs": "^3.0",
+    "phpunit/phpunit": "^9.6"
   },
   "config": {
     "platform": {
@@ -27,6 +28,9 @@
     ],
     "fix": [
       "phpcbf"
+    ],
+    "test": [
+      "phpunit"
     ]
   },
   "minimum-stability": "dev"
