@@ -67,6 +67,30 @@ class Elementor extends Integrations {
 			return;
 		}
 
+		// Bail if the plugin isn't connected; Media::setup() hasn't run, so its
+		// dependencies (e.g. sync) are not initialized and calling cloudinary_url()
+		// would fatal.
+		if ( ! $this->plugin->settings->get_param( 'connected' ) ) {
+			return;
+		}
+
+		/**
+		 * Filter whether Cloudinary should replace background image URLs in Elementor's generated CSS.
+		 *
+		 * @hook  cloudinary_elementor_replace_background_images_in_css
+		 * @since 3.3.4
+		 * @default {true}
+		 *
+		 * @param $replace   {bool}         Whether to replace background images. Default true.
+		 * @param $post_css  {Post}         The post CSS object.
+		 * @param $element   {Element_Base} The Elementor element being processed.
+		 *
+		 * @return {bool}
+		 */
+		if ( ! apply_filters( 'cloudinary_elementor_replace_background_images_in_css', true, $post_css, $element ) ) {
+			return;
+		}
+
 		$settings = $element->get_settings_for_display();
 		$media    = $this->plugin->get_component( 'media' );
 		$delivery = $this->plugin->get_component( 'delivery' );

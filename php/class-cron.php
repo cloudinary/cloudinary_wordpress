@@ -203,8 +203,15 @@ class Cron {
 	 */
 	protected function load_schedule() {
 		$this->schedule = get_option( self::CRON_META_KEY, array() );
+		// Guard against a corrupted option (e.g. a string was previously
+		// stored) so the foreach below cannot fatal on PHP 8.x.
+		if ( ! is_array( $this->schedule ) ) {
+			$this->schedule = array();
+		}
 		foreach ( $this->schedule as &$item ) {
-			$item['active'] = false;
+			if ( is_array( $item ) ) {
+				$item['active'] = false;
+			}
 		}
 	}
 

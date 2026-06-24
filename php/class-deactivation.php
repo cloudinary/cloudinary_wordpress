@@ -199,9 +199,9 @@ class Deactivation {
 					</div>
 				<?php endif; ?>
 				<div class="modal-body" id="modal-body">
-					<p>
+					<h2 class="cld-modal-box__title">
 						<?php esc_html_e( 'Before you deactivate the plugin, would you quickly give us your reason for doing so?', 'cloudinary' ); ?>
-					</p>
+					</h2>
 					<ul class="reasons">
 						<?php foreach ( $this->get_reasons() as $reason ) : ?>
 							<li>
@@ -249,7 +249,7 @@ class Deactivation {
 					</p>
 				</div>
 				<div class="modal-footer" id="modal-footer">
-					<button class="button button-link deactivate-close" data-action="deactivate">
+					<button class="button deactivate-close" data-action="deactivate">
 						<?php esc_html_e( 'Skip and deactivate', 'cloudinary' ); ?>
 					</button>
 					<button class="button cancel-close" data-action="cancel">

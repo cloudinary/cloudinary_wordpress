@@ -33,17 +33,26 @@ if ( empty( $tax_labels ) ) {
 
 $cloudinary = get_plugin_instance();
 ?>
-<div class="cloudinary-collapsible">
-	<div class="cloudinary-collapsible__toggle">
+<div class="cloudinary-collapsible cloudinary-collapsible--card">
+	<div class="cloudinary-collapsible__toggle" data-collapsible-target="cld-collapse-taxonomy-transformations">
 		<h2>
 			<?php
 			// translators: The taxonomy label.
 			echo esc_html( sprintf( __( 'Cloudinary %s transformations', 'cloudinary' ), $tax_labels->singular_name ) );
 			?>
 		</h2>
-		<button type="button"><i class="dashicons dashicons-arrow-down-alt2"></i></button>
+		<?php
+		// translators: The taxonomy singular label (e.g. Category, Tag).
+		$toggle_label = sprintf( __( 'Toggle %s transformations', 'cloudinary' ), $tax_labels->singular_name );
+		?>
+		<button
+			type="button"
+			aria-expanded="false"
+			aria-controls="cld-collapse-taxonomy-transformations"
+			aria-label="<?php echo esc_attr( $toggle_label ); ?>"
+		><i class="dashicons dashicons-arrow-down-alt2"></i></button>
 	</div>
-	<div class="cloudinary-collapsible__content" style="display:none;">
+	<div id="cld-collapse-taxonomy-transformations" class="cloudinary-collapsible__content" hidden>
 		<div class="cld-more-details">
 			<?php
 			printf(

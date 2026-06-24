@@ -98,6 +98,12 @@ class Special_Offer {
 	protected function is_special_offer_available() {
 		$last_usage = get_option( Connect::META_KEYS['last_usage'], array( 'plan' => '' ) );
 
+		// `last_usage` can be a string when the usage API has never returned a
+		// valid response. Only an array with a `plan` key is meaningful here.
+		if ( ! is_array( $last_usage ) || ! isset( $last_usage['plan'] ) ) {
+			return false;
+		}
+
 		return 'free' === strtolower( $last_usage['plan'] );
 	}
 

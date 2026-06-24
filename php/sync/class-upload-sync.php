@@ -298,10 +298,11 @@ class Upload_Sync {
 	 * @param int         $attachment_id The attachment ID.
 	 * @param string|null $type          Optional Sync type.
 	 * @param string|null $suffix        An optional suffix.
+	 * @param bool        $overwrite     Whether to overwrite an existing Cloudinary asset.
 	 *
 	 * @return array|\WP_Error
 	 */
-	public function upload_asset( $attachment_id, $type = null, $suffix = null ) {
+	public function upload_asset( $attachment_id, $type = null, $suffix = null, $overwrite = false ) {
 
 		add_filter( 'cloudinary_doing_upload', '__return_true' );
 
@@ -340,6 +341,9 @@ class Upload_Sync {
 				remove_filter( 'wp_get_original_image_path', array( $this, 'filter_backup_original' ), 10 );
 				break;
 			default:
+				if ( $overwrite ) {
+					$options['overwrite'] = true;
+				}
 				$result = $this->connect->api->upload( $attachment_id, $options, array() );
 				break;
 		}
@@ -349,6 +353,11 @@ class Upload_Sync {
 
 			// Check that this wasn't an existing.
 			if ( ! empty( $result['existing'] ) ) {
+				// If no public_id is recorded in WordPress, this asset in Cloudinary is from a
+				// failed previous upload. Overwrite it instead of creating a suffixed duplicate.
+				if ( empty( $suffix ) && ! $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true ) ) {
+					return $this->upload_asset( $attachment_id, $type, null, true );
+				}
 				// Add a suffix and try again.
 				$suffix = '_' . $attachment_id . substr( strrev( uniqid() ), 0, 5 );
 
