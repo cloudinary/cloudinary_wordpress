@@ -66,10 +66,10 @@ class Responsive_Breakpoints extends Delivery_Feature {
 		 * @since  3.2.4
 		 * @default {false}
 		 *
-		 * @param $skip_features {bool}  True to skip adding in the features.
-		 * @param $tag_element   {array} The tag element.
+		 * @param bool $skip_features  True to skip adding in the features.
+		 * @param array $tag_element The tag element.
 		 *
-		 * @return {bool}
+		 * @return bool 
 		 */
 		if ( apply_filters( 'cloudinary_skip_responsive_breakpoints', false, $tag_element ) ) {
 			return $tag_element;
@@ -85,7 +85,7 @@ class Responsive_Breakpoints extends Delivery_Feature {
 				 * @hook  cloudinary_responsive_images_bypass_formats
 				 * @since 3.0.9
 				 *
-				 * @param $formats {array) The list of formats to exclude.
+				 * @param array $formats The list of formats to exclude.
 				 */
 				apply_filters( 'cloudinary_responsive_images_bypass_formats', array( 'svg' ) ),
 				true
@@ -109,8 +109,8 @@ class Responsive_Breakpoints extends Delivery_Feature {
 		 * @hook  cloudinary_lazy_load_bypass
 		 * @since 3.0.9
 		 *
-		 * @param $short_circuit {bool}  The short circuit value.
-		 * @param $tag_element   {array} The tag element.
+		 * @param bool $short_circuit  The short circuit value.
+		 * @param array $tag_element The tag element.
 		 */
 		if ( is_null( $lazy ) || ! $lazy->is_enabled() || Utils::is_amp() || apply_filters( 'cloudinary_lazy_load_bypass', false, $tag_element ) ) {
 			$tag_element = $this->apply_breakpoints( $tag_element );

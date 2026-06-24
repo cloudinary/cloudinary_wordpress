@@ -107,9 +107,9 @@ class Cache_Point {
 		 * @hook    cloudinary_on_demand_sync_limit
 		 * @default 100
 		 *
-		 * @param $value {int} The default number of static assets.
+		 * @param int $value The default number of static assets.
 		 *
-		 * @return {int}
+		 * @return int
 		 */
 		$this->sync_limit = apply_filters( 'cloudinary_on_demand_sync_limit', 100 );
 		$this->register_post_type();
@@ -118,7 +118,7 @@ class Cache_Point {
 		add_filter( 'get_post_metadata', array( $this, 'get_meta' ), 10, 3 );
 		add_filter( 'delete_post_metadata', array( $this, 'delete_meta' ), 10, 4 );
 		add_action( 'shutdown', array( $this, 'meta_updates' ) );
-		add_action( 'wp_resource_hints', array( $this, 'dns_prefetch' ), 10, 2 );
+		add_filter( 'wp_resource_hints', array( $this, 'dns_prefetch' ), 10, 2 );
 	}
 
 	/**

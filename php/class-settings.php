@@ -366,8 +366,8 @@ class Settings {
 			 *
 			 * @hook cloudinary_setting_get_value
 			 *
-			 * @param $value {mixed} The setting value.
-			 * @param $slug  {string}  The setting slug.
+			 * @param mixed $value The setting value.
+			 * @param string $slug  The setting slug.
 			 */
 			$return[ $slug ] = apply_filters( 'cloudinary_setting_get_value', $value, $slug );
 		}
@@ -530,11 +530,11 @@ class Settings {
 		 * @hook   cloudinary_settings_save_setting
 		 * @since  2.7.6
 		 *
-		 * @param $new_value     {int}     The new setting value.
-		 * @param $current_value {string}  The setting current value.
-		 * @param $setting       {Setting} The setting object.
+		 * @param int $new_value     The new setting value.
+		 * @param string $current_value  The setting current value.
+		 * @param Setting $setting The setting object.
 		 *
-		 * @return {mixed}
+		 * @return mixed
 		 */
 		$new_value = apply_filters( "cloudinary_settings_save_setting_{$slug}", $new_value, $current_value, $setting );
 		$new_value = apply_filters( 'cloudinary_settings_save_setting', $new_value, $current_value, $setting );

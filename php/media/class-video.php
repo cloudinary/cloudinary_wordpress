@@ -694,7 +694,7 @@ class Video {
 					return $return;
 				},
 				10,
-				5
+				4
 			);
 		}
 

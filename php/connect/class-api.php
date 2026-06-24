@@ -209,9 +209,9 @@ class Api {
 		 * @hook   cloudinary_bypass_seo_url
 		 * @since  3.1.5
 		 *
-		 * @param $bypass_seo_url {bool} Whether to bypass SEO URLs.
+		 * @param bool $bypass_seo_url Whether to bypass SEO URLs.
 		 *
-		 * @return {bool}
+		 * @return bool
 		 */
 		$bypass_seo_url = apply_filters( 'cloudinary_bypass_seo_url', false );
 
@@ -294,10 +294,10 @@ class Api {
 					 * @hook cloudinary_upload_eager_formats
 					 * @since 3.1.6
 					 *
-					 * @param $formats {array} The default formats.
-					 * @param $type    {string} The asset type.
+					 * @param array $formats The default formats.
+					 * @param string $type The asset type.
 					 *
-					 * @return {array}
+					 * @return array
 					 */
 					$formats = apply_filters( 'cloudinary_upload_eager_formats', $formats, $type );
 
@@ -517,10 +517,10 @@ class Api {
 		 * @since   3.1.8
 		 * @default true
 		 *
-		 * @param $use_original  {bool} The default value.
-		 * @param $attachment_id {int}  The attachment ID.
+		 * @param bool $use_original The default value.
+		 * @param int $attachment_id  The attachment ID.
 		 *
-		 * @return  {bool}
+		 * @return  bool
 		 */
 		$use_original = apply_filters( 'cloudinary_use_original_image', true, $attachment_id );
 		if ( $use_original && function_exists( 'wp_get_original_image_url' ) && wp_attachment_is_image( $attachment_id ) ) {
@@ -598,8 +598,8 @@ class Api {
 		 * @hook cloudinary_upload_args
 		 * @since 3.0.1
 		 *
-		 * @param $call_args     {array} The default args.
-		 * @param $attachment_id {int}   The attachment ID.
+		 * @param array $call_args The default args.
+		 * @param int $attachment_id   The attachment ID.
 		 */
 		$call_args = apply_filters( 'cloudinary_upload_args', $call_args, $attachment_id );
 
@@ -632,8 +632,8 @@ class Api {
 		 * @hook  cloudinary_uploaded_asset
 		 * @since 3.0.1
 		 *
-		 * @param $attachment_id {int}            The attachment ID.
-		 * @param $result        {array|WP_Error} The upload result.
+		 * @param int $attachment_id            The attachment ID.
+		 * @param array|WP_Error $result The upload result.
 		 */
 		do_action( 'cloudinary_uploaded_asset', $attachment_id, $result );
 
@@ -897,9 +897,9 @@ class Api {
 		 * @hook   cloudinary_bypass_seo_url
 		 * @since  3.1.5
 		 *
-		 * @param $bypass_seo_url {bool} Whether to bypass SEO URLs.
+		 * @param bool $bypass_seo_url Whether to bypass SEO URLs.
 		 *
-		 * @return {bool}
+		 * @return bool
 		 */
 		$bypass_seo_url = apply_filters( 'cloudinary_bypass_seo_url', false );
 
@@ -929,11 +929,11 @@ class Api {
 			 * @hook   cloudinary_seo_public_id
 			 * @since  3.1.5
 			 *
-			 * @param $sufix          {string}       The public_id suffix.
-			 * @param $relationship  {Relationship} The relationship.
-			 * @param $attachment_id {int}          The attachment ID.
+			 * @param string $sufix       The public_id suffix.
+			 * @param Relationship $relationship The relationship.
+			 * @param int $attachment_id          The attachment ID.
 			 *
-			 * @return {string}
+			 * @return string
 			 */
 			$suffix = apply_filters( 'cloudinary_seo_public_id', "{$filename}.{$relationship->format}", $relationship, $attachment_id );
 

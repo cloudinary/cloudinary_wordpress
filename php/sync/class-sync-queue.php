@@ -109,9 +109,9 @@ class Sync_Queue {
 		 *
 		 * @hook   cloudinary_queue_threads
 		 *
-		 * @param $count {int} The number of manual sync threads to use.
+		 * @param int $count The number of manual sync threads to use.
 		 *
-		 * @return {int}
+		 * @return int
 		 */
 		$queue_threads_count = apply_filters( 'cloudinary_queue_threads', 2 );
 		for ( $i = 0; $i < $queue_threads_count; ++$i ) {
@@ -123,9 +123,9 @@ class Sync_Queue {
 		 *
 		 * @hook   cloudinary_autosync_threads
 		 *
-		 * @param $count {int} The number of autosync threads to use.
+		 * @param int $count The number of autosync threads to use.
 		 *
-		 * @return {int}
+		 * @return int
 		 */
 		$autosync_thread_count = apply_filters( 'cloudinary_autosync_threads', 2 );
 		for ( $i = 0; $i < $autosync_thread_count; ++$i ) {
@@ -474,9 +474,9 @@ class Sync_Queue {
 		 * @hook   cloudinary_build_queue_query
 		 * @since  2.7.6
 		 *
-		 * @param $args {array} The arguments for the query.
+		 * @param array $args The arguments for the query.
 		 *
-		 * @return {array}
+		 * @return array
 		 */
 		$args = apply_filters( 'cloudinary_build_queue_query', $args );
 
@@ -742,10 +742,10 @@ class Sync_Queue {
 		 * @hook   cloudinary_thread_queue_details_query
 		 * @since  2.7.6
 		 *
-		 * @param $args   {array}  The arguments for the query.
-		 * @param $thread {string} The thread name.
+		 * @param array $args  The arguments for the query.
+		 * @param string $thread The thread name.
 		 *
-		 * @return {array}
+		 * @return array
 		 */
 		$args = apply_filters( 'cloudinary_thread_queue_details_query', $args, $thread );
 
