@@ -3301,6 +3301,16 @@ class Media extends Settings_Component implements Setup {
 
 		$size_data = $image_subsizes[ $size_slug ];
 
+		// A non-crop ( crop => false ) size is a maximum bounding box, not exact dimensions.
+		// WordPress scales such images to fit inside the box while preserving the aspect ratio,
+		// so the registered width/height must not be treated as a fixed crop. Doing so forces
+		// non-square images into the box dimensions ( e.g. the default `large` 1024x1024 becomes
+		// w_1024,h_1024,c_scale ), visibly stretching landscape/portrait assets. Only hard-crop
+		// sizes have exact dimensions worth pinning here.
+		if ( empty( $size_data['crop'] ) ) {
+			return null;
+		}
+
 		// Return width and height if both are present and valid.
 		if ( ! empty( $size_data['width'] ) && ! empty( $size_data['height'] ) ) {
 			return array( (int) $size_data['width'], (int) $size_data['height'] );
