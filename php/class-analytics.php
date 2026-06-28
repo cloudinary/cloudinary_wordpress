@@ -182,10 +182,15 @@ class Analytics {
 		if ( empty( $result ) || is_wp_error( $result ) ) {
 			return;
 		}
-		if ( get_option( self::FIRST_API_FLAG ) ) {
+
+		// One-time per account: suppress only if already sent for this cloud_name
+		// (so a switched/added account re-emits).
+		$connect = $this->plugin->get_component( 'connect' );
+		$cloud   = $connect ? (string) $connect->get_cloud_name() : '';
+		if ( get_option( self::FIRST_API_FLAG ) === $cloud ) {
 			return;
 		}
-		update_option( self::FIRST_API_FLAG, true, false );
+		update_option( self::FIRST_API_FLAG, $cloud, false );
 
 		$asset_type = '';
 		if ( is_array( $result ) && ! empty( $result['resource_type'] ) ) {
@@ -197,7 +202,11 @@ class Analytics {
 			'activation_funnel',
 			9,
 			array(
+				// This hook fires only for uploads (cloudinary_uploaded_asset); a
+				// non-error result implies HTTP 2xx — the action does not surface
+				// the raw status code.
 				'api_endpoint' => 'upload',
+				'http_status'  => 200,
 				'asset_type'   => $asset_type,
 			)
 		);
@@ -281,7 +290,11 @@ class Analytics {
 			array(
 				'timeout'  => 1,
 				'blocking' => false,
-				'body'     => $event,
+				// JSON body so booleans (is_multisite, format_valid, …) stay real
+				// booleans on the wire, per spec §2.3 (a form body would coerce
+				// them to "1"/"").
+				'headers'  => array( 'Content-Type' => 'application/json' ),
+				'body'     => wp_json_encode( $event ),
 			)
 		);
 	}
@@ -395,8 +408,12 @@ class Analytics {
 		$clean = array();
 		if ( is_array( $params ) ) {
 			foreach ( $params as $key => $value ) {
-				if ( is_scalar( $value ) ) {
-					$clean[ sanitize_key( $key ) ] = sanitize_text_field( (string) $value );
+				$key = sanitize_key( $key );
+				// Preserve booleans and numbers (spec §2.3); sanitize strings only.
+				if ( is_bool( $value ) || is_int( $value ) || is_float( $value ) ) {
+					$clean[ $key ] = $value;
+				} elseif ( is_string( $value ) ) {
+					$clean[ $key ] = sanitize_text_field( $value );
 				}
 			}
 		}

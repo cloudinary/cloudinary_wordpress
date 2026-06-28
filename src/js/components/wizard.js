@@ -7,6 +7,7 @@ const Wizard = {
 	testing: null,
 	connectAttempts: 0,
 	startedEntry: false,
+	startedTracked: false,
 	next: document.querySelector( '[data-navigate="next"]' ),
 	back: document.querySelector( '[data-navigate="back"]' ),
 	lock: document.getElementById( 'pad-lock' ),
@@ -122,7 +123,12 @@ const Wizard = {
 					const valid = this.evaluateConnectionString( value );
 					Analytics.track(
 						'credentials_format_validated',
-						{ format_valid: valid },
+						{
+							format_valid: valid,
+							invalid_reason: valid
+								? ''
+								: this.invalidReason( value ),
+						},
 						'activation_funnel',
 						3
 					);
@@ -259,7 +265,18 @@ const Wizard = {
 			case 1:
 				this.hide( this.back );
 				this.unlockNext();
-				Analytics.track( 'wizard_started', {}, 'activation_funnel', 2 );
+				if ( ! this.startedTracked ) {
+					this.startedTracked = true;
+					if ( ! this.config.wizardStartedAt ) {
+						this.setConfig( 'wizardStartedAt', Date.now() );
+					}
+					Analytics.track(
+						'wizard_started',
+						{ entry_point: this.getEntryPoint() },
+						'activation_funnel',
+						2
+					);
+				}
 				break;
 			case 2:
 				Analytics.track(
@@ -304,7 +321,7 @@ const Wizard = {
 				}
 				Analytics.track(
 					'wizard_completed',
-					{},
+					{ time_to_complete_sec: this.timeToCompleteSec() },
 					'activation_funnel',
 					6
 				);
@@ -355,6 +372,40 @@ const Wizard = {
 			/^(?:CLOUDINARY_URL=)?(cloudinary:\/\/){1}(\d*)[:]{1}([^@]*)[@]{1}([^@]*)$/gim
 		);
 		return reg.test( value );
+	},
+	// Best-effort reason a connection string failed local format validation
+	// (the only local check is the regex above). For credential-friction analysis.
+	invalidReason( value ) {
+		const str = value.replace( 'CLOUDINARY_URL=', '' );
+		if ( 0 !== str.indexOf( 'cloudinary://' ) ) {
+			return 'missing_scheme';
+		}
+		if ( -1 === str.indexOf( '@' ) ) {
+			return 'missing_cloud_name';
+		}
+		const creds = str.replace( 'cloudinary://', '' ).split( '@' )[ 0 ];
+		if ( -1 === creds.indexOf( ':' ) ) {
+			return 'missing_secret';
+		}
+		if ( ! /^\d+$/.test( creds.split( ':' )[ 0 ] ) ) {
+			return 'invalid_api_key';
+		}
+		return 'invalid_format';
+	},
+	// auto_redirect when WordPress bounced the admin here post-activation,
+	// otherwise menu navigation. Heuristic, based on the referrer.
+	getEntryPoint() {
+		return -1 !== document.referrer.indexOf( 'plugins.php' )
+			? 'auto_redirect'
+			: 'menu';
+	},
+	// Seconds from wizard_started (persisted in config) to completion.
+	timeToCompleteSec() {
+		const start = this.config.wizardStartedAt;
+		if ( ! start ) {
+			return null;
+		}
+		return Math.max( 0, Math.round( ( Date.now() - start ) / 1000 ) );
 	},
 	testConnection( value ) {
 		this.connectAttempts += 1;
