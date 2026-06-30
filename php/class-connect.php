@@ -153,6 +153,22 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		$url    = $request->get_param( 'cloudinary_url' );
 		$result = $this->test_connection( $url );
 
+		$analytics = $this->plugin->get_component( 'analytics' );
+		if ( $analytics ) {
+			$success = isset( $result['type'] ) && 'connection_success' === $result['type'];
+			$analytics->track(
+				'connection_test_result',
+				'activation_funnel',
+				3,
+				array(
+					'status'         => $success ? 'success' : 'error',
+					'error_type'     => $success ? '' : ( isset( $result['type'] ) ? $result['type'] : 'unknown' ),
+					'http_status'    => isset( $result['http_status'] ) ? (int) $result['http_status'] : 0,
+					'attempt_number' => (int) $request->get_param( 'attempt_number' ),
+				)
+			);
+		}
+
 		return rest_ensure_response( $result );
 	}
 
@@ -220,6 +236,22 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 				array(
 					'timeout'  => 0.1,
 					'blocking' => false,
+				)
+			);
+		}
+
+		$analytics = $this->plugin->get_component( 'analytics' );
+		if ( $analytics ) {
+			$analytics->track(
+				'wizard_setup_submitted',
+				'activation_funnel',
+				5,
+				array(
+					'media_library' => 'on' === $media,
+					'non_media'     => 'on' === $nonmedia,
+					'advanced'      => 'on' === $advanced,
+					'status'        => 'success',
+					'http_status'   => 200,
 				)
 			);
 		}
@@ -386,9 +418,10 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 */
 	public function test_connection( $url ) {
 		$result = array(
-			'type'    => 'connection_success',
-			'message' => null,
-			'url'     => $url,
+			'type'        => 'connection_success',
+			'message'     => null,
+			'url'         => $url,
+			'http_status' => 0,
 		);
 
 		$test  = wp_parse_url( $url );
@@ -430,7 +463,10 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 				$result['type'] = 'connection_error';
 			}
 			$result['message'] = ucwords( str_replace( '_', ' ', $test_result->get_error_message() ) );
+			// `API::call()` returns the HTTP response code as the WP_Error code.
+			$result['http_status'] = is_numeric( $test_result->get_error_code() ) ? (int) $test_result->get_error_code() : 0;
 		} else {
+			$result['http_status'] = 200;
 			$this->usage_stats( true );
 		}
 

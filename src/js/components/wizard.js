@@ -1,9 +1,13 @@
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import Analytics from './analytics';
 
 const Wizard = {
 	storageKey: '_cld_wizard',
 	testing: null,
+	connectAttempts: 0,
+	startedEntry: false,
+	startedTracked: false,
 	next: document.querySelector( '[data-navigate="next"]' ),
 	back: document.querySelector( '[data-navigate="back"]' ),
 	lock: document.getElementById( 'pad-lock' ),
@@ -93,6 +97,15 @@ const Wizard = {
 		} );
 		connectionInput.addEventListener( 'input', ( ev ) => {
 			this.lockNext();
+			if ( ! this.startedEntry ) {
+				this.startedEntry = true;
+				Analytics.track(
+					'credentials_entry_started',
+					{},
+					'activation_funnel',
+					3
+				);
+			}
 			const value = connectionInput.value.replace(
 				'CLOUDINARY_URL=',
 				''
@@ -108,6 +121,17 @@ const Wizard = {
 
 				this.debounceConnect = setTimeout( () => {
 					const valid = this.evaluateConnectionString( value );
+					Analytics.track(
+						'credentials_format_validated',
+						{
+							format_valid: valid,
+							invalid_reason: valid
+								? ''
+								: this.invalidReason( value ),
+						},
+						'activation_funnel',
+						3
+					);
 					if ( valid ) {
 						this.connection.working.classList.add( 'active' );
 						this.testConnection( value );
@@ -123,6 +147,31 @@ const Wizard = {
 			this.updateConnection.classList.remove( 'hidden' );
 		}
 
+		const signup = document.querySelector(
+			'a[href="https://cloudinary.com/signup"]'
+		);
+		if ( signup ) {
+			signup.addEventListener( 'click', () => {
+				Analytics.track(
+					'wizard_signup_clicked',
+					{},
+					'activation_funnel',
+					2
+				);
+			} );
+		}
+
+		if ( this.complete ) {
+			this.complete.addEventListener( 'click', () => {
+				Analytics.track(
+					'wizard_dashboard_clicked',
+					{},
+					'activation_funnel',
+					7
+				);
+			} );
+		}
+
 		this.getTab( this.config.tab );
 		this.initFeatures();
 		window.addEventListener( 'hashchange', ( ev ) => {
@@ -136,20 +185,31 @@ const Wizard = {
 		}
 	},
 	initFeatures() {
+		const toggled = ( settingKey, enabled ) => {
+			Analytics.track(
+				'wizard_setting_toggled',
+				{ setting_key: settingKey, enabled },
+				'activation_funnel',
+				4
+			);
+		};
 		const mediaCheck = document.getElementById( 'media_library' );
 		mediaCheck.checked = this.config.mediaLibrary;
 		mediaCheck.addEventListener( 'change', () => {
 			this.setConfig( 'mediaLibrary', mediaCheck.checked );
+			toggled( 'media_library', mediaCheck.checked );
 		} );
 		const nonMediaCheck = document.getElementById( 'non_media' );
 		nonMediaCheck.checked = this.config.nonMedia;
 		nonMediaCheck.addEventListener( 'change', () => {
 			this.setConfig( 'nonMedia', nonMediaCheck.checked );
+			toggled( 'non_media', nonMediaCheck.checked );
 		} );
 		const advanced = document.getElementById( 'advanced' );
 		advanced.checked = this.config.advanced;
 		advanced.addEventListener( 'change', () => {
 			this.setConfig( 'advanced', advanced.checked );
+			toggled( 'advanced', advanced.checked );
 		} );
 	},
 	getCurrent() {
@@ -205,8 +265,26 @@ const Wizard = {
 			case 1:
 				this.hide( this.back );
 				this.unlockNext();
+				if ( ! this.startedTracked ) {
+					this.startedTracked = true;
+					if ( ! this.config.wizardStartedAt ) {
+						this.setConfig( 'wizardStartedAt', Date.now() );
+					}
+					Analytics.track(
+						'wizard_started',
+						{ entry_point: this.getEntryPoint() },
+						'activation_funnel',
+						2
+					);
+				}
 				break;
 			case 2:
+				Analytics.track(
+					'wizard_connect_viewed',
+					{},
+					'activation_funnel',
+					3
+				);
 				this.show( this.back );
 				if ( ! this.config.cldString ) {
 					this.lockNext();
@@ -227,6 +305,12 @@ const Wizard = {
 					document.location.hash = '1';
 					return;
 				}
+				Analytics.track(
+					'wizard_settings_viewed',
+					{},
+					'activation_funnel',
+					4
+				);
 				this.show( this.lock );
 				this.show( this.back );
 				break;
@@ -235,6 +319,12 @@ const Wizard = {
 					document.location.hash = '1';
 					return;
 				}
+				Analytics.track(
+					'wizard_completed',
+					{ time_to_complete_sec: this.timeToCompleteSec() },
+					'activation_funnel',
+					6
+				);
 				this.hide( this.tabBar );
 				this.hide( this.next );
 				this.hide( this.back );
@@ -283,11 +373,53 @@ const Wizard = {
 		);
 		return reg.test( value );
 	},
+	// Best-effort reason a connection string failed local format validation
+	// (the only local check is the regex above). For credential-friction analysis.
+	invalidReason( value ) {
+		const str = value.replace( 'CLOUDINARY_URL=', '' );
+		if ( 0 !== str.indexOf( 'cloudinary://' ) ) {
+			return 'missing_scheme';
+		}
+		if ( -1 === str.indexOf( '@' ) ) {
+			return 'missing_cloud_name';
+		}
+		const creds = str.replace( 'cloudinary://', '' ).split( '@' )[ 0 ];
+		if ( -1 === creds.indexOf( ':' ) ) {
+			return 'missing_secret';
+		}
+		if ( ! /^\d+$/.test( creds.split( ':' )[ 0 ] ) ) {
+			return 'invalid_api_key';
+		}
+		return 'invalid_format';
+	},
+	// auto_redirect when WordPress bounced the admin here post-activation,
+	// otherwise menu navigation. Heuristic, based on the referrer.
+	getEntryPoint() {
+		return -1 !== document.referrer.indexOf( 'plugins.php' )
+			? 'auto_redirect'
+			: 'menu';
+	},
+	// Seconds from wizard_started (persisted in config) to completion.
+	timeToCompleteSec() {
+		const start = this.config.wizardStartedAt;
+		if ( ! start ) {
+			return null;
+		}
+		return Math.max( 0, Math.round( ( Date.now() - start ) / 1000 ) );
+	},
 	testConnection( value ) {
+		this.connectAttempts += 1;
+		Analytics.track(
+			'connection_test_started',
+			{ attempt_number: this.connectAttempts },
+			'activation_funnel',
+			3
+		);
 		apiFetch( {
 			path: cldData.wizard.testURL,
 			data: {
 				cloudinary_url: value,
+				attempt_number: this.connectAttempts,
 			},
 			method: 'POST',
 		} ).then( ( result ) => {
