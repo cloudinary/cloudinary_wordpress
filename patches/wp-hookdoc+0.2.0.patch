@@ -1,0 +1,61 @@
+diff --git a/node_modules/wp-hookdoc/plugin/index.js b/node_modules/wp-hookdoc/plugin/index.js
+index 1b3457d..63b72c8 100644
+--- a/node_modules/wp-hookdoc/plugin/index.js
++++ b/node_modules/wp-hookdoc/plugin/index.js
+@@ -1,9 +1,47 @@
+ /**
+  * Only use comment blocks which has a @hook tag and simulate as @class.
++ *
++ * Patched (cloudinary_wordpress): accept standard PHPDoc tag syntax inside
++ * @hook blocks and normalize it to the JSDoc syntax that JSDoc's parser
++ * expects, so source files can keep valid PHPDoc (PHPStan-clean):
++ *   @param  Type $name Desc    ->  @param  {Type} $name Desc   (standard PHPDoc)
++ *   @param  $name {Type} Desc  ->  @param  {Type} $name Desc   (legacy hookdoc)
++ *   @return Type Desc          ->  @return {Type} Desc
++ * Tags already using the {Type} form are left untouched.
+  */
+ 
+ 'use strict';
+ 
++// Matches a PHPDoc type expression (unions, generics, arrays, FQCN, etc.).
++var TYPE = '[\\w\\\\|\\[\\]<>,\\s\\.\\$\']+';
++
++function normalizeHookDocblock(comment) {
++    return comment
++        // @param Type $name desc  (standard PHPDoc: type first, not yet braced)
++        .replace(
++            new RegExp('(@param\\s+)(?!\\{)(' + TYPE + '?)\\s+(\\$\\w+)', 'g'),
++            function (m, tag, type, name) {
++                return tag + '{' + type.trim() + '} ' + name;
++            }
++        )
++        // @param $name {Type} desc  (legacy hookdoc: name first, braced type after)
++        .replace(
++            /(@param\s+)(\$\w+)\s+\{([^}]+)\}/g,
++            function (m, tag, name, type) {
++                return tag + '{' + type.trim() + '} ' + name;
++            }
++        )
++        // @return/@returns Type desc  (standard PHPDoc: not yet braced)
++        .replace(
++            new RegExp('(@returns?\\s+)(?!\\{)(' + TYPE + '?)(\\s|\\*/|$)', 'g'),
++            function (m, tag, type, tail) {
++                type = type.trim();
++                if (!type) { return m; }
++                return tag + '{' + type + '}' + tail;
++            }
++        );
++}
++
+ exports.handlers = {
+     beforeParse: function(e) {
+         // a JSDoc comment looks like: /**[one or more chars]*/
+@@ -19,7 +57,7 @@ exports.handlers = {
+             // Generate parsed
+             comments.forEach(function(comment) {
+                 if (/\*[ \t]*@hook[ ]/g.test(comment)) {
+-                    parsed.push(comment.replace(/\*[ \t]*@hook[ ]/g, '* @class '));
++                    parsed.push(normalizeHookDocblock(comment).replace(/\*[ \t]*@hook[ ]/g, '* @class '));
+                 }
+             });
+         }
