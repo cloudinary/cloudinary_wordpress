@@ -1,0 +1,99 @@
+name: Deploy to WordPress.org Repository
+
+on:
+
+  # The action will run when a release or a pre-release is created.
+  #
+  # In case of a pre-release, the action will not commit to WP.org (dry-run). However, it will still
+  # create a zip file and upload it to the release. Note that a pre-release (release candidate)
+  # should not be changed to a release but rather a new release should be created.
+  #
+  # The "prereleased" type will not trigger for pre-releases published from draft releases, but
+  # the "published" type will trigger. Since we want a workflow to run when stable and pre-releases
+  # publish, we subscribe to "published" instead of "released" and "prereleased".
+  #
+  # See: https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#release
+  release:
+    types: [ published ]
+
+jobs:
+  lint_and_test:
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  deploy_to_wp_repository:
+    needs: lint_and_test
+    name: Deploy to WP.org
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-${{ hashFiles( 'composer.lock' ) }}
+          restore-keys: ${{ runner.os }}-php-
+
+      # Install dependencies.
+      - name: Install NPM dependencies
+        run: npm ci
+
+      - name: Install Composer dependencies
+        run: composer install --no-dev
+
+      # Build.
+      - name: Build
+        run: npm run build
+
+      - name: Prepare build directory
+        run: npx grunt prepare
+
+      # Ensure the version in the .version file matches the tag of the release.
+      - name: Verify version matches tag
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          FILE_VERSION=$(cat .version | tr -d '[:space:]')
+          if [ "$TAG" != "$FILE_VERSION" ]; then
+            echo "::error::Tag $TAG does not match .version $FILE_VERSION"
+            exit 1
+          fi
+
+      - name: WordPress Plugin Deploy
+        # This is used to get the zip-path later.
+        id: deploy
+        uses: 10up/action-wordpress-plugin-deploy@stable
+        with:
+          generate-zip: true
+          # In case of a pre-release, do not commit to WP.org.
+          dry-run: ${{ github.event.release.prerelease }}
+
+        env:
+          BUILD_DIR: 'build'
+          SLUG: 'cloudinary-image-management-and-manipulation-in-the-cloud-cdn'
+          # Use secrets to authenticate with WP.org.
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.deploy.outputs.zip-path }}
