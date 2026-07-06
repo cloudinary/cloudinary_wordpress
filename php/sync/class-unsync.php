@@ -254,7 +254,7 @@ class Unsync {
 		 * @hook   cloudinary_unsync_asset
 		 * @since  3.0.0
 		 *
-		 * @param $attachment_id {int}    The attachment ID.
+		 * @param int $attachment_id    The attachment ID.
 		 */
 		do_action( 'cloudinary_unsync_asset', $attachment_id );
 	}
