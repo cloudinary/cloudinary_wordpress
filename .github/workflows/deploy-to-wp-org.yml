@@ -16,6 +16,15 @@ on:
   release:
     types: [ published ]
 
+  # Allows running the workflow manually (e.g. against a branch or tag) without publishing a
+  # real GitHub release, so the pipeline can be exercised safely. Defaults to a dry-run.
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Skip the actual WP.org SVN commit (still builds, verifies, and uploads a zip artifact)'
+        type: boolean
+        default: true
+
 jobs:
   lint_and_test:
     uses: ./.github/workflows/ci.yml
@@ -25,6 +34,8 @@ jobs:
     needs: lint_and_test
     name: Deploy to WP.org
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
@@ -68,7 +79,9 @@ jobs:
         run: npx grunt prepare
 
       # Ensure the version in the .version file matches the tag of the release.
+      # Skipped for manual runs, which may not be run against a release tag.
       - name: Verify version matches tag
+        if: github.event_name == 'release'
         run: |
           TAG="${GITHUB_REF_NAME#v}"
           FILE_VERSION=$(cat .version | tr -d '[:space:]')
@@ -83,8 +96,8 @@ jobs:
         uses: 10up/action-wordpress-plugin-deploy@stable
         with:
           generate-zip: true
-          # In case of a pre-release, do not commit to WP.org.
-          dry-run: ${{ github.event.release.prerelease }}
+          # In case of a pre-release, do not commit to WP.org. Manual runs default to a dry-run too.
+          dry-run: ${{ github.event_name == 'release' && github.event.release.prerelease || inputs.dry_run }}
 
         env:
           BUILD_DIR: 'build'
@@ -94,6 +107,7 @@ jobs:
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
 
       - name: Upload release asset
+        if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ steps.deploy.outputs.zip-path }}
