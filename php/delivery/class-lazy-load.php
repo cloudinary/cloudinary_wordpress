@@ -94,9 +94,9 @@ class Lazy_Load extends Delivery_Feature {
 		 * @hook   cloudinary_lazy_load_bypass_classes
 		 * @since  3.0.9
 		 *
-		 * @param $classes {array} Classes that bypass the Lazy Load.
+		 * @param array $classes Classes that bypass the Lazy Load.
 		 *
-		 * @return {bool}
+		 * @return bool 
 		 *
 		 * @example
 		 * <?php
@@ -256,7 +256,7 @@ class Lazy_Load extends Delivery_Feature {
 				 * @hook  cloudinary_lazy_load_bypass_formats
 				 * @since 3.0.0
 				 *
-				 * @param $formats {array) The list of formats to exclude.
+				 * @param array $formats The list of formats to exclude.
 				 */
 				apply_filters( 'cloudinary_lazy_load_bypass_formats', array( 'svg' ) ),
 				true
@@ -272,10 +272,10 @@ class Lazy_Load extends Delivery_Feature {
 		 *
 		 * @since 3.0.9
 		 *
-		 * @param $short_circuit {bool}  The short circuit value.
-		 * @param $tag_element   {array} The tag element.
+		 * @param bool $short_circuit  The short circuit value.
+		 * @param array $tag_element The tag element.
 		 *
-		 * @return {bool}
+		 * @return bool 
 		 *
 		 * @example
 		 * <?php

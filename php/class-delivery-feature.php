@@ -203,7 +203,7 @@ abstract class Delivery_Feature implements Assets {
 		 * @hook  cloudinary_is_{$class_name}_active
 		 * @since 3.0.4
 		 *
-		 * @param $is_active {bool} Flag if active.
+		 * @param bool $is_active Flag if active.
 		 */
 		return apply_filters( "cloudinary_is_{$class_name}_active", $is_active );
 	}

@@ -172,6 +172,8 @@ class File_System {
 				);
 			}
 		}
+
+		return array();
 	}
 
 	/**
