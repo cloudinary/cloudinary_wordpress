@@ -225,11 +225,11 @@ class Analytics {
 		 * Filter whether the plugin emits custom analytics events.
 		 *
 		 * @hook  cloudinary_analytics_enabled
-		 * @since 3.3.4
+		 * @since 3.3.5
 		 *
-		 * @param $enabled {bool} Whether analytics are enabled.
+		 * @param bool $enabled Whether analytics are enabled.
 		 *
-		 * @return {bool}
+		 * @return bool
 		 */
 		return (bool) apply_filters( 'cloudinary_analytics_enabled', true );
 	}
@@ -459,11 +459,11 @@ class Analytics {
 		 * Filter whether the analytics smoke-test event is emitted.
 		 *
 		 * @hook  cloudinary_analytics_smoke_test
-		 * @since 3.3.4
+		 * @since 3.3.5
 		 *
-		 * @param $enabled {bool} Whether to emit the smoke-test event.
+		 * @param bool $enabled Whether to emit the smoke-test event.
 		 *
-		 * @return {bool}
+		 * @return bool
 		 */
 		if ( ! apply_filters( 'cloudinary_analytics_smoke_test', false ) ) {
 			return;

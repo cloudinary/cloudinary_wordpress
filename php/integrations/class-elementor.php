@@ -79,13 +79,13 @@ class Elementor extends Integrations {
 		 *
 		 * @hook  cloudinary_elementor_replace_background_images_in_css
 		 * @since 3.3.4
-		 * @default {true}
+		 * @default true
 		 *
-		 * @param $replace   {bool}         Whether to replace background images. Default true.
-		 * @param $post_css  {Post}         The post CSS object.
-		 * @param $element   {Element_Base} The Elementor element being processed.
+		 * @param bool         $replace  Whether to replace background images. Default true.
+		 * @param Post         $post_css The post CSS object.
+		 * @param Element_Base $element  The Elementor element being processed.
 		 *
-		 * @return {bool}
+		 * @return bool
 		 */
 		if ( ! apply_filters( 'cloudinary_elementor_replace_background_images_in_css', true, $post_css, $element ) ) {
 			return;
