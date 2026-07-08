@@ -76,10 +76,14 @@ class Sync extends Text {
 		}
 
 		$struct['element'] = 'a';
-		/** @var \Cloudinary\UI\Component\Page $page */
-		$page              = $this->setting->find_setting( 'sync_media' )->get_component();
-		$href              = $page->get_url();
-		$args              = array();
+		/**
+		 * The settings page component.
+		 *
+		 * @var \Cloudinary\UI\Component\Page $page
+		 */
+		$page = $this->setting->find_setting( 'sync_media' )->get_component();
+		$href = $page->get_url();
+		$args = array();
 
 		if ( ! $this->setting->get_param( 'queue' )->is_enabled() ) {
 			$args['enable-bulk'] = true;

@@ -265,7 +265,11 @@ final class Plugin {
 		$components = array_filter( $this->components, array( $this, 'is_config_component' ) );
 
 		foreach ( $components as $slug => $component ) {
-			/** @var Config $component */
+			/**
+			 * Component that implements Config.
+			 *
+			 * @var Config $component
+			 */
 			$component->get_config();
 		}
 	}

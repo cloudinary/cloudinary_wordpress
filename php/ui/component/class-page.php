@@ -78,18 +78,20 @@ class Page extends Panel {
 		if ( Utils::get_active_setting() !== $this->setting ) {
 			return null;
 		}
-		$html = array();
+		/**
+		 * The admin component.
+		 *
+		 * @var \Cloudinary\Admin $admin
+		 */
+		$admin  = get_plugin_instance()->get_component( 'admin' );
+		$notice = $admin->get_admin_notices();
 
-		if ( empty( $this->setting->get_admin_notices() ) ) {
+		if ( null === $notice ) {
 			return $struct;
 		}
 
-		foreach ( $this->setting->get_admin_notices() as $setting ) {
-			$html[] = $setting->get_component()->render();
-			$setting->set_param( 'enabled', false );
-		}
 		$struct['element'] = null;
-		$struct['content'] = self::compile_html( $html );
+		$struct['content'] = $notice->get_component()->render();
 
 		return $struct;
 	}
@@ -188,9 +190,13 @@ class Page extends Panel {
 			}
 
 			// Create the link.
-			$link                       = $this->get_part( 'a' );
-			$link['content']            = $setting->get_param( 'menu_title', $setting->get_param( 'page_title' ) );
-			/** @var \Cloudinary\UI\Component\Page $page */
+			$link            = $this->get_part( 'a' );
+			$link['content'] = $setting->get_param( 'menu_title', $setting->get_param( 'page_title' ) );
+			/**
+			 * The settings page component.
+			 *
+			 * @var \Cloudinary\UI\Component\Page $page
+			 */
 			$page                       = $setting->get_component();
 			$link['attributes']['href'] = $page->get_url();
 

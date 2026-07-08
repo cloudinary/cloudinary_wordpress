@@ -656,7 +656,11 @@ class Global_Transformations {
 				return;
 			}
 
-			/** @var \Cloudinary\Assets $assets */
+			/**
+			 * The assets component.
+			 *
+			 * @var \Cloudinary\Assets $assets
+			 */
 			$assets = $this->media->plugin->get_component( 'assets' );
 			$item   = $assets->get_asset( $attachment_id, 'dataset' );
 			if ( ! empty( $item['data']['public_id'] ) ) {

@@ -522,9 +522,10 @@ class Admin {
 	}
 
 	/**
-	 * Get admin notices.
+	 * Absorb WordPress settings errors into the plugin notice store and return
+	 * the renderable notice setting, if any notices are pending.
 	 *
-	 * @return Setting[]
+	 * @return Setting|null
 	 */
 	public function get_admin_notices() {
 		$setting_notices = get_settings_errors();
@@ -532,6 +533,13 @@ class Admin {
 			$this->add_admin_notice( $notice['code'], $notice['message'], $notice['type'], true );
 		}
 
-		return $setting_notices;
+		$notices = $this->notices->get_value();
+		if ( empty( $notices ) ) {
+			return null;
+		}
+
+		sort( $notices );
+
+		return $this->init_components( $notices, self::NOTICE_SLUG );
 	}
 }

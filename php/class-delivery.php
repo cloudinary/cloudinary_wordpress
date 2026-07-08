@@ -2110,7 +2110,11 @@ class Delivery implements Setup {
 
 		// Check if we are saving. If so, bail.
 		// This is to prevent the replacement from happening in the shutdown, signaling content changes in the editor.
-		/** @var \Cloudinary\String_Replace $replace */
+		/**
+		 * The string replace component.
+		 *
+		 * @var \Cloudinary\String_Replace $replace
+		 */
 		$replace = $this->plugin->get_component( 'replace' );
 		if ( $replace->doing_save() ) {
 			return;

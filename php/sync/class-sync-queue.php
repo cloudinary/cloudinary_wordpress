@@ -137,7 +137,11 @@ class Sync_Queue {
 		// Enable sync queue.
 		if ( filter_input( INPUT_GET, 'enable-bulk', FILTER_VALIDATE_BOOLEAN ) ) {
 			$this->bulk_sync( true );
-			/** @var \Cloudinary\UI\Component\Page $page */
+			/**
+			 * The settings page component.
+			 *
+			 * @var \Cloudinary\UI\Component\Page $page
+			 */
 			$page = $this->sync->settings->get_component();
 			wp_safe_redirect( $page->get_url() );
 			exit;
@@ -145,7 +149,11 @@ class Sync_Queue {
 		// Stop sync queue.
 		if ( filter_input( INPUT_GET, 'disable-bulk', FILTER_VALIDATE_BOOLEAN ) ) {
 			$this->bulk_sync( false );
-			/** @var \Cloudinary\UI\Component\Page $page */
+			/**
+			 * The settings page component.
+			 *
+			 * @var \Cloudinary\UI\Component\Page $page
+			 */
 			$page = $this->sync->settings->get_component();
 			wp_safe_redirect( $page->get_url() );
 			exit;

@@ -607,7 +607,11 @@ class Sync implements Setup, Assets {
 				'validate' => function ( $attachment_id ) {
 
 					$valid = true;
-					/** @var \Cloudinary\Connect $connect */
+					/**
+					 * The connect manager.
+					 *
+					 * @var \Cloudinary\Connect $connect
+					 */
 					$connect     = $this->managers['connect'];
 					$credentials = $connect->get_credentials();
 					if ( isset( $credentials['cname'] ) ) {
@@ -1051,7 +1055,11 @@ class Sync implements Setup, Assets {
 	 */
 	public function init_background_upload() {
 		if ( ! empty( $this->to_sync ) ) {
-			/** @var \Cloudinary\Sync\Sync_Queue $queue */
+			/**
+			 * The sync queue manager.
+			 *
+			 * @var \Cloudinary\Sync\Sync_Queue $queue
+			 */
 			$queue = $this->managers['queue'];
 			$queue->add_to_queue( $this->to_sync, 'autosync' );
 			$queue->start_threads( 'autosync' );
