@@ -38,7 +38,7 @@ class Admin {
 	/**
 	 * Holds notices object.
 	 *
-	 * @var Settings
+	 * @var Setting
 	 */
 	protected $notices;
 

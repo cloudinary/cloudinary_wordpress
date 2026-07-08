@@ -203,6 +203,7 @@ class Push_Sync {
 		$thread = $this->plugin->settings->get_param( 'current_sync_thread' );
 
 		// Activation funnel: first sync started (emitted once per account).
+		/** @var \Cloudinary\Analytics $analytics */
 		$analytics = $this->plugin->get_component( 'analytics' );
 		if ( $analytics ) {
 			$connect = $this->plugin->get_component( 'connect' );

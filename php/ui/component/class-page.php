@@ -154,7 +154,7 @@ class Page extends Panel {
 	 */
 	protected function tabs( $struct ) {
 
-		if ( $this->setting->has_param( 'has_tabs' ) && 1 < count( $this->setting->get_settings( 'page' ) ) ) {
+		if ( $this->setting->has_param( 'has_tabs' ) && 1 < count( $this->setting->get_settings() ) ) {
 			$struct['element']             = 'ul';
 			$struct['attributes']['class'] = array(
 				'cld-page-tabs',
@@ -190,7 +190,9 @@ class Page extends Panel {
 			// Create the link.
 			$link                       = $this->get_part( 'a' );
 			$link['content']            = $setting->get_param( 'menu_title', $setting->get_param( 'page_title' ) );
-			$link['attributes']['href'] = $setting->get_component()->get_url();
+			/** @var \Cloudinary\UI\Component\Page $page */
+			$page                       = $setting->get_component();
+			$link['attributes']['href'] = $page->get_url();
 
 			// Add tab to list.
 			$tab['children'][ $setting->get_slug() ] = $link;

@@ -76,7 +76,9 @@ class Sync extends Text {
 		}
 
 		$struct['element'] = 'a';
-		$href              = $this->setting->find_setting( 'sync_media' )->get_component()->get_url();
+		/** @var \Cloudinary\UI\Component\Page $page */
+		$page              = $this->setting->find_setting( 'sync_media' )->get_component();
+		$href              = $page->get_url();
 		$args              = array();
 
 		if ( ! $this->setting->get_param( 'queue' )->is_enabled() ) {

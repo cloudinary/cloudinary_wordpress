@@ -18,6 +18,9 @@ use function Cloudinary\get_plugin_instance;
  * Class API.
  *
  * Push media to Cloudinary on upload.
+ *
+ * @method array|\WP_Error usage( string ...$args ) Get account usage stats.
+ * @method array|\WP_Error ping( string ...$args ) Ping the Cloudinary API.
  */
 class Api {
 
@@ -828,9 +831,9 @@ class Api {
 	/**
 	 * Set the POSTFIELDS to the correct array type, not the string based.
 	 *
-	 * @param \Requests_Transport_cURL $handle  The transport handle to set.
-	 * @param array                    $request The request array.
-	 * @param string                   $url     The url to send to.
+	 * @param resource $handle  The cURL handle to set.
+	 * @param array    $request The request array.
+	 * @param string   $url     The url to send to.
 	 */
 	public function set_data( $handle, $request, $url ) {
 		// Ensure that this request is in fact ours.

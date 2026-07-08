@@ -67,7 +67,7 @@ class Folder_Table extends Table {
 	/**
 	 * Build the header.
 	 *
-	 * @return \array[][]
+	 * @return array[][]
 	 */
 	protected function build_headers() {
 		$header_columns = array(

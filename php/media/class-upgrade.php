@@ -197,7 +197,7 @@ class Upgrade {
 	 *
 	 * @param int $attachment_id The attachment ID to migrate.
 	 *
-	 * @return array();
+	 * @return array
 	 */
 	public function migrate_legacy_meta( $attachment_id ) {
 

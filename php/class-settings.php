@@ -15,6 +15,8 @@ use Cloudinary\Settings\Storage\Storage;
  * Class Settings
  *
  * @package Cloudinary
+ *
+ * @property-read Setting|null $image_settings Chainable access to the image_settings child setting.
  */
 class Settings {
 
@@ -338,7 +340,7 @@ class Settings {
 	/**
 	 * Get a setting value.
 	 *
-	 * @param [string] ...$slugs Additional slugs to get settings for.
+	 * @param string ...$slugs Additional slugs to get settings for.
 	 *
 	 * @return mixed
 	 */

@@ -15,6 +15,13 @@ use Cloudinary\UI\Component;
  * Class Setting
  *
  * @package Cloudinary\Settings
+ *
+ * Chainable child-setting access is provided dynamically via __get(). The
+ * properties documented below are the child slugs accessed directly in the
+ * codebase; the leading-underscore variant returns the child's value.
+ *
+ * @property-read Setting|null $overlay  Chainable access to the overlay child setting.
+ * @property-read mixed        $_overlay Value of the overlay child setting.
  */
 class Setting {
 

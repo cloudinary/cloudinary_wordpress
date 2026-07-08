@@ -575,6 +575,7 @@ class Deactivation {
 			$this->settings->delete( $slug );
 		}
 
+		/** @var \Cloudinary\Sync\Sync_Queue $queue */
 		$queue       = $this->plugin->get_component( 'sync' )->managers['queue'];
 		$all_threads = $queue->get_threads( 'all' );
 		foreach ( $all_threads as $threads ) {

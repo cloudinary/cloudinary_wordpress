@@ -14,7 +14,7 @@ parameters:
 		-
 			identifier: return.void
 			message: '#^Action callback returns .+ but should not return anything\.$#'
-	level: 1
+	level: 2
 	paths:
 		- php
 		- cloudinary.php
@@ -24,6 +24,7 @@ parameters:
 		- vendor/php-stubs/wp-cli-stubs/wp-cli-commands-stubs.php
 		- vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
 		- tests/phpstan/stubs/wpml.php
+		- tests/phpstan/stubs/elementor.php
 		- tests/phpstan/stubs/wpcom-vip.php
 		- tests/phpstan/stubs/constants.php
 	excludePaths:

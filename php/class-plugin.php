@@ -242,7 +242,7 @@ final class Plugin {
 			/**
 			 * Component that implements Settings.
 			 *
-			 * @var  Component\Settings $component
+			 * @var  Settings_Component $component
 			 */
 			$component->init_settings( $this->settings );
 
@@ -265,6 +265,7 @@ final class Plugin {
 		$components = array_filter( $this->components, array( $this, 'is_config_component' ) );
 
 		foreach ( $components as $slug => $component ) {
+			/** @var Config $component */
 			$component->get_config();
 		}
 	}
@@ -481,7 +482,7 @@ final class Plugin {
 		/**
 		 * An array of classes that implement the Notice interface.
 		 *
-		 * @var $components Notice[]
+		 * @var Notice[] $components
 		 */
 		$components = array_filter( $this->components, array( $this, 'is_notice_component' ) );
 		$default    = array(

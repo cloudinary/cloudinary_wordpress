@@ -33,6 +33,7 @@ class Cache_Status extends Media_Status {
 	 */
 	protected function box_status( $struct ) {
 
+		/** @var \Cloudinary\Cache $cache */
 		$cache        = $this->plugin->get_component( 'cache' );
 		$this->cache  = $cache->cache_point;
 		$cache_points = $this->cache->get_active_cache_points();
