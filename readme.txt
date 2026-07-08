@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: image-optimizer, core-web-vitals, video, resize, performance
 Requires at least: 5.6
-Tested up to: 6.9.4
+Tested up to: 7.0
 Requires PHP: 7.4
 Stable tag: STABLETAG
 License: GPLv2
@@ -145,6 +145,18 @@ Your site is now setup to start using Cloudinary.
 
 
 == Changelog ==
+
+= 3.3.4 (24 June 2026) =
+
+Fixes and Improvements:
+
+* Cloudinary fields on taxonomy term edit pages can now be collapsed
+* Improved the styling of the deactivation feedback form and made the Skip and deactivate option more
+ prominent
+* Resolved deprecation warnings when running on PHP 8.4
+* Fixed an asset synchronization issue that could result in duplicate assets being created
+* Fixed a fatal error that could occur during plugin activation in certain environments
+* Fixed an Elementor regression that caused dynamic background images to display the same image across all posts
 
 = 3.3.3 (29 April 2026) =
 

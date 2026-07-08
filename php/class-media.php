@@ -446,15 +446,26 @@ class Media extends Settings_Component implements Setup {
 			return $is_oversize[ $attachment_id ];
 		}
 
-		$file_size = $this->get_attachment_file_size( $attachment_id );
-		$max_size  = ( wp_attachment_is_image( $attachment_id ) ? 'image_max_size_bytes' : 'video_max_size_bytes' );
-		$limit     = $this->plugin->components['connect']->usage['media_limits'][ $max_size ];
+		$file_size    = $this->get_attachment_file_size( $attachment_id );
+		$max_size_key = ( wp_attachment_is_image( $attachment_id ) ? 'image_max_size_bytes' : 'video_max_size_bytes' );
+		$usage        = $this->plugin->components['connect']->usage;
+		$media_limits = is_array( $usage ) && isset( $usage['media_limits'] ) ? $usage['media_limits'] : null;
+
+		// If the limit isn't available yet (e.g. plugin not connected, or API
+		// returned an unexpected response), treat the asset as not oversize
+		// rather than fatal-erroring on a string offset.
+		if ( ! is_array( $media_limits ) || ! isset( $media_limits[ $max_size_key ] ) ) {
+			$is_oversize[ $attachment_id ] = false;
+
+			return $is_oversize[ $attachment_id ];
+		}
+
+		$limit = $media_limits[ $max_size_key ];
 
 		$is_oversize[ $attachment_id ] = $file_size > $limit;
 
 		if ( $is_oversize[ $attachment_id ] ) {
-			$max_size    = ( wp_attachment_is_image( $attachment_id ) ? 'image_max_size_bytes' : 'video_max_size_bytes' );
-			$max_size_hr = size_format( $this->plugin->components['connect']->usage['media_limits'][ $max_size ] );
+			$max_size_hr = size_format( $limit );
 			// translators: variable is file size.
 			$message = sprintf( __( 'File size exceeds the maximum of %s. This media asset will be served from WordPress.', 'cloudinary' ), $max_size_hr );
 			update_post_meta( $attachment_id, Sync::META_KEYS['sync_error'], $message );

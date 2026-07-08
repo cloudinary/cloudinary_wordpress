@@ -337,6 +337,9 @@ class Utils {
 		// Ensure that the plugin bootstrap is loaded.
 		get_plugin_instance()->init();
 
+		// Record the activation type for analytics before any install/upgrade runs.
+		Analytics::stash_activation();
+
 		$sql = self::get_table_sql();
 
 		if ( false === self::table_installed() ) {
