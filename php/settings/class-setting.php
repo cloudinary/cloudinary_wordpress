@@ -64,7 +64,7 @@ class Setting {
 	/**
 	 * Holds the parent.
 	 *
-	 * @var self
+	 * @var string
 	 */
 	protected $parent;
 
@@ -388,7 +388,7 @@ class Setting {
 	/**
 	 * Get the option parent.
 	 *
-	 * @return Settings
+	 * @return Setting|null
 	 */
 	public function get_option_parent() {
 		$root = explode( $this->separator, $this->slug, 2 )[0];

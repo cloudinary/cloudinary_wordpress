@@ -156,7 +156,7 @@ class Api {
 	 *
 	 * @var string|null
 	 */
-	private $pending_url = array();
+	private $pending_url = null;
 
 	/**
 	 * API constructor.
@@ -801,7 +801,7 @@ class Api {
 	 *
 	 * @param array $args Array of parameters to sign.
 	 *
-	 * @return array|\WP_Error
+	 * @return string
 	 */
 	public function sign( $args ) {
 
@@ -988,7 +988,7 @@ class Api {
 	 * @param array  $args   The optional arguments to send.
 	 * @param string $method The call HTTP method.
 	 *
-	 * @return array|\WP_Error
+	 * @return array|string|\WP_Error
 	 */
 	private function call( $url, $args = array(), $method = 'get' ) {
 		$args['method']             = strtoupper( $method );

@@ -67,7 +67,7 @@ class Global_Transformations {
 	/**
 	 * Holds the media settings.
 	 *
-	 * @var Setting
+	 * @var \Cloudinary\Settings
 	 */
 	protected $media_settings;
 
@@ -360,7 +360,7 @@ class Global_Transformations {
 	 *
 	 * @param int $post_id The post ID.
 	 *
-	 * @return array|false|int|\WP_Error|\WP_Term[]
+	 * @return array<array{term: \WP_Term, value: mixed}>
 	 */
 	public function get_terms( $post_id ) {
 		// Get terms for this post on load.

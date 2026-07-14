@@ -47,7 +47,7 @@ class Page extends Panel {
 	 *
 	 * @param array $struct The array structure.
 	 *
-	 * @return array
+	 * @return array|null
 	 */
 	protected function form( $struct ) {
 		if ( $this->setting->has_param( 'has_tabs' ) ) {
@@ -72,7 +72,7 @@ class Page extends Panel {
 	 *
 	 * @param array $struct The array structure.
 	 *
-	 * @return array
+	 * @return array|null
 	 */
 	protected function notice( $struct ) {
 		if ( Utils::get_active_setting() !== $this->setting ) {

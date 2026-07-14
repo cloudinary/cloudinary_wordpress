@@ -159,6 +159,11 @@ class Video {
 		// If not CLD video init, return default.
 		if ( ! $this->player_enabled() ) {
 			if ( empty( $attr['cloudinary'] ) ) {
+				/**
+				 * The attachment metadata.
+				 *
+				 * @var array $video
+				 */
 				$video                        = wp_get_attachment_metadata( $attr['id'] );
 				$url                          = $this->media->cloudinary_url( $attr['id'] );
 				$attr[ $video['fileformat'] ] = strtok( $url, '?' );
@@ -400,6 +405,11 @@ class Video {
 				$params['source']['transformation'] = $transformations;
 			}
 			// Set the source_type.
+			/**
+			 * The attachment metadata.
+			 *
+			 * @var array $video
+			 */
 			$video = wp_get_attachment_metadata( $attachment_id );
 			if ( ! empty( $video['fileformat'] ) && 'off' === $streaming['adaptive_streaming'] ) {
 				$params['source']['source_types'][] = $video['fileformat'];

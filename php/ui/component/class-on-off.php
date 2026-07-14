@@ -231,7 +231,7 @@ class On_Off extends Text {
 	 *
 	 * @param string $value The value to sanitize.
 	 *
-	 * @return bool
+	 * @return string
 	 */
 	public function sanitize_value( $value ) {
 		$allowed = array(

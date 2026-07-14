@@ -67,7 +67,7 @@ class Sync extends Text {
 	 *
 	 * @param array $struct The array structure.
 	 *
-	 * @return array
+	 * @return array|null
 	 */
 	protected function action( $struct ) {
 
