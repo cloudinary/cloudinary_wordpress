@@ -3253,7 +3253,7 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function upgrade_settings( $previous_version, $new_version ) {
 
-		if ( '2.4' === $previous_version ) {
+		if ( version_compare( $previous_version, '2.5', '<' ) ) {
 			// Setup new data from old.
 			$images    = get_option( 'cloudinary_global_transformations', array() );
 			$video     = get_option( self::GLOBAL_VIDEO_TRANSFORMATIONS, array() );
