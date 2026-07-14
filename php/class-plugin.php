@@ -20,7 +20,6 @@ use Cloudinary\Media\Gallery;
 use Cloudinary\Sync\Storage;
 use Cloudinary\UI\State;
 use const E_USER_WARNING;
-use const WPCOM_IS_VIP_ENV;
 
 /**
  * Main plugin bootstrap file.
@@ -45,7 +44,7 @@ final class Plugin {
 	/**
 	 * The core Settings object.
 	 *
-	 * @var Settings
+	 * @var Settings|null
 	 */
 	public $settings;
 
@@ -147,7 +146,7 @@ final class Plugin {
 	 *
 	 * @param mixed $component The component.
 	 *
-	 * @return Admin|CLD_Assets|Connect|Dashboard|Deactivation|Delivery|Extensions|Gallery|Lazy_Load|Media|Meta_Box|Relate|Report|Responsive_Breakpoints|REST_API|State|Storage|SVG|Sync|URL|null
+	 * @return Admin|CLD_Assets|Connect|Cron|Dashboard|Deactivation|Delivery|Extensions|Gallery|Lazy_Load|Media|Meta_Box|Relate|Report|Responsive_Breakpoints|REST_API|State|Storage|SVG|Sync|URL|null
 	 */
 	public function get_component( $component ) {
 		$return = null;
@@ -699,7 +698,7 @@ final class Plugin {
 	 * @return bool
 	 */
 	public function is_wpcom_vip_prod() {
-		return ( defined( '\WPCOM_IS_VIP_ENV' ) && WPCOM_IS_VIP_ENV );
+		return ( defined( '\WPCOM_IS_VIP_ENV' ) && constant( '\WPCOM_IS_VIP_ENV' ) ); // @phpstan-ignore booleanAnd.rightAlwaysFalse
 	}
 
 	/**
@@ -734,7 +733,7 @@ final class Plugin {
 	 * Output script data if set.
 	 */
 	public function print_script_data() {
-		if ( ! isset( $this->settings ) || ! method_exists( $this->settings, 'get_param' ) ) {
+		if ( ! isset( $this->settings ) ) {
 			return;
 		}
 

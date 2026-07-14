@@ -755,11 +755,12 @@ class Utils {
 	 * @return WP_Post|null
 	 */
 	public static function get_post_parent( $post = null ) {
-		if ( is_callable( 'get_post_parent' ) ) {
+		// get_post_parent() was added in WP 6.0; keep a fallback for older supported versions.
+		if ( is_callable( 'get_post_parent' ) ) { // @phpstan-ignore function.alreadyNarrowedType
 			return get_post_parent( $post );
 		}
 
-		$wp_post = get_post( $post );
+		$wp_post = get_post( $post ); // @phpstan-ignore deadCode.unreachable
 		return ! empty( $wp_post->post_parent ) ? get_post( $wp_post->post_parent ) : null;
 	}
 

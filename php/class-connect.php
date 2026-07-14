@@ -46,7 +46,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 *
 	 * @since   0.1
 	 *
-	 * @var     array
+	 * @var     array|mixed
 	 */
 	public $usage;
 
@@ -156,7 +156,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		/**
 		 * The analytics component.
 		 *
-		 * @var \Cloudinary\Analytics $analytics
+		 * @var \Cloudinary\Analytics|null $analytics
 		 */
 		$analytics = $this->plugin->get_component( 'analytics' );
 		if ( $analytics ) {
@@ -248,7 +248,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		/**
 		 * The analytics component.
 		 *
-		 * @var \Cloudinary\Analytics $analytics
+		 * @var \Cloudinary\Analytics|null $analytics
 		 */
 		$analytics = $this->plugin->get_component( 'analytics' );
 		if ( $analytics ) {
@@ -774,7 +774,6 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			$stats = $this->api->usage();
 			if (
 				! is_wp_error( $stats )
-				&& is_array( $stats )
 				&& isset( $stats['media_limits'] )
 				&& is_array( $stats['media_limits'] )
 			) {

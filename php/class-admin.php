@@ -367,7 +367,7 @@ class Admin {
 	/**
 	 * Filter out non-setting params.
 	 *
-	 * @param numeric-string $key The key to filter out.
+	 * @param int|string $key The key to filter out.
 	 *
 	 * @return bool
 	 */
@@ -465,12 +465,12 @@ class Admin {
 	/**
 	 * Set an error/notice for a setting.
 	 *
-	 * @param string $error_code    The error code/slug.
-	 * @param string $error_message The error text/message.
-	 * @param string $type          The error type.
-	 * @param bool   $dismissible   If notice is dismissible.
-	 * @param int    $duration      How long it's dismissible for.
-	 * @param string $icon          Optional icon.
+	 * @param string       $error_code    The error code/slug.
+	 * @param string|array $error_message The error text/message.
+	 * @param string       $type          The error type.
+	 * @param bool         $dismissible   If notice is dismissible.
+	 * @param int          $duration      How long it's dismissible for.
+	 * @param string       $icon          Optional icon.
 	 */
 	public function add_admin_notice( $error_code, $error_message, $type = 'error', $dismissible = true, $duration = 0, $icon = null ) {
 

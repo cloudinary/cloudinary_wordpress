@@ -503,11 +503,9 @@ class Settings {
 				$set = true;
 			}
 		} else {
-			$found = $this->find_setting( $slug );
-			if ( $found ) {
-				$storage_path = $found->get_param( self::META_KEYS['storage'], $found->get_slug() );
-				$set          = $this->set_value( $storage_path, $value );
-			}
+			$found        = $this->find_setting( $slug );
+			$storage_path = $found->get_param( self::META_KEYS['storage'], $found->get_slug() );
+			$set          = $this->set_value( $storage_path, $value );
 		}
 
 		return $set;

@@ -360,6 +360,6 @@ class Folder_Table extends Table {
 	 */
 	protected function pre_render() {
 		wp_add_inline_script( 'cloudinary', 'var CLDCACHE = ' . wp_json_encode( $this->export ), 'before' );
-		parent::pre_render();
+		parent::pre_render(); // @phpstan-ignore staticMethod.resultUnused
 	}
 }

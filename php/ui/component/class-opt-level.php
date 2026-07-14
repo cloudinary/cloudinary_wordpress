@@ -199,7 +199,7 @@ class Opt_Level extends Line_Stat {
 		foreach ( $this->settings_slugs as $slug ) {
 			$setting      = $this->plugin_settings->get_setting( $slug );
 			$meet_depends = true;
-			if ( null !== $setting && ! is_wp_error( $setting ) ) {
+			if ( null !== $setting ) {
 				$params = $setting->get_params();
 				if ( ! empty( $params['depends'] ) ) {
 					foreach ( $params['depends'] as $depend ) {

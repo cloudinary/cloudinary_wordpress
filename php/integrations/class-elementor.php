@@ -63,7 +63,8 @@ class Elementor extends Integrations {
 	 * @return void
 	 */
 	public function replace_background_images_in_css( $post_css, $element ) {
-		if ( ! method_exists( $element, 'get_settings_for_display' ) ) {
+		// Elementor is optional; guard against API differences across versions.
+		if ( ! method_exists( $element, 'get_settings_for_display' ) ) { // @phpstan-ignore function.alreadyNarrowedType
 			return;
 		}
 
@@ -184,7 +185,8 @@ class Elementor extends Integrations {
 	 * @return string|null
 	 */
 	private function find_unique_selector( $post_css, $element ) {
-		if ( ! method_exists( $element, 'get_unique_selector' ) ) {
+		// Elementor is optional; guard against API differences across versions.
+		if ( ! method_exists( $element, 'get_unique_selector' ) ) { // @phpstan-ignore function.alreadyNarrowedType
 			return null;
 		}
 
@@ -203,7 +205,8 @@ class Elementor extends Integrations {
 	 * @return bool True if the rule could be overridden, false if the internal Elementor methods aren't available.
 	 */
 	private function override_elementor_css_rule( $post_css, $css_selector, $css_rule, $media_query ) {
-		if ( ! method_exists( $post_css, 'get_stylesheet' ) ) {
+		// Elementor is optional; guard against API differences across versions.
+		if ( ! method_exists( $post_css, 'get_stylesheet' ) ) { // @phpstan-ignore function.alreadyNarrowedType
 			return false;
 		}
 

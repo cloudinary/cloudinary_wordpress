@@ -142,6 +142,11 @@ class Download_Sync {
 			$source = wp_get_attachment_url( $attachment_id );
 		}
 
+		/**
+		 * Raw attachment metadata; may include keys beyond core's documented shape.
+		 *
+		 * @var array<string, mixed>|false $meta
+		 */
 		$meta = wp_get_attachment_metadata( $attachment_id );
 		if ( ! empty( $meta['file'] ) ) {
 			$file_name = isset( $meta['original_image'] ) ? wp_basename( $meta['original_image'] ) : wp_basename( $meta['file'] );

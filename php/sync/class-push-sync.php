@@ -206,7 +206,7 @@ class Push_Sync {
 		/**
 		 * The analytics component.
 		 *
-		 * @var \Cloudinary\Analytics $analytics
+		 * @var \Cloudinary\Analytics|null $analytics
 		 */
 		$analytics = $this->plugin->get_component( 'analytics' );
 		if ( $analytics ) {
