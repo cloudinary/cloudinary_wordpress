@@ -111,11 +111,18 @@ Files included in the release package are defined in the `gruntfile.js` under th
 
 ### Deployment to WordPress.org
 
-1. Tag a release from the `master` branch on GitHub.
+Deployment is automated via the `Deploy to WordPress.org Repository` GitHub Actions workflow (`.github/workflows/deploy-to-wp-org.yml`):
 
-2. Run `npm run deploy` to deploy the version referenced in the `cloudinary.php` file of the current branch.
+1. Bump the version in `.version` on `master` (this is what gets checked against the release tag, and what `readme.txt`/`cloudinary.php` are stamped with during the build).
 
-3. Run `npm run deploy-assets` to deploy just the WP.org plugin assets such as screenshots, icons and banners.
+2. Create and publish a GitHub Release from `master`, with a tag matching that version (e.g. `3.3.4` or `v3.3.4`). Publishing the release triggers the workflow, which builds the plugin, deploys it to the WP.org SVN repository, and attaches the built zip to the release.
+
+   - Marking the release as a **pre-release** runs the same workflow in dry-run mode: it builds and verifies everything but skips the actual SVN commit, which is the safe way to test a release without shipping it to WP.org.
+   - The workflow can also be run manually from the Actions tab (`workflow_dispatch`) against any branch/tag, defaulting to a dry-run, to exercise the pipeline without publishing a GitHub release at all.
+
+3. If you need to deploy from a local machine instead (e.g. as a fallback), run `npm run deploy`, which builds and runs `grunt deploy` using SVN credentials configured locally.
+
+4. Run `npm run deploy-assets` to deploy just the WP.org plugin assets such as screenshots, icons and banners.
 
 ## End-to-end testing
 
