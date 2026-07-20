@@ -158,8 +158,8 @@ class Assets extends Settings_Component {
 		add_filter( 'cloudinary_set_usable_asset', array( $this, 'check_usable_asset' ) );
 		// Actions.
 		add_action( 'cloudinary_ready', array( $this, 'setup' ) );
-		add_action( 'cloudinary_thread_queue_details_query', array( $this, 'connect_post_type' ) );
-		add_action( 'cloudinary_build_queue_query', array( $this, 'connect_post_type' ) );
+		add_filter( 'cloudinary_thread_queue_details_query', array( $this, 'connect_post_type' ) );
+		add_filter( 'cloudinary_build_queue_query', array( $this, 'connect_post_type' ) );
 		add_action( 'cloudinary_string_replace', array( $this, 'add_url_replacements' ), 20 );
 		add_action( 'shutdown', array( $this, 'meta_updates' ) );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_cache' ), 100 );

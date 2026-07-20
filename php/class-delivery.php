@@ -411,10 +411,10 @@ class Delivery implements Setup {
 		 *
 		 * @hook   cloudinary_is_deliverable
 		 *
-		 * @param $is            {bool} The default value.
-		 * @param $attachment_id {int}  The attachment ID.
+		 * @param bool $is The default value.
+		 * @param int $attachment_id  The attachment ID.
 		 *
-		 * @return {bool}
+		 * @return bool
 		 */
 		return apply_filters( 'cloudinary_is_deliverable', $is, $attachment_id );
 	}
@@ -724,7 +724,7 @@ class Delivery implements Setup {
 
 		add_filter( 'cloudinary_current_post_id', array( $this, 'get_current_post_id' ) );
 		add_filter( 'the_content', array( $this, 'add_post_id' ) );
-		add_action( 'wp_resource_hints', array( $this, 'dns_prefetch' ), 10, 2 );
+		add_filter( 'wp_resource_hints', array( $this, 'dns_prefetch' ), 10, 2 );
 
 		$metadata = Utils::METADATA;
 
@@ -759,9 +759,9 @@ class Delivery implements Setup {
 		 * @since 3.2.12
 		 * @default array ( 'dns-prefetch', 'preconnect' )
 		 *
-		 * @param $types {array} The types of resource hints to use.
+		 * @param array $types The types of resource hints to use.
 		 *
-		 * @return {array} The modified resource hints to use.
+		 * @return array The modified resource hints to use.
 		 */
 		$resource_hints = apply_filters( 'cloudinary_dns_prefetch_types', array( 'dns-prefetch', 'preconnect' ) );
 
@@ -861,7 +861,7 @@ class Delivery implements Setup {
 		 * @hook  cloudinary_init_delivery
 		 * @since 2.7.5
 		 *
-		 * @param $delivery {Delivery} The delivery object.
+		 * @param Delivery $delivery The delivery object.
 		 */
 		do_action( 'cloudinary_init_delivery', $this );
 	}
@@ -952,9 +952,9 @@ class Delivery implements Setup {
 					 * @hook cloudinary_contextualized_post_id
 					 * @since 3.2.0
 					 *
-					 * @param $post_id {int} The post ID.
+					 * @param int $post_id The post ID.
 					 *
-					 * @return {int}
+					 * @return int
 					 */
 					$post_id = apply_filters( 'cloudinary_contextualized_post_id', $result->post_id );
 
@@ -1095,10 +1095,10 @@ class Delivery implements Setup {
 			 * @hook   cloudinary_delivery_get_id
 			 * @since  2.7.6
 			 *
-			 * @param $attachment_id {int}    The attachment ID.
-			 * @param $tag_element   {array}  The tag element.
+			 * @param int $attachment_id    The attachment ID.
+			 * @param array $tag_element  The tag element.
 			 *
-			 * @return {int|false}
+			 * @return int|false
 			 */
 			$set['id'] = apply_filters( 'cloudinary_delivery_get_id', $set['id'], $set );
 			if ( empty( $set['id'] ) ) {
@@ -1234,8 +1234,8 @@ class Delivery implements Setup {
 		 * @since 3.2.4
 		 * @default {false}
 		 *
-		 * @param $skip        {bool} True to unset attributes.
-		 * @param $tag_element {array} The tag element.
+		 * @param bool $skip True to unset attributes.
+		 * @param array $tag_element The tag element.
 		 *
 		 * @retun {bool}
 		 */
@@ -1332,8 +1332,8 @@ class Delivery implements Setup {
 		 * @since 3.2.4
 		 * @default {false}
 		 *
-		 * @param $unset       {bool} True to unset attributes.
-		 * @param $tag_element {array} The tag element.
+		 * @param bool $unset True to unset attributes.
+		 * @param array $tag_element The tag element.
 		 *
 		 * @retun {bool}
 		 */
@@ -1344,7 +1344,6 @@ class Delivery implements Setup {
 				$tag_element['atts']['width'],
 				$tag_element['atts']['height'],
 				$tag_element['atts']['data-crop'],
-				$tag_element['atts']['srcset'],
 				$tag_element['atts']['data-responsive']
 			);
 
@@ -1382,9 +1381,9 @@ class Delivery implements Setup {
 			 * @hook   cloudinary_edit_asset_permalink
 			 * @since  3.2.0
 			 *
-			 * @param $permalink {string} The permalink.
+			 * @param string $permalink The permalink.
 			 *
-			 * @return {string}
+			 * @return string
 			 */
 			$permalink = apply_filters( 'cloudinary_edit_asset_permalink', add_query_arg( 'asset', $tag_element['id'], $base_url ) );
 
@@ -1399,9 +1398,9 @@ class Delivery implements Setup {
 		 * @hook   cloudinary_bypass_seo_url
 		 * @since  3.1.5
 		 *
-		 * @param $bypass_seo_url {bool} Whether to bypass SEO URLs.
+		 * @param bool $bypass_seo_url Whether to bypass SEO URLs.
 		 *
-		 * @return {bool}
+		 * @return bool
 		 */
 		$bypass_seo_url = apply_filters( 'cloudinary_bypass_seo_url', false );
 
@@ -1437,9 +1436,9 @@ class Delivery implements Setup {
 		 * @since  3.0.0
 		 * @default {true}
 		 *
-		 * @param $apply {bool}  True to apply, false to skip.
+		 * @param bool $apply  True to apply, false to skip.
 		 *
-		 * @return {bool}
+		 * @return bool
 		 */
 		if ( apply_filters( 'cloudinary_apply_breakpoints', true ) ) {
 			$meta = wp_get_attachment_metadata( $tag_element['id'] );
@@ -1468,9 +1467,9 @@ class Delivery implements Setup {
 		 * @hook   cloudinary_pre_image_tag | cloudinary_pre_video_tag
 		 * @since  2.7.5
 		 *
-		 * @param $tag_element {array}  The tag_element (tag + attributes array).
+		 * @param array $tag_element  The tag_element (tag + attributes array).
 		 *
-		 * @return {array}
+		 * @return array
 		 */
 		$tag_element = apply_filters( "cloudinary_pre_{$tag_element['type']}_tag", $tag_element );
 
@@ -1489,10 +1488,10 @@ class Delivery implements Setup {
 		 * @hook   cloudinary_image_tag | cloudinary_video_tag
 		 * @since  3.0.0
 		 *
-		 * @param $replace     {string} The new HTML tag.
-		 * @param $tag_element {array}  The tag_element (tag + attributes array).
+		 * @param string $replace The new HTML tag.
+		 * @param array $tag_element  The tag_element (tag + attributes array).
 		 *
-		 * @return {array}
+		 * @return array
 		 */
 		return apply_filters( "cloudinary_{$tag_element['type']}_tag", $replace, $tag_element );
 	}
@@ -1513,10 +1512,10 @@ class Delivery implements Setup {
 		 * @since 3.2.6
 		 * @default {false}
 		 *
-		 * @param $skip    {bool}  True to skip parsing.
-		 * @param $element {string} The element to parse.
+		 * @param bool $skip  True to skip parsing.
+		 * @param string $element The element to parse.
 		 *
-		 * @return {bool}
+		 * @return bool
 		 */
 		if ( apply_filters( 'cloudinary_skip_parse_element', false, $element ) ) {
 			return null;
@@ -1533,7 +1532,7 @@ class Delivery implements Setup {
 		 * @since 3.1.3
 		 * @default {false}
 		 *
-		 * @param $enabeld {bool} Is the Crop and Gravity control enabled?
+		 * @param bool $enabeld Is the Crop and Gravity control enabled?
 		 *
 		 * @retrun {bool}
 		 */
@@ -1712,9 +1711,9 @@ class Delivery implements Setup {
 		 * @hook   cloudinary_parse_element
 		 * @since  3.0.9
 		 *
-		 * @param $tag_element {array} The tag element.
+		 * @param array $tag_element The tag element.
 		 *
-		 * @return {array} The tag element.
+		 * @return array The tag element.
 		 */
 		$tag_element = apply_filters( 'cloudinary_parse_element', $tag_element );
 
@@ -1775,10 +1774,10 @@ class Delivery implements Setup {
 		 * @hook   cloudinary_is_content_dir
 		 * @since  2.7.6
 		 *
-		 * @param $is_local {bool}   If the url is a local asset.
-		 * @param $url      {string} The url.
+		 * @param bool $is_local   If the url is a local asset.
+		 * @param string $url The url.
 		 *
-		 * @return {bool}
+		 * @return bool
 		 */
 		return apply_filters( 'cloudinary_is_content_dir', $is_local, $url );
 	}
@@ -1807,9 +1806,9 @@ class Delivery implements Setup {
 			 * @hook   cloudinary_allowed_extensions
 			 * @since  3.0.0
 			 *
-			 * @param $allowed_types {array}  Array of allowed file extensions.
+			 * @param array $allowed_types  Array of allowed file extensions.
 			 *
-			 * @return {array}
+			 * @return array
 			 */
 			$allowed_types = apply_filters( 'cloudinary_allowed_extensions', $allowed_types );
 		}
@@ -1858,9 +1857,9 @@ class Delivery implements Setup {
 		 * @hook   cloudinary_set_usable_asset
 		 * @since  3.0.2
 		 *
-		 * @param $item {array} The found asset array.
+		 * @param object $item The found asset object.
 		 *
-		 * @return {array}
+		 * @return object
 		 */
 		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
 
@@ -1870,9 +1869,9 @@ class Delivery implements Setup {
 		 * @hook   cloudinary_content_url
 		 * @since  3.1.6
 		 *
-		 * @param $url {string} The default content_url.
+		 * @param string $url The default content_url.
 		 *
-		 * @return {string}
+		 * @return string
 		 */
 		$content_url = apply_filters( 'cloudinary_content_url', content_url() );
 
@@ -1889,11 +1888,11 @@ class Delivery implements Setup {
 		 * @hook   cloudinary_delivery_searchable_url
 		 * @since  3.1.6
 		 *
-		 * @param $url         {string} The URL to be searched for and prepared to be delivered by Cloudinary.
-		 * @param $item        {array}  The found asset array.
-		 * @param $content_url {string} The content URL.
+		 * @param string $url         The URL to be searched for and prepared to be delivered by Cloudinary.
+		 * @param object $item        The found asset object.
+		 * @param string $content_url The content URL.
 		 *
-		 * @return {string}
+		 * @return string
 		 */
 		$url = apply_filters( 'cloudinary_delivery_searchable_url', $url, $item, $content_url );
 

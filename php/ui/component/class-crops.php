@@ -19,9 +19,9 @@ use function Cloudinary\get_plugin_instance;
 class Crops extends Select {
 
 	/**
-	 * Holds the demo file name.
+	 * Holds the demo file names.
 	 *
-	 * @var string
+	 * @var array
 	 */
 	protected $demo_files = array(
 		'docs/addons/objectdetection/dirt-road-1851258_1280.jpg',
@@ -124,9 +124,9 @@ class Crops extends Select {
 		 * @hook   cloudinary_registered_sizes
 		 * @since  3.1.3
 		 *
-		 * @param $demo_files {array} array of demo files.
+		 * @param array $demo_files array of demo files.
 		 *
-		 * @return {array}
+		 * @return array
 		 */
 		$examples = apply_filters( 'cloudinary_demo_crop_files', $this->demo_files );
 

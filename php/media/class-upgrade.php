@@ -64,8 +64,8 @@ class Upgrade {
 			 * @hook  cloudinary_upgrade_asset
 			 * @since 3.0.5
 			 *
-			 * @param $attachment_id {int} The attachment ID.
-			 * @param $version       {string} The current plugin version.
+			 * @param int $attachment_id The attachment ID.
+			 * @param string $version The current plugin version.
 			 */
 			do_action( 'cloudinary_upgrade_asset', $attachment_id, $this->media->plugin->version );
 
@@ -201,9 +201,18 @@ class Upgrade {
 	 */
 	public function migrate_legacy_meta( $attachment_id ) {
 
+		/**
+		 * The raw attachment metadata, which may contain plugin-specific keys
+		 * beyond WordPress core's documented shape.
+		 *
+		 * @var array $old_meta
+		 */
 		$old_meta = wp_get_attachment_metadata( $attachment_id, true );
-		$v2_meta  = get_post_meta( $attachment_id, Sync::META_KEYS['cloudinary_legacy'], true );
-		$v3_meta  = array();
+		if ( ! is_array( $old_meta ) ) {
+			$old_meta = array();
+		}
+		$v2_meta = get_post_meta( $attachment_id, Sync::META_KEYS['cloudinary_legacy'], true );
+		$v3_meta = array();
 
 		// Direct from old meta to v3, create v2 to chain the upgrade path.
 		if ( isset( $old_meta[ Sync::META_KEYS['cloudinary_legacy'] ] ) && empty( $v2_meta ) ) {

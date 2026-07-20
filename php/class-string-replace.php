@@ -81,7 +81,7 @@ class String_Replace implements Setup {
 	 * Add Public Filters.
 	 */
 	protected function public_filters() {
-		add_action( 'template_include', array( $this, 'init_debug' ), PHP_INT_MAX );
+		add_filter( 'template_include', array( $this, 'init_debug' ), PHP_INT_MAX );
 		if ( ! defined( 'REST_REQUEST' ) || ! REST_REQUEST ) { // Not needed on REST API.
 			add_action( 'parse_request', array( $this, 'init' ), - 1000 ); // Not crazy low, but low enough to catch most cases, but not too low that it may break AMP.
 		}
@@ -275,8 +275,8 @@ class String_Replace implements Setup {
 		 * @hook  cloudinary_string_replace
 		 * @since 3.0.3 Added the `$context` argument.
 		 *
-		 * @param $content {string} The html of the page.
-		 * @param $context {string} The render context.
+		 * @param string $content The html of the page.
+		 * @param string $context The render context.
 		 */
 		do_action( 'cloudinary_string_replace', $content, $context );
 	}
