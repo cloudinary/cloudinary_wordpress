@@ -2,6 +2,8 @@ name: CI
 
 on:
   push:
+    branches: [ develop, master ]
+  workflow_call:
   pull_request:
 
 jobs:
