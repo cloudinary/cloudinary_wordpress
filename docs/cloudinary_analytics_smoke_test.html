@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Filter: cloudinary_asset_state - Cloudinary Docs</title>
+	<title>Filter: cloudinary_analytics_smoke_test - Cloudinary Docs</title>
 
 	<script src="scripts/prettify/prettify.js"></script>
 	<script src="scripts/prettify/lang-css.js"></script>
@@ -22,7 +22,7 @@
 <div id="main">
 
 	
-	<h1 class="page-title">Filter: cloudinary_asset_state</h1>
+	<h1 class="page-title">Filter: cloudinary_analytics_smoke_test</h1>
 	
 
 	
@@ -44,14 +44,14 @@
 
     
 
-    <h4 class="name" id="cloudinary_asset_state">apply_filters( 'cloudinary_asset_state', <span class="signature">$state, $attachment_id )</span><span class="type-signature"> &rarr; {array}</span></h4>
+    <h4 class="name" id="cloudinary_analytics_smoke_test">apply_filters( 'cloudinary_analytics_smoke_test', <span class="signature">$enabled )</span><span class="type-signature"> &rarr; {bool}</span></h4>
 
     
 
 
 
 <div class="description">
-    Filter the state of the asset.
+    Filter whether the analytics smoke-test event is emitted.
 </div>
 
 
@@ -85,13 +85,13 @@
 
         <tr>
             
-                <td class="name"><code>$state</code></td>
+                <td class="name"><code>$enabled</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">int</span>
+<span class="param-type">bool</span>
 
 
             
@@ -101,30 +101,7 @@
 
             
 
-            <td class="description last">The attachment state.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>$attachment_id</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">int</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">The attachment ID.</td>
+            <td class="description last">Whether to emit the smoke-test event.</td>
         </tr>
 
     
@@ -140,6 +117,9 @@
 
     
 
+    
+    <dt class="tag-since">Since:</dt>
+    <dd class="tag-since"><ul class="dummy"><li>3.3.5</li></ul></dd>
     
 
     
@@ -165,7 +145,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="php_class-sync.php.html">php/class-sync.php</a>, <a href="php_class-sync.php.html#line775">line 775</a>
+        <a href="php_class-analytics.php.html">php/class-analytics.php</a>, <a href="php_class-analytics.php.html#line458">line 458</a>
     </li></ul></dd>
     
 
@@ -199,7 +179,7 @@
     </dt>
     <dd>
         
-<span class="param-type">array</span>
+<span class="param-type">bool</span>
 
 
     </dd>
