@@ -146,6 +146,12 @@ Your site is now setup to start using Cloudinary.
 
 == Changelog ==
 
+= 3.3.5 (20 July 2026) =
+
+Fixes and Improvements:
+
+* Behind-the-scenes data handling improvements
+
 = 3.3.4 (24 June 2026) =
 
 Fixes and Improvements:
