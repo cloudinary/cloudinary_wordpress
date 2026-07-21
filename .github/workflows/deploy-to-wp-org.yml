@@ -78,15 +78,21 @@ jobs:
       - name: Prepare build directory
         run: npx grunt prepare
 
+      # Read once so both the tag check and the deploy step use the exact same value, rather
+      # than letting the deploy action derive its own version from GITHUB_REF - that only works
+      # when triggered from a tag push, and yields a bogus value like "refs/heads/master" (which
+      # SVN then can't use as a tag path) on a workflow_dispatch run against a branch.
+      - name: Read plugin version
+        run: echo "PLUGIN_VERSION=$(cat .version | tr -d '[:space:]')" >> "$GITHUB_ENV"
+
       # Ensure the version in the .version file matches the tag of the release.
       # Skipped for manual runs, which may not be run against a release tag.
       - name: Verify version matches tag
         if: github.event_name == 'release'
         run: |
           TAG="${GITHUB_REF_NAME#v}"
-          FILE_VERSION=$(cat .version | tr -d '[:space:]')
-          if [ "$TAG" != "$FILE_VERSION" ]; then
-            echo "::error::Tag $TAG does not match .version $FILE_VERSION"
+          if [ "$TAG" != "$PLUGIN_VERSION" ]; then
+            echo "::error::Tag $TAG does not match .version $PLUGIN_VERSION"
             exit 1
           fi
 
@@ -102,6 +108,7 @@ jobs:
         env:
           BUILD_DIR: 'build'
           SLUG: 'cloudinary-image-management-and-manipulation-in-the-cloud-cdn'
+          VERSION: ${{ env.PLUGIN_VERSION }}
           # Use secrets to authenticate with WP.org.
           SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
