@@ -227,7 +227,7 @@ class Cache extends Settings_Component implements Setup {
 			add_action( 'admin_init', array( $this, 'admin_rewrite' ), 0 );
 		}
 		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
-		add_action( 'http_request_args', array( $this, 'prevent_caching_internal_requests' ), 10, 5 ); // phpcs:ignore WordPressVIPMinimum.Hooks.RestrictedHooks.http_request_args
+		add_filter( 'http_request_args', array( $this, 'prevent_caching_internal_requests' ), 10, 2 ); // phpcs:ignore WordPressVIPMinimum.Hooks.RestrictedHooks.http_request_args
 	}
 
 	/**
@@ -261,9 +261,9 @@ class Cache extends Settings_Component implements Setup {
 		 * @hook    cloudinary_bypass_cache
 		 * @default false
 		 *
-		 * @param $bypass {bool} True to bypass, false to not.
+		 * @param bool $bypass True to bypass, false to not.
 		 *
-		 * @return  {bool}
+		 * @return  bool
 		 */
 		return apply_filters( 'cloudinary_bypass_cache', ! is_null( $bypass ) );
 	}
@@ -486,9 +486,9 @@ class Cache extends Settings_Component implements Setup {
 		 * @hook    cloudinary_plugin_asset_cache_inline_types
 		 * @default array()
 		 *
-		 * @param $inline_types {array} The types of files to be encoded inline.
+		 * @param array $inline_types The types of files to be encoded inline.
 		 *
-		 * @return  {array}
+		 * @return  array
 		 */
 		return apply_filters( 'cloudinary_plugin_asset_cache_inline_types', $inline_types );
 	}
@@ -577,9 +577,9 @@ class Cache extends Settings_Component implements Setup {
 		 * @hook    cloudinary_plugin_asset_cache_filters
 		 * @default array()
 		 *
-		 * @param $default_filters {array} The types of files to be filtered.
+		 * @param array $default_filters The types of files to be filtered.
 		 *
-		 * @return  {array}
+		 * @return  array
 		 */
 		return apply_filters( 'cloudinary_plugin_asset_cache_filters', $default_filters );
 	}

@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cloudinary STABLETAG\n"
 "Report-Msgid-Bugs-To: https://github.com/cloudinary/cloudinary_wordpress\n"
-"POT-Creation-Date: 2026-04-27 07:42:18+00:00\n"
+"POT-Creation-Date: 2026-07-07 08:46:01+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -24,7 +24,767 @@ msgstr ""
 "X-Textdomain-Support: yes\n"
 "X-Generator: grunt-wp-i18n 1.0.4\n"
 
-#: cloudinary.php:63
+#: .wp-env/themes/nbcustrap-child-main/archive.php:37
+msgid "Currently browsing "
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/author.php:119
+#. translators: %s: author name
+msgid "Latest Posts from %s"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/functions.php:93
+msgid "Off Canvas Menu"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/functions.php:178
+msgid "Programs"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/functions.php:179
+msgid "Program"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/functions.php:220
+msgid "Contests"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/functions.php:221
+msgid "Contest"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/functions.php:251
+msgid "Courses"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/functions.php:252
+msgid "Course"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/functions.php:310
+msgid "ago"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/functions.php:1918
+#: .wp-env/themes/understrap/inc/pagination.php:56
+msgid "Posts navigation"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/global-templates/navbar-collapse-bootstrap5.php:18
+#: .wp-env/themes/understrap/global-templates/navbar-collapse-bootstrap4.php:18
+#: .wp-env/themes/understrap/global-templates/navbar-collapse-bootstrap5.php:18
+#: .wp-env/themes/understrap/global-templates/navbar-offcanvas-bootstrap5.php:18
+msgid "Main Navigation"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/header.php:54
+#: .wp-env/themes/understrap/header.php:33
+msgid "Skip to content"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/inc/template-tags.php:142
+#: .wp-env/themes/nbcustrap-child-main/inc/template-tags.php:157
+#: .wp-env/themes/nbcustrap-child-main/loop-templates/content-author.php:39
+#: .wp-env/themes/nbcustrap-child-main/modules.php:111
+#: .wp-env/themes/nbcustrap-child-main/single.php:43
+#: .wp-env/themes/nbcustrap-child-main/single.php:296
+#. translators: %s: Categories of current post
+#. translators: %s: Tags of current post
+#. translators: %s: Categories of current post
+#. translators: %s: Categories of current post
+#. translators: %s: Tags of current post
+msgid "%s"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/inc/template-tags.php:176
+#: .wp-env/themes/understrap/inc/template-tags.php:136
+#. translators: %s post title
+msgid "Leave a comment<span class=\"screen-reader-text\"> on %s</span>"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/inc/template-tags.php:283
+#: .wp-env/themes/understrap/inc/template-tags.php:243
+msgid "Comments navigation"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/inc/template-tags.php:287
+#: .wp-env/themes/understrap/inc/template-tags.php:247
+msgid "&larr; Older Comments"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/inc/template-tags.php:293
+#: .wp-env/themes/understrap/inc/template-tags.php:253
+msgid "Newer Comments &rarr;"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/inc/template-tags.php:312
+#: .wp-env/themes/understrap/inc/template-tags.php:272
+#. translators: %s: Name of current post
+msgid "Edit %s"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/inc/template-tags.php:341
+#: .wp-env/themes/understrap/inc/template-tags.php:301
+msgid "Post navigation"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/inc/template-tags.php:371
+#: .wp-env/themes/understrap/inc/template-tags.php:331
+msgid "Pages:"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/inc/template-tags.php:411
+#. translators: used between list items, there is a space after the comma
+msgid " "
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/search.php:36
+#: .wp-env/themes/understrap/search.php:38
+#. translators: %s: query term
+msgid "Search Results for: %s"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/tribe/events/single-event.php:103
+#: .wp-env/themes/nbcustrap-child-main/tribe/events/single-event.php:137
+msgid "%s Navigation"
+msgstr ""
+
+#: .wp-env/themes/understrap/404.php:30
+msgid "Oops! That page can&rsquo;t be found."
+msgstr ""
+
+#: .wp-env/themes/understrap/404.php:36
+msgid "It looks like nothing was found at this location. Maybe try a search?"
+msgstr ""
+
+#: .wp-env/themes/understrap/404.php:46
+msgid "Most Used Categories"
+msgstr ""
+
+#: .wp-env/themes/understrap/404.php:69
+#. translators: %1$s: smiley
+msgid "Try looking in the monthly archives. %1$s"
+msgstr ""
+
+#: .wp-env/themes/understrap/author.php:54
+msgid "Website"
+msgstr ""
+
+#: .wp-env/themes/understrap/author.php:65
+#. translators: %s: author name
+msgid "About %s"
+msgstr ""
+
+#: .wp-env/themes/understrap/author.php:79
+#. translators: %s: author name
+msgid "Posts by %s"
+msgstr ""
+
+#: .wp-env/themes/understrap/global-templates/navbar-collapse-bootstrap4.php:35
+#: .wp-env/themes/understrap/global-templates/navbar-collapse-bootstrap5.php:34
+msgid "Toggle navigation"
+msgstr ""
+
+#: .wp-env/themes/understrap/global-templates/navbar-offcanvas-bootstrap5.php:34
+msgid "Open menu"
+msgstr ""
+
+#: .wp-env/themes/understrap/global-templates/navbar-offcanvas-bootstrap5.php:46
+msgid "Close menu"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/class-wp-bootstrap-navwalker.php:377
+msgid "Add a menu"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/custom-comments.php:106
+msgid "Comments are closed."
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/custom-header.php:54
+msgid "Default Header Image"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/customizer.php:67
+msgid "Theme Layout Settings"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/customizer.php:69
+msgid "Container width and sidebar defaults"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/customizer.php:89
+msgid "Bootstrap Version"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/customizer.php:90
+msgid "Choose between Bootstrap 4 and Bootstrap 5"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/customizer.php:94
+msgid "Bootstrap 4"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/customizer.php:95
+msgid "Bootstrap 5"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/customizer.php:117
+msgid "Container Width"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/customizer.php:118
+msgid "Choose between Bootstrap's container and container-fluid"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/customizer.php:122
+msgid "Fixed width container"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/customizer.php:123
+msgid "Full width container"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/customizer.php:145
+msgid "Responsive Navigation Type"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/customizer.php:146
+msgid "Choose between an expanding and collapsing navbar or an offcanvas drawer."
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/customizer.php:153
+msgid "Collapse"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/customizer.php:154
+msgid "Offcanvas"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/customizer.php:176
+msgid "Sidebar Positioning"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/customizer.php:177
+msgid ""
+"Set sidebar's default position. Can either be: right, left, both or none. "
+"Note: this can be overridden on individual pages."
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/customizer.php:184
+msgid "Right sidebar"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/customizer.php:185
+msgid "Left sidebar"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/customizer.php:186
+msgid "Left & Right sidebars"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/customizer.php:187
+msgid "No sidebar"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/customizer.php:209
+msgid "Footer Site Info"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/customizer.php:210
+msgid "Override Understrap's site info located at the footer of the page."
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/editor.php:50
+msgid "Lead Paragraph"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/editor.php:60
+msgid "Blockquote"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/editor.php:66
+msgid "Blockquote Footer"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/editor.php:72
+msgid "Cite"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/extras.php:247
+msgid "Read More..."
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/hooks.php:30
+msgid "https://wordpress.org/"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/hooks.php:33
+#. translators: WordPress
+msgid "Proudly powered by %s"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/hooks.php:38
+#. translators: 1: Theme name, 2: Theme author
+msgid "Theme: %1$s by %2$s."
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/hooks.php:40
+msgid "https://understrap.com"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/hooks.php:44
+#. translators: Theme version
+msgid "Version: %s"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/setup.php:49
+msgid "Primary Menu"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/template-tags.php:102
+#. translators: %s: Categories of current post
+msgid "Posted in %s"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/template-tags.php:117
+#. translators: %s: Tags of current post
+msgid "Tagged %s"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/template-tags.php:385
+#. translators: used between list items, there is a space after the comma
+msgid ", "
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/widgets.php:279
+#. translators: Widget area title
+msgid "Right Sidebar"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/widgets.php:281
+msgid "Right sidebar widget area"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/widgets.php:292
+#. translators: Widget area title
+msgid "Left Sidebar"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/widgets.php:294
+msgid "Left sidebar widget area"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/widgets.php:305
+#. translators: Widget area title
+msgid "Hero Slider"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/widgets.php:307
+msgid "Hero slider area. Place two or more widgets here and they will slide!"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/widgets.php:318
+#. translators: Widget area title
+msgid "Hero Canvas"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/widgets.php:320
+msgid "Full size canvas hero area for Bootstrap and other custom HTML markup"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/widgets.php:331
+#. translators: Widget area title
+msgid "Top Full"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/widgets.php:333
+msgid "Full top widget with dynamic grid"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/widgets.php:344
+#. translators: Widget area title
+msgid "Footer Full"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/widgets.php:346
+msgid "Full sized footer widget with dynamic grid"
+msgstr ""
+
+#: .wp-env/themes/understrap/loop-templates/content-none.php:18
+msgid "Nothing Found"
+msgstr ""
+
+#: .wp-env/themes/understrap/loop-templates/content-none.php:30
+#. translators: 1: Link to WP admin new post page.
+msgid "Ready to publish your first post? <a href=\"%1$s\">Get started here</a>."
+msgstr ""
+
+#: .wp-env/themes/understrap/loop-templates/content-none.php:38
+msgid ""
+"Sorry, but nothing matched your search terms. Please try again with some "
+"different keywords."
+msgstr ""
+
+#: .wp-env/themes/understrap/loop-templates/content-none.php:46
+msgid ""
+"It seems we can&rsquo;t find what you&rsquo;re looking for. Perhaps "
+"searching can help."
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/cart/cart-empty.php:36
+msgid "Return to shop"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/cart/cart.php:28
+msgid "Remove item"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/cart/cart.php:29
+msgid "Thumbnail image"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/cart/cart.php:30
+#: .wp-env/themes/understrap/woocommerce/cart/cart.php:87
+#: .wp-env/themes/understrap/woocommerce/checkout/form-pay.php:27
+msgid "Product"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/cart/cart.php:31
+#: .wp-env/themes/understrap/woocommerce/cart/cart.php:112
+msgid "Price"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/cart/cart.php:32
+#: .wp-env/themes/understrap/woocommerce/cart/cart.php:118
+msgid "Quantity"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/cart/cart.php:33
+#: .wp-env/themes/understrap/woocommerce/cart/cart.php:144
+msgid "Subtotal"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/cart/cart.php:66
+#. translators: %s is the product name
+msgid "Remove %s from cart"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/cart/cart.php:107
+msgid "Available on backorder"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/cart/cart.php:162
+#: .wp-env/themes/understrap/woocommerce/checkout/form-coupon.php:34
+msgid "Coupon:"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/cart/cart.php:162
+#: .wp-env/themes/understrap/woocommerce/checkout/form-coupon.php:35
+msgid "Coupon code"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/cart/cart.php:162
+#: .wp-env/themes/understrap/woocommerce/checkout/form-coupon.php:39
+msgid "Apply coupon"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/cart/cart.php:167
+msgid "Update cart"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/cart/proceed-to-checkout-button.php:25
+msgid "Proceed to checkout"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/checkout/form-checkout.php:26
+msgid "You must be logged in to checkout."
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/checkout/form-checkout.php:54
+msgid "Your order"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/checkout/form-coupon.php:26
+msgid "Have a coupon?"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/checkout/form-coupon.php:26
+msgid "Click here to enter your code"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/checkout/form-coupon.php:31
+msgid "If you have a coupon code, please apply it below."
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/checkout/form-pay.php:28
+msgid "Qty"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/checkout/form-pay.php:29
+msgid "Totals"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/checkout/form-pay.php:89
+msgid ""
+"Sorry, it seems that there are no available payment methods for your "
+"location. Please contact us if you require assistance or wish to make "
+"alternate arrangements."
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/checkout/form-verify-email.php:33
+msgid "We were unable to verify the email address you provided. Please try again."
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/checkout/form-verify-email.php:40
+#. translators: 1: opening login link 2: closing login link
+msgid ""
+"To view this page, you must either %1$slogin%2$s or verify the email "
+"address associated with the order."
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/checkout/form-verify-email.php:49
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-edit-account.php:43
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-login.php:85
+msgid "Email address"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/checkout/form-verify-email.php:56
+msgid "Verify"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/checkout/payment.php:33
+msgid ""
+"Sorry, it seems that there are no available payment methods. Please contact "
+"us if you require assistance or wish to make alternate arrangements."
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/checkout/payment.php:33
+msgid "Please fill in your details above to see available payment methods."
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/checkout/payment.php:43
+#. translators: $1 and $2 opening and closing emphasis tags respectively
+msgid ""
+"Since your browser does not support JavaScript, or it is disabled, please "
+"ensure you click the %1$sUpdate Totals%2$s button before placing your "
+"order. You may be charged more than the amount stated above if you fail to "
+"do so."
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/checkout/payment.php:45
+msgid "Update totals"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/global/form-login.php:33
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-lost-password.php:28
+msgid "Username or email"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/global/form-login.php:37
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-login.php:42
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-login.php:92
+msgid "Password"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/global/form-login.php:46
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-login.php:50
+msgid "Remember me"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/global/form-login.php:50
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-login.php:31
+msgid "Login"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/global/form-login.php:53
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-login.php:56
+msgid "Lost your password?"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/loop/orderby.php:24
+msgid "Shop order"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/downloads.php:34
+msgid "No downloads available yet."
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/downloads.php:34
+#: .wp-env/themes/understrap/woocommerce/myaccount/orders.php:100
+msgid "Browse products"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-edit-account.php:27
+msgid "First name"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-edit-account.php:31
+msgid "Last name"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-edit-account.php:37
+msgid "Display name"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-edit-account.php:38
+msgid ""
+"This will be how your name will be displayed in the account section and in "
+"reviews"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-edit-account.php:57
+msgid "Password change"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-edit-account.php:60
+msgid "Current password (leave blank to leave unchanged)"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-edit-account.php:64
+msgid "New password (leave blank to leave unchanged)"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-edit-account.php:68
+msgid "Confirm new password"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-edit-account.php:85
+msgid "Save changes"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-edit-address.php:20
+#: .wp-env/themes/understrap/woocommerce/myaccount/my-address.php:26
+#: .wp-env/themes/understrap/woocommerce/myaccount/my-address.php:35
+msgid "Billing address"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-edit-address.php:20
+#: .wp-env/themes/understrap/woocommerce/myaccount/my-address.php:27
+msgid "Shipping address"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-edit-address.php:46
+msgid "Save address"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-login.php:38
+msgid "Username or email address"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-login.php:53
+msgid "Log in"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-login.php:69
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-login.php:106
+msgid "Register"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-login.php:78
+msgid "Username"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-login.php:98
+msgid "A link to set a new password will be sent to your email address."
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-lost-password.php:25
+msgid ""
+"Lost your password? Please enter your username or email address. You will "
+"receive a link to create a new password via email."
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-lost-password.php:38
+msgid "Reset password"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-reset-password.php:25
+msgid "Enter a new password below."
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-reset-password.php:28
+msgid "New password"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-reset-password.php:32
+msgid "Re-enter new password"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/form-reset-password.php:45
+msgid "Save"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/my-address.php:46
+msgid "The following addresses will be used on the checkout page by default."
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/my-address.php:63
+msgid "Edit"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/my-address.php:63
+msgid "Add"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/my-address.php:67
+msgid "You have not set up this type of address yet."
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/my-orders.php:14
+msgid "Order"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/my-orders.php:15
+msgid "Date"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/my-orders.php:16
+msgid "Status"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/my-orders.php:17
+msgid "Total"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/my-orders.php:37
+msgid "Recent orders"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/my-orders.php:75
+#: .wp-env/themes/understrap/woocommerce/myaccount/orders.php:61
+#. translators: 1: formatted order total 2: total order items
+msgid "%1$s for %2$s item"
+msgid_plural "%1$s for %2$s items"
+msgstr[0] ""
+msgstr[1] ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/orders.php:89
+msgid "Previous"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/orders.php:93
+#: ui-definitions/components/wizard.php:208
+msgid "Next"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/orders.php:100
+msgid "No order has been made yet."
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/order/order-again.php:22
+msgid "Order again"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/product-searchform.php:25
+msgid "Search products&hellip;"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/product-searchform.php:26
+msgid "Search for:"
+msgstr ""
+
+#: cloudinary.php:64
 msgid ""
 "Cloudinary plugin error: Your version of PHP is too old to run this plugin. "
 "You must be running PHP 7.4 or higher."
@@ -218,46 +978,46 @@ msgstr ""
 msgid "Enable caching site assets."
 msgstr ""
 
-#: php/class-connect.php:267
+#: php/class-connect.php:299
 msgid "Connection to Cloudinary has been removed."
 msgstr ""
 
-#: php/class-connect.php:288
+#: php/class-connect.php:320
 msgid ""
 "The environment variable URL must be in this format: "
 "cloudinary://API_KEY:API_SECRET@CLOUD_NAME"
 msgstr ""
 
-#: php/class-connect.php:309
+#: php/class-connect.php:341
 msgid "Successfully connected to Cloudinary."
 msgstr ""
 
-#: php/class-connect.php:353
+#: php/class-connect.php:385
 #. translators: Placeholder refers the error from API.
 msgid "Cloudinary Error: %s"
 msgstr ""
 
-#: php/class-connect.php:361
+#: php/class-connect.php:393
 #. translators: Placeholders are <a> tags.
 msgid ""
 "Cloudinary Account Disabled. %1$s Upgrade your plan %3$s or %2$s submit a "
 "support request %3$s for assistance."
 msgstr ""
 
-#: php/class-connect.php:406
+#: php/class-connect.php:439
 #. translators: Placeholder refers to the expected URL format.
 msgid "Incorrect Format. Expecting: %s"
 msgstr ""
 
-#: php/class-connect.php:418
+#: php/class-connect.php:451
 msgid "CNAME is not a valid domain name."
 msgstr ""
 
-#: php/class-connect.php:808
+#: php/class-connect.php:855
 msgid "upgrade your account"
 msgstr ""
 
-#: php/class-connect.php:823
+#: php/class-connect.php:870
 #. translators: %1$s quota size, %2$s amount in percent, %3$s link URL, %4$s
 #. link anchor text.
 msgid ""
@@ -269,11 +1029,11 @@ msgid ""
 "full functionality."
 msgstr ""
 
-#: php/class-connect.php:1018
+#: php/class-connect.php:1065
 msgid "Cloudinary was able to connect to the WordPress REST API."
 msgstr ""
 
-#: php/class-connect.php:1035 php/class-connect.php:1045
+#: php/class-connect.php:1082 php/class-connect.php:1092
 #. translators: 1: The WordPress error message. 2: The WordPress error code.
 msgid "The Cloudinary REST API endpoints are not available. Error: %1$s (%2$s)"
 msgstr ""
@@ -506,14 +1266,14 @@ msgstr ""
 msgid "Unsynced"
 msgstr ""
 
-#: php/class-media.php:459
+#: php/class-media.php:470
 #. translators: variable is file size.
 msgid ""
 "File size exceeds the maximum of %s. This media asset will be served from "
 "WordPress."
 msgstr ""
 
-#: php/class-media.php:2070
+#: php/class-media.php:2081
 msgid "Import"
 msgstr ""
 
@@ -521,49 +1281,49 @@ msgstr ""
 msgid "Cloudinary"
 msgstr ""
 
-#: php/class-media.php:2425
+#: php/class-media.php:2436
 msgid "The delivery for this asset is disabled."
 msgstr ""
 
-#: php/class-media.php:2429
+#: php/class-media.php:2440
 msgid "Not syncable. This is an external media."
 msgstr ""
 
-#: php/class-media.php:2433
+#: php/class-media.php:2444
 msgid "This media is Fetch type."
 msgstr ""
 
-#: php/class-media.php:2437
+#: php/class-media.php:2448
 msgid "This media is Sprite type."
 msgstr ""
 
-#: php/class-media.php:2447
+#: php/class-media.php:2458
 msgid "Not Synced"
 msgstr ""
 
-#: php/class-media.php:2452
+#: php/class-media.php:2463
 msgid "Synced"
 msgstr ""
 
-#: php/class-media.php:3111
+#: php/class-media.php:3122
 msgid "No Cloudinary filters"
 msgstr ""
 
-#: php/class-media.php:3211
+#: php/class-media.php:3222
 msgid "Media Settings"
 msgstr ""
 
-#: php/class-media.php:3214
+#: php/class-media.php:3225
 msgid "Media Display"
 msgstr ""
 
-#: php/class-media.php:3218 php/ui/component/class-plan-details.php:119
+#: php/class-media.php:3229 php/ui/component/class-plan-details.php:129
 #: php/ui/component/class-plan-status.php:128
-#: ui-definitions/settings-pages.php:568 ui-definitions/settings-sidebar.php:44
+#: ui-definitions/settings-pages.php:568 ui-definitions/settings-sidebar.php:47
 msgid "Transformations"
 msgstr ""
 
-#: php/class-media.php:3219
+#: php/class-media.php:3230
 msgid ""
 "Cloudinary allows you to easily transform your images on-the-fly to any "
 "required format, style and dimension, and also optimizes images for minimal "
@@ -572,12 +1332,12 @@ msgid ""
 "transformation and delivery URLs."
 msgstr ""
 
-#: php/class-media.php:3224 ui-definitions/settings-image.php:175
+#: php/class-media.php:3235 ui-definitions/settings-image.php:175
 #: ui-definitions/settings-pages.php:594 ui-definitions/settings-video.php:260
 msgid "See examples"
 msgstr ""
 
-#: php/class-plugin.php:759
+#: php/class-plugin.php:767
 msgid "Visit plugin site"
 msgstr ""
 
@@ -656,56 +1416,56 @@ msgid ""
 "purchase?<br><br>Thank you!"
 msgstr ""
 
-#: php/class-sync.php:483
+#: php/class-sync.php:485
 msgid "Synchronizing asset with Cloudinary"
 msgstr ""
 
-#: php/class-sync.php:503
+#: php/class-sync.php:505
 msgid "Upgrading from previous version"
 msgstr ""
 
-#: php/class-sync.php:514
+#: php/class-sync.php:516
 msgid "Downloading from Cloudinary"
 msgstr ""
 
-#: php/class-sync.php:529 php/class-sync.php:546
+#: php/class-sync.php:531 php/class-sync.php:548
 msgid "Uploading to Cloudinary"
 msgstr ""
 
-#: php/class-sync.php:559
+#: php/class-sync.php:561
 #. translators: %s folder name
 msgid "Copying to folder %s."
 msgstr ""
 
-#: php/class-sync.php:574 php/class-sync.php:601
+#: php/class-sync.php:576 php/class-sync.php:603
 msgid "Updating metadata"
 msgstr ""
 
-#: php/class-sync.php:587
+#: php/class-sync.php:589
 msgid "Updating breakpoints"
 msgstr ""
 
-#: php/class-sync.php:622
+#: php/class-sync.php:624
 msgid "Uploading to new cloud name."
 msgstr ""
 
-#: php/class-sync.php:1097
+#: php/class-sync.php:1099
 msgid "Sync errors cleaned up"
 msgstr ""
 
-#: php/class-sync.php:1187
+#: php/class-sync.php:1189
 msgid "Is Cloudinary synced."
 msgstr ""
 
-#: php/class-sync.php:1244
+#: php/class-sync.php:1246
 msgid "Media Library Sync Settings"
 msgstr ""
 
-#: php/class-sync.php:1249
+#: php/class-sync.php:1251
 msgid "Sync method"
 msgstr ""
 
-#: php/class-sync.php:1252
+#: php/class-sync.php:1254
 #. translators: The HTML break line, the link to Cloudinary documentation and
 #. closing tag.
 msgid ""
@@ -714,35 +1474,35 @@ msgid ""
 "Media Library.%3$s%4$sLearn more%5$s"
 msgstr ""
 
-#: php/class-sync.php:1263
+#: php/class-sync.php:1265
 msgid "Auto sync"
 msgstr ""
 
-#: php/class-sync.php:1264
+#: php/class-sync.php:1266
 msgid "Manual sync"
 msgstr ""
 
-#: php/class-sync.php:1270
+#: php/class-sync.php:1272
 msgid "Cloudinary folder path"
 msgstr ""
 
-#: php/class-sync.php:1274
+#: php/class-sync.php:1276
 msgid "e.g.: wordpress_assets/"
 msgstr ""
 
-#: php/class-sync.php:1277
+#: php/class-sync.php:1279
 msgid ""
 "The folder in your Cloudinary account that WordPress assets are uploaded "
 "to. Leave blank to use the root of your Cloudinary library."
 msgstr ""
 
-#: php/class-sync.php:1286 php/ui/component/class-plan-details.php:118
+#: php/class-sync.php:1288 php/ui/component/class-plan-details.php:128
 #: php/ui/component/class-plan-status.php:94
-#: ui-definitions/settings-sidebar.php:38
+#: ui-definitions/settings-sidebar.php:41
 msgid "Storage"
 msgstr ""
 
-#: php/class-sync.php:1289
+#: php/class-sync.php:1291
 #. translators: the HTML for opening and closing list and its items.
 msgid ""
 "Choose where your assets are stored.%1$sCloudinary and WordPress: Stores "
@@ -755,19 +1515,19 @@ msgid ""
 "compatibility.%4$s%5$sLearn more%6$s"
 msgstr ""
 
-#: php/class-sync.php:1302
+#: php/class-sync.php:1304
 msgid "Cloudinary and WordPress"
 msgstr ""
 
-#: php/class-sync.php:1303
+#: php/class-sync.php:1305
 msgid "Cloudinary and WordPress (low resolution)"
 msgstr ""
 
-#: php/class-sync.php:1304
+#: php/class-sync.php:1306
 msgid "Cloudinary only"
 msgstr ""
 
-#: php/class-sync.php:1310 php/delivery/class-lazy-load.php:543
+#: php/class-sync.php:1312 php/delivery/class-lazy-load.php:543
 #: php/media/class-gallery.php:425 ui-definitions/components/header.php:19
 #: ui-definitions/settings-image.php:263 ui-definitions/settings-pages.php:207
 #: ui-definitions/settings-pages.php:223 ui-definitions/settings-pages.php:224
@@ -775,48 +1535,48 @@ msgstr ""
 msgid "Need help?"
 msgstr ""
 
-#: php/class-sync.php:1313
+#: php/class-sync.php:1315
 #. Translators: The HTML for opening and closing link tags.
 msgid ""
 "Watch free lessons on how to use the Media Library Sync Settings in the "
 "%1$sCloudinary Academy%2$s."
 msgstr ""
 
-#: php/class-utils.php:515
+#: php/class-utils.php:518
 #. translators: The plugin version.
 msgid "I need help with Cloudinary WordPress plugin version %s"
 msgstr ""
 
-#: php/class-utils.php:519
+#: php/class-utils.php:522
 msgid ""
 "Please, provide more details on your request, and if possible, attach a "
 "System Report"
 msgstr ""
 
-#: php/class-utils.php:855
+#: php/class-utils.php:858
 msgid "Debug log is empty"
 msgstr ""
 
-#: php/class-utils.php:909
+#: php/class-utils.php:912
 msgid "Missing SRC attribute."
 msgstr ""
 
-#: php/class-utils.php:947
+#: php/class-utils.php:950
 #. translators: The attachment ID.
 msgid "Clean up sync metadata for %d"
 msgstr ""
 
-#: php/class-utils.php:1372
+#: php/class-utils.php:1375
 msgid "Cloudinary global transformations"
 msgstr ""
 
-#: php/class-utils.php:1379
+#: php/class-utils.php:1382
 #. translators: %1$s is the taxonomy label and the %2$s is the context of the
 #. use.
 msgid "%1$s %2$s transformations"
 msgstr ""
 
-#: php/class-utils.php:1389
+#: php/class-utils.php:1392
 #. translators: %s is the term name.
 msgid "%s transformations"
 msgstr ""
@@ -1037,25 +1797,25 @@ msgstr ""
 msgid "Could not download the Cloudinary asset."
 msgstr ""
 
-#: php/sync/class-push-sync.php:220
+#: php/sync/class-push-sync.php:242
 #. translators: variable is sync type.
 msgid "Sync type: %s"
 msgstr ""
 
-#: php/sync/class-push-sync.php:245
+#: php/sync/class-push-sync.php:267
 msgid "Starting new thread."
 msgstr ""
 
-#: php/sync/class-push-sync.php:271
+#: php/sync/class-push-sync.php:293
 msgid "Asset in sync loop."
 msgstr ""
 
-#: php/sync/class-push-sync.php:277
+#: php/sync/class-push-sync.php:299
 #. translators: variable is thread name and asset ID.
 msgid "%1$s - cycle %3$s: Syncing asset %2$d"
 msgstr ""
 
-#: php/sync/class-push-sync.php:287
+#: php/sync/class-push-sync.php:309
 #. translators: variable is thread name.
 msgid "Ending thread %s"
 msgstr ""
@@ -1130,7 +1890,7 @@ msgstr ""
 msgid "Optimizing assets."
 msgstr ""
 
-#: php/sync/class-sync-queue.php:409 php/ui/component/class-plan-details.php:83
+#: php/sync/class-sync-queue.php:409 php/ui/component/class-plan-details.php:93
 msgid "Optimized assets"
 msgstr ""
 
@@ -1186,11 +1946,11 @@ msgstr ""
 msgid "Starting thread %s."
 msgstr ""
 
-#: php/sync/class-sync-queue.php:907
+#: php/sync/class-sync-queue.php:909
 msgid "Resuming Maybe"
 msgstr ""
 
-#: php/sync/class-sync-queue.php:916
+#: php/sync/class-sync-queue.php:918
 #. translators: variable is thread name.
 msgid "Thread %s Stopped."
 msgstr ""
@@ -1291,9 +2051,16 @@ msgstr ""
 msgid "60 monthly credits"
 msgstr ""
 
-#: php/templates/taxonomy-term-transformation-fields.php:28
+#: php/templates/taxonomy-term-transformation-fields.php:25
 #. translators: The taxonomy label and the context.
 msgid "Cloudinary %1$s %2$s Transformations"
+msgstr ""
+
+#: php/templates/taxonomy-term-transformation-fields.php:30
+#: php/templates/taxonomy-transformation-fields.php:46
+#. translators: The transformation context (e.g. Image, Video).
+#. translators: The taxonomy singular label (e.g. Category, Tag).
+msgid "Toggle %s transformations"
 msgstr ""
 
 #: php/templates/taxonomy-transformation-fields.php:41
@@ -1301,7 +2068,7 @@ msgstr ""
 msgid "Cloudinary %s transformations"
 msgstr ""
 
-#: php/templates/taxonomy-transformation-fields.php:51
+#: php/templates/taxonomy-transformation-fields.php:60
 #. translators: %1$s is the taxonomy label, %2$s is the image settings link,
 #. %4$s is the video settings link. The %3$s is the closing tags for the links.
 msgid ""
@@ -1500,25 +2267,25 @@ msgstr ""
 msgid "%s unoptimized"
 msgstr ""
 
-#: php/ui/component/class-plan-details.php:74
+#: php/ui/component/class-plan-details.php:84
 msgid "Plan"
 msgstr ""
 
-#: php/ui/component/class-plan-details.php:82
+#: php/ui/component/class-plan-details.php:92
 msgid "Total Requests"
 msgstr ""
 
-#: php/ui/component/class-plan-details.php:103
+#: php/ui/component/class-plan-details.php:113
 msgid "Plan Units"
 msgstr ""
 
-#: php/ui/component/class-plan-details.php:104
+#: php/ui/component/class-plan-details.php:114
 msgid "Remaining Units"
 msgstr ""
 
-#: php/ui/component/class-plan-details.php:120
+#: php/ui/component/class-plan-details.php:130
 #: php/ui/component/class-plan-status.php:161
-#: ui-definitions/settings-sidebar.php:49
+#: ui-definitions/settings-sidebar.php:52
 msgid "Bandwidth"
 msgstr ""
 
@@ -1774,10 +2541,6 @@ msgstr ""
 
 #: ui-definitions/components/wizard.php:207
 msgid "Back"
-msgstr ""
-
-#: ui-definitions/components/wizard.php:208
-msgid "Next"
 msgstr ""
 
 #: ui-definitions/settings-image.php:11
@@ -2369,15 +3132,15 @@ msgstr ""
 msgid "Account status"
 msgstr ""
 
-#: ui-definitions/settings-sidebar.php:56
+#: ui-definitions/settings-sidebar.php:59
 msgid "View my account status"
 msgstr ""
 
-#: ui-definitions/settings-sidebar.php:69
+#: ui-definitions/settings-sidebar.php:72
 msgid "Optimization level"
 msgstr ""
 
-#: ui-definitions/settings-sidebar.php:75
+#: ui-definitions/settings-sidebar.php:78
 #. translators: %s is the percentage optimized.
 msgid "%s Optimized"
 msgstr ""
@@ -2555,4 +3318,104 @@ msgstr ""
 
 #. Author URI of the plugin/theme
 msgid "https://cloudinary.com/"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/inc/template-tags.php:345
+#: .wp-env/themes/understrap/inc/template-tags.php:305
+msgctxt "Previous post link"
+msgid "<i class=\"fa fa-angle-left\"></i>&nbsp;%title"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/inc/template-tags.php:348
+#: .wp-env/themes/understrap/inc/template-tags.php:308
+msgctxt "Next post link"
+msgid "%title&nbsp;<i class=\"fa fa-angle-right\"></i>"
+msgstr ""
+
+#: .wp-env/themes/nbcustrap-child-main/tribe/events/single-event.php:85
+msgctxt "%s Events plural label"
+msgid "All %s"
+msgstr ""
+
+#: .wp-env/themes/understrap/author.php:44
+#. translators: %s: author name
+msgctxt "Avatar alt"
+msgid "Profile picture of %s"
+msgstr ""
+
+#: .wp-env/themes/understrap/comments.php:36
+#. translators: %s: post title
+msgctxt "comments title"
+msgid "One thought on &ldquo;%s&rdquo;"
+msgstr ""
+
+#: .wp-env/themes/understrap/comments.php:43
+#. translators: 1: number of comments, 2: post title
+msgctxt "comments title"
+msgid "%1$s thought on &ldquo;%2$s&rdquo;"
+msgid_plural "%1$s thoughts on &ldquo;%2$s&rdquo;"
+msgstr[0] ""
+msgstr[1] ""
+
+#: .wp-env/themes/understrap/inc/editor.php:56
+msgctxt "Font size name"
+msgid "Small"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/pagination.php:53
+msgctxt "previous set of posts"
+msgid "&laquo;"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/pagination.php:54
+msgctxt "next set of posts"
+msgid "&raquo;"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/template-tags.php:41
+msgctxt "post date"
+msgid "Posted on"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/template-tags.php:55
+msgctxt "post author"
+msgid "by"
+msgstr ""
+
+#: .wp-env/themes/understrap/inc/template-tags.php:55
+msgctxt "post author"
+msgid "Posted by"
+msgstr ""
+
+#: .wp-env/themes/understrap/searchform.php:21
+msgctxt "label"
+msgid "Search for:"
+msgstr ""
+
+#: .wp-env/themes/understrap/searchform.php:23
+msgctxt "placeholder"
+msgid "Search &hellip;"
+msgstr ""
+
+#: .wp-env/themes/understrap/searchform.php:25
+#: .wp-env/themes/understrap/searchform.php:28
+#: .wp-env/themes/understrap/woocommerce/product-searchform.php:29
+msgctxt "submit button"
+msgid "Search"
+msgstr ""
+
+#: .wp-env/themes/understrap/sidebar-templates/sidebar-hero.php:30
+msgctxt "carousel control"
+msgid "Previous"
+msgstr ""
+
+#: .wp-env/themes/understrap/sidebar-templates/sidebar-hero.php:38
+msgctxt "carousel control"
+msgid "Next"
+msgstr ""
+
+#: .wp-env/themes/understrap/woocommerce/myaccount/my-orders.php:63
+#: .wp-env/themes/understrap/woocommerce/myaccount/orders.php:49
+msgctxt "hash before order number"
+msgid "#"
 msgstr ""

@@ -139,6 +139,7 @@ final class Plugin {
 		$this->components['wpml']                   = new WPML( $this );
 		$this->components['elementor']              = new Elementor( $this );
 		$this->components['special_offer']          = new Special_Offer( $this );
+		$this->components['analytics']              = new Analytics( $this );
 	}
 
 	/**
@@ -212,7 +213,7 @@ final class Plugin {
 			 * @hook  cloudinary_connected
 			 * @since 3.0.0
 			 *
-			 * @param $plugin {Plugin} The core plugin object.
+			 * @param Plugin $plugin The core plugin object.
 			 */
 			do_action( 'cloudinary_connected', $this );
 		}
@@ -222,7 +223,7 @@ final class Plugin {
 		 * @hook  cloudinary_init_settings
 		 * @since 2.7.5
 		 *
-		 * @param $plugin {Plugin} The core plugin object.
+		 * @param Plugin $plugin The core plugin object.
 		 */
 		do_action( 'cloudinary_init_settings', $this );
 
@@ -464,7 +465,7 @@ final class Plugin {
 		 * @hook  cloudinary_ready
 		 * @since 3.0.0
 		 *
-		 * @param $plugin {Plugin} The core plugin object.
+		 * @param Plugin $plugin The core plugin object.
 		 */
 		do_action( 'cloudinary_ready', $this );
 	}
@@ -532,6 +533,13 @@ final class Plugin {
 		 */
 		if ( ! defined( 'CLOUDINARY_ENDPOINTS_DEACTIVATION' ) ) {
 			define( 'CLOUDINARY_ENDPOINTS_DEACTIVATION', 'https://analytics-api.cloudinary.com/wp_deactivate_reason' );
+		}
+
+		/**
+		 * The Cloudinary custom-events collector endpoint for plugin analytics.
+		 */
+		if ( ! defined( 'CLOUDINARY_ENDPOINTS_ANALYTICS' ) ) {
+			define( 'CLOUDINARY_ENDPOINTS_ANALYTICS', 'https://analytics-api.cloudinary.com/wp_plugin_event' );
 		}
 
 		/**
