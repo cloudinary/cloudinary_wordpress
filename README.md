@@ -1,182 +1,111 @@
-# Cloudinary's WordPress Plugin
+# Cloudinary plugin for WordPress
 
-Cloudinary is a cloud service that offers a solution to a web application's entire image and video management pipeline.
-With Cloudinary, all your images are automatically uploaded, normalized, optimized and backed-up in the cloud instead of being hosted on your servers.
+[![WordPress Plugin Version](https://img.shields.io/wordpress/plugin/v/cloudinary-image-management-and-manipulation-in-the-cloud-cdn.svg)](https://wordpress.org/plugins/cloudinary-image-management-and-manipulation-in-the-cloud-cdn/)
+[![License: GPL v2](https://img.shields.io/badge/license-GPL--2.0-blue.svg)](./LICENSE)
+[![CI](https://github.com/cloudinary/cloudinary_wordpress/actions/workflows/ci.yml/badge.svg)](https://github.com/cloudinary/cloudinary_wordpress/actions/workflows/ci.yml)
 
-With Cloudinary, you can stop messing around with image editors. Cloudinary can manipulate and transform your images online, on-the-fly, directly from your WordPress console. Enhance your images using every possible filter and effect you can think of. All manipulations are done in the cloud using super-powerful hardware, and all resulting images are cached, optimized (smushed and more) and delivered via a lightning fast content delivery network (CDN).
+The Cloudinary plugin for WordPress syncs the WordPress media library to Cloudinary and rewrites the front-end image and video URLs a theme outputs so they deliver optimized, responsively sized, and CDN-served — no template edits. It's a site plugin configured in `wp-admin`, not a code SDK; it installs from the WordPress.org plugin directory (slug `cloudinary-image-management-and-manipulation-in-the-cloud-cdn`) and runs on WordPress 5.6+ (tested to 7.0) and PHP 7.4+.
 
-## WordPress Plugin
+## Installation
 
-The plugin is available for installation via WordPress plugins directory.
-The plugin is publicly available at: [https://wordpress.org/plugins/cloudinary-image-management-and-manipulation-in-the-cloud-cdn/](https://wordpress.org/plugins/cloudinary-image-management-and-manipulation-in-the-cloud-cdn/)
+Install it from the WordPress.org plugin directory, not Composer:
 
-This Git repository is the development repository, while there's a mirror public SVN repository of the actual released WordPress plugin version: [https://plugins.svn.wordpress.org/cloudinary-image-management-and-manipulation-in-the-cloud-cdn/](https://plugins.svn.wordpress.org/cloudinary-image-management-and-manipulation-in-the-cloud-cdn/)
+1. In `wp-admin`, go to **Plugins > Add New**.
+2. Search for **Cloudinary**.
+3. On *Cloudinary - Deliver Images and Videos at Scale*, click **Install Now**, then **Activate**.
 
-> **Deprecation Note**
-> The legacy WordPress Plugin version (v1.x) will be deprecated as of **February 1st, 2021**, after which support, updates and bug fixes for the legacy plugin will continue in limited fashion.
-> The legacy plugin will be made obsolete on **August 1st, 2021** (end-of-life date), meaning, Version 1.x of the plugin will no longer function after that date.
-> We ask that you update to our latest WordPress Plugin v2.x before the August 1st deadline.
+Or upload the ZIP from the [plugin page](https://wordpress.org/plugins/cloudinary-image-management-and-manipulation-in-the-cloud-cdn/) via **Plugins > Add New > Upload Plugin**. The `composer.json` in this repo is for local development tooling only — don't `composer require` the plugin into a site.
 
-## Additional resources
+## Configuration
 
-Additional resources are available at:
+The plugin holds the API secret server-side (in the WordPress database), so there's no client-side config and no env var to export. Connect it with a single connection string in the admin UI:
 
--   [Website](https://cloudinary.com)
--   [Documentation](https://cloudinary.com/documentation)
--   [Knowledge Base](https://support.cloudinary.com/hc/en-us)
+1. In the [Cloudinary Console](https://console.cloudinary.com/console), copy the **API environment variable** for your product environment. Its format is:
 
-## Support
+   ```
+   cloudinary://<API_KEY>:<API_SECRET>@<CLOUD_NAME>
+   ```
 
-You can [open an issue through GitHub](https://github.com/cloudinary/cloudinary_wordpress/issues).
+2. In `wp-admin`, open the **Cloudinary** menu (the setup wizard opens on first activation).
+3. Paste the connection string into the connection field and save.
 
-Contact us [https://cloudinary.com/contact](https://cloudinary.com/contact)
+Cloudinary verifies the credentials, then the Image, Video, Lazy Loading, and Sync settings pages become available. The API secret stays in the WordPress database on the server — it's never exposed on the front end. Keep it out of client-side code and version control.
 
-Stay tuned for updates, tips and tutorials: [Blog](https://cloudinary.com/blog), [Twitter](https://twitter.com/cloudinary), [Facebook](https://www.facebook.com/Cloudinary).
+## Quick examples
 
-## Development
+The plugin is configured through the admin UI; its behavior is extended from a theme or plugin through WordPress filters and WP-CLI. Add the PHP snippets to your theme's `functions.php`. Each hook name and line reference below is verified against the plugin source.
 
-### Prerequisites
+### Add a global transformation to every delivered image
 
--   [Node.js](https://nodejs.org/) v16+ (see `.nvmrc`)
--   [npm](https://www.npmjs.com/) v6.9+
--   [Composer](https://getcomposer.org/)
--   [Docker](https://www.docker.com/) (required for the WordPress local environment via `wp-env`)
+The `cloudinary_transformations` filter (`php/class-media.php:994`) receives the transformation array Cloudinary applies to an asset and the WordPress attachment ID. Append a step to change how every image is delivered:
 
-### Local Development Setup
-
-1. **Clone the repository:**
-
-    ```bash
-    git clone https://github.com/cloudinary/cloudinary_wordpress.git
-    cd cloudinary_wordpress
-    ```
-
-2. **Set the correct Node version** (if using [nvm](https://github.com/nvm-sh/nvm)):
-
-    ```bash
-    nvm install
-    nvm use
-    ```
-
-3. **Install dependencies:**
-
-    ```bash
-    npm install
-    ```
-
-    This will also run `composer install` automatically via the `postinstall` script, setting up PHP dependencies and linting tools.
-
-4. **Start the local WordPress environment:**
-
-    Make sure Docker is running, then:
-
-    ```bash
-    npm run env:start
-    ```
-
-    This spins up a WordPress instance at [http://localhost:8888](http://localhost:8888) with the plugin activated and `WP_DEBUG` enabled. A loopback fix is applied automatically so REST API self-requests work inside the container.
-
-5. **Build front-end assets:**
-
-    ```bash
-    npm run build        # One-time production build
-    npm run dev          # Watch mode for development
-    ```
-
-### Useful Commands
-
-| Command                | Description                              |
-| ---------------------- | ---------------------------------------- |
-| `npm run env:start`    | Start the local WordPress environment    |
-| `npm run env:stop`     | Stop the local WordPress environment     |
-| `npm run env:destroy`  | Remove the local environment completely  |
-| `npm run env:logs`     | View container logs                      |
-| `npm run env:cli`      | Run WP-CLI commands inside the container |
-| `npm run env:clean`    | Reset the environment (removes all data) |
-| `npm run build`        | Build front-end assets for production    |
-| `npm run dev`          | Build front-end assets in watch mode     |
-| `npm run lint`         | Run all linters (PHP, JS, CSS)           |
-| `npm run lint:php`     | Run PHP CodeSniffer                      |
-| `npm run lint:php:fix` | Auto-fix PHP linting issues              |
-| `npm run lint:js`      | Run ESLint on JavaScript files           |
-| `npm run lint:js:fix`  | Auto-fix JS linting issues               |
-| `npm run lint:style`   | Run stylelint on SCSS files              |
-| `npm run i18n`         | Generate translation files               |
-
-### Create a Plugin Release Package
-
-Run `npm run package` to create the plugin release in the `/build` directory and package it as `cloudinary-image-management-and-manipulation-in-the-cloud-cdn.zip` in the root directory.
-
-Files included in the release package are defined in the `gruntfile.js` under the `copy` task. Be sure to update this list of files and directories when you add new files to the project.
-
-### Deployment to WordPress.org
-
-Deployment is automated via the `Deploy to WordPress.org Repository` GitHub Actions workflow (`.github/workflows/deploy-to-wp-org.yml`):
-
-1. Bump the version in `.version` on `master` (this is what gets checked against the release tag, and what `readme.txt`/`cloudinary.php` are stamped with during the build).
-
-2. Create and publish a GitHub Release from `master`, with a tag matching that version (e.g. `3.3.4` or `v3.3.4`). Publishing the release triggers the workflow, which builds the plugin, deploys it to the WP.org SVN repository, and attaches the built zip to the release.
-
-   - Marking the release as a **pre-release** runs the same workflow in dry-run mode: it builds and verifies everything but skips the actual SVN commit, which is the safe way to test a release without shipping it to WP.org.
-   - The workflow can also be run manually from the Actions tab (`workflow_dispatch`) against any branch/tag, defaulting to a dry-run, to exercise the pipeline without publishing a GitHub release at all.
-
-3. If you need to deploy from a local machine instead (e.g. as a fallback), run `npm run deploy`, which builds and runs `grunt deploy` using SVN credentials configured locally.
-
-4. Run `npm run deploy-assets` to deploy just the WP.org plugin assets such as screenshots, icons and banners.
-
-## End-to-end testing
-
-E2E tests run against a wp-env site using Playwright.
-
-### One-time setup
-
-```bash
-npm install
-npx playwright install --with-deps chromium
-npm run env:start
+```php
+<?php
+// In your theme's functions.php.
+add_filter(
+	'cloudinary_transformations',
+	function ( $transformations, $attachment_id ) {
+		// Sharpen every delivered image.
+		$transformations[] = array( 'effect' => 'sharpen:80' );
+		return $transformations;
+	},
+	10,
+	2
+);
 ```
 
-### Running the tests
+### Keep specific assets out of Cloudinary
 
-```bash
-npm run test:e2e
+The `cloudinary_can_sync_asset` filter (`php/class-sync.php:339`) receives whether an asset may sync, its attachment ID, and its sync type. Return `false` to keep an asset on the WordPress host:
+
+```php
+<?php
+// In your theme's functions.php.
+add_filter(
+	'cloudinary_can_sync_asset',
+	function ( $can, $attachment_id, $type ) {
+		// Don't push PDFs to Cloudinary.
+		if ( 'application/pdf' === get_post_mime_type( $attachment_id ) ) {
+			return false;
+		}
+		return $can;
+	},
+	10,
+	3
+);
 ```
 
-### Wizard test credentials
+### Bulk-sync and inspect the media library with WP-CLI
 
-`tests/e2e/wizard-setup.spec.js` exercises the live Cloudinary connection flow, so it needs a real connection string. Provide one of two ways:
-
-**Option 1 — `.env` file (recommended for sustained local development).** Copy `.env.example` to `.env` and fill in the value. `.env` is gitignored. Playwright loads it automatically at startup.
+The plugin registers a `wp cloudinary` command namespace. `sync` (`php/traits/trait-cli.php:144`) pushes all eligible media library assets to Cloudinary in one pass; `analyze` (`php/traits/trait-cli.php:202`) reports each asset's sync state. Run them over SSH or in a deploy script:
 
 ```bash
-cp .env.example .env
-# edit .env, set CLOUDINARY_E2E_URL=cloudinary://...
-npm run test:e2e
+# Push the whole existing library to Cloudinary.
+wp cloudinary sync
+
+# Report what's synced, pending, or errored.
+wp cloudinary analyze
 ```
 
-**Option 2 — shell export (good for one-off runs and CI).**
+## For AI agents
 
-```bash
-export CLOUDINARY_E2E_URL='cloudinary://API_KEY:API_SECRET@CLOUD_NAME'
-npm run test:e2e
-```
+`cloudinary_wordpress` is the WordPress/WooCommerce site plugin: it installs from the WordPress.org directory, connects via a `cloudinary://<API_KEY>:<API_SECRET>@<CLOUD_NAME>` string in `wp-admin`, and needs no application code for basic use. It does not wrap or require `cloudinary_php`. For other platforms and tasks, route to a different package:
 
-A real shell env var takes precedence over the `.env` file.
+| Task | Use instead |
+|---|---|
+| Call Cloudinary from a custom PHP application | [`cloudinary_php`](https://github.com/cloudinary/cloudinary_php) |
+| A Magento 2 / Adobe Commerce store | [`cloudinary_magento2`](https://github.com/cloudinary/cloudinary_magento2) |
+| SAP Commerce Cloud | [`cloudinary_sap_commerce`](https://github.com/cloudinary/cloudinary_sap_commerce) |
+| Salesforce Commerce Cloud | [`cloudinary_sfcc_site_cartridge`](https://github.com/cloudinary/cloudinary_sfcc_site_cartridge) |
+| commercetools | [`cloudinary_commercetools`](https://github.com/cloudinary/cloudinary_commercetools) |
+| Run Cloudinary operations as agent tools | [Cloudinary MCP servers](https://github.com/cloudinary/mcp-servers) |
 
-The variable is intentionally named `CLOUDINARY_E2E_URL` (not `CLOUDINARY_URL`) so it cannot be confused with the Cloudinary SDK convention or with anything you might define in `.wp-env.override.json` for local dev. Use a dedicated test Cloudinary account — never production credentials.
+## Links
 
-> **Note:** Do **not** set `CLOUDINARY_URL` or `CLOUDINARY_CONNECTION_STRING` as PHP constants via `.wp-env.override.json` while running this spec. The plugin treats a constant-defined connection string as already-configured and hides the wizard's connection input, which makes the test impossible.
+- [WordPress integration guide](https://cloudinary.com/documentation/wordpress_integration)
+- [Developer hooks (actions and filters)](https://cloudinary.com/documentation/wordpress_developers#actions_and_filters)
+- [Transformation and API references](https://cloudinary.com/documentation/cloudinary_references)
+- [Documentation llms.txt index](https://cloudinary.com/documentation/llms.txt)
+- [Plugin on WordPress.org](https://wordpress.org/plugins/cloudinary-image-management-and-manipulation-in-the-cloud-cdn/)
 
-CI will provide `CLOUDINARY_E2E_URL` via a GitHub Actions secret (wired separately under WPP-1195's CI subtask).
-
-### Debugging a failing e2e test
-
-```bash
-npm run test:e2e:debug -- wizard-setup
-```
-
-This opens Playwright's UI runner where you can step through actions, inspect the DOM, and view the network panel.
-
-## License
-
-Released under the GPL license.
+Released under the GPL-2.0 license.

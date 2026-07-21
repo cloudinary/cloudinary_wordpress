@@ -1,0 +1,14 @@
+---
+description: Cloudinary WordPress plugin — canonical agent conventions
+alwaysApply: true
+---
+
+Follow [`AGENTS.md`](../../AGENTS.md) at the repo root for all build/test/lint, distribution, hooks, and conventions.
+
+This is the official Cloudinary plugin for WordPress/WooCommerce — a site plugin installed from the WordPress.org directory, not a code SDK. It does not wrap or require `cloudinary_php`.
+
+Non-negotiables:
+- Edit `src/`; never hand-edit the compiled `js/` and `css/` (webpack builds them via `npm run build`).
+- Build toolchain is Node >=22 / npm >=10 (per `.nvmrc` and `engines`) — ignore any "Node 16" reference.
+- `STABLETAG` in `cloudinary.php`/`readme.txt` is a build-time version placeholder — do not hardcode a version.
+- PHP must pass `composer lint` (WordPress + VIP standards) and target PHP 7.4+. License GPL-2.0. Branch/PR against `master`.
