@@ -12,6 +12,7 @@ import save from './save';
 import attributes from './attributes.json';
 
 registerBlockType( 'cloudinary/gallery', {
+	apiVersion: 2,
 	title: __( 'Cloudinary Gallery', 'cloudinary' ),
 	description: __(
 		'Add a gallery powered by the Cloudinary Gallery Widget to your post.',
