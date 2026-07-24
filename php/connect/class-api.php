@@ -55,7 +55,7 @@ class Api {
 	/**
 	 * Holds the media instance.
 	 *
-	 * @var Media
+	 * @var Media|null
 	 */
 	protected $media;
 
@@ -269,7 +269,7 @@ class Api {
 		// Prepare the eager transformations for the upload.
 		if ( 'upload' === $context ) {
 			foreach ( $transformations as &$transformation ) {
-				if ( 0 <= strpos( $transformation, 'f_auto' ) ) {
+				if ( false !== strpos( $transformation, 'f_auto' ) ) {
 					$parts = explode( ',', $transformation );
 					unset( $parts[ array_search( 'f_auto', $parts, true ) ] );
 					$remaining_transformations = implode( ',', $parts );
@@ -362,7 +362,7 @@ class Api {
 
 		$base = Utils::pathinfo( $public_id );
 		// Add size.
-		if ( ! empty( $size ) && is_array( $size ) ) {
+		if ( ! empty( $size ) ) {
 			if ( ! empty( $size['transformation'] ) ) {
 				$url_parts[] = $size['transformation'];
 			}
@@ -649,7 +649,7 @@ class Api {
 	 *
 	 * @param array $args The upload parameters.
 	 *
-	 * @return array $the url to the cached item.
+	 * @return array|string|\WP_Error $the url to the cached item.
 	 */
 	public function upload_cache( $args ) {
 		$call_args = array(

@@ -52,15 +52,6 @@ class Media extends Settings_Component implements Setup {
 	private $cloudinary_folder;
 
 	/**
-	 * Holds the found Cloudinary ID's
-	 *
-	 * @since   0.1
-	 *
-	 * @var     array
-	 */
-	private $cloudinary_ids = array();
-
-	/**
 	 * Cloudinary credentials.
 	 *
 	 * @var array
@@ -98,7 +89,7 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Gallery instance.
 	 *
-	 * @var \Cloudinary\Media\Gallery
+	 * @var \Cloudinary\Media\Gallery|null
 	 */
 	public $gallery;
 
@@ -112,7 +103,7 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Sync instance.
 	 *
-	 * @var \Cloudinary\Sync
+	 * @var \Cloudinary\Sync|null
 	 */
 	public $sync;
 
@@ -1572,7 +1563,7 @@ class Media extends Settings_Component implements Setup {
 					'full'   => true,
 				);
 			}
-		} elseif ( is_string( $size ) || ( is_array( $size ) && 3 === count( $size ) ) ) {
+		} elseif ( is_string( $size ) || 3 === count( $size ) ) {
 			$intermediate = image_get_intermediate_size( $attachment_id, $size );
 			// PDF's do not have intermediate URL.
 			if ( is_array( $intermediate ) && ! empty( $intermediate['url'] ) ) {
@@ -1646,7 +1637,7 @@ class Media extends Settings_Component implements Setup {
 	 * @param int  $attachment_id The Attachment ID.
 	 * @param bool $suffixed      Flag to get suffixed version of ID.
 	 *
-	 * @return string
+	 * @return string|null
 	 */
 	public function get_public_id( $attachment_id, $suffixed = false ) {
 		// Check for a public_id.
@@ -1880,13 +1871,13 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Get the responsive breakpoints for the image.
 	 *
-	 * @param array  $sources       The original sources array.
-	 * @param array  $size_array    The size array.
-	 * @param string $image_src     The original image source.
-	 * @param array  $image_meta    The image meta array.
-	 * @param int    $attachment_id The attachment id.
+	 * @param array|false $sources  The original sources array.
+	 * @param array       $size_array    The size array.
+	 * @param string      $image_src     The original image source.
+	 * @param array       $image_meta    The image meta array.
+	 * @param int         $attachment_id The attachment id.
 	 *
-	 * @return array Altered or same sources array.
+	 * @return array|false Altered or same sources array.
 	 */
 	public function image_srcset( $sources, $size_array, $image_src, $image_meta, $attachment_id ) {
 
@@ -2107,7 +2098,7 @@ class Media extends Settings_Component implements Setup {
 	 * @param array  $asset     The asset array data.
 	 * @param string $public_id The cloudinary public id.
 	 *
-	 * @return int|WP_Error
+	 * @return int
 	 */
 	private function create_attachment( $asset, $public_id ) {
 
@@ -3262,7 +3253,7 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function upgrade_settings( $previous_version, $new_version ) {
 
-		if ( 2.4 === $previous_version ) {
+		if ( version_compare( $previous_version, '2.5', '<' ) ) {
 			// Setup new data from old.
 			$images    = get_option( 'cloudinary_global_transformations', array() );
 			$video     = get_option( self::GLOBAL_VIDEO_TRANSFORMATIONS, array() );

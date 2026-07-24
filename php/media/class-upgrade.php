@@ -205,7 +205,7 @@ class Upgrade {
 		 * The raw attachment metadata, which may contain plugin-specific keys
 		 * beyond WordPress core's documented shape.
 		 *
-		 * @var array $old_meta
+		 * @var array|false $old_meta
 		 */
 		$old_meta = wp_get_attachment_metadata( $attachment_id, true );
 		if ( ! is_array( $old_meta ) ) {

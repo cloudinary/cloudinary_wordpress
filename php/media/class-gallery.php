@@ -559,7 +559,7 @@ class Gallery extends Settings_Component {
 			if (
 				! is_null( $screen )
 				&& (
-					'cloudinary_page_cloudinary_gallery' === $screen->id || ( method_exists( $screen, 'is_block_editor' ) && $screen->is_block_editor() )
+					'cloudinary_page_cloudinary_gallery' === $screen->id || $screen->is_block_editor()
 				)
 			) {
 				$can = true;

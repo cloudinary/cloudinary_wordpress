@@ -37,7 +37,7 @@ class Cache extends Settings_Component implements Setup {
 	/**
 	 * File System
 	 *
-	 * @var File_System
+	 * @var File_System|null
 	 */
 	public $file_system;
 

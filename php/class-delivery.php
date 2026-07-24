@@ -232,7 +232,7 @@ class Delivery implements Setup {
 	/**
 	 * Filter out Cloudinary URLS and replace with local.
 	 *
-	 * @param string $content The content to filter.
+	 * @param mixed $content The content to filter.
 	 *
 	 * @return string
 	 */
@@ -541,7 +541,7 @@ class Delivery implements Setup {
 	 */
 	public function get_sized( $attachment_id ) {
 		static $sizes = array(), $registered_sizes;
-		if ( ! $registered_sizes && is_callable( 'wp_get_registered_image_subsizes' ) ) {
+		if ( ! $registered_sizes ) {
 			$registered_sizes = wp_get_registered_image_subsizes();
 		}
 		if ( empty( $sizes[ $attachment_id ] ) ) {
@@ -1125,7 +1125,7 @@ class Delivery implements Setup {
 			if ( empty( $cloudinary_url ) ) {
 				continue;
 			}
-			if ( ! empty( $relation['slashed'] ) && $relation['slashed'] ) {
+			if ( ! empty( $relation['slashed'] ) ) {
 				$aliases[ $base . '?_i=AA' ] = addcslashes( $cloudinary_url, '/' );
 				$aliases[ $base . '?' ]      = addcslashes( $cloudinary_url . '&', '/' );
 				$aliases[ $base ]            = addcslashes( $cloudinary_url, '/' );
@@ -1939,7 +1939,7 @@ class Delivery implements Setup {
 	/**
 	 * Sanitize a url.
 	 *
-	 * @param string $url URL to sanitize.
+	 * @param mixed $url URL to sanitize.
 	 *
 	 * @return string|null
 	 */

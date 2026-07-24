@@ -14,7 +14,7 @@ parameters:
 		-
 			identifier: return.void
 			message: '#^Action callback returns .+ but should not return anything\.$#'
-	level: 3
+	level: 4
 	paths:
 		- php
 		- cloudinary.php

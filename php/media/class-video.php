@@ -36,13 +36,6 @@ class Video {
 	private $config;
 
 	/**
-	 * List of attachment ID's to enable.
-	 *
-	 * @var array
-	 */
-	private $attachments = array();
-
-	/**
 	 * Meta key to store usable video transformations for an attachment.
 	 *
 	 * @var string
@@ -68,31 +61,6 @@ class Video {
 	 */
 	public function player_enabled() {
 		return isset( $this->config['video_player'] ) && 'cld' === $this->config['video_player'] && ! is_admin();
-	}
-
-	/**
-	 * Queue video tag for script init in footer.
-	 *
-	 * @param int          $attachment_id Attachment ID.
-	 * @param string       $url           The video URL.
-	 * @param string|array $format        The video formats.
-	 * @param array        $args          Args to be passed to video init.
-	 *
-	 * @return int
-	 */
-	private function queue_video_config( $attachment_id, $url, $format, $args = array() ) {
-
-		if ( ! empty( $args['transformation'] ) && false === $this->validate_usable_transformations( $attachment_id, $args['transformation'] ) ) {
-			unset( $args['transformation'] );
-		}
-		$this->attachments[] = array(
-			'id'     => $attachment_id,
-			'url'    => $url,
-			'format' => $format,
-			'args'   => $args,
-		);
-
-		return count( $this->attachments ) - 1;// Return the queue index.
 	}
 
 	/**

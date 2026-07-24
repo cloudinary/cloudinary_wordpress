@@ -147,7 +147,7 @@ class File_Folder extends On_Off {
 	/**
 	 * Decode the serialised value.
 	 *
-	 * @param string $value The string to decode.
+	 * @param mixed $value The string to decode.
 	 *
 	 * @return array|bool|string
 	 */

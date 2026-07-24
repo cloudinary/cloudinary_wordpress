@@ -30,7 +30,7 @@ class Setting {
 	/**
 	 * Holds the settings component.
 	 *
-	 * @var Component
+	 * @var Component|null
 	 */
 	protected $component;
 	/**
