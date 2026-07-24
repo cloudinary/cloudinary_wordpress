@@ -433,7 +433,6 @@ class Admin {
 	 */
 	protected function save_settings( $submission, $data ) {
 		$page    = $this->settings->get_setting( $submission );
-		$errors  = array();
 		$pending = false;
 		foreach ( $data as $key => $value ) {
 			$slug    = $submission . $page->separator . $key;
@@ -451,7 +450,7 @@ class Admin {
 			$pending = true;
 		}
 
-		if ( empty( $errors ) && true === $pending ) {
+		if ( true === $pending ) {
 			$results = $this->settings->save();
 			if ( ! empty( $results ) ) {
 				$this->add_admin_notice( 'error_notice', __( 'Settings updated successfully', 'cloudinary' ), 'success' );

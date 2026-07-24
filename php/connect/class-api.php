@@ -439,6 +439,7 @@ class Api {
 		$chunk_size     = 20000000;
 		$index          = 0;
 		$file_size      = filesize( $args['file'] );
+		$result         = new \WP_Error( 'upload_error', __( 'No data to upload.', 'cloudinary' ) );
 		while ( ! feof( $src ) ) {
 			$current_loc = $index * $chunk_size;
 			if ( $current_loc >= $file_size ) {

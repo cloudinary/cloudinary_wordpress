@@ -248,7 +248,7 @@ class Upgrade {
 		update_post_meta( $attachment_id, '_wp_attachment_metadata', $old_meta );
 
 		// migrate from pre v2 meta.
-		if ( empty( $v2_meta ) && empty( $v3_meta ) ) {
+		if ( empty( $v2_meta ) ) {
 			// Attempt old post meta.
 			$public_id = get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
 			if ( ! empty( $public_id ) ) {
