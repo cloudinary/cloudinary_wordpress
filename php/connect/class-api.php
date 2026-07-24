@@ -186,9 +186,9 @@ class Api {
 	/**
 	 * Return an endpoint for a specific resource type.
 	 *
-	 * @param string $resource The resource type for the endpoint.
-	 * @param string $function The function of the endpoint.
-	 * @param bool   $endpoint Flag to get an endpoint or an asset url.
+	 * @param string|null $resource The resource type for the endpoint.
+	 * @param string|null $function The function of the endpoint.
+	 * @param bool        $endpoint Flag to get an endpoint or an asset url.
 	 *
 	 * @return string
 	 */
@@ -437,7 +437,7 @@ class Api {
 
 		// Since WP_Filesystem doesn't have a fread, we need to do it manually. However we'll still use it for writing.
 		$src            = fopen( $args['file'], 'r' ); // phpcs:ignore
-		$temp_file_name = wp_tempnam( uniqid( time() ) . '.' . Utils::pathinfo( $args['file'], PATHINFO_EXTENSION ) );
+		$temp_file_name = wp_tempnam( uniqid( (string) time() ) . '.' . Utils::pathinfo( $args['file'], PATHINFO_EXTENSION ) );
 		$upload_id      = substr( sha1( uniqid( $this->credentials['api_secret'] . wp_rand() ) ), 0, 16 );
 		$chunk_size     = 20000000;
 		$index          = 0;
@@ -500,10 +500,10 @@ class Api {
 	/**
 	 * Upload an asset.
 	 *
-	 * @param int   $attachment_id Attachment ID to upload.
-	 * @param array $args          Array of upload options.
-	 * @param array $headers       Additional headers to use in upload.
-	 * @param bool  $try_remote    Flag to try_remote upload.
+	 * @param int|string $attachment_id Attachment ID to upload, or a file path for raw uploads.
+	 * @param array      $args          Array of upload options.
+	 * @param array      $headers       Additional headers to use in upload.
+	 * @param bool       $try_remote    Flag to try_remote upload.
 	 *
 	 * @return array|\WP_Error
 	 */
@@ -1026,7 +1026,7 @@ class Api {
 			return $request;
 		}
 		$body   = wp_remote_retrieve_body( $request );
-		$result = json_decode( $body, ARRAY_A );
+		$result = json_decode( $body, true );
 		if ( empty( $result ) && ! empty( $body ) ) {
 			return $body; // not json.
 		}

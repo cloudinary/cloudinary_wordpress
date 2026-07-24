@@ -537,7 +537,7 @@ class Filter {
 		$shortcodes = $this->get_video_shortcodes( $html );
 		foreach ( $shortcodes as $shortcode ) {
 			// Add ID.
-			$new_atts = $shortcode['args'] . ' id="' . esc_attr( $id ) . '"';
+			$new_atts = $shortcode['args'] . ' id="' . esc_attr( (string) $id ) . '"';
 
 			// Add defaults.
 			$settings = $this->media->get_settings()->get_value( 'video_settings' );

@@ -178,8 +178,8 @@ class Video {
 			$player_style_url  = sprintf( CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_STYLE, CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION );
 			$player_script_url = sprintf( CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_SCRIPT, CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION );
 
-			wp_register_style( 'cld-player', $player_style_url, null, CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION );
-			wp_register_script( 'cld-core', $core_url, null, CLOUDINARY_ENDPOINTS_CORE_VERSION, true );
+			wp_register_style( 'cld-player', $player_style_url, array(), CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION );
+			wp_register_script( 'cld-core', $core_url, array(), CLOUDINARY_ENDPOINTS_CORE_VERSION, true );
 			wp_register_script( 'cld-player', $player_script_url, array( 'cld-core' ), CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION, true );
 		}
 	}

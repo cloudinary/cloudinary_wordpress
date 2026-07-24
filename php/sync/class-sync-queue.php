@@ -778,8 +778,8 @@ class Sync_Queue {
 	/**
 	 * Add to a threads queue.
 	 *
-	 * @param int   $thread         Thread ID.
-	 * @param array $attachment_ids The ID to add.
+	 * @param string $thread         Thread name.
+	 * @param array  $attachment_ids The ID to add.
 	 */
 	public function add_to_thread_queue( $thread, array $attachment_ids ) {
 
@@ -856,7 +856,7 @@ class Sync_Queue {
 
 		$attachment_ids = $been_synced;
 		if ( ! empty( $attachment_ids ) ) {
-			$chunk_size = ceil( count( $attachment_ids ) / count( $threads ) );
+			$chunk_size = (int) ceil( count( $attachment_ids ) / count( $threads ) );
 			$chunks     = array_chunk( $attachment_ids, $chunk_size );
 			foreach ( $chunks as $index => $chunk ) {
 				$thread = array_shift( $threads );

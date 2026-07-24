@@ -1357,11 +1357,11 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Generate a Cloudinary URL based on attachment ID and required size.
 	 *
-	 * @param int          $attachment_id             The id of the attachment.
-	 * @param array|string $size                      The wp size to set for the URL.
-	 * @param array|string $transformations           Set of transformations to apply to this url.
-	 * @param string|null  $cloudinary_id             Optional forced cloudinary ID.
-	 * @param bool         $overwrite_transformations Flag url is a breakpoint URL to stop re-applying default transformations.
+	 * @param int                    $attachment_id             The id of the attachment.
+	 * @param array|string|bool|null $size                      The wp size to set for the URL.
+	 * @param array|string|bool|null $transformations           Set of transformations to apply to this url.
+	 * @param string|null            $cloudinary_id             Optional forced cloudinary ID.
+	 * @param bool                   $overwrite_transformations Flag url is a breakpoint URL to stop re-applying default transformations.
 	 *
 	 * @return string|null The converted URL.
 	 */
@@ -2058,7 +2058,7 @@ class Media extends Settings_Component implements Setup {
 		$max_files = apply_filters( 'cloudinary_max_files_import', 20 );
 
 		// External assets.
-		wp_enqueue_script( 'cloudinary-media-modal', $this->plugin->dir_url . '/js/media-modal.js', null, $this->plugin->version, true );
+		wp_enqueue_script( 'cloudinary-media-modal', $this->plugin->dir_url . '/js/media-modal.js', array(), $this->plugin->version, true );
 		wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, $deps, $this->plugin->version, true );
 		wp_enqueue_script( 'cloudinary-terms-order', $this->plugin->dir_url . '/js/terms-order.js', array( 'jquery', 'wp-i18n' ), $this->plugin->version, true );
 		wp_enqueue_style( 'cloudinary' );
@@ -2638,7 +2638,7 @@ class Media extends Settings_Component implements Setup {
 					$time = "_{$time}";
 				} else { // Readable request.
 					$to_unset = "_{$time}";
-					$time     = gmdate( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $time );
+					$time     = gmdate( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), (int) $time );
 				}
 
 				// Maybe cleanup log entries.
@@ -2682,9 +2682,9 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Update cloudinary metadata.
 	 *
-	 * @param int          $post_id The attachment ID.
-	 * @param string       $key     The meta key to get.
-	 * @param string|array $data    $the meta data to update.
+	 * @param int    $post_id The attachment ID.
+	 * @param string $key     The meta key to get.
+	 * @param mixed  $data    The meta data to update.
 	 *
 	 * @return bool
 	 */

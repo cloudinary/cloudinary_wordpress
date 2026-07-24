@@ -618,7 +618,7 @@ abstract class Component {
 	/**
 	 * Get a build part to construct.
 	 *
-	 * @param string $part The part name.
+	 * @param string|null $part The part name.
 	 *
 	 * @return array
 	 */

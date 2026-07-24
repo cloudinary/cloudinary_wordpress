@@ -141,7 +141,7 @@ class Upgrade {
 			// Check folder sync in order and if it's not a URL.
 			if ( ! wp_http_validate_url( $file ) && $this->media->is_folder_synced( $attachment_id ) ) {
 				$public_id_folder = ltrim( dirname( $this->media->get_public_id( $attachment_id ) ) );
-				$test_signature   = md5( false );
+				$test_signature   = md5( (string) false );
 				$folder_signature = md5( $public_id_folder );
 				$signature        = $this->sync->get_signature( $attachment_id );
 				if ( $folder_signature !== $test_signature && $test_signature === $signature['folder'] ) {

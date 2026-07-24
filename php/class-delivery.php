@@ -1830,7 +1830,7 @@ class Delivery implements Setup {
 	/**
 	 * Set url usability.
 	 *
-	 * @param object    $item      The item object result.
+	 * @param array     $item      The item result.
 	 * @param null|bool $auto_sync If auto_sync is on.
 	 */
 	protected function set_usability( $item, $auto_sync = null ) {
@@ -1841,9 +1841,9 @@ class Delivery implements Setup {
 		 * @hook   cloudinary_set_usable_asset
 		 * @since  3.0.2
 		 *
-		 * @param object $item The found asset object.
+		 * @param array $item The found asset.
 		 *
-		 * @return object
+		 * @return array
 		 */
 		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
 
@@ -1873,7 +1873,7 @@ class Delivery implements Setup {
 		 * @since  3.1.6
 		 *
 		 * @param string $url         The URL to be searched for and prepared to be delivered by Cloudinary.
-		 * @param object $item        The found asset object.
+		 * @param array  $item        The found asset.
 		 * @param string $content_url The content URL.
 		 *
 		 * @return string

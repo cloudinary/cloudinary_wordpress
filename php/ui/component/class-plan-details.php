@@ -109,7 +109,7 @@ class Plan_Details extends Component {
 		$remaining  = $units - $units_used;
 
 
-		$usage                                 = number_format_i18n( $units ) . ' per month / ' . number_format_i18n( $units_used, 2 ) . ' used';
+		$usage                                 = number_format_i18n( (float) $units ) . ' per month / ' . number_format_i18n( (float) $units_used, 2 ) . ' used';
 		$struct['children']['units']           = $this->make_item( __( 'Plan Units', 'cloudinary' ), $usage, $this->dir_url . 'css/images/units.svg' );
 		$struct['children']['remaining_units'] = $this->make_item( __( 'Remaining Units', 'cloudinary' ), number_format_i18n( $remaining, 2 ), $this->dir_url . 'css/images/units-plus.svg' );
 
