@@ -29,7 +29,7 @@ class Upload_Sync {
 	/**
 	 * The Push_Sync object.
 	 *
-	 * @var \Cloudinary\Sync\Push_Sync
+	 * @var \Cloudinary\Sync\Push_Sync|null
 	 */
 	private $pusher;
 
@@ -55,23 +55,14 @@ class Upload_Sync {
 	protected $media;
 
 	/**
-	 * This feature is enabled.
-	 *
-	 * @var bool
-	 */
-	private $enabled;
-
-	/**
 	 * Upload_Sync constructor.
 	 *
-	 * @param \Cloudinary\Plugin $plugin  The plugin.
-	 * @param bool               $enabled Is this feature enabled.
-	 * @param object             $pusher  An object that implements `push_attachments`. Default: null.
+	 * @param \Cloudinary\Plugin $plugin The plugin.
+	 * @param object             $pusher An object that implements `push_attachments`. Default: null.
 	 */
-	public function __construct( \Cloudinary\Plugin $plugin, $enabled = false, $pusher = null ) {
-		$this->plugin  = $plugin;
-		$this->pusher  = $pusher;
-		$this->enabled = $enabled;
+	public function __construct( \Cloudinary\Plugin $plugin, $pusher = null ) {
+		$this->plugin = $plugin;
+		$this->pusher = $pusher;
 	}
 
 	/**
@@ -123,12 +114,6 @@ class Upload_Sync {
 				),
 				'upload.php'
 			);
-			if ( ! $this->media->is_uploadable_media( $post->ID ) ) {
-				return $actions;
-			}
-			if ( ! $this->sync->is_syncable( $post->ID ) ) {
-				return $actions;
-			}
 			if ( ! $this->plugin->components['sync']->is_synced( $post->ID ) ) {
 				$actions['cloudinary-push'] = sprintf(
 					'<a href="%s" aria-label="%s">%s</a>',

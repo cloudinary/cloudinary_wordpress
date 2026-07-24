@@ -15,7 +15,7 @@ class WordPress extends Url_Object {
 	/**
 	 * Holds the Cloudinary URL object.
 	 *
-	 * @var Cloudinary
+	 * @var Cloudinary|null
 	 */
 	protected $cloudinary_url;
 

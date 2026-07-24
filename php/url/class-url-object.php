@@ -117,7 +117,7 @@ abstract class Url_Object {
 	/**
 	 * Get the ID.
 	 *
-	 * @return int|null
+	 * @return int|string|null
 	 */
 	abstract public function get_id();
 }

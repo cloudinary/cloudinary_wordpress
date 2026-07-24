@@ -713,7 +713,7 @@ class Assets extends Settings_Component {
 	 *
 	 * @param int $asset_id The attachment/asset ID.
 	 *
-	 * @return string
+	 * @return bool
 	 */
 	public function generate_storage_signature( $asset_id ) {
 		return $this->get_asset_storage_folder( $asset_id ) === $this->media->get_public_id( $asset_id );
@@ -1141,7 +1141,7 @@ class Assets extends Settings_Component {
 	 *
 	 * @param int $asset_id The asset id.
 	 *
-	 * @return \WP_Post|null;
+	 * @return \WP_Post|null
 	 */
 	public function find_parent( $asset_id ) {
 		$path   = $this->clean_path( $this->media->local_url( $asset_id ) );
@@ -1199,7 +1199,7 @@ class Assets extends Settings_Component {
 	 *
 	 * @param array $item The raw data for an asset.
 	 *
-	 * @return array
+	 * @return array|null
 	 */
 	public function build_item( $item ) {
 		if ( empty( $item ) ) {
@@ -1792,7 +1792,8 @@ class Assets extends Settings_Component {
 	 */
 	protected function add_asset_parent( $post ) {
 		if ( is_multisite() ) {
-			$post->blog_id = get_current_blog_id();
+			// Dynamically stash the current blog ID on the post object for later multisite checks.
+			$post->blog_id = get_current_blog_id(); // @phpstan-ignore property.notFound
 		}
 
 		$this->asset_parents[ $post->post_title ] = $post;

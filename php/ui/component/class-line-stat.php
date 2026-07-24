@@ -27,14 +27,14 @@ class Line_Stat extends Component {
 	/**
 	 * Holds the used persentage.
 	 *
-	 * @var string
+	 * @var int|float|string
 	 */
 	protected $used_percent;
 
 	/**
 	 * Holds the limit.
 	 *
-	 * @var string
+	 * @var int|float|string
 	 */
 	protected $limit;
 
@@ -76,7 +76,7 @@ class Line_Stat extends Component {
 	/**
 	 * Holds the connect instance.
 	 *
-	 * @var Connect
+	 * @var \Cloudinary\Connect
 	 */
 	protected $connect;
 
@@ -86,8 +86,8 @@ class Line_Stat extends Component {
 	public function setup() {
 		parent::setup();
 		$this->set_stats();
-		$used  = $this->limit * $this->used_percent / 100;
-		$avail = $this->limit - $used;
+		$used  = (float) $this->limit * (float) $this->used_percent / 100;
+		$avail = (float) $this->limit - $used;
 		if ( $this->setting->get_param( 'format_size' ) ) {
 			$used                  = empty( $used ) ? 0 : $used;
 			$avail                 = empty( $avail ) ? 0 : $avail;
@@ -118,7 +118,13 @@ class Line_Stat extends Component {
 	 * Set the usage stats.
 	 */
 	protected function set_stats() {
-		$this->connect      = get_plugin_instance()->get_component( 'connect' );
+		/**
+		 * The connect component.
+		 *
+		 * @var \Cloudinary\Connect $connect
+		 */
+		$connect            = get_plugin_instance()->get_component( 'connect' );
+		$this->connect      = $connect;
 		$this->limit        = $this->connect->get_usage_stat( $this->setting->get_param( 'stat' ), 'limit' );
 		$this->used_percent = $this->connect->get_usage_stat( $this->setting->get_param( 'stat' ), 'used_percent' );
 	}

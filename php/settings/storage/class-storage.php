@@ -41,7 +41,7 @@ abstract class Storage {
 	 * Get the data.
 	 *
 	 * @param string $slug   The slug of the setting storage to get.
-	 * @param false  $reload Flag to force a reload.
+	 * @param bool   $reload Flag to force a reload.
 	 *
 	 * @return mixed
 	 */

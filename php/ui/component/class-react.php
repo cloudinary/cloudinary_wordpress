@@ -89,7 +89,7 @@ class React extends Text {
 	/**
 	 * Sanitize the value.
 	 *
-	 * @param string $value The value to sanitize.
+	 * @param mixed $value The value to sanitize.
 	 *
 	 * @return array|bool|null
 	 */

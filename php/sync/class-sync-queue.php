@@ -137,13 +137,25 @@ class Sync_Queue {
 		// Enable sync queue.
 		if ( filter_input( INPUT_GET, 'enable-bulk', FILTER_VALIDATE_BOOLEAN ) ) {
 			$this->bulk_sync( true );
-			wp_safe_redirect( $this->sync->settings->get_component()->get_url() );
+			/**
+			 * The settings page component.
+			 *
+			 * @var \Cloudinary\UI\Component\Page $page
+			 */
+			$page = $this->sync->settings->get_component();
+			wp_safe_redirect( $page->get_url() );
 			exit;
 		}
 		// Stop sync queue.
 		if ( filter_input( INPUT_GET, 'disable-bulk', FILTER_VALIDATE_BOOLEAN ) ) {
 			$this->bulk_sync( false );
-			wp_safe_redirect( $this->sync->settings->get_component()->get_url() );
+			/**
+			 * The settings page component.
+			 *
+			 * @var \Cloudinary\UI\Component\Page $page
+			 */
+			$page = $this->sync->settings->get_component();
+			wp_safe_redirect( $page->get_url() );
 			exit;
 		}
 

@@ -41,7 +41,7 @@ trait Params_Trait {
 	 * Sets the params recursively.
 	 *
 	 * @param array $parts The parts to set.
-	 * @param array $param The param being set.
+	 * @param mixed $param The param being set.
 	 * @param mixed $value The value to set.
 	 *
 	 * @return mixed
@@ -246,7 +246,7 @@ trait Params_Trait {
 	/**
 	 * Check if a param is public.
 	 *
-	 * @param string $key The param key.
+	 * @param int|string $key The param key.
 	 *
 	 * @return bool
 	 */

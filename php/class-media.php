@@ -38,7 +38,7 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @since   0.1
 	 *
-	 * @var     string.
+	 * @var     string
 	 */
 	public $base_url;
 
@@ -47,58 +47,49 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @since   0.1
 	 *
-	 * @var     string.
+	 * @var     string
 	 */
 	private $cloudinary_folder;
 
 	/**
-	 * Holds the found Cloudinary ID's
-	 *
-	 * @since   0.1
-	 *
-	 * @var     array.
-	 */
-	private $cloudinary_ids = array();
-
-	/**
 	 * Cloudinary credentials.
 	 *
-	 * @var array.
+	 * @var array
 	 */
 	public $credentials;
 
 	/**
 	 * Cloudinary url filtering instance.
 	 *
-	 * @var \Cloudinary\Media\Filter.
+	 * @var \Cloudinary\Media\Filter
 	 */
 	public $filter;
 
 	/**
 	 * Cloudinary upgrade instance.
 	 *
-	 * @var \Cloudinary\Media\Upgrade.
+	 * @var \Cloudinary\Media\Upgrade
 	 */
 	public $upgrade;
 
 	/**
 	 * Cloudinary global transformations.
 	 *
-	 * @var \Cloudinary\Media\Global_Transformations.
+	 * @var \Cloudinary\Media\Global_Transformations
 	 */
 	public $global_transformations;
 
 	/**
 	 * Video filter instance.
 	 *
-	 * @var \Cloudinary\Media\Video.
+	 * @var \Cloudinary\Media\Video
 	 */
 	public $video;
 
 	/**
 	 * Gallery instance.
 	 *
-	 * @var \Cloudinary\Media\Gallery.
+	 * @var \Cloudinary\Media\Gallery|null
 	 */
 	public $gallery;
 
@@ -112,7 +103,7 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Sync instance.
 	 *
-	 * @var \Cloudinary\Sync
+	 * @var \Cloudinary\Sync|null
 	 */
 	public $sync;
 
@@ -941,7 +932,7 @@ class Media extends Settings_Component implements Setup {
 	 * @param array  $transformations The transformation set to check.
 	 * @param string $type            The type of transformation to check for.
 	 *
-	 * @return bool
+	 * @return int|string|false
 	 */
 	public function get_transformation( $transformations, $type ) {
 		foreach ( $transformations as $index => $transformation ) {
@@ -1372,7 +1363,7 @@ class Media extends Settings_Component implements Setup {
 	 * @param string|null  $cloudinary_id             Optional forced cloudinary ID.
 	 * @param bool         $overwrite_transformations Flag url is a breakpoint URL to stop re-applying default transformations.
 	 *
-	 * @return string The converted URL.
+	 * @return string|null The converted URL.
 	 */
 	public function cloudinary_url( $attachment_id, $size = array(), $transformations = array(), $cloudinary_id = null, $overwrite_transformations = false ) {
 		static $cache = array();
@@ -1572,7 +1563,7 @@ class Media extends Settings_Component implements Setup {
 					'full'   => true,
 				);
 			}
-		} elseif ( is_string( $size ) || ( is_array( $size ) && 3 === count( $size ) ) ) {
+		} elseif ( is_string( $size ) || 3 === count( $size ) ) {
 			$intermediate = image_get_intermediate_size( $attachment_id, $size );
 			// PDF's do not have intermediate URL.
 			if ( is_array( $intermediate ) && ! empty( $intermediate['url'] ) ) {
@@ -1646,7 +1637,7 @@ class Media extends Settings_Component implements Setup {
 	 * @param int  $attachment_id The Attachment ID.
 	 * @param bool $suffixed      Flag to get suffixed version of ID.
 	 *
-	 * @return string
+	 * @return string|null
 	 */
 	public function get_public_id( $attachment_id, $suffixed = false ) {
 		// Check for a public_id.
@@ -1777,11 +1768,11 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Filter the requested image and return image source.
 	 *
-	 * @param null         $image         The null image value for short circuit check.
+	 * @param array|false  $image         The image value for short circuit check.
 	 * @param int          $attachment_id The ID of the attachment.
 	 * @param string|array $size          The requested size of the image.
 	 *
-	 * @return array The image array of size and url.
+	 * @return array|false The image array of size and url.
 	 * @uses filter:image_downsize
 	 */
 	public function filter_downsize( $image, $attachment_id, $size ) {
@@ -1880,13 +1871,13 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Get the responsive breakpoints for the image.
 	 *
-	 * @param array  $sources       The original sources array.
-	 * @param array  $size_array    The size array.
-	 * @param string $image_src     The original image source.
-	 * @param array  $image_meta    The image meta array.
-	 * @param int    $attachment_id The attachment id.
+	 * @param array|false $sources  The original sources array.
+	 * @param array       $size_array    The size array.
+	 * @param string      $image_src     The original image source.
+	 * @param array       $image_meta    The image meta array.
+	 * @param int         $attachment_id The attachment id.
 	 *
-	 * @return array Altered or same sources array.
+	 * @return array|false Altered or same sources array.
 	 */
 	public function image_srcset( $sources, $size_array, $image_src, $image_meta, $attachment_id ) {
 
@@ -2107,7 +2098,7 @@ class Media extends Settings_Component implements Setup {
 	 * @param array  $asset     The asset array data.
 	 * @param string $public_id The cloudinary public id.
 	 *
-	 * @return int|WP_Error
+	 * @return int
 	 */
 	private function create_attachment( $asset, $public_id ) {
 
@@ -2781,7 +2772,7 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @param int $attachment_id The ID of the attachment.
 	 *
-	 * @return array
+	 * @return string
 	 */
 	public function get_context_options( $attachment_id ) {
 		$caption = get_post( $attachment_id )->post_excerpt;
@@ -3262,7 +3253,7 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function upgrade_settings( $previous_version, $new_version ) {
 
-		if ( 2.4 === $previous_version ) {
+		if ( version_compare( $previous_version, '2.5', '<' ) ) {
 			// Setup new data from old.
 			$images    = get_option( 'cloudinary_global_transformations', array() );
 			$video     = get_option( self::GLOBAL_VIDEO_TRANSFORMATIONS, array() );
@@ -3275,7 +3266,7 @@ class Media extends Settings_Component implements Setup {
 			// Update value.
 			$setting->set_value( $media );
 			// Save to DB.
-			$setting->save_value();
+			$setting->save_value( $media );
 		}
 	}
 

@@ -162,11 +162,11 @@ class Delivery implements Setup {
 	/**
 	 * Determine if attributes should be added to image tags.
 	 *
-	 * @param WP_REST_Response     $response The response object.
-	 * @param WP_REST_Server       $handler  The request handler.
-	 * @param WP_REST_Request|null $request The request object, if available.
+	 * @param \WP_REST_Response     $response The response object.
+	 * @param \WP_REST_Server       $handler  The request handler.
+	 * @param \WP_REST_Request|null $request The request object, if available.
 	 *
-	 * @return WP_REST_Response
+	 * @return \WP_REST_Response
 	 */
 	public function maybe_unset_attributes( $response, $handler, $request ) {
 		$route = $request->get_route();
@@ -232,7 +232,7 @@ class Delivery implements Setup {
 	/**
 	 * Filter out Cloudinary URLS and replace with local.
 	 *
-	 * @param string $content The content to filter.
+	 * @param mixed $content The content to filter.
 	 *
 	 * @return string
 	 */
@@ -541,7 +541,7 @@ class Delivery implements Setup {
 	 */
 	public function get_sized( $attachment_id ) {
 		static $sizes = array(), $registered_sizes;
-		if ( ! $registered_sizes && is_callable( 'wp_get_registered_image_subsizes' ) ) {
+		if ( ! $registered_sizes ) {
 			$registered_sizes = wp_get_registered_image_subsizes();
 		}
 		if ( empty( $sizes[ $attachment_id ] ) ) {
@@ -1125,7 +1125,7 @@ class Delivery implements Setup {
 			if ( empty( $cloudinary_url ) ) {
 				continue;
 			}
-			if ( ! empty( $relation['slashed'] ) && $relation['slashed'] ) {
+			if ( ! empty( $relation['slashed'] ) ) {
 				$aliases[ $base . '?_i=AA' ] = addcslashes( $cloudinary_url, '/' );
 				$aliases[ $base . '?' ]      = addcslashes( $cloudinary_url . '&', '/' );
 				$aliases[ $base ]            = addcslashes( $cloudinary_url, '/' );
@@ -1747,7 +1747,7 @@ class Delivery implements Setup {
 			$dirname = trim( substr( $path, strlen( $base ), 8 ), DIRECTORY_SEPARATOR );
 			if ( empty( $dirname ) || preg_match( '/\d{4}\/\d{2}/', $dirname ) ) {
 				$is_local = true;
-			} elseif ( ! empty( $dirname ) ) {
+			} else {
 				$is_local = false;
 			}
 		}
@@ -1939,7 +1939,7 @@ class Delivery implements Setup {
 	/**
 	 * Sanitize a url.
 	 *
-	 * @param string $url URL to sanitize.
+	 * @param mixed $url URL to sanitize.
 	 *
 	 * @return string|null
 	 */
@@ -2110,7 +2110,13 @@ class Delivery implements Setup {
 
 		// Check if we are saving. If so, bail.
 		// This is to prevent the replacement from happening in the shutdown, signaling content changes in the editor.
-		if ( $this->plugin->get_component( 'replace' )->doing_save() ) {
+		/**
+		 * The string replace component.
+		 *
+		 * @var \Cloudinary\String_Replace $replace
+		 */
+		$replace = $this->plugin->get_component( 'replace' );
+		if ( $replace->doing_save() ) {
 			return;
 		}
 		$this->init_delivery();

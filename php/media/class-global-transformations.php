@@ -67,7 +67,7 @@ class Global_Transformations {
 	/**
 	 * Holds the media settings.
 	 *
-	 * @var Setting
+	 * @var \Cloudinary\Settings
 	 */
 	protected $media_settings;
 
@@ -326,7 +326,7 @@ class Global_Transformations {
 	/**
 	 * Check if the post has any public taxonomies.
 	 *
-	 * @param \WP_POST $post The post to check.
+	 * @param \WP_Post $post The post to check.
 	 *
 	 * @return bool
 	 */
@@ -360,7 +360,7 @@ class Global_Transformations {
 	 *
 	 * @param int $post_id The post ID.
 	 *
-	 * @return array|false|int|\WP_Error|\WP_Term[]
+	 * @return array<array{term: \WP_Term, value: mixed}>
 	 */
 	public function get_terms( $post_id ) {
 		// Get terms for this post on load.
@@ -656,7 +656,13 @@ class Global_Transformations {
 				return;
 			}
 
-			$item = $this->media->plugin->get_component( 'assets' )->get_asset( $attachment_id, 'dataset' );
+			/**
+			 * The assets component.
+			 *
+			 * @var \Cloudinary\Assets $assets
+			 */
+			$assets = $this->media->plugin->get_component( 'assets' );
+			$item   = $assets->get_asset( $attachment_id, 'dataset' );
 			if ( ! empty( $item['data']['public_id'] ) ) {
 				$text            = __( 'Add Effects', 'cloudinary' );
 				$transformations = Relate::get_transformations( $attachment_id, true, true );

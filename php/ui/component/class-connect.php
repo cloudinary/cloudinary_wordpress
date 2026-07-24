@@ -28,7 +28,7 @@ class Connect extends Component {
 	/**
 	 * Holder the Connect object.
 	 *
-	 * @var Connect
+	 * @var \Cloudinary\Connect
 	 */
 	protected $connect;
 

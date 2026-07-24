@@ -197,7 +197,7 @@ class Upgrade {
 	 *
 	 * @param int $attachment_id The attachment ID to migrate.
 	 *
-	 * @return array();
+	 * @return array
 	 */
 	public function migrate_legacy_meta( $attachment_id ) {
 
@@ -205,7 +205,7 @@ class Upgrade {
 		 * The raw attachment metadata, which may contain plugin-specific keys
 		 * beyond WordPress core's documented shape.
 		 *
-		 * @var array $old_meta
+		 * @var array|false $old_meta
 		 */
 		$old_meta = wp_get_attachment_metadata( $attachment_id, true );
 		if ( ! is_array( $old_meta ) ) {
@@ -248,7 +248,7 @@ class Upgrade {
 		update_post_meta( $attachment_id, '_wp_attachment_metadata', $old_meta );
 
 		// migrate from pre v2 meta.
-		if ( empty( $v2_meta ) && empty( $v3_meta ) ) {
+		if ( empty( $v2_meta ) ) {
 			// Attempt old post meta.
 			$public_id = get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
 			if ( ! empty( $public_id ) ) {

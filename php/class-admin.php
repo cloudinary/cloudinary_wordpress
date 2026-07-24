@@ -38,7 +38,7 @@ class Admin {
 	/**
 	 * Holds notices object.
 	 *
-	 * @var Settings
+	 * @var Setting
 	 */
 	protected $notices;
 
@@ -367,7 +367,7 @@ class Admin {
 	/**
 	 * Filter out non-setting params.
 	 *
-	 * @param numeric-string $key The key to filter out.
+	 * @param int|string $key The key to filter out.
 	 *
 	 * @return bool
 	 */
@@ -433,7 +433,6 @@ class Admin {
 	 */
 	protected function save_settings( $submission, $data ) {
 		$page    = $this->settings->get_setting( $submission );
-		$errors  = array();
 		$pending = false;
 		foreach ( $data as $key => $value ) {
 			$slug    = $submission . $page->separator . $key;
@@ -451,7 +450,7 @@ class Admin {
 			$pending = true;
 		}
 
-		if ( empty( $errors ) && true === $pending ) {
+		if ( true === $pending ) {
 			$results = $this->settings->save();
 			if ( ! empty( $results ) ) {
 				$this->add_admin_notice( 'error_notice', __( 'Settings updated successfully', 'cloudinary' ), 'success' );
@@ -466,12 +465,12 @@ class Admin {
 	/**
 	 * Set an error/notice for a setting.
 	 *
-	 * @param string $error_code    The error code/slug.
-	 * @param string $error_message The error text/message.
-	 * @param string $type          The error type.
-	 * @param bool   $dismissible   If notice is dismissible.
-	 * @param int    $duration      How long it's dismissible for.
-	 * @param string $icon          Optional icon.
+	 * @param string       $error_code    The error code/slug.
+	 * @param string|array $error_message The error text/message.
+	 * @param string       $type          The error type.
+	 * @param bool         $dismissible   If notice is dismissible.
+	 * @param int          $duration      How long it's dismissible for.
+	 * @param string       $icon          Optional icon.
 	 */
 	public function add_admin_notice( $error_code, $error_message, $type = 'error', $dismissible = true, $duration = 0, $icon = null ) {
 
@@ -523,9 +522,10 @@ class Admin {
 	}
 
 	/**
-	 * Get admin notices.
+	 * Absorb WordPress settings errors into the plugin notice store and return
+	 * the renderable notice setting, if any notices are pending.
 	 *
-	 * @return Setting[]
+	 * @return Setting|null
 	 */
 	public function get_admin_notices() {
 		$setting_notices = get_settings_errors();
@@ -533,6 +533,13 @@ class Admin {
 			$this->add_admin_notice( $notice['code'], $notice['message'], $notice['type'], true );
 		}
 
-		return $setting_notices;
+		$notices = $this->notices->get_value();
+		if ( empty( $notices ) ) {
+			return null;
+		}
+
+		sort( $notices );
+
+		return $this->init_components( $notices, self::NOTICE_SLUG );
 	}
 }

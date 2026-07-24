@@ -35,7 +35,7 @@ class Sync implements Setup, Assets {
 	/**
 	 * Contains all the different sync components.
 	 *
-	 * @var Delete_Sync[]|Push_Sync[]|Upload_Sync[]|Media[]|Unsync[]|Download_Sync[]
+	 * @var array<string, Delete_Sync|Push_Sync|Upload_Sync|Media|Unsync|Download_Sync|Sync_Queue|null>
 	 */
 	public $managers;
 
@@ -70,7 +70,7 @@ class Sync implements Setup, Assets {
 	/**
 	 * Holds the sync settings object.
 	 *
-	 * @var Setting
+	 * @var Setting|null
 	 */
 	public $settings;
 
@@ -281,7 +281,7 @@ class Sync implements Setup, Assets {
 	 * @param int  $attachment_id The Attachment id to generate a signature for.
 	 * @param bool $cache         Flag to specify if a cached signature is to be used or build a new one.
 	 *
-	 * @return string|bool
+	 * @return mixed
 	 */
 	public function generate_signature( $attachment_id, $cache = true ) {
 		static $signatures = array(); // cache signatures.
@@ -606,8 +606,14 @@ class Sync implements Setup, Assets {
 				'generate' => array( $this->managers['connect'], 'get_cloud_name' ),
 				'validate' => function ( $attachment_id ) {
 
-					$valid       = true;
-					$credentials = $this->managers['connect']->get_credentials();
+					$valid = true;
+					/**
+					 * The connect manager.
+					 *
+					 * @var \Cloudinary\Connect $connect
+					 */
+					$connect     = $this->managers['connect'];
+					$credentials = $connect->get_credentials();
 					if ( isset( $credentials['cname'] ) ) {
 						$url = get_post_meta( $attachment_id, '_wp_attached_file', true );
 						if ( wp_http_validate_url( $url ) ) {
@@ -1024,9 +1030,9 @@ class Sync implements Setup, Assets {
 	/**
 	 * Set an item to the signature set.
 	 *
-	 * @param int    $attachment_id The attachment ID.
-	 * @param string $type          The sync type.
-	 * @param null   $value         The value.
+	 * @param int         $attachment_id The attachment ID.
+	 * @param string      $type          The sync type.
+	 * @param string|null $value    The value.
 	 */
 	public function set_signature_item( $attachment_id, $type, $value = null ) {
 
@@ -1049,8 +1055,14 @@ class Sync implements Setup, Assets {
 	 */
 	public function init_background_upload() {
 		if ( ! empty( $this->to_sync ) ) {
-			$this->managers['queue']->add_to_queue( $this->to_sync, 'autosync' );
-			$this->managers['queue']->start_threads( 'autosync' );
+			/**
+			 * The sync queue manager.
+			 *
+			 * @var \Cloudinary\Sync\Sync_Queue $queue
+			 */
+			$queue = $this->managers['queue'];
+			$queue->add_to_queue( $this->to_sync, 'autosync' );
+			$queue->start_threads( 'autosync' );
 		}
 	}
 

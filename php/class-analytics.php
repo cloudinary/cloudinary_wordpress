@@ -160,7 +160,7 @@ class Analytics {
 		if ( ! empty( $pending['previous_version'] ) ) {
 			$params['previous_version'] = $pending['previous_version'];
 		}
-		if ( isset( $pending['days_since_last_active'] ) && null !== $pending['days_since_last_active'] ) {
+		if ( isset( $pending['days_since_last_active'] ) ) {
 			$params['days_since_last_active'] = $pending['days_since_last_active'];
 		}
 
@@ -193,7 +193,7 @@ class Analytics {
 		update_option( self::FIRST_API_FLAG, $cloud, false );
 
 		$asset_type = '';
-		if ( is_array( $result ) && ! empty( $result['resource_type'] ) ) {
+		if ( ! empty( $result['resource_type'] ) ) {
 			$asset_type = $result['resource_type'];
 		}
 
@@ -260,7 +260,7 @@ class Analytics {
 					'event_category'  => $category,
 					'event_timestamp' => gmdate( 'Y-m-d\TH:i:s\Z' ),
 				),
-				is_array( $params ) ? $params : array()
+				$params
 			);
 
 			if ( null !== $funnel_step ) {
@@ -365,7 +365,7 @@ class Analytics {
 	 */
 	protected function get_user_role() {
 		$user = wp_get_current_user();
-		if ( $user && ! empty( $user->roles ) ) {
+		if ( ! empty( $user->roles ) ) {
 			return (string) reset( $user->roles );
 		}
 
