@@ -248,7 +248,7 @@ class WPML extends Integrations {
 				break;
 			}
 
-			$relationship            = new Relationship( $args['asset'] );
+			$relationship            = new Relationship( (int) $args['asset'] );
 			$contextual_relationship = $relationship->get_contextualized_relationship( $language );
 
 			if ( ! empty( $contextual_relationship ) ) {

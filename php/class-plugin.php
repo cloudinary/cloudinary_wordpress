@@ -194,7 +194,12 @@ final class Plugin {
 	public function setup_settings() {
 		$params         = $this->get_settings_page_structure();
 		$this->settings = new Settings( $this->slug, $params );
-		$components     = array_filter( $this->components, array( $this, 'is_setting_component' ) );
+		/**
+		 * Components implementing Settings_Component.
+		 *
+		 * @var Settings_Component[] $components
+		 */
+		$components = array_filter( $this->components, array( $this, 'is_setting_component' ) );
 		$this->init_component_settings( $components );
 
 		// Setup connection.
@@ -328,7 +333,7 @@ final class Plugin {
 	public function register_assets() {
 		// Register Main.
 		wp_register_script( 'cloudinary', $this->dir_url . 'js/cloudinary.js', array( 'jquery', 'wp-util' ), $this->version, true );
-		wp_register_style( 'cloudinary', $this->dir_url . 'css/cloudinary.css', null, $this->version );
+		wp_register_style( 'cloudinary', $this->dir_url . 'css/cloudinary.css', array(), $this->version );
 
 		$components = array_filter( $this->components, array( $this, 'is_asset_component' ) );
 		array_map(

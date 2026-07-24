@@ -235,7 +235,7 @@ class Global_Transformations {
 				switch ( $screen->base ) {
 					case 'term':
 						$term_id         = filter_input( INPUT_GET, 'tag_ID', FILTER_SANITIZE_NUMBER_INT );
-						$transformations = $this->get_term_transformations( $term_id, $type );
+						$transformations = $this->get_term_transformations( (int) $term_id, $type );
 						break;
 					default:
 						$transformations = array();
@@ -428,7 +428,7 @@ class Global_Transformations {
 	 */
 	public function make_term_sort_item( $id, $name ) {
 		$out = array(
-			'<li class="cld-tax-order-list-item" data-item="' . esc_attr( $id ) . '">',
+			'<li class="cld-tax-order-list-item" data-item="' . esc_attr( (string) $id ) . '">',
 			'<span class="dashicons dashicons-menu cld-tax-order-list-item-handle"></span>',
 			'<input class="cld-tax-order-list-item-input" type="hidden" name="cld_tax_order[]" value="' . $id . '">' . $name,
 			'</li>',

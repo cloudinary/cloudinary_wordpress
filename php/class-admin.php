@@ -153,7 +153,7 @@ class Admin {
 		$data     = array_filter(
 			$data,
 			function ( $key ) use ( $settings ) {
-				return $settings->get_setting( $key, false );
+				return (bool) $settings->get_setting( $key, false );
 			},
 			ARRAY_FILTER_USE_KEY
 		);
@@ -210,7 +210,7 @@ class Admin {
 			$page['slug'],
 			'',
 			$page['icon'],
-			'81.5'
+			81.5
 		);
 		$connected   = $this->settings->get_param( 'connected' );
 		// Setup the Child page handles.

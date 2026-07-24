@@ -146,7 +146,7 @@ class Plan extends Component {
 		$limit       = $this->connection->get_usage_stat( 'credits', 'limit' );
 		if ( $limit ) {
 			// translators: The number of monthly credits.
-			$description = sprintf( _n( '%d Monthly Credit', '%d Monthly Credits', $limit, 'cloudinary' ), $limit );
+			$description = sprintf( _n( '%d Monthly Credit', '%d Monthly Credits', (int) $limit, 'cloudinary' ), (int) $limit );
 		}
 
 		return $description;

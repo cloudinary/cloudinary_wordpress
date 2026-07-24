@@ -814,9 +814,9 @@ class Sync implements Setup, Assets {
 		 *
 		 * @hook   cloudinary_sync_base
 		 *
-		 * @param array $signatures   The attachments required signatures.
-		 * @param WP_Post $post The attachment post.
-		 * @param Sync $sync    The sync object instance.
+		 * @param array         $signatures The attachments required signatures.
+		 * @param \WP_Post|null $post       The attachment post.
+		 * @param Sync          $sync       The sync object instance.
 		 *
 		 * @return array
 		 */

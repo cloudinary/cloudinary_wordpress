@@ -456,7 +456,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		$cname_str   = $this->extract_cname( $test );
 		$cname_valid = $this->validate_domain( $cname_str );
 
-		if ( $cname_str && ( ! substr_count( $cname_valid, '.' ) || false === $cname_valid ) ) {
+		if ( $cname_str && ( false === $cname_valid || ! substr_count( $cname_valid, '.' ) ) ) {
 			$result['type']    = 'invalid_cname';
 			$result['message'] = __( 'CNAME is not a valid domain name.', 'cloudinary' );
 
@@ -632,7 +632,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 *
 	 * @param string $domain The domain.
 	 *
-	 * @return bool
+	 * @return string|false
 	 */
 	protected function validate_domain( $domain ) {
 		$is_valid = false;

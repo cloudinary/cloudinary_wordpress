@@ -169,7 +169,7 @@ class Lazy_Load extends Delivery_Feature {
 			'data-image' => wp_json_encode( $options ),
 		);
 
-		return HTML::build_tag( 'noscript', $atts ) . $tag . HTML::build_tag( 'noscript', null, 'close' );
+		return HTML::build_tag( 'noscript', $atts ) . $tag . HTML::build_tag( 'noscript', array(), 'close' );
 	}
 
 	/**
@@ -349,7 +349,7 @@ class Lazy_Load extends Delivery_Feature {
 	 * Register front end hooks.
 	 */
 	public function register_assets() {
-		wp_register_script( 'cld-lazy-load', $this->plugin->dir_url . 'js/lazy-load.js', null, $this->plugin->version, false );
+		wp_register_script( 'cld-lazy-load', $this->plugin->dir_url . 'js/lazy-load.js', array(), $this->plugin->version, false );
 	}
 
 	/**
