@@ -590,7 +590,7 @@ class Settings {
 	/**
 	 * Save settings.
 	 *
-	 * @return bool[]|\WP_Error[]
+	 * @return string[]
 	 */
 	public function save() {
 		$pending   = array_keys( $this->get_pending() );

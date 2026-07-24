@@ -941,7 +941,7 @@ class Media extends Settings_Component implements Setup {
 	 * @param array  $transformations The transformation set to check.
 	 * @param string $type            The type of transformation to check for.
 	 *
-	 * @return bool
+	 * @return int|string|false
 	 */
 	public function get_transformation( $transformations, $type ) {
 		foreach ( $transformations as $index => $transformation ) {
@@ -1372,7 +1372,7 @@ class Media extends Settings_Component implements Setup {
 	 * @param string|null  $cloudinary_id             Optional forced cloudinary ID.
 	 * @param bool         $overwrite_transformations Flag url is a breakpoint URL to stop re-applying default transformations.
 	 *
-	 * @return string The converted URL.
+	 * @return string|null The converted URL.
 	 */
 	public function cloudinary_url( $attachment_id, $size = array(), $transformations = array(), $cloudinary_id = null, $overwrite_transformations = false ) {
 		static $cache = array();
@@ -1777,11 +1777,11 @@ class Media extends Settings_Component implements Setup {
 	/**
 	 * Filter the requested image and return image source.
 	 *
-	 * @param null         $image         The null image value for short circuit check.
+	 * @param array|false  $image         The image value for short circuit check.
 	 * @param int          $attachment_id The ID of the attachment.
 	 * @param string|array $size          The requested size of the image.
 	 *
-	 * @return array The image array of size and url.
+	 * @return array|false The image array of size and url.
 	 * @uses filter:image_downsize
 	 */
 	public function filter_downsize( $image, $attachment_id, $size ) {
@@ -2781,7 +2781,7 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @param int $attachment_id The ID of the attachment.
 	 *
-	 * @return array
+	 * @return string
 	 */
 	public function get_context_options( $attachment_id ) {
 		$caption = get_post( $attachment_id )->post_excerpt;

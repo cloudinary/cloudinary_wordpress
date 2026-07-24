@@ -48,7 +48,7 @@ class Gallery extends Settings_Component {
 	/**
 	 * Holds the sync settings object.
 	 *
-	 * @var Setting
+	 * @var \Cloudinary\Settings|Setting
 	 */
 	public $settings;
 

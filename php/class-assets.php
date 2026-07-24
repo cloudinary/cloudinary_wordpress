@@ -713,7 +713,7 @@ class Assets extends Settings_Component {
 	 *
 	 * @param int $asset_id The attachment/asset ID.
 	 *
-	 * @return string
+	 * @return bool
 	 */
 	public function generate_storage_signature( $asset_id ) {
 		return $this->get_asset_storage_folder( $asset_id ) === $this->media->get_public_id( $asset_id );
@@ -1199,7 +1199,7 @@ class Assets extends Settings_Component {
 	 *
 	 * @param array $item The raw data for an asset.
 	 *
-	 * @return array
+	 * @return array|null
 	 */
 	public function build_item( $item ) {
 		if ( empty( $item ) ) {
