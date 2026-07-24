@@ -38,7 +38,7 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @since   0.1
 	 *
-	 * @var     string.
+	 * @var     string
 	 */
 	public $base_url;
 
@@ -47,7 +47,7 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @since   0.1
 	 *
-	 * @var     string.
+	 * @var     string
 	 */
 	private $cloudinary_folder;
 
@@ -56,49 +56,49 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @since   0.1
 	 *
-	 * @var     array.
+	 * @var     array
 	 */
 	private $cloudinary_ids = array();
 
 	/**
 	 * Cloudinary credentials.
 	 *
-	 * @var array.
+	 * @var array
 	 */
 	public $credentials;
 
 	/**
 	 * Cloudinary url filtering instance.
 	 *
-	 * @var \Cloudinary\Media\Filter.
+	 * @var \Cloudinary\Media\Filter
 	 */
 	public $filter;
 
 	/**
 	 * Cloudinary upgrade instance.
 	 *
-	 * @var \Cloudinary\Media\Upgrade.
+	 * @var \Cloudinary\Media\Upgrade
 	 */
 	public $upgrade;
 
 	/**
 	 * Cloudinary global transformations.
 	 *
-	 * @var \Cloudinary\Media\Global_Transformations.
+	 * @var \Cloudinary\Media\Global_Transformations
 	 */
 	public $global_transformations;
 
 	/**
 	 * Video filter instance.
 	 *
-	 * @var \Cloudinary\Media\Video.
+	 * @var \Cloudinary\Media\Video
 	 */
 	public $video;
 
 	/**
 	 * Gallery instance.
 	 *
-	 * @var \Cloudinary\Media\Gallery.
+	 * @var \Cloudinary\Media\Gallery
 	 */
 	public $gallery;
 
@@ -3275,7 +3275,7 @@ class Media extends Settings_Component implements Setup {
 			// Update value.
 			$setting->set_value( $media );
 			// Save to DB.
-			$setting->save_value();
+			$setting->save_value( $media );
 		}
 	}
 

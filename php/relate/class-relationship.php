@@ -24,6 +24,7 @@ use function Cloudinary\get_plugin_instance;
  * @property string|null $sized_url
  * @property string|null $url_hash
  * @property string|null $media_context
+ * @property string|null $format
  */
 class Relationship {
 
@@ -32,7 +33,7 @@ class Relationship {
 	 *
 	 * @var int
 	 */
-	protected $post_id;
+	public $post_id;
 
 	/**
 	 * Flag to save the relationship on shutdown.

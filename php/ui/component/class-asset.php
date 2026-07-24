@@ -156,7 +156,7 @@ class Asset extends Panel {
 	/**
 	 * Get the manager part.
 	 *
-	 * @param array $item The item to get the manager for.
+	 * @param Setting $item The item to get the manager for.
 	 *
 	 * @return array
 	 */

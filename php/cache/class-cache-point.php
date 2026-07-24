@@ -34,7 +34,7 @@ class Cache_Point {
 	/**
 	 * Holds a list of pre-found cached urls before querying to find cached items
 	 *
-	 * @var array.
+	 * @var array
 	 */
 	protected $pre_cached = array();
 	/**

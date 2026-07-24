@@ -162,11 +162,11 @@ class Delivery implements Setup {
 	/**
 	 * Determine if attributes should be added to image tags.
 	 *
-	 * @param WP_REST_Response     $response The response object.
-	 * @param WP_REST_Server       $handler  The request handler.
-	 * @param WP_REST_Request|null $request The request object, if available.
+	 * @param \WP_REST_Response     $response The response object.
+	 * @param \WP_REST_Server       $handler  The request handler.
+	 * @param \WP_REST_Request|null $request The request object, if available.
 	 *
-	 * @return WP_REST_Response
+	 * @return \WP_REST_Response
 	 */
 	public function maybe_unset_attributes( $response, $handler, $request ) {
 		$route = $request->get_route();
@@ -2110,7 +2110,13 @@ class Delivery implements Setup {
 
 		// Check if we are saving. If so, bail.
 		// This is to prevent the replacement from happening in the shutdown, signaling content changes in the editor.
-		if ( $this->plugin->get_component( 'replace' )->doing_save() ) {
+		/**
+		 * The string replace component.
+		 *
+		 * @var \Cloudinary\String_Replace $replace
+		 */
+		$replace = $this->plugin->get_component( 'replace' );
+		if ( $replace->doing_save() ) {
 			return;
 		}
 		$this->init_delivery();

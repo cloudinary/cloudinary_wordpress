@@ -606,8 +606,14 @@ class Sync implements Setup, Assets {
 				'generate' => array( $this->managers['connect'], 'get_cloud_name' ),
 				'validate' => function ( $attachment_id ) {
 
-					$valid       = true;
-					$credentials = $this->managers['connect']->get_credentials();
+					$valid = true;
+					/**
+					 * The connect manager.
+					 *
+					 * @var \Cloudinary\Connect $connect
+					 */
+					$connect     = $this->managers['connect'];
+					$credentials = $connect->get_credentials();
 					if ( isset( $credentials['cname'] ) ) {
 						$url = get_post_meta( $attachment_id, '_wp_attached_file', true );
 						if ( wp_http_validate_url( $url ) ) {
@@ -1049,8 +1055,14 @@ class Sync implements Setup, Assets {
 	 */
 	public function init_background_upload() {
 		if ( ! empty( $this->to_sync ) ) {
-			$this->managers['queue']->add_to_queue( $this->to_sync, 'autosync' );
-			$this->managers['queue']->start_threads( 'autosync' );
+			/**
+			 * The sync queue manager.
+			 *
+			 * @var \Cloudinary\Sync\Sync_Queue $queue
+			 */
+			$queue = $this->managers['queue'];
+			$queue->add_to_queue( $this->to_sync, 'autosync' );
+			$queue->start_threads( 'autosync' );
 		}
 	}
 

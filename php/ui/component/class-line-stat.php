@@ -86,8 +86,8 @@ class Line_Stat extends Component {
 	public function setup() {
 		parent::setup();
 		$this->set_stats();
-		$used  = $this->limit * $this->used_percent / 100;
-		$avail = $this->limit - $used;
+		$used  = (float) $this->limit * (float) $this->used_percent / 100;
+		$avail = (float) $this->limit - $used;
 		if ( $this->setting->get_param( 'format_size' ) ) {
 			$used                  = empty( $used ) ? 0 : $used;
 			$avail                 = empty( $avail ) ? 0 : $avail;

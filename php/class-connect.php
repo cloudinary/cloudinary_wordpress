@@ -153,6 +153,11 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		$url    = $request->get_param( 'cloudinary_url' );
 		$result = $this->test_connection( $url );
 
+		/**
+		 * The analytics component.
+		 *
+		 * @var \Cloudinary\Analytics $analytics
+		 */
 		$analytics = $this->plugin->get_component( 'analytics' );
 		if ( $analytics ) {
 			$success = isset( $result['type'] ) && 'connection_success' === $result['type'];
@@ -240,6 +245,11 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			);
 		}
 
+		/**
+		 * The analytics component.
+		 *
+		 * @var \Cloudinary\Analytics $analytics
+		 */
 		$analytics = $this->plugin->get_component( 'analytics' );
 		if ( $analytics ) {
 			$analytics->track(

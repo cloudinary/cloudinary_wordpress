@@ -157,7 +157,7 @@ class Opt_Level extends Line_Stat {
 	 */
 	protected function set_texts() {
 
-		$used_percent = round( $this->used / $this->limit * 100 );
+		$used_percent = round( (float) $this->used / (float) $this->limit * 100 );
 		/* translators: %s is the percentage optimized. */
 		$this->used_text = sprintf( __( '%s optimized', 'cloudinary' ), $used_percent . '%' );
 
