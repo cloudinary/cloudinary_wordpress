@@ -428,13 +428,13 @@ class Gallery extends Settings_Component {
 			);
 		}
 
+		// The `js/gallery.js` app script is enqueued in `enqueue_admin_scripts()`
+		// with its generated asset dependencies. Adding a `script` here would
+		// enqueue the same file under a second handle, executing the bundle twice
+		// and calling `createRoot()` twice on the same container.
 		$panel[] = array(
-			'type'   => 'react',
-			'slug'   => 'gallery_config',
-			'script' => array(
-				'slug' => 'gallery-widget',
-				'src'  => $this->plugin->dir_url . 'js/gallery.js',
-			),
+			'type' => 'react',
+			'slug' => 'gallery_config',
 		);
 
 		$panel[] = array(
