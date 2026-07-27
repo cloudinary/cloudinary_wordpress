@@ -2,6 +2,7 @@
 
 import { __ } from '@wordpress/i18n';
 import { withSelect } from '@wordpress/data';
+import { useEffect } from '@wordpress/element';
 import { PanelBody, ToggleControl } from '@wordpress/components';
 
 const Video = {
@@ -87,11 +88,17 @@ const TransformationsToggle = ( props ) => {
 
 let ImageInspectorControls = ( props ) => {
 	const { setAttributes, media } = props;
-	const { InspectorControls } = wp.editor;
+	const { InspectorControls } = wp.blockEditor;
 
-	if ( media && media.transformations ) {
-		setAttributes( { transformations: true } );
-	}
+	// Flag the block as having transformations after render. Calling
+	// setAttributes during render triggers a React "Cannot update a component
+	// while rendering a different component" warning under React 19
+	// (WordPress 7.1).
+	useEffect( () => {
+		if ( media && media.transformations ) {
+			setAttributes( { transformations: true } );
+		}
+	}, [ media, setAttributes ] );
 
 	return (
 		<InspectorControls>
