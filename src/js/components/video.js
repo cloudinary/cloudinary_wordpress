@@ -4,6 +4,8 @@ import { __ } from '@wordpress/i18n';
 import { withSelect } from '@wordpress/data';
 import { useEffect } from '@wordpress/element';
 import { PanelBody, ToggleControl } from '@wordpress/components';
+import { addFilter } from '@wordpress/hooks';
+import { InspectorControls } from '@wordpress/block-editor';
 
 const Video = {
 	_init() {
@@ -12,7 +14,7 @@ const Video = {
 		}
 
 		// Gutenberg Video Settings
-		wp.hooks.addFilter(
+		addFilter(
 			'blocks.registerBlockType',
 			'Cloudinary/Media/Video',
 			function ( settings, name ) {
@@ -58,7 +60,7 @@ const cldAddToggle = function ( settings, name ) {
 	return settings;
 };
 
-wp.hooks.addFilter(
+addFilter(
 	'blocks.registerBlockType',
 	'cloudinary/addAttributes',
 	cldAddToggle
@@ -88,7 +90,6 @@ const TransformationsToggle = ( props ) => {
 
 let ImageInspectorControls = ( props ) => {
 	const { setAttributes, media } = props;
-	const { InspectorControls } = wp.blockEditor;
 
 	// Flag the block as having transformations after render. Calling
 	// setAttributes during render triggers a React "Cannot update a component
@@ -131,7 +132,7 @@ const cldFilterBlocksEdit = ( BlockEdit ) => {
 	};
 };
 
-wp.hooks.addFilter(
+addFilter(
 	'editor.BlockEdit',
 	'cloudinary/filterEdit',
 	cldFilterBlocksEdit,
