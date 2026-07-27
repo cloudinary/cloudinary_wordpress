@@ -7,14 +7,13 @@ const AssetManager = {
 	cachePoints: {},
 	spinners: {},
 	states: null,
-	init( context, States ) {
-		this.states = States;
+	init( context, states ) {
+		this.states = states;
 
 		if ( typeof CLDASSETS !== 'undefined' ) {
 			apiFetch.use( apiFetch.createNonceMiddleware( CLDASSETS.nonce ) );
-			const cachePoints = context.querySelectorAll(
-				'[data-cache-point]'
-			);
+			const cachePoints =
+				context.querySelectorAll( '[data-cache-point]' );
 
 			cachePoints.forEach( ( cachePoint ) => this._bind( cachePoint ) );
 			const purgeAll = document.getElementById(
@@ -440,7 +439,7 @@ const AssetManager = {
 					purge.dataset.parent = cachePoint.dataset.cachePoint;
 					const self = this;
 					purge.classList.add( 'button-primary' );
-					this._purgeAll( purge, false, function() {
+					this._purgeAll( purge, false, function () {
 						self._load( cachePoint.dataset.cachePoint );
 					} );
 				}
@@ -569,5 +568,7 @@ if ( context ) {
 	// Init states.
 	States.init();
 	// Init.
-	window.addEventListener( 'load', () => AssetManager.init( context, States ) );
+	window.addEventListener( 'load', () =>
+		AssetManager.init( context, States )
+	);
 }

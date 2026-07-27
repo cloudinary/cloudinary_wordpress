@@ -27,6 +27,8 @@ module.exports = [
 			'**/vendor/**',
 			'js/**',
 			'**/*.min.js',
+			// Vendored third-party library (https://github.com/kallookoo/wp-color-picker-alpha).
+			'src/js/wp-color-picker-alpha.js',
 		],
 	},
 	...recommended,
@@ -49,6 +51,7 @@ module.exports = [
 				CLDCACHE: 'readonly',
 				cldData: 'readonly',
 				CLD_METADATA: 'readonly',
+				CLDASSETS: 'readonly',
 			},
 		},
 		rules: {
@@ -60,6 +63,12 @@ module.exports = [
 			'react-hooks/rules-of-hooks': 'error',
 			'react-hooks/exhaustive-deps': 'warn',
 			'@wordpress/no-global-event-listener': 'off',
+			// CLD_Deactivate is a wp_localize_script object name (php/class-deactivation.php);
+			// renaming it would require a matching PHP-side change.
+			camelcase: [
+				'error',
+				{ properties: 'never', allow: [ '^CLD_Deactivate$' ] },
+			],
 		},
 	},
 ];
