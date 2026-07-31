@@ -50,6 +50,25 @@ class Sync_Queue {
 	private static $queue_enabled = '_cloudinary_bulk_sync_enabled';
 
 	/**
+	 * Option key for the start time of the current bulk-sync run.
+	 *
+	 * Set once, on the initial `rest_start_sync()` call, rather than in the
+	 * per-cycle queue option (`$queue_key`), which gets rebuilt/deleted by
+	 * `stop_maybe()`'s internal restart cycles before a listener could read
+	 * it. Lets `sync_completed` report an accurate end-to-end duration.
+	 *
+	 * @var     string
+	 */
+	const RUN_STARTED_KEY = '_cloudinary_sync_run_started';
+
+	/**
+	 * Option key for the running success/error tally of the current run.
+	 *
+	 * @var     string
+	 */
+	const RUN_TALLY_KEY = '_cloudinary_sync_run_tally';
+
+	/**
 	 * The cron frequency to ensure that the queue is progressing.
 	 *
 	 * @var int
@@ -181,6 +200,94 @@ class Sync_Queue {
 	}
 
 	/**
+	 * Marks the start of a new bulk-sync run, for the `sync_completed` tally.
+	 *
+	 * A no-op if a run is already being tracked (e.g. `stop_maybe()`'s
+	 * internal restart cycle), so the original start time is preserved.
+	 *
+	 * @param string $type The type of queue being started.
+	 *
+	 * @return void
+	 */
+	public function mark_run_started( $type = 'queue' ) {
+		if ( 'queue' !== $type || false !== get_option( self::RUN_STARTED_KEY, false ) ) {
+			return;
+		}
+		update_option( self::RUN_STARTED_KEY, time(), false );
+		update_option(
+			self::RUN_TALLY_KEY,
+			array(
+				'synced' => 0,
+				'errors' => 0,
+			),
+			false
+		);
+	}
+
+	/**
+	 * Adds a sync result to the current run's success/error tally.
+	 *
+	 * A no-op if no run is currently being tracked.
+	 *
+	 * @param bool $success Whether the sync operation succeeded.
+	 *
+	 * @return void
+	 */
+	public function tally_run_result( $success ) {
+		if ( false === get_option( self::RUN_STARTED_KEY, false ) ) {
+			return;
+		}
+		$tally = get_option(
+			self::RUN_TALLY_KEY,
+			array(
+				'synced' => 0,
+				'errors' => 0,
+			)
+		);
+		$key   = $success ? 'synced' : 'errors';
+
+		$tally[ $key ] = isset( $tally[ $key ] ) ? $tally[ $key ] + 1 : 1;
+		update_option( self::RUN_TALLY_KEY, $tally, false );
+	}
+
+	/**
+	 * Emits the `sync_completed` analytics event, clearing the tracked run state.
+	 *
+	 * A no-op if no run is currently being tracked.
+	 *
+	 * @return void
+	 */
+	protected function track_run_completed() {
+		$started = get_option( self::RUN_STARTED_KEY, false );
+		if ( false === $started ) {
+			return;
+		}
+		$tally = get_option(
+			self::RUN_TALLY_KEY,
+			array(
+				'synced' => 0,
+				'errors' => 0,
+			)
+		);
+		delete_option( self::RUN_STARTED_KEY );
+		delete_option( self::RUN_TALLY_KEY );
+
+		$analytics = $this->plugin->get_component( 'analytics' );
+		if ( $analytics ) {
+			$analytics->track(
+				'sync_completed',
+				'sync',
+				null,
+				array(
+					'total_synced' => isset( $tally['synced'] ) ? (int) $tally['synced'] : 0,
+					'total_errors' => isset( $tally['errors'] ) ? (int) $tally['errors'] : 0,
+					'duration_sec' => time() - (int) $started,
+				)
+			);
+		}
+	}
+
+	/**
 	 * Load the Upload Queue hooks.
 	 *
 	 * @return void
@@ -188,6 +295,45 @@ class Sync_Queue {
 	public function load_hooks() {
 		add_action( 'cloudinary_resume_queue', array( $this, 'maybe_resume_queue' ) );
 		add_action( 'cloudinary_settings_save_setting_auto_sync', array( $this, 'change_setting_state' ), 10, 3 );
+		add_filter( 'cloudinary_settings_save_setting', array( $this, 'track_setting_changed' ), 10, 3 );
+	}
+
+	/**
+	 * Emits `sync_settings_changed` for sync-relevant settings.
+	 *
+	 * Hooked to the generic per-save filter (fires for every changed setting),
+	 * filtered down to the sync-relevant slugs we care about.
+	 *
+	 * @param mixed   $new_value     The new value.
+	 * @param mixed   $current_value The current value.
+	 * @param Setting $setting       The setting object.
+	 *
+	 * @return mixed
+	 */
+	public function track_setting_changed( $new_value, $current_value, $setting ) {
+		$tracked_slugs = array( 'auto_sync', 'offload' );
+		// `get_slug()` returns the full dotted path (e.g. `connect.auto_sync`);
+		// only the last segment identifies the setting itself.
+		$full_slug = $setting->get_slug();
+		$parts     = explode( '.', $full_slug );
+		$slug      = end( $parts );
+
+		if ( in_array( $slug, $tracked_slugs, true ) ) {
+			$analytics = $this->plugin->get_component( 'analytics' );
+			if ( $analytics ) {
+				$analytics->track(
+					'sync_settings_changed',
+					'sync',
+					null,
+					array(
+						'setting_key' => $slug,
+						'new_value'   => $new_value,
+					)
+				);
+			}
+		}
+
+		return $new_value;
 	}
 
 	/**
@@ -544,6 +690,7 @@ class Sync_Queue {
 	protected function shutdown_queue( $type = 'queue' ) {
 		if ( 'queue' === $type ) {
 			delete_option( self::$queue_enabled );
+			$this->track_run_completed();
 		} elseif ( 'autosync' === $type ) {
 			// Remove pending flag.
 			delete_post_meta_by_key( Sync::META_KEYS['pending'] );

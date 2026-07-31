@@ -1,6 +1,7 @@
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import OnOff from './onoff';
+import Analytics from './analytics';
 
 const Extensions = {
 	pageReloader: document.getElementById( 'page-reloader' ),
@@ -32,6 +33,11 @@ const Extensions = {
 	toggleExtension( toggle ) {
 		const extension = toggle.dataset.extension;
 		const enabled = toggle.checked;
+		Analytics.track(
+			'extension_toggled',
+			{ extension_id: extension, enabled },
+			'features'
+		);
 		apiFetch( {
 			path: cldData.extensions.url,
 			data: {

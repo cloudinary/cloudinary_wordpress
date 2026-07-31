@@ -1,4 +1,5 @@
 /* global CLD_Deactivate */
+import Analytics from './components/analytics';
 
 const Deactivate = {
 	// The link that triggers the ThickBox
@@ -88,7 +89,14 @@ const Deactivate = {
 
 		[ ...context.deactivateButton ].forEach( ( button ) => {
 			button.addEventListener( 'click', function () {
-				window.location.href = context.deactivationUrl;
+				if ( 'true' === context.modal.dataset.connected ) {
+					Analytics.track( 'deactivation_skipped', {}, 'deactivation' );
+				}
+				// Give the fire-and-forget analytics request a moment to
+				// leave the browser before the page navigates away.
+				setTimeout( function () {
+					window.location.href = context.deactivationUrl;
+				}, 150 );
 			} );
 		} );
 
@@ -148,6 +156,11 @@ const Deactivate = {
 		document.body.style.overflow = 'hidden';
 		this.modal.style.visibility = 'visible';
 		this.modal.style.opacity = '1';
+		Analytics.track(
+			'deactivation_modal_viewed',
+			{ is_connected: 'true' === this.modal.dataset.connected },
+			'deactivation'
+		);
 	},
 	submit( dataHandling = '' ) {
 		wp.ajax

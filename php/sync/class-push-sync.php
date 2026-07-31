@@ -183,6 +183,24 @@ class Push_Sync {
 			$this->queue->stop_queue();
 		} else {
 			$state['success'] = $this->queue->start_queue( $type );
+
+			if ( $state['success'] ) {
+				$this->queue->mark_run_started( $type );
+
+				$analytics = $this->plugin->get_component( 'analytics' );
+				if ( $analytics ) {
+					$queue = $this->queue->get_queue( $type );
+					$analytics->track(
+						'bulk_sync_started',
+						'sync',
+						null,
+						array(
+							'asset_count' => isset( $queue['total'] ) ? (int) $queue['total'] : 0,
+							'trigger'     => 'manual',
+						)
+					);
+				}
+			}
 		}
 
 		return rest_ensure_response( $state );

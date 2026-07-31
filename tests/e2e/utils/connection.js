@@ -59,7 +59,38 @@ function ensureCloudinaryConnected() {
 	return { cloudName };
 }
 
+/**
+ * Fakes a "connected" state without calling the real Cloudinary API.
+ *
+ * Unlike `ensureCloudinaryConnected()`, this writes the connection + signature
+ * options directly via `wp eval` (bypassing `update_option()`, so
+ * `Connect::verify_connection()` — a `pre_update_option` filter — never
+ * runs). Useful for flows that only need `Connect::is_connected()` to be
+ * true (e.g. the deactivation modal's connected/not-connected branching) and
+ * shouldn't depend on live Cloudinary credentials being available.
+ *
+ * @return {{ cloudName: string, cloudinaryUrl: string }} The fake cloud name and connection URL used.
+ */
+function fakeCloudinaryConnected() {
+	const cloudName = 'e2e-fake-cloud';
+	const cloudinaryUrl = `cloudinary://123456789012345:AbCdEfGhIjKlMnOpQrStUvWxYz1@${ cloudName }`;
+
+	wpCli( [
+		'eval',
+		`'
+		global $wpdb;
+		$url = "${ cloudinaryUrl }";
+		$wpdb->update( $wpdb->options, array( "option_value" => serialize( array( "cloudinary_url" => $url ) ) ), array( "option_name" => "cloudinary_connect" ) );
+		update_option( "cloudinary_connection_signature", md5( $url ) );
+		wp_cache_flush();
+		'`,
+	] );
+
+	return { cloudName, cloudinaryUrl };
+}
+
 module.exports = {
 	parseCloudName,
 	ensureCloudinaryConnected,
+	fakeCloudinaryConnected,
 };
