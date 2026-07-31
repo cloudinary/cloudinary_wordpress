@@ -601,7 +601,7 @@ class Assets extends Settings_Component {
 			return;
 		}
 
-		$query_args     = array(
+		$query_args = array(
 			'post_type'              => self::POST_TYPE_SLUG,
 			'posts_per_page'         => 100,
 			'post_parent'            => $parent_id,
@@ -609,6 +609,11 @@ class Assets extends Settings_Component {
 			'fields'                 => 'ids',
 			'update_post_meta_cache' => false,
 			'update_post_term_cache' => false,
+			// Internal bookkeeping query over our own post type: do not run
+			// third-party content filters (e.g. `the_posts`) meant for
+			// public-facing queries. The query is fully specified, so the
+			// filters VIP protects (posts_where/join/orderby) are not relied on.
+			'suppress_filters'       => true, // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.SuppressFilters_suppress_filters
 		);
 		$query          = new \WP_Query( $query_args );
 		$previous_total = $query->found_posts;
@@ -987,6 +992,11 @@ class Assets extends Settings_Component {
 			'no_found_rows'          => true,
 			'update_post_meta_cache' => false,
 			'update_post_term_cache' => false,
+			// Internal bookkeeping query over our own post type: do not run
+			// third-party content filters (e.g. `the_posts`) meant for
+			// public-facing queries. The query is fully specified, so the
+			// filters VIP protects (posts_where/join/orderby) are not relied on.
+			'suppress_filters'       => true, // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.SuppressFilters_suppress_filters
 		);
 		$query               = new \WP_Query( $args );
 		$this->asset_parents = array();
