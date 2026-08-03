@@ -416,8 +416,8 @@ trait CLI_Trait {
 			$diff          = $name_length - $max_length;
 			$concat_length = $diff > 3 ? 3 : $diff;
 			$usable_length = $max_length - $concat_length;
-			$front         = substr( $name, 0, floor( $usable_length / 2 ) );
-			$back          = substr( $name, strlen( $name ) - ceil( $usable_length / 2 ) );
+			$front         = substr( $name, 0, (int) floor( $usable_length / 2 ) );
+			$back          = substr( $name, strlen( $name ) - (int) ceil( $usable_length / 2 ) );
 			$name          = $front . implode( array_fill( 0, $concat_length, $concat_char ) ) . $back;
 		}
 		$used_length = $max_length - strlen( $name );

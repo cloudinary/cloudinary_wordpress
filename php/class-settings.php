@@ -15,6 +15,8 @@ use Cloudinary\Settings\Storage\Storage;
  * Class Settings
  *
  * @package Cloudinary
+ *
+ * @property-read Setting|null $image_settings Chainable access to the image_settings child setting.
  */
 class Settings {
 
@@ -338,7 +340,7 @@ class Settings {
 	/**
 	 * Get a setting value.
 	 *
-	 * @param [string] ...$slugs Additional slugs to get settings for.
+	 * @param string ...$slugs Additional slugs to get settings for.
 	 *
 	 * @return mixed
 	 */
@@ -501,11 +503,9 @@ class Settings {
 				$set = true;
 			}
 		} else {
-			$found = $this->find_setting( $slug );
-			if ( $found ) {
-				$storage_path = $found->get_param( self::META_KEYS['storage'], $found->get_slug() );
-				$set          = $this->set_value( $storage_path, $value );
-			}
+			$found        = $this->find_setting( $slug );
+			$storage_path = $found->get_param( self::META_KEYS['storage'], $found->get_slug() );
+			$set          = $this->set_value( $storage_path, $value );
 		}
 
 		return $set;
@@ -588,7 +588,7 @@ class Settings {
 	/**
 	 * Save settings.
 	 *
-	 * @return bool[]|\WP_Error[]
+	 * @return string[]
 	 */
 	public function save() {
 		$pending   = array_keys( $this->get_pending() );

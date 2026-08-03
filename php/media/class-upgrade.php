@@ -141,7 +141,7 @@ class Upgrade {
 			// Check folder sync in order and if it's not a URL.
 			if ( ! wp_http_validate_url( $file ) && $this->media->is_folder_synced( $attachment_id ) ) {
 				$public_id_folder = ltrim( dirname( $this->media->get_public_id( $attachment_id ) ) );
-				$test_signature   = md5( false );
+				$test_signature   = md5( (string) false );
 				$folder_signature = md5( $public_id_folder );
 				$signature        = $this->sync->get_signature( $attachment_id );
 				if ( $folder_signature !== $test_signature && $test_signature === $signature['folder'] ) {
@@ -197,7 +197,7 @@ class Upgrade {
 	 *
 	 * @param int $attachment_id The attachment ID to migrate.
 	 *
-	 * @return array();
+	 * @return array
 	 */
 	public function migrate_legacy_meta( $attachment_id ) {
 
@@ -205,7 +205,7 @@ class Upgrade {
 		 * The raw attachment metadata, which may contain plugin-specific keys
 		 * beyond WordPress core's documented shape.
 		 *
-		 * @var array $old_meta
+		 * @var array|false $old_meta
 		 */
 		$old_meta = wp_get_attachment_metadata( $attachment_id, true );
 		if ( ! is_array( $old_meta ) ) {
@@ -248,7 +248,7 @@ class Upgrade {
 		update_post_meta( $attachment_id, '_wp_attachment_metadata', $old_meta );
 
 		// migrate from pre v2 meta.
-		if ( empty( $v2_meta ) && empty( $v3_meta ) ) {
+		if ( empty( $v2_meta ) ) {
 			// Attempt old post meta.
 			$public_id = get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true );
 			if ( ! empty( $public_id ) ) {

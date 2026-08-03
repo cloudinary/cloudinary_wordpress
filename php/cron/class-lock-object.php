@@ -67,7 +67,7 @@ class Lock_Object extends Lock_File {
 	 */
 	public function set_lock_file( $file = null, $data = null ) {
 		$time = time();
-		$bits = $data ? json_decode( $data, true ) : uniqid( $time );
+		$bits = $data ? json_decode( $data, true ) : uniqid( (string) $time );
 		if ( ! $this->has_lock_file( $file ) ) {
 			set_transient( self::PREFIX . $this->get_lock_file_name( $file ), $bits, Cron::$daemon_watcher_interval );
 		}

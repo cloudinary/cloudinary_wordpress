@@ -27,7 +27,7 @@ class File_System {
 	/**
 	 * WP file system
 	 *
-	 * @var \WP_Filesystem_Direct
+	 * @var \WP_Filesystem_Direct|null
 	 */
 	public $wp_file_system;
 
@@ -210,9 +210,9 @@ class File_System {
 	/**
 	 * Get the URL's for a list of src files.
 	 *
-	 * @param string $path    The path to get urls for.
-	 * @param array  $files   The list of files.
-	 * @param null   $version The version.
+	 * @param string      $path    The path to get urls for.
+	 * @param array       $files   The list of files.
+	 * @param string|null $version The version.
 	 *
 	 * @return array|false|mixed
 	 */

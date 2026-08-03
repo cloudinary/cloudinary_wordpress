@@ -156,13 +156,25 @@ class Sync_Queue {
 		// Enable sync queue.
 		if ( filter_input( INPUT_GET, 'enable-bulk', FILTER_VALIDATE_BOOLEAN ) ) {
 			$this->bulk_sync( true );
-			wp_safe_redirect( $this->sync->settings->get_component()->get_url() );
+			/**
+			 * The settings page component.
+			 *
+			 * @var \Cloudinary\UI\Component\Page $page
+			 */
+			$page = $this->sync->settings->get_component();
+			wp_safe_redirect( $page->get_url() );
 			exit;
 		}
 		// Stop sync queue.
 		if ( filter_input( INPUT_GET, 'disable-bulk', FILTER_VALIDATE_BOOLEAN ) ) {
 			$this->bulk_sync( false );
-			wp_safe_redirect( $this->sync->settings->get_component()->get_url() );
+			/**
+			 * The settings page component.
+			 *
+			 * @var \Cloudinary\UI\Component\Page $page
+			 */
+			$page = $this->sync->settings->get_component();
+			wp_safe_redirect( $page->get_url() );
 			exit;
 		}
 
@@ -913,8 +925,8 @@ class Sync_Queue {
 	/**
 	 * Add to a threads queue.
 	 *
-	 * @param int   $thread         Thread ID.
-	 * @param array $attachment_ids The ID to add.
+	 * @param string $thread         Thread name.
+	 * @param array  $attachment_ids The ID to add.
 	 */
 	public function add_to_thread_queue( $thread, array $attachment_ids ) {
 
@@ -991,7 +1003,7 @@ class Sync_Queue {
 
 		$attachment_ids = $been_synced;
 		if ( ! empty( $attachment_ids ) ) {
-			$chunk_size = ceil( count( $attachment_ids ) / count( $threads ) );
+			$chunk_size = (int) ceil( count( $attachment_ids ) / count( $threads ) );
 			$chunks     = array_chunk( $attachment_ids, $chunk_size );
 			foreach ( $chunks as $index => $chunk ) {
 				$thread = array_shift( $threads );

@@ -27,7 +27,7 @@ class Lock_File {
 	/**
 	 * Get a lock data.
 	 *
-	 * @param string|null $file The lock name.
+	 * @param string|int|null $file The lock name.
 	 *
 	 * @return false|mixed|string
 	 */
@@ -50,7 +50,7 @@ class Lock_File {
 	/**
 	 * Get the lock name.
 	 *
-	 * @param string|null $file_name The name of the transient.
+	 * @param string|int|null $file_name The name of the transient.
 	 *
 	 * @return mixed|string|null
 	 */
@@ -66,7 +66,7 @@ class Lock_File {
 	/**
 	 * Check if a lock is in place.
 	 *
-	 * @param string|null $file The lock name.
+	 * @param string|int|null $file The lock name.
 	 *
 	 * @return bool
 	 */
@@ -87,14 +87,14 @@ class Lock_File {
 	/**
 	 * Set a lock.
 	 *
-	 * @param string|null $file The name to set.
-	 * @param mixed       $data The data to set.
+	 * @param string|int|null $file The name to set.
+	 * @param mixed           $data The data to set.
 	 *
 	 * @return mixed|string
 	 */
 	public function set_lock_file( $file = null, $data = null ) {
 		$time = time();
-		$bits = $data ? $data : uniqid( $time );
+		$bits = $data ? $data : uniqid( (string) $time );
 		if ( ! $this->has_lock_file( $file ) ) {
 			$file_path = $this->get_lock_file_name( $file );
 			file_put_contents( $file_path, $bits ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_file_put_contents
@@ -106,7 +106,7 @@ class Lock_File {
 	/**
 	 * Delete a lock.
 	 *
-	 * @param string|null $file The name to set.
+	 * @param string|int|null $file The name to set.
 	 */
 	public function delete_lock_file( $file = null ) {
 		$file = $this->get_lock_file_name( $file );

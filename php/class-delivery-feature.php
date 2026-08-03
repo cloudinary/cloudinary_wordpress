@@ -8,7 +8,6 @@
 namespace Cloudinary;
 
 use Cloudinary\Component\Assets;
-use Cloudinary\Settings\Setting;
 
 /**
  * Class Delivery_Feature
@@ -57,7 +56,7 @@ abstract class Delivery_Feature implements Assets {
 	/**
 	 * Holds the settings.
 	 *
-	 * @var Setting
+	 * @var Settings|\Cloudinary\Settings\Setting
 	 */
 	protected $settings;
 

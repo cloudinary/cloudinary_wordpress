@@ -46,7 +46,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 *
 	 * @since   0.1
 	 *
-	 * @var     array
+	 * @var     array|mixed
 	 */
 	public $usage;
 
@@ -153,6 +153,11 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		$url    = $request->get_param( 'cloudinary_url' );
 		$result = $this->test_connection( $url );
 
+		/**
+		 * The analytics component.
+		 *
+		 * @var \Cloudinary\Analytics|null $analytics
+		 */
 		$analytics = $this->plugin->get_component( 'analytics' );
 		if ( $analytics ) {
 			$success = isset( $result['type'] ) && 'connection_success' === $result['type'];
@@ -240,6 +245,11 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			);
 		}
 
+		/**
+		 * The analytics component.
+		 *
+		 * @var \Cloudinary\Analytics|null $analytics
+		 */
 		$analytics = $this->plugin->get_component( 'analytics' );
 		if ( $analytics ) {
 			$analytics->track(
@@ -505,7 +515,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		$cname_str   = $this->extract_cname( $test );
 		$cname_valid = $this->validate_domain( $cname_str );
 
-		if ( $cname_str && ( ! substr_count( $cname_valid, '.' ) || false === $cname_valid ) ) {
+		if ( $cname_str && ( false === $cname_valid || ! substr_count( $cname_valid, '.' ) ) ) {
 			$result['type']    = 'invalid_cname';
 			$result['message'] = __( 'CNAME is not a valid domain name.', 'cloudinary' );
 
@@ -682,7 +692,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	protected function extract_cname( $parsed_url ) {
 		$cname = null;
 
-		if ( ! empty( $test['query'] ) ) {
+		if ( ! empty( $parsed_url['query'] ) ) {
 			$config_params = array();
 			wp_parse_str( $parsed_url['query'], $config_params );
 			$cname = isset( $config_params['cname'] ) ? $config_params['cname'] : $cname;
@@ -698,7 +708,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 *
 	 * @param string $domain The domain.
 	 *
-	 * @return bool
+	 * @return string|false
 	 */
 	protected function validate_domain( $domain ) {
 		$is_valid = false;
@@ -840,7 +850,6 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			$stats = $this->api->usage();
 			if (
 				! is_wp_error( $stats )
-				&& is_array( $stats )
 				&& isset( $stats['media_limits'] )
 				&& is_array( $stats['media_limits'] )
 			) {
@@ -997,6 +1006,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 */
 	public function upgrade_connection( $old_version ) {
 
+		$data = array();
 		if ( version_compare( $old_version, '2.0.0', '>' ) ) {
 			// Post V1 - quick check all details are valid.
 			$data = $this->settings->get_value( 'connect' );
@@ -1027,6 +1037,9 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 		}
 
 		// Test upgraded details.
+		if ( empty( $data['cloudinary_url'] ) ) {
+			return; // Nothing to upgrade.
+		}
 		$data['cloudinary_url'] = str_replace( 'CLOUDINARY_URL=', '', $data['cloudinary_url'] );
 		$test                   = $this->test_connection( $data['cloudinary_url'] );
 
