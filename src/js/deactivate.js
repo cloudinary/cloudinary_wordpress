@@ -7,7 +7,9 @@ const Deactivate = {
 	modalBody: document.getElementById( 'modal-body' ),
 	modalFooter: document.getElementById( 'modal-footer' ),
 	modalUninstall: document.getElementById( 'modal-uninstall' ),
-	modalClose: document.querySelectorAll( 'button[data-action="cancel"], button[data-action="close"]' ),
+	modalClose: document.querySelectorAll(
+		'button[data-action="cancel"], button[data-action="close"]'
+	),
 	// The different links to deactivate the plugin.
 	pluginListLinks: document.querySelectorAll(
 		'.cld-deactivate-link, .cld-deactivate'
@@ -48,14 +50,17 @@ const Deactivate = {
 	addEvents() {
 		const context = this;
 
-		[...context.modalClose].forEach( ( button ) => {
+		[ ...context.modalClose ].forEach( ( button ) => {
 			button.addEventListener( 'click', ( ev ) => {
 				context.closeModal();
 			} );
 		} );
 
 		window.addEventListener( 'keyup', ( ev ) => {
-			if ( 'visible' === context.modal.style.visibility && 'Escape' === ev.key ) {
+			if (
+				'visible' === context.modal.style.visibility &&
+				'Escape' === ev.key
+			) {
 				context.modal.style.visibility = 'hidden';
 				context.modal.style.opacity = '0';
 			}
@@ -70,13 +75,12 @@ const Deactivate = {
 
 		// Add event listener to deactivation links to add the pop up.
 		[ ...context.pluginListLinks ].forEach( ( link ) => {
-			link.addEventListener( 'click', function( ev ) {
+			link.addEventListener( 'click', function ( ev ) {
 				ev.preventDefault();
 				context.deactivationUrl = ev.target.getAttribute( 'href' );
 				context.openModal();
 			} );
 		} );
-
 
 		[ ...context.contactButton ].forEach( ( button ) => {
 			button.addEventListener( 'click', function () {
@@ -90,7 +94,11 @@ const Deactivate = {
 		[ ...context.deactivateButton ].forEach( ( button ) => {
 			button.addEventListener( 'click', function () {
 				if ( 'true' === context.modal.dataset.connected ) {
-					Analytics.track( 'deactivation_skipped', {}, 'deactivation' );
+					Analytics.track(
+						'deactivation_skipped',
+						{},
+						'deactivation'
+					);
 				}
 				// Give the fire-and-forget analytics request a moment to
 				// leave the browser before the page navigates away.
@@ -102,7 +110,7 @@ const Deactivate = {
 
 		// Add event listener to update reason and more container.
 		[ ...context.options ].forEach( ( option ) => {
-			option.addEventListener( 'change', function( ev ) {
+			option.addEventListener( 'change', function ( ev ) {
 				context.reason = ev.target.value;
 				context.more = ev.target.parentNode.querySelector( 'textarea' );
 			} );
@@ -121,9 +129,10 @@ const Deactivate = {
 
 		// Add event listener to submit the feedback.
 		[ ...context.submitButton ].forEach( ( button ) => {
-			button.addEventListener( 'click', function() {
+			button.addEventListener( 'click', function () {
 				const option = document.querySelector(
-					'.cloudinary-deactivation .data input[name="option"]:checked' );
+					'.cloudinary-deactivation .data input[name="option"]:checked'
+				);
 				let value = '';
 
 				if ( option ) {
@@ -141,14 +150,19 @@ const Deactivate = {
 		} );
 
 		if ( this.isCloudinaryOnly ) {
-			const bypass = document.getElementById( 'cld-bypass-cloudinary-only' );
-			bypass.addEventListener( 'change', function ( ev ) {
-				this.modal.dataset.cloudinaryOnly = ! bypass.checked;
-			}.bind( this ) );
+			const bypass = document.getElementById(
+				'cld-bypass-cloudinary-only'
+			);
+			bypass.addEventListener(
+				'change',
+				function ( ev ) {
+					this.modal.dataset.cloudinaryOnly = ! bypass.checked;
+				}.bind( this )
+			);
 		}
 	},
 	closeModal() {
-		document.body.style.removeProperty('overflow');
+		document.body.style.removeProperty( 'overflow' );
 		this.modal.style.visibility = 'hidden';
 		this.modal.style.opacity = '0';
 	},
@@ -172,7 +186,7 @@ const Deactivate = {
 					report: this.report?.checked,
 					contact: this.contact?.checked,
 					email: this.email,
-					dataHandling
+					dataHandling,
 				},
 				beforeSend( request ) {
 					request.setRequestHeader(
@@ -181,7 +195,7 @@ const Deactivate = {
 					);
 				},
 			} )
-			.always( function() {
+			.always( function () {
 				window.location.reload();
 			} );
 	},
