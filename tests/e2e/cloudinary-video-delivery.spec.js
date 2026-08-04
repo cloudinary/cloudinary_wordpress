@@ -148,13 +148,11 @@ test.describe( 'Cloudinary video delivery', () => {
 		try {
 			wpCli( [ 'post', 'delete', String( postId ), '--force' ] );
 		} catch ( e ) {
-			// eslint-disable-next-line no-console
 			console.warn( 'Post cleanup failed:', e.message );
 		}
 		try {
 			wpCli( [ 'post', 'delete', String( attachmentId ), '--force' ] );
 		} catch ( e ) {
-			// eslint-disable-next-line no-console
 			console.warn( 'Media cleanup failed:', e.message );
 		}
 	} );

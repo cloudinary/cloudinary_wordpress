@@ -30,7 +30,8 @@ const CloudinaryLoader = {
 			image.addEventListener( 'error', ( ev ) => {
 				// If load error, set a broken image and remove from images list to prevent infinite load loop.
 				image.srcset = ''; // Remove srcset to stop browser from trying again.
-				image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="rgba(0,0,0,0.1)"/><text x="50%" y="50%" fill="red" text-anchor="middle" dominant-baseline="middle">%26%23x26A0%3B︎</text></svg>';
+				image.src =
+					'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="rgba(0,0,0,0.1)"/><text x="50%" y="50%" fill="red" text-anchor="middle" dominant-baseline="middle">%26%23x26A0%3B︎</text></svg>';
 				this.rObserver.unobserve( image );
 			} );
 		} else {
@@ -57,7 +58,8 @@ const CloudinaryLoader = {
 		const srcSet = [];
 		this.sizeBands.forEach( ( size ) => {
 			if ( size <= image.originalWidth ) {
-				let newURL = this.getSizeURL( image, size, true ) + ` ${ size }w`;
+				const newURL =
+					this.getSizeURL( image, size, true ) + ` ${ size }w`;
 				if ( -1 === srcSet.indexOf( newURL ) ) {
 					srcSet.push( newURL );
 				}
@@ -86,22 +88,33 @@ const CloudinaryLoader = {
 	},
 	_setupObservers() {
 		const iOptions = {
-			rootMargin: this.lazyThreshold + 'px 0px ' + this.lazyThreshold + 'px 0px',
+			rootMargin:
+				this.lazyThreshold + 'px 0px ' + this.lazyThreshold + 'px 0px',
 		};
 
-		const placeholderThreshold = this.minPlaceholderThreshold < this.lazyThreshold * 2 ? this.lazyThreshold * 2 : this.minPlaceholderThreshold;
+		const placeholderThreshold =
+			this.minPlaceholderThreshold < this.lazyThreshold * 2
+				? this.lazyThreshold * 2
+				: this.minPlaceholderThreshold;
 		const pOptions = {
-			rootMargin: placeholderThreshold + 'px 0px ' + placeholderThreshold + 'px 0px',
+			rootMargin:
+				placeholderThreshold +
+				'px 0px ' +
+				placeholderThreshold +
+				'px 0px',
 		};
 		this.rObserver = new ResizeObserver( ( entries, observer ) => {
-			entries.forEach( entry => {
-				if ( entry.target.cld_loaded && entry.contentRect.width >= entry.target.cld_loaded ) {
+			entries.forEach( ( entry ) => {
+				if (
+					entry.target.cld_loaded &&
+					entry.contentRect.width >= entry.target.cld_loaded
+				) {
 					entry.target.src = this.getSizeURL( entry.target );
 				}
 			} );
 		} );
 		this.iObserver = new IntersectionObserver( ( entries, observer ) => {
-			entries.forEach( entry => {
+			entries.forEach( ( entry ) => {
 				if ( entry.isIntersecting ) {
 					this.buildImage( entry.target );
 					observer.unobserve( entry.target );
@@ -110,8 +123,7 @@ const CloudinaryLoader = {
 			} );
 		}, iOptions );
 		this.pObserver = new IntersectionObserver( ( entries, observer ) => {
-			entries.forEach( entry => {
-
+			entries.forEach( ( entry ) => {
 				if ( entry.isIntersecting ) {
 					entry.target.src = this.getPlaceholderURL( entry.target );
 					observer.unobserve( entry.target );
@@ -146,8 +158,9 @@ const CloudinaryLoader = {
 		this.lazyThreshold = parseInt( unit, 10 );
 	},
 	_getDensity() {
-		let maxDensity = this.config.dpr ? this.config.dpr.replace(
-			'X', '' ) : 'off';
+		let maxDensity = this.config.dpr
+			? this.config.dpr.replace( 'X', '' )
+			: 'off';
 		if ( 'off' === maxDensity ) {
 			this.density = 1;
 			return 1;
@@ -159,10 +172,7 @@ const CloudinaryLoader = {
 			deviceDensity = roundToHalf( deviceDensity );
 		}
 
-		if (
-			'max' !== maxDensity &&
-			'auto' !== deviceDensity
-		) {
+		if ( 'max' !== maxDensity && 'auto' !== deviceDensity ) {
 			maxDensity = parseFloat( maxDensity );
 
 			// Round maxDensity to nearest 0.5 to maintain consistency
@@ -182,7 +192,11 @@ const CloudinaryLoader = {
 			width = image.width;
 			let height = Math.round( width / ratio );
 
-			while ( -1 === this.sizeBands.indexOf( width ) && height < maxHeight && width < maxSize ) {
+			while (
+				-1 === this.sizeBands.indexOf( width ) &&
+				height < maxHeight &&
+				width < maxSize
+			) {
 				width++;
 				height = Math.round( width / ratio );
 			}
@@ -196,8 +210,9 @@ const CloudinaryLoader = {
 		return width;
 	},
 	scaleSize( image, width, dpr ) {
-
-		const ratio = image.dataset.crop ? parseFloat( image.dataset.crop ) : ( image.originalWidth / image.originalHeight ).toFixed( 2 );
+		const ratio = image.dataset.crop
+			? parseFloat( image.dataset.crop )
+			: ( image.originalWidth / image.originalHeight ).toFixed( 2 );
 		const scaledWidth = this.scaleWidth( image, width, ratio );
 		const scaledHeight = Math.round( scaledWidth / ratio );
 		const newSize = [];
@@ -227,7 +242,9 @@ const CloudinaryLoader = {
 		};
 	},
 	getDeliveryMethod( image ) {
-		return image.dataset.seo && 'upload' === image.dataset.delivery ? 'images' : 'image/' + image.dataset.delivery;
+		return image.dataset.seo && 'upload' === image.dataset.delivery
+			? 'images'
+			: 'image/' + image.dataset.delivery;
 	},
 	getSizeURL( image, width ) {
 		const newSize = this.scaleSize( image, width, true );
@@ -238,7 +255,7 @@ const CloudinaryLoader = {
 			'upload' === image.dataset.delivery ? newSize.transformation : '',
 			image.dataset.transformations,
 			'v' + image.dataset.version,
-			image.dataset.publicId + '?_i=AA'
+			image.dataset.publicId + '?_i=AA',
 		];
 
 		return parts.filter( this.empty ).join( '/' );
@@ -252,14 +269,14 @@ const CloudinaryLoader = {
 			this.getDeliveryMethod( image ),
 			newSize.transformation,
 			this.config.placeholder,
-			image.dataset.publicId
+			image.dataset.publicId,
 		];
 
 		return parts.filter( this.empty ).join( '/' );
 	},
 	empty( thing ) {
 		return 'undefined' !== typeof thing && 0 !== thing.length;
-	}
+	},
 };
 window.CLDBind = ( image ) => {
 	if ( ! image.CLDbound ) {
@@ -267,15 +284,17 @@ window.CLDBind = ( image ) => {
 	}
 };
 window.initFallback = () => {
-	[...document.querySelectorAll('img[data-cloudinary="lazy"]')].forEach( ( image )=>{
-		CLDBind( image );
-	})
-}
+	[ ...document.querySelectorAll( 'img[data-cloudinary="lazy"]' ) ].forEach(
+		( image ) => {
+			window.CLDBind( image );
+		}
+	);
+};
 // Window load Fallback.
 window.addEventListener( 'load', () => {
-	initFallback();
+	window.initFallback();
 } );
 // Dynamic loaded.
-if( document.querySelector('script[src*="?cloudinary_lazy_load_loader"]') ) {
-	initFallback();
+if ( document.querySelector( 'script[src*="?cloudinary_lazy_load_loader"]' ) ) {
+	window.initFallback();
 }
