@@ -13,7 +13,11 @@ import apiFetch from '@wordpress/api-fetch';
 import { Spinner } from '@wordpress/components';
 import '@wordpress/components/build-style/style.css';
 import { useEffect, useMemo, useState } from '@wordpress/element';
-import { InspectorControls, MediaPlaceholder } from '@wordpress/block-editor';
+import {
+	InspectorControls,
+	MediaPlaceholder,
+	useBlockProps,
+} from '@wordpress/block-editor';
 
 /**
  * Internal dependencies
@@ -36,7 +40,13 @@ const galleryWidgetConfig = ( config, container ) => ( {
 	zoom: false,
 } );
 
-const Edit = ( { setAttributes, attributes, className, isSelected } ) => {
+// Prefix for the generated gallery container class. A literal prefix keeps
+// the value a valid, unique CSS selector. Prior to the Block API v2 upgrade
+// the block's `className` prop was used, but that prop is no longer passed to
+// `Edit` in API v2, which produced containers named "undefined<id>".
+const CONTAINER_PREFIX = 'cld-gallery-';
+
+const Edit = ( { setAttributes, attributes, isSelected } ) => {
 	const [ errorMessage, setErrorMessage ] = useState( null );
 	const [ loading, setLoading ] = useState( false );
 
@@ -122,22 +132,32 @@ const Edit = ( { setAttributes, attributes, className, isSelected } ) => {
 
 			return () => gallery.destroy();
 		}
-	}, [ errorMessage, attributes, setAttributes, className ] );
+	}, [ errorMessage, attributes, setAttributes ] );
 
 	const hasImages = !! attributes.selectedImages.length;
 
-	if ( ! attributes.container ) {
-		setAttributes( {
-			container: `${ className }${ generateId( 15 ) }`,
-		} );
-	}
+	// Persist the generated container id and prepared defaults after render.
+	// Calling setAttributes during render triggers a React "Cannot update a
+	// component while rendering a different component" warning under React 19
+	// (WordPress 7.1).
+	useEffect( () => {
+		if ( ! attributes.container ) {
+			setAttributes( {
+				container: `${ CONTAINER_PREFIX }${ generateId( 15 ) }`,
+			} );
+		}
+	}, [ attributes.container, setAttributes ] );
 
-	setAttributes( preparedAttributes );
+	useEffect( () => {
+		setAttributes( preparedAttributes );
+	}, [ preparedAttributes, setAttributes ] );
+
+	const blockProps = useBlockProps();
 
 	return (
-		<>
+		<div { ...blockProps }>
 			<>
-				<div className={ attributes.container || className }></div>
+				<div className={ attributes.container }></div>
 				<div className="wp-block-cloudinary-gallery">
 					<MediaPlaceholder
 						labels={ {
@@ -169,7 +189,7 @@ const Edit = ( { setAttributes, attributes, className, isSelected } ) => {
 					setAttributes={ setAttributes }
 				/>
 			</InspectorControls>
-		</>
+		</div>
 	);
 };
 

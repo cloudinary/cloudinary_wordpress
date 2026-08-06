@@ -153,7 +153,15 @@ class Video {
 	 * Enqueue BLock Assets
 	 */
 	public function enqueue_block_assets() {
-		wp_enqueue_script( 'cloudinary-block', $this->media->plugin->dir_url . 'js/block-editor.js', array(), $this->media->plugin->version, true );
+		$asset = require $this->media->plugin->dir_path . 'js/block-editor.asset.php'; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
+
+		wp_enqueue_script(
+			'cloudinary-block',
+			$this->media->plugin->dir_url . 'js/block-editor.js',
+			$asset['dependencies'],
+			$asset['version'],
+			true
+		);
 		wp_add_inline_script( 'cloudinary-block', 'var CLD_VIDEO_PLAYER = ' . wp_json_encode( $this->config ), 'before' );
 	}
 
