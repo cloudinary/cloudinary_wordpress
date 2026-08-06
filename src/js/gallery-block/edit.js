@@ -58,7 +58,6 @@ const Edit = ( { setAttributes, attributes, isSelected } ) => {
 
 		const defaultAttrs = {};
 
-		// eslint-disable-next-line no-unused-vars
 		const { container, ...flattenedAttrs } = dot.dot( CLD_GALLERY_CONFIG );
 
 		Object.keys( flattenedAttrs ).forEach( ( attr ) => {
