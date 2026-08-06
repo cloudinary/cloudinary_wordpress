@@ -92,7 +92,7 @@ class On_Off extends Text {
 			$struct['attributes']['data-main'] = wp_json_encode( $controllers );
 		}
 
-		if ( $this->is_readonly() || ( true === $this->setting->has_param( 'main_required', false ) && empty( $struct['attributes']['data-main'] ) ) ) {
+		if ( $this->is_readonly() || ( true === $this->setting->has_param( 'main_required' ) && empty( $struct['attributes']['data-main'] ) ) ) {
 			$struct['attributes']['type'] = 'hidden';
 		}
 
@@ -119,7 +119,7 @@ class On_Off extends Text {
 	 */
 	protected function shadow( $struct ) {
 		// Add the toggle stub.
-		if ( $this->is_readonly() || ( true === $this->setting->has_param( 'main_required', false ) && empty( $struct['attributes']['data-main'] ) ) ) {
+		if ( $this->is_readonly() || ( true === $this->setting->has_param( 'main_required' ) && empty( $struct['attributes']['data-main'] ) ) ) {
 			$struct                           = $this->get_part( 'input' );
 			$struct['attributes']['type']     = 'checkbox';
 			$struct['attributes']['disabled'] = 'disabled';
@@ -231,7 +231,7 @@ class On_Off extends Text {
 	 *
 	 * @param string $value The value to sanitize.
 	 *
-	 * @return bool
+	 * @return string
 	 */
 	public function sanitize_value( $value ) {
 		$allowed = array(

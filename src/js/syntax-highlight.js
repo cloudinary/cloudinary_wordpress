@@ -1,4 +1,4 @@
-import { json } from "@codemirror/lang-json";
+import { json } from '@codemirror/lang-json';
 import { EditorState } from '@codemirror/state';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { EditorView, basicSetup } from 'codemirror';
@@ -12,25 +12,25 @@ const SyntaxHighlight = {
 			EditorState.readOnly.of( true ), // Make the editor read-only.
 			oneDark, // Apply dark theme.
 
-			EditorView.theme({
+			EditorView.theme( {
 				'&': {
 					height: '600px', // Define the height of the editor.
 				},
-			}),
+			} ),
 		];
 
 		// Initialize the editor when the DOM is fully loaded.
-		document.addEventListener('DOMContentLoaded', function () {
-			if (undefined === CLD_METADATA) {
+		document.addEventListener( 'DOMContentLoaded', function () {
+			if ( undefined === CLD_METADATA ) {
 				return;
 			}
 
-			const parent = document.getElementById('meta-data');
-			const doc = JSON.stringify(CLD_METADATA, null, '  ');
+			const parent = document.getElementById( 'meta-data' );
+			const doc = JSON.stringify( CLD_METADATA, null, '  ' );
 
-			new EditorView({ parent, doc, extensions });
+			new EditorView( { parent, doc, extensions } );
 		} );
-	}
+	},
 };
 
 SyntaxHighlight.init();

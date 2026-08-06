@@ -212,9 +212,9 @@ class Text extends Component {
 	/**
 	 * Sanitize the value.
 	 *
-	 * @param string $value The value to sanitize.
+	 * @param mixed $value The value to sanitize.
 	 *
-	 * @return string
+	 * @return mixed
 	 */
 	public function sanitize_value( $value ) {
 		if ( 0 === strlen( $value ) && $this->setting->has_param( 'default' ) ) {

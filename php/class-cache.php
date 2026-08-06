@@ -10,7 +10,6 @@ namespace Cloudinary;
 use Cloudinary\Cache\Cache_Point;
 use Cloudinary\Cache\File_System;
 use Cloudinary\Component\Setup;
-use Cloudinary\Settings\Setting;
 use WP_Error;
 use WP_HTTP_Response;
 use WP_REST_Request;
@@ -38,7 +37,7 @@ class Cache extends Settings_Component implements Setup {
 	/**
 	 * File System
 	 *
-	 * @var File_System
+	 * @var File_System|null
 	 */
 	public $file_system;
 
@@ -720,33 +719,17 @@ class Cache extends Settings_Component implements Setup {
 	}
 
 	/**
-	 * Adds the individual setting tabs.
+	 * Register the cache-path hooks for each cache tab.
+	 *
+	 * The settings structures themselves are registered declaratively via
+	 * settings(); this only wires the per-tab cache_point path callbacks that
+	 * run on the cloudinary_cache_init_cache_points action.
 	 */
 	protected function setup_setting_tabs() {
-		$cache_settings = $this->get_cache_settings();
-		foreach ( $cache_settings as $setting ) {
-			$callback = $setting->get_param( 'callback' );
-			if ( is_callable( $callback ) ) {
-				call_user_func( $callback ); // Init the settings.
-			}
-		}
-	}
-
-	/**
-	 * Get all the Cache settings.
-	 *
-	 * @return Setting[]
-	 */
-	public function get_cache_settings() {
-		static $settings = array();
-		if ( empty( $settings ) ) {
-			$main_setting = $this->settings->get_setting( 'cache_paths' );
-			foreach ( $main_setting->get_settings() as $slug => $setting ) {
-				$settings[ $slug ] = $setting;
-			}
-		}
-
-		return $settings;
+		add_action( 'cloudinary_cache_init_cache_points', array( $this, 'add_plugin_cache_paths' ) );
+		add_action( 'cloudinary_cache_init_cache_points', array( $this, 'add_theme_cache_paths' ) );
+		add_action( 'cloudinary_cache_init_cache_points', array( $this, 'add_wp_cache_paths' ) );
+		add_action( 'cloudinary_cache_init_cache_points', array( $this, 'add_content_cache_paths' ) );
 	}
 
 	/**
@@ -783,7 +766,9 @@ class Cache extends Settings_Component implements Setup {
 	}
 
 	/**
-	 * Add the plugin cache settings page.
+	 * Get the plugin cache settings structure.
+	 *
+	 * @return array
 	 */
 	protected function add_plugin_settings() {
 
@@ -821,8 +806,8 @@ class Cache extends Settings_Component implements Setup {
 				$plugins_setup,
 			),
 		);
-		$this->settings->create_setting( 'plugins_settings', $params, $this->settings->get_setting( 'cache_plugins' ) );
-		add_action( 'cloudinary_cache_init_cache_points', array( $this, 'add_plugin_cache_paths' ) );
+
+		return $params;
 	}
 
 	/**
@@ -834,7 +819,9 @@ class Cache extends Settings_Component implements Setup {
 	}
 
 	/**
-	 * Add Theme Settings page.
+	 * Get the theme cache settings structure.
+	 *
+	 * @return array
 	 */
 	protected function add_theme_settings() {
 
@@ -873,8 +860,7 @@ class Cache extends Settings_Component implements Setup {
 			),
 		);
 
-		$this->settings->create_setting( 'theme_settings', $params, $this->settings->get_setting( 'cache_themes' ) );
-		add_action( 'cloudinary_cache_init_cache_points', array( $this, 'add_theme_cache_paths' ) );
+		return $params;
 	}
 
 	/**
@@ -886,7 +872,9 @@ class Cache extends Settings_Component implements Setup {
 	}
 
 	/**
-	 * Add WP Settings page.
+	 * Get the WordPress cache settings structure.
+	 *
+	 * @return array
 	 */
 	protected function add_wp_settings() {
 
@@ -925,8 +913,7 @@ class Cache extends Settings_Component implements Setup {
 			),
 		);
 
-		$this->settings->create_setting( 'wordpress_settings', $params, $this->settings->get_setting( 'cache_wordpress' ) );
-		add_action( 'cloudinary_cache_init_cache_points', array( $this, 'add_wp_cache_paths' ) );
+		return $params;
 	}
 
 	/**
@@ -938,7 +925,9 @@ class Cache extends Settings_Component implements Setup {
 	}
 
 	/**
-	 * Add WP Settings page.
+	 * Get the content cache settings structure.
+	 *
+	 * @return array
 	 */
 	protected function add_content_settings() {
 
@@ -977,8 +966,7 @@ class Cache extends Settings_Component implements Setup {
 			),
 		);
 
-		$this->settings->create_setting( 'content_settings', $params, $this->settings->get_setting( 'cache_content' ) );
-		add_action( 'cloudinary_cache_init_cache_points', array( $this, 'add_content_cache_paths' ) );
+		return $params;
 	}
 
 	/**
@@ -1046,24 +1034,24 @@ class Cache extends Settings_Component implements Setup {
 							'default'      => 'off',
 						),
 						array(
-							'slug'     => 'cache_plugins',
-							'type'     => 'frame',
-							'callback' => array( $this, 'add_plugin_settings' ),
+							'slug' => 'cache_plugins',
+							'type' => 'frame',
+							$this->add_plugin_settings(),
 						),
 						array(
-							'slug'     => 'cache_themes',
-							'type'     => 'frame',
-							'callback' => array( $this, 'add_theme_settings' ),
+							'slug' => 'cache_themes',
+							'type' => 'frame',
+							$this->add_theme_settings(),
 						),
 						array(
-							'slug'     => 'cache_wordpress',
-							'type'     => 'frame',
-							'callback' => array( $this, 'add_wp_settings' ),
+							'slug' => 'cache_wordpress',
+							'type' => 'frame',
+							$this->add_wp_settings(),
 						),
 						array(
-							'slug'     => 'cache_content',
-							'type'     => 'frame',
-							'callback' => array( $this, 'add_content_settings' ),
+							'slug' => 'cache_content',
+							'type' => 'frame',
+							$this->add_content_settings(),
 						),
 					),
 					array(
