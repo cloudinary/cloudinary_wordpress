@@ -13,6 +13,9 @@
  */
 
 const { execSync } = require( 'child_process' );
+const fs = require( 'fs' );
+const os = require( 'os' );
+const path = require( 'path' );
 
 const CONNECT_OPTION = 'cloudinary_connect';
 const SIGNATURE_OPTION = 'cloudinary_connection_signature';
@@ -77,6 +80,50 @@ function wpCli( args ) {
 }
 
 /**
+ * Runs PHP via `wp eval-file` inside the wp-env cli container.
+ *
+ * Unlike `wp eval`, `eval-file` reliably sees plugin-defined globals/functions
+ * such as `get_plugin_instance()` — under plain `wp eval` that call fails with
+ * "Call to undefined function", for reasons not fully tracked down. Route any
+ * snippet that touches the plugin instance through here instead.
+ *
+ * @param {string} phpCode PHP statements (no `<?php` tag).
+ * @return {string} stdout, trimmed.
+ */
+function wpEvalFile( phpCode ) {
+	const container = getCliContainer();
+	const localPath = path.join(
+		os.tmpdir(),
+		`cld-e2e-eval-${ Date.now() }-${ Math.random()
+			.toString( 36 )
+			.slice( 2 ) }.php`
+	);
+	const remotePath = `/tmp/${ path.basename( localPath ) }`;
+
+	// `get_plugin_instance()` and friends live in the Cloudinary namespace;
+	// an unqualified call from the global namespace (the default for a
+	// plain eval'd file) fails with "Call to undefined function".
+	fs.writeFileSync(
+		localPath,
+		`<?php\nnamespace Cloudinary;\n${ phpCode }\n`
+	);
+	try {
+		execSync( `docker cp ${ localPath } ${ container }:${ remotePath }`, {
+			stdio: [ 'ignore', 'pipe', 'pipe' ],
+		} );
+		return execSync(
+			`docker exec ${ container } wp eval-file ${ remotePath } --allow-root`,
+			{ encoding: 'utf8', stdio: [ 'ignore', 'pipe', 'pipe' ] }
+		).trim();
+	} finally {
+		fs.unlinkSync( localPath );
+		execSync( `docker exec ${ container } rm -f ${ remotePath }`, {
+			stdio: [ 'ignore', 'pipe', 'pipe' ],
+		} );
+	}
+}
+
+/**
  * Wipe any existing Cloudinary connection so the wizard reappears.
  *
  * Each option may or may not exist. We attempt all three and
@@ -133,4 +180,5 @@ module.exports = {
 	resetCloudinaryConnection,
 	visitWizard,
 	wpCli,
+	wpEvalFile,
 };
