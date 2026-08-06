@@ -80,7 +80,17 @@ function fakeCloudinaryConnected() {
 		`'
 		global $wpdb;
 		$url = "${ cloudinaryUrl }";
-		$wpdb->update( $wpdb->options, array( "option_value" => serialize( array( "cloudinary_url" => $url ) ) ), array( "option_name" => "cloudinary_connect" ) );
+		$value = serialize( array( "cloudinary_url" => $url ) );
+		// A raw upsert — not update_option(), which would fire the
+		// pre_update_option_cloudinary_connect filter (verify_connection())
+		// and attempt a real API call with these fake credentials. The row
+		// may not exist at all (e.g. after a real plugin_uninstalled test
+		// run deletes it), so a plain UPDATE would silently affect zero rows.
+		$wpdb->query( $wpdb->prepare(
+			"INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, %s)
+			 ON DUPLICATE KEY UPDATE option_value = %s",
+			"cloudinary_connect", $value, "yes", $value
+		) );
 		update_option( "cloudinary_connection_signature", md5( $url ) );
 		wp_cache_flush();
 		'`,

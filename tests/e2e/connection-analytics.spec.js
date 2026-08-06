@@ -10,7 +10,9 @@ const {
 	getCloudinaryUrlFromEnv,
 	resetCloudinaryConnection,
 	visitWizard,
+	wpCli,
 } = require( './utils/wizard' );
+const { fakeCloudinaryConnected } = require( './utils/connection' );
 const {
 	clearAnalyticsEvents,
 	findAnalyticsEvents,
@@ -82,5 +84,28 @@ test.describe( 'Connection management analytics', () => {
 		expect( event.event_category ).toBe( 'connection' );
 		expect( event.status ).toBe( 'success' );
 		expect( event.http_status ).toBe( 200 );
+	} );
+
+	test( 'removing the connection string emits connection_disconnected', async () => {
+		// Fake a connected state, then a real update_option() call to empty
+		// the URL — the same pre_update_option_cloudinary_connect choke
+		// point the Connect settings page's "Disconnect" button goes
+		// through — fires verify_connection()'s empty-URL branch.
+		fakeCloudinaryConnected();
+		clearAnalyticsEvents();
+
+		wpCli( [
+			'option',
+			'update',
+			'cloudinary_connect',
+			'\'{"cloudinary_url":""}\'',
+			'--format=json',
+		] );
+
+		const events = findAnalyticsEvents(
+			readAnalyticsEvents(),
+			'connection_disconnected'
+		);
+		expect( events.length ).toBe( 1 );
 	} );
 } );

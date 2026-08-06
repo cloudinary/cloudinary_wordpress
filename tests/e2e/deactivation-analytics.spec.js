@@ -22,6 +22,11 @@ const SEL = {
 	modal: '#cloudinary-deactivation',
 	cancelButton: '.cloudinary-deactivation button[data-action="cancel"]',
 	skipButton: '.cloudinary-deactivation button[data-action="deactivate"]',
+	submitButton: '.cloudinary-deactivation button[data-action="submit"]',
+	reasonRadio: ( id ) =>
+		`.cloudinary-deactivation input[name="reason"][value="${ id }"]`,
+	dataOptionRadio: ( id ) =>
+		`.cloudinary-deactivation input[name="option"][value="${ id }"]`,
 };
 
 test.describe( 'Deactivation analytics', () => {
@@ -95,5 +100,59 @@ test.describe( 'Deactivation analytics', () => {
 		expect( events[ events.length - 1 ].event_category ).toBe(
 			'deactivation'
 		);
+	} );
+
+	test( '"Submit and deactivate" with a reason emits deactivation_submitted', async ( {
+		admin,
+		page,
+	} ) => {
+		await admin.visitAdminPage( 'plugins.php' );
+
+		await page.locator( SEL.deactivateLink ).first().click();
+		await expect( page.locator( SEL.modal ) ).toBeVisible();
+
+		await page.locator( SEL.reasonRadio( 'missing_features' ) ).check();
+		await page.locator( SEL.submitButton ).click();
+
+		// submit() POSTs via wp.ajax then always() reloads the page.
+		await page.waitForURL( /plugins\.php/, { timeout: 15_000 } );
+
+		const events = findAnalyticsEvents(
+			readAnalyticsEvents(),
+			'deactivation_submitted'
+		);
+		expect( events.length ).toBe( 1 );
+		expect( events[ 0 ].reason_id ).toBe( 'missing_features' );
+	} );
+
+	test( 'choosing "Remove all plugin data" emits plugin_uninstalled', async ( {
+		admin,
+		page,
+	} ) => {
+		// cleanup() drops the relationship table other specs' cache/sync
+		// tests rely on; the shared register_activation_hook -> Utils::
+		// install() recreates it via dbDelta on the next activation
+		// (table_installed() === false), and this file's afterEach already
+		// reactivates the plugin unconditionally after every test.
+		await admin.visitAdminPage( 'plugins.php' );
+
+		await page.locator( SEL.deactivateLink ).first().click();
+		await expect( page.locator( SEL.modal ) ).toBeVisible();
+
+		await page.locator( SEL.reasonRadio( 'other_reason' ) ).check();
+		await page.locator( SEL.dataOptionRadio( 'uninstall' ) ).check();
+		await page.locator( SEL.submitButton ).click();
+
+		await page.waitForURL( /plugins\.php/, { timeout: 15_000 } );
+		await page.waitForTimeout( 500 );
+
+		const events = readAnalyticsEvents();
+		expect(
+			findAnalyticsEvents( events, 'plugin_uninstalled' ).length
+		).toBe( 1 );
+		// The same submission also carries a real reason, so both fire.
+		expect(
+			findAnalyticsEvents( events, 'deactivation_submitted' ).length
+		).toBe( 1 );
 	} );
 } );
