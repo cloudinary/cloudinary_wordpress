@@ -298,10 +298,13 @@ class String_Replace implements Setup {
 		if ( ! empty( $this->context ) ) {
 			$context = $this->context;
 		}
+		$is_json = false;
 		if ( Utils::looks_like_json( $content ) ) {
-			$json_maybe = json_decode( $content, true );
-			if ( ! empty( $json_maybe ) ) {
+			// Decode as objects, not associative arrays, so JSON object/array shape (e.g. empty objects `{}`) survives the round trip below.
+			$json_maybe = json_decode( $content );
+			if ( null !== $json_maybe ) {
 				$content = $json_maybe;
+				$is_json = true;
 			}
 		}
 		$this->prime_replacements( $content, $context );
@@ -309,7 +312,7 @@ class String_Replace implements Setup {
 			$content = self::do_replace( $content );
 		}
 		self::reset();
-		$last_content = ! empty( $json_maybe ) ? wp_json_encode( $content ) : $content;
+		$last_content = $is_json ? wp_json_encode( $content ) : $content;
 
 		return $last_content;
 	}
