@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Source: php/integrations/class-elementor.php - Cloudinary Docs</title>
+
+	<script src="scripts/prettify/prettify.js"></script>
+	<script src="scripts/prettify/lang-css.js"></script>
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+	<link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+
+	<link
+			href="https://fonts.googleapis.com/css?family=IBM+Plex+Mono|IBM+Plex+Sans:300,400|Playfair+Display:900&display=swap"
+			rel="stylesheet">
+</head>
+
+<body>
+
+<div id="main">
+
+	
+	<h1 class="page-title">Source: php/integrations/class-elementor.php</h1>
+	
+
+	
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>&lt;?php
+/**
+ * Elementor integration class for the Cloudinary plugin.
+ *
+ * @package Cloudinary
+ */
+
+namespace Cloudinary\Integrations;
+
+use Elementor\Core\Files\CSS\Post;
+use Elementor\Element_Base;
+use Elementor\Plugin;
+
+/**
+ * Class Elementor
+ */
+class Elementor extends Integrations {
+
+	/**
+	 * List of Elementor background image settings keys.
+	 *
+	 * @var array
+	 */
+	const ELEMENTOR_BACKGROUND_IMAGES = array(
+		'background_image',
+		'background_hover_image',
+		'background_image_tablet',
+		'background_hover_image_tablet',
+		'background_image_mobile',
+		'background_hover_image_mobile',
+		'background_overlay_image',
+		'background_overlay_hover_image',
+		'background_overlay_image_tablet',
+		'background_overlay_hover_image_tablet',
+		'background_overlay_image_mobile',
+		'background_overlay_hover_image_mobile',
+	);
+
+	/**
+	 * Check if the integration can be enabled.
+	 *
+	 * @return bool
+	 */
+	public function can_enable() {
+		return class_exists( 'Elementor\Plugin' );
+	}
+
+	/**
+	 * Register hooks for the integration.
+	 *
+	 * @return void
+	 */
+	public function register_hooks() {
+		add_action( 'elementor/element/parse_css', array( $this, 'replace_background_images_in_css' ), 10, 2 );
+		add_action( 'cloudinary_flush_cache', array( $this, 'clear_elementor_css_cache' ) );
+	}
+
+	/**
+	 * Replace all background images URLs with Cloudinary URLs, within the generated Elementor CSS file.
+	 *
+	 * @param Post         $post_css The post CSS object.
+	 * @param Element_Base $element  The Elementor element.
+	 * @return void
+	 */
+	public function replace_background_images_in_css( $post_css, $element ) {
+		// Elementor is optional; guard against API differences across versions.
+		if ( ! method_exists( $element, 'get_settings_for_display' ) ) { // @phpstan-ignore function.alreadyNarrowedType
+			return;
+		}
+
+		// Bail if the plugin isn't connected; Media::setup() hasn't run, so its
+		// dependencies (e.g. sync) are not initialized and calling cloudinary_url()
+		// would fatal.
+		if ( ! $this->plugin->settings->get_param( 'connected' ) ) {
+			return;
+		}
+
+		/**
+		 * Filter whether Cloudinary should replace background image URLs in Elementor's generated CSS.
+		 *
+		 * @hook  cloudinary_elementor_replace_background_images_in_css
+		 * @since 3.3.4
+		 * @default true
+		 *
+		 * @param bool         $replace  Whether to replace background images. Default true.
+		 * @param Post         $post_css The post CSS object.
+		 * @param Element_Base $element  The Elementor element being processed.
+		 *
+		 * @return bool
+		 */
+		if ( ! apply_filters( 'cloudinary_elementor_replace_background_images_in_css', true, $post_css, $element ) ) {
+			return;
+		}
+
+		$settings = $element->get_settings_for_display();
+		$media    = $this->plugin->get_component( 'media' );
+		$delivery = $this->plugin->get_component( 'delivery' );
+
+		if ( ! $media || ! $delivery ) {
+			return;
+		}
+
+		foreach ( self::ELEMENTOR_BACKGROUND_IMAGES as $background_key ) {
+			$background   = null;
+			$is_container = false;
+
+			if ( isset( $settings[ $background_key ] ) ) {
+				// Elementor section/column elements store background settings without a leading underscore.
+				$background   = $settings[ $background_key ];
+				$is_container = true;
+			} elseif ( isset( $settings[ '_' . $background_key ] ) ) {
+				// Elementor basic elements (e.g. heading) store background settings with a leading underscore.
+				$background = $settings[ '_' . $background_key ];
+			}
+
+			// If this specific background setting is not set, we can skip it and check for the next setting.
+			if ( empty( $background ) || empty( $background['id'] ) ) {
+				continue;
+			}
+
+			$media_id   = $background['id'];
+			$media_size = isset( $background['size'] ) ? $background['size'] : array();
+
+			// Skip if the media is not deliverable via Cloudinary.
+			if ( ! $delivery->is_deliverable( $media_id ) ) {
+				continue;
+			}
+
+			// Generate the Cloudinary URL.
+			$cloudinary_url = $media->cloudinary_url( $media_id, $media_size );
+
+			// If URL generation failed, we should leave the original URL within the CSS.
+			if ( empty( $cloudinary_url ) ) {
+				continue;
+			}
+
+			$unique_selector = $this->find_unique_selector( $post_css, $element );
+			// If we can't find a unique selector via Elementor's internal API, we can't do any replacement.
+			if ( null === $unique_selector ) {
+				return;
+			}
+
+			// Build the CSS selector and rule for background image replacement.
+			$is_hover     = ( strpos( $background_key, 'hover' ) !== false );
+			$is_overlay   = ( strpos( $background_key, 'overlay' ) !== false );
+			$css_selector = $this->build_background_image_css_selector( $unique_selector, $is_container, $is_hover, $is_overlay );
+			$css_rule     = array( 'background-image' => "url('$cloudinary_url')" );
+
+			// Retrieve the specific media query rule for non-desktop devices based on the setting key.
+			$media_query = null;
+			if ( strpos( $background_key, 'tablet' ) !== false ) {
+				$media_query = array( 'max' => 'tablet' );
+			} elseif ( strpos( $background_key, 'mobile' ) !== false ) {
+				$media_query = array( 'max' => 'mobile' );
+			}
+
+			$success = $this->override_elementor_css_rule( $post_css, $css_selector, $css_rule, $media_query );
+			if ( ! $success ) {
+				// If we couldn't override the CSS rule, likely due to Elementor internal API changes, we should stop further processing.
+				return;
+			}
+		}
+	}
+
+	/**
+	 * Clear Elementor CSS cache.
+	 * This is called when Cloudinary cache is flushed, so that any change in media URLs is reflected in Elementor CSS files.
+	 *
+	 * @return void
+	 */
+	public function clear_elementor_css_cache() {
+		if ( class_exists( 'Elementor\Plugin' ) ) {
+			$elementor = Plugin::instance();
+			$elementor->files_manager->clear_cache();
+		}
+	}
+
+	/**
+	 * Find the unique selector for an Elementor element.
+	 * Double-checks if the method exists before calling it, to ensure compatibility with different Elementor versions.
+	 *
+	 * @param Post         $post_css The post CSS object.
+	 * @param Element_Base $element  The Elementor element.
+	 *
+	 * @return string|null
+	 */
+	private function find_unique_selector( $post_css, $element ) {
+		// Elementor is optional; guard against API differences across versions.
+		if ( ! method_exists( $element, 'get_unique_selector' ) ) { // @phpstan-ignore function.alreadyNarrowedType
+			return null;
+		}
+
+		return $post_css->get_element_unique_selector( $element );
+	}
+
+	/**
+	 * Override the Elementor CSS rule for a specific selector.
+	 * Double-checks if the method exists before calling it, to ensure compatibility with different Elementor versions.
+	 *
+	 * @param Post       $post_css     The post CSS object.
+	 * @param string     $css_selector The CSS selector.
+	 * @param array      $css_rule     The CSS rule to apply.
+	 * @param array|null $media_query  The media query conditions. Null for default (desktop) styles.
+	 *
+	 * @return bool True if the rule could be overridden, false if the internal Elementor methods aren't available.
+	 */
+	private function override_elementor_css_rule( $post_css, $css_selector, $css_rule, $media_query ) {
+		// Elementor is optional; guard against API differences across versions.
+		if ( ! method_exists( $post_css, 'get_stylesheet' ) ) { // @phpstan-ignore function.alreadyNarrowedType
+			return false;
+		}
+
+		$stylesheet = $post_css->get_stylesheet();
+		if ( ! method_exists( $stylesheet, 'add_rules' ) ) {
+			return false;
+		}
+
+		$stylesheet->add_rules( $css_selector, $css_rule, $media_query );
+		return true;
+	}
+
+	/**
+	 * Build the full CSS selector for background image replacement.
+	 * We try to match the exact Elementor formatting and rules, so that our CSS overrides the previous rules,
+	 * instead of adding new rules within the CSS which may not apply for specific edge cases (e.g. specific child elements).
+	 *
+	 * @param string $unique_selector The unique selector for the element.
+	 * @param bool   $is_container    Whether the element is a container (section/column).
+	 * @param bool   $is_hover        Whether the background is for hover state.
+	 * @param bool   $is_overlay      Whether the background is for an overlay.
+	 *
+	 * @return string
+	 */
+	private function build_background_image_css_selector( $unique_selector, $is_container, $is_hover, $is_overlay ) {
+		if ( $is_overlay ) {
+			// Overlay backgrounds need to target multiple pseudo-elements and child elements.
+			$overlay_selector = sprintf(
+				'%1$s%2$s::before,
+				%1$s%2$s > .elementor-background-video-container::before,
+				%1$s%2$s > .e-con-inner > .elementor-background-video-container::before,
+				%1$s > .elementor-background-slideshow%2$s::before,
+				%1$s > .e-con-inner > .elementor-background-slideshow%2$s::before',
+				$unique_selector,
+				$is_hover ? ':hover' : ''
+			);
+
+			// For non-hover overlays, we need to also target motion effects layers.
+			if ( ! $is_hover ) {
+				$overlay_selector = sprintf(
+					'%1$s,
+					%2$s > .elementor-motion-effects-container > .elementor-motion-effects-layer::before',
+					$overlay_selector,
+					$unique_selector
+				);
+			}
+
+			// Replace any newline and extra spaces to match the exact Elementor formatting.
+			return preg_replace( '/\s+/', ' ', $overlay_selector );
+		}
+		// For hover backgrounds, we simply append :hover to the unique selector.
+		if ( $is_hover ) {
+			return $unique_selector . ':hover';
+		}
+
+		// For non-container elements, we can return the unique selector as is.
+		if ( ! $is_container ) {
+			return $unique_selector;
+		}
+
+		// For container elements, we need to target both the element itself and its motion effects layers.
+		return sprintf(
+			'%1$s:not(.elementor-motion-effects-element-type-background), %1$s > .elementor-motion-effects-container > .elementor-motion-effects-layer',
+			$unique_selector
+		);
+	}
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+	<h2><a href="index.html">Home</a></h2><h3>Actions</h3><ul><li><a href="cloudinary_connected.html">cloudinary_connected</a></li><li><a href="cloudinary_delete_asset.html">cloudinary_delete_asset</a></li><li><a href="cloudinary_download_asset.html">cloudinary_download_asset</a></li><li><a href="cloudinary_enable_crop_and_gravity_control.html">cloudinary_enable_crop_and_gravity_control</a></li><li><a href="cloudinary_flush_cache.html">cloudinary_flush_cache</a></li><li><a href="cloudinary_init_delivery.html">cloudinary_init_delivery</a></li><li><a href="cloudinary_init_settings.html">cloudinary_init_settings</a></li><li><a href="cloudinary_is_%257B$class_name%257D_active.html">cloudinary_is_{$class_name}_active</a></li><li><a href="cloudinary_lazy_load_bypass.html">cloudinary_lazy_load_bypass</a></li><li><a href="cloudinary_lazy_load_bypass_formats.html">cloudinary_lazy_load_bypass_formats</a></li><li><a href="cloudinary_media_filters.html">cloudinary_media_filters</a></li><li><a href="cloudinary_ready.html">cloudinary_ready</a></li><li><a href="cloudinary_register_extensions.html">cloudinary_register_extensions</a></li><li><a href="cloudinary_registered_sizes.html">cloudinary_registered_sizes</a></li><li><a href="cloudinary_responsive_images_bypass_formats.html">cloudinary_responsive_images_bypass_formats</a></li><li><a href="cloudinary_setting_get_value.html">cloudinary_setting_get_value</a></li><li><a href="cloudinary_string_replace.html">cloudinary_string_replace</a></li><li><a href="cloudinary_tag_skip_classes.html">cloudinary_tag_skip_classes</a></li><li><a href="cloudinary_unset_attributes.html">cloudinary_unset_attributes</a></li><li><a href="cloudinary_unsync_asset.html">cloudinary_unsync_asset</a></li><li><a href="cloudinary_upgrade_asset.html">cloudinary_upgrade_asset</a></li><li><a href="cloudinary_upload_args.html">cloudinary_upload_args</a></li><li><a href="cloudinary_uploaded_asset.html">cloudinary_uploaded_asset</a></li></ul><h3>Filters</h3><ul><li><a href="cloudinary_allow_glb_upload.html">cloudinary_allow_glb_upload</a></li><li><a href="cloudinary_allowed_extensions.html">cloudinary_allowed_extensions</a></li><li><a href="cloudinary_allowed_svg_tags.html">cloudinary_allowed_svg_tags</a></li><li><a href="cloudinary_analytics_enabled.html">cloudinary_analytics_enabled</a></li><li><a href="cloudinary_analytics_smoke_test.html">cloudinary_analytics_smoke_test</a></li><li><a href="cloudinary_apply_breakpoints.html">cloudinary_apply_breakpoints</a></li><li><a href="cloudinary_asset_payload.html">cloudinary_asset_payload</a></li><li><a href="cloudinary_asset_state.html">cloudinary_asset_state</a></li><li><a href="cloudinary_autosync_threads.html">cloudinary_autosync_threads</a></li><li><a href="cloudinary_build_queue_query.html">cloudinary_build_queue_query</a></li><li><a href="cloudinary_bypass_cache.html">cloudinary_bypass_cache</a></li><li><a href="cloudinary_bypass_seo_url.html">cloudinary_bypass_seo_url</a></li><li><a href="cloudinary_can_sync_asset.html">cloudinary_can_sync_asset</a></li><li><a href="cloudinary_content_url.html">cloudinary_content_url</a></li><li><a href="cloudinary_contextualized_post_id.html">cloudinary_contextualized_post_id</a></li><li><a href="cloudinary_current_post_id.html">cloudinary_current_post_id</a></li><li><a href="cloudinary_delivery_get_id.html">cloudinary_delivery_get_id</a></li><li><a href="cloudinary_delivery_searchable_url.html">cloudinary_delivery_searchable_url</a></li><li><a href="cloudinary_dns_prefetch_types.html">cloudinary_dns_prefetch_types</a></li><li><a href="cloudinary_edit_asset_permalink.html">cloudinary_edit_asset_permalink</a></li><li><a href="cloudinary_elementor_replace_background_images_in_css.html">cloudinary_elementor_replace_background_images_in_css</a></li><li><a href="cloudinary_filter_unknown_urls.html">cloudinary_filter_unknown_urls</a></li><li><a href="cloudinary_get_signature.html">cloudinary_get_signature</a></li><li><a href="cloudinary_home_url.html">cloudinary_home_url</a></li><li><a href="cloudinary_ignored_class_keywords.html">cloudinary_ignored_class_keywords</a></li><li><a href="cloudinary_ignored_data_keywords.html">cloudinary_ignored_data_keywords</a></li><li><a href="cloudinary_is_content_dir.html">cloudinary_is_content_dir</a></li><li><a href="cloudinary_is_deliverable.html">cloudinary_is_deliverable</a></li><li><a href="cloudinary_is_media.html">cloudinary_is_media</a></li><li><a href="cloudinary_is_uploadable_media.html">cloudinary_is_uploadable_media</a></li><li><a href="cloudinary_lazy_load_bypass_classes.html">cloudinary_lazy_load_bypass_classes</a></li><li><a href="cloudinary_local_url.html">cloudinary_local_url</a></li><li><a href="cloudinary_max_files_import.html">cloudinary_max_files_import</a></li><li><a href="cloudinary_media_context.html">cloudinary_media_context</a></li><li><a href="cloudinary_media_context_query.html">cloudinary_media_context_query</a></li><li><a href="cloudinary_media_context_things.html">cloudinary_media_context_things</a></li><li><a href="cloudinary_meta_boxes.html">cloudinary_meta_boxes</a></li><li><a href="cloudinary_migrate_legacy_meta.html">cloudinary_migrate_legacy_meta</a></li><li><a href="cloudinary_on_demand_sync_limit.html">cloudinary_on_demand_sync_limit</a></li><li><a href="cloudinary_parse_element.html">cloudinary_parse_element</a></li><li><a href="cloudinary_plugin_asset_cache_filters.html">cloudinary_plugin_asset_cache_filters</a></li><li><a href="cloudinary_plugin_asset_cache_inline_types.html">cloudinary_plugin_asset_cache_inline_types</a></li><li><a href="cloudinary_queue_threads.html">cloudinary_queue_threads</a></li><li><a href="cloudinary_raw_url.html">cloudinary_raw_url</a></li><li><a href="cloudinary_rest_url.html">cloudinary_rest_url</a></li><li><a href="cloudinary_seo_public_id.html">cloudinary_seo_public_id</a></li><li><a href="cloudinary_set_usable_asset.html">cloudinary_set_usable_asset</a></li><li><a href="cloudinary_settings_save_setting.html">cloudinary_settings_save_setting</a></li><li><a href="cloudinary_site_url.html">cloudinary_site_url</a></li><li><a href="cloudinary_skip_parse_element.html">cloudinary_skip_parse_element</a></li><li><a href="cloudinary_skip_responsive_breakpoints.html">cloudinary_skip_responsive_breakpoints</a></li><li><a href="cloudinary_sync_base.html">cloudinary_sync_base</a></li><li><a href="cloudinary_sync_base_struct.html">cloudinary_sync_base_struct</a></li><li><a href="cloudinary_task_capability.html">cloudinary_task_capability</a></li><li><a href="cloudinary_task_capability_%257Btask%257D.html">cloudinary_task_capability_{task}</a></li><li><a href="cloudinary_thread_queue_details_query.html">cloudinary_thread_queue_details_query</a></li><li><a href="cloudinary_upgrade_sequence.html">cloudinary_upgrade_sequence</a></li><li><a href="cloudinary_upload_eager_formats.html">cloudinary_upload_eager_formats</a></li><li><a href="cloudinary_use_original_image.html">cloudinary_use_original_image</a></li><li><a href="intermediate_image_sizes_advanced.html">intermediate_image_sizes_advanced</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+	<a href="https://cloudinary.com/" target="_blank" rel="noopener noreferrer">Cloudinary</a> |
+	<a href="https://github.com/cloudinary/cloudinary_wordpress/" target="_blank" rel="noopener noreferrer">Cloudinary
+		on GitHub</a>
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>
