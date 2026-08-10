@@ -18,6 +18,9 @@ use function Cloudinary\get_plugin_instance;
  * Class API.
  *
  * Push media to Cloudinary on upload.
+ *
+ * @method array|\WP_Error usage( string ...$args ) Get account usage stats.
+ * @method array|\WP_Error ping( string ...$args ) Ping the Cloudinary API.
  */
 class Api {
 
@@ -52,7 +55,7 @@ class Api {
 	/**
 	 * Holds the media instance.
 	 *
-	 * @var Media
+	 * @var Media|null
 	 */
 	protected $media;
 
@@ -153,7 +156,7 @@ class Api {
 	 *
 	 * @var string|null
 	 */
-	private $pending_url = array();
+	private $pending_url = null;
 
 	/**
 	 * API constructor.
@@ -183,9 +186,9 @@ class Api {
 	/**
 	 * Return an endpoint for a specific resource type.
 	 *
-	 * @param string $resource The resource type for the endpoint.
-	 * @param string $function The function of the endpoint.
-	 * @param bool   $endpoint Flag to get an endpoint or an asset url.
+	 * @param string|null $resource The resource type for the endpoint.
+	 * @param string|null $function The function of the endpoint.
+	 * @param bool        $endpoint Flag to get an endpoint or an asset url.
 	 *
 	 * @return string
 	 */
@@ -266,7 +269,7 @@ class Api {
 		// Prepare the eager transformations for the upload.
 		if ( 'upload' === $context ) {
 			foreach ( $transformations as &$transformation ) {
-				if ( 0 <= strpos( $transformation, 'f_auto' ) ) {
+				if ( false !== strpos( $transformation, 'f_auto' ) ) {
 					$parts = explode( ',', $transformation );
 					unset( $parts[ array_search( 'f_auto', $parts, true ) ] );
 					$remaining_transformations = implode( ',', $parts );
@@ -359,7 +362,7 @@ class Api {
 
 		$base = Utils::pathinfo( $public_id );
 		// Add size.
-		if ( ! empty( $size ) && is_array( $size ) ) {
+		if ( ! empty( $size ) ) {
 			if ( ! empty( $size['transformation'] ) ) {
 				$url_parts[] = $size['transformation'];
 			}
@@ -434,11 +437,12 @@ class Api {
 
 		// Since WP_Filesystem doesn't have a fread, we need to do it manually. However we'll still use it for writing.
 		$src            = fopen( $args['file'], 'r' ); // phpcs:ignore
-		$temp_file_name = wp_tempnam( uniqid( time() ) . '.' . Utils::pathinfo( $args['file'], PATHINFO_EXTENSION ) );
+		$temp_file_name = wp_tempnam( uniqid( (string) time() ) . '.' . Utils::pathinfo( $args['file'], PATHINFO_EXTENSION ) );
 		$upload_id      = substr( sha1( uniqid( $this->credentials['api_secret'] . wp_rand() ) ), 0, 16 );
 		$chunk_size     = 20000000;
 		$index          = 0;
 		$file_size      = filesize( $args['file'] );
+		$result         = new \WP_Error( 'upload_error', __( 'No data to upload.', 'cloudinary' ) );
 		while ( ! feof( $src ) ) {
 			$current_loc = $index * $chunk_size;
 			if ( $current_loc >= $file_size ) {
@@ -496,10 +500,10 @@ class Api {
 	/**
 	 * Upload an asset.
 	 *
-	 * @param int   $attachment_id Attachment ID to upload.
-	 * @param array $args          Array of upload options.
-	 * @param array $headers       Additional headers to use in upload.
-	 * @param bool  $try_remote    Flag to try_remote upload.
+	 * @param int|string $attachment_id Attachment ID to upload, or a file path for raw uploads.
+	 * @param array      $args          Array of upload options.
+	 * @param array      $headers       Additional headers to use in upload.
+	 * @param bool       $try_remote    Flag to try_remote upload.
 	 *
 	 * @return array|\WP_Error
 	 */
@@ -645,7 +649,7 @@ class Api {
 	 *
 	 * @param array $args The upload parameters.
 	 *
-	 * @return array $the url to the cached item.
+	 * @return array|string|\WP_Error $the url to the cached item.
 	 */
 	public function upload_cache( $args ) {
 		$call_args = array(
@@ -797,7 +801,7 @@ class Api {
 	 *
 	 * @param array $args Array of parameters to sign.
 	 *
-	 * @return array|\WP_Error
+	 * @return string
 	 */
 	public function sign( $args ) {
 
@@ -827,9 +831,9 @@ class Api {
 	/**
 	 * Set the POSTFIELDS to the correct array type, not the string based.
 	 *
-	 * @param \Requests_Transport_cURL $handle  The transport handle to set.
-	 * @param array                    $request The request array.
-	 * @param string                   $url     The url to send to.
+	 * @param resource $handle  The cURL handle to set.
+	 * @param array    $request The request array.
+	 * @param string   $url     The url to send to.
 	 */
 	public function set_data( $handle, $request, $url ) {
 		// Ensure that this request is in fact ours.
@@ -984,7 +988,7 @@ class Api {
 	 * @param array  $args   The optional arguments to send.
 	 * @param string $method The call HTTP method.
 	 *
-	 * @return array|\WP_Error
+	 * @return array|string|\WP_Error
 	 */
 	private function call( $url, $args = array(), $method = 'get' ) {
 		$args['method']             = strtoupper( $method );
@@ -1022,7 +1026,7 @@ class Api {
 			return $request;
 		}
 		$body   = wp_remote_retrieve_body( $request );
-		$result = json_decode( $body, ARRAY_A );
+		$result = json_decode( $body, true );
 		if ( empty( $result ) && ! empty( $body ) ) {
 			return $body; // not json.
 		}

@@ -1,4 +1,4 @@
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 
 const BreakpointsPreview = {
 	template: document.getElementById( 'main-image' ),
@@ -23,7 +23,7 @@ const BreakpointsPreview = {
 			this.calculateShift();
 		} );
 
-		this.stepper.dispatchEvent( new Event('change') );
+		this.stepper.dispatchEvent( new Event( 'change' ) );
 	},
 	calculateShift() {
 		const count = this.counter.value;
@@ -51,7 +51,7 @@ const BreakpointsPreview = {
 		}
 
 		let size = maxSize;
-		let percent = size / maxSize * 100;
+		let percent = ( size / maxSize ) * 100;
 		const mainImage = this.makeSize( size, percent );
 		mainImage.classList.add( 'main-image' );
 		this.preview.innerHTML = '';
@@ -64,11 +64,20 @@ const BreakpointsPreview = {
 				break;
 			}
 
-			percent = size / maxSize * 100;
+			percent = ( size / maxSize ) * 100;
 			this.preview.appendChild( this.makeSize( size, percent ) );
 			count++;
 		}
-		this.details.innerText = __( `With a max width of ${ maxSize }px and a minimum of ${ minSize }px, you get a potential of ${ count } images.`, 'cloudinary' );
+		this.details.innerText = sprintf(
+			/* translators: 1: maximum width in pixels, 2: minimum width in pixels, 3: number of images */
+			__(
+				'With a max width of %1$dpx and a minimum of %2$dpx, you get a potential of %3$d images.',
+				'cloudinary'
+			),
+			maxSize,
+			minSize,
+			count
+		);
 		return count;
 	},
 	makeSize( size, percent ) {
@@ -80,7 +89,7 @@ const BreakpointsPreview = {
 		box.id = '';
 		box.classList.remove( 'main-image' );
 		return box;
-	}
+	},
 };
 
 window.addEventListener( 'load', () => BreakpointsPreview.init() );

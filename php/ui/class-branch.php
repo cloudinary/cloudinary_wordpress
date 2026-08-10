@@ -34,7 +34,7 @@ class Branch {
 	/**
 	 * Holds the ID of the main input.
 	 *
-	 * @var array()
+	 * @var array
 	 */
 	public $main = array();
 

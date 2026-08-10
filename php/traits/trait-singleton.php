@@ -19,7 +19,7 @@ trait Singleton_Trait {
 	/**
 	 * Holds the singleton instance.
 	 *
-	 * @var self
+	 * @var self|null
 	 */
 	protected static $instance;
 

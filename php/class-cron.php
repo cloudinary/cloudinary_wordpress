@@ -81,7 +81,7 @@ class Cron {
 
 		// Ensure it's safe.
 		if ( self::$daemon_watcher_interval > ini_get( 'max_execution_time' ) ) {
-			self::$daemon_watcher_interval = ini_get( 'max_execution_time' );
+			self::$daemon_watcher_interval = (int) ini_get( 'max_execution_time' );
 		}
 
 		$this->init_time = time();

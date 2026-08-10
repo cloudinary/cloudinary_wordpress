@@ -33,7 +33,7 @@ class Storage implements Notice {
 	 *
 	 * @since   2.2.0
 	 *
-	 * @var     \Cloudinary\Media Instance of the media object.
+	 * @var     \Cloudinary\Media|null Instance of the media object.
 	 */
 	protected $media;
 
@@ -42,7 +42,7 @@ class Storage implements Notice {
 	 *
 	 * @since   2.2.0
 	 *
-	 * @var     \Cloudinary\Sync Instance of the plugin.
+	 * @var     \Cloudinary\Sync|null Instance of the plugin.
 	 */
 	protected $sync;
 
@@ -51,7 +51,7 @@ class Storage implements Notice {
 	 *
 	 * @since   2.2.0
 	 *
-	 * @var     \Cloudinary\Sync\Download_Sync Instance of the plugin.
+	 * @var     \Cloudinary\Sync\Download_Sync|null Instance of the plugin.
 	 */
 	protected $download;
 
@@ -60,7 +60,7 @@ class Storage implements Notice {
 	 *
 	 * @since   2.2.0
 	 *
-	 * @var     \Cloudinary\Connect Instance of the plugin.
+	 * @var     \Cloudinary\Connect|null Instance of the plugin.
 	 */
 	protected $connect;
 

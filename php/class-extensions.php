@@ -24,7 +24,7 @@ class Extensions extends Settings_Component implements Setup {
 	/**
 	 * Holds the core plugin settings.
 	 *
-	 * @var Settings
+	 * @var Settings|\Cloudinary\Settings\Setting
 	 */
 	protected $settings;
 

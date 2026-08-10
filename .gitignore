@@ -61,3 +61,6 @@ package/dist
 
 # PHPStan result cache
 /.phpstan-cache/
+
+# Generated docs (published to gh-pages by workflow)
+/docs/

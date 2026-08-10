@@ -22,7 +22,9 @@ use function Cloudinary\get_plugin_instance;
  * @property string|null $text_overlay
  * @property string|null $image_overlay
  * @property string|null $sized_url
+ * @property string|null $url_hash
  * @property string|null $media_context
+ * @property string|null $format
  */
 class Relationship {
 
@@ -31,7 +33,7 @@ class Relationship {
 	 *
 	 * @var int
 	 */
-	protected $post_id;
+	public $post_id;
 
 	/**
 	 * Flag to save the relationship on shutdown.
@@ -81,7 +83,7 @@ class Relationship {
 		global $wpdb;
 		$table_name = Utils::get_relationship_table();
 		// method_exists guard handles the case where Utils was autoloaded from the old plugin version during a plugin update request.
-		$default_contexts = method_exists( Utils::class, 'get_media_context_things' ) ? Utils::get_media_context_things() : array( 'default' );
+		$default_contexts = method_exists( Utils::class, 'get_media_context_things' ) ? Utils::get_media_context_things() : array( 'default' ); // @phpstan-ignore function.alreadyNarrowedType
 
 		// If the context is in the default contexts, we want to query for all of them.
 		// This ensures that a media uploaded with a previous default context will still be found, even if the default context has changed since it was uploaded.

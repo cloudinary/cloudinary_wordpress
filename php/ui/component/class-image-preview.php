@@ -216,6 +216,6 @@ class Image_Preview extends Component {
 		);
 		wp_add_inline_script( 'cloudinary', 'var CLD_GLOBAL_TRANSFORMATIONS = CLD_GLOBAL_TRANSFORMATIONS ? CLD_GLOBAL_TRANSFORMATIONS : {};', 'before' );
 		wp_add_inline_script( 'cloudinary', 'CLD_GLOBAL_TRANSFORMATIONS.image = ' . wp_json_encode( $script_data ), 'before' );
-		parent::pre_render();
+		parent::pre_render(); // @phpstan-ignore staticMethod.resultUnused
 	}
 }

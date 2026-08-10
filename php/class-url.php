@@ -51,7 +51,7 @@ class URL implements Setup {
 	/**
 	 * Holds a list of the WordPress URL objects.
 	 *
-	 * @var array
+	 * @var WordPress[]
 	 */
 	protected $wordpress_urls = array();
 
@@ -120,7 +120,7 @@ class URL implements Setup {
 	 *
 	 * @param string $url The WordPress URL to break apart.
 	 *
-	 * @return array
+	 * @return WordPress
 	 */
 	public function wordpress_url( $url ) {
 		if ( ! isset( $this->wordpress_urls[ $url ] ) ) {
