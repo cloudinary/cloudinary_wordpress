@@ -109,26 +109,31 @@ test.describe( 'Non-media cache analytics', () => {
 		// rest_purge_all() resolves the `parent` param via
 		// Assets::get_param(), which is only ever populated by
 		// activate_parent() — an in-memory (non-persisted) call made during
-		// Assets::activate_parents() for paths configured 'on' in settings.
-		// create_asset_parent() alone (used by the other tests here, which
-		// go through get_asset_parent() — a real, DB-backed lookup instead)
-		// isn't enough for this specific endpoint. None of the plugin's
-		// default non-media paths (WP core, active theme, plugins, uploads)
-		// are active out of the box — on a fresh install this path setting
-		// defaults to off — so explicitly enable it the same way a real
-		// settings-page submission would via `Admin::save_settings()`.
+		// Assets::activate_parents() for paths configured 'on' in settings,
+		// AND only for a path that already has a real asset-parent post.
+		// None of the plugin's default non-media paths (WP core, active
+		// theme, plugins, uploads) are active out of the box — on a fresh
+		// install this path setting defaults to off — so explicitly enable
+		// it the same way a real settings-page submission would via
+		// `Admin::save_settings()`, and create the underlying post directly
+		// rather than relying on a subsequent admin page load's side effect
+		// (`Assets::update_asset_paths()`) to materialize it, which is a
+		// timing-sensitive path that has flaked under CI load.
 		const realCachePoint = 'wp-content/uploads/';
 		wpEvalFile( `
 			$admin  = get_plugin_instance()->get_component( 'admin' );
 			$method = new \\ReflectionMethod( $admin, 'save_settings' );
 			$method->setAccessible( true );
 			$method->invoke( $admin, 'cache', array( 'wp_content' => 'on' ) );
+
+			$assets  = get_plugin_instance()->get_component( 'assets' );
+			$uploads = wp_get_upload_dir();
+			$url     = trailingslashit( $uploads['baseurl'] );
+			if ( null === $assets->get_asset_parent( $url ) ) {
+				$assets->create_asset_parent( $url, 0 );
+			}
 		` );
 
-		// `Assets::update_asset_paths()` — which creates the underlying
-		// asset-parent post for a newly-enabled path — only runs on a real,
-		// logged-in, non-REST admin request, so this visit is what actually
-		// materializes the cache point before the REST purge call below.
 		await admin.visitAdminPage( 'admin.php', 'page=cloudinary' );
 		const { restBase, nonce } = await getRestContext( page );
 
