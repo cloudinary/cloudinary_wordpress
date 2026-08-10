@@ -112,11 +112,23 @@ test.describe( 'Non-media cache analytics', () => {
 		// Assets::activate_parents() for paths configured 'on' in settings.
 		// create_asset_parent() alone (used by the other tests here, which
 		// go through get_asset_parent() — a real, DB-backed lookup instead)
-		// isn't enough for this specific endpoint. Rather than configure a
-		// custom path setting, target one of the plugin's own default
-		// non-media paths, which is already active for exactly this reason.
+		// isn't enough for this specific endpoint. None of the plugin's
+		// default non-media paths (WP core, active theme, plugins, uploads)
+		// are active out of the box — on a fresh install this path setting
+		// defaults to off — so explicitly enable it the same way a real
+		// settings-page submission would via `Admin::save_settings()`.
 		const realCachePoint = 'wp-content/uploads/';
+		wpEvalFile( `
+			$admin  = get_plugin_instance()->get_component( 'admin' );
+			$method = new \\ReflectionMethod( $admin, 'save_settings' );
+			$method->setAccessible( true );
+			$method->invoke( $admin, 'cache', array( 'wp_content' => 'on' ) );
+		` );
 
+		// `Assets::update_asset_paths()` — which creates the underlying
+		// asset-parent post for a newly-enabled path — only runs on a real,
+		// logged-in, non-REST admin request, so this visit is what actually
+		// materializes the cache point before the REST purge call below.
 		await admin.visitAdminPage( 'admin.php', 'page=cloudinary' );
 		const { restBase, nonce } = await getRestContext( page );
 

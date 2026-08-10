@@ -2,10 +2,14 @@
 /**
  * Analytics egress capture — local/e2e dev helper mu-plugin.
  *
- * Intercepts outgoing POSTs to the Cloudinary custom-events collector
- * (analytics-api.cloudinary.com) and appends each payload as a JSONL entry
- * to a log file, so e2e tests and manual QA can assert on emitted events
- * without hitting the real collector.
+ * Intercepts outgoing requests to any Cloudinary analytics-api.cloudinary.com
+ * endpoint — the custom-events collector AND the older deactivation-reason
+ * collector, both on the same host — and appends each payload as a JSONL
+ * entry to a log file, so e2e tests and manual QA can assert on emitted
+ * events. The request is fully preempted with a synthetic response: earlier
+ * versions of this mu-plugin only logged the payload and let the request
+ * proceed, which meant every local/CI test run was quietly leaking synthetic
+ * events (and deactivation "feedback") into the real production collector.
  *
  * @package Cloudinary
  */
@@ -26,7 +30,9 @@ function cld_analytics_capture_log_path() {
 add_filter( 'pre_http_request', 'cld_analytics_capture_intercept', 10, 3 );
 
 /**
- * Logs outgoing analytics events, letting the request proceed unmodified.
+ * Logs outgoing analytics/deactivation-reason requests and preempts them
+ * with a synthetic success response, so nothing actually reaches the real
+ * collector during local dev or CI runs.
  *
  * @param false|array|WP_Error $preempt     Whether to preempt the request.
  * @param array                $parsed_args Parsed request arguments.
@@ -48,7 +54,16 @@ function cld_analytics_capture_intercept( $preempt, $parsed_args, $url ) {
 		FILE_APPEND | LOCK_EX
 	);
 
-	return $preempt;
+	return array(
+		'headers'  => array(),
+		'body'     => '',
+		'response' => array(
+			'code'    => 200,
+			'message' => 'OK',
+		),
+		'cookies'  => array(),
+		'filename' => null,
+	);
 }
 
 /**
