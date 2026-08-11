@@ -113,6 +113,15 @@ jobs:
           SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
 
+      # Makes the zip downloadable from the run's Artifacts panel regardless of trigger, so
+      # manual/dry-run dispatches can be inspected without publishing a release.
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PLUGIN_VERSION }}.zip
+          path: ${{ steps.deploy.outputs.zip-path }}
+          retention-days: 7
+
       - name: Upload release asset
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2

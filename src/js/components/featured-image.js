@@ -5,6 +5,7 @@ import { __ } from '@wordpress/i18n';
 
 import { ToggleControl } from '@wordpress/components';
 import { withDispatch, withSelect } from '@wordpress/data';
+import { addFilter } from '@wordpress/hooks';
 
 // Set our component.
 let FeaturedTransformationsToggle = ( props ) => {
@@ -72,7 +73,7 @@ const Featured = {
 		// the media object, to determine if an asset has transformations.
 		// Also adds deeper support for other image types within Guttenberg.
 		// @todo: find other locations (i.e Video poster).
-		wp.hooks.addFilter(
+		addFilter(
 			'editor.MediaUpload',
 			'cloudinary/filter-featured-image',
 			cldFilterFeatured
