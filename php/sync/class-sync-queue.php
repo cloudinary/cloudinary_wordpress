@@ -277,6 +277,18 @@ class Sync_Queue {
 			)
 		);
 		wp_cache_delete( $option_name, 'options' );
+
+		// `mark_run_started()` clears this option via `delete_option()`,
+		// which (on sites with a persistent object cache) marks it in the
+		// `notoptions` cache as known-absent. The raw insert above bypasses
+		// that bookkeeping entirely, so without this, `get_option()` keeps
+		// short-circuiting to the default (0) instead of reading the row
+		// this just wrote/incremented.
+		$notoptions = wp_cache_get( 'notoptions', 'options' );
+		if ( is_array( $notoptions ) && isset( $notoptions[ $option_name ] ) ) {
+			unset( $notoptions[ $option_name ] );
+			wp_cache_set( 'notoptions', $notoptions, 'options' );
+		}
 	}
 
 	/**

@@ -146,7 +146,12 @@ class Admin {
 	 * @param WP_REST_Request $request The request object.
 	 */
 	public function rest_dismiss_notice( WP_REST_Request $request ) {
-		$token    = sanitize_key( $request->get_param( 'token' ) );
+		// The token is a notice setting's dotted slug (e.g. `_cld_notices.0`),
+		// which `Notice::is_enabled()` later looks up via `get_transient()`
+		// with the dot intact — `sanitize_key()` strips dots, which would
+		// write the transient under a key that never matches, making
+		// dismissible notices reappear on every page load.
+		$token    = preg_replace( '/[^a-z0-9_.\-]/i', '', (string) $request->get_param( 'token' ) );
 		$duration = $request->get_param( 'duration' );
 
 		set_transient( $token, true, $duration );
