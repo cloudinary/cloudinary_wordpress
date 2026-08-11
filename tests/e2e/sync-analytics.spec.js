@@ -32,7 +32,8 @@ function resetSyncQueueState() {
 	for ( const opt of [
 		'_cloudinary_bulk_sync_enabled',
 		'_cloudinary_sync_run_started',
-		'_cloudinary_sync_run_tally',
+		'_cloudinary_sync_run_tally_synced',
+		'_cloudinary_sync_run_tally_errors',
 		'_cloudinary_sync_queue',
 	] ) {
 		try {

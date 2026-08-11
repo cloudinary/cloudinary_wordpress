@@ -94,17 +94,16 @@ const Deactivate = {
 		[ ...context.deactivateButton ].forEach( ( button ) => {
 			button.addEventListener( 'click', function () {
 				if ( 'true' === context.modal.dataset.connected ) {
-					Analytics.track(
+					// trackReliable() uses navigator.sendBeacon(), which the
+					// browser guarantees to dispatch even across the
+					// navigation below — no need to delay it with a timeout.
+					Analytics.trackReliable(
 						'deactivation_skipped',
 						{},
 						'deactivation'
 					);
 				}
-				// Give the fire-and-forget analytics request a moment to
-				// leave the browser before the page navigates away.
-				setTimeout( function () {
-					window.location.href = context.deactivationUrl;
-				}, 150 );
+				window.location.href = context.deactivationUrl;
 			} );
 		} );
 

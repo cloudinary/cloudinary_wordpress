@@ -339,9 +339,14 @@ class Rest_Assets {
 		$current_page = $page ? $page : 1;
 		$data         = $this->get_assets( $parent->ID, $search, $current_page );
 
-		$analytics = get_plugin_instance()->get_component( 'analytics' );
-		if ( $analytics ) {
-			$analytics->track( 'cache_items_viewed', 'cache', null, array( 'cache_point' => (string) $url ) );
+		// This endpoint is also hit for pagination and search-as-you-type
+		// within an already-open cache point; only the initial open (page 1,
+		// no search term) represents a genuine "viewed" event.
+		if ( 1 === (int) $current_page && empty( $search ) ) {
+			$analytics = get_plugin_instance()->get_component( 'analytics' );
+			if ( $analytics ) {
+				$analytics->track( 'cache_items_viewed', 'cache', null, array( 'cache_point' => (string) $url ) );
+			}
 		}
 
 		return rest_ensure_response( $data );

@@ -62,11 +62,24 @@ class Sync_Queue {
 	const RUN_STARTED_KEY = '_cloudinary_sync_run_started';
 
 	/**
-	 * Option key for the running success/error tally of the current run.
+	 * Option key for the running count of successful syncs in the current run.
+	 *
+	 * Kept as its own scalar option (rather than a field in a single
+	 * serialized array) so it can be incremented atomically — the queue runs
+	 * multiple concurrent threads as separate requests, and a
+	 * get_option()/update_option() read-modify-write round trip on a shared
+	 * array would lose updates under that concurrency.
 	 *
 	 * @var     string
 	 */
-	const RUN_TALLY_KEY = '_cloudinary_sync_run_tally';
+	const RUN_TALLY_SYNCED_KEY = '_cloudinary_sync_run_tally_synced';
+
+	/**
+	 * Option key for the running count of failed syncs in the current run.
+	 *
+	 * @var     string
+	 */
+	const RUN_TALLY_ERRORS_KEY = '_cloudinary_sync_run_tally_errors';
 
 	/**
 	 * The cron frequency to ensure that the queue is progressing.
@@ -226,14 +239,8 @@ class Sync_Queue {
 			return;
 		}
 		update_option( self::RUN_STARTED_KEY, time(), false );
-		update_option(
-			self::RUN_TALLY_KEY,
-			array(
-				'synced' => 0,
-				'errors' => 0,
-			),
-			false
-		);
+		delete_option( self::RUN_TALLY_SYNCED_KEY );
+		delete_option( self::RUN_TALLY_ERRORS_KEY );
 	}
 
 	/**
@@ -249,17 +256,27 @@ class Sync_Queue {
 		if ( false === get_option( self::RUN_STARTED_KEY, false ) ) {
 			return;
 		}
-		$tally = get_option(
-			self::RUN_TALLY_KEY,
-			array(
-				'synced' => 0,
-				'errors' => 0,
+		$this->increment_option( $success ? self::RUN_TALLY_SYNCED_KEY : self::RUN_TALLY_ERRORS_KEY );
+	}
+
+	/**
+	 * Atomically increments an integer option, creating it as 1 if missing.
+	 *
+	 * @param string $option_name The option to increment.
+	 *
+	 * @return void
+	 */
+	protected function increment_option( $option_name ) {
+		global $wpdb;
+
+		$wpdb->query( // phpcs:ignore WordPress.DB
+			$wpdb->prepare(
+				"INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, '1', 'no')
+				 ON DUPLICATE KEY UPDATE option_value = option_value + 1",
+				$option_name
 			)
 		);
-		$key   = $success ? 'synced' : 'errors';
-
-		$tally[ $key ] = isset( $tally[ $key ] ) ? $tally[ $key ] + 1 : 1;
-		update_option( self::RUN_TALLY_KEY, $tally, false );
+		wp_cache_delete( $option_name, 'options' );
 	}
 
 	/**
@@ -274,15 +291,11 @@ class Sync_Queue {
 		if ( false === $started ) {
 			return;
 		}
-		$tally = get_option(
-			self::RUN_TALLY_KEY,
-			array(
-				'synced' => 0,
-				'errors' => 0,
-			)
-		);
+		$synced = (int) get_option( self::RUN_TALLY_SYNCED_KEY, 0 );
+		$errors = (int) get_option( self::RUN_TALLY_ERRORS_KEY, 0 );
 		delete_option( self::RUN_STARTED_KEY );
-		delete_option( self::RUN_TALLY_KEY );
+		delete_option( self::RUN_TALLY_SYNCED_KEY );
+		delete_option( self::RUN_TALLY_ERRORS_KEY );
 
 		$analytics = $this->plugin->get_component( 'analytics' );
 		if ( $analytics ) {
@@ -291,8 +304,8 @@ class Sync_Queue {
 				'sync',
 				null,
 				array(
-					'total_synced' => isset( $tally['synced'] ) ? (int) $tally['synced'] : 0,
-					'total_errors' => isset( $tally['errors'] ) ? (int) $tally['errors'] : 0,
+					'total_synced' => $synced,
+					'total_errors' => $errors,
 					'duration_sec' => time() - (int) $started,
 				)
 			);
@@ -330,19 +343,33 @@ class Sync_Queue {
 		$parts     = explode( '.', $full_slug );
 		$slug      = end( $parts );
 
-		if ( in_array( $slug, $tracked_slugs, true ) ) {
-			$analytics = $this->plugin->get_component( 'analytics' );
-			if ( $analytics ) {
-				$analytics->track(
-					'sync_settings_changed',
-					'sync',
-					null,
-					array(
-						'setting_key' => $slug,
-						'new_value'   => $new_value,
-					)
-				);
-			}
+		if ( ! in_array( $slug, $tracked_slugs, true ) ) {
+			return $new_value;
+		}
+
+		// Not every `set_pending()` caller passes $current_value (e.g. the
+		// wizard's save re-submits `auto_sync` unconditionally); fall back to
+		// the setting's own current value, which `@data` still reflects here
+		// since `set_pending()` only stages the pending write.
+		if ( null === $current_value ) {
+			$current_value = $setting->get_value();
+		}
+
+		if ( $new_value === $current_value ) {
+			return $new_value;
+		}
+
+		$analytics = $this->plugin->get_component( 'analytics' );
+		if ( $analytics ) {
+			$analytics->track(
+				'sync_settings_changed',
+				'sync',
+				null,
+				array(
+					'setting_key' => $slug,
+					'new_value'   => $new_value,
+				)
+			);
 		}
 
 		return $new_value;
@@ -699,7 +726,7 @@ class Sync_Queue {
 	 *
 	 * @param string $type The type of queue to shutdown.
 	 */
-	protected function shutdown_queue( $type = 'queue' ) {
+	public function shutdown_queue( $type = 'queue' ) {
 		if ( 'queue' === $type ) {
 			delete_option( self::$queue_enabled );
 			$this->track_run_completed();

@@ -644,11 +644,29 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	/**
 	 * Check the status of Cloudinary.
 	 *
+	 * Also called interactively from `test_connection()` (wizard live-typing
+	 * checks and connection saves) — `connectivity_check_failed` is NOT
+	 * tracked here so those don't get miscounted as background connectivity
+	 * failures. See `cron_check_status()` for the cron-only variant that does.
+	 *
 	 * @return array|WP_Error
 	 */
 	public function check_status() {
 		$status = $this->test_ping();
 		$this->settings->get_setting( 'status' )->save_value( $status );
+
+		return $status;
+	}
+
+	/**
+	 * Cron-only wrapper around `check_status()` that tracks connectivity
+	 * failures. Kept separate from `check_status()` so interactive callers
+	 * (the wizard's live check, connection saves) never emit this event.
+	 *
+	 * @return array|WP_Error
+	 */
+	public function cron_check_status() {
+		$status = $this->check_status();
 
 		if ( is_wp_error( $status ) ) {
 			$analytics = $this->plugin->get_component( 'analytics' );
@@ -825,7 +843,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 * Setup Status cron.
 	 */
 	protected function setup_status_cron() {
-		Cron::register_process( 'check_status', array( $this, 'check_status' ), DAY_IN_SECONDS );
+		Cron::register_process( 'check_status', array( $this, 'cron_check_status' ), DAY_IN_SECONDS );
 	}
 
 	/**

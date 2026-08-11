@@ -78,6 +78,18 @@ class Admin {
 	const NOTICE_SLUG = '_cld_notices';
 
 	/**
+	 * Settings slugs (by page) that directly inject transformation qualifiers
+	 * (format, quality, freeform string) into delivered URLs, as opposed to
+	 * plain feature-enablement toggles.
+	 *
+	 * @var array
+	 */
+	const GLOBAL_TRANSFORMATION_SLUGS = array(
+		'image_settings' => array( 'image_format', 'image_quality', 'image_freeform' ),
+		'video_settings' => array( 'video_format', 'video_quality', 'video_freeform' ),
+	);
+
+	/**
 	 * Initiate the settings object.
 	 *
 	 * @param Plugin $plugin The main plugin instance.
@@ -134,14 +146,14 @@ class Admin {
 	 * @param WP_REST_Request $request The request object.
 	 */
 	public function rest_dismiss_notice( WP_REST_Request $request ) {
-		$token    = $request->get_param( 'token' );
+		$token    = sanitize_key( $request->get_param( 'token' ) );
 		$duration = $request->get_param( 'duration' );
 
 		set_transient( $token, true, $duration );
 
 		$analytics = $this->plugin->get_component( 'analytics' );
 		if ( $analytics ) {
-			$analytics->track( 'notice_dismissed', 'settings', null, array( 'notice_id' => (string) $token ) );
+			$analytics->track( 'notice_dismissed', 'settings', null, array( 'notice_id' => $token ) );
 		}
 	}
 
@@ -494,18 +506,6 @@ class Admin {
 		// Flush cache.
 		do_action( 'cloudinary_flush_cache' );
 	}
-
-	/**
-	 * Settings slugs (by page) that directly inject transformation qualifiers
-	 * (format, quality, freeform string) into delivered URLs, as opposed to
-	 * plain feature-enablement toggles.
-	 *
-	 * @var array
-	 */
-	const GLOBAL_TRANSFORMATION_SLUGS = array(
-		'image_settings' => array( 'image_format', 'image_quality', 'image_freeform' ),
-		'video_settings' => array( 'video_format', 'video_quality', 'video_freeform' ),
-	);
 
 	/**
 	 * Emits `transformation_applied` (scope: global) when a settings save
