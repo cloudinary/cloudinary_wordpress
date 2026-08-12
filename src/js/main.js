@@ -16,6 +16,7 @@ import Storage from './components/storage';
 import Extensions from './components/extensions';
 import Tabs from './components/tabs';
 import Analytics from './components/analytics';
+import SpecialOffer from './components/special-offer';
 
 import '../css/main.scss';
 
@@ -64,4 +65,5 @@ export const cloudinary = {
 	Extensions,
 	Tabs,
 	Analytics,
+	SpecialOffer,
 };

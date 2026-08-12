@@ -301,7 +301,10 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 * @return array|WP_Error The data if cleared.
 	 */
 	public function verify_connection( $data ) {
-		$admin = $this->plugin->get_component( 'admin' );
+		$admin     = $this->plugin->get_component( 'admin' );
+		$analytics = $this->plugin->get_component( 'analytics' );
+		$current   = $this->plugin->settings->find_setting( 'connect' )->get_value();
+
 		if ( empty( $data['cloudinary_url'] ) ) {
 			delete_option( self::META_KEYS['signature'] );
 			$admin->add_admin_notice(
@@ -312,11 +315,14 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 			);
 			$this->plugin->settings->set_param( 'connected', false );
 
+			if ( $analytics && ! empty( $current['cloudinary_url'] ) ) {
+				$analytics->track( 'connection_disconnected', 'connection' );
+			}
+
 			return $data;
 		}
 
 		$data['cloudinary_url'] = str_replace( 'CLOUDINARY_URL=', '', $data['cloudinary_url'] );
-		$current                = $this->plugin->settings->find_setting( 'connect' )->get_value();
 
 		// Same URL, return original data.
 		if ( $current['cloudinary_url'] === $data['cloudinary_url'] ) {
@@ -331,6 +337,18 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 				'error'
 			);
 
+			if ( $analytics ) {
+				$analytics->track(
+					'connection_string_updated',
+					'connection',
+					null,
+					array(
+						'status'     => 'error',
+						'error_type' => 'format_mismatch',
+					)
+				);
+			}
+
 			return $current;
 		}
 
@@ -343,6 +361,19 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 				'error'
 			);
 
+			if ( $analytics ) {
+				$analytics->track(
+					'connection_string_updated',
+					'connection',
+					null,
+					array(
+						'status'      => 'error',
+						'error_type'  => $result['type'],
+						'http_status' => (int) $result['http_status'],
+					)
+				);
+			}
+
 			return $current;
 		}
 
@@ -354,6 +385,34 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 
 		$this->settings->get_setting( 'signature' )->save_value( md5( $data['cloudinary_url'] ) );
 		$this->plugin->settings->set_param( 'connected', true );
+
+		if ( $analytics ) {
+			$analytics->track(
+				'connection_string_updated',
+				'connection',
+				null,
+				array(
+					'status'      => 'success',
+					'error_type'  => '',
+					'http_status' => (int) $result['http_status'],
+				)
+			);
+
+			$previous_cloud = ! empty( $current['cloudinary_url'] ) ? wp_parse_url( $current['cloudinary_url'], PHP_URL_HOST ) : '';
+			$new_cloud      = wp_parse_url( $data['cloudinary_url'], PHP_URL_HOST );
+
+			if ( ! empty( $previous_cloud ) && $new_cloud !== $previous_cloud ) {
+				$analytics->track(
+					'account_switched',
+					'connection',
+					null,
+					array(
+						'previous_cloud_name' => $previous_cloud,
+						'new_cloud_name'      => $new_cloud,
+					)
+				);
+			}
+		}
 
 		return $data;
 	}
@@ -585,11 +644,46 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	/**
 	 * Check the status of Cloudinary.
 	 *
+	 * Also called interactively from `test_connection()` (wizard live-typing
+	 * checks and connection saves) — `connectivity_check_failed` is NOT
+	 * tracked here so those don't get miscounted as background connectivity
+	 * failures. See `cron_check_status()` for the cron-only variant that does.
+	 *
 	 * @return array|WP_Error
 	 */
 	public function check_status() {
 		$status = $this->test_ping();
 		$this->settings->get_setting( 'status' )->save_value( $status );
+
+		return $status;
+	}
+
+	/**
+	 * Cron-only wrapper around `check_status()` that tracks connectivity
+	 * failures. Kept separate from `check_status()` so interactive callers
+	 * (the wizard's live check, connection saves) never emit this event.
+	 *
+	 * @return array|WP_Error
+	 */
+	public function cron_check_status() {
+		$status = $this->check_status();
+
+		if ( is_wp_error( $status ) ) {
+			$analytics = $this->plugin->get_component( 'analytics' );
+			if ( $analytics ) {
+				$code = $status->get_error_code();
+				$analytics->track(
+					'connectivity_check_failed',
+					'connection',
+					null,
+					array(
+						'check_type'  => 'ping',
+						'http_status' => is_numeric( $code ) ? (int) $code : 0,
+						'error_type'  => is_numeric( $code ) ? '' : (string) $code,
+					)
+				);
+			}
+		}
 
 		return $status;
 	}
@@ -749,7 +843,7 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 	 * Setup Status cron.
 	 */
 	protected function setup_status_cron() {
-		Cron::register_process( 'check_status', array( $this, 'check_status' ), DAY_IN_SECONDS );
+		Cron::register_process( 'check_status', array( $this, 'cron_check_status' ), DAY_IN_SECONDS );
 	}
 
 	/**
@@ -1062,6 +1156,20 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 				),
 				false
 			);
+
+			$analytics = $plugin->get_component( 'analytics' );
+			if ( $analytics ) {
+				$analytics->track(
+					'connectivity_check_failed',
+					'connection',
+					null,
+					array(
+						'check_type'  => 'rest_api',
+						'http_status' => isset( $connectivity['http_status'] ) ? (int) $connectivity['http_status'] : 0,
+						'error_type'  => isset( $connectivity['error_type'] ) ? (string) $connectivity['error_type'] : '',
+					)
+				);
+			}
 		}
 
 		return $connectivity;
@@ -1089,23 +1197,27 @@ class Connect extends Settings_Component implements Config, Setup, Notice {
 
 		if ( is_wp_error( $response ) ) {
 			$result = array(
-				'working' => false,
-				'message' => sprintf(
+				'working'     => false,
+				'message'     => sprintf(
 					/* translators: 1: The WordPress error message. 2: The WordPress error code. */
 					__( 'The Cloudinary REST API endpoints are not available. Error: %1$s (%2$s)', 'cloudinary' ),
 					$response->get_error_message(),
 					$response->get_error_code()
 				),
+				'http_status' => 0,
+				'error_type'  => (string) $response->get_error_code(),
 			);
 		} elseif ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			$result = array(
-				'working' => false,
-				'message' => sprintf(
+				'working'     => false,
+				'message'     => sprintf(
 					/* translators: 1: The WordPress error message. 2: The WordPress error code. */
 					__( 'The Cloudinary REST API endpoints are not available. Error: %1$s (%2$s)', 'cloudinary' ),
 					wp_remote_retrieve_response_message( $response ),
 					wp_remote_retrieve_response_code( $response )
 				),
+				'http_status' => (int) wp_remote_retrieve_response_code( $response ),
+				'error_type'  => 'http_error',
 			);
 		}
 

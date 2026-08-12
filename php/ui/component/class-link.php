@@ -37,13 +37,12 @@ class Link extends Component {
 		$struct['attributes']['href']   = $this->setting->get_param( 'url' );
 		$struct['attributes']['target'] = $this->setting->get_param( 'target', '_blank' );
 		$struct['render']               = true;
-		$struct['attributes']['class']  = $this->setting->get_param(
-			'attributes:class',
-			array(
-				'button',
-				'button-primary',
-			)
-		);
+		// `get_param()` splits on `$this->separator` ('.' by default), so a
+		// colon-delimited path here never matched the nested 'attributes'
+		// array below it — it silently fell through to the default class
+		// list. Read the 'attributes' param directly instead.
+		$attributes                    = $this->setting->get_param( 'attributes', array() );
+		$struct['attributes']['class'] = isset( $attributes['class'] ) ? $attributes['class'] : array( 'button', 'button-primary' );
 
 		return $struct;
 	}

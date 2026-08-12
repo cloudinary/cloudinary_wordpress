@@ -68,9 +68,9 @@ class Special_Offer {
 					'content' => $this->get_special_offer_content(),
 				),
 				array(
-					'type'    => 'link',
-					'content' => __( 'Get started', 'cloudinary' ),
-					'url'     => function () {
+					'type'       => 'link',
+					'content'    => __( 'Get started', 'cloudinary' ),
+					'url'        => function () {
 						$args = array(
 							'tf_360017815680' => 'help_with_plans',
 							'tf_subject'      => sprintf(
@@ -82,7 +82,10 @@ class Special_Offer {
 						);
 						return Utils::get_support_link( $args );
 					},
-					'target'  => '_blank',
+					'target'     => '_blank',
+					'attributes' => array(
+						'class' => array( 'button', 'button-primary', 'cld-special-offer-link' ),
+					),
 				),
 			),
 		);

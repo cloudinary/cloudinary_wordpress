@@ -165,6 +165,41 @@ class Assets extends Settings_Component {
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_cache' ), 100 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'cloudinary_delete_asset', array( $this, 'purge_parent' ) );
+		add_action( 'cloudinary_uploaded_asset', array( $this, 'track_cache_uploaded' ), 10, 2 );
+	}
+
+	/**
+	 * Emits `cache_uploaded` when a non-media asset is pushed to Cloudinary.
+	 *
+	 * Hooked to the same action `Analytics::maybe_first_api_consumption()`
+	 * uses for the activation funnel, filtered down to non-media assets.
+	 * Fires once per asset (no batch-level upload wrapper exists to hook
+	 * instead), so `item_count` is always 1.
+	 *
+	 * @param int             $attachment_id The attachment ID.
+	 * @param array|\WP_Error $result        The upload result.
+	 *
+	 * @return void
+	 */
+	public function track_cache_uploaded( $attachment_id, $result ) {
+		if ( ! self::is_asset_type( $attachment_id ) ) {
+			return;
+		}
+
+		$analytics = $this->plugin->get_component( 'analytics' );
+		if ( ! $analytics ) {
+			return;
+		}
+
+		$analytics->track(
+			'cache_uploaded',
+			'cache',
+			null,
+			array(
+				'item_count' => 1,
+				'status'     => is_wp_error( $result ) ? 'error' : 'success',
+			)
+		);
 	}
 
 	/**
