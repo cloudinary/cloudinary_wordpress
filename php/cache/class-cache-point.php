@@ -34,7 +34,7 @@ class Cache_Point {
 	/**
 	 * Holds a list of pre-found cached urls before querying to find cached items
 	 *
-	 * @var array.
+	 * @var array
 	 */
 	protected $pre_cached = array();
 	/**
@@ -406,7 +406,7 @@ class Cache_Point {
 	 *
 	 * @param string $url The URL to convert.
 	 *
-	 * @return string
+	 * @return string|null
 	 */
 	public function url_to_path( $url ) {
 		$url      = $this->clean_url( $url );
@@ -451,7 +451,7 @@ class Cache_Point {
 	 *
 	 * @param string $url The cache point url to get.
 	 *
-	 * @return \WP_Post
+	 * @return \WP_Post|null
 	 */
 	public function get_cache_point( $url ) {
 		// Lets check if the cache_point is a file.
@@ -647,7 +647,7 @@ class Cache_Point {
 	 */
 	protected function check_version( $url, $version ) {
 		$cache_point = $this->get_cache_point( $url );
-		if ( ! is_numeric( $cache_point ) ) {
+		if ( $cache_point instanceof \WP_Post ) {
 			$prev_version = get_post_meta( $cache_point->ID, self::META_KEYS['version'], true );
 			if ( $prev_version !== $version ) {
 				update_post_meta( $cache_point->ID, self::META_KEYS['version'], $version );

@@ -37,8 +37,19 @@ class Dashboard {
 	 * @return bool
 	 */
 	public function has_data() {
+		/**
+		 * The sync component.
+		 *
+		 * @var \Cloudinary\Sync $sync
+		 */
 		$sync = $this->plugin->get_component( 'sync' );
-		$data = $sync->managers['queue']->get_total_synced_media();
+		/**
+		 * The sync queue manager.
+		 *
+		 * @var \Cloudinary\Sync\Sync_Queue $queue
+		 */
+		$queue = $sync->managers['queue'];
+		$data  = $queue->get_total_synced_media();
 
 		return ! empty( $data );
 	}

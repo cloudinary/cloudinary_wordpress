@@ -16,6 +16,7 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
 use WP_HTTP_Response;
+use function Cloudinary\get_plugin_instance;
 
 /**
  * Class Rest Assets.
@@ -108,8 +109,10 @@ class Rest_Assets {
 		$media         = $this->assets->media;
 		$attachment_id = $request->get_param( 'ID' );
 		$type          = $media->get_resource_type( $attachment_id );
+		$analytics     = get_plugin_instance()->get_component( 'analytics' );
 
 		$return = array();
+		$saved  = false;
 
 		// Save transformations if present.
 		$transformations = $request->get_param( 'transformations' );
@@ -117,6 +120,19 @@ class Rest_Assets {
 		if ( isset( $transformations ) ) {
 			$result = $this->save_transformation_type( $attachment_id, $transformations, $type, 'transformations' );
 			$return = array_merge( $return, $result );
+			$saved  = true;
+
+			if ( $analytics ) {
+				$analytics->track(
+					'transformation_applied',
+					'media',
+					null,
+					array(
+						'scope'                => 'asset',
+						'transformation_count' => $this->count_transformation_qualifiers( $result['transformations'] ),
+					)
+				);
+			}
 		}
 
 		// Save text overlay even if empty (allow clearing).
@@ -125,6 +141,7 @@ class Rest_Assets {
 		if ( isset( $text_overlay ) && array_key_exists( 'transformation', (array) $text_overlay ) ) {
 			$result = $this->save_transformation_type( $attachment_id, $text_overlay['transformation'], $type, 'text_overlay', $text_overlay );
 			$return = array_merge( $return, $result );
+			$saved  = true;
 		}
 
 		// Save image overlay even if empty (allow clearing).
@@ -133,9 +150,42 @@ class Rest_Assets {
 		if ( isset( $image_overlay ) && array_key_exists( 'transformation', (array) $image_overlay ) ) {
 			$result = $this->save_transformation_type( $attachment_id, $image_overlay['transformation'], $type, 'image_overlay', $image_overlay );
 			$return = array_merge( $return, $result );
+			$saved  = true;
+		}
+
+		if ( $saved && $analytics ) {
+			$analytics->track(
+				'asset_edited',
+				'media',
+				null,
+				array(
+					'asset_id'   => (int) $attachment_id,
+					'asset_type' => $type,
+				)
+			);
 		}
 
 		return rest_ensure_response( $return );
+	}
+
+	/**
+	 * Counts the comma/slash-separated qualifiers in a transformation string.
+	 *
+	 * @param string $transformation The cleaned transformation string.
+	 *
+	 * @return int
+	 */
+	protected function count_transformation_qualifiers( $transformation ) {
+		if ( empty( $transformation ) ) {
+			return 0;
+		}
+
+		$count = 0;
+		foreach ( array_filter( explode( '/', $transformation ) ) as $segment ) {
+			$count += count( array_filter( explode( ',', $segment ) ) );
+		}
+
+		return $count;
 	}
 
 	/**
@@ -222,6 +272,7 @@ class Rest_Assets {
 		$count      = $request->get_param( 'count' );
 		$clean      = $this->assets->clean_path( $parent_url );
 		$parent     = $this->assets->get_param( $clean );
+		$analytics  = get_plugin_instance()->get_component( 'analytics' );
 		$result     = array(
 			'total'   => 0,
 			'pending' => count( $this->assets->get_asset_parents() ),
@@ -244,6 +295,10 @@ class Rest_Assets {
 			$result['total']   = 0;
 			$result['pending'] = 0;
 			$result['percent'] = 100;
+
+			if ( $analytics ) {
+				$analytics->track( 'asset_cache_purged', 'cache', null, array( 'scope' => $clean ) );
+			}
 		} elseif ( false === $count ) {
 			$data   = array(
 				'public_id'  => null,
@@ -260,6 +315,10 @@ class Rest_Assets {
 			$result['total']   = 0;
 			$result['pending'] = 0;
 			$result['percent'] = 100;
+
+			if ( $analytics ) {
+				$analytics->track( 'all_cache_purged', 'cache' );
+			}
 		}
 
 		return rest_ensure_response( $result );
@@ -279,6 +338,16 @@ class Rest_Assets {
 		$page         = $request->get_param( 'page' );
 		$current_page = $page ? $page : 1;
 		$data         = $this->get_assets( $parent->ID, $search, $current_page );
+
+		// This endpoint is also hit for pagination and search-as-you-type
+		// within an already-open cache point; only the initial open (page 1,
+		// no search term) represents a genuine "viewed" event.
+		if ( 1 === (int) $current_page && empty( $search ) ) {
+			$analytics = get_plugin_instance()->get_component( 'analytics' );
+			if ( $analytics ) {
+				$analytics->track( 'cache_items_viewed', 'cache', null, array( 'cache_point' => (string) $url ) );
+			}
+		}
 
 		return rest_ensure_response( $data );
 	}
@@ -308,6 +377,22 @@ class Rest_Assets {
 		global $wpdb;
 		$ids   = $request['ids'];
 		$state = $request['state'];
+
+		if ( 'delete' !== $state ) {
+			$analytics = get_plugin_instance()->get_component( 'analytics' );
+			if ( $analytics ) {
+				$analytics->track(
+					'cache_items_toggled',
+					'cache',
+					null,
+					array(
+						'enabled'    => 'enable' === strtolower( $state ),
+						'item_count' => count( $ids ),
+					)
+				);
+			}
+		}
+
 		foreach ( $ids as $id ) {
 			$where = array(
 				'post_id'   => $id,

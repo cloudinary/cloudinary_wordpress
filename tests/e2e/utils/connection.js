@@ -59,7 +59,48 @@ function ensureCloudinaryConnected() {
 	return { cloudName };
 }
 
+/**
+ * Fakes a "connected" state without calling the real Cloudinary API.
+ *
+ * Unlike `ensureCloudinaryConnected()`, this writes the connection + signature
+ * options directly via `wp eval` (bypassing `update_option()`, so
+ * `Connect::verify_connection()` — a `pre_update_option` filter — never
+ * runs). Useful for flows that only need `Connect::is_connected()` to be
+ * true (e.g. the deactivation modal's connected/not-connected branching) and
+ * shouldn't depend on live Cloudinary credentials being available.
+ *
+ * @return {{ cloudName: string, cloudinaryUrl: string }} The fake cloud name and connection URL used.
+ */
+function fakeCloudinaryConnected() {
+	const cloudName = 'e2e-fake-cloud';
+	const cloudinaryUrl = `cloudinary://123456789012345:AbCdEfGhIjKlMnOpQrStUvWxYz1@${ cloudName }`;
+
+	wpCli( [
+		'eval',
+		`'
+		global $wpdb;
+		$url = "${ cloudinaryUrl }";
+		$value = serialize( array( "cloudinary_url" => $url ) );
+		// A raw upsert — not update_option(), which would fire the
+		// pre_update_option_cloudinary_connect filter (verify_connection())
+		// and attempt a real API call with these fake credentials. The row
+		// may not exist at all (e.g. after a real plugin_uninstalled test
+		// run deletes it), so a plain UPDATE would silently affect zero rows.
+		$wpdb->query( $wpdb->prepare(
+			"INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, %s)
+			 ON DUPLICATE KEY UPDATE option_value = %s",
+			"cloudinary_connect", $value, "yes", $value
+		) );
+		update_option( "cloudinary_connection_signature", md5( $url ) );
+		wp_cache_flush();
+		'`,
+	] );
+
+	return { cloudName, cloudinaryUrl };
+}
+
 module.exports = {
 	parseCloudName,
 	ensureCloudinaryConnected,
+	fakeCloudinaryConnected,
 };

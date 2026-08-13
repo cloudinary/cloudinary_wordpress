@@ -157,7 +157,7 @@ class Opt_Level extends Line_Stat {
 	 */
 	protected function set_texts() {
 
-		$used_percent = round( $this->used / $this->limit * 100 );
+		$used_percent = round( (float) $this->used / (float) $this->limit * 100 );
 		/* translators: %s is the percentage optimized. */
 		$this->used_text = sprintf( __( '%s optimized', 'cloudinary' ), $used_percent . '%' );
 
@@ -199,7 +199,7 @@ class Opt_Level extends Line_Stat {
 		foreach ( $this->settings_slugs as $slug ) {
 			$setting      = $this->plugin_settings->get_setting( $slug );
 			$meet_depends = true;
-			if ( null !== $setting && ! is_wp_error( $setting ) ) {
+			if ( null !== $setting ) {
 				$params = $setting->get_params();
 				if ( ! empty( $params['depends'] ) ) {
 					foreach ( $params['depends'] as $depend ) {

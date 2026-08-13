@@ -50,6 +50,38 @@ class Sync_Queue {
 	private static $queue_enabled = '_cloudinary_bulk_sync_enabled';
 
 	/**
+	 * Option key for the start time of the current bulk-sync run.
+	 *
+	 * Set once, on the initial `rest_start_sync()` call, rather than in the
+	 * per-cycle queue option (`$queue_key`), which gets rebuilt/deleted by
+	 * `stop_maybe()`'s internal restart cycles before a listener could read
+	 * it. Lets `sync_completed` report an accurate end-to-end duration.
+	 *
+	 * @var     string
+	 */
+	const RUN_STARTED_KEY = '_cloudinary_sync_run_started';
+
+	/**
+	 * Option key for the running count of successful syncs in the current run.
+	 *
+	 * Kept as its own scalar option (rather than a field in a single
+	 * serialized array) so it can be incremented atomically — the queue runs
+	 * multiple concurrent threads as separate requests, and a
+	 * get_option()/update_option() read-modify-write round trip on a shared
+	 * array would lose updates under that concurrency.
+	 *
+	 * @var     string
+	 */
+	const RUN_TALLY_SYNCED_KEY = '_cloudinary_sync_run_tally_synced';
+
+	/**
+	 * Option key for the running count of failed syncs in the current run.
+	 *
+	 * @var     string
+	 */
+	const RUN_TALLY_ERRORS_KEY = '_cloudinary_sync_run_tally_errors';
+
+	/**
 	 * The cron frequency to ensure that the queue is progressing.
 	 *
 	 * @var int
@@ -137,13 +169,25 @@ class Sync_Queue {
 		// Enable sync queue.
 		if ( filter_input( INPUT_GET, 'enable-bulk', FILTER_VALIDATE_BOOLEAN ) ) {
 			$this->bulk_sync( true );
-			wp_safe_redirect( $this->sync->settings->get_component()->get_url() );
+			/**
+			 * The settings page component.
+			 *
+			 * @var \Cloudinary\UI\Component\Page $page
+			 */
+			$page = $this->sync->settings->get_component();
+			wp_safe_redirect( $page->get_url() );
 			exit;
 		}
 		// Stop sync queue.
 		if ( filter_input( INPUT_GET, 'disable-bulk', FILTER_VALIDATE_BOOLEAN ) ) {
 			$this->bulk_sync( false );
-			wp_safe_redirect( $this->sync->settings->get_component()->get_url() );
+			/**
+			 * The settings page component.
+			 *
+			 * @var \Cloudinary\UI\Component\Page $page
+			 */
+			$page = $this->sync->settings->get_component();
+			wp_safe_redirect( $page->get_url() );
 			exit;
 		}
 
@@ -181,6 +225,106 @@ class Sync_Queue {
 	}
 
 	/**
+	 * Marks the start of a new bulk-sync run, for the `sync_completed` tally.
+	 *
+	 * A no-op if a run is already being tracked (e.g. `stop_maybe()`'s
+	 * internal restart cycle), so the original start time is preserved.
+	 *
+	 * @param string $type The type of queue being started.
+	 *
+	 * @return void
+	 */
+	public function mark_run_started( $type = 'queue' ) {
+		if ( 'queue' !== $type || false !== get_option( self::RUN_STARTED_KEY, false ) ) {
+			return;
+		}
+		update_option( self::RUN_STARTED_KEY, time(), false );
+		delete_option( self::RUN_TALLY_SYNCED_KEY );
+		delete_option( self::RUN_TALLY_ERRORS_KEY );
+	}
+
+	/**
+	 * Adds a sync result to the current run's success/error tally.
+	 *
+	 * A no-op if no run is currently being tracked.
+	 *
+	 * @param bool $success Whether the sync operation succeeded.
+	 *
+	 * @return void
+	 */
+	public function tally_run_result( $success ) {
+		if ( false === get_option( self::RUN_STARTED_KEY, false ) ) {
+			return;
+		}
+		$this->increment_option( $success ? self::RUN_TALLY_SYNCED_KEY : self::RUN_TALLY_ERRORS_KEY );
+	}
+
+	/**
+	 * Atomically increments an integer option, creating it as 1 if missing.
+	 *
+	 * @param string $option_name The option to increment.
+	 *
+	 * @return void
+	 */
+	protected function increment_option( $option_name ) {
+		global $wpdb;
+
+		$wpdb->query( // phpcs:ignore WordPress.DB
+			$wpdb->prepare(
+				"INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, '1', 'no')
+				 ON DUPLICATE KEY UPDATE option_value = option_value + 1",
+				$option_name
+			)
+		);
+		wp_cache_delete( $option_name, 'options' );
+
+		// `mark_run_started()` clears this option via `delete_option()`,
+		// which (on sites with a persistent object cache) marks it in the
+		// `notoptions` cache as known-absent. The raw insert above bypasses
+		// that bookkeeping entirely, so without this, `get_option()` keeps
+		// short-circuiting to the default (0) instead of reading the row
+		// this just wrote/incremented.
+		$notoptions = wp_cache_get( 'notoptions', 'options' );
+		if ( is_array( $notoptions ) && isset( $notoptions[ $option_name ] ) ) {
+			unset( $notoptions[ $option_name ] );
+			wp_cache_set( 'notoptions', $notoptions, 'options' );
+		}
+	}
+
+	/**
+	 * Emits the `sync_completed` analytics event, clearing the tracked run state.
+	 *
+	 * A no-op if no run is currently being tracked.
+	 *
+	 * @return void
+	 */
+	protected function track_run_completed() {
+		$started = get_option( self::RUN_STARTED_KEY, false );
+		if ( false === $started ) {
+			return;
+		}
+		$synced = (int) get_option( self::RUN_TALLY_SYNCED_KEY, 0 );
+		$errors = (int) get_option( self::RUN_TALLY_ERRORS_KEY, 0 );
+		delete_option( self::RUN_STARTED_KEY );
+		delete_option( self::RUN_TALLY_SYNCED_KEY );
+		delete_option( self::RUN_TALLY_ERRORS_KEY );
+
+		$analytics = $this->plugin->get_component( 'analytics' );
+		if ( $analytics ) {
+			$analytics->track(
+				'sync_completed',
+				'sync',
+				null,
+				array(
+					'total_synced' => $synced,
+					'total_errors' => $errors,
+					'duration_sec' => time() - (int) $started,
+				)
+			);
+		}
+	}
+
+	/**
 	 * Load the Upload Queue hooks.
 	 *
 	 * @return void
@@ -188,6 +332,59 @@ class Sync_Queue {
 	public function load_hooks() {
 		add_action( 'cloudinary_resume_queue', array( $this, 'maybe_resume_queue' ) );
 		add_action( 'cloudinary_settings_save_setting_auto_sync', array( $this, 'change_setting_state' ), 10, 3 );
+		add_filter( 'cloudinary_settings_save_setting', array( $this, 'track_setting_changed' ), 10, 3 );
+	}
+
+	/**
+	 * Emits `sync_settings_changed` for sync-relevant settings.
+	 *
+	 * Hooked to the generic per-save filter (fires for every changed setting),
+	 * filtered down to the sync-relevant slugs we care about.
+	 *
+	 * @param mixed   $new_value     The new value.
+	 * @param mixed   $current_value The current value.
+	 * @param Setting $setting       The setting object.
+	 *
+	 * @return mixed
+	 */
+	public function track_setting_changed( $new_value, $current_value, $setting ) {
+		$tracked_slugs = array( 'auto_sync', 'offload' );
+		// `get_slug()` returns the full dotted path (e.g. `connect.auto_sync`);
+		// only the last segment identifies the setting itself.
+		$full_slug = $setting->get_slug();
+		$parts     = explode( '.', $full_slug );
+		$slug      = end( $parts );
+
+		if ( ! in_array( $slug, $tracked_slugs, true ) ) {
+			return $new_value;
+		}
+
+		// Not every `set_pending()` caller passes $current_value (e.g. the
+		// wizard's save re-submits `auto_sync` unconditionally); fall back to
+		// the setting's own current value, which `@data` still reflects here
+		// since `set_pending()` only stages the pending write.
+		if ( null === $current_value ) {
+			$current_value = $setting->get_value();
+		}
+
+		if ( $new_value === $current_value ) {
+			return $new_value;
+		}
+
+		$analytics = $this->plugin->get_component( 'analytics' );
+		if ( $analytics ) {
+			$analytics->track(
+				'sync_settings_changed',
+				'sync',
+				null,
+				array(
+					'setting_key' => $slug,
+					'new_value'   => $new_value,
+				)
+			);
+		}
+
+		return $new_value;
 	}
 
 	/**
@@ -541,9 +738,10 @@ class Sync_Queue {
 	 *
 	 * @param string $type The type of queue to shutdown.
 	 */
-	protected function shutdown_queue( $type = 'queue' ) {
+	public function shutdown_queue( $type = 'queue' ) {
 		if ( 'queue' === $type ) {
 			delete_option( self::$queue_enabled );
+			$this->track_run_completed();
 		} elseif ( 'autosync' === $type ) {
 			// Remove pending flag.
 			delete_post_meta_by_key( Sync::META_KEYS['pending'] );
@@ -766,8 +964,8 @@ class Sync_Queue {
 	/**
 	 * Add to a threads queue.
 	 *
-	 * @param int   $thread         Thread ID.
-	 * @param array $attachment_ids The ID to add.
+	 * @param string $thread         Thread name.
+	 * @param array  $attachment_ids The ID to add.
 	 */
 	public function add_to_thread_queue( $thread, array $attachment_ids ) {
 
@@ -844,7 +1042,7 @@ class Sync_Queue {
 
 		$attachment_ids = $been_synced;
 		if ( ! empty( $attachment_ids ) ) {
-			$chunk_size = ceil( count( $attachment_ids ) / count( $threads ) );
+			$chunk_size = (int) ceil( count( $attachment_ids ) / count( $threads ) );
 			$chunks     = array_chunk( $attachment_ids, $chunk_size );
 			foreach ( $chunks as $index => $chunk ) {
 				$thread = array_shift( $threads );

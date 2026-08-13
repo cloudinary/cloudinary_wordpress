@@ -90,9 +90,13 @@ class Image_Preview extends Component {
 	 * @return array
 	 */
 	protected function preview( $struct ) {
-		$struct['element']           = 'img';
-		$struct['attributes']['id']  = "sample-{$this->preview_type}";
-		$struct['attributes']['src'] = '#';
+		$struct['element']          = 'img';
+		$struct['attributes']['id'] = "sample-{$this->preview_type}";
+		// A bare '#' resolves to the current page's own URL, so the browser
+		// re-requests this admin page as an "image" before
+		// global-transformations.js replaces it with a real preview URL.
+		// Use an inert placeholder instead.
+		$struct['attributes']['src'] = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
 		$struct['render']            = true;
 
 		return $struct;
@@ -216,6 +220,6 @@ class Image_Preview extends Component {
 		);
 		wp_add_inline_script( 'cloudinary', 'var CLD_GLOBAL_TRANSFORMATIONS = CLD_GLOBAL_TRANSFORMATIONS ? CLD_GLOBAL_TRANSFORMATIONS : {};', 'before' );
 		wp_add_inline_script( 'cloudinary', 'CLD_GLOBAL_TRANSFORMATIONS.image = ' . wp_json_encode( $script_data ), 'before' );
-		parent::pre_render();
+		parent::pre_render(); // @phpstan-ignore staticMethod.resultUnused
 	}
 }

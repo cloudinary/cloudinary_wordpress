@@ -136,7 +136,7 @@ class Plan_Status extends Component {
 		$limit['attributes']['class'] = array(
 			'limit',
 		);
-		$limit['content']             = number_format_i18n( $this->connection->get_usage_stat( 'transformations', 'limit' ) );
+		$limit['content']             = number_format_i18n( (float) $this->connection->get_usage_stat( 'transformations', 'limit' ) );
 
 		$usage                        = $this->get_part( 'span' );
 		$usage['attributes']['class'] = array(

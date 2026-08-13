@@ -334,8 +334,17 @@ class Utils {
 	 * Install our custom table.
 	 */
 	public static function install() {
-		// Ensure that the plugin bootstrap is loaded.
-		get_plugin_instance()->init();
+		$plugin = get_plugin_instance();
+
+		// Ensure the plugin metadata (version, paths) is available for the DB
+		// routines below, but avoid re-running init during activation when it has
+		// already run on the `init` hook. Re-running the full bootstrap out of
+		// sequence during activation can destabilise plugin load order for the
+		// request (e.g. triggering other plugins such as ACF to initialise too
+		// early). We only need the plugin version here, not the component graph.
+		if ( empty( $plugin->version ) ) {
+			$plugin->init();
+		}
 
 		// Record the activation type for analytics before any install/upgrade runs.
 		Analytics::stash_activation();
@@ -755,11 +764,12 @@ class Utils {
 	 * @return WP_Post|null
 	 */
 	public static function get_post_parent( $post = null ) {
-		if ( is_callable( 'get_post_parent' ) ) {
+		// get_post_parent() was added in WP 6.0; keep a fallback for older supported versions.
+		if ( is_callable( 'get_post_parent' ) ) { // @phpstan-ignore function.alreadyNarrowedType
 			return get_post_parent( $post );
 		}
 
-		$wp_post = get_post( $post );
+		$wp_post = get_post( $post ); // @phpstan-ignore deadCode.unreachable
 		return ! empty( $wp_post->post_parent ) ? get_post( $wp_post->post_parent ) : null;
 	}
 

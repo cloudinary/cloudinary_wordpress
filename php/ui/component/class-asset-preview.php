@@ -31,7 +31,7 @@ class Asset_Preview extends Asset {
 	 * @return array
 	 */
 	protected function preview( $struct ) {
-		$attachment = filter_input( INPUT_GET, 'asset', FILTER_SANITIZE_NUMBER_INT );
+		$attachment = (int) filter_input( INPUT_GET, 'asset', FILTER_SANITIZE_NUMBER_INT );
 		$dataset    = $this->assets->get_asset( $attachment, 'dataset' );
 
 		// Check if the attachment is a video.
@@ -63,7 +63,7 @@ class Asset_Preview extends Asset {
 	 * Setup the JS data before rendering.
 	 */
 	protected function pre_render() {
-		$attachment = filter_input( INPUT_GET, 'asset', FILTER_SANITIZE_NUMBER_INT );
+		$attachment = (int) filter_input( INPUT_GET, 'asset', FILTER_SANITIZE_NUMBER_INT );
 
 		// Check if the attachment is a video.
 		if ( $attachment && wp_attachment_is( 'video', $attachment ) ) {
@@ -104,7 +104,7 @@ class Asset_Preview extends Asset {
 		wp_enqueue_media();
 
 		// Check if the attachment is a video and enqueue video player assets.
-		$attachment = filter_input( INPUT_GET, 'asset', FILTER_SANITIZE_NUMBER_INT );
+		$attachment = (int) filter_input( INPUT_GET, 'asset', FILTER_SANITIZE_NUMBER_INT );
 		if ( $attachment && wp_attachment_is( 'video', $attachment ) ) {
 			wp_enqueue_style( 'cld-player' );
 			wp_enqueue_script( 'cld-player' );

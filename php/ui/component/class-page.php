@@ -47,7 +47,7 @@ class Page extends Panel {
 	 *
 	 * @param array $struct The array structure.
 	 *
-	 * @return array
+	 * @return array|null
 	 */
 	protected function form( $struct ) {
 		if ( $this->setting->has_param( 'has_tabs' ) ) {
@@ -72,24 +72,26 @@ class Page extends Panel {
 	 *
 	 * @param array $struct The array structure.
 	 *
-	 * @return array
+	 * @return array|null
 	 */
 	protected function notice( $struct ) {
 		if ( Utils::get_active_setting() !== $this->setting ) {
 			return null;
 		}
-		$html = array();
+		/**
+		 * The admin component.
+		 *
+		 * @var \Cloudinary\Admin $admin
+		 */
+		$admin  = get_plugin_instance()->get_component( 'admin' );
+		$notice = $admin->get_admin_notices();
 
-		if ( empty( $this->setting->get_admin_notices() ) ) {
+		if ( null === $notice ) {
 			return $struct;
 		}
 
-		foreach ( $this->setting->get_admin_notices() as $setting ) {
-			$html[] = $setting->get_component()->render();
-			$setting->set_param( 'enabled', false );
-		}
 		$struct['element'] = null;
-		$struct['content'] = self::compile_html( $html );
+		$struct['content'] = $notice->get_component()->render();
 
 		return $struct;
 	}
@@ -154,7 +156,7 @@ class Page extends Panel {
 	 */
 	protected function tabs( $struct ) {
 
-		if ( $this->setting->has_param( 'has_tabs' ) && 1 < count( $this->setting->get_settings( 'page' ) ) ) {
+		if ( $this->setting->has_param( 'has_tabs' ) && 1 < count( $this->setting->get_settings() ) ) {
 			$struct['element']             = 'ul';
 			$struct['attributes']['class'] = array(
 				'cld-page-tabs',
@@ -188,9 +190,15 @@ class Page extends Panel {
 			}
 
 			// Create the link.
-			$link                       = $this->get_part( 'a' );
-			$link['content']            = $setting->get_param( 'menu_title', $setting->get_param( 'page_title' ) );
-			$link['attributes']['href'] = $setting->get_component()->get_url();
+			$link            = $this->get_part( 'a' );
+			$link['content'] = $setting->get_param( 'menu_title', $setting->get_param( 'page_title' ) );
+			/**
+			 * The settings page component.
+			 *
+			 * @var \Cloudinary\UI\Component\Page $page
+			 */
+			$page                       = $setting->get_component();
+			$link['attributes']['href'] = $page->get_url();
 
 			// Add tab to list.
 			$tab['children'][ $setting->get_slug() ] = $link;

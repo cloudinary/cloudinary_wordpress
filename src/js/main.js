@@ -12,10 +12,11 @@ import MediaLibrary from './components/media-library';
 import Notices from './components/notices';
 import UI from './components/ui';
 import Wizard from './components/wizard';
-import Storage from "./components/storage";
-import Extensions from "./components/extensions";
-import Tabs from "./components/tabs";
-import Analytics from "./components/analytics";
+import Storage from './components/storage';
+import Extensions from './components/extensions';
+import Tabs from './components/tabs';
+import Analytics from './components/analytics';
+import SpecialOffer from './components/special-offer';
 
 import '../css/main.scss';
 
@@ -49,7 +50,6 @@ import '../css/images/confetti.png';
 import '../css/images/circular-loader.svg';
 import '../css/images/dam-icon.svg';
 
-
 // jQuery, because reasons.
 window.$ = window.jQuery;
 
@@ -64,5 +64,6 @@ export const cloudinary = {
 	Storage,
 	Extensions,
 	Tabs,
-	Analytics
+	Analytics,
+	SpecialOffer,
 };

@@ -22,7 +22,7 @@ trait Relation_Trait {
 	 *
 	 * @method array query_relations( array $public_ids, array $urls = array() )
 	 *
-	 * @var callable
+	 * @var callable|null
 	 */
 	protected $query_relations;
 

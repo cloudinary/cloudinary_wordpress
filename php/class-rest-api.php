@@ -27,6 +27,13 @@ class REST_API {
 	public $endpoints;
 
 	/**
+	 * Holds the plugin instance.
+	 *
+	 * @var Plugin
+	 */
+	protected $plugin;
+
+	/**
 	 * The nonce key used for WordPress REST API authentication.
 	 *
 	 * @var string
@@ -38,7 +45,8 @@ class REST_API {
 	 *
 	 * @param Plugin $plugin Instance of the global Plugin.
 	 */
-	public function __construct( Plugin $plugin ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+	public function __construct( Plugin $plugin ) {
+		$this->plugin = $plugin;
 		add_action( 'rest_api_init', array( $this, 'rest_api_init' ), PHP_INT_MAX );
 	}
 

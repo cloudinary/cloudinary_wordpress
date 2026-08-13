@@ -185,7 +185,7 @@ class Deactivation {
 
 		$is_cloudinary_only = 'cld' === $this->plugin->settings->get_value( 'offload' );
 		?>
-		<div id="cloudinary-deactivation" class="cld-modal" data-cloudinary-only="<?php echo esc_attr( $is_cloudinary_only ); ?>">
+		<div id="cloudinary-deactivation" class="cld-modal" data-cloudinary-only="<?php echo esc_attr( (string) $is_cloudinary_only ); ?>" data-connected="true">
 			<div class="cloudinary-deactivation cld-modal-box">
 				<?php if ( $is_cloudinary_only ) : ?>
 					<div class="modal-header" id="modal-header">
@@ -282,7 +282,7 @@ class Deactivation {
 	public function render_not_connected() {
 		$user = wp_get_current_user();
 		?>
-		<div id="cloudinary-deactivation" class="cld-modal">
+		<div id="cloudinary-deactivation" class="cld-modal" data-connected="false">
 			<div class="cloudinary-deactivation cld-modal-box">
 				<div class="modal-body" id="modal-body">
 					<p>
@@ -328,7 +328,19 @@ class Deactivation {
 	 * @return void
 	 */
 	public function enqueue_scripts() {
-		wp_enqueue_script( 'cloudinary-deactivation', $this->plugin->dir_url . 'js/deactivate.js', array(), $this->plugin->version, true );
+		$asset        = require $this->plugin->dir_path . 'js/deactivate.asset.php'; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
+		$dependencies = array_filter(
+			$asset['dependencies'],
+			static function ( $dependency ) {
+				return false === strpos( $dependency, '/' );
+			}
+		);
+		// The deactivation script tracks analytics events, which requires the
+		// main `cloudinary` handle (and its `cldData` inline script) to be
+		// enqueued — it otherwise has no reason to load on the Plugins screen.
+		$dependencies[] = 'cloudinary';
+
+		wp_enqueue_script( 'cloudinary-deactivation', $this->plugin->dir_url . 'js/deactivate.js', $dependencies, $this->plugin->version, true );
 		wp_localize_script(
 			'cloudinary-deactivation',
 			'CLD_Deactivate',
@@ -426,11 +438,32 @@ class Deactivation {
 
 		$args['version'] = $this->plugin->version;
 
+		// The not-connected "Contact me" flow submits an email address
+		// instead of a real reason; it doesn't carry `reason_id` semantics.
+		$is_contact_flow = (bool) filter_var( $request->get_param( 'email' ), FILTER_VALIDATE_EMAIL );
+
+		$analytics = $this->plugin->get_component( 'analytics' );
+		if ( $analytics && ! $is_contact_flow ) {
+			$analytics->track(
+				'deactivation_submitted',
+				'deactivation',
+				null,
+				array(
+					'reason_id'     => sanitize_text_field( $reason ),
+					'reason_text'   => sanitize_textarea_field( (string) $more ),
+					'allow_contact' => $contact,
+				)
+			);
+		}
+
 		$url = add_query_arg( array_filter( $args ), CLOUDINARY_ENDPOINTS_DEACTIVATION );
 
 		$response = wp_remote_get( $url );
 
 		if ( 'uninstall' === $data ) {
+			if ( $analytics ) {
+				$analytics->track( 'plugin_uninstalled', 'deactivation' );
+			}
 			$this->cleanup();
 		}
 
@@ -495,7 +528,7 @@ class Deactivation {
 
 		foreach ( $user_meta_keys as $key ) {
 			// Inspired on https://developer.wordpress.org/reference/functions/delete_post_meta_by_key/.
-			delete_metadata( 'user', null, $key, '', true );
+			delete_metadata( 'user', 0, $key, '', true );
 		}
 	}
 
@@ -528,7 +561,7 @@ class Deactivation {
 
 		foreach ( $term_meta_keys as $key ) {
 			// Inspired on https://developer.wordpress.org/reference/functions/delete_post_meta_by_key/.
-			delete_metadata( 'term', null, $key, '', true );
+			delete_metadata( 'term', 0, $key, '', true );
 		}
 	}
 
@@ -575,6 +608,11 @@ class Deactivation {
 			$this->settings->delete( $slug );
 		}
 
+		/**
+		 * The sync queue manager.
+		 *
+		 * @var \Cloudinary\Sync\Sync_Queue $queue
+		 */
 		$queue       = $this->plugin->get_component( 'sync' )->managers['queue'];
 		$all_threads = $queue->get_threads( 'all' );
 		foreach ( $all_threads as $threads ) {

@@ -36,13 +36,6 @@ class Video {
 	private $config;
 
 	/**
-	 * List of attachment ID's to enable.
-	 *
-	 * @var array
-	 */
-	private $attachments = array();
-
-	/**
 	 * Meta key to store usable video transformations for an attachment.
 	 *
 	 * @var string
@@ -68,31 +61,6 @@ class Video {
 	 */
 	public function player_enabled() {
 		return isset( $this->config['video_player'] ) && 'cld' === $this->config['video_player'] && ! is_admin();
-	}
-
-	/**
-	 * Queue video tag for script init in footer.
-	 *
-	 * @param int          $attachment_id Attachment ID.
-	 * @param string       $url           The video URL.
-	 * @param string|array $format        The video formats.
-	 * @param array        $args          Args to be passed to video init.
-	 *
-	 * @return int
-	 */
-	private function queue_video_config( $attachment_id, $url, $format, $args = array() ) {
-
-		if ( ! empty( $args['transformation'] ) && false === $this->validate_usable_transformations( $attachment_id, $args['transformation'] ) ) {
-			unset( $args['transformation'] );
-		}
-		$this->attachments[] = array(
-			'id'     => $attachment_id,
-			'url'    => $url,
-			'format' => $format,
-			'args'   => $args,
-		);
-
-		return count( $this->attachments ) - 1;// Return the queue index.
 	}
 
 	/**
@@ -159,6 +127,11 @@ class Video {
 		// If not CLD video init, return default.
 		if ( ! $this->player_enabled() ) {
 			if ( empty( $attr['cloudinary'] ) ) {
+				/**
+				 * The attachment metadata.
+				 *
+				 * @var array $video
+				 */
 				$video                        = wp_get_attachment_metadata( $attr['id'] );
 				$url                          = $this->media->cloudinary_url( $attr['id'] );
 				$attr[ $video['fileformat'] ] = strtok( $url, '?' );
@@ -180,7 +153,15 @@ class Video {
 	 * Enqueue BLock Assets
 	 */
 	public function enqueue_block_assets() {
-		wp_enqueue_script( 'cloudinary-block', $this->media->plugin->dir_url . 'js/block-editor.js', array(), $this->media->plugin->version, true );
+		$asset = require $this->media->plugin->dir_path . 'js/block-editor.asset.php'; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
+
+		wp_enqueue_script(
+			'cloudinary-block',
+			$this->media->plugin->dir_url . 'js/block-editor.js',
+			$asset['dependencies'],
+			$asset['version'],
+			true
+		);
 		wp_add_inline_script( 'cloudinary-block', 'var CLD_VIDEO_PLAYER = ' . wp_json_encode( $this->config ), 'before' );
 	}
 
@@ -205,8 +186,8 @@ class Video {
 			$player_style_url  = sprintf( CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_STYLE, CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION );
 			$player_script_url = sprintf( CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_SCRIPT, CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION );
 
-			wp_register_style( 'cld-player', $player_style_url, null, CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION );
-			wp_register_script( 'cld-core', $core_url, null, CLOUDINARY_ENDPOINTS_CORE_VERSION, true );
+			wp_register_style( 'cld-player', $player_style_url, array(), CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION );
+			wp_register_script( 'cld-core', $core_url, array(), CLOUDINARY_ENDPOINTS_CORE_VERSION, true );
 			wp_register_script( 'cld-player', $player_script_url, array( 'cld-core' ), CLOUDINARY_ENDPOINTS_VIDEO_PLAYER_VERSION, true );
 		}
 	}
@@ -221,7 +202,7 @@ class Video {
 	 */
 	public function filter_video_block_render_block( $block_content, array $block ) {
 		if ( 'core/video' === $block['blockName'] ) {
-			remove_filter( 'render_block', array( $this, 'filter_video_block_render_block' ), 10, 2 );
+			remove_filter( 'render_block', array( $this, 'filter_video_block_render_block' ), 10 );
 
 			$filtered_block = $this->filter_video_block_pre_render( $block, $block );
 			$block_content  = render_block( $filtered_block );
@@ -400,6 +381,11 @@ class Video {
 				$params['source']['transformation'] = $transformations;
 			}
 			// Set the source_type.
+			/**
+			 * The attachment metadata.
+			 *
+			 * @var array $video
+			 */
 			$video = wp_get_attachment_metadata( $attachment_id );
 			if ( ! empty( $video['fileformat'] ) && 'off' === $streaming['adaptive_streaming'] ) {
 				$params['source']['source_types'][] = $video['fileformat'];

@@ -229,7 +229,7 @@ class Filter {
 
 			// Get the format.
 			list( $format ) = array_intersect( $exts, array_keys( $args ) );
-			if ( null !== $format ) {
+			if ( ! empty( $format ) ) {
 				$url = $args[ $format ];
 				if ( empty( $args['id'] ) ) {
 					$attachment_id = $this->media->get_id_from_url( $url );
@@ -509,7 +509,7 @@ class Filter {
 				// Ensure there is a Cloudinary URL.
 				$url     = $this->get_url_from_tag( $html );
 				$new_url = $this->media->cloudinary_url( $id, $attachment['image-size'], $attachment['transformations'] );
-				if ( false !== $new_url ) {
+				if ( ! empty( $new_url ) ) {
 					$html = str_replace( $url, $new_url, $html );
 				}
 			}
@@ -537,7 +537,7 @@ class Filter {
 		$shortcodes = $this->get_video_shortcodes( $html );
 		foreach ( $shortcodes as $shortcode ) {
 			// Add ID.
-			$new_atts = $shortcode['args'] . ' id="' . esc_attr( $id ) . '"';
+			$new_atts = $shortcode['args'] . ' id="' . esc_attr( (string) $id ) . '"';
 
 			// Add defaults.
 			$settings = $this->media->get_settings()->get_value( 'video_settings' );

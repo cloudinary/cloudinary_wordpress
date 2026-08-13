@@ -420,7 +420,7 @@ abstract class Component {
 	/**
 	 * Check if the structure is an array of structures.
 	 *
-	 * @param array $struct The structure to check.
+	 * @param mixed $struct The structure to check.
 	 *
 	 * @return bool
 	 */
@@ -554,7 +554,7 @@ abstract class Component {
 	/**
 	 * Adds the content to the html.
 	 *
-	 * @param string $content The content to add.
+	 * @param mixed $content The content to add.
 	 */
 	protected function add_content( $content ) {
 
@@ -618,7 +618,7 @@ abstract class Component {
 	/**
 	 * Get a build part to construct.
 	 *
-	 * @param string $part The part name.
+	 * @param string|null $part The part name.
 	 *
 	 * @return array
 	 */

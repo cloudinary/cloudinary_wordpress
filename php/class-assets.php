@@ -165,6 +165,41 @@ class Assets extends Settings_Component {
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_cache' ), 100 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'cloudinary_delete_asset', array( $this, 'purge_parent' ) );
+		add_action( 'cloudinary_uploaded_asset', array( $this, 'track_cache_uploaded' ), 10, 2 );
+	}
+
+	/**
+	 * Emits `cache_uploaded` when a non-media asset is pushed to Cloudinary.
+	 *
+	 * Hooked to the same action `Analytics::maybe_first_api_consumption()`
+	 * uses for the activation funnel, filtered down to non-media assets.
+	 * Fires once per asset (no batch-level upload wrapper exists to hook
+	 * instead), so `item_count` is always 1.
+	 *
+	 * @param int             $attachment_id The attachment ID.
+	 * @param array|\WP_Error $result        The upload result.
+	 *
+	 * @return void
+	 */
+	public function track_cache_uploaded( $attachment_id, $result ) {
+		if ( ! self::is_asset_type( $attachment_id ) ) {
+			return;
+		}
+
+		$analytics = $this->plugin->get_component( 'analytics' );
+		if ( ! $analytics ) {
+			return;
+		}
+
+		$analytics->track(
+			'cache_uploaded',
+			'cache',
+			null,
+			array(
+				'item_count' => 1,
+				'status'     => is_wp_error( $result ) ? 'error' : 'success',
+			)
+		);
 	}
 
 	/**
@@ -601,7 +636,7 @@ class Assets extends Settings_Component {
 			return;
 		}
 
-		$query_args     = array(
+		$query_args = array(
 			'post_type'              => self::POST_TYPE_SLUG,
 			'posts_per_page'         => 100,
 			'post_parent'            => $parent_id,
@@ -609,6 +644,11 @@ class Assets extends Settings_Component {
 			'fields'                 => 'ids',
 			'update_post_meta_cache' => false,
 			'update_post_term_cache' => false,
+			// Internal bookkeeping query over our own post type: do not run
+			// third-party content filters (e.g. `the_posts`) meant for
+			// public-facing queries. The query is fully specified, so the
+			// filters VIP protects (posts_where/join/orderby) are not relied on.
+			'suppress_filters'       => true, // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.SuppressFilters_suppress_filters
 		);
 		$query          = new \WP_Query( $query_args );
 		$previous_total = $query->found_posts;
@@ -713,7 +753,7 @@ class Assets extends Settings_Component {
 	 *
 	 * @param int $asset_id The attachment/asset ID.
 	 *
-	 * @return string
+	 * @return bool
 	 */
 	public function generate_storage_signature( $asset_id ) {
 		return $this->get_asset_storage_folder( $asset_id ) === $this->media->get_public_id( $asset_id );
@@ -987,6 +1027,11 @@ class Assets extends Settings_Component {
 			'no_found_rows'          => true,
 			'update_post_meta_cache' => false,
 			'update_post_term_cache' => false,
+			// Internal bookkeeping query over our own post type: do not run
+			// third-party content filters (e.g. `the_posts`) meant for
+			// public-facing queries. The query is fully specified, so the
+			// filters VIP protects (posts_where/join/orderby) are not relied on.
+			'suppress_filters'       => true, // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.SuppressFilters_suppress_filters
 		);
 		$query               = new \WP_Query( $args );
 		$this->asset_parents = array();
@@ -1141,7 +1186,7 @@ class Assets extends Settings_Component {
 	 *
 	 * @param int $asset_id The asset id.
 	 *
-	 * @return \WP_Post|null;
+	 * @return \WP_Post|null
 	 */
 	public function find_parent( $asset_id ) {
 		$path   = $this->clean_path( $this->media->local_url( $asset_id ) );
@@ -1199,7 +1244,7 @@ class Assets extends Settings_Component {
 	 *
 	 * @param array $item The raw data for an asset.
 	 *
-	 * @return array
+	 * @return array|null
 	 */
 	public function build_item( $item ) {
 		if ( empty( $item ) ) {
@@ -1792,7 +1837,8 @@ class Assets extends Settings_Component {
 	 */
 	protected function add_asset_parent( $post ) {
 		if ( is_multisite() ) {
-			$post->blog_id = get_current_blog_id();
+			// Dynamically stash the current blog ID on the post object for later multisite checks.
+			$post->blog_id = get_current_blog_id(); // @phpstan-ignore property.notFound
 		}
 
 		$this->asset_parents[ $post->post_title ] = $post;

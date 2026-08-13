@@ -67,7 +67,7 @@ class Sync extends Text {
 	 *
 	 * @param array $struct The array structure.
 	 *
-	 * @return array
+	 * @return array|null
 	 */
 	protected function action( $struct ) {
 
@@ -76,8 +76,14 @@ class Sync extends Text {
 		}
 
 		$struct['element'] = 'a';
-		$href              = $this->setting->find_setting( 'sync_media' )->get_component()->get_url();
-		$args              = array();
+		/**
+		 * The settings page component.
+		 *
+		 * @var \Cloudinary\UI\Component\Page $page
+		 */
+		$page = $this->setting->find_setting( 'sync_media' )->get_component();
+		$href = $page->get_url();
+		$args = array();
 
 		if ( ! $this->setting->get_param( 'queue' )->is_enabled() ) {
 			$args['enable-bulk'] = true;

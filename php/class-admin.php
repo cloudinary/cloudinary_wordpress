@@ -38,7 +38,7 @@ class Admin {
 	/**
 	 * Holds notices object.
 	 *
-	 * @var Settings
+	 * @var Setting
 	 */
 	protected $notices;
 
@@ -76,6 +76,18 @@ class Admin {
 	 * @var string
 	 */
 	const NOTICE_SLUG = '_cld_notices';
+
+	/**
+	 * Settings slugs (by page) that directly inject transformation qualifiers
+	 * (format, quality, freeform string) into delivered URLs, as opposed to
+	 * plain feature-enablement toggles.
+	 *
+	 * @var array
+	 */
+	const GLOBAL_TRANSFORMATION_SLUGS = array(
+		'image_settings' => array( 'image_format', 'image_quality', 'image_freeform' ),
+		'video_settings' => array( 'video_format', 'video_quality', 'video_freeform' ),
+	);
 
 	/**
 	 * Initiate the settings object.
@@ -134,10 +146,20 @@ class Admin {
 	 * @param WP_REST_Request $request The request object.
 	 */
 	public function rest_dismiss_notice( WP_REST_Request $request ) {
-		$token    = $request->get_param( 'token' );
+		// The token is a notice setting's dotted slug (e.g. `_cld_notices.0`),
+		// which `Notice::is_enabled()` later looks up via `get_transient()`
+		// with the dot intact — `sanitize_key()` strips dots, which would
+		// write the transient under a key that never matches, making
+		// dismissible notices reappear on every page load.
+		$token    = preg_replace( '/[^a-z0-9_.\-]/i', '', (string) $request->get_param( 'token' ) );
 		$duration = $request->get_param( 'duration' );
 
 		set_transient( $token, true, $duration );
+
+		$analytics = $this->plugin->get_component( 'analytics' );
+		if ( $analytics ) {
+			$analytics->track( 'notice_dismissed', 'settings', null, array( 'notice_id' => $token ) );
+		}
 	}
 
 	/**
@@ -153,7 +175,7 @@ class Admin {
 		$data     = array_filter(
 			$data,
 			function ( $key ) use ( $settings ) {
-				return $settings->get_setting( $key, false );
+				return (bool) $settings->get_setting( $key, false );
 			},
 			ARRAY_FILTER_USE_KEY
 		);
@@ -210,7 +232,7 @@ class Admin {
 			$page['slug'],
 			'',
 			$page['icon'],
-			'81.5'
+			81.5
 		);
 		$connected   = $this->settings->get_param( 'connected' );
 		// Setup the Child page handles.
@@ -301,7 +323,14 @@ class Admin {
 			$page = $this->get_param( 'current_section' );
 		}
 
-		$this->set_param( 'active_slug', isset( $page['slug'] ) ? $page['slug'] : '' );
+		$active_slug = isset( $page['slug'] ) ? $page['slug'] : '';
+		$this->set_param( 'active_slug', $active_slug );
+
+		$analytics = $this->plugin->get_component( 'analytics' );
+		if ( $analytics && ! empty( $active_slug ) ) {
+			$analytics->track( 'settings_page_viewed', 'settings', null, array( 'page' => $active_slug ) );
+		}
+
 		$setting         = $this->init_components( $page, $screen->id );
 		$this->component = $setting->get_component();
 		$template        = $this->section;
@@ -367,7 +396,7 @@ class Admin {
 	/**
 	 * Filter out non-setting params.
 	 *
-	 * @param numeric-string $key The key to filter out.
+	 * @param int|string $key The key to filter out.
 	 *
 	 * @return bool
 	 */
@@ -432,9 +461,9 @@ class Admin {
 	 * @param array  $data       The data to save.
 	 */
 	protected function save_settings( $submission, $data ) {
-		$page    = $this->settings->get_setting( $submission );
-		$errors  = array();
-		$pending = false;
+		$page         = $this->settings->get_setting( $submission );
+		$pending      = false;
+		$changed_keys = array();
 		foreach ( $data as $key => $value ) {
 			$slug    = $submission . $page->separator . $key;
 			$current = $this->settings->get_value( $slug );
@@ -448,13 +477,33 @@ class Admin {
 				$this->add_admin_notice( $result->get_error_code(), $result->get_error_message(), $result->get_error_data() );
 				break;
 			}
-			$pending = true;
+			$changed_keys[] = $key;
+			$pending        = true;
 		}
 
-		if ( empty( $errors ) && true === $pending ) {
+		if ( true === $pending ) {
 			$results = $this->settings->save();
 			if ( ! empty( $results ) ) {
 				$this->add_admin_notice( 'error_notice', __( 'Settings updated successfully', 'cloudinary' ), 'success' );
+
+				$analytics = $this->plugin->get_component( 'analytics' );
+				if ( $analytics ) {
+					$analytics->track(
+						'settings_saved',
+						'settings',
+						null,
+						array(
+							'page'         => $submission,
+							'changed_keys' => $changed_keys,
+						)
+					);
+
+					if ( 'gallery' === $submission ) {
+						$this->track_gallery_configured( $analytics, $data );
+					}
+
+					$this->maybe_track_global_transformation( $analytics, $submission, $changed_keys );
+				}
 			}
 		} else {
 			$this->add_admin_notice( 'error_notice', __( 'No changes to save', 'cloudinary' ), 'success' );
@@ -464,14 +513,76 @@ class Admin {
 	}
 
 	/**
+	 * Emits `transformation_applied` (scope: global) when a settings save
+	 * changed a global transformation field.
+	 *
+	 * `global-transformations.js` only builds a live preview and never
+	 * persists anything itself, so this is derived from the generic
+	 * settings-save diff rather than a dedicated save action.
+	 *
+	 * @param Analytics $analytics    The analytics component.
+	 * @param string    $submission   The settings page slug that was saved.
+	 * @param array     $changed_keys The keys that changed in this save.
+	 *
+	 * @return void
+	 */
+	protected function maybe_track_global_transformation( $analytics, $submission, $changed_keys ) {
+		if ( ! isset( self::GLOBAL_TRANSFORMATION_SLUGS[ $submission ] ) ) {
+			return;
+		}
+
+		$matched = array_intersect( $changed_keys, self::GLOBAL_TRANSFORMATION_SLUGS[ $submission ] );
+		if ( empty( $matched ) ) {
+			return;
+		}
+
+		$analytics->track(
+			'transformation_applied',
+			'media',
+			null,
+			array(
+				'scope'                => 'global',
+				'transformation_count' => count( $matched ),
+			)
+		);
+	}
+
+	/**
+	 * Emits `gallery_configured` for a gallery settings save.
+	 *
+	 * The gallery React panel serializes its whole config (including the
+	 * layout mode and selected media) into the `gallery_config` field as a
+	 * JSON string, so `layout`/`media_count` have to be parsed out of it
+	 * rather than read as their own submitted fields.
+	 *
+	 * @param Analytics $analytics The analytics component.
+	 * @param array     $data      The raw submitted gallery data.
+	 *
+	 * @return void
+	 */
+	protected function track_gallery_configured( $analytics, $data ) {
+		$config = isset( $data['gallery_config'] ) ? json_decode( $data['gallery_config'], true ) : null;
+
+		$analytics->track(
+			'gallery_configured',
+			'features',
+			null,
+			array(
+				'layout'      => isset( $config['displayProps']['mode'] ) ? $config['displayProps']['mode'] : '',
+				'media_count' => isset( $config['mediaAssets'] ) && is_array( $config['mediaAssets'] ) ? count( $config['mediaAssets'] ) : 0,
+			)
+		);
+	}
+
+	/**
 	 * Set an error/notice for a setting.
 	 *
-	 * @param string $error_code    The error code/slug.
-	 * @param string $error_message The error text/message.
-	 * @param string $type          The error type.
-	 * @param bool   $dismissible   If notice is dismissible.
-	 * @param int    $duration      How long it's dismissible for.
-	 * @param string $icon          Optional icon.
+	 * @param string       $error_code    The error code/slug.
+	 * @param string|array $error_message The error text/message.
+	 * @param string       $type          The error type.
+	 * @param bool         $dismissible   If notice is dismissible.
+	 * @param int          $duration      How long it's dismissible for.
+	 * @param string       $icon          Optional icon.
 	 */
 	public function add_admin_notice( $error_code, $error_message, $type = 'error', $dismissible = true, $duration = 0, $icon = null ) {
 
@@ -523,9 +634,10 @@ class Admin {
 	}
 
 	/**
-	 * Get admin notices.
+	 * Absorb WordPress settings errors into the plugin notice store and return
+	 * the renderable notice setting, if any notices are pending.
 	 *
-	 * @return Setting[]
+	 * @return Setting|null
 	 */
 	public function get_admin_notices() {
 		$setting_notices = get_settings_errors();
@@ -533,6 +645,13 @@ class Admin {
 			$this->add_admin_notice( $notice['code'], $notice['message'], $notice['type'], true );
 		}
 
-		return $setting_notices;
+		$notices = $this->notices->get_value();
+		if ( empty( $notices ) ) {
+			return null;
+		}
+
+		sort( $notices );
+
+		return $this->init_components( $notices, self::NOTICE_SLUG );
 	}
 }

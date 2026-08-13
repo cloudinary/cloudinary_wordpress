@@ -156,7 +156,7 @@ class Asset extends Panel {
 	/**
 	 * Get the manager part.
 	 *
-	 * @param array $item The item to get the manager for.
+	 * @param Setting $item The item to get the manager for.
 	 *
 	 * @return array
 	 */
@@ -273,6 +273,6 @@ class Asset extends Panel {
 		wp_add_inline_script( 'cloudinary', 'var CLDASSETS = ' . wp_json_encode( $export ), 'before' );
 
 		$plugin->add_script_data( 'editor', $export );
-		parent::pre_render();
+		parent::pre_render(); // @phpstan-ignore staticMethod.resultUnused
 	}
 }

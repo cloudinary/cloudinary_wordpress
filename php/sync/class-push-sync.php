@@ -180,9 +180,36 @@ class Push_Sync {
 			'success' => false,
 		);
 		if ( empty( $start ) ) {
-			$this->queue->stop_queue();
+			// A real, user-driven stop (the bulk-sync toggle was switched off)
+			// rather than `stop_maybe()`'s internal restart-to-catch-new-items
+			// cycle, so this needs to actually close out the tracked run —
+			// `shutdown_queue()` does that via `track_run_completed()`, unlike
+			// the bare `stop_queue()` that cycle uses.
+			$this->queue->shutdown_queue( 'queue' );
 		} else {
+			// Set before starting the queue: `start_queue()` immediately spawns
+			// background threads whose sync results would otherwise be tallied
+			// against a run that doesn't exist yet and get silently dropped. On
+			// a failed start, `start_queue()` itself calls `shutdown_queue()`,
+			// which cleans up the run state this just staged.
+			$this->queue->mark_run_started( $type );
 			$state['success'] = $this->queue->start_queue( $type );
+
+			if ( $state['success'] ) {
+				$analytics = $this->plugin->get_component( 'analytics' );
+				if ( $analytics ) {
+					$queue = $this->queue->get_queue( $type );
+					$analytics->track(
+						'bulk_sync_started',
+						'sync',
+						null,
+						array(
+							'asset_count' => isset( $queue['total'] ) ? (int) $queue['total'] : 0,
+							'trigger'     => 'manual',
+						)
+					);
+				}
+			}
 		}
 
 		return rest_ensure_response( $state );
@@ -203,6 +230,11 @@ class Push_Sync {
 		$thread = $this->plugin->settings->get_param( 'current_sync_thread' );
 
 		// Activation funnel: first sync started (emitted once per account).
+		/**
+		 * The analytics component.
+		 *
+		 * @var \Cloudinary\Analytics|null $analytics
+		 */
 		$analytics = $this->plugin->get_component( 'analytics' );
 		if ( $analytics ) {
 			$connect = $this->plugin->get_component( 'connect' );
