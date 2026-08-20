@@ -13,6 +13,7 @@ import { createRoot, render, useEffect, useState } from '@wordpress/element';
 /**
  * Internal dependencies
  */
+import '../../css/gallery.scss';
 import GalleryControls from '../gallery-block/controls';
 import {
 	convertColors,
