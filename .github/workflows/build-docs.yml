@@ -1,11 +1,8 @@
 name: Build Docs
 
 on:
-  push:
-    branches:
-      - master
   release:
-    types: [published]
+    types: [released]
   workflow_dispatch:
 
 permissions:
