@@ -220,6 +220,17 @@ class Gallery extends Settings_Component {
 			$this->plugin->version
 		);
 
+		// Styles for the shared gallery controls (e.g. the Layout radio group)
+		// used by the settings page preview app. These live in `gallery.scss`,
+		// which is bundled with the `gallery` (settings) entry but is not
+		// auto-enqueued, so load it explicitly here.
+		wp_enqueue_style(
+			'cloudinary-gallery-controls-css',
+			$this->plugin->dir_url . 'css/gallery.css',
+			array(),
+			$this->plugin->version
+		);
+
 		$script = array(
 			'slug'      => 'gallery_config',
 			'src'       => $this->plugin->dir_url . 'js/gallery.js',
