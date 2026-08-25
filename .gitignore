@@ -62,5 +62,9 @@ package/dist
 # PHPStan result cache
 /.phpstan-cache/
 
+# PHPUnit
+/.phpunit.result.cache
+/phpunit.xml
+
 # Generated docs (published to gh-pages by workflow)
 /docs/

@@ -80,6 +80,54 @@ jobs:
       - name: Run PHPStan
         run: composer phpstan
 
+  unit:
+    name: Unit (PHPUnit)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-unit-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-unit-
+
+      # wp-env downloads WordPress and the core PHPUnit suite into this
+      # directory, which is roughly a gigabyte of git clones. Caching it keeps
+      # `env:start` from re-cloning them on every run. The key covers the
+      # wp-env config and version, because a change to either means different
+      # sources have to be downloaded.
+      - name: Cache wp-env sources
+        uses: actions/cache@v4
+        with:
+          path: ~/.wp-env
+          key: ${{ runner.os }}-wp-env-${{ hashFiles('.wp-env.json', 'package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-wp-env-
+
+      # Also installs the Composer dependencies through the postinstall script.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start wp-env
+        run: npm run env:start
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Stop wp-env
+        if: always()
+        run: npm run env:stop
+
   e2e:
     name: E2E (Playwright)
     runs-on: ubuntu-latest

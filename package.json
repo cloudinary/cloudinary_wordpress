@@ -38,7 +38,8 @@
     "readme": "composer readme",
     "prepare": "husky",
     "test:e2e": "playwright test --config tests/e2e/playwright.config.js",
-    "test:e2e:debug": "playwright test --config tests/e2e/playwright.config.js --ui"
+    "test:e2e:debug": "playwright test --config tests/e2e/playwright.config.js --ui",
+    "test:unit": "wp-env run tests-cli --env-cwd=\"wp-content/plugins/$(basename \"$PWD\")\" vendor/bin/phpunit"
   },
   "lint-staged": {
     "*.php": [
