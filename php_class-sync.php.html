@@ -272,9 +272,28 @@ class Sync implements Setup, Assets {
 			);
 		}
 		if ( isset( $log[ $type ] ) ) {
+			$this->managers['queue']->tally_run_result( ! is_wp_error( $result ) );
+
 			if ( is_wp_error( $result ) ) {
+				$error_code = $result->get_error_code();
+
+				$analytics = $this->plugin->get_component( 'analytics' );
+				if ( $analytics ) {
+					$analytics->track(
+						'asset_sync_failed',
+						'sync',
+						null,
+						array(
+							'asset_id'    => $attachment_id,
+							'asset_type'  => $this->managers['media']->get_resource_type( $attachment_id ),
+							'error_type'  => is_numeric( $error_code ) ? '' : (string) $error_code,
+							'http_status' => is_numeric( $error_code ) ? (int) $error_code : 0,
+						)
+					);
+				}
+
 				$result = array(
-					'code'    => $result->get_error_code(),
+					'code'    => $error_code,
 					'message' => $result->get_error_message(),
 				);
 				update_post_meta( $attachment_id, self::META_KEYS['sync_error'], $result['message'] );
