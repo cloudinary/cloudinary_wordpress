@@ -146,7 +146,7 @@ final class Plugin {
 	 *
 	 * @param mixed $component The component.
 	 *
-	 * @return Admin|CLD_Assets|Connect|Cron|Dashboard|Deactivation|Delivery|Extensions|Gallery|Lazy_Load|Media|Meta_Box|Relate|Report|Responsive_Breakpoints|REST_API|State|Storage|SVG|Sync|URL|null
+	 * @return Admin|Analytics|CLD_Assets|Connect|Cron|Dashboard|Deactivation|Delivery|Extensions|Gallery|Lazy_Load|Media|Meta_Box|Relate|Report|Responsive_Breakpoints|REST_API|State|Storage|SVG|Sync|URL|null
 	 */
 	public function get_component( $component ) {
 		$return = null;

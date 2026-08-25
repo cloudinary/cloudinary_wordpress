@@ -220,6 +220,17 @@ class Gallery extends Settings_Component {
 			$this->plugin->version
 		);
 
+		// Styles for the shared gallery controls (e.g. the Layout radio group)
+		// used by the settings page preview app. These live in `gallery.scss`,
+		// which is bundled with the `gallery` (settings) entry but is not
+		// auto-enqueued, so load it explicitly here.
+		wp_enqueue_style(
+			'cloudinary-gallery-controls-css',
+			$this->plugin->dir_url . 'css/gallery.css',
+			array(),
+			$this->plugin->version
+		);
+
 		$script = array(
 			'slug'      => 'gallery_config',
 			'src'       => $this->plugin->dir_url . 'js/gallery.js',
@@ -240,10 +251,12 @@ class Gallery extends Settings_Component {
 	/**
 	 * Retrieve asset dependencies.
 	 *
+	 * @param string $script The script slug to get the generated asset file for.
+	 *
 	 * @return array
 	 */
-	private function get_asset() {
-		$asset = require $this->plugin->dir_path . 'js/gallery.asset.php'; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
+	private function get_asset( $script = 'gallery' ) {
+		$asset = require $this->plugin->dir_path . 'js/' . $script . '.asset.php'; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
 
 		$asset['dependencies'] = array_filter(
 			$asset['dependencies'],
@@ -261,22 +274,38 @@ class Gallery extends Settings_Component {
 	public function block_editor_scripts_styles() {
 		$this->enqueue_gallery_library();
 
+		$asset = $this->get_asset( 'gallery-block' );
+
+		wp_enqueue_script(
+			'cloudinary-gallery-block-js',
+			$this->plugin->dir_url . 'js/gallery-block.js',
+			array_merge( $asset['dependencies'], array( self::GALLERY_LIBRARY_HANDLE ) ),
+			$asset['version'],
+			true
+		);
+
+		wp_add_inline_script( 'cloudinary-gallery-block-js', 'var CLD_REST_ENDPOINT = "/' . REST_API::BASE . '";', 'before' );
+	}
+
+	/**
+	 * Enqueue the gallery block editor styles.
+	 *
+	 * Registered on `enqueue_block_assets` so the styles are injected into the
+	 * iframed block editor correctly. As of WordPress 7.1 the post editor is
+	 * always iframed, and styles added via `enqueue_block_editor_assets` are
+	 * flagged as being added to the iframe incorrectly.
+	 */
+	public function block_editor_styles() {
+		if ( ! is_admin() ) {
+			return;
+		}
+
 		wp_enqueue_style(
 			'cloudinary-gallery-block-css',
 			$this->plugin->dir_url . 'css/gallery-block.css',
 			array(),
 			$this->plugin->version
 		);
-
-		wp_enqueue_script(
-			'cloudinary-gallery-block-js',
-			$this->plugin->dir_url . 'js/gallery-block.js',
-			array( 'wp-blocks', 'wp-editor', 'wp-element', self::GALLERY_LIBRARY_HANDLE ),
-			$this->plugin->version,
-			true
-		);
-
-		wp_add_inline_script( 'cloudinary-gallery-block-js', 'var CLD_REST_ENDPOINT = "/' . REST_API::BASE . '";', 'before' );
 	}
 
 	/**
@@ -410,13 +439,13 @@ class Gallery extends Settings_Component {
 			);
 		}
 
+		// The `js/gallery.js` app script is enqueued in `enqueue_admin_scripts()`
+		// with its generated asset dependencies. Adding a `script` here would
+		// enqueue the same file under a second handle, executing the bundle twice
+		// and calling `createRoot()` twice on the same container.
 		$panel[] = array(
-			'type'   => 'react',
-			'slug'   => 'gallery_config',
-			'script' => array(
-				'slug' => 'gallery-widget',
-				'src'  => $this->plugin->dir_url . 'js/gallery.js',
-			),
+			'type' => 'react',
+			'slug' => 'gallery_config',
 		);
 
 		$panel[] = array(
@@ -688,6 +717,7 @@ class Gallery extends Settings_Component {
 	public function setup_hooks() {
 		add_filter( 'cloudinary_api_rest_endpoints', array( $this, 'rest_endpoints' ) );
 		add_action( 'enqueue_block_editor_assets', array( $this, 'block_editor_scripts_styles' ) );
+		add_action( 'enqueue_block_assets', array( $this, 'block_editor_styles' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_gallery_library' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 		add_filter( 'render_block', array( $this, 'prepare_block_render' ), 10, 2 );

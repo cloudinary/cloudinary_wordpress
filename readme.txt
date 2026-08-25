@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: image-optimizer, core-web-vitals, video, resize, performance
 Requires at least: 5.6
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
 Stable tag: STABLETAG
 License: GPLv2
@@ -145,6 +145,15 @@ Your site is now setup to start using Cloudinary.
 
 
 == Changelog ==
+
+= 3.3.6 (25 August 2026) =
+
+Fixes and Improvements:
+
+* Fixed an issue that could disrupt the Novamira MCP integration by ensuring JSON responses retain their expected structure
+* Updated JavaScript dependencies to improve security, stability, and development tooling
+* Added compatibility with WordPress 7.1, including support for block editor and Gallery settings updates
+* Fixed an issue where non-crop WordPress image sizes could be delivered with distorted dimensions. Thanks to @airbuzz for the contribution
 
 = 3.3.5 (20 July 2026) =
 
