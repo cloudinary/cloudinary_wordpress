@@ -15,7 +15,9 @@
     "phpstan/phpstan": "^2.0",
     "szepeviktor/phpstan-wordpress": "^2.0",
     "php-stubs/wp-cli-stubs": "^2.10",
-    "php-stubs/woocommerce-stubs": "^9.0"
+    "php-stubs/woocommerce-stubs": "^9.0",
+    "phpunit/phpunit": "^9.6@stable",
+    "yoast/phpunit-polyfills": "^1.1@stable"
   },
   "config": {
     "platform": {
@@ -34,6 +36,9 @@
     ],
     "phpstan": [
       "phpstan analyse --memory-limit=-1"
+    ],
+    "test": [
+      "phpunit"
     ]
   },
   "minimum-stability": "dev"

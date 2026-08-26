@@ -60,5 +60,8 @@
 	<exclude-pattern>/vendor/</exclude-pattern>
 	<!-- Static analysis stub files intentionally mirror third-party APIs. -->
 	<exclude-pattern>/tests/phpstan/stubs/</exclude-pattern>
+	<!-- PHPUnit tests follow the WordPress core test suite conventions,
+		which differ from the plugin coding standard. -->
+	<exclude-pattern>/tests/phpunit/</exclude-pattern>
 	<exclude-pattern>*.js</exclude-pattern>
 </ruleset>
