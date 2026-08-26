@@ -7,7 +7,7 @@
     "ext-json": "*"
   },
   "require-dev": {
-    "dealerdirect/phpcodesniffer-composer-installer": "^0.7.0",
+    "dealerdirect/phpcodesniffer-composer-installer": "^1.2.1",
     "phpcompatibility/phpcompatibility-wp": "dev-master",
     "phpcompatibility/php-compatibility": "dev-develop as 9.99.99",
     "automattic/vipwpcs": "^3.0",
