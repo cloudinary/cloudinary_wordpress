@@ -338,9 +338,14 @@ class Upload_Sync {
 
 			// Check that this wasn't an existing.
 			if ( ! empty( $result['existing'] ) ) {
-				// If no public_id is recorded in WordPress, this asset in Cloudinary is from a
-				// failed previous upload. Overwrite it instead of creating a suffixed duplicate.
-				if ( empty( $suffix ) && ! $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true ) ) {
+				// A missing public_id in WordPress isn't enough on its own to prove the conflicting
+				// Cloudinary asset is an orphan of this attachment's own failed upload -- any never
+				// synced attachment also has no public_id. Only treat it as our own orphan, safe to
+				// overwrite, when the existing asset's file size also matches the local file.
+				if ( empty( $suffix )
+					&& ! $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true )
+					&& $this->is_matching_existing_asset( $attachment_id, $result )
+				) {
 					return $this->upload_asset( $attachment_id, $type, null, true );
 				}
 				// Add a suffix and try again.
@@ -380,6 +385,30 @@ class Upload_Sync {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Check whether a Cloudinary "existing" asset is likely this attachment's own local file.
+	 *
+	 * Used to tell apart an orphan left by this same attachment's previously interrupted upload
+	 * (safe to overwrite) from an unrelated asset that happens to share the same derived public
+	 * ID, e.g. WordPress reusing a filename across months (must not be overwritten).
+	 *
+	 * @param int   $attachment_id The attachment ID.
+	 * @param array $result        The Cloudinary upload result.
+	 *
+	 * @return bool
+	 */
+	public function is_matching_existing_asset( $attachment_id, $result ) {
+		if ( empty( $result['bytes'] ) ) {
+			return false;
+		}
+		$file = get_attached_file( $attachment_id );
+		if ( empty( $file ) || ! file_exists( $file ) ) {
+			return false;
+		}
+
+		return (int) filesize( $file ) === (int) $result['bytes'];
 	}
 
 	/**
