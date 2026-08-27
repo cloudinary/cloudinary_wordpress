@@ -50,20 +50,25 @@ class Test_Upload_Sync extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Build an Upload_Sync instance.
+	 * Build a fully wired Upload_Sync instance.
 	 *
-	 * is_matching_existing_asset() only calls core get_attached_file()/filesize(), never touches
-	 * $media/$sync/$connect, so the component doesn't need setup() to have wired those up.
+	 * is_matching_existing_asset() reads the upload file path through $media, so setup() needs
+	 * to have run to wire it -- the real Media component, already initialised by the plugin
+	 * bootstrap, is reused rather than stubbed.
 	 *
 	 * @return Upload_Sync
 	 */
 	protected function get_upload_sync() {
-		return new Upload_Sync( \Cloudinary\get_plugin_instance() );
+		$upload_sync = new Upload_Sync( \Cloudinary\get_plugin_instance() );
+		$upload_sync->setup();
+
+		return $upload_sync;
 	}
 
 	/**
 	 * An existing asset whose byte size matches the local file is treated as this attachment's
-	 * own orphaned upload, so it's safe to overwrite.
+	 * own orphaned upload, so it's safe to overwrite. No etag in the result falls back to the
+	 * byte comparison alone.
 	 *
 	 * @return void
 	 */
@@ -113,6 +118,78 @@ class Test_Upload_Sync extends WP_UnitTestCase {
 
 		$this->assertFalse(
 			$this->get_upload_sync()->is_matching_existing_asset( $post_id, $result )
+		);
+	}
+
+	/**
+	 * Matching bytes plus a matching etag (the MD5 of the stored asset) confirms the content
+	 * itself, not just its size.
+	 *
+	 * @return void
+	 */
+	public function test_matches_when_bytes_and_etag_both_match() {
+		$result = array(
+			'bytes' => self::$attachment_bytes,
+			'etag'  => md5_file( get_attached_file( self::$attachment_id ) ),
+		);
+
+		$this->assertTrue(
+			$this->get_upload_sync()->is_matching_existing_asset( self::$attachment_id, $result )
+		);
+	}
+
+	/**
+	 * A byte size that coincidentally matches an unrelated file must not be enough on its own
+	 * once an etag is available to rule it out.
+	 *
+	 * @return void
+	 */
+	public function test_does_not_match_when_bytes_match_but_etag_differs() {
+		$result = array(
+			'bytes' => self::$attachment_bytes,
+			'etag'  => 'not-the-real-hash',
+		);
+
+		$this->assertFalse(
+			$this->get_upload_sync()->is_matching_existing_asset( self::$attachment_id, $result )
+		);
+	}
+
+	/**
+	 * Cloudinary uploads the unscaled original for a "-scaled" image (the file WordPress
+	 * attaches for images over big_image_size_threshold is a downsized copy, not what was
+	 * actually sent), so the check must compare against that original, not the attached file.
+	 *
+	 * @return void
+	 */
+	public function test_matches_using_the_unscaled_original_for_a_scaled_image() {
+		$id = self::factory()->attachment->create_upload_object( DIR_TESTDATA . '/images/canola.jpg' );
+
+		$original_file = get_attached_file( $id );
+		$scaled_file   = dirname( $original_file ) . '/canola-scaled.jpg';
+
+		// Stand in for the "-scaled" file WordPress would attach: same starting bytes, padded
+		// so its size provably differs from the original left alongside it.
+		copy( $original_file, $scaled_file );
+		file_put_contents( $scaled_file, file_get_contents( $scaled_file ) . 'padding' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		update_attached_file( $id, $scaled_file );
+
+		$metadata                   = wp_get_attachment_metadata( $id );
+		$metadata['original_image'] = wp_basename( $original_file );
+		wp_update_attachment_metadata( $id, $metadata );
+
+		$original_bytes = filesize( $original_file );
+		$scaled_bytes   = filesize( $scaled_file );
+
+		$this->assertNotSame( $original_bytes, $scaled_bytes, 'Fixture files must differ in size for this test to be meaningful.' );
+
+		// Cloudinary was sent the original -- its bytes must be what's compared against.
+		$this->assertTrue(
+			$this->get_upload_sync()->is_matching_existing_asset( $id, array( 'bytes' => $original_bytes ) )
+		);
+		// The attached (scaled) file's size is not what was actually uploaded.
+		$this->assertFalse(
+			$this->get_upload_sync()->is_matching_existing_asset( $id, array( 'bytes' => $scaled_bytes ) )
 		);
 	}
 }

@@ -391,8 +391,12 @@ class Upload_Sync {
 	 * Check whether a Cloudinary "existing" asset is likely this attachment's own local file.
 	 *
 	 * Used to tell apart an orphan left by this same attachment's previously interrupted upload
-	 * (safe to overwrite) from an unrelated asset that happens to share the same derived public
-	 * ID, e.g. WordPress reusing a filename across months (must not be overwritten).
+	 * of the default (non "folder"/"cloud_name") sync type (safe to overwrite) from an unrelated
+	 * asset that happens to share the same derived public ID, e.g. WordPress reusing a filename
+	 * across months (must not be overwritten). Only called once a public_id is unrecorded, so in
+	 * practice this only ever runs for that default sync type; the other types always have one.
+	 *
+	 * @internal Reachable for testing; not intended to be called from outside this class.
 	 *
 	 * @param int   $attachment_id The attachment ID.
 	 * @param array $result        The Cloudinary upload result.
@@ -401,14 +405,23 @@ class Upload_Sync {
 	 */
 	public function is_matching_existing_asset( $attachment_id, $result ) {
 		if ( empty( $result['bytes'] ) ) {
+			Utils::log(
+				sprintf( 'Cloudinary upload result for attachment %d has no "bytes" field; treating as a non-matching asset.', $attachment_id ),
+				'upload-sync-existing-asset-check'
+			);
+
 			return false;
 		}
-		$file = get_attached_file( $attachment_id );
+		$file = $this->media->get_upload_file_path( $attachment_id );
 		if ( empty( $file ) || ! file_exists( $file ) ) {
 			return false;
 		}
+		if ( (int) filesize( $file ) !== (int) $result['bytes'] ) {
+			return false;
+		}
 
-		return (int) filesize( $file ) === (int) $result['bytes'];
+		// Bytes alone can coincide between unrelated files; confirm with the content hash when available.
+		return empty( $result['etag'] ) || md5_file( $file ) === $result['etag'];
 	}
 
 	/**

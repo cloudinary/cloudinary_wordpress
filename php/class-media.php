@@ -496,6 +496,27 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Get the local file path used to upload an attachment.
+	 *
+	 * Mirrors the file resolution in Connect\Api::upload(): the unscaled original when
+	 * `cloudinary_use_original_image` allows it, the attached file otherwise -- e.g. the
+	 * `-scaled` copy WordPress creates for images over `big_image_size_threshold`.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function get_upload_file_path( $attachment_id ) {
+		/** This filter is documented in php/connect/class-api.php */
+		$use_original = apply_filters( 'cloudinary_use_original_image', true, $attachment_id );
+		if ( $use_original && function_exists( 'wp_get_original_image_path' ) && wp_attachment_is_image( $attachment_id ) ) {
+			return wp_get_original_image_path( $attachment_id );
+		}
+
+		return get_attached_file( $attachment_id );
+	}
+
+	/**
 	 * Get the Cloudinary delivery type.
 	 *
 	 * @param int $attachment_id The attachment ID.
