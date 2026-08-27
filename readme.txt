@@ -146,7 +146,7 @@ Your site is now setup to start using Cloudinary.
 
 == Changelog ==
 
-= 3.3.6.1 (27 August 2026) =
+= 3.3.7 (27 August 2026) =
 
 Fixes and Improvements:
 
