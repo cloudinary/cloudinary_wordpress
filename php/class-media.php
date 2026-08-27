@@ -2059,7 +2059,8 @@ class Media extends Settings_Component implements Setup {
 
 		// External assets.
 		wp_enqueue_script( 'cloudinary-media-modal', $this->plugin->dir_url . '/js/media-modal.js', array(), $this->plugin->version, true );
-		wp_enqueue_script( 'cloudinary-media-library', CLOUDINARY_ENDPOINTS_MEDIA_LIBRARY, $deps, $this->plugin->version, true );
+		// Self-hosted to avoid WP 7.1 stamping crossorigin="anonymous" on this cross-origin CDN script, which the CDN doesn't send CORS headers for. See #1254.
+		wp_enqueue_script( 'cloudinary-media-library', $this->plugin->dir_url . '/js/cloudinary-media-library.js', $deps, $this->plugin->version, true );
 		wp_enqueue_script( 'cloudinary-terms-order', $this->plugin->dir_url . '/js/terms-order.js', array( 'jquery', 'wp-i18n' ), $this->plugin->version, true );
 		wp_enqueue_style( 'cloudinary' );
 		$params = array(
