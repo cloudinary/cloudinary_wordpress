@@ -146,6 +146,12 @@ Your site is now setup to start using Cloudinary.
 
 == Changelog ==
 
+= 3.3.7 (27 August 2026) =
+
+Fixes and Improvements:
+
+* Fixed an issue that prevented the Media Library Widget from loading. Thanks to @eugenepg for the contribution
+
 = 3.3.6 (25 August 2026) =
 
 Fixes and Improvements:
