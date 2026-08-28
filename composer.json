@@ -17,7 +17,7 @@
     "php-stubs/wp-cli-stubs": "^2.10",
     "php-stubs/woocommerce-stubs": "^11.0",
     "phpunit/phpunit": "^9.6@stable",
-    "yoast/phpunit-polyfills": "^1.1@stable"
+    "yoast/phpunit-polyfills": "^4.0@stable"
   },
   "config": {
     "platform": {
