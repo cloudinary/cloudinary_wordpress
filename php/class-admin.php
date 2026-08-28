@@ -538,9 +538,10 @@ class Admin {
 
 		$analytics->track(
 			'transformation_applied',
-			'media',
+			'feature_usage',
 			null,
 			array(
+				'feature'              => 'transformation',
 				'scope'                => 'global',
 				'transformation_count' => count( $matched ),
 			)
@@ -565,9 +566,10 @@ class Admin {
 
 		$analytics->track(
 			'gallery_configured',
-			'features',
+			'feature_usage',
 			null,
 			array(
+				'feature'     => 'gallery',
 				'layout'      => isset( $config['displayProps']['mode'] ) ? $config['displayProps']['mode'] : '',
 				'media_count' => isset( $config['mediaAssets'] ) && is_array( $config['mediaAssets'] ) ? count( $config['mediaAssets'] ) : 0,
 			)
