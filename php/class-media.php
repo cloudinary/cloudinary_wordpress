@@ -504,7 +504,7 @@ class Media extends Settings_Component implements Setup {
 	 *
 	 * @param int $attachment_id The attachment ID.
 	 *
-	 * @return string
+	 * @return string|false
 	 */
 	public function get_upload_file_path( $attachment_id ) {
 		/** This filter is documented in php/connect/class-api.php */

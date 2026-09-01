@@ -412,6 +412,12 @@ class Upload_Sync {
 
 			return false;
 		}
+		// Byte-identical content between two unrelated attachments isn't proof of ownership: the
+		// second overwrite would still clobber the first's context and advance its version. Only
+		// proceed if no other attachment already claims this public ID.
+		if ( ! $this->is_solely_linked_to( $attachment_id, empty( $result['public_id'] ) ? null : $result['public_id'] ) ) {
+			return false;
+		}
 		$file = $this->media->get_upload_file_path( $attachment_id );
 		if ( empty( $file ) || ! file_exists( $file ) ) {
 			return false;
@@ -419,9 +425,42 @@ class Upload_Sync {
 		if ( (int) filesize( $file ) !== (int) $result['bytes'] ) {
 			return false;
 		}
+		// Hashing a vip:// stream wrapper path pulls the whole object over the network; a failed
+		// read returns false rather than throwing, which would wrongly read as a mismatch. Bytes
+		// alone is the safer signal to rely on there.
+		if ( false !== strpos( $file, 'vip://' ) ) {
+			return true;
+		}
 
 		// Bytes alone can coincide between unrelated files; confirm with the content hash when available.
 		return empty( $result['etag'] ) || md5_file( $file ) === $result['etag'];
+	}
+
+	/**
+	 * Check that no other attachment is already tracked as linked to a public ID.
+	 *
+	 * Mirrors the ownership guard Delete_Sync::delete_asset() uses before destroying an asset.
+	 *
+	 * @param int         $attachment_id The attachment ID.
+	 * @param string|null $public_id     The public ID to check.
+	 *
+	 * @return bool
+	 */
+	protected function is_solely_linked_to( $attachment_id, $public_id ) {
+		if ( empty( $public_id ) ) {
+			return false;
+		}
+		$linked = $this->media->get_linked_attachments( $public_id );
+		if ( count( $linked ) > 1 ) {
+			// More than one attachment already shares this public ID.
+			return false;
+		}
+		if ( 1 === count( $linked ) && (int) $attachment_id !== (int) $linked[0] ) {
+			// Exactly one other attachment is already linked to it.
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
