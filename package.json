@@ -107,7 +107,7 @@
     "lint-staged": "^17.3.0",
     "load-grunt-tasks": "^5.1.0",
     "mini-css-extract-plugin": "^2.9.4",
-    "npm-run-all2": "^9.0.2",
+    "npm-run-all2": "^9.0.3",
     "patch-package": "^8.0.1",
     "postcss-loader": "^8.2.0",
     "prettier": "npm:wp-prettier@^3.0.0",
