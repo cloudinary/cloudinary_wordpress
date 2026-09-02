@@ -104,7 +104,7 @@
     "grunt-wp-i18n": "^1.0.3",
     "husky": "^9.1.7",
     "jsdoc": "^4.0.5",
-    "lint-staged": "^16.2.6",
+    "lint-staged": "^17.3.0",
     "load-grunt-tasks": "^5.1.0",
     "mini-css-extract-plugin": "^2.9.4",
     "npm-run-all2": "^9.0.2",
