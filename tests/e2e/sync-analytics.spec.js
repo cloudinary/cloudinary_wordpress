@@ -87,10 +87,43 @@ test.describe( 'Asset sync analytics', () => {
 		expect( response.ok() ).toBeTruthy();
 		await page.waitForTimeout( 500 );
 
+		console.log(
+			'DEBUG image_delivery setting:',
+			wpCli( [
+				'eval',
+				'echo var_export( get_plugin_instance()->settings->get_value( "image_delivery" ), true );',
+			] )
+		);
+
+		console.log(
+			'DEBUG attachment list:',
+			wpCli( [
+				'post',
+				'list',
+				'--post_type=attachment',
+				'--fields=ID,post_mime_type,post_status',
+				'--format=json',
+			] )
+		);
+
+		console.log(
+			'DEBUG sync queue option:',
+			wpCli( [
+				'option',
+				'get',
+				'_cloudinary_sync_queue',
+				'--format=json',
+			] )
+		);
+
+		console.log( 'DEBUG rest response body:', await response.text() );
+
 		const events = findAnalyticsEvents(
 			readAnalyticsEvents(),
 			'bulk_sync_started'
 		);
+
+		console.log( 'DEBUG events:', JSON.stringify( events ) );
 		expect( events.length ).toBe( 1 );
 		expect( events[ 0 ].trigger ).toBe( 'manual' );
 		expect( events[ 0 ].asset_count ).toBeGreaterThan( 0 );
