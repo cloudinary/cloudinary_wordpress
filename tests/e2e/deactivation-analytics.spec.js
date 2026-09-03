@@ -54,22 +54,6 @@ test.describe( 'Deactivation analytics', () => {
 		await page.locator( SEL.deactivateLink ).first().click();
 		await expect( page.locator( SEL.modal ) ).toBeVisible();
 
-		console.log(
-			'DEBUG analytics config:',
-			await page.evaluate( () => window.cldData?.analytics )
-		);
-
-		console.log(
-			'DEBUG immediate read:',
-			JSON.stringify( readAnalyticsEvents() )
-		);
-		await page.waitForTimeout( 1000 );
-
-		console.log(
-			'DEBUG after 1s wait:',
-			JSON.stringify( readAnalyticsEvents() )
-		);
-
 		const events = findAnalyticsEvents(
 			readAnalyticsEvents(),
 			'deactivation_modal_viewed'

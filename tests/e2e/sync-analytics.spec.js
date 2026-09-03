@@ -89,10 +89,9 @@ test.describe( 'Asset sync analytics', () => {
 
 		console.log(
 			'DEBUG image_delivery setting:',
-			wpCli( [
-				'eval',
-				'echo var_export( get_plugin_instance()->settings->get_value( "image_delivery" ), true );',
-			] )
+			wpEvalFile(
+				'echo var_export( get_plugin_instance()->settings->get_value( "image_delivery" ), true );'
+			)
 		);
 
 		console.log(
