@@ -198,13 +198,17 @@ class Push_Sync {
 			if ( $state['success'] ) {
 				$analytics = $this->plugin->get_component( 'analytics' );
 				if ( $analytics ) {
-					$queue = $this->queue->get_queue( $type );
+					// Read the count `build_queue()` captured as it ran, rather than
+					// re-reading the `_cloudinary_sync_queue` option now: `start_queue()`
+					// above already kicked off background threads, and one that
+					// finishes (or errors out) fast enough can delete that option via
+					// `stop_queue()` before this gets a chance to read it back.
 					$analytics->track(
 						'bulk_sync_started',
 						'sync',
 						null,
 						array(
-							'asset_count' => isset( $queue['total'] ) ? (int) $queue['total'] : 0,
+							'asset_count' => $this->queue->get_last_built_total(),
 							'trigger'     => 'manual',
 						)
 					);
