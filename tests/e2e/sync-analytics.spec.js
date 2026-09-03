@@ -78,6 +78,32 @@ test.describe( 'Asset sync analytics', () => {
 
 		await admin.visitAdminPage( 'admin.php', 'page=cloudinary' );
 
+		console.log(
+			'DEBUG state before REST call:',
+			wpEvalFile( `
+				$q = new \\WP_Query( array(
+					'post_type'      => 'attachment',
+					'post_mime_type' => 'image',
+					'post_status'    => 'inherit',
+					'fields'         => 'ids',
+					'posts_per_page' => -1,
+				) );
+				$out = array(
+					'auto_sync'    => get_plugin_instance()->settings->get_value( 'auto_sync' ),
+					'bulk_enabled' => get_option( '_cloudinary_bulk_sync_enabled' ),
+					'matching_ids' => $q->posts,
+				);
+				foreach ( $q->posts as $id ) {
+					$out['meta'][ $id ] = array(
+						'sync_error' => get_post_meta( $id, '_cld_error', true ),
+						'cloudinary' => get_post_meta( $id, '_cloudinary', true ),
+						'queued'     => get_post_meta( $id, '_cloudinary_sync_queued', true ),
+					);
+				}
+				echo wp_json_encode( $out );
+			` )
+		);
+
 		const nonce = await page.evaluate(
 			() => window.cldData?.analytics?.nonce
 		);
