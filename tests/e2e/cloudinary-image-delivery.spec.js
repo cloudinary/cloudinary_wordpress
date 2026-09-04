@@ -3,7 +3,7 @@
  */
 const fs = require( 'fs' );
 const path = require( 'path' );
-const { test, expect } = require( '@wordpress/e2e-test-utils-playwright' );
+const { test, expect } = require( './fixtures' );
 
 /**
  * Internal dependencies
@@ -45,7 +45,9 @@ function expectCloudinaryUrl( rawUrl, expectedCloud ) {
 	).toBe( true );
 }
 
-test.describe( 'Cloudinary image delivery', () => {
+// @serial: needs real credentials in `cloudinary_connect` for `wp cloudinary
+// sync`, while every analytics spec overwrites that option with fake ones.
+test.describe( 'Cloudinary image delivery', { tag: '@serial' }, () => {
 	test.beforeAll( () => {
 		( { cloudName } = ensureCloudinaryConnected() );
 	} );

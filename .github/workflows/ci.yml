@@ -87,6 +87,70 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-unit-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-unit-
+
+      # This job only needs vendor/bin/phpunit (from Composer) and the wp-env
+      # CLI. A full `npm ci` pulls ~2,200 packages and has taken anywhere from
+      # 36s to 7 minutes on hosted runners; @wordpress/env alone is ~400
+      # packages and installs in ~30s. It is installed into a scratch prefix
+      # outside the repo so npm does not reconcile against package-lock.json
+      # and pull the whole tree anyway. The version is read from the lockfile
+      # so it cannot drift from what developers run locally.
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --no-progress
+
+      - name: Install wp-env
+        run: |
+          version=$(node -p "require('./package-lock.json').packages['node_modules/@wordpress/env'].version")
+          echo "Installing @wordpress/env@$version"
+          npm install --prefix "$RUNNER_TEMP/wp-env" --no-audit --no-fund "@wordpress/env@$version"
+          echo "$RUNNER_TEMP/wp-env/node_modules/.bin" >> "$GITHUB_PATH"
+
+      # The wp-env sources directory is deliberately not cached. A restored
+      # ~/.wp-env carries the previous run's install state, which skipped the
+      # plugin's activation hook and left the relationships table missing.
+      - name: Start wp-env
+        run: wp-env start
+
+      - name: Run unit tests
+        run: wp-env run tests-cli --env-cwd="wp-content/plugins/$(basename "$PWD")" vendor/bin/phpunit
+
+      - name: Stop wp-env
+        if: always()
+        run: wp-env stop
+
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Not needed by Playwright, but every job that has this step completes
+      # `npm ci` in ~35s while this job, without it, took 2.5 to 4 minutes on
+      # the same runs (same npm, same cache hit). setup-php also installs
+      # Composer, which the postinstall hook calls.
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -97,61 +161,59 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.composer/cache
-          key: ${{ runner.os }}-composer-unit-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-composer-e2e-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
-            ${{ runner.os }}-composer-unit-
+            ${{ runner.os }}-composer-e2e-
 
-      # wp-env downloads WordPress and the core PHPUnit suite into this
-      # directory, which is roughly a gigabyte of git clones. Caching it keeps
-      # `env:start` from re-cloning them on every run. The key covers the
-      # wp-env config and version, because a change to either means different
-      # sources have to be downloaded.
-      - name: Cache wp-env sources
+      # Deliberately not `--ignore-scripts`: with the npm 10 that ships with
+      # the pinned Node, that flag made this step take 4 to 7 minutes instead
+      # of ~36s (a known npm 10 reify stall around lifecycle-script nodes).
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
         uses: actions/cache@v4
         with:
-          path: ~/.wp-env
-          key: ${{ runner.os }}-wp-env-${{ hashFiles('.wp-env.json', 'package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-wp-env-
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
 
-      # Also installs the Composer dependencies through the postinstall script.
-      - name: Install dependencies
-        run: npm ci
+      # wp-env spends most of its time pulling Docker images and installing
+      # WordPress, none of which depends on the Node-side steps. Run it in the
+      # background while the browser install and asset build proceed, then
+      # wait for it. All of this has to live in one step because `wait` only
+      # sees children of the same shell. wp-env output goes to a file and is
+      # printed afterwards so the interleaved log stays readable.
+      - name: Start wp-env, install browsers, build assets
+        env:
+          PLAYWRIGHT_CACHE_HIT: ${{ steps.playwright-cache.outputs.cache-hit }}
+        run: |
+          npm run env:start > wp-env-start.log 2>&1 &
+          wp_env_pid=$!
 
-      - name: Start wp-env
-        run: npm run env:start
+          if [ "$PLAYWRIGHT_CACHE_HIT" = "true" ]; then
+            # Browser binaries came from cache; only the apt packages they
+            # need are missing on a fresh runner.
+            npx playwright install-deps chromium
+          else
+            npx playwright install --with-deps chromium
+          fi
 
-      - name: Run unit tests
-        run: npm run test:unit
+          npm run build
 
-      - name: Stop wp-env
-        if: always()
-        run: npm run env:stop
-
-  e2e:
-    name: E2E (Playwright)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Build assets
-        run: npm run build
-
-      - name: Start wp-env
-        run: npm run env:start
+          echo "::group::wp-env start"
+          if wait "$wp_env_pid"; then
+            cat wp-env-start.log
+            echo "::endgroup::"
+          else
+            cat wp-env-start.log
+            echo "::endgroup::"
+            exit 1
+          fi
 
       - name: Run E2E tests
         env:
