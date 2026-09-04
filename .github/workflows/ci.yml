@@ -83,18 +83,19 @@ jobs:
   unit:
     name: Unit (PHPUnit)
     runs-on: ubuntu-latest
-    env:
-      # Shell-expanded by wp-env; matches the "Cache wp-env sources" path.
-      WP_ENV_HOME: /home/runner/.wp-env
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
-          cache: 'npm'
 
       - name: Cache Composer
         uses: actions/cache@v4
@@ -104,36 +105,35 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-composer-unit-
 
-      # wp-env downloads WordPress and the core PHPUnit suite into this
-      # directory, which is roughly a gigabyte of git clones. Caching it keeps
-      # `env:start` from re-cloning them on every run. The key covers the
-      # wp-env config and version, because a change to either means different
-      # sources have to be downloaded.
-      #
-      # WP_ENV_HOME is pinned at the job level because wp-env's default differs
-      # per platform (`~/.wp-env`, or `~/wp-env` on Linux runners that ship
-      # snap), and the unpinned path produced a cache that was never saved.
-      - name: Cache wp-env sources
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.WP_ENV_HOME }}
-          key: ${{ runner.os }}-wp-env-${{ hashFiles('.wp-env.json', 'package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-wp-env-
+      # This job only needs vendor/bin/phpunit (from Composer) and the wp-env
+      # CLI. A full `npm ci` pulls ~2,200 packages and has taken anywhere from
+      # 36s to 7 minutes on hosted runners; @wordpress/env alone is ~400
+      # packages and installs in ~30s. It is installed into a scratch prefix
+      # outside the repo so npm does not reconcile against package-lock.json
+      # and pull the whole tree anyway. The version is read from the lockfile
+      # so it cannot drift from what developers run locally.
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --no-progress
 
-      # Also installs the Composer dependencies through the postinstall script.
-      - name: Install dependencies
-        run: npm ci
+      - name: Install wp-env
+        run: |
+          version=$(node -p "require('./package-lock.json').packages['node_modules/@wordpress/env'].version")
+          echo "Installing @wordpress/env@$version"
+          npm install --prefix "$RUNNER_TEMP/wp-env" --no-audit --no-fund "@wordpress/env@$version"
+          echo "$RUNNER_TEMP/wp-env/node_modules/.bin" >> "$GITHUB_PATH"
 
+      # The wp-env sources directory is deliberately not cached. A restored
+      # ~/.wp-env carries the previous run's install state, which skipped the
+      # plugin's activation hook and left the relationships table missing.
       - name: Start wp-env
-        run: npm run env:start
+        run: wp-env start
 
       - name: Run unit tests
-        run: npm run test:unit
+        run: wp-env run tests-cli --env-cwd="wp-content/plugins/$(basename "$PWD")" vendor/bin/phpunit
 
       - name: Stop wp-env
         if: always()
-        run: npm run env:stop
+        run: wp-env stop
 
   e2e:
     name: E2E (Playwright)
