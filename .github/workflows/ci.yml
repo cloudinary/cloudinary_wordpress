@@ -148,12 +148,12 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
 
-      # --ignore-scripts skips the postinstall hook: `composer install` only
-      # pulls dev tooling (phpcs, phpstan, phpunit) the plugin does not load
-      # at runtime, and `patch-package` only patches wp-hookdoc for the docs
-      # build. Neither is needed to run the e2e suite.
+      # Deliberately not `--ignore-scripts`: with the npm 10 that ships with
+      # the pinned Node, that flag made this step take 4 to 7 minutes instead
+      # of ~36s (a known npm 10 reify stall around lifecycle-script nodes).
+      # The postinstall hook's composer install is only ~7s.
       - name: Install dependencies
-        run: npm ci --ignore-scripts
+        run: npm ci
 
       - name: Get Playwright version
         id: playwright-version
