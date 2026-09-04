@@ -26,8 +26,8 @@ defined( 'ABSPATH' ) || exit;
  * Returns the e2e worker marker for the current request, if any.
  *
  * Playwright runs spec files in parallel workers against this single
- * WordPress install. Each worker tags its browser/REST traffic with an
- * `X-CLD-E2E-Worker` header and its WP-CLI calls with a `CLD_E2E_WORKER`
+ * WordPress install. Each worker tags its browser/REST traffic with a
+ * `cld_e2e_worker` cookie and its WP-CLI calls with a `CLD_E2E_WORKER`
  * env var, so every worker gets its own capture log and one worker's
  * events (or `--clear`) can't leak into another worker's assertions.
  *
@@ -39,8 +39,10 @@ defined( 'ABSPATH' ) || exit;
 function cld_analytics_capture_worker_marker() {
 	$marker = '';
 
-	if ( ! empty( $_SERVER['HTTP_X_CLD_E2E_WORKER'] ) ) {
-		$marker = wp_unslash( $_SERVER['HTTP_X_CLD_E2E_WORKER'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+	// Dev/CI-only mu-plugin with no page cache in front of it, so the VIP
+	// cache-constraints sniff on $_COOKIE does not apply.
+	if ( ! empty( $_COOKIE['cld_e2e_worker'] ) ) { // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE
+		$marker = wp_unslash( $_COOKIE['cld_e2e_worker'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE
 	} elseif ( false !== getenv( 'CLD_E2E_WORKER' ) && '' !== getenv( 'CLD_E2E_WORKER' ) ) {
 		$marker = getenv( 'CLD_E2E_WORKER' );
 	}

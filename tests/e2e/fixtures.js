@@ -11,9 +11,13 @@
  *
  * The marker travels two ways:
  *
- * - `X-CLD-E2E-Worker` request header, via the browser context's
- *   `extraHTTPHeaders`, so page loads and `page.request.*` REST calls made by
- *   the plugin's PHP side are attributed to this worker.
+ * - `cld_e2e_worker` cookie on the browser context, scoped to the site under
+ *   test, so page loads and `page.request.*` REST calls (which share the
+ *   context's cookie jar) are attributed to this worker. A cookie rather than
+ *   an `extraHTTPHeaders` entry because Playwright attaches those headers to
+ *   every request including cross-origin ones, and a custom header forces a
+ *   CORS preflight that third parties (e.g. fonts loaded inside the Cloudinary
+ *   player iframe) reject.
  * - `CLD_E2E_WORKER` env var on the Playwright worker process, which
  *   `utils/wizard.js`'s `wpCli()` / `wpEvalFile()` forward into their
  *   `docker exec` calls so WP-CLI reads and writes the same per-worker log.
@@ -25,11 +29,11 @@
 const base = require( '@wordpress/e2e-test-utils-playwright' );
 
 /**
- * Header name the mu-plugin reads the worker marker from.
+ * Cookie name the mu-plugin reads the worker marker from.
  *
  * @type {string}
  */
-const WORKER_HEADER = 'X-CLD-E2E-Worker';
+const WORKER_COOKIE = 'cld_e2e_worker';
 
 /**
  * Builds the marker for a given Playwright worker.
@@ -60,13 +64,17 @@ const test = base.test.extend( {
 		{ scope: 'worker', auto: true },
 	],
 
-	// Merge the marker header into whatever `extraHTTPHeaders` the config
-	// already provides, rather than replacing it.
-	extraHTTPHeaders: async ( { extraHTTPHeaders }, provide, testInfo ) => {
-		await provide( {
-			...( extraHTTPHeaders || {} ),
-			[ WORKER_HEADER ]: markerForWorker( testInfo ),
-		} );
+	// Add the marker cookie to every browser context before the WP package's
+	// `page` fixture (and anything else built on `context`) gets hold of it.
+	context: async ( { context, baseURL }, provide, testInfo ) => {
+		await context.addCookies( [
+			{
+				name: WORKER_COOKIE,
+				value: markerForWorker( testInfo ),
+				url: baseURL,
+			},
+		] );
+		await provide( context );
 	},
 } );
 
@@ -74,5 +82,5 @@ module.exports = {
 	...base,
 	test,
 	expect: base.expect,
-	WORKER_HEADER,
+	WORKER_COOKIE,
 };
