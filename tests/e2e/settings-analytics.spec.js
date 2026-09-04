@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-const { test, expect } = require( '@wordpress/e2e-test-utils-playwright' );
+const { test, expect } = require( './fixtures' );
 
 /**
  * Internal dependencies
@@ -57,13 +57,17 @@ test.describe( 'Settings & navigation analytics', () => {
 			'page=cloudinary_image_settings'
 		);
 
-		// Flip the image format select to force a real change.
-		const formatSelect = page.locator(
-			'select[name="image_settings[image_format]"]'
+		// Flip the image quality select to force a real change. Deliberately
+		// not image_format: media-analytics.spec.js flips that one, and the
+		// two specs run in parallel workers against the same site. Each spec
+		// owning a different key keeps its flipped key in the save diff no
+		// matter how the two saves interleave.
+		const qualitySelect = page.locator(
+			'select[name="image_settings[image_quality]"]'
 		);
-		const current = await formatSelect.inputValue();
-		const nextValue = 'webp' === current ? 'auto' : 'webp';
-		await formatSelect.selectOption( nextValue );
+		const current = await qualitySelect.inputValue();
+		const nextValue = '80' === current ? 'auto' : '80';
+		await qualitySelect.selectOption( nextValue );
 
 		await page.locator( SEL.saveButton ).click();
 		await page.waitForLoadState( 'networkidle' );
@@ -74,7 +78,7 @@ test.describe( 'Settings & navigation analytics', () => {
 		);
 		expect( savedEvents.length ).toBe( 1 );
 		expect( savedEvents[ 0 ].page ).toBe( 'image_settings' );
-		expect( savedEvents[ 0 ].changed_keys ).toContain( 'image_format' );
+		expect( savedEvents[ 0 ].changed_keys ).toContain( 'image_quality' );
 	} );
 
 	test( 'dismissing an admin notice emits notice_dismissed', async ( {

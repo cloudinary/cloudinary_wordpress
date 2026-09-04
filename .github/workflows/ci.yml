@@ -83,6 +83,9 @@ jobs:
   unit:
     name: Unit (PHPUnit)
     runs-on: ubuntu-latest
+    env:
+      # Shell-expanded by wp-env; matches the "Cache wp-env sources" path.
+      WP_ENV_HOME: /home/runner/.wp-env
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -106,10 +109,14 @@ jobs:
       # `env:start` from re-cloning them on every run. The key covers the
       # wp-env config and version, because a change to either means different
       # sources have to be downloaded.
+      #
+      # WP_ENV_HOME is pinned at the job level because wp-env's default differs
+      # per platform (`~/.wp-env`, or `~/wp-env` on Linux runners that ship
+      # snap), and the unpinned path produced a cache that was never saved.
       - name: Cache wp-env sources
         uses: actions/cache@v4
         with:
-          path: ~/.wp-env
+          path: ${{ env.WP_ENV_HOME }}
           key: ${{ runner.os }}-wp-env-${{ hashFiles('.wp-env.json', 'package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-wp-env-
@@ -141,17 +148,56 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
 
+      # --ignore-scripts skips the postinstall hook: `composer install` only
+      # pulls dev tooling (phpcs, phpstan, phpunit) the plugin does not load
+      # at runtime, and `patch-package` only patches wp-hookdoc for the docs
+      # build. Neither is needed to run the e2e suite.
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
 
-      - name: Build assets
-        run: npm run build
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
 
-      - name: Start wp-env
-        run: npm run env:start
+      # wp-env spends most of its time pulling Docker images and installing
+      # WordPress, none of which depends on the Node-side steps. Run it in the
+      # background while the browser install and asset build proceed, then
+      # wait for it. All of this has to live in one step because `wait` only
+      # sees children of the same shell. wp-env output goes to a file and is
+      # printed afterwards so the interleaved log stays readable.
+      - name: Start wp-env, install browsers, build assets
+        env:
+          PLAYWRIGHT_CACHE_HIT: ${{ steps.playwright-cache.outputs.cache-hit }}
+        run: |
+          npm run env:start > wp-env-start.log 2>&1 &
+          wp_env_pid=$!
+
+          if [ "$PLAYWRIGHT_CACHE_HIT" = "true" ]; then
+            # Browser binaries came from cache; only the apt packages they
+            # need are missing on a fresh runner.
+            npx playwright install-deps chromium
+          else
+            npx playwright install --with-deps chromium
+          fi
+
+          npm run build
+
+          echo "::group::wp-env start"
+          if wait "$wp_env_pid"; then
+            cat wp-env-start.log
+            echo "::endgroup::"
+          else
+            cat wp-env-start.log
+            echo "::endgroup::"
+            exit 1
+          fi
 
       - name: Run E2E tests
         env:
