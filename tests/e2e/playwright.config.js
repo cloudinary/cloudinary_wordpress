@@ -23,7 +23,14 @@ module.exports = defineConfig( {
 	reporter: process.env.CI ? [ [ 'github' ], [ 'list' ] ] : 'list',
 	forbidOnly: !! process.env.CI,
 	retries: process.env.CI ? 2 : 0,
-	workers: 1,
+	// Spec files are spread across workers; tests within one file still run
+	// in order (fullyParallel is off), which the delivery specs' shared
+	// beforeAll/afterAll state relies on. Specs tagged @serial mutate
+	// site-wide state (connection, plugin activation) and are run in a
+	// second, single-worker pass by `npm run test:e2e`; see package.json.
+	// Analytics specs are safe to run concurrently because tests/e2e/fixtures.js
+	// gives each worker its own analytics capture log.
+	workers: 3,
 	timeout: 60_000,
 	expect: {
 		timeout: 10_000,

@@ -37,7 +37,9 @@
     "postinstall": "patch-package && composer install",
     "readme": "composer readme",
     "prepare": "husky",
-    "test:e2e": "playwright test --config tests/e2e/playwright.config.js",
+    "test:e2e": "npm-run-all --silent test:e2e:parallel test:e2e:serial",
+    "test:e2e:parallel": "playwright test --config tests/e2e/playwright.config.js --grep-invert @serial",
+    "test:e2e:serial": "playwright test --config tests/e2e/playwright.config.js --grep @serial --workers=1",
     "test:e2e:debug": "playwright test --config tests/e2e/playwright.config.js --ui",
     "test:unit": "wp-env run tests-cli --env-cwd=\"wp-content/plugins/$(basename \"$PWD\")\" vendor/bin/phpunit"
   },
