@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-const { test, expect } = require( '@wordpress/e2e-test-utils-playwright' );
+const { test, expect } = require( './fixtures' );
 
 /**
  * Internal dependencies

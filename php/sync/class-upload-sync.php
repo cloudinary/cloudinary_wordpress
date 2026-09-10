@@ -338,9 +338,14 @@ class Upload_Sync {
 
 			// Check that this wasn't an existing.
 			if ( ! empty( $result['existing'] ) ) {
-				// If no public_id is recorded in WordPress, this asset in Cloudinary is from a
-				// failed previous upload. Overwrite it instead of creating a suffixed duplicate.
-				if ( empty( $suffix ) && ! $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true ) ) {
+				// A missing public_id in WordPress isn't enough on its own to prove the conflicting
+				// Cloudinary asset is an orphan of this attachment's own failed upload -- any never
+				// synced attachment also has no public_id. Only treat it as our own orphan, safe to
+				// overwrite, when the existing asset's file size also matches the local file.
+				if ( empty( $suffix )
+					&& ! $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true )
+					&& $this->is_matching_existing_asset( $attachment_id, $result )
+				) {
 					return $this->upload_asset( $attachment_id, $type, null, true );
 				}
 				// Add a suffix and try again.
@@ -380,6 +385,82 @@ class Upload_Sync {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Check whether a Cloudinary "existing" asset is likely this attachment's own local file.
+	 *
+	 * Used to tell apart an orphan left by this same attachment's previously interrupted upload
+	 * of the default (non "folder"/"cloud_name") sync type (safe to overwrite) from an unrelated
+	 * asset that happens to share the same derived public ID, e.g. WordPress reusing a filename
+	 * across months (must not be overwritten). Only called once a public_id is unrecorded, so in
+	 * practice this only ever runs for that default sync type; the other types always have one.
+	 *
+	 * @internal Reachable for testing; not intended to be called from outside this class.
+	 *
+	 * @param int   $attachment_id The attachment ID.
+	 * @param array $result        The Cloudinary upload result.
+	 *
+	 * @return bool
+	 */
+	public function is_matching_existing_asset( $attachment_id, $result ) {
+		if ( empty( $result['bytes'] ) ) {
+			Utils::log(
+				sprintf( 'Cloudinary upload result for attachment %d has no "bytes" field; treating as a non-matching asset.', $attachment_id ),
+				'upload-sync-existing-asset-check'
+			);
+
+			return false;
+		}
+		// Byte-identical content between two unrelated attachments isn't proof of ownership: the
+		// second overwrite would still clobber the first's context and advance its version. Only
+		// proceed if no other attachment already claims this public ID.
+		if ( ! $this->is_solely_linked_to( $attachment_id, empty( $result['public_id'] ) ? null : $result['public_id'] ) ) {
+			return false;
+		}
+		$file = $this->media->get_upload_file_path( $attachment_id );
+		if ( empty( $file ) || ! file_exists( $file ) ) {
+			return false;
+		}
+		if ( (int) filesize( $file ) !== (int) $result['bytes'] ) {
+			return false;
+		}
+		// Hashing a vip:// stream wrapper path pulls the whole object over the network; a failed
+		// read returns false rather than throwing, which would wrongly read as a mismatch. Bytes
+		// alone is the safer signal to rely on there.
+		if ( false !== strpos( $file, 'vip://' ) ) {
+			return true;
+		}
+
+		// Bytes alone can coincide between unrelated files; confirm with the content hash when available.
+		return empty( $result['etag'] ) || md5_file( $file ) === $result['etag'];
+	}
+
+	/**
+	 * Check that no other attachment is already tracked as linked to a public ID.
+	 *
+	 * Mirrors the ownership guard Delete_Sync::delete_asset() uses before destroying an asset.
+	 *
+	 * @param int         $attachment_id The attachment ID.
+	 * @param string|null $public_id     The public ID to check.
+	 *
+	 * @return bool
+	 */
+	protected function is_solely_linked_to( $attachment_id, $public_id ) {
+		if ( empty( $public_id ) ) {
+			return false;
+		}
+		$linked = $this->media->get_linked_attachments( $public_id );
+		if ( count( $linked ) > 1 ) {
+			// More than one attachment already shares this public ID.
+			return false;
+		}
+		if ( 1 === count( $linked ) && (int) $attachment_id !== (int) $linked[0] ) {
+			// Exactly one other attachment is already linked to it.
+			return false;
+		}
+
+		return true;
 	}
 
 	/**

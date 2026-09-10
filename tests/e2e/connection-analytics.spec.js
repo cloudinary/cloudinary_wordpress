@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-const { test, expect } = require( '@wordpress/e2e-test-utils-playwright' );
+const { test, expect } = require( './fixtures' );
 
 /**
  * Internal dependencies
@@ -29,7 +29,9 @@ const SEL = {
 	tab4: '#tab-4',
 };
 
-test.describe( 'Connection management analytics', () => {
+// @serial: resets and empties `cloudinary_connect`, disconnecting the plugin
+// for every other spec that happens to be running at the same time.
+test.describe( 'Connection management analytics', { tag: '@serial' }, () => {
 	test.beforeEach( async ( { context } ) => {
 		resetCloudinaryConnection();
 		clearAnalyticsEvents();

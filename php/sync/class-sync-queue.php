@@ -117,6 +117,20 @@ class Sync_Queue {
 	protected $autosync_threads = array();
 
 	/**
+	 * The total number of assets `build_queue()` last enqueued.
+	 *
+	 * Captured synchronously as the queue is built, rather than re-read from
+	 * the `_cloudinary_sync_queue` option afterwards: `start_queue()` starts
+	 * background threads right after building the queue, and a thread that
+	 * finishes (or errors out) fast enough can call `stop_queue()` -- which
+	 * deletes that option -- before the original request gets a chance to
+	 * read it back.
+	 *
+	 * @var int
+	 */
+	protected $last_built_total = 0;
+
+	/**
 	 * Upload_Queue constructor.
 	 *
 	 * @param \Cloudinary\Plugin $plugin The plugin.
@@ -449,6 +463,15 @@ class Sync_Queue {
 	}
 
 	/**
+	 * Get the total number of assets `build_queue()` last enqueued.
+	 *
+	 * @return int
+	 */
+	public function get_last_built_total() {
+		return $this->last_built_total;
+	}
+
+	/**
 	 * Get a set of pending items.
 	 *
 	 * @param string $thread The thread ID.
@@ -630,6 +653,8 @@ class Sync_Queue {
 	 */
 	public function build_queue() {
 
+		$this->last_built_total = 0;
+
 		$args = array(
 			'post_type'           => 'attachment',
 			'post_mime_type'      => array(),
@@ -704,11 +729,12 @@ class Sync_Queue {
 			$query = new \WP_Query( $args );
 		} while ( $query->have_posts() );
 
-		$threads          = $this->add_to_queue( $ids );
-		$queue            = array();
-		$queue['total']   = array_sum( $threads );
-		$queue['threads'] = array_keys( $threads );
-		$queue['started'] = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
+		$threads                = $this->add_to_queue( $ids );
+		$queue                  = array();
+		$queue['total']         = array_sum( $threads );
+		$queue['threads']       = array_keys( $threads );
+		$queue['started']       = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp.Requested
+		$this->last_built_total = $queue['total'];
 		wp_cache_delete( self::$queue_enabled, 'options' );
 		$queue['running'] = get_option( self::$queue_enabled );
 		// Set the queue option.

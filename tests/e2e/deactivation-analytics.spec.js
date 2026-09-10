@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-const { test, expect } = require( '@wordpress/e2e-test-utils-playwright' );
+const { test, expect } = require( './fixtures' );
 
 /**
  * Internal dependencies
@@ -29,7 +29,9 @@ const SEL = {
 		`.cloudinary-deactivation input[name="option"][value="${ id }"]`,
 };
 
-test.describe( 'Deactivation analytics', () => {
+// @serial: deactivates and fully uninstalls the plugin (dropping its tables
+// and options); no other spec can run while that is in flight.
+test.describe( 'Deactivation analytics', { tag: '@serial' }, () => {
 	test.beforeEach( async () => {
 		// Fake a connected state (no live Cloudinary credentials required)
 		// so the connected/reason-picker modal — rather than the

@@ -177,7 +177,7 @@ class Cache_Point {
 		if ( self::POST_TYPE_SLUG === get_post_type( $object_id ) ) {
 			$check = false;
 			$meta  = $this->get_meta_cache( $object_id );
-			if ( isset( $meta[ $meta_key ] ) && $meta[ $meta_key ] === $meta_value || is_null( $meta_value ) ) {
+			if ( ( isset( $meta[ $meta_key ] ) && $meta[ $meta_key ] === $meta_value ) || is_null( $meta_value ) ) {
 				unset( $meta[ $meta_key ] );
 				$check = $this->set_meta_cache( $object_id, $meta );
 			}

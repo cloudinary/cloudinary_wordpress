@@ -7,15 +7,17 @@
     "ext-json": "*"
   },
   "require-dev": {
-    "dealerdirect/phpcodesniffer-composer-installer": "^0.7.0",
-    "phpcompatibility/phpcompatibility-wp": "dev-master",
-    "phpcompatibility/php-compatibility": "dev-develop as 9.99.99",
+    "dealerdirect/phpcodesniffer-composer-installer": "^1.2.1",
+    "phpcompatibility/phpcompatibility-wp": "^2.1.8",
+    "phpcompatibility/php-compatibility": "^9.3.5",
     "automattic/vipwpcs": "^3.0",
     "wp-coding-standards/wpcs": "^3.0",
     "phpstan/phpstan": "^2.0",
     "szepeviktor/phpstan-wordpress": "^2.0",
     "php-stubs/wp-cli-stubs": "^2.10",
-    "php-stubs/woocommerce-stubs": "^9.0"
+    "php-stubs/woocommerce-stubs": "^11.0",
+    "phpunit/phpunit": "^9.6@stable",
+    "yoast/phpunit-polyfills": "^4.0@stable"
   },
   "config": {
     "platform": {
@@ -34,7 +36,11 @@
     ],
     "phpstan": [
       "phpstan analyse --memory-limit=-1"
+    ],
+    "test": [
+      "phpunit"
     ]
   },
-  "minimum-stability": "dev"
+  "minimum-stability": "dev",
+  "prefer-stable": true
 }

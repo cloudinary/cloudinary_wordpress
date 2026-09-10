@@ -57,6 +57,22 @@ function getCliContainer() {
 }
 
 /**
+ * `docker exec` flags that forward the per-worker e2e marker (set by
+ * `tests/e2e/fixtures.js`) into the container, so the analytics-capture
+ * mu-plugin's WP-CLI command reads and clears this worker's own log rather
+ * than a log shared with the other parallel workers.
+ *
+ * @return {string[]} Zero or more `-e KEY=VALUE` arguments.
+ */
+function workerEnvFlags() {
+	const marker = process.env.CLD_E2E_WORKER;
+	if ( ! marker || ! /^[A-Za-z0-9_-]+$/.test( marker ) ) {
+		return [];
+	}
+	return [ '-e', `CLD_E2E_WORKER=${ marker }` ];
+}
+
+/**
  * Run a WP-CLI command inside the wp-env cli container.
  *
  * @param {string[]} args wp-cli arguments after the leading `wp`.
@@ -67,6 +83,7 @@ function wpCli( args ) {
 	const cmd = [
 		'docker',
 		'exec',
+		...workerEnvFlags(),
 		container,
 		'wp',
 		...args,
@@ -112,7 +129,16 @@ function wpEvalFile( phpCode ) {
 			stdio: [ 'ignore', 'pipe', 'pipe' ],
 		} );
 		return execSync(
-			`docker exec ${ container } wp eval-file ${ remotePath } --allow-root`,
+			[
+				'docker',
+				'exec',
+				...workerEnvFlags(),
+				container,
+				'wp',
+				'eval-file',
+				remotePath,
+				'--allow-root',
+			].join( ' ' ),
 			{ encoding: 'utf8', stdio: [ 'ignore', 'pipe', 'pipe' ] }
 		).trim();
 	} finally {

@@ -4,7 +4,7 @@
 const fs = require( 'fs' );
 const path = require( 'path' );
 const { execSync } = require( 'child_process' );
-const { test, expect } = require( '@wordpress/e2e-test-utils-playwright' );
+const { test, expect } = require( './fixtures' );
 
 /**
  * Internal dependencies
@@ -85,7 +85,9 @@ function setVideoPlayer( value ) {
 	} );
 }
 
-test.describe( 'Cloudinary video delivery', () => {
+// @serial: needs real credentials in `cloudinary_connect` for `wp cloudinary
+// sync`, while every analytics spec overwrites that option with fake ones.
+test.describe( 'Cloudinary video delivery', { tag: '@serial' }, () => {
 	test.beforeAll( () => {
 		( { cloudName } = ensureCloudinaryConnected() );
 	} );
