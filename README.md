@@ -37,8 +37,8 @@ Stay tuned for updates, tips and tutorials: [Blog](https://cloudinary.com/blog),
 
 ### Prerequisites
 
--   [Node.js](https://nodejs.org/) v16+ (see `.nvmrc`)
--   [npm](https://www.npmjs.com/) v6.9+
+-   [Node.js](https://nodejs.org/) v22+ (see `.nvmrc`)
+-   [npm](https://www.npmjs.com/) v10+
 -   [Composer](https://getcomposer.org/)
 -   [Docker](https://www.docker.com/) (required for the WordPress local environment via `wp-env`)
 

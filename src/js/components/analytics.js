@@ -51,7 +51,7 @@ const Analytics = {
 
 		try {
 			apiFetch( {
-				path: this.config.endpoint,
+				url: this.config.endpoint,
 				method: 'POST',
 				data: {
 					event_name: eventName,

@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-const { test, expect } = require( '@wordpress/e2e-test-utils-playwright' );
+const { test, expect } = require( './fixtures' );
 
 /**
  * Internal dependencies
@@ -53,8 +53,13 @@ test.describe( 'Non-media cache analytics', () => {
 		admin,
 		page,
 	} ) => {
-		createCachePoint();
+		// Load the admin page before creating the cache point. CACHE_POINT_PATH
+		// is not enabled in the cache settings, so an admin page load's
+		// Assets::activate_parents() treats an existing parent for it as
+		// disabled and deletes it. Creating the parent afterwards means the
+		// REST call below still finds it.
 		await admin.visitAdminPage( 'admin.php', 'page=cloudinary' );
+		createCachePoint();
 		const { restBase, nonce } = await getRestContext( page );
 
 		const response = await page.request.post( `${ restBase }/show_cache`, {
@@ -119,8 +124,24 @@ test.describe( 'Non-media cache analytics', () => {
 		// rather than relying on a subsequent admin page load's side effect
 		// (`Assets::update_asset_paths()`) to materialize it, which is a
 		// timing-sensitive path that has flaked under CI load.
+		//
+		// Also remove any leftover parent for CACHE_POINT_PATH (created by
+		// earlier tests in this file) and release the asset lock. That path
+		// is not enabled in settings, so the admin page load below would
+		// otherwise purge it via Assets::activate_parents() ->
+		// purge_parent() -> lock_assets(), a 10s transient nothing clears.
+		// While locked, get_assets_settings() returns nothing, no parent is
+		// activated, and rest_purge_all() never reaches the tracked branch.
+		// With sub-second page loads this test lands inside that window.
 		const realCachePoint = 'wp-content/uploads/';
 		wpEvalFile( `
+			$assets = get_plugin_instance()->get_component( 'assets' );
+			$stale  = $assets->get_asset_parent( '${ CACHE_POINT_PATH }' );
+			if ( $stale instanceof \\WP_Post ) {
+				wp_delete_post( $stale->ID, true );
+			}
+			$assets->unlock_assets();
+
 			$admin  = get_plugin_instance()->get_component( 'admin' );
 			$method = new \\ReflectionMethod( $admin, 'save_settings' );
 			$method->setAccessible( true );

@@ -319,7 +319,7 @@ class Cron {
 
 			// Default is on. So if it has not been set, default applies.
 			$slug = sanitize_title( $name );
-			if ( $this->locker->has_lock_file( $name ) || isset( $tasks[ $slug ] ) && 'off' === $tasks[ $slug ] ) {
+			if ( $this->locker->has_lock_file( $name ) || ( isset( $tasks[ $slug ] ) && 'off' === $tasks[ $slug ] ) ) {
 				continue;
 			}
 
