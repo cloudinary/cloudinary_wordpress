@@ -125,15 +125,18 @@ jobs:
       # The wp-env sources directory is deliberately not cached. A restored
       # ~/.wp-env carries the previous run's install state, which skipped the
       # plugin's activation hook and left the relationships table missing.
+      # .wp-env.ci.json omits the HTTPS URLs and the proxy lifecycle script
+      # that .wp-env.json uses for local development. Runners have no local CA
+      # and no proxy container, so they serve the site over plain HTTP.
       - name: Start wp-env
-        run: wp-env start
+        run: wp-env start --config .wp-env.ci.json
 
       - name: Run unit tests
-        run: wp-env run tests-cli --env-cwd="wp-content/plugins/$(basename "$PWD")" vendor/bin/phpunit
+        run: wp-env run tests-cli --config .wp-env.ci.json --env-cwd="wp-content/plugins/$(basename "$PWD")" vendor/bin/phpunit
 
       - name: Stop wp-env
         if: always()
-        run: wp-env stop
+        run: wp-env stop --config .wp-env.ci.json
 
   e2e:
     name: E2E (Playwright)
@@ -192,7 +195,7 @@ jobs:
         env:
           PLAYWRIGHT_CACHE_HIT: ${{ steps.playwright-cache.outputs.cache-hit }}
         run: |
-          npm run env:start > wp-env-start.log 2>&1 &
+          npx wp-env start --config .wp-env.ci.json > wp-env-start.log 2>&1 &
           wp_env_pid=$!
 
           if [ "$PLAYWRIGHT_CACHE_HIT" = "true" ]; then
@@ -215,14 +218,18 @@ jobs:
             exit 1
           fi
 
+      # Runners have no local CA and no HTTPS proxy, so the suite talks to
+      # wp-env's published port directly over plain HTTP. WP_BASE_URL is the
+      # single switch for this; see tests/e2e/playwright.config.js.
       - name: Run E2E tests
         env:
           CLOUDINARY_E2E_URL: ${{ secrets.CLOUDINARY_E2E_URL }}
+          WP_BASE_URL: http://localhost:8889
         run: npm run test:e2e
 
       - name: Stop wp-env
         if: always()
-        run: npm run env:stop
+        run: npx wp-env stop --config .wp-env.ci.json
 
       - name: Upload Playwright artifacts
         if: failure()
