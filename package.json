@@ -70,7 +70,7 @@
     "tippy.js": "^6.3.1"
   },
   "devDependencies": {
-    "@playwright/test": "^1.59.1",
+    "@playwright/test": "^1.63.0",
     "@typescript-eslint/eslint-plugin": "^8.46.3",
     "@wordpress/api-fetch": "^7.54.0",
     "@wordpress/block-editor": "^17.0.0",
