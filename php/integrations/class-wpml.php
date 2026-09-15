@@ -202,29 +202,10 @@ class WPML extends Integrations {
 	 * Rebuild the REST URL so it carries the current language correctly in every WPML
 	 * negotiation mode.
 	 *
-	 * WPML hooks WordPress's `home_url` filter to inject the browsing language into every
-	 * generated URL. Since `rest_url()` applies that filter to the REST base before the
-	 * endpoint path is appended, a non-default language corrupts the URL, e.g.
-	 * `/wp-json/?lang=fr/cloudinary/v1/queue` instead of `/wp-json/cloudinary/v1/queue`.
-	 * This silently breaks the background sync loopback request: it "succeeds" by hitting
-	 * the REST index instead of the intended route, so queued assets never finish syncing.
-	 *
-	 * First, `WPML_URL_Filters::remove_global_hooks()`/`add_global_hooks()` (WPML's own
-	 * supported way of getting a clean, language-unfiltered URL, also used by WPML's Google
-	 * Site Kit and canonical-URL compatibility code) strips that `home_url` mangling.
-	 *
-	 * That alone is only enough in directory/domain negotiation mode, where WPML separately
-	 * hooks core's `rest_url` filter directly (`WPML_URL_Converter_Subdir_Strategy`/
-	 * `_Domain_Strategy`) to re-insert the language after the full URL is built - a hook
-	 * `remove_global_hooks()` doesn't touch. In "language as a parameter" mode, nothing does
-	 * that (`WPML_Lang_Parameter_Filters` only hooks `request`/`get_pagenum_link`/
-	 * `wp_link_pages_link`), so the clean URL would be missing `?lang=` entirely - not just for
-	 * this loopback request, but for every browser-facing endpoint built via `Utils::rest_url()`
-	 * (asset fetch/save, cache purge, analytics, UI state), silently running them under the
-	 * default language's context instead. Re-applying the language via `wpml_permalink` -
-	 * WPML's documented public filter, routing to `WPML_URL_Converter::convert_url()` - fixes
-	 * that: it's a no-op when the URL already carries the right language (directory/domain
-	 * mode), and appends `?lang=` correctly when it doesn't (parameter mode).
+	 * WPML's `home_url` filter corrupts REST URLs for a non-default language (e.g.
+	 * `/wp-json/?lang=fr/cloudinary/v1/queue`), so `remove_global_hooks()` strips it before
+	 * rebuilding the URL, then `wpml_permalink` re-applies the language correctly - a no-op in
+	 * directory/domain mode, and required in parameter mode, which has no other way to do it.
 	 *
 	 * @param string      $rest_url The REST url, already corrupted by WPML's `home_url` filter.
 	 * @param string      $path     The REST path that was requested.
