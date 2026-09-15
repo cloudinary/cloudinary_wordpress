@@ -64,6 +64,7 @@ class WPML extends Integrations {
 		add_filter( 'cloudinary_media_context_query', array( $this, 'filter_media_context_query' ) );
 		add_filter( 'cloudinary_media_context_things', array( $this, 'filter_media_context_things' ) );
 		add_filter( 'cloudinary_home_url', array( $this, 'home_url' ) );
+		add_filter( 'cloudinary_rest_url', array( $this, 'rest_url' ), 10, 3 );
 		add_action( 'cloudinary_edit_asset_permalink', array( $this, 'add_locale' ) );
 		add_filter( 'cloudinary_contextualized_post_id', array( $this, 'contextualized_post_id' ) );
 		add_filter( 'wpml_admin_language_switcher_items', array( $this, 'language_switcher_items' ) );
@@ -195,6 +196,39 @@ class WPML extends Integrations {
 	 */
 	public function home_url() {
 		return get_option( 'home' );
+	}
+
+	/**
+	 * Rebuild the REST URL with WPML's URL-language filtering removed.
+	 *
+	 * WPML hooks WordPress's `home_url` filter to inject the browsing language into every
+	 * generated URL. Since `rest_url()` applies that filter to the REST base before the
+	 * endpoint path is appended, a non-default language corrupts the URL, e.g.
+	 * `/wp-json/?lang=fr/cloudinary/v1/queue` instead of `/wp-json/cloudinary/v1/queue`.
+	 * This silently breaks the background sync loopback request: it "succeeds" by hitting
+	 * the REST index instead of the intended route, so queued assets never finish syncing.
+	 *
+	 * `WPML_URL_Filters::remove_global_hooks()`/`add_global_hooks()` is WPML's own supported
+	 * way of getting a clean, language-unfiltered URL (used by WPML's own Google Site Kit and
+	 * canonical-URL compatibility code for the same reason).
+	 *
+	 * @param string      $rest_url The REST url, already corrupted by WPML's `home_url` filter.
+	 * @param string      $path     The REST path that was requested.
+	 * @param string|null $scheme   The scheme used for the REST url.
+	 *
+	 * @return string
+	 */
+	public function rest_url( $rest_url, $path, $scheme ) {
+		if ( ! class_exists( 'WPML_URL_Filters' ) || ! function_exists( 'WPML\Container\make' ) ) {
+			return $rest_url;
+		}
+
+		$url_filters = make( 'WPML_URL_Filters' );
+		$url_filters->remove_global_hooks();
+		$rest_url = rest_url( $path, $scheme );
+		$url_filters->add_global_hooks();
+
+		return $rest_url;
 	}
 
 	/**
