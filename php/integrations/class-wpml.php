@@ -64,6 +64,7 @@ class WPML extends Integrations {
 		add_filter( 'cloudinary_media_context_query', array( $this, 'filter_media_context_query' ) );
 		add_filter( 'cloudinary_media_context_things', array( $this, 'filter_media_context_things' ) );
 		add_filter( 'cloudinary_home_url', array( $this, 'home_url' ) );
+		add_filter( 'cloudinary_rest_url', array( $this, 'rest_url' ), 10, 3 );
 		add_action( 'cloudinary_edit_asset_permalink', array( $this, 'add_locale' ) );
 		add_filter( 'cloudinary_contextualized_post_id', array( $this, 'contextualized_post_id' ) );
 		add_filter( 'wpml_admin_language_switcher_items', array( $this, 'language_switcher_items' ) );
@@ -195,6 +196,41 @@ class WPML extends Integrations {
 	 */
 	public function home_url() {
 		return get_option( 'home' );
+	}
+
+	/**
+	 * Rebuild the REST URL so it carries the current language correctly in every WPML
+	 * negotiation mode.
+	 *
+	 * WPML's `home_url` filter corrupts REST URLs for a non-default language (e.g.
+	 * `/wp-json/?lang=fr/cloudinary/v1/queue`), so `remove_global_hooks()` strips it before
+	 * rebuilding the URL, then `wpml_permalink` re-applies the language correctly - a no-op in
+	 * directory/domain mode, and required in parameter mode, which has no other way to do it.
+	 *
+	 * @param string      $rest_url The REST url, already corrupted by WPML's `home_url` filter.
+	 * @param string      $path     The REST path that was requested.
+	 * @param string|null $scheme   The scheme used for the REST url.
+	 *
+	 * @return string
+	 */
+	public function rest_url( $rest_url, $path, $scheme ) {
+		if ( ! class_exists( 'WPML_URL_Filters' ) || ! function_exists( 'WPML\Container\make' ) ) {
+			return $rest_url;
+		}
+
+		$url_filters = make( 'WPML_URL_Filters' );
+		if ( ! method_exists( $url_filters, 'remove_global_hooks' ) || ! method_exists( $url_filters, 'add_global_hooks' ) ) {
+			return $rest_url;
+		}
+
+		$url_filters->remove_global_hooks();
+		try {
+			$clean_rest_url = rest_url( $path, $scheme );
+		} finally {
+			$url_filters->add_global_hooks();
+		}
+
+		return apply_filters( 'wpml_permalink', $clean_rest_url, apply_filters( 'wpml_current_language', null ) );
 	}
 
 	/**
