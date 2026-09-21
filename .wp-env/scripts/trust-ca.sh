@@ -27,11 +27,9 @@ if [ ! -f "$CA_FILE" ]; then
 	exit 0
 fi
 
-# The wp-env containers. The CLI containers are included so WP-CLI commands and
-# the PHPUnit suite reach the site over HTTPS too.
-CONTAINER_PATTERNS='wordpress-1$|cli-1$'
-
-CONTAINERS=$(docker ps --format '{{.Names}}' | grep -E "$CONTAINER_PATTERNS" || true)
+# This project's WordPress and CLI containers. The CLI containers are included
+# so WP-CLI commands and the PHPUnit suite reach the site over HTTPS too.
+CONTAINERS=$(wp_env_containers)
 
 if [ -z "$CONTAINERS" ]; then
 	echo "Warning: no wp-env containers found. Loopback trust setup skipped."
@@ -51,10 +49,22 @@ for container in $CONTAINERS; do
 
 	# Replace any previous entry so a changed gateway address cannot leave a
 	# stale line behind, then append the current one.
-	docker exec --user root "$container" bash -c "
-		sed -i '/$DEV_HOST/d; /$TESTS_HOST/d' /etc/hosts
-		echo '$gateway $DEV_HOST $TESTS_HOST' >> /etc/hosts
-	" 2>/dev/null || echo "Warning: could not update /etc/hosts in $container."
+	#
+	# Docker bind-mounts /etc/hosts, so `sed -i` fails with "Device or resource
+	# busy": it works by renaming a temporary file over the target. Filter into
+	# a temporary file and copy the contents back instead, which writes through
+	# the existing inode. Errors are surfaced rather than discarded, because a
+	# silent failure here leaves a stale address behind and breaks loopback in a
+	# way that is hard to trace back to this script.
+	if ! docker exec --user root "$container" bash -c "
+		set -e
+		grep -v -e '$DEV_HOST' -e '$TESTS_HOST' /etc/hosts > /tmp/hosts.new
+		echo '$gateway $DEV_HOST $TESTS_HOST' >> /tmp/hosts.new
+		cat /tmp/hosts.new > /etc/hosts
+		rm -f /tmp/hosts.new
+	"; then
+		echo "Warning: could not update /etc/hosts in $container."
+	fi
 
 	# update-ca-certificates rebuilds the bundle that both PHP and curl read.
 	docker cp "$CA_FILE" "$container:/usr/local/share/ca-certificates/mkcert-root-ca.crt" >/dev/null 2>&1 || {
