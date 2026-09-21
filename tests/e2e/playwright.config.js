@@ -37,8 +37,9 @@ process.env.WP_BASE_URL = BASE_URL;
 // CA bundle and ignores the keychain.
 //
 // NODE_EXTRA_CA_CERTS is read once when Node starts, so it cannot be set from
-// here; the test:e2e npm scripts export it instead. Fail loudly rather than let
-// the run die later inside globalSetup with an opaque TLS error.
+// here; .wp-env/scripts/run-e2e.sh exports it before launching Playwright.
+// Fail loudly rather than let the run die later inside globalSetup with an
+// opaque TLS error.
 const LOCAL_CA_PATH = path.join( process.cwd(), '.wp-env/certs/rootCA.pem' );
 
 if (

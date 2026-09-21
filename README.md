@@ -75,11 +75,7 @@ Stay tuned for updates, tips and tutorials: [Blog](https://cloudinary.com/blog),
     npm run env:start
     ```
 
-    This spins up a WordPress instance at [https://cloudinary.local.wpenv.net](https://cloudinary.local.wpenv.net) with the plugin activated and `WP_DEBUG` enabled, plus a tests instance at [https://tests.cloudinary.local.wpenv.net](https://tests.cloudinary.local.wpenv.net).
-
-    The site is served over HTTPS by an nginx proxy that `npm run env:start` brings up alongside wp-env. The environment runs over TLS by default because several code paths behave differently under HTTPS: `is_ssl()` decides the delivery URL scheme, auth cookies only get the `Secure` flag on HTTPS, and the admin enforces `FORCE_SSL_ADMIN`. Testing on plain HTTP hides those differences until production.
-
-    Loopback REST API self-requests are configured automatically, and they verify the certificate rather than skipping the check, so they exercise the same code path as production.
+    This spins up a WordPress instance at [https://cloudinary.local.wpenv.net](https://cloudinary.local.wpenv.net) with the plugin activated and `WP_DEBUG` enabled, plus a tests instance at [https://tests.cloudinary.local.wpenv.net](https://tests.cloudinary.local.wpenv.net). An nginx proxy serves both over HTTPS, so local behaviour matches production for `is_ssl()`, `Secure` cookies and loopback requests. No `/etc/hosts` entry is needed.
 
 5. **Trust the local certificate (first run only):**
 
@@ -87,9 +83,7 @@ Stay tuned for updates, tips and tutorials: [Blog](https://cloudinary.com/blog),
     npm run env:install-cert
     ```
 
-    This adds the locally generated certificate authority to your OS trust store, so the browser accepts `*.cloudinary.local.wpenv.net` without a warning. It asks for your password, because changing the system trust store requires it. The certificate and its CA are created on first `npm run env:start` and live in `.wp-env/certs/`, which is gitignored.
-
-    No `/etc/hosts` entry is needed: `local.wpenv.net` and all of its subdomains resolve to `127.0.0.1` over public DNS.
+    Adds the generated certificate authority to your OS trust store, so the browser accepts the site without a warning. It asks for your password. Certificates live in `.wp-env/certs/`, which is gitignored.
 
 6. **Build front-end assets:**
 
@@ -123,13 +117,13 @@ Stay tuned for updates, tips and tutorials: [Blog](https://cloudinary.com/blog),
 
 ### Troubleshooting the local environment
 
-**The browser warns that the certificate is not trusted.** Run `npm run env:install-cert`. If the warning persists, delete `.wp-env/certs/`, run `npm run env:start` to reissue the certificate, then trust it again.
+| Symptom | Fix |
+| ------- | --- |
+| Browser warns the certificate is untrusted | `npm run env:install-cert`. If it persists, delete `.wp-env/certs/`, run `npm run env:start`, then trust it again. |
+| Port 80 or 443 is in use | Another project holds it; the error names the container. Stop it, then `npm run env:proxy:up`. |
+| `Call to undefined function Cloudinary\get_plugin_instance()` | The plugin is inactive after switching between `.wp-env.json` and `.wp-env.ci.json`. Destroy and start again under the same config. |
 
-**`npm run env:start` reports that port 80 or 443 is in use.** Another local project holds the port. The message names the container or process. Stop it, then run `npm run env:proxy:up` to finish starting the proxy.
-
-**`wp-env stop` leaves the proxy running.** The proxy is a separate Docker Compose project, so wp-env does not manage it. `npm run env:stop` and `npm run env:destroy` stop it for you; `npm run env:proxy:down` does it on its own.
-
-**CI uses a different config.** GitHub runners have no certificate authority and no proxy, so the workflow passes `--config .wp-env.ci.json`, which is the same environment without the HTTPS URLs. Keep the shared values in both files in sync.
+CI runs over plain HTTP via `--config .wp-env.ci.json`, because runners have no certificate authority. Keep the shared values in both config files in sync.
 
 ### Create a Plugin Release Package
 
@@ -171,9 +165,7 @@ npm run env:install-cert
 npm run test:e2e
 ```
 
-The suite runs against the HTTPS tests site at `https://tests.cloudinary.local.wpenv.net`. Certificates are verified rather than ignored, so a broken certificate fails the run instead of passing silently. Always start the suite through the npm scripts: they set `NODE_EXTRA_CA_CERTS`, which Playwright's Node-side request client needs because it does not read the OS trust store.
-
-To run against a different site, set `WP_BASE_URL`. CI uses this to run over plain HTTP, because GitHub runners have no local certificate authority:
+The suite runs against the HTTPS tests site. Start it through the npm scripts, which point Node at the local certificate authority. Override the target with `WP_BASE_URL`:
 
 ```bash
 WP_BASE_URL=http://localhost:8889 npm run test:e2e

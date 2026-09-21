@@ -41,9 +41,9 @@
     "readme": "composer readme",
     "prepare": "husky",
     "test:e2e": "npm-run-all --silent test:e2e:parallel test:e2e:serial",
-    "test:e2e:parallel": "NODE_EXTRA_CA_CERTS=./.wp-env/certs/rootCA.pem playwright test --config tests/e2e/playwright.config.js --grep-invert @serial",
-    "test:e2e:serial": "NODE_EXTRA_CA_CERTS=./.wp-env/certs/rootCA.pem playwright test --config tests/e2e/playwright.config.js --grep @serial --workers=1",
-    "test:e2e:debug": "NODE_EXTRA_CA_CERTS=./.wp-env/certs/rootCA.pem playwright test --config tests/e2e/playwright.config.js --ui",
+    "test:e2e:parallel": "./.wp-env/scripts/run-e2e.sh --grep-invert @serial",
+    "test:e2e:serial": "./.wp-env/scripts/run-e2e.sh --grep @serial --workers=1",
+    "test:e2e:debug": "./.wp-env/scripts/run-e2e.sh --ui",
     "test:unit": "wp-env run tests-cli --env-cwd=\"wp-content/plugins/$(basename \"$PWD\")\" vendor/bin/phpunit"
   },
   "lint-staged": {
