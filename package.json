@@ -116,7 +116,7 @@
     "rtlcss-webpack-plugin": "^4.0.4",
     "taffydb": "^2.7.3",
     "terser-webpack-plugin": "^5.3.14",
-    "webpack": "^5.94.0",
+    "webpack": "^5.111.1",
     "webpack-cli": "^7.2.3",
     "wp-hookdoc": "^0.2.0"
   },
