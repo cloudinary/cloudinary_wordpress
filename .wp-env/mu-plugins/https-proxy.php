@@ -54,8 +54,12 @@ if (
  * cookie path. Stripping it here is the last chance to correct the value,
  * because the constants are already defined by the time mu-plugins load.
  *
- * Only ports wp-env itself publishes are removed, so a developer who
- * deliberately runs on a custom port keeps it.
+ * The port to remove is not hard-coded, because wp-env lets developers change
+ * it through WP_ENV_PORT or a "port" key in the config files. The origin is
+ * taken from WP_CONTENT_URL instead, which .wp-env.json defines as the intended
+ * public URL and which wp-env never rewrites. Any port on the incoming URL is
+ * then replaced with whatever that constant says, so a custom wp-env port is
+ * handled without this file knowing about it.
  *
  * This filter cannot fix asset URLs. wp_plugin_directory_constants() defines
  * WP_CONTENT_URL and WP_PLUGIN_URL from get_option( 'siteurl' ) at
@@ -65,14 +69,36 @@ if (
  * WP_HOME, WP_SITEURL and WP_TESTS_DOMAIN.
  *
  * @param string $url The home or site URL.
- * @return string The URL without the wp-env port.
+ * @return string The URL with the wp-env port replaced by the public origin.
  */
 function cld_strip_wp_env_port( $url ) {
-	if ( ! is_string( $url ) || 0 !== strpos( $url, 'https://' ) ) {
+	if ( ! is_string( $url ) || ! defined( 'WP_CONTENT_URL' ) ) {
 		return $url;
 	}
 
-	return preg_replace( '#^(https://[^/:]+):(?:8888|8889)#', '$1', $url );
+	$origin = wp_parse_url( WP_CONTENT_URL );
+
+	if ( empty( $origin['scheme'] ) || empty( $origin['host'] ) ) {
+		return $url;
+	}
+
+	$parts = wp_parse_url( $url );
+
+	// Only rewrite URLs that point at the same host, so an unrelated URL
+	// passing through these filters is left alone.
+	if ( empty( $parts['host'] ) || $parts['host'] !== $origin['host'] ) {
+		return $url;
+	}
+
+	$public = $origin['scheme'] . '://' . $origin['host'];
+
+	if ( ! empty( $origin['port'] ) ) {
+		$public .= ':' . $origin['port'];
+	}
+
+	$path = isset( $parts['path'] ) ? $parts['path'] : '';
+
+	return $public . $path;
 }
 
 add_filter( 'option_home', 'cld_strip_wp_env_port', 20 );
