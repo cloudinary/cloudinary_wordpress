@@ -1,0 +1,73 @@
+# TLS termination for the wp-env development and tests sites.
+#
+# The nginx image substitutes the ${...} placeholders from the container
+# environment at start up, via /docker-entrypoint.d/20-envsubst-on-templates.sh.
+# It only substitutes names that exist as environment variables, so nginx's own
+# runtime variables ($host, $remote_addr and friends) pass through untouched.
+
+# Media uploads are the point of this plugin, so do not cap them at nginx's
+# 1 MB default.
+client_max_body_size 1000m;
+
+# wp-env publishes its sites on the host, so the proxy reaches them through the
+# host gateway rather than by joining the wp-env Docker network. That network is
+# named after a hash of the config path and is recreated by `wp-env start`,
+# which would make a network-based link fragile.
+upstream development {
+	server host.docker.internal:${WP_ENV_PORT};
+}
+
+upstream tests {
+	server host.docker.internal:${WP_ENV_TESTS_PORT};
+}
+
+# Shared proxy headers. X-Forwarded-Proto is the important one: the mu-plugin at
+# .wp-env/mu-plugins/https-proxy.php reads it to make is_ssl() return true.
+proxy_set_header Host $host;
+proxy_set_header X-Real-IP $remote_addr;
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+proxy_set_header X-Forwarded-Proto https;
+proxy_set_header X-Forwarded-Host $host;
+proxy_set_header X-Forwarded-Port ${PROXY_HTTPS_PORT};
+
+# Long-running admin requests, such as bulk media sync, must not be cut off at
+# nginx's 60s default while the plugin talks to the Cloudinary API.
+proxy_read_timeout 300s;
+proxy_send_timeout 300s;
+
+server {
+	listen ${PROXY_HTTPS_PORT} ssl;
+	http2 on;
+	server_name ${DEV_HOST};
+
+	ssl_certificate /etc/nginx/certs/${DEV_HOST}.crt;
+	ssl_certificate_key /etc/nginx/certs/${DEV_HOST}.key;
+
+	location / {
+		proxy_pass http://development;
+	}
+}
+
+server {
+	listen ${PROXY_HTTPS_PORT} ssl;
+	http2 on;
+	server_name ${TESTS_HOST};
+
+	# The certificate covers *.cloudinary.local.wpenv.net, so the tests host
+	# shares it with the development host.
+	ssl_certificate /etc/nginx/certs/${DEV_HOST}.crt;
+	ssl_certificate_key /etc/nginx/certs/${DEV_HOST}.key;
+
+	location / {
+		proxy_pass http://tests;
+	}
+}
+
+# Redirect plain HTTP to HTTPS so a stray http:// link cannot silently bypass
+# the proxy and hide the edge cases this setup exists to surface.
+server {
+	listen ${PROXY_HTTP_PORT} default_server;
+	server_name _;
+
+	return 301 https://$host$request_uri;
+}

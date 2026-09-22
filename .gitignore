@@ -46,6 +46,9 @@ coverage/html/
 # wp-env personal overrides
 .wp-env.override.json
 
+# Locally generated TLS certificates and CA for the wp-env HTTPS proxy
+/.wp-env/certs/
+
 # IDE
 .vscode
 

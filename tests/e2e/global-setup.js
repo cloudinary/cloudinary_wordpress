@@ -26,7 +26,7 @@ module.exports = async function globalSetup( config ) {
 	fs.mkdirSync( path.dirname( storageStatePath ), { recursive: true } );
 
 	const requestContext = await request.newContext( {
-		baseURL: baseURL || 'http://localhost:8889',
+		baseURL: baseURL || 'https://tests.cloudinary.local.wpenv.net',
 	} );
 
 	const requestUtils = new RequestUtils( requestContext, {
