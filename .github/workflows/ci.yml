@@ -96,6 +96,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
+          cache: 'npm'
 
       - name: Cache Composer
         uses: actions/cache@v4
@@ -105,35 +106,40 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-composer-unit-
 
-      # This job only needs vendor/bin/phpunit (from Composer) and the wp-env
-      # CLI. A full `npm ci` pulls ~2,200 packages and has taken anywhere from
-      # 36s to 7 minutes on hosted runners; @wordpress/env alone is ~400
-      # packages and installs in ~30s. It is installed into a scratch prefix
-      # outside the repo so npm does not reconcile against package-lock.json
-      # and pull the whole tree anyway. The version is read from the lockfile
-      # so it cannot drift from what developers run locally.
-      - name: Install Composer dependencies
-        run: composer install --no-interaction --no-progress
-
-      - name: Install wp-env
-        run: |
-          version=$(node -p "require('./package-lock.json').packages['node_modules/@wordpress/env'].version")
-          echo "Installing @wordpress/env@$version"
-          npm install --prefix "$RUNNER_TEMP/wp-env" --no-audit --no-fund "@wordpress/env@$version"
-          echo "$RUNNER_TEMP/wp-env/node_modules/.bin" >> "$GITHUB_PATH"
+      # This job only needs vendor/bin/phpunit and the wp-env CLI, so it used to
+      # install @wordpress/env on its own into a scratch prefix rather than run
+      # a full `npm ci`. That install resolved dependency ranges fresh against
+      # npm instead of obeying package-lock.json, which made the job depend on
+      # whatever upstream had published that day: a broken @wp-playground/cli
+      # release, pulled in transitively by @wordpress/env, failed every run
+      # while the lockfile-based jobs were unaffected.
+      #
+      # `npm ci` installs the locked tree, so the job can no longer break
+      # because of a third-party release. The postinstall hook runs
+      # `patch-package && composer install`, which is what provides
+      # vendor/bin/phpunit, so this single step covers both toolchains.
+      #
+      # Deliberately not `--ignore-scripts`, for the same reason as the e2e
+      # job below: besides skipping the Composer install, that flag made this
+      # step take 1m30s instead of ~36s from a cold cache.
+      - name: Install dependencies
+        run: npm ci
 
       # The wp-env sources directory is deliberately not cached. A restored
       # ~/.wp-env carries the previous run's install state, which skipped the
       # plugin's activation hook and left the relationships table missing.
+      # .wp-env.ci.json omits the HTTPS URLs and the proxy lifecycle script
+      # that .wp-env.json uses for local development. Runners have no local CA
+      # and no proxy container, so they serve the site over plain HTTP.
       - name: Start wp-env
-        run: wp-env start
+        run: npx wp-env start --config .wp-env.ci.json
 
       - name: Run unit tests
-        run: wp-env run tests-cli --env-cwd="wp-content/plugins/$(basename "$PWD")" vendor/bin/phpunit
+        run: npx wp-env run tests-cli --config .wp-env.ci.json --env-cwd="wp-content/plugins/$(basename "$PWD")" vendor/bin/phpunit
 
       - name: Stop wp-env
         if: always()
-        run: wp-env stop
+        run: npx wp-env stop --config .wp-env.ci.json
 
   e2e:
     name: E2E (Playwright)
@@ -192,7 +198,7 @@ jobs:
         env:
           PLAYWRIGHT_CACHE_HIT: ${{ steps.playwright-cache.outputs.cache-hit }}
         run: |
-          npm run env:start > wp-env-start.log 2>&1 &
+          npx wp-env start --config .wp-env.ci.json > wp-env-start.log 2>&1 &
           wp_env_pid=$!
 
           if [ "$PLAYWRIGHT_CACHE_HIT" = "true" ]; then
@@ -215,14 +221,18 @@ jobs:
             exit 1
           fi
 
+      # Runners have no local CA and no HTTPS proxy, so the suite talks to
+      # wp-env's published port directly over plain HTTP. WP_BASE_URL is the
+      # single switch for this; see tests/e2e/playwright.config.js.
       - name: Run E2E tests
         env:
           CLOUDINARY_E2E_URL: ${{ secrets.CLOUDINARY_E2E_URL }}
+          WP_BASE_URL: http://localhost:8889
         run: npm run test:e2e
 
       - name: Stop wp-env
         if: always()
-        run: npm run env:stop
+        run: npx wp-env stop --config .wp-env.ci.json
 
       - name: Upload Playwright artifacts
         if: failure()

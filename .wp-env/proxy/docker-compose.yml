@@ -1,0 +1,45 @@
+# TLS proxy in front of the wp-env environment.
+#
+# Started and stopped by ../scripts/proxy-up.sh and ../scripts/proxy-down.sh,
+# which export the variables used below from ../scripts/config.sh. This is a
+# separate compose project from wp-env's own, so `wp-env destroy` cannot remove
+# it and `wp-env start` cannot overwrite it.
+
+services:
+  # Builds mkcert and issues the certificate, then exits. The proxy waits for a
+  # successful exit so it never starts without a certificate on disk.
+  mkcert:
+    build: ../docker/mkcert
+    volumes:
+      - ../certs:/root/.local/share/mkcert
+    # The working directory is the mounted certificate directory, so both the
+    # CA and the issued pair land in .wp-env/certs/. The wildcard covers the
+    # tests host name.
+    command:
+      - sh
+      - -c
+      - test -f "$$DEV_HOST.crt" || mkcert -cert-file "$$DEV_HOST.crt" -key-file "$$DEV_HOST.key" "$$DEV_HOST" "*.$$DEV_HOST"
+    environment:
+      DEV_HOST: ${DEV_HOST}
+
+  proxy:
+    image: nginx:1.29-alpine
+    depends_on:
+      mkcert:
+        condition: service_completed_successfully
+    ports:
+      - '${PROXY_HTTP_PORT}:${PROXY_HTTP_PORT}'
+      - '${PROXY_HTTPS_PORT}:${PROXY_HTTPS_PORT}'
+    volumes:
+      - ../certs:/etc/nginx/certs:ro
+      - ./nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+    environment:
+      DEV_HOST: ${DEV_HOST}
+      TESTS_HOST: ${TESTS_HOST}
+      PROXY_HTTP_PORT: ${PROXY_HTTP_PORT}
+      PROXY_HTTPS_PORT: ${PROXY_HTTPS_PORT}
+      WP_ENV_PORT: ${WP_ENV_PORT}
+      WP_ENV_TESTS_PORT: ${WP_ENV_TESTS_PORT}
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    restart: unless-stopped
