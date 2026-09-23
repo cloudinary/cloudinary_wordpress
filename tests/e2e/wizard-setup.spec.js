@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-const { test, expect } = require( '@wordpress/e2e-test-utils-playwright' );
+const { test, expect } = require( './fixtures' );
 
 /**
  * Internal dependencies
@@ -29,7 +29,9 @@ const SEL = {
 	wizardWrap: '.cld-wizard',
 };
 
-test.describe( 'Cloudinary wizard setup', () => {
+// @serial: wipes `cloudinary_connect` in beforeEach and re-connects with real
+// credentials, which would break any parallel spec relying on a connection.
+test.describe( 'Cloudinary wizard setup', { tag: '@serial' }, () => {
 	test.beforeEach( async ( { context } ) => {
 		// Clear server-side state via WP-CLI.
 		resetCloudinaryConnection();

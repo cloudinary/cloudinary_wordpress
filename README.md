@@ -37,10 +37,11 @@ Stay tuned for updates, tips and tutorials: [Blog](https://cloudinary.com/blog),
 
 ### Prerequisites
 
--   [Node.js](https://nodejs.org/) v16+ (see `.nvmrc`)
--   [npm](https://www.npmjs.com/) v6.9+
+-   [Node.js](https://nodejs.org/) v22+ (see `.nvmrc`)
+-   [npm](https://www.npmjs.com/) v10+
 -   [Composer](https://getcomposer.org/)
 -   [Docker](https://www.docker.com/) (required for the WordPress local environment via `wp-env`)
+-   [mkcert](https://github.com/FiloSottile/mkcert) (required once, to trust the local HTTPS certificate)
 
 ### Local Development Setup
 
@@ -74,9 +75,17 @@ Stay tuned for updates, tips and tutorials: [Blog](https://cloudinary.com/blog),
     npm run env:start
     ```
 
-    This spins up a WordPress instance at [http://localhost:8888](http://localhost:8888) with the plugin activated and `WP_DEBUG` enabled. A loopback fix is applied automatically so REST API self-requests work inside the container.
+    This spins up a WordPress instance at [https://cloudinary.local.wpenv.net](https://cloudinary.local.wpenv.net) with the plugin activated and `WP_DEBUG` enabled, plus a tests instance at [https://tests.cloudinary.local.wpenv.net](https://tests.cloudinary.local.wpenv.net). An nginx proxy serves both over HTTPS, so local behaviour matches production for `is_ssl()`, `Secure` cookies and loopback requests. No `/etc/hosts` entry is needed.
 
-5. **Build front-end assets:**
+5. **Trust the local certificate (first run only):**
+
+    ```bash
+    npm run env:install-cert
+    ```
+
+    Adds the generated certificate authority to your OS trust store, so the browser accepts the site without a warning. It asks for your password. Certificates live in `.wp-env/certs/`, which is gitignored.
+
+6. **Build front-end assets:**
 
     ```bash
     npm run build        # One-time production build
@@ -90,6 +99,9 @@ Stay tuned for updates, tips and tutorials: [Blog](https://cloudinary.com/blog),
 | `npm run env:start`    | Start the local WordPress environment    |
 | `npm run env:stop`     | Stop the local WordPress environment     |
 | `npm run env:destroy`  | Remove the local environment completely  |
+| `npm run env:install-cert` | Trust the local HTTPS certificate (once) |
+| `npm run env:proxy:up` | Start the HTTPS proxy on its own         |
+| `npm run env:proxy:down` | Stop the HTTPS proxy                   |
 | `npm run env:logs`     | View container logs                      |
 | `npm run env:cli`      | Run WP-CLI commands inside the container |
 | `npm run env:clean`    | Reset the environment (removes all data) |
@@ -102,6 +114,16 @@ Stay tuned for updates, tips and tutorials: [Blog](https://cloudinary.com/blog),
 | `npm run lint:js:fix`  | Auto-fix JS linting issues               |
 | `npm run lint:style`   | Run stylelint on SCSS files              |
 | `npm run i18n`         | Generate translation files               |
+
+### Troubleshooting the local environment
+
+| Symptom | Fix |
+| ------- | --- |
+| Browser warns the certificate is untrusted | `npm run env:install-cert`. If it persists, delete `.wp-env/certs/`, run `npm run env:start`, then trust it again. |
+| Port 80 or 443 is in use | Another project holds it; the error names the container. Stop it, then `npm run env:proxy:up`. |
+| `Call to undefined function Cloudinary\get_plugin_instance()` | The plugin is inactive after switching between `.wp-env.json` and `.wp-env.ci.json`. Destroy and start again under the same config. |
+
+CI runs over plain HTTP via `--config .wp-env.ci.json`, because runners have no certificate authority. Keep the shared values in both config files in sync.
 
 ### Create a Plugin Release Package
 
@@ -134,12 +156,19 @@ E2E tests run against a wp-env site using Playwright.
 npm install
 npx playwright install --with-deps chromium
 npm run env:start
+npm run env:install-cert
 ```
 
 ### Running the tests
 
 ```bash
 npm run test:e2e
+```
+
+The suite runs against the HTTPS tests site. Start it through the npm scripts, which point Node at the local certificate authority. Override the target with `WP_BASE_URL`:
+
+```bash
+WP_BASE_URL=http://localhost:8889 npm run test:e2e
 ```
 
 ### Wizard test credentials

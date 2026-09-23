@@ -127,6 +127,7 @@ class Lazy_Load extends Delivery_Feature {
 	public function get_inline_script() {
 		$config = $this->get_config();
 
+		// phpcs:ignore WordPressVIPMinimum.Performance.FetchingRemoteData.FileGetContentsUnknown -- Reads a local file bundled with the plugin, not remote data.
 		return 'var CLDLB = ' . wp_json_encode( $config ) . ';' . file_get_contents( $this->plugin->dir_path . 'js/inline-loader.js' );
 	}
 
