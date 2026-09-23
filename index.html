@@ -125,10 +125,11 @@ We ask that you update to our latest WordPress Plugin v2.x before the August 1st
 <h2>Development</h2>
 <h3>Prerequisites</h3>
 <ul>
-<li><a href="https://nodejs.org/">Node.js</a> v16+ (see <code>.nvmrc</code>)</li>
-<li><a href="https://www.npmjs.com/">npm</a> v6.9+</li>
+<li><a href="https://nodejs.org/">Node.js</a> v22+ (see <code>.nvmrc</code>)</li>
+<li><a href="https://www.npmjs.com/">npm</a> v10+</li>
 <li><a href="https://getcomposer.org/">Composer</a></li>
 <li><a href="https://www.docker.com/">Docker</a> (required for the WordPress local environment via <code>wp-env</code>)</li>
+<li><a href="https://github.com/FiloSottile/mkcert">mkcert</a> (required once, to trust the local HTTPS certificate)</li>
 </ul>
 <h3>Local Development Setup</h3>
 <ol>
@@ -155,7 +156,13 @@ nvm use
 <p>Make sure Docker is running, then:</p>
 <pre class="prettyprint source lang-bash"><code>npm run env:start
 </code></pre>
-<p>This spins up a WordPress instance at <a href="http://localhost:8888">http://localhost:8888</a> with the plugin activated and <code>WP_DEBUG</code> enabled. A loopback fix is applied automatically so REST API self-requests work inside the container.</p>
+<p>This spins up a WordPress instance at <a href="https://cloudinary.local.wpenv.net">https://cloudinary.local.wpenv.net</a> with the plugin activated and <code>WP_DEBUG</code> enabled, plus a tests instance at <a href="https://tests.cloudinary.local.wpenv.net">https://tests.cloudinary.local.wpenv.net</a>. An nginx proxy serves both over HTTPS, so local behaviour matches production for <code>is_ssl()</code>, <code>Secure</code> cookies and loopback requests. No <code>/etc/hosts</code> entry is needed.</p>
+</li>
+<li>
+<p><strong>Trust the local certificate (first run only):</strong></p>
+<pre class="prettyprint source lang-bash"><code>npm run env:install-cert
+</code></pre>
+<p>Adds the generated certificate authority to your OS trust store, so the browser accepts the site without a warning. It asks for your password. Certificates live in <code>.wp-env/certs/</code>, which is gitignored.</p>
 </li>
 <li>
 <p><strong>Build front-end assets:</strong></p>
@@ -184,6 +191,18 @@ npm run dev          # Watch mode for development
 <tr>
 <td><code>npm run env:destroy</code></td>
 <td>Remove the local environment completely</td>
+</tr>
+<tr>
+<td><code>npm run env:install-cert</code></td>
+<td>Trust the local HTTPS certificate (once)</td>
+</tr>
+<tr>
+<td><code>npm run env:proxy:up</code></td>
+<td>Start the HTTPS proxy on its own</td>
+</tr>
+<tr>
+<td><code>npm run env:proxy:down</code></td>
+<td>Stop the HTTPS proxy</td>
 </tr>
 <tr>
 <td><code>npm run env:logs</code></td>
@@ -235,6 +254,30 @@ npm run dev          # Watch mode for development
 </tr>
 </tbody>
 </table>
+<h3>Troubleshooting the local environment</h3>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Browser warns the certificate is untrusted</td>
+<td><code>npm run env:install-cert</code>. If it persists, delete <code>.wp-env/certs/</code>, run <code>npm run env:start</code>, then trust it again.</td>
+</tr>
+<tr>
+<td>Port 80 or 443 is in use</td>
+<td>Another project holds it; the error names the container. Stop it, then <code>npm run env:proxy:up</code>.</td>
+</tr>
+<tr>
+<td><code>Call to undefined function Cloudinary\get_plugin_instance()</code></td>
+<td>The plugin is inactive after switching between <code>.wp-env.json</code> and <code>.wp-env.ci.json</code>. Destroy and start again under the same config.</td>
+</tr>
+</tbody>
+</table>
+<p>CI runs over plain HTTP via <code>--config .wp-env.ci.json</code>, because runners have no certificate authority. Keep the shared values in both config files in sync.</p>
 <h3>Create a Plugin Release Package</h3>
 <p>Run <code>npm run package</code> to create the plugin release in the <code>/build</code> directory and package it as <code>cloudinary-image-management-and-manipulation-in-the-cloud-cdn.zip</code> in the root directory.</p>
 <p>Files included in the release package are defined in the <code>gruntfile.js</code> under the <code>copy</code> task. Be sure to update this list of files and directories when you add new files to the project.</p>
@@ -264,9 +307,13 @@ npm run dev          # Watch mode for development
 <pre class="prettyprint source lang-bash"><code>npm install
 npx playwright install --with-deps chromium
 npm run env:start
+npm run env:install-cert
 </code></pre>
 <h3>Running the tests</h3>
 <pre class="prettyprint source lang-bash"><code>npm run test:e2e
+</code></pre>
+<p>The suite runs against the HTTPS tests site. Start it through the npm scripts, which point Node at the local certificate authority. Override the target with <code>WP_BASE_URL</code>:</p>
+<pre class="prettyprint source lang-bash"><code>WP_BASE_URL=http://localhost:8889 npm run test:e2e
 </code></pre>
 <h3>Wizard test credentials</h3>
 <p><code>tests/e2e/wizard-setup.spec.js</code> exercises the live Cloudinary connection flow, so it needs a real connection string. Provide one of two ways:</p>
