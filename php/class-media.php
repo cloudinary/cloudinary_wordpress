@@ -1186,23 +1186,20 @@ class Media extends Settings_Component implements Setup {
 			return str_replace( trailingslashit( $dirs['baseurl'] ), '', $url );
 		}
 
-		if (
-			false === $this->in_downsize
-			&& ! doing_filter( 'content_save_pre' )
-			&& ! Utils::is_saving_metadata()
-			/**
-			 * Filter doing upload.
-			 * If so, return the default attachment URL.
-			 *
-			 * @param bool Default false.
-			 *
-			 * @return bool
-			 */
-			&& ! apply_filters( 'cloudinary_doing_upload', false )
-		) {
-			if ( ! $this->is_cloudinary_url( $url ) && $this->cloudinary_id( $attachment_id ) ) {
-				$url = $this->cloudinary_url( $attachment_id );
-			}
+		/**
+		 * Filter doing upload.
+		 * If so, return the default attachment URL.
+		 *
+		 * @param bool Default false.
+		 *
+		 * @return bool
+		 */
+		if ( $this->is_replacement_paused( $attachment_id, false ) || apply_filters( 'cloudinary_doing_upload', false ) ) {
+			return $url;
+		}
+
+		if ( ! $this->is_cloudinary_url( $url ) && $this->cloudinary_id( $attachment_id ) ) {
+			$url = $this->cloudinary_url( $attachment_id );
 		}
 
 		return $url;
@@ -1802,7 +1799,7 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		// Don't do this while saving.
-		if ( true === $this->in_downsize || doing_filter( 'content_save_pre' ) || wp_attachment_is( 'video', $attachment_id ) || Utils::is_saving_metadata() ) {
+		if ( $this->is_replacement_paused( $attachment_id ) ) {
 			return $image;
 		}
 
@@ -1831,6 +1828,72 @@ class Media extends Settings_Component implements Setup {
 					false,
 				);
 			}
+		}
+
+		return $image;
+	}
+
+	/**
+	 * Whether URL replacement should be paused for this attachment right now: while a
+	 * downsize is already in progress (re-entrancy guard), while content or metadata is being
+	 * saved, or -- unless explicitly included -- for a video attachment, since there is no
+	 * "image size" to downsize a video to.
+	 *
+	 * Shared by filter_downsize(), filter_attachment_image_src(), and attachment_url(), so the
+	 * save-state/re-entrancy logic lives in one place.
+	 *
+	 * @param int  $attachment_id  The attachment ID.
+	 * @param bool $exclude_videos Whether a video attachment should also count as paused.
+	 *
+	 * @return bool
+	 */
+	private function is_replacement_paused( $attachment_id, $exclude_videos = true ) {
+		if ( true === $this->in_downsize || doing_filter( 'content_save_pre' ) || Utils::is_saving_metadata() ) {
+			return true;
+		}
+
+		return $exclude_videos && wp_attachment_is( 'video', $attachment_id );
+	}
+
+	/**
+	 * Correct wp_get_attachment_image_src() results that image_downsize() missed, or that a
+	 * later-priority plugin overwrote, so Cloudinary keeps the last word on this specific,
+	 * commonly-targeted core hook.
+	 *
+	 * @param array|false  $image         The image src array, or false.
+	 * @param int          $attachment_id The ID of the attachment.
+	 * @param string|array $size          The requested size of the image.
+	 * @param bool         $icon          Whether the image should be treated as an icon.
+	 *
+	 * @return array|false The image array of size and url.
+	 * @uses filter:wp_get_attachment_image_src
+	 */
+	public function filter_attachment_image_src( $image, $attachment_id, $size, $icon ) {
+		if ( empty( $image ) || $icon ) {
+			return $image;
+		}
+
+		// Fast bow-out: already a Cloudinary URL, nothing to do.
+		if ( $this->is_cloudinary_url( $image[0] ) ) {
+			return $image;
+		}
+
+		if ( $this->is_replacement_paused( $attachment_id ) ) {
+			return $image;
+		}
+
+		if ( ! $this->plugin->get_component( 'delivery' )->is_deliverable( $attachment_id ) ) {
+			return $image;
+		}
+
+		$cloudinary_id = $this->cloudinary_id( $attachment_id );
+		if ( ! $cloudinary_id ) {
+			return $image;
+		}
+
+		$url = $this->cloudinary_url( $attachment_id, $size, array(), $cloudinary_id );
+		if ( $url ) {
+			$image[0] = $url;
 		}
 
 		return $image;
@@ -3150,6 +3213,7 @@ class Media extends Settings_Component implements Setup {
 		add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
 		add_filter( 'wp_get_original_image_url', array( $this, 'original_attachment_url' ), 10, 2 );
 		add_filter( 'image_downsize', array( $this, 'filter_downsize' ), 10, 3 );
+		add_filter( 'wp_get_attachment_image_src', array( $this, 'filter_attachment_image_src' ), PHP_INT_MAX, 4 );
 		add_filter( 'wp_calculate_image_srcset_meta', array( $this, 'calculate_image_srcset_meta' ), 10, 3 );
 
 		// Hook into Featured Image cycle.
