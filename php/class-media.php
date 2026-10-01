@@ -1869,7 +1869,7 @@ class Media extends Settings_Component implements Setup {
 	 * @uses filter:wp_get_attachment_image_src
 	 */
 	public function filter_attachment_image_src( $image, $attachment_id, $size, $icon ) {
-		if ( empty( $image ) || $icon ) {
+		if ( empty( $image ) ) {
 			return $image;
 		}
 
@@ -3212,8 +3212,6 @@ class Media extends Settings_Component implements Setup {
 		add_filter( 'wp_calculate_image_srcset', array( $this, 'image_srcset' ), 10, 5 );
 		add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
 		add_filter( 'wp_get_original_image_url', array( $this, 'original_attachment_url' ), 10, 2 );
-		add_filter( 'image_downsize', array( $this, 'filter_downsize' ), 10, 3 );
-		add_filter( 'wp_get_attachment_image_src', array( $this, 'filter_attachment_image_src' ), PHP_INT_MAX, 4 );
 		add_filter( 'wp_calculate_image_srcset_meta', array( $this, 'calculate_image_srcset_meta' ), 10, 3 );
 
 		// Hook into Featured Image cycle.
@@ -3255,6 +3253,14 @@ class Media extends Settings_Component implements Setup {
 			if ( Utils::is_admin() ) {
 				$this->add_live_url_filters();
 			}
+
+			// image_downsize() and wp_get_attachment_image_src() are exercised by ordinary
+			// front-end theme code (e.g. the_post_thumbnail()), not just wp-admin screens, so
+			// these run everywhere rather than being scoped to add_live_url_filters()'s
+			// admin-only set.
+			add_filter( 'image_downsize', array( $this, 'filter_downsize' ), 10, 3 );
+			add_filter( 'wp_get_attachment_image_src', array( $this, 'filter_attachment_image_src' ), PHP_INT_MAX, 4 );
+
 			// Filter default image Quality and Format transformations.
 			add_filter( 'cloudinary_default_qf_transformations_image', array( $this, 'default_image_transformations' ), 10 );
 			add_filter( 'cloudinary_default_freeform_transformations_image', array( $this, 'default_image_freeform_transformations' ), 10 );

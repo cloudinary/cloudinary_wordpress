@@ -4,8 +4,11 @@
  *
  * This covers the wp_get_attachment_image_src filter Cloudinary hooks so it keeps the last
  * word on that specific, commonly-targeted core hook (see WPP-1183): it must bow out cheaply
- * when a URL is already a Cloudinary URL, leave icon/false results alone, and only correct a
- * local URL when the attachment is actually deliverable and synced.
+ * when a URL is already a Cloudinary URL or there is no image at all, correct a local URL when
+ * the attachment is actually deliverable and synced regardless of the caller's $icon argument
+ * (WP_Media_List_Table's list-mode thumbnail column passes icon=true for every attachment, real
+ * images included -- see wp-admin/includes/class-wp-media-list-table.php), and otherwise leave
+ * the result alone.
  *
  * cloudinary_id() and cloudinary_url() are stubbed out (Test_Attachment_Image_Src_Media below)
  * rather than driven through the real sync/signature pipeline, matching the approach in
@@ -97,15 +100,53 @@ class Test_Attachment_Image_Src extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The icon fallback path in wp_get_attachment_image_src() is left alone entirely.
+	 * $icon is the caller's permission to fall back to a mime-type icon if image_downsize()
+	 * found nothing -- WordPress passes the original argument through to the filter unchanged,
+	 * regardless of whether $image is actually a real image or a fallback icon (see
+	 * wp_get_attachment_image_src() in wp-includes/media.php). WP_Media_List_Table's list-mode
+	 * thumbnail column calls wp_get_attachment_image() with icon=true for every attachment, real
+	 * synced images included, so icon=true must not by itself block correction.
 	 *
 	 * @return void
 	 */
-	public function test_icon_result_is_returned_unchanged() {
+	public function test_icon_true_does_not_block_correcting_a_real_synced_image() {
+		$media                      = $this->get_media();
+		$media->stub_cloudinary_id  = 'sample.jpg';
+		$media->stub_cloudinary_url = 'https://res.cloudinary.com/test-cloud/image/upload/sample.jpg';
+		$image                      = array( 'http://example.org/wp-content/uploads/canola.jpg', 100, 100, true );
+
+		$result = $this->without_saving_metadata_guard(
+			function () use ( $media, $image ) {
+				return $media->filter_attachment_image_src( $image, self::$attachment_id, 'thumbnail', true );
+			}
+		);
+
+		$this->assertSame( $media->stub_cloudinary_url, $result[0] );
+	}
+
+	/**
+	 * A genuine mime-icon fallback (no cloudinary_id to correct it to, e.g. an unsynced or
+	 * non-deliverable attachment) is still left alone -- not because of the $icon flag, but
+	 * because there is nothing to swap it for.
+	 *
+	 * @return void
+	 */
+	public function test_icon_fallback_is_unchanged_when_nothing_to_correct_it_to() {
+		$bare_id = self::factory()->post->create(
+			array(
+				'post_type'      => 'attachment',
+				'post_mime_type' => 'image/jpeg',
+			)
+		);
+
 		$media = $this->get_media();
 		$image = array( 'http://example.org/wp-includes/images/media/default.png', 48, 64, false );
 
-		$result = $media->filter_attachment_image_src( $image, self::$attachment_id, 'thumbnail', true );
+		$result = $this->without_saving_metadata_guard(
+			function () use ( $media, $image, $bare_id ) {
+				return $media->filter_attachment_image_src( $image, $bare_id, 'thumbnail', true );
+			}
+		);
 
 		$this->assertSame( $image, $result );
 	}
