@@ -1186,15 +1186,18 @@ class Media extends Settings_Component implements Setup {
 			return str_replace( trailingslashit( $dirs['baseurl'] ), '', $url );
 		}
 
-		/**
-		 * Filter doing upload.
-		 * If so, return the default attachment URL.
-		 *
-		 * @param bool Default false.
-		 *
-		 * @return bool
-		 */
-		if ( $this->is_replacement_paused( $attachment_id, false ) || apply_filters( 'cloudinary_doing_upload', false ) ) {
+		if (
+			$this->is_replacement_paused( $attachment_id, false )
+			/**
+			 * Filter doing upload.
+			 * If so, return the default attachment URL.
+			 *
+			 * @param bool Default false.
+			 *
+			 * @return bool
+			 */
+			|| apply_filters( 'cloudinary_doing_upload', false )
+		) {
 			return $url;
 		}
 
