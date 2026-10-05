@@ -446,7 +446,7 @@ class Deactivation {
 		if ( $analytics && ! $is_contact_flow ) {
 			$analytics->track(
 				'deactivation_submitted',
-				'deactivation',
+				'activation_funnel',
 				null,
 				array(
 					'reason_id'     => sanitize_text_field( $reason ),
