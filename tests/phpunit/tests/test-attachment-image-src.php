@@ -4,11 +4,13 @@
  *
  * This covers the wp_get_attachment_image_src filter Cloudinary hooks so it keeps the last
  * word on that specific, commonly-targeted core hook (see WPP-1183): it must bow out cheaply
- * when a URL is already a Cloudinary URL or there is no image at all, correct a local URL when
- * the attachment is actually deliverable and synced regardless of the caller's $icon argument
- * (WP_Media_List_Table's list-mode thumbnail column passes icon=true for every attachment, real
- * images included -- see wp-admin/includes/class-wp-media-list-table.php), and otherwise leave
- * the result alone.
+ * when a URL is already a Cloudinary URL or there is no image at all, only correct an attachment
+ * that actually has a real image representation (an image, or a preview-capable format like PDF/
+ * PSD -- anything else showing here with icon=true is a generic mime icon, not something to
+ * replace with the raw asset URL), correct a local URL when the attachment is actually
+ * deliverable and synced regardless of the caller's $icon argument (WP_Media_List_Table's
+ * list-mode thumbnail column passes icon=true for every attachment, real images included -- see
+ * wp-admin/includes/class-wp-media-list-table.php), and otherwise leave the result alone.
  *
  * cloudinary_id() and cloudinary_url() are stubbed out (Test_Attachment_Image_Src_Media below)
  * rather than driven through the real sync/signature pipeline, matching the approach in
@@ -55,44 +57,16 @@ class Test_Attachment_Image_Src extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Utils::is_saving_metadata() reads did_action() counters (add_post_meta, etc.) that
-	 * WordPress never resets between tests within one PHPUnit process -- any earlier test, or
-	 * even our own wpSetUpBeforeClass() fixture, already ticks them past zero. Momentarily
-	 * clearing them here isolates the checks that come after that guard in
-	 * filter_attachment_image_src(), so those tests exercise their own branch instead of
-	 * always bowing out at is_saving_metadata() for an unrelated, process-wide reason.
-	 *
-	 * @param callable $callback Callback to run with the guard cleared.
-	 *
-	 * @return mixed
-	 */
-	protected function without_saving_metadata_guard( callable $callback ) {
-		$keys  = array( 'add_post_meta', 'update_post_meta', 'add_term_meta', 'update_term_meta', 'add_user_meta', 'update_user_meta' );
-		$saved = array();
-		foreach ( $keys as $key ) {
-			if ( isset( $GLOBALS['wp_actions'][ $key ] ) ) {
-				$saved[ $key ] = $GLOBALS['wp_actions'][ $key ];
-				unset( $GLOBALS['wp_actions'][ $key ] );
-			}
-		}
-		try {
-			return $callback();
-		} finally {
-			foreach ( $saved as $key => $value ) {
-				$GLOBALS['wp_actions'][ $key ] = $value;
-			}
-		}
-	}
-
-	/**
 	 * A URL that already lives on the configured Cloudinary domain is returned untouched -- the
 	 * cheap bow-out path the ticket calls for, taken before any sync/delivery check runs.
 	 *
 	 * @return void
 	 */
 	public function test_already_cloudinary_url_is_returned_unchanged() {
-		$media = $this->get_media();
-		$image = array( 'https://res.cloudinary.com/test-cloud/image/upload/v1/sample.jpg', 100, 100, true );
+		$media                      = $this->get_media();
+		$media->stub_cloudinary_id  = 'sample.jpg';
+		$media->stub_cloudinary_url = 'https://res.cloudinary.com/test-cloud/image/upload/should-not-be-used.jpg';
+		$image                      = array( 'https://res.cloudinary.com/test-cloud/image/upload/v1/sample.jpg', 100, 100, true );
 
 		$result = $media->filter_attachment_image_src( $image, self::$attachment_id, 'thumbnail', false );
 
@@ -115,11 +89,7 @@ class Test_Attachment_Image_Src extends WP_UnitTestCase {
 		$media->stub_cloudinary_url = 'https://res.cloudinary.com/test-cloud/image/upload/sample.jpg';
 		$image                      = array( 'http://example.org/wp-content/uploads/canola.jpg', 100, 100, true );
 
-		$result = $this->without_saving_metadata_guard(
-			function () use ( $media, $image ) {
-				return $media->filter_attachment_image_src( $image, self::$attachment_id, 'thumbnail', true );
-			}
-		);
+		$result = $media->filter_attachment_image_src( $image, self::$attachment_id, 'thumbnail', true );
 
 		$this->assertSame( $media->stub_cloudinary_url, $result[0] );
 	}
@@ -138,17 +108,69 @@ class Test_Attachment_Image_Src extends WP_UnitTestCase {
 				'post_mime_type' => 'image/jpeg',
 			)
 		);
+		// wp_attachment_is()/wp_attachment_is_image() return false unconditionally without a
+		// real _wp_attached_file, regardless of post_mime_type -- see wp-includes/post.php.
+		update_post_meta( $bare_id, '_wp_attached_file', 'bare.jpg' );
 
 		$media = $this->get_media();
 		$image = array( 'http://example.org/wp-includes/images/media/default.png', 48, 64, false );
 
-		$result = $this->without_saving_metadata_guard(
-			function () use ( $media, $image, $bare_id ) {
-				return $media->filter_attachment_image_src( $image, $bare_id, 'thumbnail', true );
-			}
-		);
+		$result = $media->filter_attachment_image_src( $image, $bare_id, 'thumbnail', true );
 
 		$this->assertSame( $image, $result );
+	}
+
+	/**
+	 * A synced non-image, non-preview attachment (audio, zip, docx, ...) requested with icon=true
+	 * must keep its generic mime icon. Delivery::is_deliverable() treats every non-image,
+	 * non-video attachment as deliverable, so without a type check here, this would otherwise get
+	 * "corrected" to the raw asset's Cloudinary URL -- breaking the resulting <img> tag (caught in
+	 * PR review: WP_Media_List_Table's list view requests icon=true for every attachment type).
+	 *
+	 * @return void
+	 */
+	public function test_synced_non_image_attachment_with_icon_is_returned_unchanged() {
+		$zip_id = self::factory()->post->create(
+			array(
+				'post_type'      => 'attachment',
+				'post_mime_type' => 'application/zip',
+			)
+		);
+		update_post_meta( $zip_id, '_wp_attached_file', 'archive.zip' );
+
+		$media                      = $this->get_media();
+		$media->stub_cloudinary_id  = 'archive.zip';
+		$media->stub_cloudinary_url = 'https://res.cloudinary.com/test-cloud/raw/upload/archive.zip';
+		$image                      = array( 'http://example.org/wp-includes/images/media/archive.png', 48, 64, false );
+
+		$result = $media->filter_attachment_image_src( $image, $zip_id, 'thumbnail', true );
+
+		$this->assertSame( $image, $result );
+	}
+
+	/**
+	 * A synced preview-capable format (PDF/PSD) is the deliberate carve-out: it has a real image
+	 * preview to correct to, so icon=true must not block it either, mirroring the image case.
+	 *
+	 * @return void
+	 */
+	public function test_synced_preview_only_attachment_with_icon_is_corrected() {
+		$pdf_id = self::factory()->post->create(
+			array(
+				'post_type'      => 'attachment',
+				'post_mime_type' => 'application/pdf',
+			)
+		);
+		update_post_meta( $pdf_id, '_wp_attached_file', 'document.pdf' );
+
+		$media                      = $this->get_media();
+		$media->stub_cloudinary_id  = 'document.pdf';
+		$media->stub_cloudinary_url = 'https://res.cloudinary.com/test-cloud/image/upload/document.jpg';
+		$image                      = array( 'http://example.org/wp-includes/images/media/document.png', 48, 64, false );
+
+		$result = $media->filter_attachment_image_src( $image, $pdf_id, 'thumbnail', true );
+
+		$this->assertSame( $media->stub_cloudinary_url, $result[0] );
 	}
 
 	/**
@@ -163,7 +185,9 @@ class Test_Attachment_Image_Src extends WP_UnitTestCase {
 	}
 
 	/**
-	 * A video attachment is left untouched, mirroring the same guard filter_downsize() uses.
+	 * A video attachment is left untouched -- caught by the image/preview-only type check before
+	 * ever reaching the deliverable/sync checks (a video has no image representation to correct
+	 * to here; its own URL is handled by attachment_url() instead).
 	 *
 	 * @return void
 	 */
@@ -174,15 +198,12 @@ class Test_Attachment_Image_Src extends WP_UnitTestCase {
 				'post_mime_type' => 'video/mp4',
 			)
 		);
+		update_post_meta( $video_id, '_wp_attached_file', 'video.mp4' );
 
 		$media = $this->get_media();
 		$image = array( 'http://example.org/wp-content/uploads/video.mp4', 640, 360, true );
 
-		$result = $this->without_saving_metadata_guard(
-			function () use ( $media, $image, $video_id ) {
-				return $media->filter_attachment_image_src( $image, $video_id, 'thumbnail', false );
-			}
-		);
+		$result = $media->filter_attachment_image_src( $image, $video_id, 'thumbnail', false );
 
 		$this->assertSame( $image, $result );
 	}
@@ -200,16 +221,14 @@ class Test_Attachment_Image_Src extends WP_UnitTestCase {
 				'post_mime_type' => 'image/jpeg',
 			)
 		);
+		update_post_meta( $bare_id, '_wp_attached_file', 'bare.jpg' );
 
-		$media                     = $this->get_media();
-		$media->stub_cloudinary_id = 'sample.jpg';
-		$image                     = array( 'http://example.org/wp-content/uploads/bare.jpg', 100, 100, true );
+		$media                      = $this->get_media();
+		$media->stub_cloudinary_id  = 'sample.jpg';
+		$media->stub_cloudinary_url = 'https://res.cloudinary.com/test-cloud/image/upload/should-not-be-used.jpg';
+		$image                      = array( 'http://example.org/wp-content/uploads/bare.jpg', 100, 100, true );
 
-		$result = $this->without_saving_metadata_guard(
-			function () use ( $media, $image, $bare_id ) {
-				return $media->filter_attachment_image_src( $image, $bare_id, 'thumbnail', false );
-			}
-		);
+		$result = $media->filter_attachment_image_src( $image, $bare_id, 'thumbnail', false );
 
 		$this->assertSame( $image, $result );
 	}
@@ -226,11 +245,7 @@ class Test_Attachment_Image_Src extends WP_UnitTestCase {
 		$media->stub_cloudinary_url = 'https://res.cloudinary.com/test-cloud/image/upload/should-not-be-used.jpg';
 		$image                      = array( 'http://example.org/wp-content/uploads/canola.jpg', 100, 100, true );
 
-		$result = $this->without_saving_metadata_guard(
-			function () use ( $media, $image ) {
-				return $media->filter_attachment_image_src( $image, self::$attachment_id, 'thumbnail', false );
-			}
-		);
+		$result = $media->filter_attachment_image_src( $image, self::$attachment_id, 'thumbnail', false );
 
 		$this->assertSame( $image, $result );
 	}
@@ -247,16 +262,37 @@ class Test_Attachment_Image_Src extends WP_UnitTestCase {
 		$media->stub_cloudinary_url = 'https://res.cloudinary.com/test-cloud/image/upload/sample.jpg';
 		$image                      = array( 'http://example.org/wp-content/uploads/canola.jpg', 100, 100, true );
 
-		$result = $this->without_saving_metadata_guard(
-			function () use ( $media, $image ) {
-				return $media->filter_attachment_image_src( $image, self::$attachment_id, 'thumbnail', false );
-			}
-		);
+		$result = $media->filter_attachment_image_src( $image, self::$attachment_id, 'thumbnail', false );
 
 		$this->assertSame( $media->stub_cloudinary_url, $result[0] );
 		$this->assertSame( 100, $result[1] );
 		$this->assertSame( 100, $result[2] );
 		$this->assertTrue( $result[3] );
+	}
+
+	/**
+	 * Regression test for a PR review finding: Utils::is_saving_metadata() must reflect a meta
+	 * write happening right now, not one that happened earlier in the request. It used to read
+	 * did_action(), which is cumulative for the whole request -- so an unrelated post/term/user
+	 * meta write anywhere earlier (a view counter, a session plugin, anything) would permanently
+	 * block correction for the rest of the page once these filters started running on the front
+	 * end. Writing unrelated meta here, before calling the filter, catches a regression back to
+	 * that behaviour.
+	 *
+	 * @return void
+	 */
+	public function test_earlier_unrelated_meta_write_does_not_block_correction() {
+		$other_post_id = self::factory()->post->create();
+		update_post_meta( $other_post_id, 'unrelated_counter', 1 );
+
+		$media                      = $this->get_media();
+		$media->stub_cloudinary_id  = 'sample.jpg';
+		$media->stub_cloudinary_url = 'https://res.cloudinary.com/test-cloud/image/upload/sample.jpg';
+		$image                      = array( 'http://example.org/wp-content/uploads/canola.jpg', 100, 100, true );
+
+		$result = $media->filter_attachment_image_src( $image, self::$attachment_id, 'thumbnail', false );
+
+		$this->assertSame( $media->stub_cloudinary_url, $result[0] );
 	}
 }
 

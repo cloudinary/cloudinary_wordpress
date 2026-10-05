@@ -1881,6 +1881,15 @@ class Media extends Settings_Component implements Setup {
 			return $image;
 		}
 
+		// Only images and preview-capable formats (PDF, PSD) have a real image representation to
+		// correct to. is_deliverable() treats every other attachment type as deliverable too, so
+		// without this, a synced non-image (audio, zip, docx, ...) requested with icon=true would
+		// have its generic mime icon replaced with the raw asset's Cloudinary URL, breaking the
+		// resulting <img> tag.
+		if ( ! wp_attachment_is_image( $attachment_id ) && ! $this->is_preview_only( $attachment_id ) ) {
+			return $image;
+		}
+
 		if ( $this->is_replacement_paused( $attachment_id ) ) {
 			return $image;
 		}

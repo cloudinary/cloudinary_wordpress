@@ -720,7 +720,11 @@ class Utils {
 
 
 	/**
-	 * Is saving metadata.
+	 * Is metadata currently being saved, right now.
+	 *
+	 * Uses doing_action(), not did_action(): the latter is cumulative for the whole request, so
+	 * it would stay true for the rest of the page after any earlier, unrelated post/term/user
+	 * meta write (a view counter, a session plugin, etc.), long after that write finished.
 	 *
 	 * @return bool
 	 */
@@ -731,7 +735,7 @@ class Utils {
 		foreach ( $metadata['actions'] as $action ) {
 			foreach ( $metadata['objects'] as $object ) {
 				$inline_action = str_replace( array( '{object}', 'metadata' ), array( $object, 'meta' ), $action );
-				if ( did_action( $inline_action ) ) {
+				if ( doing_action( $inline_action ) ) {
 					$saving = true;
 					break;
 				}
