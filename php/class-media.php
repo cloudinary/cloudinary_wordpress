@@ -1187,7 +1187,7 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		if (
-			$this->is_replacement_paused( $attachment_id, false )
+			$this->is_replacement_paused( $attachment_id, false ) // false: videos still need their own URL corrected here.
 			/**
 			 * Filter doing upload.
 			 * If so, return the default attachment URL.
