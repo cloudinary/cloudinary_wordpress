@@ -9,6 +9,7 @@ const { test, expect } = require( './fixtures' );
  * Internal dependencies
  */
 const { ensureCloudinaryConnected } = require( './utils/connection' );
+const { expectCloudinaryUrl } = require( './utils/delivery' );
 const { wpCli } = require( './utils/wizard' );
 
 const FIXTURE_PATH = path.join( __dirname, 'fixtures', 'test-image.jpg' );
@@ -21,29 +22,6 @@ let cloudName;
  * @type {{ postId: number, attachmentId: number, postLink: string }|null}
  */
 let created = null;
-
-/**
- * Assert that a given image URL is served by Cloudinary under the
- * expected cloud name. We intentionally do not assert specific
- * transformations — those are an implementation detail of the plugin
- * and may change.
- *
- * @param {string} rawUrl        The src or srcset candidate.
- * @param {string} expectedCloud The cloud name parsed from CLOUDINARY_E2E_URL.
- */
-function expectCloudinaryUrl( rawUrl, expectedCloud ) {
-	let parsed;
-	try {
-		parsed = new URL( rawUrl );
-	} catch ( e ) {
-		throw new Error( `Image URL is not parseable: ${ rawUrl }` );
-	}
-	expect( parsed.host, `host of ${ rawUrl }` ).toBe( 'res.cloudinary.com' );
-	expect(
-		parsed.pathname.startsWith( `/${ expectedCloud }/` ),
-		`pathname of ${ rawUrl } should start with /${ expectedCloud }/`
-	).toBe( true );
-}
 
 // @serial: needs real credentials in `cloudinary_connect` for `wp cloudinary
 // sync`, while every analytics spec overwrites that option with fake ones.
