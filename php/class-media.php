@@ -1706,7 +1706,7 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function has_outdated_sizes( $attachment_id ) {
 		$metadata = wp_get_attachment_metadata( $attachment_id );
-		if ( empty( $metadata['file'] ) || empty( $metadata['sizes'] ) || ! is_array( $metadata['sizes'] ) ) {
+		if ( empty( $metadata['file'] ) || empty( $metadata['sizes'] ) ) {
 			return false;
 		}
 
