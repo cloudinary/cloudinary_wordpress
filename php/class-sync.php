@@ -568,6 +568,18 @@ class Sync implements Setup, Assets {
 				'required' => false, // Required to complete URL render flag.
 				'realtime' => true,
 			),
+			'sizes'        => array(
+				'generate' => array( $this, 'generate_sizes_signature' ),
+				'priority' => 5.25,
+				'sync'     => array( $this->managers['upload'], 'regenerate_sizes' ),
+				'validate' => function ( $attachment_id ) {
+					return $this->managers['media']->has_outdated_sizes( $attachment_id );
+				},
+				'state'    => 'info syncing',
+				'note'     => __( 'Regenerating thumbnail sizes', 'cloudinary' ),
+				'required' => false,
+				'realtime' => true,
+			),
 			'folder'       => array(
 				'generate' => array( $this->managers['media'], 'get_cloudinary_folder' ),
 				'validate' => array( $this->managers['media'], 'is_folder_synced' ),
@@ -1388,5 +1400,20 @@ class Sync implements Setup, Assets {
 		}
 
 		return $str;
+	}
+
+	/**
+	 * Generate a signature for an attachment's thumbnail sizes.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function generate_sizes_signature( $attachment_id ) {
+		$metadata = wp_get_attachment_metadata( $attachment_id );
+		$file     = ! empty( $metadata['file'] ) ? wp_basename( $metadata['file'] ) : '';
+		$sizes    = ! empty( $metadata['sizes'] ) ? wp_json_encode( $metadata['sizes'] ) : '';
+
+		return $file . $sizes;
 	}
 }

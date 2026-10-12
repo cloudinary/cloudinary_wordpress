@@ -278,6 +278,31 @@ class Upload_Sync {
 	}
 
 	/**
+	 * Regenerate an attachment's thumbnail sizes when they no longer match the current attached file.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return array|\WP_Error
+	 */
+	public function regenerate_sizes( $attachment_id ) {
+		if ( ! function_exists( 'wp_generate_attachment_metadata' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/image.php';
+		}
+
+		$file     = get_attached_file( $attachment_id );
+		$metadata = wp_generate_attachment_metadata( $attachment_id, $file );
+		if ( empty( $metadata ) ) {
+			return new \WP_Error( 'cloudinary_regenerate_sizes_failed', __( 'Could not regenerate attachment sizes.', 'cloudinary' ) );
+		}
+
+		wp_update_attachment_metadata( $attachment_id, $metadata );
+		// Persist the new signature, otherwise this would re-trigger on every subsequent render.
+		$this->sync->set_signature_item( $attachment_id, 'sizes' );
+
+		return $metadata;
+	}
+
+	/**
 	 * Upload an asset to Cloudinary.
 	 *
 	 * @param int         $attachment_id The attachment ID.
