@@ -15,8 +15,27 @@ const { wpCli, wpEvalFile } = require( './utils/wizard' );
 const VALID_FIXTURE = path.join( __dirname, 'fixtures', 'svg-valid.svg' );
 const UNSAFE_FIXTURE = path.join( __dirname, 'fixtures', 'svg-unsafe.svg' );
 
+/**
+ * Settings the spec depends on.
+ *
+ * `image_format` and `image_quality` are pinned because the analytics specs
+ * flip them and leave them changed. With a fixed global format such as
+ * `webp`, the first render after sync delivers the SVG as `f_webp` without
+ * `fl_sanitize`, because `Media::get_cloudinary_id()` swaps the extension
+ * for the global format.
+ *
+ * @type {Record<string, string>}
+ */
+const SETTINGS = {
+	svg_support: 'on',
+	image_format: 'auto',
+	image_quality: 'auto',
+};
+
 let cloudName;
-let previousSvgSupport;
+
+/** @type {Record<string, string>|null} */
+let previousSettings = null;
 
 /**
  * Attachments and posts created by the current test, removed in afterEach.
@@ -26,21 +45,29 @@ let previousSvgSupport;
 let createdIds = [];
 
 /**
- * Read or write the plugin's `svg_support` setting.
+ * Save plugin settings and return their previous values.
  *
- * Goes through the settings API rather than `wp option patch` so the value
- * lands in the same place the settings screen saves it.
+ * Goes through the settings API rather than `wp option patch` so the values
+ * land in the same place the settings screen saves them.
  *
- * @param {string} [value] `on` or `off`. Omit to only read.
- * @return {string} The value before the write.
+ * @param {Record<string, string>} values Setting slug to value.
+ * @return {Record<string, string>} Setting slug to the value before the write.
  */
-function svgSupport( value ) {
-	const write = value ? `$setting->save_value( '${ value }' );` : '';
-	return wpEvalFile( `
-		$setting = get_plugin_instance()->settings->get_setting( 'svg_support' );
-		echo $setting->get_value();
-		${ write }
-	` );
+function saveSettings( values ) {
+	return JSON.parse(
+		wpEvalFile( `
+			$settings = get_plugin_instance()->settings;
+			$previous = array();
+			foreach ( json_decode( '${ JSON.stringify(
+				values
+			) }', true ) as $slug => $value ) {
+				$setting           = $settings->get_setting( $slug );
+				$previous[ $slug ] = $setting->get_value();
+				$setting->save_value( $value );
+			}
+			echo wp_json_encode( $previous );
+		` )
+	);
 }
 
 /**
@@ -169,12 +196,13 @@ test.describe( 'Cloudinary SVG upload and delivery', { tag: '@serial' }, () => {
 
 		// SVG support is off by default. Without it WordPress rejects the
 		// upload and the plugin does not sync or sanitize SVGs.
-		previousSvgSupport = svgSupport( 'on' );
+		previousSettings = saveSettings( SETTINGS );
 	} );
 
 	test.afterAll( () => {
-		if ( previousSvgSupport ) {
-			svgSupport( previousSvgSupport );
+		if ( previousSettings ) {
+			saveSettings( previousSettings );
+			previousSettings = null;
 		}
 	} );
 
