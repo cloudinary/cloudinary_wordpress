@@ -88,7 +88,8 @@ async function saveAsset( page, button ) {
 
 /**
  * Open the published post and read the delivery attributes of the inline
- * image once the lazy-loader has swapped in the Cloudinary URL.
+ * image once the lazy-loader has swapped in the Cloudinary URL. `src` in
+ * the result is the URL the browser loaded.
  *
  * @param {import('@playwright/test').Page} page
  * @return {Promise<{ src: string, transformations: string }>} Delivery data.
@@ -102,12 +103,18 @@ async function readDelivery( page ) {
 	await expect( img, 'the inline image should render' ).toBeVisible();
 	await img.scrollIntoViewIfNeeded();
 
-	await expect(
-		img,
-		'the lazy-loader should swap in the Cloudinary URL'
-	).toHaveAttribute( 'src', /^https:\/\/res\.cloudinary\.com\// );
+	// The lazy-loader either writes the delivery URL to `src` or, when the
+	// theme emits a srcset, restores `data-srcset` and leaves the SVG
+	// placeholder in `src`. `currentSrc` is the URL the browser picked in
+	// both cases.
+	const currentSrc = () => img.evaluate( ( node ) => node.currentSrc );
+	await expect
+		.poll( currentSrc, {
+			message: 'the lazy-loader should swap in the Cloudinary URL',
+		} )
+		.toMatch( /^https:\/\/res\.cloudinary\.com\// );
 
-	const src = await img.getAttribute( 'src' );
+	const src = await currentSrc();
 	expectCloudinaryUrl( src, cloudName );
 
 	return {
