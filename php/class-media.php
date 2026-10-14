@@ -1694,6 +1694,36 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Check if an attachment's registered sizes reference filenames that no longer match the current attached file.
+	 *
+	 * This happens when an image is edited (e.g. cropped) via the WordPress image editor: the main file gets
+	 * renamed (an `-e{timestamp}` suffix is added), but the `sizes` metadata can be left pointing at the
+	 * pre-edit filenames, leaving no local file matching that size record.
+	 *
+	 * @param int $attachment_id The Attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function has_outdated_sizes( $attachment_id ) {
+		$metadata = wp_get_attachment_metadata( $attachment_id );
+		if ( empty( $metadata['file'] ) || empty( $metadata['sizes'] ) ) {
+			return false;
+		}
+
+		$base = wp_basename( $metadata['file'] );
+		$ext  = pathinfo( $base, PATHINFO_EXTENSION );
+		$base = ! empty( $ext ) ? substr( $base, 0, - ( strlen( $ext ) + 1 ) ) : $base;
+
+		foreach ( $metadata['sizes'] as $size ) {
+			if ( empty( $size['file'] ) || 0 !== strpos( $size['file'], $base . '-' ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Get a Cloudinary ID which includes the file format extension.
 	 *
 	 * @param int $attachment_id The Attachment ID.
