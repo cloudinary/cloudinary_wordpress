@@ -729,7 +729,7 @@ class Filter {
 	 * @return string
 	 */
 	public function filter_image_block_render_block( $block_content, array $block ) {
-		if ( 'core/image' === $block['blockName'] && ! empty( $block['attrs']['overwrite_transformations'] ) ) {
+		if ( 'core/image' === $block['blockName'] && ! empty( $block['attrs']['overwrite_transformations'] ) && ! empty( $block['attrs']['id'] )) {
 			$block_content = str_replace( 'wp-image-' . $block['attrs']['id'], 'wp-image-' . $block['attrs']['id'] . ' cld-overwrite', $block_content );
 		}
 
