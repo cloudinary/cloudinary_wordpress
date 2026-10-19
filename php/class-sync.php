@@ -905,6 +905,43 @@ class Sync implements Setup, Assets {
 	 * @return string|null
 	 */
 	public function validate_sync_type( $type, $attachment_id ) {
+		// Both branches below save a signature and then re-check get_sync_type() for what's
+		// next. If that save doesn't stick -- e.g. a concurrent request overwrites it before
+		// it's read back, see GitHub issue #1301 -- get_sync_type() keeps handing back this
+		// same $type and this method recurses on it forever, pinning a PHP worker and hammering
+		// the DB. Count re-entries per attachment+type and bail out to a sync error once it's
+		// clearly not resolving, rather than let the recursion run unbounded.
+		static $attempts  = array();
+		$key              = $attachment_id . ':' . $type;
+		$attempts[ $key ] = isset( $attempts[ $key ] ) ? $attempts[ $key ] + 1 : 1;
+
+		/**
+		 * Filter the number of times a single sync type may be re-validated for the same
+		 * attachment within one request before it's treated as stuck in a loop.
+		 *
+		 * @hook   cloudinary_sync_type_retry_limit
+		 *
+		 * @param int    $limit         The retry limit. Default 50.
+		 * @param string $type          The sync type being validated.
+		 * @param int    $attachment_id The attachment ID.
+		 *
+		 * @return int
+		 */
+		$limit = apply_filters( 'cloudinary_sync_type_retry_limit', 50, $type, $attachment_id );
+		if ( $attempts[ $key ] > $limit ) {
+			update_post_meta(
+				$attachment_id,
+				self::META_KEYS['sync_error'],
+				sprintf(
+					/* translators: %s is the sync type that would not advance. */
+					__( 'Sync loop detected: the "%s" sync state could not be saved.', 'cloudinary' ),
+					$type
+				)
+			);
+
+			return null;
+		}
+
 		// Validate that this sync type applied (for optional types like upgrade).
 		if ( false === $this->run_sync_method( $type, 'validate', $attachment_id ) ) {
 			// If invalid, save the new signature.

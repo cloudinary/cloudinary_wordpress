@@ -278,7 +278,15 @@ class Push_Sync {
 				$action_message = sprintf( __( 'Sync type: %s', 'cloudinary' ), $type );
 				do_action( '_cloudinary_queue_action', $action_message, $thread );
 				if ( isset( $stat[ $attachment_id ][ $type ] ) ) {
-					// Loop prevention.
+					// Loop prevention: the same sync type came up twice for this attachment in
+					// one pass, so its state isn't advancing. Flag it instead of leaving it
+					// unsynced, unqueued and un-errored -- which would just queue it right back
+					// up on the next build_queue() run. See GitHub issue #1301.
+					update_post_meta(
+						$attachment_id,
+						Sync::META_KEYS['sync_error'],
+						__( 'Sync loop detected: sync state is not advancing.', 'cloudinary' )
+					);
 					break;
 				}
 				$stat[ $attachment_id ][ $type ] = true;
