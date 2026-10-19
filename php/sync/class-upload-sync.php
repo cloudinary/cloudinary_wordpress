@@ -289,12 +289,21 @@ class Upload_Sync {
 			require_once ABSPATH . 'wp-admin/includes/image.php';
 		}
 
-		$file     = get_attached_file( $attachment_id );
-		$metadata = wp_generate_attachment_metadata( $attachment_id, $file );
-		if ( empty( $metadata ) ) {
+		// Captured before wp_generate_attachment_metadata(), which writes its own (incomplete) metadata
+		// to the database as a side effect while it runs -- reading "current" metadata after that call
+		// would already return the clobbered record.
+		$metadata = wp_get_attachment_metadata( $attachment_id );
+
+		$file        = get_attached_file( $attachment_id );
+		$regenerated = wp_generate_attachment_metadata( $attachment_id, $file );
+		if ( empty( $regenerated['sizes'] ) ) {
 			return new \WP_Error( 'cloudinary_regenerate_sizes_failed', __( 'Could not regenerate attachment sizes.', 'cloudinary' ) );
 		}
 
+		// wp_generate_attachment_metadata() builds a fresh metadata array, so only merge in the
+		// regenerated sizes rather than overwriting the whole record -- other keys (e.g. original_image,
+		// third-party plugin data) must be preserved.
+		$metadata['sizes'] = $regenerated['sizes'];
 		wp_update_attachment_metadata( $attachment_id, $metadata );
 		// Persist the new signature, otherwise this would re-trigger on every subsequent render.
 		$this->sync->set_signature_item( $attachment_id, 'sizes' );

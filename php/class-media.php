@@ -1694,11 +1694,16 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
-	 * Check if an attachment's registered sizes reference filenames that no longer match the current attached file.
+	 * Check if an attachment's registered sizes reference files that no longer exist on disk.
 	 *
 	 * This happens when an image is edited (e.g. cropped) via the WordPress image editor: the main file gets
 	 * renamed (an `-e{timestamp}` suffix is added), but the `sizes` metadata can be left pointing at the
 	 * pre-edit filenames, leaving no local file matching that size record.
+	 *
+	 * This intentionally checks file existence rather than filename prefix: WordPress core has valid states
+	 * where a size's filename legitimately keeps the pre-edit base (e.g. editing with "all sizes except
+	 * thumbnail" deliberately preserves the thumbnail, or a size too small to regenerate from the edited
+	 * image is left as-is). A prefix-only check would misflag those as broken and overwrite valid files.
 	 *
 	 * @param int $attachment_id The Attachment ID.
 	 *
@@ -1710,12 +1715,10 @@ class Media extends Settings_Component implements Setup {
 			return false;
 		}
 
-		$base = wp_basename( $metadata['file'] );
-		$ext  = pathinfo( $base, PATHINFO_EXTENSION );
-		$base = ! empty( $ext ) ? substr( $base, 0, - ( strlen( $ext ) + 1 ) ) : $base;
+		$dir = dirname( get_attached_file( $attachment_id ) );
 
 		foreach ( $metadata['sizes'] as $size ) {
-			if ( empty( $size['file'] ) || 0 !== strpos( $size['file'], $base . '-' ) ) {
+			if ( empty( $size['file'] ) || ! file_exists( path_join( $dir, $size['file'] ) ) ) {
 				return true;
 			}
 		}
