@@ -2796,14 +2796,22 @@ class Media extends Settings_Component implements Setup {
 		// now-current value instead of clobbering it.
 		$max_attempts = 3;
 		for ( $attempt = 0; $attempt < $max_attempts; $attempt++ ) {
-			// WP primes and caches ALL of a post's meta on first access, so a plain re-read
-			// here would just replay this same process's first (possibly already stale) read on
-			// every retry, never seeing what a concurrent process wrote in the meantime. Drop it
-			// so each attempt re-queries the DB.
-			wp_cache_delete( $post_id, 'post_meta' );
+			if ( $attempt > 0 ) {
+				// Only before a retry, not the first attempt: the compare-and-swap below
+				// ($prev_value) is what catches a stale read, by failing against the DB's actual
+				// current value regardless of what's cached. Forcing a fresh read up front would
+				// cost every single meta write here -- and there are many per sync -- a full
+				// reload for no benefit, since nothing has failed yet to justify distrusting the
+				// cache.
+				wp_cache_delete( $post_id, 'post_meta' );
+			}
 
-			$exists = metadata_exists( 'post', $post_id, Sync::META_KEYS['cloudinary'] );
+			// Read before checking existence: when the row is missing, get_post_meta() below
+			// runs the `cloudinary_migrate_legacy_meta` filter, whose callbacks can create this
+			// row themselves as a side effect (e.g. legacy-plugin migration). Checking existence
+			// first would miss that and cost an extra, avoidable retry.
 			$meta   = $this->get_post_meta( $post_id );
+			$exists = metadata_exists( 'post', $post_id, Sync::META_KEYS['cloudinary'] );
 			if ( isset( $meta[ $key ] ) && $meta[ $key ] === $data ) {
 				return true; // Already set to this value, including by a racing write.
 			}
@@ -2811,6 +2819,11 @@ class Media extends Settings_Component implements Setup {
 			$meta[ $key ] = $data;
 
 			if ( $exists ) {
+				// Note: update_metadata() only applies $prev_value (and so only detects a race)
+				// when it's non-empty. If `_cloudinary` currently holds an empty array (e.g.
+				// right after meta_cleanup) or something that didn't come back as an array, this
+				// falls through to an unconditional write instead -- still correct, just unable
+				// to tell a race apart from an ordinary write in that specific case.
 				$result = update_post_meta( $post_id, Sync::META_KEYS['cloudinary'], $meta, $prev );
 			} else {
 				// No row yet: add it uniquely so a concurrent first write can't be silently
@@ -2848,9 +2861,11 @@ class Media extends Settings_Component implements Setup {
 		// compare-and-swap retry against concurrent writers.
 		$max_attempts = 3;
 		for ( $attempt = 0; $attempt < $max_attempts; $attempt++ ) {
-			// See the matching note in update_post_meta(): drop the cached meta so this
-			// actually re-reads the DB instead of replaying an earlier, possibly stale read.
-			wp_cache_delete( $post_id, 'post_meta' );
+			if ( $attempt > 0 ) {
+				// See the matching note in update_post_meta(): only before a retry, once the
+				// compare-and-swap below has actually failed against the DB's current value.
+				wp_cache_delete( $post_id, 'post_meta' );
+			}
 
 			$meta = $this->get_post_meta( $post_id );
 			if ( ! isset( $meta[ $key ] ) ) {

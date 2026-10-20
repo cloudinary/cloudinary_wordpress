@@ -10,6 +10,11 @@
  * over and over. These confirm it instead bails out to a sync error once a type clearly isn't
  * resolving.
  *
+ * The guard counts how deep the current, still-unresolved recursion chain is, not how many times
+ * validate_sync_type() has been entered overall, since a type that resolves immediately (no
+ * recursion) can legitimately be checked many times across a long request without ever being
+ * stuck -- confirmed below alongside the stuck case.
+ *
  * @package Cloudinary
  */
 
@@ -26,9 +31,9 @@ class Test_Sync_Loop_Guard extends WP_UnitTestCase {
 	 * attachment, is realtime, and (unlike 'file') does no network calls, so it is exactly the
 	 * type the live incident got stuck recursing on.
 	 *
-	 * A fresh one per test, not a shared static: validate_sync_type()'s retry counter is a
-	 * function-static, so it persists for this whole PHPUnit process. Reusing one attachment
-	 * across test methods would let one test's count carry over into the next.
+	 * A fresh one per test, not a shared static, for isolation: validate_sync_type()'s counter is
+	 * a function-static keyed by attachment ID, so a fresh ID per test rules out one test's calls
+	 * being counted against another's, on top of the counter's own per-chain reset.
 	 *
 	 * @var int
 	 */
@@ -40,6 +45,26 @@ class Test_Sync_Loop_Guard extends WP_UnitTestCase {
 	public function set_up() {
 		parent::set_up();
 		$this->attachment_id = self::factory()->attachment->create_upload_object( DIR_TESTDATA . '/images/canola.jpg' );
+	}
+
+	/**
+	 * register_sync_type() (used below for 'test_pending_type') writes directly into the Sync
+	 * component singleton, which outlives any one test -- see the matching note in
+	 * Test_Push_Sync_Outer_Loop_Guard, whose own custom type this would otherwise collide with if
+	 * both ran in the same PHPUnit process.
+	 *
+	 * @return void
+	 */
+	public function tear_down() {
+		$sync       = \Cloudinary\get_plugin_instance()->get_component( 'sync' );
+		$reflection = new ReflectionProperty( $sync, 'sync_base_struct' );
+		$reflection->setAccessible( true );
+		$struct = $reflection->getValue( $sync );
+		unset( $struct['test_pending_type'] );
+		$reflection->setValue( $sync, $struct );
+		$sync->setup_sync_types();
+
+		parent::tear_down();
 	}
 
 	/**
@@ -165,5 +190,45 @@ class Test_Sync_Loop_Guard extends WP_UnitTestCase {
 		$sync->get_sync_type( $this->attachment_id, false );
 
 		$this->assertEmpty( get_post_meta( $this->attachment_id, Sync::META_KEYS['sync_error'], true ) );
+	}
+
+	/**
+	 * A type that's simply pending -- not stuck, just not synced yet, and not realtime so nothing
+	 * recurses -- can legitimately be checked many times in one long request (status rendered for
+	 * several references to the same attachment, the process_assets() loop itself, and so on).
+	 * None of those calls recurse into one another, so the guard must never mistake their total
+	 * count for one unresolved chain, however many of them there are.
+	 *
+	 * @return void
+	 */
+	public function test_many_independent_calls_for_a_stable_pending_type_do_not_trip_the_guard() {
+		$sync = $this->get_sync();
+		add_filter( 'cloudinary_sync_type_retry_limit', fn() => 5 );
+
+		// A type that never resolves but also never recurses: validate() is true and it isn't
+		// realtime, so validate_sync_type() returns it directly every time, same as a type simply
+		// waiting its turn. Lowest priority so it's always what get_sync_type() picks.
+		$sync->register_sync_type(
+			'test_pending_type',
+			array(
+				'asset_state' => 0,
+				'generate'    => '__return_true',
+				'validate'    => '__return_true',
+				'priority'    => -1,
+				'sync'        => '__return_null',
+				'realtime'    => false,
+			)
+		);
+		$sync->setup_sync_types();
+
+		for ( $i = 0; $i < 20; $i++ ) {
+			$type = $sync->get_sync_type( $this->attachment_id, false );
+			$this->assertSame( 'test_pending_type', $type );
+		}
+
+		$this->assertEmpty(
+			get_post_meta( $this->attachment_id, Sync::META_KEYS['sync_error'], true ),
+			'20 independent, non-recursing calls (4x the 5-call limit) must not trip the guard.'
+		);
 	}
 }
