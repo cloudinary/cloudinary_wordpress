@@ -302,8 +302,9 @@ class Upload_Sync {
 		// _wp_make_subsizes() treats them as new sizes to create rather than skipping them as already
 		// present (it only checks whether the size *name* already has an entry, not whether the file
 		// behind it still exists).
-		$dir     = dirname( $file );
-		$missing = array();
+		$original = $metadata;
+		$dir      = dirname( $file );
+		$missing  = array();
 		foreach ( $metadata['sizes'] as $size_name => $size_data ) {
 			if ( ! empty( $size_data['file'] ) && file_exists( path_join( $dir, $size_data['file'] ) ) ) {
 				continue;
@@ -324,10 +325,33 @@ class Upload_Sync {
 		// _wp_make_subsizes() is WP core's own low-level size-creation step (used internally by
 		// wp_create_image_subsizes()). Unlike wp_generate_attachment_metadata(), it builds on the
 		// $metadata we pass in rather than a fresh array, so unrelated keys (original_image,
-		// third-party plugin data) are never at risk of being dropped. It also silently leaves a size
-		// out of the result if the image is too small for it, rather than erroring, so that case never
-		// reaches the sync-error path below.
+		// third-party plugin data) are never at risk of being dropped.
 		$metadata = _wp_make_subsizes( $new_sizes, $file, $metadata, $attachment_id );
+
+		// _wp_make_subsizes() never returns a WP_Error: a size it couldn't create is just left out of
+		// the result, silently, whether that's because the image is legitimately too small for it (fine,
+		// expected) or because of a real, possibly transient failure (disk/permissions/memory/missing
+		// image editor). Since the "missing" entries were already unset above, an unreported real failure
+		// would otherwise be saved as if it were a success and never retried. Tell the two apart with
+		// image_resize_dimensions() -- the same check core itself uses to decide whether a size applies.
+		$failed = array();
+		foreach ( $new_sizes as $size_name => $size_data ) {
+			if ( isset( $metadata['sizes'][ $size_name ] ) ) {
+				continue;
+			}
+			if ( ! image_resize_dimensions( $metadata['width'], $metadata['height'], $size_data['width'], $size_data['height'], $size_data['crop'] ) ) {
+				continue; // Too small for this size: leaving it out is expected.
+			}
+			$failed[] = $size_name;
+		}
+
+		if ( ! empty( $failed ) ) {
+			// _wp_make_subsizes() saves metadata to the database after each size it successfully makes,
+			// so a partial failure may have already left a partial record there; restore the original.
+			wp_update_attachment_metadata( $attachment_id, $original );
+
+			return new \WP_Error( 'cloudinary_regenerate_sizes_failed', __( 'Could not regenerate attachment sizes.', 'cloudinary' ) );
+		}
 
 		wp_update_attachment_metadata( $attachment_id, $metadata );
 		// Persist the new signature, otherwise this would re-trigger on every subsequent render.
