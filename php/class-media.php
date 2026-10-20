@@ -1711,11 +1711,16 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function has_outdated_sizes( $attachment_id ) {
 		$metadata = wp_get_attachment_metadata( $attachment_id );
-		if ( empty( $metadata['file'] ) || empty( $metadata['sizes'] ) ) {
+		$path     = get_attached_file( $attachment_id );
+
+		// Also covers cloud-only storage mode, which intentionally removes every local file (see
+		// Storage::remove_local_assets()) without updating the stored metadata: if the main file itself
+		// is gone, there is nothing to regenerate from, so this is not "outdated", it's expected.
+		if ( empty( $metadata['file'] ) || empty( $metadata['sizes'] ) || empty( $path ) || ! file_exists( $path ) ) {
 			return false;
 		}
 
-		$dir = dirname( get_attached_file( $attachment_id ) );
+		$dir = dirname( $path );
 
 		foreach ( $metadata['sizes'] as $size ) {
 			if ( empty( $size['file'] ) || ! file_exists( path_join( $dir, $size['file'] ) ) ) {
