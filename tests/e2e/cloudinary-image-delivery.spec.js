@@ -8,9 +8,12 @@ const { test, expect } = require( './fixtures' );
 /**
  * Internal dependencies
  */
-const { ensureCloudinaryConnected } = require( './utils/connection' );
 const { expectCloudinaryUrl } = require( './utils/delivery' );
-const { wpCli } = require( './utils/wizard' );
+const {
+	connectLive,
+	deletePostsLive,
+	syncLive,
+} = require( './utils/live-site' );
 
 const FIXTURE_PATH = path.join( __dirname, 'fixtures', 'test-image.jpg' );
 
@@ -23,11 +26,11 @@ let cloudName;
  */
 let created = null;
 
-// @serial: needs real credentials in `cloudinary_connect` for `wp cloudinary
+// @live: needs real credentials in `cloudinary_connect` for `wp cloudinary
 // sync`, while every analytics spec overwrites that option with fake ones.
-test.describe( 'Cloudinary image delivery', { tag: '@serial' }, () => {
+test.describe( 'Cloudinary image delivery', { tag: '@live' }, () => {
 	test.beforeAll( () => {
-		( { cloudName } = ensureCloudinaryConnected() );
+		( { cloudName } = connectLive() );
 	} );
 
 	test.beforeEach( async ( { requestUtils } ) => {
@@ -75,7 +78,7 @@ test.describe( 'Cloudinary image delivery', { tag: '@serial' }, () => {
 		// first front-end render queues the sync but renders local
 		// URLs. Driving `wp cloudinary sync` here makes the test
 		// deterministic without relying on the cron-driven queue.
-		wpCli( [ 'cloudinary', 'sync' ] );
+		syncLive();
 	} );
 
 	test.afterEach( async () => {
@@ -85,21 +88,7 @@ test.describe( 'Cloudinary image delivery', { tag: '@serial' }, () => {
 		const { postId, attachmentId } = created;
 		created = null;
 
-		// Best-effort cleanup via WP-CLI. We do not use the REST API
-		// here because the test wp-env runs without pretty permalinks,
-		// which makes appending `force=true` to a `?rest_route=`-style
-		// URL fragile. WP-CLI is unambiguous and we already use it in
-		// other helpers (see utils/wizard.js).
-		try {
-			wpCli( [ 'post', 'delete', String( postId ), '--force' ] );
-		} catch ( e ) {
-			console.warn( 'Post cleanup failed:', e.message );
-		}
-		try {
-			wpCli( [ 'post', 'delete', String( attachmentId ), '--force' ] );
-		} catch ( e ) {
-			console.warn( 'Media cleanup failed:', e.message );
-		}
+		deletePostsLive( [ postId, attachmentId ] );
 	} );
 
 	test( 'serves featured image and inline image via Cloudinary', async ( {

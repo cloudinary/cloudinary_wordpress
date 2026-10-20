@@ -8,9 +8,12 @@ const { test, expect } = require( './fixtures' );
 /**
  * Internal dependencies
  */
-const { ensureCloudinaryConnected } = require( './utils/connection' );
 const { expectCloudinaryUrl } = require( './utils/delivery' );
-const { wpCli } = require( './utils/wizard' );
+const {
+	connectLive,
+	deletePostsLive,
+	syncLive,
+} = require( './utils/live-site' );
 
 const FIXTURE_PATH = path.join( __dirname, 'fixtures', 'test-image.jpg' );
 
@@ -124,13 +127,13 @@ async function readDelivery( page ) {
 	};
 }
 
-// @serial: needs real credentials in `cloudinary_connect` to sync assets,
+// @live: needs real credentials in `cloudinary_connect` to sync assets,
 // while every analytics spec overwrites that option with fake ones.
-test.describe( 'Cloudinary per-asset editing', { tag: '@serial' }, () => {
+test.describe( 'Cloudinary per-asset editing', { tag: '@live' }, () => {
 	test.describe.configure( { mode: 'serial' } );
 
 	test.beforeAll( async ( { requestUtils } ) => {
-		( { cloudName } = ensureCloudinaryConnected() );
+		( { cloudName } = connectLive() );
 
 		const media = await requestUtils.rest( {
 			method: 'POST',
@@ -165,7 +168,7 @@ test.describe( 'Cloudinary per-asset editing', { tag: '@serial' }, () => {
 
 		// The Edit Asset page and the front-end rewrite both need the
 		// asset to be synced to Cloudinary.
-		wpCli( [ 'cloudinary', 'sync' ] );
+		syncLive();
 	} );
 
 	test.afterAll( () => {
@@ -175,15 +178,7 @@ test.describe( 'Cloudinary per-asset editing', { tag: '@serial' }, () => {
 		const { postId, attachmentId } = created;
 		created = null;
 
-		// WP-CLI rather than REST for the same reason as the image delivery
-		// spec: `force=true` on a `?rest_route=` URL is fragile.
-		for ( const id of [ postId, attachmentId ] ) {
-			try {
-				wpCli( [ 'post', 'delete', String( id ), '--force' ] );
-			} catch ( e ) {
-				console.warn( `Cleanup of post ${ id } failed:`, e.message );
-			}
-		}
+		deletePostsLive( [ postId, attachmentId ] );
 	} );
 
 	test( 'text overlay updates the delivery URL and reverts when removed', async ( {

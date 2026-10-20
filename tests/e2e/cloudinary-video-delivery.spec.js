@@ -9,8 +9,13 @@ const { test, expect } = require( './fixtures' );
 /**
  * Internal dependencies
  */
-const { ensureCloudinaryConnected } = require( './utils/connection' );
-const { wpCli, getCliContainer } = require( './utils/wizard' );
+const { getCliContainer } = require( './utils/wizard' );
+const {
+	connectLive,
+	deletePostsLive,
+	syncLive,
+	withSiteLock,
+} = require( './utils/live-site' );
 
 const FIXTURE_PATH = path.join( __dirname, 'fixtures', 'test-video.mp4' );
 
@@ -78,18 +83,20 @@ function setVideoPlayer( value ) {
 	// `timeout` matters: execSync blocks the worker's event loop, so
 	// Playwright's own test timeout cannot interrupt a hung docker/wp
 	// call. Without it a wedged container hangs the whole suite.
-	execSync( cmd, {
-		encoding: 'utf8',
-		stdio: [ 'ignore', 'pipe', 'pipe' ],
-		timeout: 30_000,
-	} );
+	withSiteLock( () =>
+		execSync( cmd, {
+			encoding: 'utf8',
+			stdio: [ 'ignore', 'pipe', 'pipe' ],
+			timeout: 30_000,
+		} )
+	);
 }
 
-// @serial: needs real credentials in `cloudinary_connect` for `wp cloudinary
+// @live: needs real credentials in `cloudinary_connect` for `wp cloudinary
 // sync`, while every analytics spec overwrites that option with fake ones.
-test.describe( 'Cloudinary video delivery', { tag: '@serial' }, () => {
+test.describe( 'Cloudinary video delivery', { tag: '@live' }, () => {
 	test.beforeAll( () => {
-		( { cloudName } = ensureCloudinaryConnected() );
+		( { cloudName } = connectLive() );
 	} );
 
 	test.beforeEach( async ( { requestUtils } ) => {
@@ -134,7 +141,7 @@ test.describe( 'Cloudinary video delivery', { tag: '@serial' }, () => {
 		// The plugin's URL rewriting depends on the asset being synced
 		// to Cloudinary. Drive the sync synchronously here so the
 		// front-end visit sees rewritten URLs.
-		wpCli( [ 'cloudinary', 'sync' ] );
+		syncLive();
 	} );
 
 	test.afterEach( async () => {
@@ -144,19 +151,7 @@ test.describe( 'Cloudinary video delivery', { tag: '@serial' }, () => {
 		const { postId, attachmentId } = created;
 		created = null;
 
-		// Best-effort cleanup via WP-CLI. Matches the image spec; we
-		// do not use the REST API because this wp-env runs without
-		// pretty permalinks, which makes `?force=true` fragile.
-		try {
-			wpCli( [ 'post', 'delete', String( postId ), '--force' ] );
-		} catch ( e ) {
-			console.warn( 'Post cleanup failed:', e.message );
-		}
-		try {
-			wpCli( [ 'post', 'delete', String( attachmentId ), '--force' ] );
-		} catch ( e ) {
-			console.warn( 'Media cleanup failed:', e.message );
-		}
+		deletePostsLive( [ postId, attachmentId ] );
 	} );
 
 	test.describe( 'with default WP player', () => {

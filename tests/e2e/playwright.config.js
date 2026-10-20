@@ -60,9 +60,13 @@ module.exports = defineConfig( {
 	retries: process.env.CI ? 2 : 0,
 	// Spec files are spread across workers; tests within one file still run
 	// in order (fullyParallel is off), which the delivery specs' shared
-	// beforeAll/afterAll state relies on. Specs tagged @serial mutate
-	// site-wide state (connection, plugin activation) and are run in a
-	// second, single-worker pass by `npm run test:e2e`; see package.json.
+	// beforeAll/afterAll state relies on. `npm run test:e2e` runs three
+	// passes; see package.json. Specs tagged @live need the real Cloudinary
+	// connection, which the analytics specs overwrite with fake credentials,
+	// so they get a pass of their own; they take turns on site-wide steps
+	// through tests/e2e/utils/live-site.js. Specs tagged @serial mutate
+	// site-wide state (connection, plugin activation) and run last, in a
+	// single-worker pass.
 	// Analytics specs are safe to run concurrently because tests/e2e/fixtures.js
 	// gives each worker its own analytics capture log.
 	workers: 3,

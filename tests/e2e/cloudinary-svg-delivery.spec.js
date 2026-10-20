@@ -8,9 +8,14 @@ const { test, expect } = require( './fixtures' );
 /**
  * Internal dependencies
  */
-const { ensureCloudinaryConnected } = require( './utils/connection' );
 const { expectCloudinaryUrl } = require( './utils/delivery' );
-const { wpCli, wpEvalFile } = require( './utils/wizard' );
+const { wpEvalFile } = require( './utils/wizard' );
+const {
+	connectLive,
+	deletePostsLive,
+	syncLive,
+	withSiteLock,
+} = require( './utils/live-site' );
 
 const VALID_FIXTURE = path.join( __dirname, 'fixtures', 'svg-valid.svg' );
 const UNSAFE_FIXTURE = path.join( __dirname, 'fixtures', 'svg-unsafe.svg' );
@@ -54,8 +59,11 @@ let createdIds = [];
  * @return {Record<string, string>} Setting slug to the value before the write.
  */
 function saveSettings( values ) {
-	return JSON.parse(
-		wpEvalFile( `
+	// Under the site lock: the settings share one option with the video
+	// spec's `video_player`, and each write rewrites the whole array.
+	return withSiteLock( () =>
+		JSON.parse(
+			wpEvalFile( `
 			$settings = get_plugin_instance()->settings;
 			$previous = array();
 			foreach ( json_decode( '${ JSON.stringify(
@@ -67,6 +75,7 @@ function saveSettings( values ) {
 			}
 			echo wp_json_encode( $previous );
 		` )
+		)
 	);
 }
 
@@ -117,7 +126,7 @@ async function uploadSvgPost( requestUtils, fixturePath, name ) {
 
 	// Same reason as the image delivery spec: sync synchronously instead
 	// of waiting for the auto-sync queue.
-	wpCli( [ 'cloudinary', 'sync' ] );
+	syncLive();
 
 	return { attachmentId: media.id, postLink: post.link, media };
 }
@@ -188,11 +197,11 @@ async function fetchAsset( request, url ) {
 	};
 }
 
-// @serial: needs real credentials in `cloudinary_connect` for `wp cloudinary
+// @live: needs real credentials in `cloudinary_connect` for `wp cloudinary
 // sync`, while every analytics spec overwrites that option with fake ones.
-test.describe( 'Cloudinary SVG upload and delivery', { tag: '@serial' }, () => {
+test.describe( 'Cloudinary SVG upload and delivery', { tag: '@live' }, () => {
 	test.beforeAll( () => {
-		( { cloudName } = ensureCloudinaryConnected() );
+		( { cloudName } = connectLive() );
 
 		// SVG support is off by default. Without it WordPress rejects the
 		// upload and the plugin does not sync or sanitize SVGs.
@@ -210,15 +219,7 @@ test.describe( 'Cloudinary SVG upload and delivery', { tag: '@serial' }, () => {
 		const ids = createdIds;
 		createdIds = [];
 
-		// WP-CLI rather than REST for the same reason as the image delivery
-		// spec: `force=true` on a `?rest_route=` URL is fragile.
-		for ( const id of ids ) {
-			try {
-				wpCli( [ 'post', 'delete', String( id ), '--force' ] );
-			} catch ( e ) {
-				console.warn( `Cleanup of post ${ id } failed:`, e.message );
-			}
-		}
+		deletePostsLive( ids );
 	} );
 
 	test( 'a valid SVG uploads, syncs and is delivered as an SVG', async ( {

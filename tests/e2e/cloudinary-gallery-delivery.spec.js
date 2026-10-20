@@ -8,9 +8,12 @@ const { test, expect } = require( './fixtures' );
 /**
  * Internal dependencies
  */
-const { ensureCloudinaryConnected } = require( './utils/connection' );
 const { expectCloudinaryUrl, srcsetUrls } = require( './utils/delivery' );
-const { wpCli } = require( './utils/wizard' );
+const {
+	connectLive,
+	deletePostsLive,
+	withSiteLock,
+} = require( './utils/live-site' );
 
 const FIXTURE_PATH = path.join( __dirname, 'fixtures', 'test-image.jpg' );
 
@@ -100,13 +103,13 @@ async function collectImageUrls( images ) {
 	);
 }
 
-// @serial: needs real credentials in `cloudinary_connect` to sync assets,
+// @live: needs real credentials in `cloudinary_connect` to sync assets,
 // while every analytics spec overwrites that option with fake ones.
-test.describe( 'Cloudinary Gallery block delivery', { tag: '@serial' }, () => {
+test.describe( 'Cloudinary Gallery block delivery', { tag: '@live' }, () => {
 	test.describe.configure( { mode: 'serial' } );
 
 	test.beforeAll( async ( { requestUtils } ) => {
-		( { cloudName } = ensureCloudinaryConnected() );
+		( { cloudName } = connectLive() );
 
 		const file = fs.readFileSync( FIXTURE_PATH );
 		const attachmentIds = [];
@@ -126,11 +129,14 @@ test.describe( 'Cloudinary Gallery block delivery', { tag: '@serial' }, () => {
 		// Same endpoint the block editor calls when images are picked in
 		// the media modal. It uploads each attachment to Cloudinary if it
 		// is not synced yet and returns the `selectedImages` attribute.
-		const selectedImages = await requestUtils.rest( {
-			method: 'POST',
-			path: '/cloudinary/v1/image_data',
-			data: { images: attachmentIds.map( ( id ) => ( { id } ) ) },
-		} );
+		// Under the site lock so it cannot race another worker's sync.
+		const selectedImages = await withSiteLock( () =>
+			requestUtils.rest( {
+				method: 'POST',
+				path: '/cloudinary/v1/image_data',
+				data: { images: attachmentIds.map( ( id ) => ( { id } ) ) },
+			} )
+		);
 
 		expect(
 			selectedImages,
@@ -165,15 +171,7 @@ test.describe( 'Cloudinary Gallery block delivery', { tag: '@serial' }, () => {
 		const { postId, attachmentIds } = created;
 		created = null;
 
-		// WP-CLI rather than REST for the same reason as the image delivery
-		// spec: `force=true` on a `?rest_route=` URL is fragile.
-		for ( const id of [ postId, ...attachmentIds ] ) {
-			try {
-				wpCli( [ 'post', 'delete', String( id ), '--force' ] );
-			} catch ( e ) {
-				console.warn( `Cleanup of post ${ id } failed:`, e.message );
-			}
-		}
+		deletePostsLive( [ postId, ...attachmentIds ] );
 	} );
 
 	test( 'renders exactly N images, all served from Cloudinary', async ( {
