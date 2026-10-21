@@ -287,36 +287,43 @@ class Push_Sync {
 					// would have just been picked up again on the next run. Instead, count
 					// consecutive passes that ended this way across requests and only flag it
 					// once that's happened a few times in a row. See GitHub issue #1301.
-					$looped     = true;
-					$loop_count = (int) get_post_meta( $attachment_id, Sync::META_KEYS['loop_count'], true ) + 1;
+					$looped = true;
 
-					/**
-					 * Filter how many consecutive passes may end in a repeated, non-advancing
-					 * sync type for the same attachment before it's flagged with a sync error.
-					 *
-					 * @hook   cloudinary_sync_loop_strikes
-					 *
-					 * @param int    $strikes       The number of strikes allowed. Default 3.
-					 * @param string $type          The sync type that repeated.
-					 * @param int    $attachment_id The attachment ID.
-					 *
-					 * @return int
-					 */
-					$loop_limit = apply_filters( 'cloudinary_sync_loop_strikes', 3, $type, $attachment_id );
-					if ( $loop_count >= $loop_limit ) {
-						update_post_meta(
-							$attachment_id,
-							Sync::META_KEYS['sync_error'],
-							sprintf(
-								/* translators: %s is the sync type that would not advance. */
-								__( 'Sync loop detected: the "%s" sync state is not advancing.', 'cloudinary' ),
-								$type
-							)
-						);
-						delete_post_meta( $attachment_id, Sync::META_KEYS['loop_count'] );
-					} else {
-						update_post_meta( $attachment_id, Sync::META_KEYS['loop_count'], $loop_count );
+					if ( $this->sync->can_sync( $attachment_id, $type ) ) {
+						$loop_count = (int) get_post_meta( $attachment_id, Sync::META_KEYS['loop_count'], true ) + 1;
+
+						/**
+						 * Filter how many consecutive passes may end in a repeated, non-advancing
+						 * sync type for the same attachment before it's flagged with a sync error.
+						 *
+						 * @hook   cloudinary_sync_loop_strikes
+						 *
+						 * @param int    $strikes       The number of strikes allowed. Default 3.
+						 * @param string $type          The sync type that repeated.
+						 * @param int    $attachment_id The attachment ID.
+						 *
+						 * @return int
+						 */
+						$loop_limit = apply_filters( 'cloudinary_sync_loop_strikes', 3, $type, $attachment_id );
+						if ( $loop_count >= $loop_limit ) {
+							update_post_meta(
+								$attachment_id,
+								Sync::META_KEYS['sync_error'],
+								sprintf(
+									/* translators: %s is the sync type that would not advance. */
+									__( 'Sync loop detected: the "%s" sync state is not advancing.', 'cloudinary' ),
+									$type
+								)
+							);
+							delete_post_meta( $attachment_id, Sync::META_KEYS['loop_count'] );
+						} else {
+							update_post_meta( $attachment_id, Sync::META_KEYS['loop_count'], $loop_count );
+						}
 					}
+					// Else: can_sync() says this type isn't meant to run right now -- e.g.
+					// Storage's own delay before offloading to "Cloudinary only" storage -- so
+					// the repeat is an intentional wait, not evidence of being stuck. Don't count
+					// a strike for it; just stop this pass the same way the guard always has.
 					break;
 				}
 				$stat[ $attachment_id ][ $type ] = true;

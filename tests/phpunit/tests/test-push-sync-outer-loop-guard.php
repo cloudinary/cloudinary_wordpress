@@ -201,6 +201,69 @@ class Test_Push_Sync_Outer_Loop_Guard extends WP_UnitTestCase {
 	}
 
 	/**
+	 * A real sync type can repeat for a reason that isn't being stuck at all: Storage's "Cloudinary
+	 * only" offload mode deliberately delays removing the local file for a minute after upload, so
+	 * its own sync() returns early (via can_sync()'s delay_cld_only() filter) without saving a
+	 * matching signature -- get_sync_type() keeps handing 'storage' back for as long as that delay
+	 * lasts. Auto sync can easily run process_assets() on the same attachment three times within
+	 * that one minute, so without this check those three ordinary, expected repeats would
+	 * permanently error out a perfectly healthy attachment.
+	 *
+	 * @return void
+	 */
+	public function test_an_intentional_sync_delay_does_not_count_as_a_strike() {
+		$plugin  = \Cloudinary\get_plugin_instance();
+		$connect = $plugin->get_component( 'connect' );
+
+		$plugin->settings->set_param( 'connected', true );
+		set_transient( Connect::META_KEYS['usage'], array( 'placeholder' => true ), HOUR_IN_SECONDS );
+		$plugin->settings->set_value( 'cloudinary_url', 'cloudinary://123456789012345:abcdefghijklmnopqrstuvwxyzABCDEF@test-cloud' );
+		$plugin->settings->set_value( 'offload', 'cld' );
+		$connect->setup();
+
+		do_action( 'cloudinary_connected', $plugin ); // Delivery::init() etc.
+
+		$plugin->get_component( 'media' )->setup();
+		$sync = $plugin->get_component( 'sync' );
+		$sync->setup();
+		$plugin->get_component( 'delivery' )->setup();
+		// Registers 'storage' and 'size' plus the delay_cld_only() filter, reading the 'cld'
+		// offload mode just set above. Must run before register_assets() below, which is what
+		// actually rebuilds $sync_types to include whatever is registered by this point.
+		$plugin->get_component( 'storage' )->setup();
+
+		$sync->register_assets();
+
+		// Act as if the attachment is already fully synced for everything except storage/size --
+		// matching the real scenario this guards against, where auto sync has already uploaded a
+		// new attachment and the offload delay is the only thing left pending. $sync_types is
+		// protected, so read it the same way the other tests in this file reach sync_base_struct.
+		update_post_meta( self::$attachment_id, '_public_id', 'fake-public-id' );
+		$reflection = new ReflectionProperty( $sync, 'sync_types' );
+		$reflection->setAccessible( true );
+		foreach ( array_keys( $reflection->getValue( $sync ) ) as $type ) {
+			if ( in_array( $type, array( 'storage', 'size' ), true ) ) {
+				continue;
+			}
+			$sync->set_signature_item( self::$attachment_id, $type );
+		}
+
+		// A delay that was just set, so delay_cld_only() blocks the actual offload for the next
+		// minute -- an intentional wait, not a stuck attachment.
+		update_post_meta( self::$attachment_id, Sync::META_KEYS['delay'], time() );
+
+		$push = $sync->managers['push'];
+		$push->process_assets( self::$attachment_id );
+		$push->process_assets( self::$attachment_id );
+		$push->process_assets( self::$attachment_id );
+
+		$this->assertEmpty(
+			get_post_meta( self::$attachment_id, Sync::META_KEYS['sync_error'], true ),
+			'An intentional wait on the offload delay must never be counted as a stuck loop.'
+		);
+	}
+
+	/**
 	 * Once errored, build_queue()'s own meta_query (`_cld_error` NOT EXISTS) is what keeps a
 	 * stuck attachment from being queued again -- confirm the flag this guard sets actually
 	 * satisfies that, end to end.
