@@ -2825,14 +2825,62 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function update_post_meta( $post_id, $key, $data ) {
 
-		$meta = $this->get_post_meta( $post_id );
-		if ( ! isset( $meta[ $key ] ) ) {
-			$meta[ $key ] = '';
+		// The `_cloudinary` meta is a single serialized array shared by every sync type, so
+		// this is a read-modify-write: fetch the whole thing, change one key, write the whole
+		// thing back. Two of these running concurrently for the same attachment (e.g. a
+		// bulk-sync thread and an autosync thread both reaching it, see GitHub issue #1301) can
+		// race -- whichever writes last overwrites the other's change outright, silently. Use
+		// WP's compare-and-swap (the $prev_value arg) to detect that and retry against the
+		// now-current value instead of clobbering it.
+		$max_attempts = 3;
+		for ( $attempt = 0; $attempt < $max_attempts; $attempt++ ) {
+			if ( $attempt > 0 ) {
+				// Only before a retry, not the first attempt: the compare-and-swap below
+				// ($prev_value) is what catches a stale read, by failing against the DB's actual
+				// current value regardless of what's cached. Forcing a fresh read up front would
+				// cost every single meta write here -- and there are many per sync -- a full
+				// reload for no benefit, since nothing has failed yet to justify distrusting the
+				// cache.
+				wp_cache_delete( $post_id, 'post_meta' );
+			}
+
+			// Read before checking existence: when the row is missing, get_post_meta() below
+			// runs the `cloudinary_migrate_legacy_meta` filter, whose callbacks can create this
+			// row themselves as a side effect (e.g. legacy-plugin migration). Checking existence
+			// first would miss that and cost an extra, avoidable retry.
+			$meta   = $this->get_post_meta( $post_id );
+			$exists = metadata_exists( 'post', $post_id, Sync::META_KEYS['cloudinary'] );
+			if ( isset( $meta[ $key ] ) && $meta[ $key ] === $data ) {
+				return true; // Already set to this value, including by a racing write.
+			}
+			$prev         = $meta;
+			$meta[ $key ] = $data;
+
+			if ( $exists ) {
+				// Note: update_metadata() only applies $prev_value (and so only detects a race)
+				// when it's non-empty. If `_cloudinary` currently holds an empty array (e.g.
+				// right after meta_cleanup) or something that didn't come back as an array, this
+				// falls through to an unconditional write instead -- still correct, just unable
+				// to tell a race apart from an ordinary write in that specific case.
+				$result = update_post_meta( $post_id, Sync::META_KEYS['cloudinary'], $meta, $prev );
+			} else {
+				// No row yet: add it uniquely so a concurrent first write can't be silently
+				// dropped the way an unconditional update_post_meta() would allow.
+				$result = add_post_meta( $post_id, Sync::META_KEYS['cloudinary'], $meta, true );
+			}
+
+			if ( false !== $result ) {
+				return $result;
+			}
+			// Lost the race to a concurrent write; loop and retry against the new state.
 		}
 
-		if ( $meta[ $key ] !== $data ) {
-			$meta[ $key ] = $data;
-		}
+		// Still contended after retries: write unconditionally rather than looping forever.
+		// This can still lose a concurrent change, but only after genuinely sustained
+		// contention, not on the first overlap.
+		wp_cache_delete( $post_id, 'post_meta' );
+		$meta         = $this->get_post_meta( $post_id );
+		$meta[ $key ] = $data;
 
 		return update_post_meta( $post_id, Sync::META_KEYS['cloudinary'], $meta );
 	}
@@ -2847,10 +2895,34 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function delete_post_meta( $post_id, $key ) {
 
-		$meta = $this->get_post_meta( $post_id );
-		if ( isset( $meta[ $key ] ) ) {
+		// Same shared-blob read-modify-write as update_post_meta() above, so apply the same
+		// compare-and-swap retry against concurrent writers.
+		$max_attempts = 3;
+		for ( $attempt = 0; $attempt < $max_attempts; $attempt++ ) {
+			if ( $attempt > 0 ) {
+				// See the matching note in update_post_meta(): only before a retry, once the
+				// compare-and-swap below has actually failed against the DB's current value.
+				wp_cache_delete( $post_id, 'post_meta' );
+			}
+
+			$meta = $this->get_post_meta( $post_id );
+			if ( ! isset( $meta[ $key ] ) ) {
+				return true; // Already gone, including by a racing write.
+			}
+			$prev = $meta;
 			unset( $meta[ $key ] );
+
+			$result = update_post_meta( $post_id, Sync::META_KEYS['cloudinary'], $meta, $prev );
+			if ( false !== $result ) {
+				return $result;
+			}
+			// Lost the race to a concurrent write; loop and retry against the new state.
 		}
+
+		// Still contended after retries: write unconditionally rather than looping forever.
+		wp_cache_delete( $post_id, 'post_meta' );
+		$meta = $this->get_post_meta( $post_id );
+		unset( $meta[ $key ] );
 
 		return update_post_meta( $post_id, Sync::META_KEYS['cloudinary'], $meta );
 	}
