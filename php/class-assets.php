@@ -193,9 +193,10 @@ class Assets extends Settings_Component {
 
 		$analytics->track(
 			'cache_uploaded',
-			'cache',
+			'feature_usage',
 			null,
 			array(
+				'feature'    => 'asset_sync',
 				'item_count' => 1,
 				'status'     => is_wp_error( $result ) ? 'error' : 'success',
 			)
