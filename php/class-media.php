@@ -1694,6 +1694,44 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Check if an attachment's registered sizes reference files that no longer exist on disk.
+	 *
+	 * This happens when an image is edited (e.g. cropped) via the WordPress image editor: the main file gets
+	 * renamed (an `-e{timestamp}` suffix is added), but the `sizes` metadata can be left pointing at the
+	 * pre-edit filenames, leaving no local file matching that size record.
+	 *
+	 * This intentionally checks file existence rather than filename prefix: WordPress core has valid states
+	 * where a size's filename legitimately keeps the pre-edit base (e.g. editing with "all sizes except
+	 * thumbnail" deliberately preserves the thumbnail, or a size too small to regenerate from the edited
+	 * image is left as-is). A prefix-only check would misflag those as broken and overwrite valid files.
+	 *
+	 * @param int $attachment_id The Attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function has_outdated_sizes( $attachment_id ) {
+		$metadata = wp_get_attachment_metadata( $attachment_id );
+		$path     = get_attached_file( $attachment_id );
+
+		// Also covers cloud-only storage mode, which intentionally removes every local file (see
+		// Storage::remove_local_assets()) without updating the stored metadata: if the main file itself
+		// is gone, there is nothing to regenerate from, so this is not "outdated", it's expected.
+		if ( empty( $metadata['file'] ) || empty( $metadata['sizes'] ) || empty( $path ) || ! file_exists( $path ) ) {
+			return false;
+		}
+
+		$dir = dirname( $path );
+
+		foreach ( $metadata['sizes'] as $size ) {
+			if ( empty( $size['file'] ) || ! file_exists( path_join( $dir, $size['file'] ) ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Get a Cloudinary ID which includes the file format extension.
 	 *
 	 * @param int $attachment_id The Attachment ID.
