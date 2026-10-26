@@ -631,7 +631,7 @@ abstract class Component {
 			'content'    => null,
 			'name'       => $part,
 		);
-		if ( isset( $this->build_parts[ $part ] ) ) {
+		if ( null !== $part && isset( $this->build_parts[ $part ] ) ) {
 			$struct = wp_parse_args( $this->build_parts[ $part ], $struct );
 		}
 		if ( $this->setting->has_param( 'attributes' . $this->setting->separator . $part ) ) {
