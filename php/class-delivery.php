@@ -955,8 +955,10 @@ class Delivery implements Setup {
 						$this->sync->add_to_sync( $post_id );
 					}
 					$size           = $this->get_sized( $post_id );
-					$key            = ! empty( $size['sized_url'] ) ? $size['sized_url'] : wp_get_attachment_url( $post_id );
-					$cached[ $key ] = (int) $post_id;
+					$attachment_url = ! empty( $size['sized_url'] ) ? $size['sized_url'] : wp_get_attachment_url( $post_id );
+					if ( $attachment_url ) {
+						$cached[ $attachment_url ] = (int) $post_id;
+					}
 				}
 			}
 			wp_cache_add( $key, $cached );
