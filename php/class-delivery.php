@@ -944,7 +944,8 @@ class Delivery implements Setup {
 					 */
 					$post_id = apply_filters( 'cloudinary_contextualized_post_id', $result->post_id );
 
-					if ( ! $this->is_deliverable( $post_id ) ) {
+					// The contextualized post can be missing, e.g. WPML returns null for an attachment without a translation.
+					if ( empty( $post_id ) || ! $this->is_deliverable( $post_id ) ) {
 						continue;
 					}
 					// If we are here, it means that an attachment in the media library doesn't have a delivery for the url.
