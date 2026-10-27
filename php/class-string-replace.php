@@ -174,6 +174,7 @@ class String_Replace implements Setup {
 	 * Output produced within an output handler is discarded, and doing so is deprecated as of PHP 8.4.
 	 * Errors displayed while replacing (e.g. notices raised by hooked callbacks) would count as such output,
 	 * so display is disabled for the duration of the handler. Errors are still logged as usual.
+	 * This doesn't cover callbacks that echo output directly, which still trigger the deprecation.
 	 *
 	 * @param string $buffer The captured buffer.
 	 * @param int    $phase  The output handler phase bitmask.
