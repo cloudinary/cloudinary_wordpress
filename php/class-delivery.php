@@ -922,13 +922,17 @@ class Delivery implements Setup {
 			$search
 		);
 
+		// Cache for the current request only. Across requests, failed deliveries or syncs need to be retried,
+		// and the contextualized post IDs can differ (e.g. per WPML language).
+		static $cache = array();
+
 		$key       = md5( $sql );
-		$cached    = wp_cache_get( $key );
+		$cached    = isset( $cache[ $key ] ) ? $cache[ $key ] : false;
 		$auto_sync = $this->sync->is_auto_sync_enabled();
 
 		if ( false === $cached ) {
 			$cached  = array();
-			$results = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared
+			$results = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 
 			if ( $results ) {
 				foreach ( $results as $result ) {
@@ -962,7 +966,7 @@ class Delivery implements Setup {
 					}
 				}
 			}
-			wp_cache_add( $key, $cached );
+			$cache[ $key ] = $cached;
 		}
 
 		$this->known   = array_merge( $this->known, $cached );
