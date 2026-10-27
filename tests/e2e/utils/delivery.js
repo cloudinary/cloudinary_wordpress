@@ -28,22 +28,45 @@ function expectCloudinaryUrl( rawUrl, expectedCloud ) {
 }
 
 /**
+ * Parse a `srcset` attribute into its candidates.
+ *
+ * Cloudinary URLs carry commas inside the transformation segment
+ * (`w_800,h_600,c_scale`), so splitting on `,` breaks them apart. A
+ * candidate ends at its descriptor, or at a comma followed by whitespace
+ * when it has none.
+ *
+ * @param {string|null} srcset The raw attribute value.
+ * @return {{ url: string, descriptor: string }[]} Candidates in source order.
+ */
+function parseSrcset( srcset ) {
+	if ( ! srcset ) {
+		return [];
+	}
+	const candidates = [];
+	const pattern = /\s*(\S+?)(?:\s+(\d+(?:\.\d+)?[wx]))?\s*(?:,(?=\s)|,?$)/gy;
+	let match;
+	while ( pattern.lastIndex < srcset.length ) {
+		match = pattern.exec( srcset );
+		if ( ! match || ! match[ 0 ] ) {
+			break;
+		}
+		candidates.push( { url: match[ 1 ], descriptor: match[ 2 ] || '' } );
+	}
+	return candidates;
+}
+
+/**
  * Split a `srcset` attribute into its candidate URLs.
  *
  * @param {string|null} srcset The raw attribute value.
  * @return {string[]} Candidate URLs, without width/density descriptors.
  */
 function srcsetUrls( srcset ) {
-	if ( ! srcset ) {
-		return [];
-	}
-	return srcset
-		.split( ',' )
-		.map( ( candidate ) => candidate.trim().split( /\s+/ )[ 0 ] )
-		.filter( Boolean );
+	return parseSrcset( srcset ).map( ( candidate ) => candidate.url );
 }
 
 module.exports = {
 	expectCloudinaryUrl,
+	parseSrcset,
 	srcsetUrls,
 };
