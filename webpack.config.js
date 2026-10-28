@@ -66,9 +66,7 @@ const sharedConfig = {
 									plugins: [
 										...( use.options?.plugins ?? [] ),
 										[
-											require.resolve(
-												'@babel/plugin-transform-react-jsx'
-											),
+											require.resolve( '@babel/plugin-transform-react-jsx' ),
 											{ runtime: 'classic' },
 										],
 									],
