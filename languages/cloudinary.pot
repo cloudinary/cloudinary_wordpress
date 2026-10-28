@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Cloudinary STABLETAG\n"
 "Report-Msgid-Bugs-To: https://github.com/cloudinary/cloudinary_wordpress\n"
-"POT-Creation-Date: 2026-09-10 09:07:21+00:00\n"
+"POT-Creation-Date: 2026-10-28 13:54:10+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -513,7 +513,7 @@ msgid ""
 "WordPress."
 msgstr ""
 
-#: php/class-media.php:2094
+#: php/class-media.php:2207
 msgid "Import"
 msgstr ""
 
@@ -521,49 +521,49 @@ msgstr ""
 msgid "Cloudinary"
 msgstr ""
 
-#: php/class-media.php:2449
+#: php/class-media.php:2562
 msgid "The delivery for this asset is disabled."
 msgstr ""
 
-#: php/class-media.php:2453
+#: php/class-media.php:2566
 msgid "Not syncable. This is an external media."
 msgstr ""
 
-#: php/class-media.php:2457
+#: php/class-media.php:2570
 msgid "This media is Fetch type."
 msgstr ""
 
-#: php/class-media.php:2461
+#: php/class-media.php:2574
 msgid "This media is Sprite type."
 msgstr ""
 
-#: php/class-media.php:2471
+#: php/class-media.php:2584
 msgid "Not Synced"
 msgstr ""
 
-#: php/class-media.php:2476
+#: php/class-media.php:2589
 msgid "Synced"
 msgstr ""
 
-#: php/class-media.php:3135
+#: php/class-media.php:3320
 msgid "No Cloudinary filters"
 msgstr ""
 
-#: php/class-media.php:3235
+#: php/class-media.php:3427
 msgid "Media Settings"
 msgstr ""
 
-#: php/class-media.php:3238
+#: php/class-media.php:3430
 msgid "Media Display"
 msgstr ""
 
-#: php/class-media.php:3242 php/ui/component/class-plan-details.php:129
+#: php/class-media.php:3434 php/ui/component/class-plan-details.php:129
 #: php/ui/component/class-plan-status.php:128
 #: ui-definitions/settings-pages.php:568 ui-definitions/settings-sidebar.php:47
 msgid "Transformations"
 msgstr ""
 
-#: php/class-media.php:3243
+#: php/class-media.php:3435
 msgid ""
 "Cloudinary allows you to easily transform your images on-the-fly to any "
 "required format, style and dimension, and also optimizes images for minimal "
@@ -572,7 +572,7 @@ msgid ""
 "transformation and delivery URLs."
 msgstr ""
 
-#: php/class-media.php:3248 ui-definitions/settings-image.php:175
+#: php/class-media.php:3440 ui-definitions/settings-image.php:175
 #: ui-definitions/settings-pages.php:594 ui-definitions/settings-video.php:260
 msgid "See examples"
 msgstr ""
@@ -656,56 +656,65 @@ msgid ""
 "purchase?<br><br>Thank you!"
 msgstr ""
 
-#: php/class-sync.php:504
+#: php/class-sync.php:505
 msgid "Synchronizing asset with Cloudinary"
 msgstr ""
 
-#: php/class-sync.php:524
+#: php/class-sync.php:525
 msgid "Upgrading from previous version"
 msgstr ""
 
-#: php/class-sync.php:535
+#: php/class-sync.php:536
 msgid "Downloading from Cloudinary"
 msgstr ""
 
-#: php/class-sync.php:550 php/class-sync.php:567
+#: php/class-sync.php:551 php/class-sync.php:568
 msgid "Uploading to Cloudinary"
 msgstr ""
 
 #: php/class-sync.php:580
+msgid "Regenerating thumbnail sizes"
+msgstr ""
+
+#: php/class-sync.php:593
 #. translators: %s folder name
 msgid "Copying to folder %s."
 msgstr ""
 
-#: php/class-sync.php:595 php/class-sync.php:622
+#: php/class-sync.php:608 php/class-sync.php:635
 msgid "Updating metadata"
 msgstr ""
 
-#: php/class-sync.php:608
+#: php/class-sync.php:621
 msgid "Updating breakpoints"
 msgstr ""
 
-#: php/class-sync.php:649
+#: php/class-sync.php:662
 msgid "Uploading to new cloud name."
 msgstr ""
 
-#: php/class-sync.php:1130
+#: php/class-sync.php:955
+#. translators: %s is the sync type that would not advance.
+msgid "Sync loop detected: the \"%s\" sync state could not be saved."
+msgstr ""
+
+#: php/class-sync.php:1191
 msgid "Sync errors cleaned up"
 msgstr ""
 
-#: php/class-sync.php:1220
+#: php/class-sync.php:1281
 msgid "Is Cloudinary synced."
 msgstr ""
 
-#: php/class-sync.php:1277
+#: php/class-sync.php:1338
 msgid "Media Library Sync Settings"
 msgstr ""
 
-#: php/class-sync.php:1282
+#: php/class-sync.php:1343
 msgid "Sync method"
 msgstr ""
 
-#: php/class-sync.php:1285
+#: php/class-sync.php:1346
 #. translators: The HTML break line, the link to Cloudinary documentation and
 #. closing tag.
 msgid ""
@@ -714,35 +723,35 @@ msgid ""
 "Media Library.%3$s%4$sLearn more%5$s"
 msgstr ""
 
-#: php/class-sync.php:1296
+#: php/class-sync.php:1357
 msgid "Auto sync"
 msgstr ""
 
-#: php/class-sync.php:1297
+#: php/class-sync.php:1358
 msgid "Manual sync"
 msgstr ""
 
-#: php/class-sync.php:1303
+#: php/class-sync.php:1364
 msgid "Cloudinary folder path"
 msgstr ""
 
-#: php/class-sync.php:1307
+#: php/class-sync.php:1368
 msgid "e.g.: wordpress_assets/"
 msgstr ""
 
-#: php/class-sync.php:1310
+#: php/class-sync.php:1371
 msgid ""
 "The folder in your Cloudinary account that WordPress assets are uploaded "
 "to. Leave blank to use the root of your Cloudinary library."
 msgstr ""
 
-#: php/class-sync.php:1319 php/ui/component/class-plan-details.php:128
+#: php/class-sync.php:1380 php/ui/component/class-plan-details.php:128
 #: php/ui/component/class-plan-status.php:94
 #: ui-definitions/settings-sidebar.php:41
 msgid "Storage"
 msgstr ""
 
-#: php/class-sync.php:1322
+#: php/class-sync.php:1383
 #. translators: the HTML for opening and closing list and its items.
 msgid ""
 "Choose where your assets are stored.%1$sCloudinary and WordPress: Stores "
@@ -755,19 +764,19 @@ msgid ""
 "compatibility.%4$s%5$sLearn more%6$s"
 msgstr ""
 
-#: php/class-sync.php:1335
+#: php/class-sync.php:1396
 msgid "Cloudinary and WordPress"
 msgstr ""
 
-#: php/class-sync.php:1336
+#: php/class-sync.php:1397
 msgid "Cloudinary and WordPress (low resolution)"
 msgstr ""
 
-#: php/class-sync.php:1337
+#: php/class-sync.php:1398
 msgid "Cloudinary only"
 msgstr ""
 
-#: php/class-sync.php:1343 php/delivery/class-lazy-load.php:544
+#: php/class-sync.php:1404 php/delivery/class-lazy-load.php:544
 #: php/media/class-gallery.php:454 ui-definitions/components/header.php:19
 #: ui-definitions/settings-image.php:263 ui-definitions/settings-pages.php:207
 #: ui-definitions/settings-pages.php:223 ui-definitions/settings-pages.php:224
@@ -775,7 +784,7 @@ msgstr ""
 msgid "Need help?"
 msgstr ""
 
-#: php/class-sync.php:1346
+#: php/class-sync.php:1407
 #. Translators: The HTML for opening and closing link tags.
 msgid ""
 "Watch free lessons on how to use the Media Library Sync Settings in the "
@@ -793,30 +802,30 @@ msgid ""
 "System Report"
 msgstr ""
 
-#: php/class-utils.php:868
+#: php/class-utils.php:872
 msgid "Debug log is empty"
 msgstr ""
 
-#: php/class-utils.php:922
+#: php/class-utils.php:926
 msgid "Missing SRC attribute."
 msgstr ""
 
-#: php/class-utils.php:960
+#: php/class-utils.php:964
 #. translators: The attachment ID.
 msgid "Clean up sync metadata for %d"
 msgstr ""
 
-#: php/class-utils.php:1385
+#: php/class-utils.php:1389
 msgid "Cloudinary global transformations"
 msgstr ""
 
-#: php/class-utils.php:1392
+#: php/class-utils.php:1396
 #. translators: %1$s is the taxonomy label and the %2$s is the context of the
 #. use.
 msgid "%1$s %2$s transformations"
 msgstr ""
 
-#: php/class-utils.php:1402
+#: php/class-utils.php:1406
 #. translators: %s is the term name.
 msgid "%s transformations"
 msgstr ""
@@ -1041,25 +1050,30 @@ msgstr ""
 msgid "Could not download the Cloudinary asset."
 msgstr ""
 
-#: php/sync/class-push-sync.php:278
+#: php/sync/class-push-sync.php:279
 #. translators: variable is sync type.
 msgid "Sync type: %s"
 msgstr ""
 
-#: php/sync/class-push-sync.php:303
+#: php/sync/class-push-sync.php:314
+#. translators: %s is the sync type that would not advance.
+msgid "Sync loop detected: the \"%s\" sync state is not advancing."
+msgstr ""
+
+#: php/sync/class-push-sync.php:354
 msgid "Starting new thread."
 msgstr ""
 
-#: php/sync/class-push-sync.php:329
+#: php/sync/class-push-sync.php:380
 msgid "Asset in sync loop."
 msgstr ""
 
-#: php/sync/class-push-sync.php:335
+#: php/sync/class-push-sync.php:386
 #. translators: variable is thread name and asset ID.
 msgid "%1$s - cycle %3$s: Syncing asset %2$d"
 msgstr ""
 
-#: php/sync/class-push-sync.php:345
+#: php/sync/class-push-sync.php:396
 #. translators: variable is thread name.
 msgid "Ending thread %s"
 msgstr ""
@@ -1221,6 +1235,10 @@ msgstr ""
 
 #: php/sync/class-upload-sync.php:148 php/sync/class-upload-sync.php:149
 msgid "Fix Cloudinary Sync Error"
+msgstr ""
+
+#: php/sync/class-upload-sync.php:296 php/sync/class-upload-sync.php:353
+msgid "Could not regenerate attachment sizes."
 msgstr ""
 
 #: php/templates/connection-string.php:13
