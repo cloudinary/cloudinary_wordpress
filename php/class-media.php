@@ -3180,7 +3180,7 @@ class Media extends Settings_Component implements Setup {
 			$attachment = get_post( $attachment_id );
 
 			if ( ! empty( $attachment ) && Assets::POST_TYPE_SLUG === $attachment->post_type && ! empty( $attachment->post_parent ) ) {
-				$version = (int) preg_replace( '/\D/', '', $this->get_post_meta( (int) $attachment->post_parent, Sync::META_KEYS['version'], true ) );
+				$version = (int) preg_replace( '/\D/', '', $this->get_post_meta( (int) $attachment->post_parent, Sync::META_KEYS['version'], true, '' ) );
 			}
 		}
 

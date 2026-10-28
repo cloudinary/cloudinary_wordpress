@@ -270,11 +270,12 @@ class Relationship {
 	public static function get_relationship( $post_id ) {
 
 		static $cache = array();
-		if ( ! isset( $cache[ $post_id ] ) ) {
-			$cache[ $post_id ] = new self( $post_id );
+		$key          = (int) $post_id;
+		if ( ! isset( $cache[ $key ] ) ) {
+			$cache[ $key ] = new self( $post_id );
 		}
 
-		return $cache[ $post_id ];
+		return $cache[ $key ];
 	}
 
 	/**

@@ -541,6 +541,8 @@ class Delivery implements Setup {
 	 */
 	public function get_sized( $attachment_id ) {
 		static $sizes = array(), $registered_sizes;
+
+		$attachment_id = (int) $attachment_id;
 		if ( ! $registered_sizes ) {
 			$registered_sizes = wp_get_registered_image_subsizes();
 		}
@@ -920,13 +922,17 @@ class Delivery implements Setup {
 			$search
 		);
 
+		// Cache for the current request only. Across requests, failed deliveries or syncs need to be retried,
+		// and the contextualized post IDs can differ (e.g. per WPML language).
+		static $cache = array();
+
 		$key       = md5( $sql );
-		$cached    = wp_cache_get( $key );
+		$cached    = isset( $cache[ $key ] ) ? $cache[ $key ] : false;
 		$auto_sync = $this->sync->is_auto_sync_enabled();
 
 		if ( false === $cached ) {
 			$cached  = array();
-			$results = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared
+			$results = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 
 			if ( $results ) {
 				foreach ( $results as $result ) {
@@ -942,7 +948,8 @@ class Delivery implements Setup {
 					 */
 					$post_id = apply_filters( 'cloudinary_contextualized_post_id', $result->post_id );
 
-					if ( ! $this->is_deliverable( $post_id ) ) {
+					// The contextualized post can be missing, e.g. WPML returns null for an attachment without a translation.
+					if ( empty( $post_id ) || ! $this->is_deliverable( $post_id ) ) {
 						continue;
 					}
 					// If we are here, it means that an attachment in the media library doesn't have a delivery for the url.
@@ -953,11 +960,13 @@ class Delivery implements Setup {
 						$this->sync->add_to_sync( $post_id );
 					}
 					$size           = $this->get_sized( $post_id );
-					$key            = ! empty( $size['sized_url'] ) ? $size['sized_url'] : wp_get_attachment_url( $post_id );
-					$cached[ $key ] = (int) $post_id;
+					$attachment_url = ! empty( $size['sized_url'] ) ? $size['sized_url'] : wp_get_attachment_url( $post_id );
+					if ( $attachment_url ) {
+						$cached[ $attachment_url ] = (int) $post_id;
+					}
 				}
 			}
-			wp_cache_add( $key, $cached );
+			$cache[ $key ] = $cached;
 		}
 
 		$this->known   = array_merge( $this->known, $cached );
