@@ -1583,9 +1583,10 @@ class Delivery implements Setup {
 		// Track back the found URL.
 		if ( $this->media->is_cloudinary_url( $raw_url ) ) {
 			$public_id = $this->media->get_public_id_from_url( $raw_url );
-			if ( isset( $this->known[ $public_id ] ) ) {
-
-				$url               = $this->known[ $public_id ]['sized_url'];
+			// A URL with transformations of its own (e.g. typed into content by hand) is left as is, since rebuilding it would drop them.
+			if ( isset( $this->known[ $public_id ] ) && ! $this->has_custom_transformations( $raw_url, $this->known[ $public_id ]['post_id'] ) ) {
+				// The relation's sized_url is relative to the content dir, while the URL keys of $this->known are full URLs.
+				$url               = $this->get_searchable_url( $this->known[ $public_id ] );
 				$attributes['src'] = $url;
 			}
 		}
@@ -1837,25 +1838,54 @@ class Delivery implements Setup {
 	}
 
 	/**
-	 * Set url usability.
+	 * Check if a Cloudinary URL has transformations other than the ones the plugin applies to the attachment itself:
+	 * its size, and the attachment's own and global transformations.
 	 *
-	 * @param array     $item      The item result.
-	 * @param null|bool $auto_sync If auto_sync is on.
+	 * @param string $url           The Cloudinary URL.
+	 * @param int    $attachment_id The attachment ID.
+	 *
+	 * @return bool
 	 */
-	protected function set_usability( $item, $auto_sync = null ) {
+	protected function has_custom_transformations( $url, $attachment_id ) {
+		$type     = $this->media->get_resource_type( $attachment_id );
+		$expected = $this->media->get_transformations_from_string( (string) $this->media->cloudinary_url( $attachment_id ), $type );
 
-		/**
-		 * Filter the found item to allow usability to be altered.
-		 *
-		 * @hook   cloudinary_set_usable_asset
-		 * @since  3.0.2
-		 *
-		 * @param array $item The found asset.
-		 *
-		 * @return array
-		 */
-		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
+		foreach ( $this->media->get_transformations_from_string( $url, $type ) as $transformation ) {
+			// Loose comparison, so the order of the parameters doesn't matter.
+			if ( ! $this->is_size_transformation( $transformation ) && ! in_array( $transformation, $expected ) ) { // phpcs:ignore WordPress.PHP.StrictInArray.MissingTrueStrict
+				return true;
+			}
+		}
 
+		return false;
+	}
+
+	/**
+	 * Check if a transformation is one the plugin uses to size an image, e.g. `w_300,h_200,c_scale` or `w_150,h_150,c_thumb,g_auto`.
+	 *
+	 * @param array $transformation The transformation, as parsed by Media::get_transformations_from_string().
+	 *
+	 * @return bool
+	 */
+	protected function is_size_transformation( $transformation ) {
+		if ( array_diff_key( $transformation, array_flip( array( 'width', 'height', 'crop', 'gravity' ) ) ) ) {
+			return false;
+		}
+		if ( isset( $transformation['crop'] ) && ! in_array( $transformation['crop'], array( 'scale', 'fill', 'thumb' ), true ) ) {
+			return false;
+		}
+
+		return ! isset( $transformation['gravity'] ) || 'auto' === $transformation['gravity'];
+	}
+
+	/**
+	 * Get the URL an item is known by, as used for the keys of $this->known.
+	 *
+	 * @param array $item The item result.
+	 *
+	 * @return string
+	 */
+	protected function get_searchable_url( $item ) {
 		/**
 		 * The URL to be searched for and prepared to be delivered by Cloudinary.
 		 *
@@ -1887,7 +1917,30 @@ class Delivery implements Setup {
 		 *
 		 * @return string
 		 */
-		$url = apply_filters( 'cloudinary_delivery_searchable_url', $url, $item, $content_url );
+		return apply_filters( 'cloudinary_delivery_searchable_url', $url, $item, $content_url );
+	}
+
+	/**
+	 * Set url usability.
+	 *
+	 * @param array     $item      The item result.
+	 * @param null|bool $auto_sync If auto_sync is on.
+	 */
+	protected function set_usability( $item, $auto_sync = null ) {
+
+		/**
+		 * Filter the found item to allow usability to be altered.
+		 *
+		 * @hook   cloudinary_set_usable_asset
+		 * @since  3.0.2
+		 *
+		 * @param array $item The found asset.
+		 *
+		 * @return array
+		 */
+		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
+
+		$url = $this->get_searchable_url( $item );
 
 		$found = array();
 
