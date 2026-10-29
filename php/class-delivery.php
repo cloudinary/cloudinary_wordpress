@@ -1584,8 +1584,8 @@ class Delivery implements Setup {
 		if ( $this->media->is_cloudinary_url( $raw_url ) ) {
 			$public_id = $this->media->get_public_id_from_url( $raw_url );
 			if ( isset( $this->known[ $public_id ] ) ) {
-
-				$url               = $this->known[ $public_id ]['sized_url'];
+				// The relation's sized_url is relative to the content dir, while the URL keys of $this->known are full URLs.
+				$url               = $this->get_searchable_url( $this->known[ $public_id ] );
 				$attributes['src'] = $url;
 			}
 		}
@@ -1837,25 +1837,13 @@ class Delivery implements Setup {
 	}
 
 	/**
-	 * Set url usability.
+	 * Get the URL an item is known by, as used for the keys of $this->known.
 	 *
-	 * @param array     $item      The item result.
-	 * @param null|bool $auto_sync If auto_sync is on.
+	 * @param array $item The item result.
+	 *
+	 * @return string
 	 */
-	protected function set_usability( $item, $auto_sync = null ) {
-
-		/**
-		 * Filter the found item to allow usability to be altered.
-		 *
-		 * @hook   cloudinary_set_usable_asset
-		 * @since  3.0.2
-		 *
-		 * @param array $item The found asset.
-		 *
-		 * @return array
-		 */
-		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
-
+	protected function get_searchable_url( $item ) {
 		/**
 		 * The URL to be searched for and prepared to be delivered by Cloudinary.
 		 *
@@ -1887,7 +1875,30 @@ class Delivery implements Setup {
 		 *
 		 * @return string
 		 */
-		$url = apply_filters( 'cloudinary_delivery_searchable_url', $url, $item, $content_url );
+		return apply_filters( 'cloudinary_delivery_searchable_url', $url, $item, $content_url );
+	}
+
+	/**
+	 * Set url usability.
+	 *
+	 * @param array     $item      The item result.
+	 * @param null|bool $auto_sync If auto_sync is on.
+	 */
+	protected function set_usability( $item, $auto_sync = null ) {
+
+		/**
+		 * Filter the found item to allow usability to be altered.
+		 *
+		 * @hook   cloudinary_set_usable_asset
+		 * @since  3.0.2
+		 *
+		 * @param array $item The found asset.
+		 *
+		 * @return array
+		 */
+		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
+
+		$url = $this->get_searchable_url( $item );
 
 		$found = array();
 
