@@ -19,7 +19,8 @@ const {
 	galleryBlock,
 	openGallery,
 } = require( './utils/gallery' );
-const { wpCli, wpEvalFile } = require( './utils/wizard' );
+const { saveSettings } = require( './utils/settings' );
+const { wpCli } = require( './utils/wizard' );
 
 const IMAGE_FIXTURE = path.join( __dirname, 'fixtures', 'test-image.jpg' );
 const VIDEO_FIXTURE = path.join( __dirname, 'fixtures', 'test-video.mp4' );
@@ -67,29 +68,6 @@ let createdIds = [];
  * @type {{ imagePost: { link: string, attachmentId: number }, galleryPost: { link: string }, videoPost: { link: string } }|null}
  */
 let created = null;
-
-/**
- * Save plugin settings through the settings API and return the old values.
- *
- * @param {Record<string, string>} values Setting slug to value.
- * @return {Record<string, string>} Setting slug to the value before the write.
- */
-function saveSettings( values ) {
-	return JSON.parse(
-		wpEvalFile( `
-			$settings = get_plugin_instance()->settings;
-			$previous = array();
-			foreach ( json_decode( '${ JSON.stringify(
-				values
-			) }', true ) as $slug => $value ) {
-				$setting           = $settings->get_setting( $slug );
-				$previous[ $slug ] = $setting->get_value();
-				$setting->save_value( $value );
-			}
-			echo wp_json_encode( $previous );
-		` )
-	);
-}
 
 /**
  * Upload a fixture file through REST and record its ID for cleanup.
