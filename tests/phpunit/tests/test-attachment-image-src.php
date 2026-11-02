@@ -3,7 +3,7 @@
  * Tests for Cloudinary\Media::filter_attachment_image_src().
  *
  * This covers the wp_get_attachment_image_src filter Cloudinary hooks so it keeps the last
- * word on that specific, commonly-targeted core hook (see WPP-1183): it must bow out cheaply
+ * word on that specific, commonly-targeted core hook: it must bow out cheaply
  * when a URL is already a Cloudinary URL or there is no image at all, only correct an attachment
  * that actually has a real image representation (an image, or a preview-capable format like PDF/
  * PSD -- anything else showing here with icon=true is a generic mime icon, not something to
