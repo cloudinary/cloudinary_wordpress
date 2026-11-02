@@ -10,17 +10,17 @@ const { test, expect } = require( './fixtures' );
  */
 const { ensureCloudinaryConnected } = require( './utils/connection' );
 const { expectCloudinaryUrl, srcsetUrls } = require( './utils/delivery' );
+const {
+	collectImageUrls,
+	galleryBlock,
+	openGallery: openGalleryAt,
+} = require( './utils/gallery' );
 const { wpCli } = require( './utils/wizard' );
 
 const FIXTURE_PATH = path.join( __dirname, 'fixtures', 'test-image.jpg' );
 
 const IMAGE_COUNT = 3;
 const INITIAL_COLUMNS = 3;
-const CONTAINER = 'cld-gallery-e2e';
-
-// The Cloudinary Gallery Widget is loaded from product-gallery.cloudinary.com
-// and renders on `window.load`, so allow for a slow third-party fetch.
-const WIDGET_TIMEOUT = 30_000;
 
 let cloudName;
 
@@ -33,71 +33,13 @@ let cloudName;
 let created = null;
 
 /**
- * Build the serialized `cloudinary/gallery` block. The inner markup must
- * match the block's `save()` output exactly, or the editor flags the block
- * as invalid when the layout test opens the post.
- *
- * @param {Object[]} selectedImages Response of the plugin's `image_data` endpoint.
- * @param {Object}   layout         Layout attributes.
- * @param {string}   layout.mode    `expanded` or `classic`.
- * @param {number}   layout.columns Column count (expanded mode only).
- * @return {string} Block markup.
- */
-function galleryBlock( selectedImages, { mode, columns } ) {
-	const attributes = {
-		container: CONTAINER,
-		selectedImages,
-		displayProps_mode: mode,
-		displayProps_columns: columns,
-	};
-
-	return (
-		`<!-- wp:cloudinary/gallery ${ JSON.stringify( attributes ) } -->\n` +
-		`<div class="${ CONTAINER }"></div>\n` +
-		`<!-- /wp:cloudinary/gallery -->`
-	);
-}
-
-/**
- * Open the published post and wait for the Gallery Widget to finish
- * rendering every image in the main viewer.
+ * Open the published post and wait for every gallery image to render.
  *
  * @param {import('@playwright/test').Page} page
  * @return {Promise<import('@playwright/test').Locator>} The widget root.
  */
-async function openGallery( page ) {
-	await page.goto( created.postLink );
-
-	const gallery = page.locator(
-		`.${ CONTAINER } [data-test="gallery-wrap"]`
-	);
-	await expect(
-		gallery,
-		'the Gallery Widget should render into the block container'
-	).toBeVisible( { timeout: WIDGET_TIMEOUT } );
-
-	await expect(
-		gallery.locator(
-			'[data-test="gallery-viewer-wrap"] [data-test="image-wrap"][data-ready="true"]'
-		)
-	).toHaveCount( IMAGE_COUNT, { timeout: WIDGET_TIMEOUT } );
-
-	return gallery;
-}
-
-/**
- * Read the `src` and `srcset` attributes of the given images.
- *
- * @param {import('@playwright/test').Locator} images
- * @return {Promise<Array<{ src: string|null, srcset: string|null }>>} Attributes per image.
- */
-async function collectImageUrls( images ) {
-	return images.evaluateAll( ( nodes ) =>
-		nodes.map( ( img ) => ( {
-			src: img.getAttribute( 'src' ),
-			srcset: img.getAttribute( 'srcset' ),
-		} ) )
-	);
+function openGallery( page ) {
+	return openGalleryAt( page, created.postLink, IMAGE_COUNT );
 }
 
 // @serial: needs real credentials in `cloudinary_connect` to sync assets,
