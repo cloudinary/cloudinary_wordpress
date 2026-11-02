@@ -30,27 +30,35 @@ function expectCloudinaryUrl( rawUrl, expectedCloud ) {
 /**
  * Parse a `srcset` attribute into its candidates.
  *
- * Cloudinary URLs carry commas inside the transformation segment
- * (`w_800,h_600,c_scale`), so splitting on `,` breaks them apart. A
- * candidate ends at its descriptor, or at a comma followed by whitespace
- * when it has none.
+ * Follows the HTML parsing rule: a URL is a run of non-whitespace
+ * characters, and trailing commas on it end the candidate. Otherwise the
+ * descriptor runs up to the next comma. Commas inside a URL, such as in a
+ * Cloudinary transformation segment (`w_800,h_600,c_scale`), stay part of
+ * the URL.
  *
  * @param {string|null} srcset The raw attribute value.
  * @return {{ url: string, descriptor: string }[]} Candidates in source order.
  */
 function parseSrcset( srcset ) {
-	if ( ! srcset ) {
-		return [];
-	}
 	const candidates = [];
-	const pattern = /\s*(\S+?)(?:\s+(\d+(?:\.\d+)?[wx]))?\s*(?:,(?=\s)|,?$)/gy;
-	let match;
-	while ( pattern.lastIndex < srcset.length ) {
-		match = pattern.exec( srcset );
-		if ( ! match || ! match[ 0 ] ) {
-			break;
+	const input = srcset || '';
+	const urlPattern = /[\s,]*(\S+)/y;
+	const descriptorPattern = /\s*([^,]*?)\s*(?:,|$)/y;
+	for (
+		let urlMatch = urlPattern.exec( input );
+		urlMatch;
+		urlMatch = urlPattern.exec( input )
+	) {
+		let url = urlMatch[ 1 ];
+		let descriptor = '';
+		if ( url.endsWith( ',' ) ) {
+			url = url.replace( /,+$/, '' );
+		} else {
+			descriptorPattern.lastIndex = urlPattern.lastIndex;
+			descriptor = descriptorPattern.exec( input )[ 1 ];
+			urlPattern.lastIndex = descriptorPattern.lastIndex;
 		}
-		candidates.push( { url: match[ 1 ], descriptor: match[ 2 ] || '' } );
+		candidates.push( { url, descriptor } );
 	}
 	return candidates;
 }
