@@ -2,8 +2,7 @@
 /**
  * Tests for Cloudinary\Delivery::parse_element().
  *
- * Since WPP-1183, image_downsize() and wp_get_attachment_image_src() return Cloudinary URLs on
- * the front end too, so tags built by theme code (wp_get_attachment_image() in a template, a
+ * image_downsize() and wp_get_attachment_image_src() return Cloudinary URLs on the front end too, so tags built by theme code (wp_get_attachment_image() in a template, a
  * shortcode, a widget) reach Delivery with a Cloudinary src instead of a local one. Delivery
  * tracks such a src back to its attachment through the public ID; this covers that the track-back
  * resolves to the same full URL the known items are keyed by, rather than the relation's
