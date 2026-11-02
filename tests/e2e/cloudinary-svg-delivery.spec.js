@@ -10,6 +10,7 @@ const { test, expect } = require( './fixtures' );
  */
 const { ensureCloudinaryConnected } = require( './utils/connection' );
 const { expectCloudinaryUrl } = require( './utils/delivery' );
+const { saveSettings } = require( './utils/settings' );
 const { wpCli, wpEvalFile } = require( './utils/wizard' );
 
 const VALID_FIXTURE = path.join( __dirname, 'fixtures', 'svg-valid.svg' );
@@ -43,32 +44,6 @@ let previousSettings = null;
  * @type {number[]}
  */
 let createdIds = [];
-
-/**
- * Save plugin settings and return their previous values.
- *
- * Goes through the settings API rather than `wp option patch` so the values
- * land in the same place the settings screen saves them.
- *
- * @param {Record<string, string>} values Setting slug to value.
- * @return {Record<string, string>} Setting slug to the value before the write.
- */
-function saveSettings( values ) {
-	return JSON.parse(
-		wpEvalFile( `
-			$settings = get_plugin_instance()->settings;
-			$previous = array();
-			foreach ( json_decode( '${ JSON.stringify(
-				values
-			) }', true ) as $slug => $value ) {
-				$setting           = $settings->get_setting( $slug );
-				$previous[ $slug ] = $setting->get_value();
-				$setting->save_value( $value );
-			}
-			echo wp_json_encode( $previous );
-		` )
-	);
-}
 
 /**
  * Upload an SVG fixture, embed it in a published post and sync it.

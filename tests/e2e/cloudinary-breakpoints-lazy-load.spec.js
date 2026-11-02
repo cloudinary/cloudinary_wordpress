@@ -14,6 +14,7 @@ const {
 	parseSrcset,
 	srcsetUrls,
 } = require( './utils/delivery' );
+const { readSettings, saveSettings } = require( './utils/settings' );
 const { wpCli, wpEvalFile } = require( './utils/wizard' );
 
 const FIXTURE_PATH = path.join( __dirname, 'fixtures', 'test-image.jpg' );
@@ -74,49 +75,6 @@ let previousSettings = null;
 let created = null;
 
 /**
- * Save plugin settings through the settings API and return the old values.
- *
- * @param {Record<string, string|number>} values Setting slug to value.
- * @return {Record<string, string|number>} Setting slug to the value before the write.
- */
-function saveSettings( values ) {
-	return JSON.parse(
-		wpEvalFile( `
-			$settings = get_plugin_instance()->settings;
-			$previous = array();
-			foreach ( json_decode( '${ JSON.stringify(
-				values
-			) }', true ) as $slug => $value ) {
-				$setting           = $settings->get_setting( $slug );
-				$previous[ $slug ] = $setting->get_value();
-				$setting->save_value( $value );
-			}
-			echo wp_json_encode( $previous );
-		` )
-	);
-}
-
-/**
- * Read the current value of the managed settings.
- *
- * @return {Record<string, string|number>} Setting slug to value.
- */
-function readSettings() {
-	return JSON.parse(
-		wpEvalFile( `
-			$settings = get_plugin_instance()->settings;
-			$values   = array();
-			foreach ( json_decode( '${ JSON.stringify(
-				MANAGED_SETTINGS
-			) }', true ) as $slug ) {
-				$values[ $slug ] = $settings->get_setting( $slug )->get_value();
-			}
-			echo wp_json_encode( $values );
-		` )
-	);
-}
-
-/**
  * Apply the breakpoint and lazy-load toggles, with the fixed breakpoint
  * range and the blur placeholder.
  *
@@ -144,6 +102,26 @@ function srcsetWidths( srcset ) {
 		.map( ( candidate ) => candidate.descriptor )
 		.filter( ( descriptor ) => /^\d+w$/.test( descriptor ) )
 		.map( ( descriptor ) => parseInt( descriptor, 10 ) );
+}
+
+/**
+ * Widths of the image sizes WordPress registered for an attachment,
+ * including the full size.
+ *
+ * @param {number} attachmentId Attachment ID.
+ * @return {number[]} Widths in pixels.
+ */
+function attachmentWidths( attachmentId ) {
+	return JSON.parse(
+		wpEvalFile( `
+			$meta   = wp_get_attachment_metadata( ${ Number( attachmentId ) } );
+			$widths = array( (int) $meta['width'] );
+			foreach ( $meta['sizes'] as $size ) {
+				$widths[] = (int) $size['width'];
+			}
+			echo wp_json_encode( $widths );
+		` )
+	);
 }
 
 /**
@@ -192,7 +170,7 @@ test.describe(
 	() => {
 		test.beforeAll( async ( { requestUtils } ) => {
 			( { cloudName } = ensureCloudinaryConnected() );
-			previousSettings = readSettings();
+			previousSettings = readSettings( MANAGED_SETTINGS );
 
 			// A timestamped filename gives every run a fresh public ID,
 			// so no CDN cache from an earlier run can interfere.
@@ -281,8 +259,8 @@ test.describe(
 				// The first candidate is the original `src`; the rest
 				// carry the breakpoint width as a transformation.
 				if ( i > 0 ) {
-					expect( url, `transformation of ${ url }` ).toContain(
-						`w_${ EXPECTED_WIDTHS[ i ] }`
+					expect( url, `transformation of ${ url }` ).toMatch(
+						new RegExp( `[/,]w_${ EXPECTED_WIDTHS[ i ] }[,/]` )
 					);
 				}
 			}
@@ -305,9 +283,21 @@ test.describe(
 				'the responsive marker should be gone'
 			).toBeUndefined();
 
-			// Core may still emit its own srcset from the registered
-			// image sizes. None of the breakpoint-only widths may appear.
+			// WordPress still writes its own srcset from the registered
+			// image sizes. Every width must be one of those sizes, so none
+			// of the breakpoint-only widths can appear.
 			const widths = srcsetWidths( attrs.srcset );
+			expect(
+				widths.length,
+				'WordPress should still write its own srcset'
+			).toBeGreaterThan( 0 );
+			const sizeWidths = attachmentWidths( created.attachmentId );
+			for ( const width of widths ) {
+				expect(
+					sizeWidths,
+					`srcset width ${ width }w should be a registered image size`
+				).toContain( width );
+			}
 			for ( const width of EXPECTED_WIDTHS.slice( 1 ) ) {
 				expect(
 					widths,
@@ -342,7 +332,7 @@ test.describe(
 
 			// The inline loader config carries the blur placeholder
 			// transformation.
-			const config = /var CLDLB = (\{.*?\});/.exec( html );
+			const config = /var CLDLB = (\{[^\n]*?\});/.exec( html );
 			expect(
 				config,
 				'the CLDLB loader config should be printed'
@@ -372,6 +362,8 @@ test.describe(
 			browser,
 			baseURL,
 		} ) => {
+			// Breakpoints are off too, so `src` is the plain delivery URL
+			// rather than one the breakpoints feature sized.
 			configure( { breakpoints: false, lazyLoad: false } );
 
 			const { attrs, html } = await serverMarkup( browser, baseURL );

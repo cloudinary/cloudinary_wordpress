@@ -10,7 +10,8 @@ const { test, expect } = require( './fixtures' );
  */
 const { ensureCloudinaryConnected } = require( './utils/connection' );
 const { expectCloudinaryUrl } = require( './utils/delivery' );
-const { wpCli, wpEvalFile } = require( './utils/wizard' );
+const { readSettings, saveSettings } = require( './utils/settings' );
+const { wpCli } = require( './utils/wizard' );
 
 const FIXTURE_PATH = path.join( __dirname, 'fixtures', 'test-image.jpg' );
 
@@ -58,42 +59,6 @@ let created = null;
  * @type {number[]}
  */
 let createdIds = [];
-
-/**
- * Save plugin settings through the settings API.
- *
- * @param {Record<string, string>} values Setting slug to value.
- */
-function saveSettings( values ) {
-	wpEvalFile( `
-		$settings = get_plugin_instance()->settings;
-		foreach ( json_decode( '${ JSON.stringify(
-			values
-		) }', true ) as $slug => $value ) {
-			$settings->get_setting( $slug )->save_value( $value );
-		}
-	` );
-}
-
-/**
- * Read the current value of the managed settings.
- *
- * @return {Record<string, string>} Setting slug to value.
- */
-function readSettings() {
-	return JSON.parse(
-		wpEvalFile( `
-			$settings = get_plugin_instance()->settings;
-			$values   = array();
-			foreach ( json_decode( '${ JSON.stringify(
-				MANAGED_SETTINGS
-			) }', true ) as $slug ) {
-				$values[ $slug ] = $settings->get_setting( $slug )->get_value();
-			}
-			echo wp_json_encode( $values );
-		` )
-	);
-}
 
 /**
  * Upload the fixture, embed it in a published post and sync it.
@@ -214,7 +179,7 @@ test.describe(
 	() => {
 		test.beforeAll( async ( { requestUtils } ) => {
 			( { cloudName } = ensureCloudinaryConnected() );
-			previousSettings = readSettings();
+			previousSettings = readSettings( MANAGED_SETTINGS );
 			saveSettings( BASE_SETTINGS );
 			created = await uploadSyncedImagePost( requestUtils );
 		} );
