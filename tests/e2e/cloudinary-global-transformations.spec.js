@@ -45,7 +45,15 @@ let cloudName;
 let previousSettings = null;
 
 /**
- * Attachments and posts created by the current test, removed in afterEach.
+ * The image post shared by all tests, set in beforeAll.
+ *
+ * @type {{ attachmentId: number, postLink: string }|null}
+ */
+let created = null;
+
+/**
+ * IDs of the attachment and post, removed in afterAll. Each ID is recorded
+ * as soon as it exists, so a setup that fails part way is still cleaned up.
  *
  * @type {number[]}
  */
@@ -90,9 +98,8 @@ function readSettings() {
 /**
  * Upload the fixture, embed it in a published post and sync it.
  *
- * Each call gets a fresh attachment, so the image is synced with the
- * settings that are active at that time. The timestamp in the filename
- * gives a fresh public ID, so no CDN cache from an earlier run applies.
+ * The timestamp in the filename gives a fresh public ID, so no CDN cache
+ * from an earlier run applies.
  *
  * @param {Object} requestUtils RequestUtils fixture.
  * @return {Promise<{ attachmentId: number, postLink: string }>} Created objects.
@@ -133,18 +140,21 @@ async function uploadSyncedImagePost( requestUtils ) {
 }
 
 /**
- * Open the post and return the delivery URL of the inline image.
+ * Open the post and return the f_ and q_ parameters of the inline image's
+ * delivery URL.
+ *
+ * The plugin adds the global format and quality when it renders the page,
+ * not when it syncs the image, so a settings change shows on the next
+ * render of the same image.
  *
  * @param {import('@playwright/test').Page} page
- * @param {string}                          postLink     Post permalink.
- * @param {number}                          attachmentId Attachment ID.
- * @return {Promise<string>} The `src` of the rendered image.
+ * @return {Promise<{ format: string[], quality: string[] }>} Parameters by prefix.
  */
-async function renderedSrc( page, postLink, attachmentId ) {
-	await page.goto( postLink );
+async function renderedParams( page ) {
+	await page.goto( created.postLink );
 
 	const img = page
-		.locator( `.wp-block-image img.wp-image-${ attachmentId }` )
+		.locator( `.wp-block-image img.wp-image-${ created.attachmentId }` )
 		.first();
 	await expect( img ).toHaveAttribute(
 		'src',
@@ -153,7 +163,12 @@ async function renderedSrc( page, postLink, attachmentId ) {
 
 	const src = await img.getAttribute( 'src' );
 	expectCloudinaryUrl( src, cloudName );
-	return src;
+
+	const params = transformationParams( src );
+	return {
+		format: withPrefix( params, 'f_' ),
+		quality: withPrefix( params, 'q_' ),
+	};
 }
 
 /**
@@ -197,9 +212,11 @@ test.describe(
 	'Cloudinary global image transformations',
 	{ tag: '@serial' },
 	() => {
-		test.beforeAll( () => {
+		test.beforeAll( async ( { requestUtils } ) => {
 			( { cloudName } = ensureCloudinaryConnected() );
 			previousSettings = readSettings();
+			saveSettings( BASE_SETTINGS );
+			created = await uploadSyncedImagePost( requestUtils );
 		} );
 
 		test.afterAll( () => {
@@ -207,9 +224,7 @@ test.describe(
 				saveSettings( previousSettings );
 				previousSettings = null;
 			}
-		} );
-
-		test.afterEach( () => {
+			created = null;
 			const ids = createdIds;
 			createdIds = [];
 
@@ -229,65 +244,43 @@ test.describe(
 
 		test( 'non-default format and quality appear as f_ and q_', async ( {
 			page,
-			requestUtils,
 		} ) => {
-			saveSettings( {
-				...BASE_SETTINGS,
-				image_format: 'webp',
-				image_quality: '60',
+			saveSettings( { image_format: 'webp', image_quality: '60' } );
+
+			expect( await renderedParams( page ) ).toEqual( {
+				format: [ 'f_webp' ],
+				quality: [ 'q_60' ],
 			} );
-
-			const { attachmentId, postLink } =
-				await uploadSyncedImagePost( requestUtils );
-			const params = transformationParams(
-				await renderedSrc( page, postLink, attachmentId )
-			);
-
-			expect( withPrefix( params, 'f_' ) ).toEqual( [ 'f_webp' ] );
-			expect( withPrefix( params, 'q_' ) ).toEqual( [ 'q_60' ] );
 		} );
 
 		test( 'reverting to the defaults replaces the explicit values with auto', async ( {
 			page,
-			requestUtils,
 		} ) => {
-			// Set the non-default values first, so this test proves the
-			// revert and does not only read the defaults.
-			saveSettings( {
-				...BASE_SETTINGS,
-				image_format: 'webp',
-				image_quality: '60',
+			// Render with the non-default values first. Without this
+			// step the test would pass even if the plugin ignored the
+			// settings and always printed the defaults.
+			saveSettings( { image_format: 'webp', image_quality: '60' } );
+			expect( await renderedParams( page ) ).toEqual( {
+				format: [ 'f_webp' ],
+				quality: [ 'q_60' ],
 			} );
+
 			saveSettings( { image_format: 'auto', image_quality: 'auto' } );
-
-			const { attachmentId, postLink } =
-				await uploadSyncedImagePost( requestUtils );
-			const params = transformationParams(
-				await renderedSrc( page, postLink, attachmentId )
-			);
-
-			expect( withPrefix( params, 'f_' ) ).toEqual( [ 'f_auto' ] );
-			expect( withPrefix( params, 'q_' ) ).toEqual( [ 'q_auto' ] );
+			expect( await renderedParams( page ) ).toEqual( {
+				format: [ 'f_auto' ],
+				quality: [ 'q_auto' ],
+			} );
 		} );
 
 		test( '"Not set" omits the f_ and q_ parameters', async ( {
 			page,
-			requestUtils,
 		} ) => {
-			saveSettings( {
-				...BASE_SETTINGS,
-				image_format: 'none',
-				image_quality: 'none',
+			saveSettings( { image_format: 'none', image_quality: 'none' } );
+
+			expect( await renderedParams( page ) ).toEqual( {
+				format: [],
+				quality: [],
 			} );
-
-			const { attachmentId, postLink } =
-				await uploadSyncedImagePost( requestUtils );
-			const params = transformationParams(
-				await renderedSrc( page, postLink, attachmentId )
-			);
-
-			expect( withPrefix( params, 'f_' ) ).toEqual( [] );
-			expect( withPrefix( params, 'q_' ) ).toEqual( [] );
 		} );
 	}
 );
