@@ -105,6 +105,13 @@ class Delivery implements Setup {
 	const META_CACHE_KEY = '_cld_replacements';
 
 	/**
+	 * The relationship columns carried over when a delivery relation is recreated.
+	 *
+	 * @var array
+	 */
+	const PRESERVED_RELATION_KEYS = array( 'transformations', 'text_overlay', 'image_overlay' );
+
+	/**
 	 * Holds the captured post contexts
 	 *
 	 * @var array
@@ -425,14 +432,12 @@ class Delivery implements Setup {
 	 * @param int $attachment_id The attachment ID.
 	 */
 	public function create_delivery( $attachment_id ) {
-		$relationship    = Relationship::get_relationship( $attachment_id );
-		$transformations = null;
-		// Preserve pre-existing transformations.
+		$relationship = Relationship::get_relationship( $attachment_id );
+		$preserve     = array();
+		// Preserve pre-existing transformations and overlays, each in its own column.
+		// Read the relationship data rather than Relate::get_transformations(), which is memoized per request and merges in the overlays.
 		if ( $relationship instanceof Relationship ) {
-			$transformations = Relate::get_transformations( $attachment_id, true );
-			if ( empty( $transformations ) ) {
-				$transformations = null;
-			}
+			$preserve = array_intersect_key( (array) $relationship->get_data(), array_flip( self::PRESERVED_RELATION_KEYS ) );
 		}
 		$this->delete_size_relationship( $attachment_id );
 		$size      = $this->get_sized( $attachment_id );
@@ -449,11 +454,11 @@ class Delivery implements Setup {
 		if ( empty( $sized_url ) ) {
 			$sized_url = Utils::get_path_from_url( wp_get_attachment_url( $attachment_id ), true );
 		}
-		self::create_size_relation( $attachment_id, $sized_url, $wh, $base );
+		// Write the preserved values with the new relation itself. Restoring them afterwards would go through a deferred save that runs on shutdown, overwriting transformations the relation has just migrated out of post meta.
+		self::create_size_relation( $attachment_id, $sized_url, $wh, $base, $preserve );
 		// Update public ID and type.
 		self::update_size_relations_public_id( $attachment_id, $public_id );
 		self::update_size_relations_state( $attachment_id, 'inherit' );
-		self::update_size_relations_transformations( $attachment_id, $transformations );
 		$this->sync->set_signature_item( $attachment_id, 'delivery' );
 	}
 
@@ -638,10 +643,11 @@ class Delivery implements Setup {
 	 * @param string $sized_url     The sized url.
 	 * @param string $size          The size in (width)x(height) format.
 	 * @param string $parent_path   The path of the parent if external.
+	 * @param array  $preserve      Transformations and overlays to carry over from a previous relation.
 	 *
 	 * @return false|int
 	 */
-	public static function create_size_relation( $attachment_id, $sized_url, $size = '0x0', $parent_path = '' ) { // phpcs:ignore PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found, PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
+	public static function create_size_relation( $attachment_id, $sized_url, $size = '0x0', $parent_path = '', $preserve = array() ) { // phpcs:ignore PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found, PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
 		global $wpdb;
 		static $media;
 		if ( ! $media ) {
@@ -670,6 +676,13 @@ class Delivery implements Setup {
 			'url_hash'        => md5( $sized_url ),
 			'parent_hash'     => md5( $parent_path ),
 		);
+
+		// Carry over preserved values, unless transformations staged in post meta replace them.
+		foreach ( array_intersect_key( (array) $preserve, array_flip( self::PRESERVED_RELATION_KEYS ) ) as $key => $value ) {
+			if ( ! empty( $value ) && empty( $data[ $key ] ) ) {
+				$data[ $key ] = $value;
+			}
+		}
 
 		$insert_id = false;
 		$created   = $wpdb->replace( Utils::get_relationship_table(), $data ); // phpcs:ignore WordPress.DB
