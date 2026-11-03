@@ -97,7 +97,15 @@ class Download_Sync {
 	 * @param string $error         The error text to return.
 	 */
 	public function handle_failed_download( $attachment_id, $error ) {
-		// @todo: Place a handler to catch the error for logging.
+		$message = sprintf(
+			'Cloudinary: failed to import asset into attachment %d (public_id: %s). Deleting the attachment. Error: %s',
+			(int) $attachment_id,
+			(string) $this->media->get_public_id( $attachment_id ),
+			(string) $error
+		);
+		Utils::log( $message, 'download-sync-failed' );
+		error_log( $message ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+
 		// Delete attachment temp.
 		wp_delete_attachment( $attachment_id, true );
 
@@ -170,9 +178,14 @@ class Download_Sync {
 			);
 
 			if ( is_wp_error( $response ) ) {
+				wp_delete_file( $upload['file'] );
+
 				return $response;
 			}
 			if ( 200 !== $response['response']['code'] ) {
+				// The error body has been streamed into the primed file, which is never attached. Remove it.
+				wp_delete_file( $upload['file'] );
+
 				$header_error = wp_remote_retrieve_header( $response, 'x-cld-error' );
 				if ( ! empty( $header_error ) ) {
 					$error = $header_error;
@@ -242,6 +255,11 @@ class Download_Sync {
 
 		} catch ( \Exception $e ) {
 			return new \WP_Error( 'download_error', $e->getMessage() );
+		}
+
+		// download_asset() returns its errors rather than throwing them.
+		if ( is_wp_error( $upload ) ) {
+			return $upload;
 		}
 
 		$attachment = wp_prepare_attachment_for_js( $attachment_id );
