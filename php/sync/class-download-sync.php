@@ -78,39 +78,72 @@ class Download_Sync {
 	/**
 	 * Admin permission callback.
 	 *
+	 * The user must be allowed to download assets, and to edit the attachment the asset is
+	 * downloaded into: the endpoint replaces that attachment's file, and deletes the
+	 * attachment if the download fails.
+	 *
 	 * Explicitly defined to allow easier testability.
 	 *
 	 * @param \WP_REST_Request $request The request.
 	 *
 	 * @return bool
 	 */
-	public function rest_can_upload_files( \WP_REST_Request $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+	public function rest_can_upload_files( \WP_REST_Request $request ) {
 
 		// This would have been from an ajax call. Therefore verify based on capability.
-		return Utils::user_can( 'manage_assets', 'upload_files', 'download' );
+		if ( ! Utils::user_can( 'manage_assets', 'upload_files', 'download' ) ) {
+			return false;
+		}
+
+		$attachment_id = absint( $request->get_param( 'attachment_id' ) );
+
+		return $attachment_id
+			&& 'attachment' === get_post_type( $attachment_id )
+			&& current_user_can( 'edit_post', $attachment_id );
 	}
 
 	/**
 	 * Handle a failed download by deleting the temp attachment and returning the error in json.
 	 *
+	 * Only an attachment that is still waiting for its first download is deleted: it has no
+	 * file yet, and the current user is allowed to delete it.
+	 *
 	 * @param int    $attachment_id The attachment ID.
 	 * @param string $error         The error text to return.
 	 */
 	public function handle_failed_download( $attachment_id, $error ) {
+		$attachment_id = absint( $attachment_id );
+		// The error can come from a response header of the remote server.
+		$error  = sanitize_text_field( (string) $error );
+		$delete = $this->is_pending_download( $attachment_id ) && current_user_can( 'delete_post', $attachment_id );
+
 		$message = sprintf(
-			'Cloudinary: failed to import asset into attachment %d (public_id: %s). Deleting the attachment. Error: %s',
-			(int) $attachment_id,
-			(string) $this->media->get_public_id( $attachment_id ),
-			(string) $error
+			'Cloudinary: failed to import asset into attachment %d (public_id: %s). %s Error: %s',
+			$attachment_id,
+			(string) $this->media->get_post_meta( $attachment_id, Sync::META_KEYS['public_id'], true ),
+			$delete ? 'Deleting the attachment.' : 'Keeping the attachment.',
+			$error
 		);
 		Utils::log( $message, 'download-sync-failed' );
 		error_log( $message ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 
-		// Delete attachment temp.
-		wp_delete_attachment( $attachment_id, true );
+		if ( $delete ) {
+			wp_delete_attachment( $attachment_id, true );
+		}
 
-		// Send error.
+		// Send error. The media modal expects the admin-ajax response format.
 		wp_send_json_error( $error );
+	}
+
+	/**
+	 * Check if an attachment is still waiting for its first download, i.e. has no file yet.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return bool
+	 */
+	protected function is_pending_download( $attachment_id ) {
+		return 'attachment' === get_post_type( $attachment_id ) && empty( get_post_meta( $attachment_id, '_wp_attached_file', true ) );
 	}
 
 	/**
@@ -122,7 +155,7 @@ class Download_Sync {
 	 */
 	public function rest_download_asset( \WP_REST_Request $request ) {
 
-		$attachment_id   = $request->get_param( 'attachment_id' );
+		$attachment_id   = absint( $request->get_param( 'attachment_id' ) );
 		$file_path       = $request->get_param( 'src' );
 		$transformations = (array) $request->get_param( 'transformations' );
 
@@ -161,6 +194,7 @@ class Download_Sync {
 		} else {
 			$file_name = wp_basename( strtok( $source, '?' ) );
 		}
+		$upload = array();
 		try {
 			// Prime a file to stream to.
 			$upload = wp_upload_bits( $file_name, null, 'temp', $date );
@@ -218,6 +252,11 @@ class Download_Sync {
 				$this->sync->add_to_sync( $attachment_id ); // Update storage and other sync types.
 			}
 		} catch ( \Exception $e ) {
+			// Remove the primed file, unless it already became the attachment's file.
+			if ( ! empty( $upload['file'] ) && get_attached_file( $attachment_id ) !== $upload['file'] ) {
+				wp_delete_file( $upload['file'] );
+			}
+
 			return new \WP_Error( 'download_error', $e->getMessage() );
 		}
 
