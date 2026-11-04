@@ -356,6 +356,54 @@ class Test_Download_Sync extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Deleting the attachment of a failed import leaves the asset on Cloudinary alone.
+	 *
+	 * @return void
+	 */
+	public function test_handle_failed_download_does_not_delete_asset_on_cloudinary() {
+		wp_set_current_user( self::$admin_id );
+		$attachment_id = $this->create_pending_attachment();
+		$this->capture_error_log();
+		$this->expectOutputRegex( '/"success":false/' );
+
+		// Make sure the hook that deletes assets on Cloudinary is registered, as on a connected site.
+		$delete_sync = \Cloudinary\get_plugin_instance()->get_component( 'sync' )->managers['delete'];
+		$callback    = array( $delete_sync, 'delete_asset' );
+		if ( false === has_action( 'delete_attachment', $callback ) ) {
+			$delete_sync->setup();
+		}
+		$priority = has_action( 'delete_attachment', $callback );
+
+		// Record whether the hook is still attached while the attachment is deleted, and any request.
+		$hooked_during_delete = null;
+		add_action(
+			'delete_attachment',
+			static function () use ( &$hooked_during_delete, $callback ) {
+				$hooked_during_delete = has_action( 'delete_attachment', $callback );
+			},
+			1
+		);
+		$requests = array();
+		add_filter(
+			'pre_http_request',
+			static function ( $pre, $args, $url ) use ( &$requests ) {
+				$requests[] = $url;
+
+				return new WP_Error( 'http_request_blocked', 'Blocked in tests.' );
+			},
+			10,
+			3
+		);
+
+		$this->call_handle_failed_download( $attachment_id, 'deny or ACL failure' );
+
+		$this->assertNull( get_post( $attachment_id ) );
+		$this->assertFalse( $hooked_during_delete );
+		$this->assertSame( array(), $requests );
+		$this->assertSame( $priority, has_action( 'delete_attachment', $callback ) );
+	}
+
+	/**
 	 * An author can import into, and so delete on failure, the attachment they just created.
 	 *
 	 * @return void

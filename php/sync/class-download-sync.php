@@ -128,11 +128,34 @@ class Download_Sync {
 		error_log( $message ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 
 		if ( $delete ) {
-			wp_delete_attachment( $attachment_id, true );
+			$this->delete_local_attachment( $attachment_id );
 		}
 
 		// Send error. The media modal expects the admin-ajax response format.
 		wp_send_json_error( $error );
+	}
+
+	/**
+	 * Delete an attachment in WordPress only.
+	 *
+	 * Deleting an attachment normally also deletes its asset on Cloudinary. A failed import must
+	 * leave that asset alone: it's the source the user picked in the media library, not a copy
+	 * made by the import.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 */
+	protected function delete_local_attachment( $attachment_id ) {
+		$callback = array( $this->sync->managers['delete'], 'delete_asset' );
+		$priority = has_action( 'delete_attachment', $callback );
+		if ( false !== $priority ) {
+			remove_action( 'delete_attachment', $callback, $priority );
+		}
+
+		wp_delete_attachment( $attachment_id, true );
+
+		if ( false !== $priority ) {
+			add_action( 'delete_attachment', $callback, $priority );
+		}
 	}
 
 	/**
@@ -194,7 +217,8 @@ class Download_Sync {
 		} else {
 			$file_name = wp_basename( strtok( $source, '?' ) );
 		}
-		$upload = array();
+		$upload   = array();
+		$attached = false;
 		try {
 			// Prime a file to stream to.
 			$upload = wp_upload_bits( $file_name, null, 'temp', $date );
@@ -232,6 +256,7 @@ class Download_Sync {
 
 			// Prepare the asset.
 			update_attached_file( $attachment_id, $upload['file'] );
+			$attached = true;
 
 			wp_update_attachment_metadata( $attachment_id, wp_generate_attachment_metadata( $attachment_id, $upload['file'] ) );
 
@@ -253,7 +278,7 @@ class Download_Sync {
 			}
 		} catch ( \Exception $e ) {
 			// Remove the primed file, unless it already became the attachment's file.
-			if ( ! empty( $upload['file'] ) && get_attached_file( $attachment_id ) !== $upload['file'] ) {
+			if ( ! $attached && ! empty( $upload['file'] ) ) {
 				wp_delete_file( $upload['file'] );
 			}
 
