@@ -90,6 +90,7 @@ class Sync implements Setup, Assets {
 		'folder_sync'         => '_folder_sync',
 		'last_oversize_check' => '_last_oversize_check',
 		'local_size'          => '_cld_local_size',
+		'loop_count'          => '_cld_loop_count',
 		'pending'             => '_cloudinary_pending',
 		'plugin_version'      => '_plugin_version',
 		'process_log'         => '_cloudinary_process_log',
@@ -568,6 +569,18 @@ class Sync implements Setup, Assets {
 				'required' => false, // Required to complete URL render flag.
 				'realtime' => true,
 			),
+			'sizes'        => array(
+				'generate' => array( $this, 'generate_sizes_signature' ),
+				'priority' => 5.25,
+				'sync'     => array( $this->managers['upload'], 'regenerate_sizes' ),
+				'validate' => function ( $attachment_id ) {
+					return $this->managers['media']->has_outdated_sizes( $attachment_id );
+				},
+				'state'    => 'info syncing',
+				'note'     => __( 'Regenerating thumbnail sizes', 'cloudinary' ),
+				'required' => false,
+				'realtime' => true,
+			),
 			'folder'       => array(
 				'generate' => array( $this->managers['media'], 'get_cloudinary_folder' ),
 				'validate' => array( $this->managers['media'], 'is_folder_synced' ),
@@ -905,23 +918,71 @@ class Sync implements Setup, Assets {
 	 * @return string|null
 	 */
 	public function validate_sync_type( $type, $attachment_id ) {
-		// Validate that this sync type applied (for optional types like upgrade).
-		if ( false === $this->run_sync_method( $type, 'validate', $attachment_id ) ) {
-			// If invalid, save the new signature.
-			$this->set_signature_item( $attachment_id, $type );
+		// Both branches below save a signature and then re-check get_sync_type() for what's
+		// next. If that save doesn't stick -- e.g. a concurrent request overwrites it before
+		// it's read back, see GitHub issue #1301 -- get_sync_type() keeps handing back this
+		// same $type and this method recurses on it forever, pinning a PHP worker and hammering
+		// the DB. Guard against that by tracking how deep the current, still-unresolved
+		// recursion chain for this attachment+type is -- NOT how many times this method has
+		// been entered overall. A long request can legitimately call this dozens of times for
+		// the same attachment+type without ever recursing (e.g. rendering sync status for many
+		// references to the same attachment); each of those returns before the next begins, so
+		// the depth count must drop back to zero between them and never accumulate.
+		static $depth  = array();
+		$key           = $attachment_id . ':' . $type;
+		$depth[ $key ] = isset( $depth[ $key ] ) ? $depth[ $key ] + 1 : 1;
 
-			$type = $this->get_sync_type( $attachment_id, false ); // Set cache to false to get the new signature.
+		try {
+			/**
+			 * Filter the number of times a single sync type may recurse for the same attachment
+			 * before it's treated as stuck in a loop.
+			 *
+			 * @hook   cloudinary_sync_type_retry_limit
+			 *
+			 * @param int    $limit         The retry limit. Default 50.
+			 * @param string $type          The sync type being validated.
+			 * @param int    $attachment_id The attachment ID.
+			 *
+			 * @return int
+			 */
+			$limit = apply_filters( 'cloudinary_sync_type_retry_limit', 50, $type, $attachment_id );
+			if ( $depth[ $key ] > $limit ) {
+				update_post_meta(
+					$attachment_id,
+					self::META_KEYS['sync_error'],
+					sprintf(
+						/* translators: %s is the sync type that would not advance. */
+						__( 'Sync loop detected: the "%s" sync state could not be saved.', 'cloudinary' ),
+						$type
+					)
+				);
 
-			// Check if this is a realtime process.
-		} elseif ( ! empty( $this->sync_base_struct[ $type ]['realtime'] ) ) {
-			$result = $this->run_sync_method( $type, 'sync', $attachment_id );
-			if ( ! empty( $result ) ) {
-				$this->log_sync_result( $attachment_id, $type, $result );
+				return null;
 			}
-			$type = $this->get_sync_type( $attachment_id, false ); // Set cache to false to get the new signature.
-		}
 
-		return $type;
+			// Validate that this sync type applied (for optional types like upgrade).
+			if ( false === $this->run_sync_method( $type, 'validate', $attachment_id ) ) {
+				// If invalid, save the new signature.
+				$this->set_signature_item( $attachment_id, $type );
+
+				$type = $this->get_sync_type( $attachment_id, false ); // Set cache to false to get the new signature.
+
+				// Check if this is a realtime process.
+			} elseif ( ! empty( $this->sync_base_struct[ $type ]['realtime'] ) ) {
+				$result = $this->run_sync_method( $type, 'sync', $attachment_id );
+				if ( ! empty( $result ) ) {
+					$this->log_sync_result( $attachment_id, $type, $result );
+				}
+				$type = $this->get_sync_type( $attachment_id, false ); // Set cache to false to get the new signature.
+			}
+
+			return $type;
+		} finally {
+			--$depth[ $key ];
+			if ( 0 >= $depth[ $key ] ) {
+				unset( $depth[ $key ] );
+			}
+		}
 	}
 
 	/**
@@ -1388,5 +1449,20 @@ class Sync implements Setup, Assets {
 		}
 
 		return $str;
+	}
+
+	/**
+	 * Generate a signature for an attachment's thumbnail sizes.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function generate_sizes_signature( $attachment_id ) {
+		$metadata = wp_get_attachment_metadata( $attachment_id );
+		$file     = ! empty( $metadata['file'] ) ? wp_basename( $metadata['file'] ) : '';
+		$sizes    = ! empty( $metadata['sizes'] ) ? wp_json_encode( $metadata['sizes'] ) : '';
+
+		return $file . $sizes;
 	}
 }

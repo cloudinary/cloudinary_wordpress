@@ -60,7 +60,7 @@ export const convertColors = ( color ) => {
 	const convertedColor = res
 		? getComputedStyle( document.documentElement ).getPropertyValue(
 				res[ 1 ]
-		  )
+			)
 		: color;
 	return convertedColor;
 };

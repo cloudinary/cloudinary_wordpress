@@ -1187,9 +1187,7 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		if (
-			false === $this->in_downsize
-			&& ! doing_filter( 'content_save_pre' )
-			&& ! Utils::is_saving_metadata()
+			$this->is_replacement_paused( $attachment_id, false ) // false: videos still need their own URL corrected here.
 			/**
 			 * Filter doing upload.
 			 * If so, return the default attachment URL.
@@ -1198,11 +1196,13 @@ class Media extends Settings_Component implements Setup {
 			 *
 			 * @return bool
 			 */
-			&& ! apply_filters( 'cloudinary_doing_upload', false )
+			|| apply_filters( 'cloudinary_doing_upload', false )
 		) {
-			if ( ! $this->is_cloudinary_url( $url ) && $this->cloudinary_id( $attachment_id ) ) {
-				$url = $this->cloudinary_url( $attachment_id );
-			}
+			return $url;
+		}
+
+		if ( ! $this->is_cloudinary_url( $url ) && $this->cloudinary_id( $attachment_id ) ) {
+			$url = $this->cloudinary_url( $attachment_id );
 		}
 
 		return $url;
@@ -1694,6 +1694,44 @@ class Media extends Settings_Component implements Setup {
 	}
 
 	/**
+	 * Check if an attachment's registered sizes reference files that no longer exist on disk.
+	 *
+	 * This happens when an image is edited (e.g. cropped) via the WordPress image editor: the main file gets
+	 * renamed (an `-e{timestamp}` suffix is added), but the `sizes` metadata can be left pointing at the
+	 * pre-edit filenames, leaving no local file matching that size record.
+	 *
+	 * This intentionally checks file existence rather than filename prefix: WordPress core has valid states
+	 * where a size's filename legitimately keeps the pre-edit base (e.g. editing with "all sizes except
+	 * thumbnail" deliberately preserves the thumbnail, or a size too small to regenerate from the edited
+	 * image is left as-is). A prefix-only check would misflag those as broken and overwrite valid files.
+	 *
+	 * @param int $attachment_id The Attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function has_outdated_sizes( $attachment_id ) {
+		$metadata = wp_get_attachment_metadata( $attachment_id );
+		$path     = get_attached_file( $attachment_id );
+
+		// Also covers cloud-only storage mode, which intentionally removes every local file (see
+		// Storage::remove_local_assets()) without updating the stored metadata: if the main file itself
+		// is gone, there is nothing to regenerate from, so this is not "outdated", it's expected.
+		if ( empty( $metadata['file'] ) || empty( $metadata['sizes'] ) || empty( $path ) || ! file_exists( $path ) ) {
+			return false;
+		}
+
+		$dir = dirname( $path );
+
+		foreach ( $metadata['sizes'] as $size ) {
+			if ( empty( $size['file'] ) || ! file_exists( path_join( $dir, $size['file'] ) ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Get a Cloudinary ID which includes the file format extension.
 	 *
 	 * @param int $attachment_id The Attachment ID.
@@ -1802,7 +1840,7 @@ class Media extends Settings_Component implements Setup {
 		}
 
 		// Don't do this while saving.
-		if ( true === $this->in_downsize || doing_filter( 'content_save_pre' ) || wp_attachment_is( 'video', $attachment_id ) || Utils::is_saving_metadata() ) {
+		if ( $this->is_replacement_paused( $attachment_id ) ) {
 			return $image;
 		}
 
@@ -1831,6 +1869,81 @@ class Media extends Settings_Component implements Setup {
 					false,
 				);
 			}
+		}
+
+		return $image;
+	}
+
+	/**
+	 * Whether URL replacement should be paused for this attachment right now: while a
+	 * downsize is already in progress (re-entrancy guard), while content or metadata is being
+	 * saved, or -- unless explicitly included -- for a video attachment, since there is no
+	 * "image size" to downsize a video to.
+	 *
+	 * Shared by filter_downsize(), filter_attachment_image_src(), and attachment_url(), so the
+	 * save-state/re-entrancy logic lives in one place.
+	 *
+	 * @param int  $attachment_id  The attachment ID.
+	 * @param bool $exclude_videos Whether a video attachment should also count as paused.
+	 *
+	 * @return bool
+	 */
+	private function is_replacement_paused( $attachment_id, $exclude_videos = true ) {
+		if ( true === $this->in_downsize || doing_filter( 'content_save_pre' ) || Utils::is_saving_metadata() ) {
+			return true;
+		}
+
+		return $exclude_videos && wp_attachment_is( 'video', $attachment_id );
+	}
+
+	/**
+	 * Correct wp_get_attachment_image_src() results that image_downsize() missed, or that a
+	 * later-priority plugin overwrote, so Cloudinary keeps the last word on this specific,
+	 * commonly-targeted core hook.
+	 *
+	 * @param array|false  $image         The image src array, or false.
+	 * @param int          $attachment_id The ID of the attachment.
+	 * @param string|array $size          The requested size of the image.
+	 * @param bool         $icon          Whether the image should be treated as an icon.
+	 *
+	 * @return array|false The image array of size and url.
+	 * @uses filter:wp_get_attachment_image_src
+	 */
+	public function filter_attachment_image_src( $image, $attachment_id, $size, $icon ) {
+		if ( empty( $image ) ) {
+			return $image;
+		}
+
+		// Fast bow-out: already a Cloudinary URL, nothing to do.
+		if ( $this->is_cloudinary_url( $image[0] ) ) {
+			return $image;
+		}
+
+		// Only images and preview-capable formats (PDF, PSD) have a real image representation to
+		// correct to. is_deliverable() treats every other attachment type as deliverable too, so
+		// without this, a synced non-image (audio, zip, docx, ...) requested with icon=true would
+		// have its generic mime icon replaced with the raw asset's Cloudinary URL, breaking the
+		// resulting <img> tag.
+		if ( ! wp_attachment_is_image( $attachment_id ) && ! $this->is_preview_only( $attachment_id ) ) {
+			return $image;
+		}
+
+		if ( $this->is_replacement_paused( $attachment_id ) ) {
+			return $image;
+		}
+
+		if ( ! $this->plugin->get_component( 'delivery' )->is_deliverable( $attachment_id ) ) {
+			return $image;
+		}
+
+		$cloudinary_id = $this->cloudinary_id( $attachment_id );
+		if ( ! $cloudinary_id ) {
+			return $image;
+		}
+
+		$url = $this->cloudinary_url( $attachment_id, $size, array(), $cloudinary_id );
+		if ( $url ) {
+			$image[0] = $url;
 		}
 
 		return $image;
@@ -2712,14 +2825,62 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function update_post_meta( $post_id, $key, $data ) {
 
-		$meta = $this->get_post_meta( $post_id );
-		if ( ! isset( $meta[ $key ] ) ) {
-			$meta[ $key ] = '';
+		// The `_cloudinary` meta is a single serialized array shared by every sync type, so
+		// this is a read-modify-write: fetch the whole thing, change one key, write the whole
+		// thing back. Two of these running concurrently for the same attachment (e.g. a
+		// bulk-sync thread and an autosync thread both reaching it, see GitHub issue #1301) can
+		// race -- whichever writes last overwrites the other's change outright, silently. Use
+		// WP's compare-and-swap (the $prev_value arg) to detect that and retry against the
+		// now-current value instead of clobbering it.
+		$max_attempts = 3;
+		for ( $attempt = 0; $attempt < $max_attempts; $attempt++ ) {
+			if ( $attempt > 0 ) {
+				// Only before a retry, not the first attempt: the compare-and-swap below
+				// ($prev_value) is what catches a stale read, by failing against the DB's actual
+				// current value regardless of what's cached. Forcing a fresh read up front would
+				// cost every single meta write here -- and there are many per sync -- a full
+				// reload for no benefit, since nothing has failed yet to justify distrusting the
+				// cache.
+				wp_cache_delete( $post_id, 'post_meta' );
+			}
+
+			// Read before checking existence: when the row is missing, get_post_meta() below
+			// runs the `cloudinary_migrate_legacy_meta` filter, whose callbacks can create this
+			// row themselves as a side effect (e.g. legacy-plugin migration). Checking existence
+			// first would miss that and cost an extra, avoidable retry.
+			$meta   = $this->get_post_meta( $post_id );
+			$exists = metadata_exists( 'post', $post_id, Sync::META_KEYS['cloudinary'] );
+			if ( isset( $meta[ $key ] ) && $meta[ $key ] === $data ) {
+				return true; // Already set to this value, including by a racing write.
+			}
+			$prev         = $meta;
+			$meta[ $key ] = $data;
+
+			if ( $exists ) {
+				// Note: update_metadata() only applies $prev_value (and so only detects a race)
+				// when it's non-empty. If `_cloudinary` currently holds an empty array (e.g.
+				// right after meta_cleanup) or something that didn't come back as an array, this
+				// falls through to an unconditional write instead -- still correct, just unable
+				// to tell a race apart from an ordinary write in that specific case.
+				$result = update_post_meta( $post_id, Sync::META_KEYS['cloudinary'], $meta, $prev );
+			} else {
+				// No row yet: add it uniquely so a concurrent first write can't be silently
+				// dropped the way an unconditional update_post_meta() would allow.
+				$result = add_post_meta( $post_id, Sync::META_KEYS['cloudinary'], $meta, true );
+			}
+
+			if ( false !== $result ) {
+				return $result;
+			}
+			// Lost the race to a concurrent write; loop and retry against the new state.
 		}
 
-		if ( $meta[ $key ] !== $data ) {
-			$meta[ $key ] = $data;
-		}
+		// Still contended after retries: write unconditionally rather than looping forever.
+		// This can still lose a concurrent change, but only after genuinely sustained
+		// contention, not on the first overlap.
+		wp_cache_delete( $post_id, 'post_meta' );
+		$meta         = $this->get_post_meta( $post_id );
+		$meta[ $key ] = $data;
 
 		return update_post_meta( $post_id, Sync::META_KEYS['cloudinary'], $meta );
 	}
@@ -2734,10 +2895,34 @@ class Media extends Settings_Component implements Setup {
 	 */
 	public function delete_post_meta( $post_id, $key ) {
 
-		$meta = $this->get_post_meta( $post_id );
-		if ( isset( $meta[ $key ] ) ) {
+		// Same shared-blob read-modify-write as update_post_meta() above, so apply the same
+		// compare-and-swap retry against concurrent writers.
+		$max_attempts = 3;
+		for ( $attempt = 0; $attempt < $max_attempts; $attempt++ ) {
+			if ( $attempt > 0 ) {
+				// See the matching note in update_post_meta(): only before a retry, once the
+				// compare-and-swap below has actually failed against the DB's current value.
+				wp_cache_delete( $post_id, 'post_meta' );
+			}
+
+			$meta = $this->get_post_meta( $post_id );
+			if ( ! isset( $meta[ $key ] ) ) {
+				return true; // Already gone, including by a racing write.
+			}
+			$prev = $meta;
 			unset( $meta[ $key ] );
+
+			$result = update_post_meta( $post_id, Sync::META_KEYS['cloudinary'], $meta, $prev );
+			if ( false !== $result ) {
+				return $result;
+			}
+			// Lost the race to a concurrent write; loop and retry against the new state.
 		}
+
+		// Still contended after retries: write unconditionally rather than looping forever.
+		wp_cache_delete( $post_id, 'post_meta' );
+		$meta = $this->get_post_meta( $post_id );
+		unset( $meta[ $key ] );
 
 		return update_post_meta( $post_id, Sync::META_KEYS['cloudinary'], $meta );
 	}
@@ -2995,7 +3180,7 @@ class Media extends Settings_Component implements Setup {
 			$attachment = get_post( $attachment_id );
 
 			if ( ! empty( $attachment ) && Assets::POST_TYPE_SLUG === $attachment->post_type && ! empty( $attachment->post_parent ) ) {
-				$version = (int) preg_replace( '/\D/', '', $this->get_post_meta( (int) $attachment->post_parent, Sync::META_KEYS['version'], true ) );
+				$version = (int) preg_replace( '/\D/', '', $this->get_post_meta( (int) $attachment->post_parent, Sync::META_KEYS['version'], true, '' ) );
 			}
 		}
 
@@ -3149,7 +3334,6 @@ class Media extends Settings_Component implements Setup {
 		add_filter( 'wp_calculate_image_srcset', array( $this, 'image_srcset' ), 10, 5 );
 		add_filter( 'wp_get_attachment_url', array( $this, 'attachment_url' ), 10, 2 );
 		add_filter( 'wp_get_original_image_url', array( $this, 'original_attachment_url' ), 10, 2 );
-		add_filter( 'image_downsize', array( $this, 'filter_downsize' ), 10, 3 );
 		add_filter( 'wp_calculate_image_srcset_meta', array( $this, 'calculate_image_srcset_meta' ), 10, 3 );
 
 		// Hook into Featured Image cycle.
@@ -3191,6 +3375,14 @@ class Media extends Settings_Component implements Setup {
 			if ( Utils::is_admin() ) {
 				$this->add_live_url_filters();
 			}
+
+			// image_downsize() and wp_get_attachment_image_src() are exercised by ordinary
+			// front-end theme code (e.g. the_post_thumbnail()), not just wp-admin screens, so
+			// these run everywhere rather than being scoped to add_live_url_filters()'s
+			// admin-only set.
+			add_filter( 'image_downsize', array( $this, 'filter_downsize' ), 10, 3 );
+			add_filter( 'wp_get_attachment_image_src', array( $this, 'filter_attachment_image_src' ), PHP_INT_MAX, 4 );
+
 			// Filter default image Quality and Format transformations.
 			add_filter( 'cloudinary_default_qf_transformations_image', array( $this, 'default_image_transformations' ), 10 );
 			add_filter( 'cloudinary_default_freeform_transformations_image', array( $this, 'default_image_freeform_transformations' ), 10 );

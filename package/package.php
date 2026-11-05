@@ -34,25 +34,32 @@ function cld_test_check_update( $data ) {
 	$slug        = 'cloudinary-image-management-and-manipulation-in-the-cloud-cdn/cloudinary.php';
 	$file        = plugin_dir_path( __FILE__ ) . 'cloudinary-wordpress-STABLETAG.zip';
 	$version     = 'STABLETAG';
-	$this_plugin = 'cloudinary-update-tester-STABLETAG/cloudinary-update-tester.php';
-	if ( ! empty( $data->no_update ) ) {
-		if ( ! empty( $data->no_update[ $slug ] ) ) {
-			$data->no_update[ $slug ]->package     = $file;
-			$data->no_update[ $slug ]->new_version = $version;
-			$data->response[ $slug ]               = $data->no_update[ $slug ];
-			unset( $data->no_update[ $slug ] );
-			deactivate_plugins( $this_plugin );
-		}
+	$this_plugin = plugin_basename( __FILE__ );
+
+	if ( ! is_object( $data ) || empty( $data->checked[ $slug ] ) ) {
+		return $data;
 	}
-	// Add if available.
-	if ( ! empty( $data->response ) ) {
-		$slug = 'cloudinary-image-management-and-manipulation-in-the-cloud-cdn/cloudinary.php';
-		if ( ! empty( $data->response[ $slug ] ) ) {
-			$data->response[ $slug ]->package     = $file;
-			$data->response[ $slug ]->new_version = $version;
-			$data->response[ $slug ]              = $data->response[ $slug ];
-			deactivate_plugins( $this_plugin );
+
+	// Already on the test version (or newer): nothing to offer, drop any update we injected earlier.
+	if ( version_compare( $data->checked[ $slug ], $version, '>=' ) ) {
+		if ( ! empty( $data->response[ $slug ] ) && $version === $data->response[ $slug ]->new_version ) {
+			$data->no_update[ $slug ] = $data->response[ $slug ];
+			unset( $data->response[ $slug ] );
 		}
+		deactivate_plugins( $this_plugin );
+
+		return $data;
+	}
+
+	if ( ! empty( $data->no_update[ $slug ] ) ) {
+		$data->response[ $slug ] = $data->no_update[ $slug ];
+		unset( $data->no_update[ $slug ] );
+	}
+
+	if ( ! empty( $data->response[ $slug ] ) ) {
+		$data->response[ $slug ]->package     = $file;
+		$data->response[ $slug ]->new_version = $version;
+		deactivate_plugins( $this_plugin );
 	}
 
 	return $data;

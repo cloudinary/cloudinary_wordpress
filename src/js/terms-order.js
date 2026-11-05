@@ -92,7 +92,7 @@ const TermsOrder = {
 										':' +
 										tag[ 0 ].id +
 										'"]'
-							  )
+								)
 							: false;
 
 						if ( tagFromDatabase.length ) {

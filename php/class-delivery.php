@@ -105,6 +105,13 @@ class Delivery implements Setup {
 	const META_CACHE_KEY = '_cld_replacements';
 
 	/**
+	 * The relationship columns carried over when a delivery relation is recreated.
+	 *
+	 * @var array
+	 */
+	const PRESERVED_RELATION_KEYS = array( 'transformations', 'text_overlay', 'image_overlay' );
+
+	/**
 	 * Holds the captured post contexts
 	 *
 	 * @var array
@@ -425,14 +432,12 @@ class Delivery implements Setup {
 	 * @param int $attachment_id The attachment ID.
 	 */
 	public function create_delivery( $attachment_id ) {
-		$relationship    = Relationship::get_relationship( $attachment_id );
-		$transformations = null;
-		// Preserve pre-existing transformations.
+		$relationship = Relationship::get_relationship( $attachment_id );
+		$preserve     = array();
+		// Preserve pre-existing transformations and overlays, each in its own column.
+		// Read the relationship data rather than Relate::get_transformations(), which is memoized per request and merges in the overlays.
 		if ( $relationship instanceof Relationship ) {
-			$transformations = Relate::get_transformations( $attachment_id, true );
-			if ( empty( $transformations ) ) {
-				$transformations = null;
-			}
+			$preserve = array_intersect_key( (array) $relationship->get_data(), array_flip( self::PRESERVED_RELATION_KEYS ) );
 		}
 		$this->delete_size_relationship( $attachment_id );
 		$size      = $this->get_sized( $attachment_id );
@@ -449,11 +454,11 @@ class Delivery implements Setup {
 		if ( empty( $sized_url ) ) {
 			$sized_url = Utils::get_path_from_url( wp_get_attachment_url( $attachment_id ), true );
 		}
-		self::create_size_relation( $attachment_id, $sized_url, $wh, $base );
+		// Write the preserved values with the new relation itself. Restoring them afterwards would go through a deferred save that runs on shutdown, overwriting transformations the relation has just migrated out of post meta.
+		self::create_size_relation( $attachment_id, $sized_url, $wh, $base, $preserve );
 		// Update public ID and type.
 		self::update_size_relations_public_id( $attachment_id, $public_id );
 		self::update_size_relations_state( $attachment_id, 'inherit' );
-		self::update_size_relations_transformations( $attachment_id, $transformations );
 		$this->sync->set_signature_item( $attachment_id, 'delivery' );
 	}
 
@@ -541,6 +546,8 @@ class Delivery implements Setup {
 	 */
 	public function get_sized( $attachment_id ) {
 		static $sizes = array(), $registered_sizes;
+
+		$attachment_id = (int) $attachment_id;
 		if ( ! $registered_sizes ) {
 			$registered_sizes = wp_get_registered_image_subsizes();
 		}
@@ -636,10 +643,11 @@ class Delivery implements Setup {
 	 * @param string $sized_url     The sized url.
 	 * @param string $size          The size in (width)x(height) format.
 	 * @param string $parent_path   The path of the parent if external.
+	 * @param array  $preserve      Transformations and overlays to carry over from a previous relation.
 	 *
 	 * @return false|int
 	 */
-	public static function create_size_relation( $attachment_id, $sized_url, $size = '0x0', $parent_path = '' ) { // phpcs:ignore PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found, PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
+	public static function create_size_relation( $attachment_id, $sized_url, $size = '0x0', $parent_path = '', $preserve = array() ) { // phpcs:ignore PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found, PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
 		global $wpdb;
 		static $media;
 		if ( ! $media ) {
@@ -668,6 +676,13 @@ class Delivery implements Setup {
 			'url_hash'        => md5( $sized_url ),
 			'parent_hash'     => md5( $parent_path ),
 		);
+
+		// Carry over preserved values, unless transformations staged in post meta replace them.
+		foreach ( array_intersect_key( (array) $preserve, array_flip( self::PRESERVED_RELATION_KEYS ) ) as $key => $value ) {
+			if ( ! empty( $value ) && empty( $data[ $key ] ) ) {
+				$data[ $key ] = $value;
+			}
+		}
 
 		$insert_id = false;
 		$created   = $wpdb->replace( Utils::get_relationship_table(), $data ); // phpcs:ignore WordPress.DB
@@ -920,13 +935,17 @@ class Delivery implements Setup {
 			$search
 		);
 
+		// Cache for the current request only. Across requests, failed deliveries or syncs need to be retried,
+		// and the contextualized post IDs can differ (e.g. per WPML language).
+		static $cache = array();
+
 		$key       = md5( $sql );
-		$cached    = wp_cache_get( $key );
+		$cached    = isset( $cache[ $key ] ) ? $cache[ $key ] : false;
 		$auto_sync = $this->sync->is_auto_sync_enabled();
 
 		if ( false === $cached ) {
 			$cached  = array();
-			$results = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared
+			$results = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 
 			if ( $results ) {
 				foreach ( $results as $result ) {
@@ -942,7 +961,8 @@ class Delivery implements Setup {
 					 */
 					$post_id = apply_filters( 'cloudinary_contextualized_post_id', $result->post_id );
 
-					if ( ! $this->is_deliverable( $post_id ) ) {
+					// The contextualized post can be missing, e.g. WPML returns null for an attachment without a translation.
+					if ( empty( $post_id ) || ! $this->is_deliverable( $post_id ) ) {
 						continue;
 					}
 					// If we are here, it means that an attachment in the media library doesn't have a delivery for the url.
@@ -953,11 +973,13 @@ class Delivery implements Setup {
 						$this->sync->add_to_sync( $post_id );
 					}
 					$size           = $this->get_sized( $post_id );
-					$key            = ! empty( $size['sized_url'] ) ? $size['sized_url'] : wp_get_attachment_url( $post_id );
-					$cached[ $key ] = (int) $post_id;
+					$attachment_url = ! empty( $size['sized_url'] ) ? $size['sized_url'] : wp_get_attachment_url( $post_id );
+					if ( $attachment_url ) {
+						$cached[ $attachment_url ] = (int) $post_id;
+					}
 				}
 			}
-			wp_cache_add( $key, $cached );
+			$cache[ $key ] = $cached;
 		}
 
 		$this->known   = array_merge( $this->known, $cached );
@@ -1574,9 +1596,10 @@ class Delivery implements Setup {
 		// Track back the found URL.
 		if ( $this->media->is_cloudinary_url( $raw_url ) ) {
 			$public_id = $this->media->get_public_id_from_url( $raw_url );
-			if ( isset( $this->known[ $public_id ] ) ) {
-
-				$url               = $this->known[ $public_id ]['sized_url'];
+			// A URL with transformations of its own (e.g. typed into content by hand) is left as is, since rebuilding it would drop them.
+			if ( isset( $this->known[ $public_id ] ) && ! $this->has_custom_transformations( $raw_url, $this->known[ $public_id ]['post_id'] ) ) {
+				// The relation's sized_url is relative to the content dir, while the URL keys of $this->known are full URLs.
+				$url               = $this->get_searchable_url( $this->known[ $public_id ] );
 				$attributes['src'] = $url;
 			}
 		}
@@ -1828,25 +1851,54 @@ class Delivery implements Setup {
 	}
 
 	/**
-	 * Set url usability.
+	 * Check if a Cloudinary URL has transformations other than the ones the plugin applies to the attachment itself:
+	 * its size, and the attachment's own and global transformations.
 	 *
-	 * @param array     $item      The item result.
-	 * @param null|bool $auto_sync If auto_sync is on.
+	 * @param string $url           The Cloudinary URL.
+	 * @param int    $attachment_id The attachment ID.
+	 *
+	 * @return bool
 	 */
-	protected function set_usability( $item, $auto_sync = null ) {
+	protected function has_custom_transformations( $url, $attachment_id ) {
+		$type     = $this->media->get_resource_type( $attachment_id );
+		$expected = $this->media->get_transformations_from_string( (string) $this->media->cloudinary_url( $attachment_id ), $type );
 
-		/**
-		 * Filter the found item to allow usability to be altered.
-		 *
-		 * @hook   cloudinary_set_usable_asset
-		 * @since  3.0.2
-		 *
-		 * @param array $item The found asset.
-		 *
-		 * @return array
-		 */
-		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
+		foreach ( $this->media->get_transformations_from_string( $url, $type ) as $transformation ) {
+			// Loose comparison, so the order of the parameters doesn't matter.
+			if ( ! $this->is_size_transformation( $transformation ) && ! in_array( $transformation, $expected ) ) { // phpcs:ignore WordPress.PHP.StrictInArray.MissingTrueStrict
+				return true;
+			}
+		}
 
+		return false;
+	}
+
+	/**
+	 * Check if a transformation is one the plugin uses to size an image, e.g. `w_300,h_200,c_scale` or `w_150,h_150,c_thumb,g_auto`.
+	 *
+	 * @param array $transformation The transformation, as parsed by Media::get_transformations_from_string().
+	 *
+	 * @return bool
+	 */
+	protected function is_size_transformation( $transformation ) {
+		if ( array_diff_key( $transformation, array_flip( array( 'width', 'height', 'crop', 'gravity' ) ) ) ) {
+			return false;
+		}
+		if ( isset( $transformation['crop'] ) && ! in_array( $transformation['crop'], array( 'scale', 'fill', 'thumb' ), true ) ) {
+			return false;
+		}
+
+		return ! isset( $transformation['gravity'] ) || 'auto' === $transformation['gravity'];
+	}
+
+	/**
+	 * Get the URL an item is known by, as used for the keys of $this->known.
+	 *
+	 * @param array $item The item result.
+	 *
+	 * @return string
+	 */
+	protected function get_searchable_url( $item ) {
 		/**
 		 * The URL to be searched for and prepared to be delivered by Cloudinary.
 		 *
@@ -1878,7 +1930,30 @@ class Delivery implements Setup {
 		 *
 		 * @return string
 		 */
-		$url = apply_filters( 'cloudinary_delivery_searchable_url', $url, $item, $content_url );
+		return apply_filters( 'cloudinary_delivery_searchable_url', $url, $item, $content_url );
+	}
+
+	/**
+	 * Set url usability.
+	 *
+	 * @param array     $item      The item result.
+	 * @param null|bool $auto_sync If auto_sync is on.
+	 */
+	protected function set_usability( $item, $auto_sync = null ) {
+
+		/**
+		 * Filter the found item to allow usability to be altered.
+		 *
+		 * @hook   cloudinary_set_usable_asset
+		 * @since  3.0.2
+		 *
+		 * @param array $item The found asset.
+		 *
+		 * @return array
+		 */
+		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
+
+		$url = $this->get_searchable_url( $item );
 
 		$found = array();
 
