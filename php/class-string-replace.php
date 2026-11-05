@@ -164,8 +164,31 @@ class String_Replace implements Setup {
 	 * Stop the buffer capture and set the output callback.
 	 */
 	public function start_capture() {
-		ob_start( array( $this, 'replace_strings' ) );
-		ob_start( array( $this, 'replace_strings' ) ); // Second call to catch early buffer flushing.
+		ob_start( array( $this, 'output_handler' ) );
+		ob_start( array( $this, 'output_handler' ) ); // Second call to catch early buffer flushing.
+	}
+
+	/**
+	 * Output buffer callback to replace strings in the captured buffer.
+	 *
+	 * Output produced within an output handler is discarded, and doing so is deprecated as of PHP 8.4.
+	 * Errors displayed while replacing (e.g. notices raised by hooked callbacks) would count as such output,
+	 * so display is disabled for the duration of the handler. Errors are still logged as usual.
+	 * This doesn't cover callbacks that echo output directly, which still trigger the deprecation.
+	 *
+	 * @param string $buffer The captured buffer.
+	 * @param int    $phase  The output handler phase bitmask.
+	 *
+	 * @return string
+	 */
+	public function output_handler( $buffer, $phase ) {
+		$display_errors = ini_set( 'display_errors', '0' ); // phpcs:ignore WordPress.PHP.IniSet.display_errors_Disallowed
+		$buffer         = $this->replace_strings( $buffer, $phase );
+		if ( false !== $display_errors ) {
+			ini_set( 'display_errors', $display_errors ); // phpcs:ignore WordPress.PHP.IniSet.display_errors_Disallowed
+		}
+
+		return $buffer;
 	}
 
 	/**
@@ -285,7 +308,7 @@ class String_Replace implements Setup {
 	 * Replace string in HTML.
 	 *
 	 * @param string|array $content The HTML.
-	 * @param string       $context The context to use.
+	 * @param string|int   $context The context to use, or the output handler phase when capturing a buffer.
 	 *
 	 * @return string
 	 */

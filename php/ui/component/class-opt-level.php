@@ -119,7 +119,7 @@ class Opt_Level extends Line_Stat {
 	protected function get_badge( $status = 'active' ) {
 		$badge                          = $this->get_part( 'span' );
 		$badge['attributes']['class'][] = "cld-optimisation-item-{$status}";
-		$text                           = $this->get_part( null );
+		$text                           = $this->get_part( '' );
 		if ( 'active' === $status ) {
 			$text['content']           = __( 'Activated', 'cloudinary' );
 			$icon                      = $this->dashicon( $this->get_part( 'span' ) );
