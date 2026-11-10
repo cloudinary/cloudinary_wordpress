@@ -9,6 +9,7 @@ const { test, expect } = require( './fixtures' );
  * Internal dependencies
  */
 const { ensureCloudinaryConnected } = require( './utils/connection' );
+const { phpJson } = require( './utils/settings' );
 const { wpCli, wpEvalFile } = require( './utils/wizard' );
 
 const FIXTURE_PATH = path.join( __dirname, 'fixtures', 'test-image.jpg' );
@@ -28,17 +29,6 @@ let attachmentIds = [];
  * @type {string[]}
  */
 let publicIds = [];
-
-/**
- * Encode a value as a PHP expression that decodes it back.
- *
- * @param {unknown} value Any JSON-serializable value.
- * @return {string} PHP expression.
- */
-function phpJson( value ) {
-	const encoded = Buffer.from( JSON.stringify( value ) ).toString( 'base64' );
-	return `json_decode( base64_decode( '${ encoded }' ), true )`;
-}
 
 /**
  * Upload the fixture image and sync it to Cloudinary.
