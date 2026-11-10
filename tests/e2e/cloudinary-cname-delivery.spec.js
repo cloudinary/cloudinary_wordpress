@@ -348,23 +348,72 @@ test.describe(
 			expect( params.get( 'cloudinary[private_cdn]' ) ).toBe( 'true' );
 		} );
 
-		test( 'with private_cdn=false the path keeps the cloud name', async ( {
-			page,
-		} ) => {
-			ensureCloudinaryConnected( { cname: CNAME, privateCdn: false } );
-			await routeCnameToCloudinary( page, {
-				cname: CNAME,
-				cloudName,
-				privateCdn: false,
+		test.describe( 'with private_cdn=false', () => {
+			// Scoped to this block, so a test added later outside it still
+			// runs against the private CDN connection.
+			test.beforeAll( () => {
+				ensureCloudinaryConnected( {
+					cname: CNAME,
+					privateCdn: false,
+				} );
 			} );
 
-			for ( const url of await imageBlockUrls( page ) ) {
-				expectCloudinaryUrl( url, {
-					host: CNAME,
+			test.afterAll( () => {
+				ensureCloudinaryConnected( { cname: CNAME } );
+			} );
+
+			test( 'image block path keeps the cloud name', async ( {
+				page,
+			} ) => {
+				await routeCnameToCloudinary( page, {
+					cname: CNAME,
 					cloudName,
 					privateCdn: false,
 				} );
-			}
+
+				for ( const url of await imageBlockUrls( page ) ) {
+					expectCloudinaryUrl( url, {
+						host: CNAME,
+						cloudName,
+						privateCdn: false,
+					} );
+				}
+			} );
+
+			// `Gallery` always passes `privateCdn: true` to the widget when a
+			// custom domain is set (`get_config()` and the block attributes in
+			// php/media/class-gallery.php) and ignores `private_cdn`. So the
+			// widget leaves the cloud name out of its URLs, which a domain
+			// that is not a private CDN cannot serve.
+			test.fixme(
+				'gallery widget path keeps the cloud name',
+				async ( { page } ) => {
+					await routeCnameToCloudinary( page, {
+						cname: CNAME,
+						cloudName,
+						privateCdn: false,
+					} );
+
+					const gallery = await openGallery(
+						page,
+						created.galleryPost.link,
+						IMAGE_COUNT
+					);
+
+					const attrs = await collectImageUrls(
+						gallery.locator( 'img' )
+					);
+					for ( const { src, srcset } of attrs ) {
+						for ( const url of [ src, ...srcsetUrls( srcset ) ] ) {
+							expectCloudinaryUrl( url, {
+								host: CNAME,
+								cloudName,
+								privateCdn: false,
+							} );
+						}
+					}
+				}
+			);
 		} );
 	}
 );

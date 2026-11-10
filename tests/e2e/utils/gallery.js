@@ -90,8 +90,6 @@ async function collectImageUrls( images ) {
 }
 
 module.exports = {
-	GALLERY_CONTAINER,
-	WIDGET_TIMEOUT,
 	collectImageUrls,
 	galleryBlock,
 	openGallery,

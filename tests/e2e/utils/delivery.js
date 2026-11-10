@@ -122,7 +122,6 @@ function srcsetUrls( srcset ) {
 }
 
 module.exports = {
-	CLOUDINARY_HOST,
 	expectCloudinaryUrl,
 	parseSrcset,
 	routeCnameToCloudinary,
