@@ -385,35 +385,34 @@ test.describe(
 			// php/media/class-gallery.php) and ignores `private_cdn`. So the
 			// widget leaves the cloud name out of its URLs, which a domain
 			// that is not a private CDN cannot serve.
-			test.fixme(
-				'gallery widget path keeps the cloud name',
-				async ( { page } ) => {
-					await routeCnameToCloudinary( page, {
-						cname: CNAME,
-						cloudName,
-						privateCdn: false,
-					} );
+			test.fixme( 'gallery widget path keeps the cloud name', async ( {
+				page,
+			} ) => {
+				await routeCnameToCloudinary( page, {
+					cname: CNAME,
+					cloudName,
+					privateCdn: false,
+				} );
 
-					const gallery = await openGallery(
-						page,
-						created.galleryPost.link,
-						IMAGE_COUNT
-					);
+				const gallery = await openGallery(
+					page,
+					created.galleryPost.link,
+					IMAGE_COUNT
+				);
 
-					const attrs = await collectImageUrls(
-						gallery.locator( 'img' )
-					);
-					for ( const { src, srcset } of attrs ) {
-						for ( const url of [ src, ...srcsetUrls( srcset ) ] ) {
-							expectCloudinaryUrl( url, {
-								host: CNAME,
-								cloudName,
-								privateCdn: false,
-							} );
-						}
+				const attrs = await collectImageUrls(
+					gallery.locator( 'img' )
+				);
+				for ( const { src, srcset } of attrs ) {
+					for ( const url of [ src, ...srcsetUrls( srcset ) ] ) {
+						expectCloudinaryUrl( url, {
+							host: CNAME,
+							cloudName,
+							privateCdn: false,
+						} );
 					}
 				}
-			);
+			} );
 		} );
 	}
 );
