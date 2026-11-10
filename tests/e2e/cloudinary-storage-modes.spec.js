@@ -166,7 +166,7 @@ function destroyRemoteAssets( ids ) {
 				$api->destroy(
 					$media->get_resource_type( $id ),
 					array(
-						'public_id'  => $media->get_public_id( $id ),
+						'public_id'  => $media->get_public_id( $id, true ),
 						'invalidate' => true,
 					)
 				);
@@ -182,15 +182,22 @@ function destroyRemoteAssets( ids ) {
  * Not `wp cloudinary sync`: that syncs every attachment in the library,
  * and a storage change replaces or removes the local files of each one.
  *
+ * `process_assets()` does not report a failure, so fail here on the sync
+ * error it saves. Otherwise the test fails later on a check that does not
+ * show the cause.
+ *
  * @param {number} attachmentId The attachment ID.
  */
 function sync( attachmentId ) {
-	wpEvalFile( `
+	const error = wpEvalFile( `
+		$id = ${ Number( attachmentId ) };
 		get_plugin_instance()
 			->get_component( 'sync' )
 			->managers['push']
-			->process_assets( ${ Number( attachmentId ) } );
+			->process_assets( $id );
+		echo (string) get_post_meta( $id, Sync::META_KEYS['sync_error'], true );
 	` );
+	expect( error, `attachment ${ attachmentId } should sync` ).toBe( '' );
 }
 
 /**
@@ -360,6 +367,13 @@ test.describe( 'Cloudinary storage modes', { tag: '@serial' }, () => {
 			state.bytes,
 			'the local file should be the low-quality version'
 		).toBeLessThan( FIXTURE_BYTES );
+		expect( Object.keys( state.sizes ).length ).toBeGreaterThan( 0 );
+		for ( const [ name, exists ] of Object.entries( state.sizes ) ) {
+			expect(
+				exists,
+				`the local "${ name }" size file should be generated from the low-quality version`
+			).toBe( true );
+		}
 
 		// Delivery still uses the full-quality original on Cloudinary.
 		await expectImageFromCloudinary( page, item );
