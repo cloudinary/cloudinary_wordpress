@@ -53,6 +53,30 @@ const galleryWidgetConfig = ( config, container ) => ( {
  */
 const getGalleryWidget = ( win ) => win?.cloudinary?.galleryWidget;
 
+/**
+ * Get the delivery settings of the connected Cloudinary account.
+ *
+ * The front end always applies them over the block attributes when it
+ * renders a gallery, so the preview does too. Blocks may have no cloud name
+ * saved (e.g. created outside the editor) or a stale one, and the custom
+ * domain settings are not block attributes at all.
+ *
+ * @return {Object} The cloud name and custom domain settings that are set.
+ */
+const getDeliveryConfig = () => {
+	if ( 'undefined' === typeof CLD_GALLERY_CONFIG ) {
+		return {};
+	}
+
+	const { cloudName, secureDistribution, privateCdn } = CLD_GALLERY_CONFIG;
+
+	return Object.fromEntries(
+		Object.entries( { cloudName, secureDistribution, privateCdn } ).filter(
+			( [ , value ] ) => undefined !== value
+		)
+	);
+};
+
 // Prefix for the generated gallery container class. A literal prefix keeps
 // the value a valid, unique CSS selector. Prior to the Block API v2 upgrade
 // the block's `className` prop was used, but that prop is no longer passed to
@@ -141,8 +165,9 @@ const Edit = ( { setAttributes, attributes, isSelected } ) => {
 				? config
 				: win.JSON.parse( JSON.stringify( config ) );
 
-		const { customSettings, ...config } =
+		const { customSettings, ...attributesConfig } =
 			setupAttributesForRendering( attributes );
+		const config = { ...attributesConfig, ...getDeliveryConfig() };
 		const custom = parseCustomSettings( customSettings );
 
 		let gallery;

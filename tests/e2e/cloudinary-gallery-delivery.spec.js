@@ -269,6 +269,8 @@ test.describe( 'Cloudinary Gallery block delivery', { tag: '@serial' }, () => {
 		editor,
 		requestUtils,
 	} ) => {
+		// The block markup has no `cloudName`, like a block created outside
+		// the editor: the preview has to use the connected account's.
 		await requestUtils.rest( {
 			method: 'POST',
 			path: `/wp/v2/posts/${ created.postId }`,
@@ -276,7 +278,6 @@ test.describe( 'Cloudinary Gallery block delivery', { tag: '@serial' }, () => {
 				content: galleryBlock( created.selectedImages, {
 					mode: 'expanded',
 					columns: INITIAL_COLUMNS,
-					cloudName,
 					customSettings: {
 						transformation: { effect: 'grayscale' },
 					},

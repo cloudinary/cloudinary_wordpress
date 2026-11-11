@@ -29,24 +29,15 @@ const WIDGET_TIMEOUT = 30_000;
  * @param {string}   layout.mode             `expanded` or `classic`.
  * @param {number}   layout.columns          Column count (expanded mode only).
  * @param {Object}   [layout.customSettings] Custom Settings, stored as JSON text like the block does.
- * @param {string}   [layout.cloudName]      Cloud name. The editor saves it on the block, and its
- *                                           preview needs it; the front end adds it on render.
  * @return {string} Block markup.
  */
-function galleryBlock(
-	selectedImages,
-	{ mode, columns, customSettings, cloudName }
-) {
+function galleryBlock( selectedImages, { mode, columns, customSettings } ) {
 	const attributes = {
 		container: GALLERY_CONTAINER,
 		selectedImages,
 		displayProps_mode: mode,
 		displayProps_columns: columns,
 	};
-
-	if ( cloudName ) {
-		attributes.cloudName = cloudName;
-	}
 
 	if ( customSettings ) {
 		attributes.customSettings = JSON.stringify( customSettings );
