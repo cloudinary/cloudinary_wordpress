@@ -24,19 +24,33 @@ const WIDGET_TIMEOUT = 30_000;
  * match the block's `save()` output exactly, or the editor flags the block
  * as invalid when a test opens the post.
  *
- * @param {Object[]} selectedImages Response of the plugin's `image_data` endpoint.
- * @param {Object}   layout         Layout attributes.
- * @param {string}   layout.mode    `expanded` or `classic`.
- * @param {number}   layout.columns Column count (expanded mode only).
+ * @param {Object[]} selectedImages          Response of the plugin's `image_data` endpoint.
+ * @param {Object}   layout                  Layout attributes.
+ * @param {string}   layout.mode             `expanded` or `classic`.
+ * @param {number}   layout.columns          Column count (expanded mode only).
+ * @param {Object}   [layout.customSettings] Custom Settings, stored as JSON text like the block does.
+ * @param {string}   [layout.cloudName]      Cloud name. The editor saves it on the block, and its
+ *                                           preview needs it; the front end adds it on render.
  * @return {string} Block markup.
  */
-function galleryBlock( selectedImages, { mode, columns } ) {
+function galleryBlock(
+	selectedImages,
+	{ mode, columns, customSettings, cloudName }
+) {
 	const attributes = {
 		container: GALLERY_CONTAINER,
 		selectedImages,
 		displayProps_mode: mode,
 		displayProps_columns: columns,
 	};
+
+	if ( cloudName ) {
+		attributes.cloudName = cloudName;
+	}
+
+	if ( customSettings ) {
+		attributes.customSettings = JSON.stringify( customSettings );
+	}
 
 	return (
 		`<!-- wp:cloudinary/gallery ${ JSON.stringify( attributes ) } -->\n` +
@@ -90,6 +104,8 @@ async function collectImageUrls( images ) {
 }
 
 module.exports = {
+	GALLERY_CONTAINER,
+	WIDGET_TIMEOUT,
 	collectImageUrls,
 	galleryBlock,
 	openGallery,
