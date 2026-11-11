@@ -11,6 +11,8 @@ const { test, expect } = require( './fixtures' );
 const { ensureCloudinaryConnected } = require( './utils/connection' );
 const { expectCloudinaryUrl, srcsetUrls } = require( './utils/delivery' );
 const {
+	GALLERY_CONTAINER,
+	WIDGET_TIMEOUT,
 	collectImageUrls,
 	galleryBlock,
 	openGallery: openGalleryAt,
@@ -28,7 +30,7 @@ let cloudName;
  * State shared by the tests in this file. The layout test edits the post
  * created in beforeAll, so the tests run in order (see `mode: 'serial'`).
  *
- * @type {{ postId: number, postLink: string, attachmentIds: number[], publicIds: string[] }|null}
+ * @type {{ postId: number, postLink: string, attachmentIds: number[], publicIds: string[], selectedImages: Object[] }|null}
  */
 let created = null;
 
@@ -97,6 +99,7 @@ test.describe( 'Cloudinary Gallery block delivery', { tag: '@serial' }, () => {
 			postLink: post.link,
 			attachmentIds,
 			publicIds: selectedImages.map( ( image ) => image.publicId ),
+			selectedImages,
 		};
 	} );
 
@@ -258,6 +261,59 @@ test.describe( 'Cloudinary Gallery block delivery', { tag: '@serial' }, () => {
 			for ( const url of [ src, ...srcsetUrls( srcset ) ] ) {
 				expectCloudinaryUrl( url, cloudName );
 			}
+		}
+	} );
+
+	test( 'renders the preview in the editor canvas with Custom Settings applied', async ( {
+		admin,
+		editor,
+		requestUtils,
+	} ) => {
+		// The block markup has no `cloudName`, like a block created outside
+		// the editor: the preview has to use the connected account's.
+		await requestUtils.rest( {
+			method: 'POST',
+			path: `/wp/v2/posts/${ created.postId }`,
+			data: {
+				content: galleryBlock( created.selectedImages, {
+					mode: 'expanded',
+					columns: INITIAL_COLUMNS,
+					customSettings: {
+						transformation: { effect: 'grayscale' },
+					},
+				} ),
+			},
+		} );
+
+		await admin.editPost( created.postId );
+
+		// Relies on the iframed editor (WordPress 7.1+, or blocks on API v3):
+		// the editor canvas is an iframe, and the widget has to render inside
+		// it, not in the outer admin document.
+		const gallery = editor.canvas.locator(
+			`.${ GALLERY_CONTAINER } [data-test="gallery-wrap"]`
+		);
+		await expect(
+			gallery,
+			'the Gallery Widget should render the editor preview'
+		).toBeVisible( { timeout: WIDGET_TIMEOUT } );
+
+		await expect(
+			gallery.locator(
+				'[data-test="gallery-viewer-wrap"] [data-test="image-wrap"][data-ready="true"]'
+			)
+		).toHaveCount( IMAGE_COUNT, { timeout: WIDGET_TIMEOUT } );
+
+		const attrs = await collectImageUrls(
+			gallery.locator( '[data-test="gallery-viewer-wrap"] img' )
+		);
+		expect( attrs.length ).toBeGreaterThan( 0 );
+		for ( const { src } of attrs ) {
+			expectCloudinaryUrl( src, cloudName );
+			expect(
+				src,
+				'the preview should apply the Custom Settings transformation'
+			).toContain( 'e_grayscale' );
 		}
 	} );
 } );

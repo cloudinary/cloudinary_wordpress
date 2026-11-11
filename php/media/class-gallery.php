@@ -288,7 +288,7 @@ class Gallery extends Settings_Component {
 	}
 
 	/**
-	 * Enqueue the gallery block editor styles.
+	 * Enqueue the gallery block editor styles and the gallery library for the editor canvas.
 	 *
 	 * Registered on `enqueue_block_assets` so the styles are injected into the
 	 * iframed block editor correctly. As of WordPress 7.1 the post editor is
@@ -298,6 +298,21 @@ class Gallery extends Settings_Component {
 	public function block_editor_styles() {
 		if ( ! is_admin() ) {
 			return;
+		}
+
+		// The gallery block preview is rendered inside the editor canvas, which
+		// is an iframe in the iframed block editor. The Product Gallery library
+		// must be loaded in that document too, since the widget looks up its
+		// container in its own document and validates its config against its
+		// own frame's globals.
+		if ( $this->maybe_enqueue_scripts() ) {
+			wp_enqueue_script(
+				self::GALLERY_LIBRARY_HANDLE,
+				CLOUDINARY_ENDPOINTS_GALLERY,
+				array(),
+				$this->plugin->version,
+				true
+			);
 		}
 
 		wp_enqueue_style(

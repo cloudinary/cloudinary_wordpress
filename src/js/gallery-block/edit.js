@@ -1,4 +1,4 @@
-/* global cloudinaryGalleryApi CLD_GALLERY_CONFIG CLD_REST_ENDPOINT */
+/* global CLD_GALLERY_CONFIG CLD_REST_ENDPOINT */
 
 /**
  * External dependencies
@@ -12,7 +12,7 @@ import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { Spinner } from '@wordpress/components';
 import '@wordpress/components/build-style/style.css';
-import { useEffect, useMemo, useState } from '@wordpress/element';
+import { useEffect, useMemo, useRef, useState } from '@wordpress/element';
 import {
 	InspectorControls,
 	MediaPlaceholder,
@@ -25,7 +25,12 @@ import {
 import '../../css/gallery.scss';
 import Controls from './controls';
 import { ALLOWED_MEDIA_TYPES } from './options';
-import { generateId, setupAttributesForRendering, showNotice } from './utils';
+import {
+	generateId,
+	parseCustomSettings,
+	setupAttributesForRendering,
+	showNotice,
+} from './utils';
 
 const dot = new Dot( '_' );
 
@@ -40,6 +45,38 @@ const galleryWidgetConfig = ( config, container ) => ( {
 	zoom: false,
 } );
 
+/**
+ * Get the Product Gallery widget factory of a given window.
+ *
+ * @param {Window} win The window to look the widget up in.
+ * @return {((config: Object) => Object)|undefined} The `galleryWidget` factory, if loaded.
+ */
+const getGalleryWidget = ( win ) => win?.cloudinary?.galleryWidget;
+
+/**
+ * Get the delivery settings of the connected Cloudinary account.
+ *
+ * The front end always applies them over the block attributes when it
+ * renders a gallery, so the preview does too. Blocks may have no cloud name
+ * saved (e.g. created outside the editor) or a stale one, and the custom
+ * domain settings are not block attributes at all.
+ *
+ * @return {Object} The cloud name and custom domain settings that are set.
+ */
+const getDeliveryConfig = () => {
+	if ( 'undefined' === typeof CLD_GALLERY_CONFIG ) {
+		return {};
+	}
+
+	const { cloudName, secureDistribution, privateCdn } = CLD_GALLERY_CONFIG;
+
+	return Object.fromEntries(
+		Object.entries( { cloudName, secureDistribution, privateCdn } ).filter(
+			( [ , value ] ) => undefined !== value
+		)
+	);
+};
+
 // Prefix for the generated gallery container class. A literal prefix keeps
 // the value a valid, unique CSS selector. Prior to the Block API v2 upgrade
 // the block's `className` prop was used, but that prop is no longer passed to
@@ -49,6 +86,7 @@ const CONTAINER_PREFIX = 'cld-gallery-';
 const Edit = ( { setAttributes, attributes, isSelected } ) => {
 	const [ errorMessage, setErrorMessage ] = useState( null );
 	const [ loading, setLoading ] = useState( false );
+	const containerRef = useRef( null );
 
 	const preparedAttributes = useMemo( () => {
 		// Do not override block settings with defaults on existing ones.
@@ -108,30 +146,84 @@ const Edit = ( { setAttributes, attributes, isSelected } ) => {
 			setErrorMessage( null );
 		}
 
-		if ( attributes.selectedImages.length ) {
-			let gallery;
+		const container = containerRef.current;
 
-			const { customSettings, ...config } =
-				setupAttributesForRendering( attributes );
+		if ( ! attributes.selectedImages.length || ! container ) {
+			return;
+		}
 
+		// In the iframed block editor the container lives in the editor
+		// canvas iframe, so the widget of that frame has to be used: it looks
+		// the container up in its own document and validates its config with
+		// checks bound to its own frame.
+		const win = container.ownerDocument.defaultView || window;
+
+		// Recreate the config in the target frame, so that its objects pass
+		// the widget's validation there.
+		const toFrame = ( config ) =>
+			win === window
+				? config
+				: win.JSON.parse( JSON.stringify( config ) );
+
+		const { customSettings, ...attributesConfig } =
+			setupAttributesForRendering( attributes );
+		const config = { ...attributesConfig, ...getDeliveryConfig() };
+		const custom = parseCustomSettings( customSettings );
+
+		let gallery;
+		let cancelled = false;
+
+		const render = () => {
+			if ( cancelled ) {
+				return;
+			}
+
+			const galleryWidget = getGalleryWidget( win );
+
+			// The library failed to load in this frame: don't leave the
+			// spinner running.
+			if ( ! galleryWidget ) {
+				setLoading( false );
+				return;
+			}
+
+			// Shallow merge, matching how the front end applies Custom
+			// Settings over the block attributes.
 			try {
-				gallery = cloudinary.galleryWidget(
-					galleryWidgetConfig(
-						{ ...config, ...customSettings },
-						attributes.container
+				gallery = galleryWidget(
+					toFrame(
+						galleryWidgetConfig(
+							{ ...config, ...custom },
+							attributes.container
+						)
 					)
 				);
 			} catch {
-				gallery = cloudinary.galleryWidget(
-					galleryWidgetConfig( config, attributes.container )
+				gallery = galleryWidget(
+					toFrame(
+						galleryWidgetConfig( config, attributes.container )
+					)
 				);
 			}
 
 			gallery.render();
 			setLoading( false );
+		};
 
-			return () => gallery.destroy();
+		if ( getGalleryWidget( win ) ) {
+			render();
+		} else if ( 'complete' !== win.document.readyState ) {
+			// The library may still be loading in the editor canvas.
+			win.addEventListener( 'load', render, { once: true } );
+		} else {
+			setLoading( false );
 		}
+
+		return () => {
+			cancelled = true;
+			win.removeEventListener( 'load', render );
+			gallery?.destroy();
+		};
 	}, [ errorMessage, attributes, setAttributes ] );
 
 	const hasImages = !! attributes.selectedImages.length;
@@ -157,7 +249,10 @@ const Edit = ( { setAttributes, attributes, isSelected } ) => {
 	return (
 		<div { ...blockProps }>
 			<>
-				<div className={ attributes.container }></div>
+				<div
+					ref={ containerRef }
+					className={ attributes.container }
+				></div>
 				<div className="wp-block-cloudinary-gallery">
 					<MediaPlaceholder
 						labels={ {
