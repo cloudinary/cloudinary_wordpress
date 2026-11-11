@@ -278,6 +278,89 @@ class Upload_Sync {
 	}
 
 	/**
+	 * Regenerate an attachment's thumbnail sizes when they no longer match the current attached file.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return array|\WP_Error
+	 */
+	public function regenerate_sizes( $attachment_id ) {
+		if ( ! function_exists( '_wp_make_subsizes' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/image.php';
+		}
+
+		$metadata = wp_get_attachment_metadata( $attachment_id );
+		$file     = get_attached_file( $attachment_id );
+
+		if ( empty( $metadata['sizes'] ) || empty( $file ) || ! file_exists( $file ) ) {
+			return new \WP_Error( 'cloudinary_regenerate_sizes_failed', __( 'Could not regenerate attachment sizes.', 'cloudinary' ) );
+		}
+
+		// Only the sizes whose backing file is actually missing get regenerated -- every other size,
+		// including one a user deliberately kept (e.g. editing with "all sizes except thumbnail"), is
+		// left completely untouched. The missing entries are removed from $metadata first so
+		// _wp_make_subsizes() treats them as new sizes to create rather than skipping them as already
+		// present (it only checks whether the size *name* already has an entry, not whether the file
+		// behind it still exists).
+		$original = $metadata;
+		$dir      = dirname( $file );
+		$missing  = array();
+		foreach ( $metadata['sizes'] as $size_name => $size_data ) {
+			if ( ! empty( $size_data['file'] ) && file_exists( path_join( $dir, $size_data['file'] ) ) ) {
+				continue;
+			}
+			unset( $metadata['sizes'][ $size_name ] );
+			$missing[ $size_name ] = true;
+		}
+
+		if ( empty( $missing ) ) {
+			return $metadata;
+		}
+
+		$registered = wp_get_registered_image_subsizes();
+		/** This filter is documented in wp-admin/includes/image.php */
+		$registered = apply_filters( 'intermediate_image_sizes_advanced', $registered, $metadata, $attachment_id );
+		$new_sizes  = array_intersect_key( $registered, $missing );
+
+		// _wp_make_subsizes() is WP core's own low-level size-creation step (used internally by
+		// wp_create_image_subsizes()). Unlike wp_generate_attachment_metadata(), it builds on the
+		// $metadata we pass in rather than a fresh array, so unrelated keys (original_image,
+		// third-party plugin data) are never at risk of being dropped.
+		$metadata = _wp_make_subsizes( $new_sizes, $file, $metadata, $attachment_id );
+
+		// _wp_make_subsizes() never returns a WP_Error: a size it couldn't create is just left out of
+		// the result, silently, whether that's because the image is legitimately too small for it (fine,
+		// expected) or because of a real, possibly transient failure (disk/permissions/memory/missing
+		// image editor). Since the "missing" entries were already unset above, an unreported real failure
+		// would otherwise be saved as if it were a success and never retried. Tell the two apart with
+		// image_resize_dimensions() -- the same check core itself uses to decide whether a size applies.
+		$failed = array();
+		foreach ( $new_sizes as $size_name => $size_data ) {
+			if ( isset( $metadata['sizes'][ $size_name ] ) ) {
+				continue;
+			}
+			if ( ! image_resize_dimensions( $metadata['width'], $metadata['height'], $size_data['width'], $size_data['height'], $size_data['crop'] ) ) {
+				continue; // Too small for this size: leaving it out is expected.
+			}
+			$failed[] = $size_name;
+		}
+
+		if ( ! empty( $failed ) ) {
+			// _wp_make_subsizes() saves metadata to the database after each size it successfully makes,
+			// so a partial failure may have already left a partial record there; restore the original.
+			wp_update_attachment_metadata( $attachment_id, $original );
+
+			return new \WP_Error( 'cloudinary_regenerate_sizes_failed', __( 'Could not regenerate attachment sizes.', 'cloudinary' ) );
+		}
+
+		wp_update_attachment_metadata( $attachment_id, $metadata );
+		// Persist the new signature, otherwise this would re-trigger on every subsequent render.
+		$this->sync->set_signature_item( $attachment_id, 'sizes' );
+
+		return $metadata;
+	}
+
+	/**
 	 * Upload an asset to Cloudinary.
 	 *
 	 * @param int         $attachment_id The attachment ID.

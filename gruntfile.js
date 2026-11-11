@@ -84,6 +84,7 @@ module.exports = function ( grunt ) {
 				},
 				cwd: '<%= tester_dir %>',
 				expand: true,
+				dest: 'cloudinary-update-tester',
 				src: [ '**/*' ],
 			},
 		},

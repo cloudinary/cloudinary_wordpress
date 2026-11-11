@@ -6,6 +6,12 @@ on:
   workflow_call:
   pull_request:
 
+# A new push to a PR makes the previous run for it obsolete, so cancel it.
+# Pushes to develop and master still run to completion.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -28,13 +34,19 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
 
+      # Composer on the runner uses ~/.cache/composer, not ~/.composer/cache,
+      # so ask it for the directory instead of hard-coding one.
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
       - name: Cache Composer
         uses: actions/cache@v4
         with:
-          path: ~/.composer/cache
-          key: ${{ runner.os }}-composer-${{ matrix.php }}-${{ hashFiles('**/composer.lock') }}
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
-            ${{ runner.os }}-composer-${{ matrix.php }}-
+            ${{ runner.os }}-composer-${{ matrix.php-version }}-
 
       - name: Install dependencies
         run: npm ci
@@ -57,10 +69,14 @@ jobs:
         with:
           php-version: '8.5'
 
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
       - name: Cache Composer
         uses: actions/cache@v4
         with:
-          path: ~/.composer/cache
+          path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-phpstan-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-phpstan-
@@ -98,10 +114,14 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
 
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
       - name: Cache Composer
         uses: actions/cache@v4
         with:
-          path: ~/.composer/cache
+          path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-unit-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-unit-
@@ -163,10 +183,14 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
 
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
       - name: Cache Composer
         uses: actions/cache@v4
         with:
-          path: ~/.composer/cache
+          path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-e2e-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-e2e-

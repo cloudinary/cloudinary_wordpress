@@ -1,4 +1,5 @@
 import apiFetch from '@wordpress/api-fetch';
+import { __ } from '@wordpress/i18n';
 
 const MediaLibrary = {
 	wpWrap: document.getElementById( 'wpwrap' ),
@@ -38,6 +39,13 @@ const MediaLibrary = {
 								setTimeout( () => {
 									preview.style.opacity = 1;
 								}, 250 );
+
+								// Only new assets need downloading, as in the media modal.
+								if ( typeof asset.fetch === 'undefined' ) {
+									self.removeProgress( download, index );
+									return;
+								}
+
 								apiFetch( {
 									path: cldData.dam.fetch_url,
 									data: {
@@ -47,24 +55,24 @@ const MediaLibrary = {
 										transformations: asset.transformations,
 									},
 									method: 'POST',
-								} ).then( ( result ) => {
-									const last = download[ index ];
-									delete download[ index ];
-									last.removeChild( last.firstChild );
-									setTimeout( () => {
-										last.style.opacity = 0;
-										setTimeout( () => {
-											last.parentNode.removeChild( last );
-											if (
-												! Object.keys( download ).length
-											) {
-												library.style.marginRight =
-													'0px';
-												status.style.display = 'none';
-											}
-										}, 1000 );
-									}, 500 );
-								} );
+								} )
+									.then( ( result ) => {
+										// A failed download is answered with { success: false, data: error }.
+										if (
+											result &&
+											false === result.success
+										) {
+											self.showError( result.data );
+										}
+									} )
+									.catch( ( error ) => {
+										self.showError(
+											error && error.message
+										);
+									} )
+									.finally( () => {
+										self.removeProgress( download, index );
+									} );
 							} );
 					}
 				},
@@ -83,6 +91,37 @@ const MediaLibrary = {
 			this.libraryWrap.offsetTop -
 			this.adminbar.offsetHeight +
 			'px';
+	},
+	/**
+	 * Fade out and remove an import progress item, and hide the import status when it's the last one.
+	 *
+	 * @param {Object} download The progress items being imported, by index.
+	 * @param {string} index    The index of the progress item to remove.
+	 */
+	removeProgress( download, index ) {
+		const last = download[ index ];
+		delete download[ index ];
+		last.removeChild( last.firstChild );
+		setTimeout( () => {
+			last.style.opacity = 0;
+			setTimeout( () => {
+				last.parentNode.removeChild( last );
+				if ( ! Object.keys( download ).length ) {
+					this.libraryWrap.style.marginRight = '0px';
+					this.importStatus.style.display = 'none';
+				}
+			}, 1000 );
+		}, 500 );
+	},
+	/**
+	 * Tell the user an asset could not be imported.
+	 *
+	 * @param {string} message The error message.
+	 */
+	showError( message ) {
+		window.alert(
+			message || __( 'Could not import the asset.', 'cloudinary' )
+		);
 	},
 	makeProgress( asset ) {
 		const wrap = document.createElement( 'div' );
