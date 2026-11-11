@@ -2,7 +2,7 @@
 Contributors: Cloudinary, XWP, Automattic
 Tags: image-optimizer, core-web-vitals, video, resize, performance
 Requires at least: 6.3
-Tested up to: 7.1
+Tested up to: 7.1.4
 Requires PHP: 7.4
 Stable tag: STABLETAG
 License: GPLv2
@@ -145,6 +145,15 @@ Your site is now setup to start using Cloudinary.
 
 
 == Changelog ==
+
+= 3.3.9 (11 November 2026) =
+
+* Fixed failed DAM downloads being reported as successful and creating empty Media Library attachments. Failed imports now return an error and are logged
+* Fixed an issue where crops and effects applied in the Cloudinary DAM widget were lost when assets were imported into WordPress
+* Added automatic thumbnail regeneration after images are edited in the WordPress image editor, eliminating an extra database query on every page load
+* Fixed a synchronization loop that could overload the server
+* Fixed deprecation warnings on recent PHP versions and an issue with caching delivery URL lookups
+* Added Cloudinary URL support to `wp_get_attachment_image_src()`, so themes and plugins using this function receive Cloudinary-delivered URLs
 
 = 3.3.8 (23 September 2026) =
 
