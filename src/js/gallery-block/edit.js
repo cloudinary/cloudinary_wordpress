@@ -149,9 +149,16 @@ const Edit = ( { setAttributes, attributes, isSelected } ) => {
 		let cancelled = false;
 
 		const render = () => {
+			if ( cancelled ) {
+				return;
+			}
+
 			const galleryWidget = getGalleryWidget( win );
 
-			if ( cancelled || ! galleryWidget ) {
+			// The library failed to load in this frame: don't leave the
+			// spinner running.
+			if ( ! galleryWidget ) {
+				setLoading( false );
 				return;
 			}
 

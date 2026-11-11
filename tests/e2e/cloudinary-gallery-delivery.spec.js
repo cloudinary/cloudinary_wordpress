@@ -286,8 +286,9 @@ test.describe( 'Cloudinary Gallery block delivery', { tag: '@serial' }, () => {
 
 		await admin.editPost( created.postId );
 
-		// The editor canvas is an iframe: the widget has to render inside it,
-		// not in the outer admin document.
+		// Relies on the iframed editor (WordPress 7.1+, or blocks on API v3):
+		// the editor canvas is an iframe, and the widget has to render inside
+		// it, not in the outer admin document.
 		const gallery = editor.canvas.locator(
 			`.${ GALLERY_CONTAINER } [data-test="gallery-wrap"]`
 		);
