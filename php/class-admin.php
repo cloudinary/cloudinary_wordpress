@@ -461,9 +461,10 @@ class Admin {
 	 * @param array  $data       The data to save.
 	 */
 	protected function save_settings( $submission, $data ) {
-		$page         = $this->settings->get_setting( $submission );
-		$pending      = false;
-		$changed_keys = array();
+		$page           = $this->settings->get_setting( $submission );
+		$pending        = false;
+		$changed_keys   = array();
+		$changed_values = array();
 		foreach ( $data as $key => $value ) {
 			$slug    = $submission . $page->separator . $key;
 			$current = $this->settings->get_value( $slug );
@@ -479,6 +480,8 @@ class Admin {
 			}
 			$changed_keys[] = $key;
 			$pending        = true;
+
+			$changed_values[ $key ] = $value;
 		}
 
 		if ( true === $pending ) {
@@ -488,15 +491,25 @@ class Admin {
 
 				$analytics = $this->plugin->get_component( 'analytics' );
 				if ( $analytics ) {
-					$analytics->track(
-						'settings_saved',
-						'settings',
-						null,
-						array(
-							'page'         => $submission,
-							'changed_keys' => $changed_keys,
-						)
+					$params = array(
+						'page'         => $submission,
+						'changed_keys' => $changed_keys,
 					);
+
+					// Values only for allowlisted feature settings; secrets
+					// and free text never leave the site.
+					$feature_values = array();
+					foreach ( $changed_values as $key => $value ) {
+						$normalized = $analytics->normalize_feature_value( $key, $value );
+						if ( null !== $normalized ) {
+							$feature_values[ $key ] = $normalized;
+						}
+					}
+					if ( ! empty( $feature_values ) ) {
+						$params['changed_values'] = $feature_values;
+					}
+
+					$analytics->track( 'settings_saved', 'settings', null, $params );
 
 					if ( 'gallery' === $submission ) {
 						$this->track_gallery_configured( $analytics, $data );

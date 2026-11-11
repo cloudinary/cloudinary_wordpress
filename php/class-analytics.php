@@ -65,6 +65,7 @@ class Analytics {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_script_data' ) );
 		add_action( 'admin_init', array( $this, 'maybe_send_smoke_event' ) );
 		add_action( 'admin_init', array( $this, 'maybe_send_pending_activation' ) );
+		add_action( 'admin_init', array( $this, 'maybe_send_feature_snapshot' ) );
 		add_action( 'cloudinary_uploaded_asset', array( $this, 'maybe_first_api_consumption' ), 10, 2 );
 	}
 
@@ -74,6 +75,149 @@ class Analytics {
 	const PENDING_ACTIVATION = '_cloudinary_pending_activation';
 	const LAST_ACTIVE        = '_cloudinary_last_active';
 	const FIRST_API_FLAG     = '_cloudinary_first_api_emitted';
+
+	/**
+	 * Option key marking the feature-config snapshot as sent (per cloud_name).
+	 */
+	const FEATURE_SNAPSHOT_FLAG = '_cloudinary_feature_snapshot_emitted';
+
+	/**
+	 * Allowlist of feature settings whose values may be emitted, mapped to how
+	 * each value is normalised before it leaves the site.
+	 *
+	 * Anything not listed here is never sent as a value. Free-text fields are
+	 * reduced to a presence boolean, since they can hold public IDs, overlay
+	 * text or URLs.
+	 *
+	 * - bool:     `on`/`off` toggle → true/false.
+	 * - int:      numeric field → int.
+	 * - string:   select/radio enum → string.
+	 * - presence: free text → whether it is non-empty.
+	 * - crops:    per-size crop map → number of sizes with a custom crop.
+	 */
+	const FEATURE_SETTINGS = array(
+		// Image.
+		'image_delivery'          => 'bool',
+		'image_optimization'      => 'bool',
+		'image_format'            => 'string',
+		'image_quality'           => 'string',
+		'image_freeform'          => 'presence',
+		'svg_support'             => 'bool',
+		'crop_sizes'              => 'crops',
+		// Lazy loading.
+		'use_lazy_load'           => 'bool',
+		'lazy_threshold'          => 'string',
+		'lazy_placeholder'        => 'string',
+		'lazy_animate'            => 'bool',
+		'dpr'                     => 'string',
+		// Responsive images.
+		'enable_breakpoints'      => 'bool',
+		'pixel_step'              => 'int',
+		'breakpoints'             => 'int',
+		'max_width'               => 'int',
+		'min_width'               => 'int',
+		// Video.
+		'video_delivery'          => 'bool',
+		'video_player'            => 'string',
+		'adaptive_streaming'      => 'bool',
+		'adaptive_streaming_mode' => 'string',
+		'video_controls'          => 'bool',
+		'video_loop'              => 'bool',
+		'video_autoplay_mode'     => 'string',
+		'video_optimization'      => 'bool',
+		'video_format'            => 'string',
+		'video_quality'           => 'string',
+		'video_freeform'          => 'presence',
+	);
+
+	/**
+	 * Normalises a feature setting value for emission.
+	 *
+	 * @param string $key   The setting slug.
+	 * @param mixed  $value The raw setting value.
+	 *
+	 * @return bool|int|string|null The normalised value, or null when the key is
+	 *                              not allowlisted or the value can't be read.
+	 */
+	public function normalize_feature_value( $key, $value ) {
+		if ( ! isset( self::FEATURE_SETTINGS[ $key ] ) ) {
+			return null;
+		}
+
+		switch ( self::FEATURE_SETTINGS[ $key ] ) {
+			case 'bool':
+				return 'on' === $value || true === $value;
+			case 'int':
+				return is_numeric( $value ) ? (int) $value : null;
+			case 'presence':
+				return is_string( $value ) && '' !== trim( $value );
+			case 'crops':
+				// Each size maps to '' (default crop), '--' (crop disabled) or
+				// a custom transformation string.
+				if ( ! is_array( $value ) ) {
+					return 0;
+				}
+
+				return count(
+					array_filter(
+						$value,
+						static function ( $crop ) {
+							return is_string( $crop ) && '' !== trim( $crop ) && '--' !== $crop;
+						}
+					)
+				);
+			default:
+				return is_scalar( $value ) ? sanitize_text_field( (string) $value ) : null;
+		}
+	}
+
+	/**
+	 * Emits the one-time `feature_config_snapshot` adoption baseline.
+	 *
+	 * Captures the full state of the delivery features, including those left
+	 * at their defaults, which `settings_saved` never reports. Sent on the
+	 * first admin load once the site is connected, then suppressed per
+	 * cloud_name. That covers wizard setups, sites connected through the
+	 * `CLOUDINARY_CONNECTION_STRING` constant, existing installs upgrading to
+	 * this version, and account switches.
+	 *
+	 * @return void
+	 */
+	public function maybe_send_feature_snapshot() {
+		if ( ! $this->is_enabled() ) {
+			return;
+		}
+
+		$connect = $this->plugin->get_component( 'connect' );
+		if ( ! $connect || ! $connect->is_connected() ) {
+			return;
+		}
+
+		$cloud = (string) $connect->get_cloud_name();
+		if ( '' === $cloud || get_option( self::FEATURE_SNAPSHOT_FLAG ) === $cloud ) {
+			return;
+		}
+		update_option( self::FEATURE_SNAPSHOT_FLAG, $cloud, false );
+
+		$this->track( 'feature_config_snapshot', 'features', null, $this->get_feature_snapshot() );
+	}
+
+	/**
+	 * Reads the current, normalised value of every allowlisted feature setting.
+	 *
+	 * @return array
+	 */
+	public function get_feature_snapshot() {
+		$snapshot = array();
+		foreach ( array_keys( self::FEATURE_SETTINGS ) as $key ) {
+			$value = $this->normalize_feature_value( $key, $this->plugin->settings->get_value( $key ) );
+			if ( null !== $value ) {
+				$snapshot[ $key ] = $value;
+			}
+		}
+
+		return $snapshot;
+	}
 
 	/**
 	 * Records the activation type on plugin activation (funnel step 1).
