@@ -79,6 +79,9 @@ test.describe( 'Settings & navigation analytics', () => {
 		expect( savedEvents.length ).toBe( 1 );
 		expect( savedEvents[ 0 ].page ).toBe( 'image_settings' );
 		expect( savedEvents[ 0 ].changed_keys ).toContain( 'image_quality' );
+		expect( savedEvents[ 0 ].changed_values.image_quality ).toBe(
+			nextValue
+		);
 	} );
 
 	test( 'dismissing an admin notice emits notice_dismissed', async ( {
