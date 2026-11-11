@@ -108,3 +108,31 @@ export const setupAttributesForRendering = ( attributes ) => {
 
 	return config;
 };
+
+/**
+ * Parse the block's Custom Settings into an object.
+ *
+ * The `customSettings` attribute is stored as JSON text. It is decoded the
+ * same way the front end does before being merged over the gallery config.
+ * Invalid JSON, or JSON that is not an object, is ignored.
+ *
+ * @param {string|Object} customSettings The Custom Settings attribute value.
+ * @return {Object} The parsed settings, or an empty object.
+ */
+export const parseCustomSettings = ( customSettings ) => {
+	let parsed = customSettings;
+
+	if ( 'string' === typeof customSettings ) {
+		try {
+			parsed = JSON.parse( customSettings );
+		} catch {
+			return {};
+		}
+	}
+
+	if ( ! parsed || 'object' !== typeof parsed || Array.isArray( parsed ) ) {
+		return {};
+	}
+
+	return parsed;
+};
