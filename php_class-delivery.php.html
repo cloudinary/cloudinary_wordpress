@@ -139,6 +139,13 @@ class Delivery implements Setup {
 	const META_CACHE_KEY = '_cld_replacements';
 
 	/**
+	 * The relationship columns carried over when a delivery relation is recreated.
+	 *
+	 * @var array
+	 */
+	const PRESERVED_RELATION_KEYS = array( 'transformations', 'text_overlay', 'image_overlay' );
+
+	/**
 	 * Holds the captured post contexts
 	 *
 	 * @var array
@@ -459,14 +466,12 @@ class Delivery implements Setup {
 	 * @param int $attachment_id The attachment ID.
 	 */
 	public function create_delivery( $attachment_id ) {
-		$relationship    = Relationship::get_relationship( $attachment_id );
-		$transformations = null;
-		// Preserve pre-existing transformations.
+		$relationship = Relationship::get_relationship( $attachment_id );
+		$preserve     = array();
+		// Preserve pre-existing transformations and overlays, each in its own column.
+		// Read the relationship data rather than Relate::get_transformations(), which is memoized per request and merges in the overlays.
 		if ( $relationship instanceof Relationship ) {
-			$transformations = Relate::get_transformations( $attachment_id, true );
-			if ( empty( $transformations ) ) {
-				$transformations = null;
-			}
+			$preserve = array_intersect_key( (array) $relationship->get_data(), array_flip( self::PRESERVED_RELATION_KEYS ) );
 		}
 		$this->delete_size_relationship( $attachment_id );
 		$size      = $this->get_sized( $attachment_id );
@@ -483,11 +488,11 @@ class Delivery implements Setup {
 		if ( empty( $sized_url ) ) {
 			$sized_url = Utils::get_path_from_url( wp_get_attachment_url( $attachment_id ), true );
 		}
-		self::create_size_relation( $attachment_id, $sized_url, $wh, $base );
+		// Write the preserved values with the new relation itself. Restoring them afterwards would go through a deferred save that runs on shutdown, overwriting transformations the relation has just migrated out of post meta.
+		self::create_size_relation( $attachment_id, $sized_url, $wh, $base, $preserve );
 		// Update public ID and type.
 		self::update_size_relations_public_id( $attachment_id, $public_id );
 		self::update_size_relations_state( $attachment_id, 'inherit' );
-		self::update_size_relations_transformations( $attachment_id, $transformations );
 		$this->sync->set_signature_item( $attachment_id, 'delivery' );
 	}
 
@@ -575,6 +580,8 @@ class Delivery implements Setup {
 	 */
 	public function get_sized( $attachment_id ) {
 		static $sizes = array(), $registered_sizes;
+
+		$attachment_id = (int) $attachment_id;
 		if ( ! $registered_sizes ) {
 			$registered_sizes = wp_get_registered_image_subsizes();
 		}
@@ -670,10 +677,11 @@ class Delivery implements Setup {
 	 * @param string $sized_url     The sized url.
 	 * @param string $size          The size in (width)x(height) format.
 	 * @param string $parent_path   The path of the parent if external.
+	 * @param array  $preserve      Transformations and overlays to carry over from a previous relation.
 	 *
 	 * @return false|int
 	 */
-	public static function create_size_relation( $attachment_id, $sized_url, $size = '0x0', $parent_path = '' ) { // phpcs:ignore PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found, PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
+	public static function create_size_relation( $attachment_id, $sized_url, $size = '0x0', $parent_path = '', $preserve = array() ) { // phpcs:ignore PHPCompatibility.Numbers.RemovedHexadecimalNumericStrings.Found, PHPCompatibility.Miscellaneous.ValidIntegers.HexNumericStringFound
 		global $wpdb;
 		static $media;
 		if ( ! $media ) {
@@ -702,6 +710,13 @@ class Delivery implements Setup {
 			'url_hash'        => md5( $sized_url ),
 			'parent_hash'     => md5( $parent_path ),
 		);
+
+		// Carry over preserved values, unless transformations staged in post meta replace them.
+		foreach ( array_intersect_key( (array) $preserve, array_flip( self::PRESERVED_RELATION_KEYS ) ) as $key => $value ) {
+			if ( ! empty( $value ) &amp;&amp; empty( $data[ $key ] ) ) {
+				$data[ $key ] = $value;
+			}
+		}
 
 		$insert_id = false;
 		$created   = $wpdb->replace( Utils::get_relationship_table(), $data ); // phpcs:ignore WordPress.DB
@@ -954,13 +969,17 @@ class Delivery implements Setup {
 			$search
 		);
 
+		// Cache for the current request only. Across requests, failed deliveries or syncs need to be retried,
+		// and the contextualized post IDs can differ (e.g. per WPML language).
+		static $cache = array();
+
 		$key       = md5( $sql );
-		$cached    = wp_cache_get( $key );
+		$cached    = isset( $cache[ $key ] ) ? $cache[ $key ] : false;
 		$auto_sync = $this->sync->is_auto_sync_enabled();
 
 		if ( false === $cached ) {
 			$cached  = array();
-			$results = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared
+			$results = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 
 			if ( $results ) {
 				foreach ( $results as $result ) {
@@ -976,7 +995,8 @@ class Delivery implements Setup {
 					 */
 					$post_id = apply_filters( 'cloudinary_contextualized_post_id', $result->post_id );
 
-					if ( ! $this->is_deliverable( $post_id ) ) {
+					// The contextualized post can be missing, e.g. WPML returns null for an attachment without a translation.
+					if ( empty( $post_id ) || ! $this->is_deliverable( $post_id ) ) {
 						continue;
 					}
 					// If we are here, it means that an attachment in the media library doesn't have a delivery for the url.
@@ -987,11 +1007,13 @@ class Delivery implements Setup {
 						$this->sync->add_to_sync( $post_id );
 					}
 					$size           = $this->get_sized( $post_id );
-					$key            = ! empty( $size['sized_url'] ) ? $size['sized_url'] : wp_get_attachment_url( $post_id );
-					$cached[ $key ] = (int) $post_id;
+					$attachment_url = ! empty( $size['sized_url'] ) ? $size['sized_url'] : wp_get_attachment_url( $post_id );
+					if ( $attachment_url ) {
+						$cached[ $attachment_url ] = (int) $post_id;
+					}
 				}
 			}
-			wp_cache_add( $key, $cached );
+			$cache[ $key ] = $cached;
 		}
 
 		$this->known   = array_merge( $this->known, $cached );
@@ -1608,9 +1630,10 @@ class Delivery implements Setup {
 		// Track back the found URL.
 		if ( $this->media->is_cloudinary_url( $raw_url ) ) {
 			$public_id = $this->media->get_public_id_from_url( $raw_url );
-			if ( isset( $this->known[ $public_id ] ) ) {
-
-				$url               = $this->known[ $public_id ]['sized_url'];
+			// A URL with transformations of its own (e.g. typed into content by hand) is left as is, since rebuilding it would drop them.
+			if ( isset( $this->known[ $public_id ] ) &amp;&amp; ! $this->has_custom_transformations( $raw_url, $this->known[ $public_id ]['post_id'] ) ) {
+				// The relation's sized_url is relative to the content dir, while the URL keys of $this->known are full URLs.
+				$url               = $this->get_searchable_url( $this->known[ $public_id ] );
 				$attributes['src'] = $url;
 			}
 		}
@@ -1862,25 +1885,54 @@ class Delivery implements Setup {
 	}
 
 	/**
-	 * Set url usability.
+	 * Check if a Cloudinary URL has transformations other than the ones the plugin applies to the attachment itself:
+	 * its size, and the attachment's own and global transformations.
 	 *
-	 * @param array     $item      The item result.
-	 * @param null|bool $auto_sync If auto_sync is on.
+	 * @param string $url           The Cloudinary URL.
+	 * @param int    $attachment_id The attachment ID.
+	 *
+	 * @return bool
 	 */
-	protected function set_usability( $item, $auto_sync = null ) {
+	protected function has_custom_transformations( $url, $attachment_id ) {
+		$type     = $this->media->get_resource_type( $attachment_id );
+		$expected = $this->media->get_transformations_from_string( (string) $this->media->cloudinary_url( $attachment_id ), $type );
 
-		/**
-		 * Filter the found item to allow usability to be altered.
-		 *
-		 * @hook   cloudinary_set_usable_asset
-		 * @since  3.0.2
-		 *
-		 * @param array $item The found asset.
-		 *
-		 * @return array
-		 */
-		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
+		foreach ( $this->media->get_transformations_from_string( $url, $type ) as $transformation ) {
+			// Loose comparison, so the order of the parameters doesn't matter.
+			if ( ! $this->is_size_transformation( $transformation ) &amp;&amp; ! in_array( $transformation, $expected ) ) { // phpcs:ignore WordPress.PHP.StrictInArray.MissingTrueStrict
+				return true;
+			}
+		}
 
+		return false;
+	}
+
+	/**
+	 * Check if a transformation is one the plugin uses to size an image, e.g. `w_300,h_200,c_scale` or `w_150,h_150,c_thumb,g_auto`.
+	 *
+	 * @param array $transformation The transformation, as parsed by Media::get_transformations_from_string().
+	 *
+	 * @return bool
+	 */
+	protected function is_size_transformation( $transformation ) {
+		if ( array_diff_key( $transformation, array_flip( array( 'width', 'height', 'crop', 'gravity' ) ) ) ) {
+			return false;
+		}
+		if ( isset( $transformation['crop'] ) &amp;&amp; ! in_array( $transformation['crop'], array( 'scale', 'fill', 'thumb' ), true ) ) {
+			return false;
+		}
+
+		return ! isset( $transformation['gravity'] ) || 'auto' === $transformation['gravity'];
+	}
+
+	/**
+	 * Get the URL an item is known by, as used for the keys of $this->known.
+	 *
+	 * @param array $item The item result.
+	 *
+	 * @return string
+	 */
+	protected function get_searchable_url( $item ) {
 		/**
 		 * The URL to be searched for and prepared to be delivered by Cloudinary.
 		 *
@@ -1912,7 +1964,30 @@ class Delivery implements Setup {
 		 *
 		 * @return string
 		 */
-		$url = apply_filters( 'cloudinary_delivery_searchable_url', $url, $item, $content_url );
+		return apply_filters( 'cloudinary_delivery_searchable_url', $url, $item, $content_url );
+	}
+
+	/**
+	 * Set url usability.
+	 *
+	 * @param array     $item      The item result.
+	 * @param null|bool $auto_sync If auto_sync is on.
+	 */
+	protected function set_usability( $item, $auto_sync = null ) {
+
+		/**
+		 * Filter the found item to allow usability to be altered.
+		 *
+		 * @hook   cloudinary_set_usable_asset
+		 * @since  3.0.2
+		 *
+		 * @param array $item The found asset.
+		 *
+		 * @return array
+		 */
+		$item = apply_filters( 'cloudinary_set_usable_asset', $item );
+
+		$url = $this->get_searchable_url( $item );
 
 		$found = array();
 
@@ -2179,7 +2254,7 @@ class Delivery implements Setup {
 </div>
 
 <nav>
-	<h2><a href="index.html">Home</a></h2><h3>Actions</h3><ul><li><a href="cloudinary_connected.html">cloudinary_connected</a></li><li><a href="cloudinary_delete_asset.html">cloudinary_delete_asset</a></li><li><a href="cloudinary_download_asset.html">cloudinary_download_asset</a></li><li><a href="cloudinary_enable_crop_and_gravity_control.html">cloudinary_enable_crop_and_gravity_control</a></li><li><a href="cloudinary_flush_cache.html">cloudinary_flush_cache</a></li><li><a href="cloudinary_init_delivery.html">cloudinary_init_delivery</a></li><li><a href="cloudinary_init_settings.html">cloudinary_init_settings</a></li><li><a href="cloudinary_is_%257B$class_name%257D_active.html">cloudinary_is_{$class_name}_active</a></li><li><a href="cloudinary_lazy_load_bypass.html">cloudinary_lazy_load_bypass</a></li><li><a href="cloudinary_lazy_load_bypass_formats.html">cloudinary_lazy_load_bypass_formats</a></li><li><a href="cloudinary_media_filters.html">cloudinary_media_filters</a></li><li><a href="cloudinary_ready.html">cloudinary_ready</a></li><li><a href="cloudinary_register_extensions.html">cloudinary_register_extensions</a></li><li><a href="cloudinary_registered_sizes.html">cloudinary_registered_sizes</a></li><li><a href="cloudinary_responsive_images_bypass_formats.html">cloudinary_responsive_images_bypass_formats</a></li><li><a href="cloudinary_setting_get_value.html">cloudinary_setting_get_value</a></li><li><a href="cloudinary_string_replace.html">cloudinary_string_replace</a></li><li><a href="cloudinary_tag_skip_classes.html">cloudinary_tag_skip_classes</a></li><li><a href="cloudinary_unset_attributes.html">cloudinary_unset_attributes</a></li><li><a href="cloudinary_unsync_asset.html">cloudinary_unsync_asset</a></li><li><a href="cloudinary_upgrade_asset.html">cloudinary_upgrade_asset</a></li><li><a href="cloudinary_upload_args.html">cloudinary_upload_args</a></li><li><a href="cloudinary_uploaded_asset.html">cloudinary_uploaded_asset</a></li></ul><h3>Filters</h3><ul><li><a href="cloudinary_allow_glb_upload.html">cloudinary_allow_glb_upload</a></li><li><a href="cloudinary_allowed_extensions.html">cloudinary_allowed_extensions</a></li><li><a href="cloudinary_allowed_svg_tags.html">cloudinary_allowed_svg_tags</a></li><li><a href="cloudinary_analytics_enabled.html">cloudinary_analytics_enabled</a></li><li><a href="cloudinary_analytics_smoke_test.html">cloudinary_analytics_smoke_test</a></li><li><a href="cloudinary_apply_breakpoints.html">cloudinary_apply_breakpoints</a></li><li><a href="cloudinary_asset_payload.html">cloudinary_asset_payload</a></li><li><a href="cloudinary_asset_state.html">cloudinary_asset_state</a></li><li><a href="cloudinary_autosync_threads.html">cloudinary_autosync_threads</a></li><li><a href="cloudinary_build_queue_query.html">cloudinary_build_queue_query</a></li><li><a href="cloudinary_bypass_cache.html">cloudinary_bypass_cache</a></li><li><a href="cloudinary_bypass_seo_url.html">cloudinary_bypass_seo_url</a></li><li><a href="cloudinary_can_sync_asset.html">cloudinary_can_sync_asset</a></li><li><a href="cloudinary_content_url.html">cloudinary_content_url</a></li><li><a href="cloudinary_contextualized_post_id.html">cloudinary_contextualized_post_id</a></li><li><a href="cloudinary_current_post_id.html">cloudinary_current_post_id</a></li><li><a href="cloudinary_delivery_get_id.html">cloudinary_delivery_get_id</a></li><li><a href="cloudinary_delivery_searchable_url.html">cloudinary_delivery_searchable_url</a></li><li><a href="cloudinary_dns_prefetch_types.html">cloudinary_dns_prefetch_types</a></li><li><a href="cloudinary_edit_asset_permalink.html">cloudinary_edit_asset_permalink</a></li><li><a href="cloudinary_elementor_replace_background_images_in_css.html">cloudinary_elementor_replace_background_images_in_css</a></li><li><a href="cloudinary_filter_unknown_urls.html">cloudinary_filter_unknown_urls</a></li><li><a href="cloudinary_get_signature.html">cloudinary_get_signature</a></li><li><a href="cloudinary_home_url.html">cloudinary_home_url</a></li><li><a href="cloudinary_ignored_class_keywords.html">cloudinary_ignored_class_keywords</a></li><li><a href="cloudinary_ignored_data_keywords.html">cloudinary_ignored_data_keywords</a></li><li><a href="cloudinary_is_content_dir.html">cloudinary_is_content_dir</a></li><li><a href="cloudinary_is_deliverable.html">cloudinary_is_deliverable</a></li><li><a href="cloudinary_is_media.html">cloudinary_is_media</a></li><li><a href="cloudinary_is_uploadable_media.html">cloudinary_is_uploadable_media</a></li><li><a href="cloudinary_lazy_load_bypass_classes.html">cloudinary_lazy_load_bypass_classes</a></li><li><a href="cloudinary_local_url.html">cloudinary_local_url</a></li><li><a href="cloudinary_max_files_import.html">cloudinary_max_files_import</a></li><li><a href="cloudinary_media_context.html">cloudinary_media_context</a></li><li><a href="cloudinary_media_context_query.html">cloudinary_media_context_query</a></li><li><a href="cloudinary_media_context_things.html">cloudinary_media_context_things</a></li><li><a href="cloudinary_meta_boxes.html">cloudinary_meta_boxes</a></li><li><a href="cloudinary_migrate_legacy_meta.html">cloudinary_migrate_legacy_meta</a></li><li><a href="cloudinary_on_demand_sync_limit.html">cloudinary_on_demand_sync_limit</a></li><li><a href="cloudinary_parse_element.html">cloudinary_parse_element</a></li><li><a href="cloudinary_plugin_asset_cache_filters.html">cloudinary_plugin_asset_cache_filters</a></li><li><a href="cloudinary_plugin_asset_cache_inline_types.html">cloudinary_plugin_asset_cache_inline_types</a></li><li><a href="cloudinary_queue_threads.html">cloudinary_queue_threads</a></li><li><a href="cloudinary_raw_url.html">cloudinary_raw_url</a></li><li><a href="cloudinary_rest_url.html">cloudinary_rest_url</a></li><li><a href="cloudinary_seo_public_id.html">cloudinary_seo_public_id</a></li><li><a href="cloudinary_set_usable_asset.html">cloudinary_set_usable_asset</a></li><li><a href="cloudinary_settings_save_setting.html">cloudinary_settings_save_setting</a></li><li><a href="cloudinary_site_url.html">cloudinary_site_url</a></li><li><a href="cloudinary_skip_parse_element.html">cloudinary_skip_parse_element</a></li><li><a href="cloudinary_skip_responsive_breakpoints.html">cloudinary_skip_responsive_breakpoints</a></li><li><a href="cloudinary_sync_base.html">cloudinary_sync_base</a></li><li><a href="cloudinary_sync_base_struct.html">cloudinary_sync_base_struct</a></li><li><a href="cloudinary_task_capability.html">cloudinary_task_capability</a></li><li><a href="cloudinary_task_capability_%257Btask%257D.html">cloudinary_task_capability_{task}</a></li><li><a href="cloudinary_thread_queue_details_query.html">cloudinary_thread_queue_details_query</a></li><li><a href="cloudinary_upgrade_sequence.html">cloudinary_upgrade_sequence</a></li><li><a href="cloudinary_upload_eager_formats.html">cloudinary_upload_eager_formats</a></li><li><a href="cloudinary_use_original_image.html">cloudinary_use_original_image</a></li><li><a href="intermediate_image_sizes_advanced.html">intermediate_image_sizes_advanced</a></li></ul>
+	<h2><a href="index.html">Home</a></h2><h3>Actions</h3><ul><li><a href="cloudinary_connected.html">cloudinary_connected</a></li><li><a href="cloudinary_delete_asset.html">cloudinary_delete_asset</a></li><li><a href="cloudinary_download_asset.html">cloudinary_download_asset</a></li><li><a href="cloudinary_enable_crop_and_gravity_control.html">cloudinary_enable_crop_and_gravity_control</a></li><li><a href="cloudinary_flush_cache.html">cloudinary_flush_cache</a></li><li><a href="cloudinary_init_delivery.html">cloudinary_init_delivery</a></li><li><a href="cloudinary_init_settings.html">cloudinary_init_settings</a></li><li><a href="cloudinary_is_%257B$class_name%257D_active.html">cloudinary_is_{$class_name}_active</a></li><li><a href="cloudinary_lazy_load_bypass.html">cloudinary_lazy_load_bypass</a></li><li><a href="cloudinary_lazy_load_bypass_formats.html">cloudinary_lazy_load_bypass_formats</a></li><li><a href="cloudinary_media_filters.html">cloudinary_media_filters</a></li><li><a href="cloudinary_ready.html">cloudinary_ready</a></li><li><a href="cloudinary_register_extensions.html">cloudinary_register_extensions</a></li><li><a href="cloudinary_registered_sizes.html">cloudinary_registered_sizes</a></li><li><a href="cloudinary_responsive_images_bypass_formats.html">cloudinary_responsive_images_bypass_formats</a></li><li><a href="cloudinary_setting_get_value.html">cloudinary_setting_get_value</a></li><li><a href="cloudinary_string_replace.html">cloudinary_string_replace</a></li><li><a href="cloudinary_tag_skip_classes.html">cloudinary_tag_skip_classes</a></li><li><a href="cloudinary_unset_attributes.html">cloudinary_unset_attributes</a></li><li><a href="cloudinary_unsync_asset.html">cloudinary_unsync_asset</a></li><li><a href="cloudinary_upgrade_asset.html">cloudinary_upgrade_asset</a></li><li><a href="cloudinary_upload_args.html">cloudinary_upload_args</a></li><li><a href="cloudinary_uploaded_asset.html">cloudinary_uploaded_asset</a></li></ul><h3>Filters</h3><ul><li><a href="cloudinary_allow_glb_upload.html">cloudinary_allow_glb_upload</a></li><li><a href="cloudinary_allowed_extensions.html">cloudinary_allowed_extensions</a></li><li><a href="cloudinary_allowed_svg_tags.html">cloudinary_allowed_svg_tags</a></li><li><a href="cloudinary_analytics_enabled.html">cloudinary_analytics_enabled</a></li><li><a href="cloudinary_analytics_smoke_test.html">cloudinary_analytics_smoke_test</a></li><li><a href="cloudinary_apply_breakpoints.html">cloudinary_apply_breakpoints</a></li><li><a href="cloudinary_asset_payload.html">cloudinary_asset_payload</a></li><li><a href="cloudinary_asset_state.html">cloudinary_asset_state</a></li><li><a href="cloudinary_autosync_threads.html">cloudinary_autosync_threads</a></li><li><a href="cloudinary_build_queue_query.html">cloudinary_build_queue_query</a></li><li><a href="cloudinary_bypass_cache.html">cloudinary_bypass_cache</a></li><li><a href="cloudinary_bypass_seo_url.html">cloudinary_bypass_seo_url</a></li><li><a href="cloudinary_can_sync_asset.html">cloudinary_can_sync_asset</a></li><li><a href="cloudinary_content_url.html">cloudinary_content_url</a></li><li><a href="cloudinary_contextualized_post_id.html">cloudinary_contextualized_post_id</a></li><li><a href="cloudinary_current_post_id.html">cloudinary_current_post_id</a></li><li><a href="cloudinary_delivery_get_id.html">cloudinary_delivery_get_id</a></li><li><a href="cloudinary_delivery_searchable_url.html">cloudinary_delivery_searchable_url</a></li><li><a href="cloudinary_dns_prefetch_types.html">cloudinary_dns_prefetch_types</a></li><li><a href="cloudinary_edit_asset_permalink.html">cloudinary_edit_asset_permalink</a></li><li><a href="cloudinary_elementor_replace_background_images_in_css.html">cloudinary_elementor_replace_background_images_in_css</a></li><li><a href="cloudinary_filter_unknown_urls.html">cloudinary_filter_unknown_urls</a></li><li><a href="cloudinary_get_signature.html">cloudinary_get_signature</a></li><li><a href="cloudinary_home_url.html">cloudinary_home_url</a></li><li><a href="cloudinary_ignored_class_keywords.html">cloudinary_ignored_class_keywords</a></li><li><a href="cloudinary_ignored_data_keywords.html">cloudinary_ignored_data_keywords</a></li><li><a href="cloudinary_is_content_dir.html">cloudinary_is_content_dir</a></li><li><a href="cloudinary_is_deliverable.html">cloudinary_is_deliverable</a></li><li><a href="cloudinary_is_media.html">cloudinary_is_media</a></li><li><a href="cloudinary_is_uploadable_media.html">cloudinary_is_uploadable_media</a></li><li><a href="cloudinary_lazy_load_bypass_classes.html">cloudinary_lazy_load_bypass_classes</a></li><li><a href="cloudinary_local_url.html">cloudinary_local_url</a></li><li><a href="cloudinary_max_files_import.html">cloudinary_max_files_import</a></li><li><a href="cloudinary_media_context.html">cloudinary_media_context</a></li><li><a href="cloudinary_media_context_query.html">cloudinary_media_context_query</a></li><li><a href="cloudinary_media_context_things.html">cloudinary_media_context_things</a></li><li><a href="cloudinary_meta_boxes.html">cloudinary_meta_boxes</a></li><li><a href="cloudinary_migrate_legacy_meta.html">cloudinary_migrate_legacy_meta</a></li><li><a href="cloudinary_on_demand_sync_limit.html">cloudinary_on_demand_sync_limit</a></li><li><a href="cloudinary_parse_element.html">cloudinary_parse_element</a></li><li><a href="cloudinary_plugin_asset_cache_filters.html">cloudinary_plugin_asset_cache_filters</a></li><li><a href="cloudinary_plugin_asset_cache_inline_types.html">cloudinary_plugin_asset_cache_inline_types</a></li><li><a href="cloudinary_queue_threads.html">cloudinary_queue_threads</a></li><li><a href="cloudinary_raw_url.html">cloudinary_raw_url</a></li><li><a href="cloudinary_rest_url.html">cloudinary_rest_url</a></li><li><a href="cloudinary_seo_public_id.html">cloudinary_seo_public_id</a></li><li><a href="cloudinary_set_usable_asset.html">cloudinary_set_usable_asset</a></li><li><a href="cloudinary_settings_save_setting.html">cloudinary_settings_save_setting</a></li><li><a href="cloudinary_site_url.html">cloudinary_site_url</a></li><li><a href="cloudinary_skip_parse_element.html">cloudinary_skip_parse_element</a></li><li><a href="cloudinary_skip_responsive_breakpoints.html">cloudinary_skip_responsive_breakpoints</a></li><li><a href="cloudinary_sync_base.html">cloudinary_sync_base</a></li><li><a href="cloudinary_sync_base_struct.html">cloudinary_sync_base_struct</a></li><li><a href="cloudinary_sync_loop_strikes.html">cloudinary_sync_loop_strikes</a></li><li><a href="cloudinary_sync_type_retry_limit.html">cloudinary_sync_type_retry_limit</a></li><li><a href="cloudinary_task_capability.html">cloudinary_task_capability</a></li><li><a href="cloudinary_task_capability_%257Btask%257D.html">cloudinary_task_capability_{task}</a></li><li><a href="cloudinary_thread_queue_details_query.html">cloudinary_thread_queue_details_query</a></li><li><a href="cloudinary_upgrade_sequence.html">cloudinary_upgrade_sequence</a></li><li><a href="cloudinary_upload_eager_formats.html">cloudinary_upload_eager_formats</a></li><li><a href="cloudinary_use_original_image.html">cloudinary_use_original_image</a></li><li><a href="intermediate_image_sizes_advanced.html">intermediate_image_sizes_advanced</a></li></ul>
 </nav>
 
 <br class="clear">
