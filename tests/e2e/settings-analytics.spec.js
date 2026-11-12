@@ -79,7 +79,71 @@ test.describe( 'Settings & navigation analytics', () => {
 		expect( savedEvents.length ).toBe( 1 );
 		expect( savedEvents[ 0 ].page ).toBe( 'image_settings' );
 		expect( savedEvents[ 0 ].changed_keys ).toContain( 'image_quality' );
+		expect( savedEvents[ 0 ].changed_values.image_quality ).toBe(
+			nextValue
+		);
 	} );
+
+	// One feature page each, flipping a field no other spec writes to, so
+	// parallel workers can't change it between this test's read and save.
+	for ( const { page: slug, tag, field, values, expected } of [
+		{
+			page: 'video_settings',
+			tag: 'select',
+			field: 'video_quality',
+			values: [ 'auto', '80' ],
+			expected: ( value ) => value,
+		},
+		{
+			page: 'lazy_loading',
+			tag: 'select',
+			field: 'dpr',
+			values: [ '2X', 'max' ],
+			expected: ( value ) => value,
+		},
+		{
+			page: 'responsive',
+			tag: 'input',
+			field: 'breakpoints',
+			values: [ '10', '12' ],
+			expected: ( value ) => Number( value ),
+		},
+	] ) {
+		test( `saving the ${ slug } page emits settings_saved with its values`, async ( {
+			admin,
+			page,
+		} ) => {
+			await admin.visitAdminPage(
+				'admin.php',
+				`page=cloudinary_${ slug }`
+			);
+
+			// Set through the DOM: some of these fields are hidden until
+			// their feature is toggled on, but are still submitted.
+			const input = page.locator( `${ tag }[name$="[${ field }]"]` );
+			const current = await input.inputValue();
+			const nextValue =
+				values[ 0 ] === current ? values[ 1 ] : values[ 0 ];
+			await input.evaluate( ( el, value ) => {
+				el.value = value;
+				el.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+				el.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+			}, nextValue );
+
+			await page.locator( SEL.saveButton ).click();
+			await page.waitForLoadState( 'networkidle' );
+
+			const savedEvents = findAnalyticsEvents(
+				readAnalyticsEvents(),
+				'settings_saved'
+			);
+			expect( savedEvents.length ).toBe( 1 );
+			expect( savedEvents[ 0 ].page ).toBe( slug );
+			expect( savedEvents[ 0 ].changed_values[ field ] ).toBe(
+				expected( nextValue )
+			);
+		} );
+	}
 
 	test( 'dismissing an admin notice emits notice_dismissed', async ( {
 		admin,

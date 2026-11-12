@@ -488,15 +488,26 @@ class Admin {
 
 				$analytics = $this->plugin->get_component( 'analytics' );
 				if ( $analytics ) {
-					$analytics->track(
-						'settings_saved',
-						'settings',
-						null,
-						array(
-							'page'         => $submission,
-							'changed_keys' => $changed_keys,
-						)
+					$params = array(
+						'page'         => $submission,
+						'changed_keys' => $changed_keys,
 					);
+
+					// Values only for allowlisted feature settings; secrets
+					// and free text never leave the site. Read back after the
+					// save so the value reflects any save filters.
+					$feature_values = array();
+					foreach ( $changed_keys as $key ) {
+						$normalized = $analytics->normalize_feature_value( $submission, $key, $this->settings->get_value( $key ) );
+						if ( null !== $normalized ) {
+							$feature_values[ $key ] = $normalized;
+						}
+					}
+					if ( ! empty( $feature_values ) ) {
+						$params['changed_values'] = $feature_values;
+					}
+
+					$analytics->track( 'settings_saved', 'settings', null, $params );
 
 					if ( 'gallery' === $submission ) {
 						$this->track_gallery_configured( $analytics, $data );
