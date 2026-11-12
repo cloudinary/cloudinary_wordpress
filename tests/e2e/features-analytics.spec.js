@@ -81,15 +81,23 @@ test.describe( 'Extensions & gallery analytics', () => {
 		expect( events[ 0 ].layout ).toBe( 'expand' );
 		expect( events[ 0 ].media_count ).toBe( 2 );
 	} );
+} );
+
+// @serial: the snapshot's one-time flag is shared by the whole site, so a
+// parallel worker's admin load could send it into that worker's log instead.
+// The sending rules are covered by PHPUnit; this checks the admin wiring.
+test.describe( 'Feature config snapshot', { tag: '@serial' }, () => {
+	test.beforeEach( () => {
+		fakeCloudinaryConnected();
+		// Earlier admin loads already sent the snapshot for this cloud_name,
+		// so reset the one-time flag to simulate a fresh setup.
+		wpCli( [ 'option', 'delete', '_cloudinary_feature_snapshot_emitted' ] );
+		clearAnalyticsEvents();
+	} );
 
 	test( 'the first admin load once connected emits feature_config_snapshot once', async ( {
 		admin,
 	} ) => {
-		// Every other spec's admin loads already sent the snapshot for this
-		// cloud_name, so reset the one-time flag to simulate a fresh setup.
-		wpCli( [ 'option', 'delete', '_cloudinary_feature_snapshot_emitted' ] );
-		clearAnalyticsEvents();
-
 		await admin.visitAdminPage( 'admin.php', 'page=cloudinary' );
 		await admin.visitAdminPage( 'admin.php', 'page=cloudinary' );
 
@@ -100,19 +108,9 @@ test.describe( 'Extensions & gallery analytics', () => {
 		expect( events.length ).toBe( 1 );
 		expect( events[ 0 ].event_category ).toBe( 'features' );
 
-		// Booleans, ints and enums are normalised, and default values are
-		// reported even though they were never explicitly saved.
-		expect( typeof events[ 0 ].image_optimization ).toBe( 'boolean' );
+		// Default values are reported even though they were never saved.
 		expect( typeof events[ 0 ].use_lazy_load ).toBe( 'boolean' );
-		expect( typeof events[ 0 ].enable_breakpoints ).toBe( 'boolean' );
-		expect( typeof events[ 0 ].adaptive_streaming ).toBe( 'boolean' );
 		expect( typeof events[ 0 ].pixel_step ).toBe( 'number' );
-		expect( typeof events[ 0 ].crop_sizes ).toBe( 'number' );
 		expect( typeof events[ 0 ].image_format ).toBe( 'string' );
-		expect( typeof events[ 0 ].video_player ).toBe( 'string' );
-
-		// Free-text transformations are reduced to a presence flag.
-		expect( typeof events[ 0 ].image_freeform ).toBe( 'boolean' );
-		expect( typeof events[ 0 ].video_freeform ).toBe( 'boolean' );
 	} );
 } );
