@@ -461,10 +461,9 @@ class Admin {
 	 * @param array  $data       The data to save.
 	 */
 	protected function save_settings( $submission, $data ) {
-		$page           = $this->settings->get_setting( $submission );
-		$pending        = false;
-		$changed_keys   = array();
-		$changed_values = array();
+		$page         = $this->settings->get_setting( $submission );
+		$pending      = false;
+		$changed_keys = array();
 		foreach ( $data as $key => $value ) {
 			$slug    = $submission . $page->separator . $key;
 			$current = $this->settings->get_value( $slug );
@@ -480,8 +479,6 @@ class Admin {
 			}
 			$changed_keys[] = $key;
 			$pending        = true;
-
-			$changed_values[ $key ] = $value;
 		}
 
 		if ( true === $pending ) {
@@ -497,10 +494,11 @@ class Admin {
 					);
 
 					// Values only for allowlisted feature settings; secrets
-					// and free text never leave the site.
+					// and free text never leave the site. Read back after the
+					// save so the value reflects any save filters.
 					$feature_values = array();
-					foreach ( $changed_values as $key => $value ) {
-						$normalized = $analytics->normalize_feature_value( $key, $value );
+					foreach ( $changed_keys as $key ) {
+						$normalized = $analytics->normalize_feature_value( $submission, $key, $this->settings->get_value( $key ) );
 						if ( null !== $normalized ) {
 							$feature_values[ $key ] = $normalized;
 						}

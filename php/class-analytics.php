@@ -82,73 +82,85 @@ class Analytics {
 	const FEATURE_SNAPSHOT_FLAG = '_cloudinary_feature_snapshot_emitted';
 
 	/**
-	 * Allowlist of feature settings whose values may be emitted, mapped to how
-	 * each value is normalised before it leaves the site.
+	 * Allowlist of feature settings whose values may be emitted, per settings
+	 * page, mapped to how each value is normalised before it leaves the site.
 	 *
 	 * Anything not listed here is never sent as a value. Free-text fields are
 	 * reduced to a presence boolean, since they can hold public IDs, overlay
 	 * text or URLs.
 	 *
-	 * - bool:     `on`/`off` toggle → true/false.
-	 * - int:      numeric field → int.
-	 * - string:   select/radio enum → string.
-	 * - presence: free text → whether it is non-empty.
-	 * - crops:    per-size crop map → number of sizes with a custom crop.
+	 * - bool:       `on`/`off` toggle → true/false.
+	 * - int:        numeric field → int.
+	 * - string:     select/radio enum → string.
+	 * - css_length: free-text CSS length → the length, or dropped when it is
+	 *               anything else.
+	 * - presence:   free text → whether it is non-empty.
+	 * - crops:      per-size crop map → number of sizes with a custom crop.
 	 */
 	const FEATURE_SETTINGS = array(
-		// Image.
-		'image_delivery'          => 'bool',
-		'image_optimization'      => 'bool',
-		'image_format'            => 'string',
-		'image_quality'           => 'string',
-		'image_freeform'          => 'presence',
-		'svg_support'             => 'bool',
-		'crop_sizes'              => 'crops',
-		// Lazy loading.
-		'use_lazy_load'           => 'bool',
-		'lazy_threshold'          => 'string',
-		'lazy_placeholder'        => 'string',
-		'lazy_animate'            => 'bool',
-		'dpr'                     => 'string',
-		// Responsive images.
-		'enable_breakpoints'      => 'bool',
-		'pixel_step'              => 'int',
-		'breakpoints'             => 'int',
-		'max_width'               => 'int',
-		'min_width'               => 'int',
-		// Video.
-		'video_delivery'          => 'bool',
-		'video_player'            => 'string',
-		'adaptive_streaming'      => 'bool',
-		'adaptive_streaming_mode' => 'string',
-		'video_controls'          => 'bool',
-		'video_loop'              => 'bool',
-		'video_autoplay_mode'     => 'string',
-		'video_optimization'      => 'bool',
-		'video_format'            => 'string',
-		'video_quality'           => 'string',
-		'video_freeform'          => 'presence',
+		'image_settings' => array(
+			'image_delivery'     => 'bool',
+			'image_optimization' => 'bool',
+			'image_format'       => 'string',
+			'image_quality'      => 'string',
+			'image_freeform'     => 'presence',
+			'svg_support'        => 'bool',
+			'crop_sizes'         => 'crops',
+		),
+		'lazy_loading'   => array(
+			'use_lazy_load'    => 'bool',
+			'lazy_threshold'   => 'css_length',
+			'lazy_placeholder' => 'string',
+			'lazy_animate'     => 'bool',
+			'dpr'              => 'string',
+		),
+		'responsive'     => array(
+			'enable_breakpoints' => 'bool',
+			'pixel_step'         => 'int',
+			'breakpoints'        => 'int',
+			'max_width'          => 'int',
+			'min_width'          => 'int',
+		),
+		'video_settings' => array(
+			'video_delivery'          => 'bool',
+			'video_player'            => 'string',
+			'adaptive_streaming'      => 'bool',
+			'adaptive_streaming_mode' => 'string',
+			'video_controls'          => 'bool',
+			'video_loop'              => 'bool',
+			'video_autoplay_mode'     => 'string',
+			'video_optimization'      => 'bool',
+			'video_format'            => 'string',
+			'video_quality'           => 'string',
+			'video_freeform'          => 'presence',
+		),
 	);
 
 	/**
 	 * Normalises a feature setting value for emission.
 	 *
+	 * @param string $page  The settings page slug the setting belongs to.
 	 * @param string $key   The setting slug.
 	 * @param mixed  $value The raw setting value.
 	 *
-	 * @return bool|int|string|null The normalised value, or null when the key is
-	 *                              not allowlisted or the value can't be read.
+	 * @return bool|int|string|null The normalised value, or null when the
+	 *                              setting is not allowlisted for that page or
+	 *                              its value is missing or unusable.
 	 */
-	public function normalize_feature_value( $key, $value ) {
-		if ( ! isset( self::FEATURE_SETTINGS[ $key ] ) ) {
+	public function normalize_feature_value( $page, $key, $value ) {
+		if ( ! isset( self::FEATURE_SETTINGS[ $page ][ $key ] ) || null === $value ) {
 			return null;
 		}
 
-		switch ( self::FEATURE_SETTINGS[ $key ] ) {
+		switch ( self::FEATURE_SETTINGS[ $page ][ $key ] ) {
 			case 'bool':
 				return 'on' === $value || true === $value;
 			case 'int':
 				return is_numeric( $value ) ? (int) $value : null;
+			case 'css_length':
+				$value = is_string( $value ) ? trim( $value ) : '';
+
+				return preg_match( '/^\d+(\.\d+)?(px|%|r?em|vh|vw)?$/', $value ) ? $value : null;
 			case 'presence':
 				return is_string( $value ) && '' !== trim( $value );
 			case 'crops':
@@ -176,15 +188,17 @@ class Analytics {
 	 *
 	 * Captures the full state of the delivery features, including those left
 	 * at their defaults, which `settings_saved` never reports. Sent on the
-	 * first admin load once the site is connected, then suppressed per
-	 * cloud_name. That covers wizard setups, sites connected through the
-	 * `CLOUDINARY_CONNECTION_STRING` constant, existing installs upgrading to
-	 * this version, and account switches.
+	 * first admin page load by an administrator once the site is connected,
+	 * then suppressed per cloud_name. That covers wizard setups, sites
+	 * connected through the `CLOUDINARY_CONNECTION_STRING` constant, existing
+	 * installs upgrading to this version, and account switches.
 	 *
 	 * @return void
 	 */
 	public function maybe_send_feature_snapshot() {
-		if ( ! $this->is_enabled() ) {
+		// `admin_init` also runs for admin-ajax requests, including logged-out
+		// ones, and for non-admin users visiting their profile.
+		if ( wp_doing_ajax() || ! Utils::user_can( 'analytics', 'manage_options' ) || ! $this->is_enabled() ) {
 			return;
 		}
 
@@ -194,10 +208,27 @@ class Analytics {
 		}
 
 		$cloud = (string) $connect->get_cloud_name();
-		if ( '' === $cloud || get_option( self::FEATURE_SNAPSHOT_FLAG ) === $cloud ) {
+		if ( '' === $cloud ) {
 			return;
 		}
-		update_option( self::FEATURE_SNAPSHOT_FLAG, $cloud, false );
+
+		// Autoloaded, so this check costs no query on later admin loads.
+		$sent = get_option( self::FEATURE_SNAPSHOT_FLAG );
+		if ( $sent === $cloud ) {
+			return;
+		}
+
+		if ( false === $sent ) {
+			// Only one of several concurrent first requests sends: add_option()
+			// upserts, and a request writing the same cloud name as an earlier
+			// one changes no row, so add_option() returns false for it.
+			if ( ! add_option( self::FEATURE_SNAPSHOT_FLAG, $cloud, '', true ) ) {
+				return;
+			}
+		} else {
+			// Account switched.
+			update_option( self::FEATURE_SNAPSHOT_FLAG, $cloud, true );
+		}
 
 		$this->track( 'feature_config_snapshot', 'features', null, $this->get_feature_snapshot() );
 	}
@@ -209,10 +240,12 @@ class Analytics {
 	 */
 	public function get_feature_snapshot() {
 		$snapshot = array();
-		foreach ( array_keys( self::FEATURE_SETTINGS ) as $key ) {
-			$value = $this->normalize_feature_value( $key, $this->plugin->settings->get_value( $key ) );
-			if ( null !== $value ) {
-				$snapshot[ $key ] = $value;
+		foreach ( self::FEATURE_SETTINGS as $page => $settings ) {
+			foreach ( array_keys( $settings ) as $key ) {
+				$value = $this->normalize_feature_value( $page, $key, $this->plugin->settings->get_value( $key ) );
+				if ( null !== $value ) {
+					$snapshot[ $key ] = $value;
+				}
 			}
 		}
 
