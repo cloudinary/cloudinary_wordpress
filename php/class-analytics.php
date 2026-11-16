@@ -193,44 +193,55 @@ class Analytics {
 	 * connected through the `CLOUDINARY_CONNECTION_STRING` constant, existing
 	 * installs upgrading to this version, and account switches.
 	 *
+	 * The `trigger` param tells the two cases apart:
+	 *
+	 * - `setup`:   the site was installed, or seen unconnected, by a version
+	 *              that sends the snapshot, then connected (or switched
+	 *              account). The flag holds an empty string until then.
+	 * - `upgrade`: the site was already connected the first time a version
+	 *              that sends the snapshot ran, so the flag was never set.
+	 *
 	 * @return void
 	 */
 	public function maybe_send_feature_snapshot() {
 		// `admin_init` also runs for admin-ajax requests, including logged-out
 		// ones, and for non-admin users visiting their profile.
-		if ( wp_doing_ajax() || ! Utils::user_can( 'analytics', 'manage_options' ) || ! $this->is_enabled() ) {
-			return;
-		}
-
-		$connect = $this->plugin->get_component( 'connect' );
-		if ( ! $connect || ! $connect->is_connected() ) {
-			return;
-		}
-
-		$cloud = (string) $connect->get_cloud_name();
-		if ( '' === $cloud ) {
+		if ( wp_doing_ajax() || ! Utils::user_can( 'analytics', 'manage_options' ) ) {
 			return;
 		}
 
 		// Autoloaded, so this check costs no query on later admin loads.
 		$sent = get_option( self::FEATURE_SNAPSHOT_FLAG );
-		if ( $sent === $cloud ) {
+
+		$connect = $this->plugin->get_component( 'connect' );
+		$cloud   = $connect && $connect->is_connected() ? (string) $connect->get_cloud_name() : '';
+		if ( '' === $cloud ) {
+			if ( false === $sent ) {
+				// Remembers the site as not yet set up, so connecting it later
+				// counts as a setup rather than an upgrade.
+				add_option( self::FEATURE_SNAPSHOT_FLAG, '', '', true );
+			}
 			return;
 		}
 
-		if ( false === $sent ) {
-			// Only one of several concurrent first requests sends: add_option()
-			// upserts, and a request writing the same cloud name as an earlier
-			// one changes no row, so add_option() returns false for it.
-			if ( ! add_option( self::FEATURE_SNAPSHOT_FLAG, $cloud, '', true ) ) {
-				return;
-			}
-		} else {
-			// Account switched.
-			update_option( self::FEATURE_SNAPSHOT_FLAG, $cloud, true );
+		if ( $sent === $cloud || ! $this->is_enabled() ) {
+			return;
 		}
 
-		$this->track( 'feature_config_snapshot', 'features', null, $this->get_feature_snapshot() );
+		// Only one of several concurrent requests sends: add_option() upserts
+		// and update_option() updates, and a request writing the same cloud
+		// name as an earlier one changes no row, so it gets false back.
+		$claimed = false === $sent
+			? add_option( self::FEATURE_SNAPSHOT_FLAG, $cloud, '', true )
+			: update_option( self::FEATURE_SNAPSHOT_FLAG, $cloud, true );
+		if ( ! $claimed ) {
+			return;
+		}
+
+		$params            = $this->get_feature_snapshot();
+		$params['trigger'] = false === $sent ? 'upgrade' : 'setup';
+
+		$this->track( 'feature_config_snapshot', 'features', null, $params );
 	}
 
 	/**
@@ -249,7 +260,38 @@ class Analytics {
 			}
 		}
 
+		// "Max images" is only ever what the settings page derives from the
+		// other responsive fields, and is stored only once that page is saved.
+		$snapshot['breakpoints'] = $this->get_breakpoint_count();
+
 		return $snapshot;
+	}
+
+	/**
+	 * Counts the responsive image widths, as the settings page shows them in
+	 * "Max images" (see `breakpoints-preview.js`): from the max width down to
+	 * the min width, one image per breakpoint distance.
+	 *
+	 * @return int
+	 */
+	public function get_breakpoint_count() {
+		$settings = $this->plugin->settings;
+		$max      = (int) $settings->get_value( 'max_width' );
+		$min      = (int) $settings->get_value( 'min_width' );
+		$step     = (int) $settings->get_value( 'pixel_step' );
+
+		// The same fallbacks as the settings page.
+		if ( $max < 1 ) {
+			$max = (int) $this->plugin->get_component( 'media' )->default_max_width();
+		}
+		if ( $min < 1 ) {
+			$min = 100;
+		}
+		if ( $step < 1 ) {
+			$step = 50;
+		}
+
+		return $max < $min ? 1 : 1 + (int) floor( ( $max - $min ) / $step );
 	}
 
 	/**
@@ -271,6 +313,9 @@ class Analytics {
 			if ( empty( $db_version ) ) {
 				$type     = 'fresh_install';
 				$previous = null;
+				// A fresh install's first feature snapshot is a setup, even
+				// when it is connected through the constant from the start.
+				add_option( self::FEATURE_SNAPSHOT_FLAG, '', '', true );
 			} elseif ( version_compare( $db_version, $current, '<' ) ) {
 				$type     = 'upgrade';
 				$previous = $db_version;

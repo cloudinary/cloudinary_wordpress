@@ -6,6 +6,7 @@
  */
 
 use Cloudinary\Analytics;
+use Cloudinary\Sync;
 use function Cloudinary\get_plugin_instance;
 
 /**
@@ -118,6 +119,21 @@ class Test_Analytics_Feature_Snapshot extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Restores the plugin's install marker.
+	 *
+	 * @param string|false $db_version The value before the test.
+	 *
+	 * @return void
+	 */
+	protected function restore_db_version( $db_version ) {
+		if ( false === $db_version ) {
+			delete_option( Sync::META_KEYS['db_version'] );
+		} else {
+			update_option( Sync::META_KEYS['db_version'], $db_version );
+		}
+	}
+
+	/**
 	 * Returns the captured snapshot events.
 	 *
 	 * @return array[]
@@ -147,7 +163,43 @@ class Test_Analytics_Feature_Snapshot extends WP_UnitTestCase {
 		$this->assertSame( 'features', $snapshots[0]['event_category'] );
 		$this->assertIsBool( $snapshots[0]['use_lazy_load'] );
 		$this->assertArrayNotHasKey( 'cloudinary_url', $snapshots[0] );
+		$this->assertSame( 'upgrade', $snapshots[0]['trigger'] );
 		$this->assertSame( 'first-cloud', get_option( Analytics::FEATURE_SNAPSHOT_FLAG ) );
+	}
+
+	/**
+	 * "Max images" is reported as the settings page shows it, derived from
+	 * the other responsive fields, rather than as stored.
+	 *
+	 * @return void
+	 */
+	public function test_breakpoints_are_counted_like_the_settings_page() {
+		$settings = get_plugin_instance()->settings;
+		$original = array();
+		$values   = array(
+			'max_width'   => 2048,
+			'min_width'   => 200,
+			'pixel_step'  => 200,
+			'breakpoints' => 42,
+		);
+		foreach ( $values as $key => $value ) {
+			$original[ $key ] = $settings->get_value( $key );
+			$settings->get_setting( $key )->set_value( $value );
+		}
+
+		$snapshot = $this->analytics->get_feature_snapshot();
+
+		$settings->get_setting( 'pixel_step' )->set_value( 500 );
+		$coarser = $this->analytics->get_breakpoint_count();
+
+		foreach ( $original as $key => $value ) {
+			$settings->get_setting( $key )->set_value( $value );
+		}
+
+		// 2048, 1848, … 248.
+		$this->assertSame( 10, $snapshot['breakpoints'] );
+		// 2048, 1548, 1048, 548.
+		$this->assertSame( 4, $coarser );
 	}
 
 	/**
@@ -160,8 +212,61 @@ class Test_Analytics_Feature_Snapshot extends WP_UnitTestCase {
 		$this->connect_as( 'second-cloud' );
 		$this->analytics->maybe_send_feature_snapshot();
 
-		$this->assertCount( 2, $this->snapshots() );
+		$snapshots = $this->snapshots();
+		$this->assertCount( 2, $snapshots );
+		$this->assertSame( 'setup', $snapshots[1]['trigger'] );
 		$this->assertSame( 'second-cloud', get_option( Analytics::FEATURE_SNAPSHOT_FLAG ) );
+	}
+
+	/**
+	 * A site seen unconnected before it is connected sends a setup snapshot.
+	 *
+	 * @return void
+	 */
+	public function test_connecting_after_an_unconnected_admin_load_is_a_setup() {
+		get_plugin_instance()->settings->set_param( 'connected', false );
+		$this->analytics->maybe_send_feature_snapshot();
+		$this->connect_as( 'first-cloud' );
+		$this->analytics->maybe_send_feature_snapshot();
+
+		$snapshots = $this->snapshots();
+		$this->assertCount( 1, $snapshots );
+		$this->assertSame( 'setup', $snapshots[0]['trigger'] );
+	}
+
+	/**
+	 * A fresh install's first snapshot is a setup, even when the site is
+	 * connected from the start through the connection string constant.
+	 *
+	 * @return void
+	 */
+	public function test_fresh_install_is_a_setup() {
+		$db_version = get_option( Sync::META_KEYS['db_version'] );
+		delete_option( Sync::META_KEYS['db_version'] );
+		Analytics::stash_activation();
+		delete_transient( Analytics::PENDING_ACTIVATION );
+		$this->restore_db_version( $db_version );
+
+		$this->analytics->maybe_send_feature_snapshot();
+
+		$snapshots = $this->snapshots();
+		$this->assertCount( 1, $snapshots );
+		$this->assertSame( 'setup', $snapshots[0]['trigger'] );
+	}
+
+	/**
+	 * An upgrade or reactivation doesn't mark the site as not set up.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_activation_leaves_the_flag_unset() {
+		$db_version = get_option( Sync::META_KEYS['db_version'] );
+		update_option( Sync::META_KEYS['db_version'], '1.0.0' );
+		Analytics::stash_activation();
+		delete_transient( Analytics::PENDING_ACTIVATION );
+		$this->restore_db_version( $db_version );
+
+		$this->assertFalse( get_option( Analytics::FEATURE_SNAPSHOT_FLAG ) );
 	}
 
 	/**
@@ -174,7 +279,7 @@ class Test_Analytics_Feature_Snapshot extends WP_UnitTestCase {
 		$this->analytics->maybe_send_feature_snapshot();
 
 		$this->assertCount( 0, $this->snapshots() );
-		$this->assertFalse( get_option( Analytics::FEATURE_SNAPSHOT_FLAG ) );
+		$this->assertSame( '', get_option( Analytics::FEATURE_SNAPSHOT_FLAG ) );
 	}
 
 	/**
@@ -228,9 +333,26 @@ class Test_Analytics_Feature_Snapshot extends WP_UnitTestCase {
 		// Simulates a concurrent request having added the flag after this one
 		// read it: the add_option() gate must fail and nothing be sent.
 		add_filter( 'pre_option_' . Analytics::FEATURE_SNAPSHOT_FLAG, '__return_false' );
-		add_option( Analytics::FEATURE_SNAPSHOT_FLAG, 'first-cloud' );
+		add_option( Analytics::FEATURE_SNAPSHOT_FLAG, 'first-cloud', '', true );
 		$this->analytics->maybe_send_feature_snapshot();
 		remove_filter( 'pre_option_' . Analytics::FEATURE_SNAPSHOT_FLAG, '__return_false' );
+
+		$this->assertCount( 0, $this->snapshots() );
+	}
+
+	/**
+	 * When another request already claimed a site marked as not set up, this
+	 * one doesn't send.
+	 *
+	 * @return void
+	 */
+	public function test_only_the_request_that_updates_the_flag_sends() {
+		// This request read the "not set up" marker, but a concurrent one has
+		// since stored the cloud name: the update_option() gate must fail.
+		add_option( Analytics::FEATURE_SNAPSHOT_FLAG, 'first-cloud', '', true );
+		add_filter( 'pre_option_' . Analytics::FEATURE_SNAPSHOT_FLAG, '__return_empty_string' );
+		$this->analytics->maybe_send_feature_snapshot();
+		remove_filter( 'pre_option_' . Analytics::FEATURE_SNAPSHOT_FLAG, '__return_empty_string' );
 
 		$this->assertCount( 0, $this->snapshots() );
 	}

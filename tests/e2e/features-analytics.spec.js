@@ -107,6 +107,9 @@ test.describe( 'Feature config snapshot', { tag: '@serial' }, () => {
 		);
 		expect( events.length ).toBe( 1 );
 		expect( events[ 0 ].event_category ).toBe( 'features' );
+		// The flag was deleted while the site was connected, as on a site
+		// that was already set up before upgrading.
+		expect( events[ 0 ].trigger ).toBe( 'upgrade' );
 
 		// Default values are reported even though they were never saved.
 		expect( typeof events[ 0 ].use_lazy_load ).toBe( 'boolean' );
