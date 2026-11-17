@@ -1,0 +1,6 @@
+<wpml-config>
+	<custom-term-fields>
+		<custom-term-field action="copy">cloudinary_transformations_image_freeform</custom-term-field>
+		<custom-term-field action="copy">cloudinary_transformations_video_freeform</custom-term-field>
+	</custom-term-fields>
+</wpml-config>
