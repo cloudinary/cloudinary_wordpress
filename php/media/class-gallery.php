@@ -557,7 +557,8 @@ class Gallery extends Settings_Component {
 	 * WordPress would deliver in that context.
 	 *
 	 * The asset is left untouched when there is no contextualized attachment, or when it
-	 * isn't synced yet, since it would have no public ID to deliver.
+	 * isn't synced yet. In that case it gets queued for sync when auto sync is enabled, like
+	 * attachments found in the post content.
 	 *
 	 * @param array $attachment The gallery asset, as stored in the block attributes.
 	 *
@@ -573,11 +574,16 @@ class Gallery extends Settings_Component {
 		/** This filter is documented in php/class-delivery.php */
 		$contextualized_id = (int) apply_filters( 'cloudinary_contextualized_post_id', $attachment_id );
 
-		if (
-			empty( $contextualized_id )
-			|| $contextualized_id === $attachment_id
-			|| ! $this->media->has_public_id( $contextualized_id )
-		) {
+		if ( empty( $contextualized_id ) || $contextualized_id === $attachment_id ) {
+			return $attachment;
+		}
+
+		$sync = $this->media->sync;
+		if ( ! $sync->is_synced( $contextualized_id ) ) {
+			if ( $sync->is_auto_sync_enabled() ) {
+				$sync->add_to_sync( $contextualized_id );
+			}
+
 			return $attachment;
 		}
 
