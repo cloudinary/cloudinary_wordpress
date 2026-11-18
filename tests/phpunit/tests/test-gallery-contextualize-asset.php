@@ -6,7 +6,7 @@
  * a multilingual plugin (e.g. WPML Media Translation) maps an attachment to a different one for
  * the current language, the gallery must deliver that one instead, like core blocks do.
  *
- * The Media and Sync dependencies are stubbed so no Cloudinary account is needed.
+ * The Media dependency is stubbed so no Cloudinary account is needed.
  *
  * @package Cloudinary
  */
@@ -56,23 +56,17 @@ class Test_Gallery_Contextualize_Asset extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Build a gallery wired to stubbed media and sync components.
+	 * Build a gallery wired to a stubbed media component.
 	 *
-	 * @param array $synced          Map of attachment ID => public ID for synced attachments.
-	 * @param bool  $auto_sync       Whether auto sync is enabled.
+	 * @param array $deliverable     Map of attachment ID => public ID for attachments that can be delivered from Cloudinary.
 	 * @param array $transformations Map of attachment ID => transformations.
 	 *
 	 * @return Test_Gallery_Contextualize_Asset_Gallery
 	 */
-	protected function get_gallery( array $synced, $auto_sync = true, array $transformations = array() ) {
-		$sync            = ( new ReflectionClass( Test_Gallery_Contextualize_Asset_Sync::class ) )->newInstanceWithoutConstructor();
-		$sync->synced    = array_keys( $synced );
-		$sync->auto_sync = $auto_sync;
-
+	protected function get_gallery( array $deliverable, array $transformations = array() ) {
 		$media                  = ( new ReflectionClass( Test_Gallery_Contextualize_Asset_Media::class ) )->newInstanceWithoutConstructor();
-		$media->public_ids      = $synced;
+		$media->public_ids      = $deliverable;
 		$media->transformations = $transformations;
-		$media->sync            = $sync;
 
 		$gallery        = ( new ReflectionClass( Test_Gallery_Contextualize_Asset_Gallery::class ) )->newInstanceWithoutConstructor();
 		$gallery->media = $media;
@@ -128,7 +122,6 @@ class Test_Gallery_Contextualize_Asset extends WP_UnitTestCase {
 		$gallery = $this->get_gallery( array( $this->original_id => 'original' ) );
 
 		$this->assertSame( $this->get_asset(), $gallery->contextualize_asset( $this->get_asset() ) );
-		$this->assertSame( array(), $gallery->media->sync->queued );
 	}
 
 	/**
@@ -156,30 +149,16 @@ class Test_Gallery_Contextualize_Asset extends WP_UnitTestCase {
 	}
 
 	/**
-	 * A contextualized attachment that isn't synced has no up-to-date public ID to deliver, so the
-	 * original asset is kept, and the attachment is queued for sync.
+	 * A contextualized attachment that can't be delivered from Cloudinary yet (e.g. its file isn't
+	 * synced) keeps the original asset, like the rest of the delivery.
 	 *
 	 * @return void
 	 */
-	public function test_unsynced_contextualized_attachment_kept_and_queued() {
+	public function test_asset_unchanged_when_contextualized_attachment_not_deliverable() {
 		$this->contextualize_to( $this->translated_id );
 		$gallery = $this->get_gallery( array( $this->original_id => 'original' ) );
 
 		$this->assertSame( $this->get_asset(), $gallery->contextualize_asset( $this->get_asset() ) );
-		$this->assertSame( array( $this->translated_id ), $gallery->media->sync->queued );
-	}
-
-	/**
-	 * Without auto sync, an unsynced contextualized attachment isn't queued.
-	 *
-	 * @return void
-	 */
-	public function test_unsynced_contextualized_attachment_not_queued_without_auto_sync() {
-		$this->contextualize_to( $this->translated_id );
-		$gallery = $this->get_gallery( array( $this->original_id => 'original' ), false );
-
-		$this->assertSame( $this->get_asset(), $gallery->contextualize_asset( $this->get_asset() ) );
-		$this->assertSame( array(), $gallery->media->sync->queued );
 	}
 
 	/**
@@ -192,7 +171,6 @@ class Test_Gallery_Contextualize_Asset extends WP_UnitTestCase {
 		$gallery = $this->get_gallery( array( $this->original_id => 'original' ) );
 
 		$this->assertSame( $this->get_asset(), $gallery->contextualize_asset( $this->get_asset() ) );
-		$this->assertSame( array(), $gallery->media->sync->queued );
 	}
 
 	/**
@@ -208,7 +186,6 @@ class Test_Gallery_Contextualize_Asset extends WP_UnitTestCase {
 				$this->original_id   => 'original',
 				$this->translated_id => 'translated',
 			),
-			true,
 			array( $this->translated_id => $sepia )
 		);
 
@@ -340,6 +317,17 @@ class Test_Gallery_Contextualize_Asset_Media extends \Cloudinary\Media {
 	}
 
 	/**
+	 * Get the Cloudinary ID, if the attachment can be delivered from Cloudinary.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return string|false
+	 */
+	public function cloudinary_id( $attachment_id ) {
+		return isset( $this->public_ids[ $attachment_id ] ) ? $this->public_ids[ $attachment_id ] . '.jpg' : false;
+	}
+
+	/**
 	 * Get the attachment transformations.
 	 *
 	 * @param int   $attachment_id             The attachment ID.
@@ -353,61 +341,3 @@ class Test_Gallery_Contextualize_Asset_Media extends \Cloudinary\Media {
 	}
 }
 
-/**
- * Sync stub with in-memory sync state, recording the attachments queued for sync.
- */
-class Test_Gallery_Contextualize_Asset_Sync extends \Cloudinary\Sync {
-
-	/**
-	 * The synced attachment IDs.
-	 *
-	 * @var int[]
-	 */
-	public $synced = array();
-
-	/**
-	 * Whether auto sync is enabled.
-	 *
-	 * @var bool
-	 */
-	public $auto_sync = true;
-
-	/**
-	 * The attachment IDs queued for sync.
-	 *
-	 * @var int[]
-	 */
-	public $queued = array();
-
-	/**
-	 * Check if the attachment is synced.
-	 *
-	 * @param int  $post_id  The attachment ID.
-	 * @param bool $re_check Unused.
-	 *
-	 * @return bool
-	 */
-	public function is_synced( $post_id, $re_check = false ) {
-		return in_array( (int) $post_id, $this->synced, true );
-	}
-
-	/**
-	 * Check if auto sync is enabled.
-	 *
-	 * @return bool
-	 */
-	public function is_auto_sync_enabled() {
-		return $this->auto_sync;
-	}
-
-	/**
-	 * Record the attachment as queued for sync.
-	 *
-	 * @param int $attachment_id The attachment ID.
-	 *
-	 * @return void
-	 */
-	public function add_to_sync( $attachment_id ) {
-		$this->queued[] = (int) $attachment_id;
-	}
-}

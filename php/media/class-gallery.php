@@ -556,9 +556,9 @@ class Gallery extends Settings_Component {
 	 * attachment for the current language), so that the gallery delivers the same asset
 	 * WordPress would deliver in that context.
 	 *
-	 * The asset is left untouched when there is no contextualized attachment, or when it
-	 * isn't synced yet. In that case it gets queued for sync when auto sync is enabled, like
-	 * attachments found in the post content.
+	 * The asset is left untouched when there is no contextualized attachment, or when it can't
+	 * be delivered from Cloudinary yet. That follows the same rule as the rest of the delivery
+	 * (Media::cloudinary_id()), which also queues the attachment for sync when needed.
 	 *
 	 * @param array $attachment The gallery asset, as stored in the block attributes.
 	 *
@@ -578,12 +578,7 @@ class Gallery extends Settings_Component {
 			return $attachment;
 		}
 
-		$sync = $this->media->sync;
-		if ( ! $sync->is_synced( $contextualized_id ) ) {
-			if ( $sync->is_auto_sync_enabled() ) {
-				$sync->add_to_sync( $contextualized_id );
-			}
-
+		if ( empty( $this->media->cloudinary_id( $contextualized_id ) ) ) {
 			return $attachment;
 		}
 

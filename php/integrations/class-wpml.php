@@ -67,6 +67,7 @@ class WPML extends Integrations {
 		add_filter( 'cloudinary_rest_url', array( $this, 'rest_url' ), 10, 3 );
 		add_action( 'cloudinary_edit_asset_permalink', array( $this, 'add_locale' ) );
 		add_filter( 'cloudinary_contextualized_post_id', array( $this, 'contextualized_post_id' ) );
+		add_filter( 'cloudinary_contextualized_term', array( $this, 'contextualized_term' ), 10, 2 );
 		add_filter( 'wpml_admin_language_switcher_items', array( $this, 'language_switcher_items' ) );
 	}
 
@@ -258,6 +259,41 @@ class WPML extends Integrations {
 		}
 
 		return apply_filters( 'wpml_object_id', $post_id, 'attachment' );
+	}
+
+	/**
+	 * Get the translation of a term in the language of a post.
+	 *
+	 * The post's term transformations ordering is copied to its translations as is, so it holds
+	 * the terms of the original post's language.
+	 *
+	 * @param \WP_Term $term    The term.
+	 * @param int      $post_id The post ID.
+	 *
+	 * @return \WP_Term
+	 */
+	public function contextualized_term( $term, $post_id ) {
+		$language = apply_filters(
+			'wpml_element_language_code',
+			null,
+			array(
+				'element_id'   => $post_id,
+				'element_type' => get_post_type( $post_id ),
+			)
+		);
+
+		if ( empty( $language ) ) {
+			return $term;
+		}
+
+		$term_id = (int) apply_filters( 'wpml_object_id', $term->term_id, $term->taxonomy, true, $language );
+		if ( $term_id === $term->term_id ) {
+			return $term;
+		}
+
+		$translated_term = get_term( $term_id, $term->taxonomy );
+
+		return $translated_term instanceof \WP_Term ? $translated_term : $term;
 	}
 
 	/**
