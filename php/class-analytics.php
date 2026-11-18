@@ -121,7 +121,7 @@ class Analytics {
 					'new_version'            => $current,
 					'days_since_last_active' => $days_since_last_active,
 				),
-				HOUR_IN_SECONDS
+				DAY_IN_SECONDS
 			);
 		} catch ( \Throwable $e ) {
 			// Fail silent: activation must never break.
@@ -147,6 +147,11 @@ class Analytics {
 	 * @return void
 	 */
 	public function maybe_send_pending_activation() {
+		// Leave the stash intact if emission is disabled, so the event is not
+		// consumed-and-dropped and can still be sent on a later admin load.
+		if ( ! $this->is_enabled() ) {
+			return;
+		}
 		$pending = get_transient( self::PENDING_ACTIVATION );
 		if ( empty( $pending ) || ! is_array( $pending ) ) {
 			return;
@@ -314,6 +319,7 @@ class Analytics {
 			'wp_version'     => get_bloginfo( 'version' ),
 			'php_version'    => PHP_VERSION,
 			'site_id'        => hash( 'sha256', home_url() ),
+			'install_id'     => $this->get_install_id(),
 			'session_id'     => $this->get_session_id(),
 			'user_role'      => $this->get_user_role(),
 			'is_multisite'   => is_multisite(),
@@ -333,6 +339,25 @@ class Analytics {
 		}
 
 		return $params;
+	}
+
+	/**
+	 * Stable, session-independent installation identifier.
+	 *
+	 * Generated once and persisted, so events emitted off-interactive
+	 * (cron/queue/front-end), where `session_id` is empty, still carry a
+	 * durable join key. Unlike `site_id` it survives a domain change.
+	 *
+	 * @return string
+	 */
+	protected function get_install_id() {
+		$id = get_option( '_cloudinary_install_id' );
+		if ( empty( $id ) ) {
+			$id = wp_generate_uuid4();
+			add_option( '_cloudinary_install_id', $id, '', false );
+		}
+
+		return (string) $id;
 	}
 
 	/**
@@ -369,7 +394,13 @@ class Analytics {
 			return (string) reset( $user->roles );
 		}
 
-		return '';
+		// No acting user (cron/queue/front-end): record the context instead of
+		// an empty string so off-interactive events remain distinguishable.
+		if ( wp_doing_cron() ) {
+			return 'cron';
+		}
+
+		return is_admin() ? 'system' : 'front';
 	}
 
 	/**
@@ -475,7 +506,7 @@ class Analytics {
 		}
 		set_transient( $throttle_key, true, 5 * MINUTE_IN_SECONDS );
 
-		$this->track( 'poc_smoke_test', 'poc' );
+		$this->track( 'poc_smoke_test', 'system' );
 	}
 
 	/**
