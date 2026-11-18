@@ -267,6 +267,7 @@ test.describe( 'Cloudinary Gallery block delivery', { tag: '@serial' }, () => {
 	test( 'renders the preview in the editor canvas with Custom Settings applied', async ( {
 		admin,
 		editor,
+		page,
 		requestUtils,
 	} ) => {
 		// The block markup has no `cloudName`, like a block created outside
@@ -289,7 +290,20 @@ test.describe( 'Cloudinary Gallery block delivery', { tag: '@serial' }, () => {
 
 		// Relies on the iframed editor (WordPress 7.1+, or blocks on API v3):
 		// the editor canvas is an iframe, and the widget has to render inside
-		// it, not in the outer admin document.
+		// it, not in the outer admin document. Wait for the canvas, iframed or
+		// not, then skip when it is not an iframe.
+		await page
+			.locator( 'iframe[name="editor-canvas"], .editor-styles-wrapper' )
+			.first()
+			.waitFor();
+		test.skip(
+			0 ===
+				( await page
+					.locator( 'iframe[name="editor-canvas"]' )
+					.count() ),
+			'needs the iframed block editor'
+		);
+
 		const gallery = editor.canvas.locator(
 			`.${ GALLERY_CONTAINER } [data-test="gallery-wrap"]`
 		);

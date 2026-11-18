@@ -1,4 +1,4 @@
-/* global CLD_GALLERY_CONFIG CLD_REST_ENDPOINT */
+/* global CLD_GALLERY_CONFIG CLD_GALLERY_DELIVERY CLD_REST_ENDPOINT */
 
 /**
  * External dependencies
@@ -61,19 +61,21 @@ const getGalleryWidget = ( win ) => win?.cloudinary?.galleryWidget;
  * saved (e.g. created outside the editor) or a stale one, and the custom
  * domain settings are not block attributes at all.
  *
- * @return {Object} The cloud name and custom domain settings that are set.
+ * `CLD_GALLERY_DELIVERY` is built by the same PHP method the front end uses
+ * (`Gallery::get_delivery_config()`), so both render with the same values.
+ *
+ * @return {Object} The cloud name and custom domain settings.
  */
-const getDeliveryConfig = () => {
-	if ( 'undefined' === typeof CLD_GALLERY_CONFIG ) {
-		return {};
-	}
+const getDeliveryConfig = () =>
+	'undefined' === typeof CLD_GALLERY_DELIVERY ? {} : CLD_GALLERY_DELIVERY;
 
-	const { cloudName, secureDistribution, privateCdn } = CLD_GALLERY_CONFIG;
-
-	return Object.fromEntries(
-		Object.entries( { cloudName, secureDistribution, privateCdn } ).filter(
-			( [ , value ] ) => undefined !== value
-		)
+/**
+ * Log that the gallery library is missing from the frame holding the
+ * preview, which otherwise leaves the block blank without any message.
+ */
+const warnLibraryMissing = () => {
+	console.warn(
+		'Cloudinary Gallery: the gallery library is not loaded in the editor canvas.'
 	);
 };
 
@@ -180,34 +182,43 @@ const Edit = ( { setAttributes, attributes, isSelected } ) => {
 
 			const galleryWidget = getGalleryWidget( win );
 
-			// The library failed to load in this frame: don't leave the
-			// spinner running.
+			// The library failed to load in this frame.
 			if ( ! galleryWidget ) {
+				warnLibraryMissing();
 				setLoading( false );
 				return;
 			}
 
-			// Shallow merge, matching how the front end applies Custom
-			// Settings over the block attributes.
 			try {
-				gallery = galleryWidget(
-					toFrame(
-						galleryWidgetConfig(
-							{ ...config, ...custom },
-							attributes.container
+				// Shallow merge, matching how the front end applies Custom
+				// Settings over the block attributes. Fall back to the config
+				// without them if the widget rejects the merged one.
+				try {
+					gallery = galleryWidget(
+						toFrame(
+							galleryWidgetConfig(
+								{ ...config, ...custom },
+								attributes.container
+							)
 						)
-					)
-				);
-			} catch {
-				gallery = galleryWidget(
-					toFrame(
-						galleryWidgetConfig( config, attributes.container )
-					)
-				);
-			}
+					);
+				} catch {
+					gallery = galleryWidget(
+						toFrame(
+							galleryWidgetConfig( config, attributes.container )
+						)
+					);
+				}
 
-			gallery.render();
-			setLoading( false );
+				gallery.render();
+			} catch ( error ) {
+				console.error(
+					'Cloudinary Gallery: could not render the preview.',
+					error
+				);
+			} finally {
+				setLoading( false );
+			}
 		};
 
 		if ( getGalleryWidget( win ) ) {
@@ -216,6 +227,7 @@ const Edit = ( { setAttributes, attributes, isSelected } ) => {
 			// The library may still be loading in the editor canvas.
 			win.addEventListener( 'load', render, { once: true } );
 		} else {
+			warnLibraryMissing();
 			setLoading( false );
 		}
 
