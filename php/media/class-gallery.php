@@ -553,6 +553,8 @@ class Gallery extends Settings_Component {
 
 		$attributes['mediaAssets'] = array();
 		foreach ( $attributes['selectedImages'] as $attachment ) {
+			$attachment = $this->contextualize_asset( $attachment );
+
 			// Since the gallery widget uses public ID's, if an attachment is deleted, it can still remain working in a gallery.
 			if ( ! wp_get_attachment_url( $attachment['attachmentId'] ) ) {
 				continue;
@@ -597,6 +599,46 @@ class Gallery extends Settings_Component {
 		<?php
 
 		return $content . ob_get_clean();
+	}
+
+	/**
+	 * Swap a gallery asset for its contextualized attachment (e.g. the translation of the
+	 * attachment for the current language), so that the gallery delivers the same asset
+	 * WordPress would deliver in that context.
+	 *
+	 * The asset is left untouched when there is no contextualized attachment, or when it can't
+	 * be delivered from Cloudinary yet. That follows the same rule as the rest of the delivery
+	 * (Media::cloudinary_id()), which also queues the attachment for sync when needed.
+	 *
+	 * @param array $attachment The gallery asset, as stored in the block attributes.
+	 *
+	 * @return array
+	 */
+	protected function contextualize_asset( $attachment ) {
+		if ( empty( $attachment['attachmentId'] ) ) {
+			return $attachment;
+		}
+
+		$attachment_id = (int) $attachment['attachmentId'];
+
+		/** This filter is documented in php/class-delivery.php */
+		$contextualized_id = (int) apply_filters( 'cloudinary_contextualized_post_id', $attachment_id );
+
+		if ( empty( $contextualized_id ) || $contextualized_id === $attachment_id ) {
+			return $attachment;
+		}
+
+		if ( empty( $this->media->cloudinary_id( $contextualized_id ) ) ) {
+			return $attachment;
+		}
+
+		$attachment['attachmentId'] = $contextualized_id;
+		$attachment['publicId']     = $this->media->get_public_id( $contextualized_id, true );
+
+		// The stored transformations belong to the original attachment; they get rebuilt for the new one.
+		unset( $attachment['transformation'] );
+
+		return $attachment;
 	}
 
 	/**
