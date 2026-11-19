@@ -8,6 +8,7 @@
 namespace Cloudinary\Integrations;
 
 use Cloudinary\Cron;
+use Cloudinary\Media\Global_Transformations;
 use Cloudinary\Relate\Relationship;
 use Cloudinary\Utils;
 use WPML\Auryn\InjectionException;
@@ -68,6 +69,9 @@ class WPML extends Integrations {
 		add_action( 'cloudinary_edit_asset_permalink', array( $this, 'add_locale' ) );
 		add_filter( 'cloudinary_contextualized_post_id', array( $this, 'contextualized_post_id' ) );
 		add_filter( 'cloudinary_contextualized_term', array( $this, 'contextualized_term' ), 10, 2 );
+		add_action( 'added_post_meta', array( $this, 'sync_post_meta' ), 10, 3 );
+		add_action( 'updated_post_meta', array( $this, 'sync_post_meta' ), 10, 3 );
+		add_action( 'deleted_post_meta', array( $this, 'sync_post_meta' ), 10, 3 );
 		add_filter( 'wpml_admin_language_switcher_items', array( $this, 'language_switcher_items' ) );
 	}
 
@@ -294,6 +298,47 @@ class WPML extends Integrations {
 		$translated_term = get_term( $term_id, $term->taxonomy );
 
 		return $translated_term instanceof \WP_Term ? $translated_term : $term;
+	}
+
+	/**
+	 * Copy the featured image transformations overwrite flag to the translations of a post.
+	 *
+	 * The flag is copied to translations through wpml-config.xml, but WPML only copies the post
+	 * meta that changed before its own save_post handler runs. The block editor saves the flag
+	 * through the REST API after that, so WPML would never copy it. Syncing it when it changes on
+	 * an original post covers every way it is saved.
+	 *
+	 * @param int|int[] $meta_id  The meta ID, or the meta IDs on deletion. Unused.
+	 * @param int       $post_id  The post ID.
+	 * @param string    $meta_key The meta key.
+	 *
+	 * @return void
+	 */
+	public function sync_post_meta( $meta_id, $post_id, $meta_key ) {
+		static $syncing = false;
+
+		// WPML writes the meta of the translations while syncing; don't sync again from those writes.
+		if ( $syncing || Global_Transformations::META_FEATURED_IMAGE_KEY !== $meta_key ) {
+			return;
+		}
+
+		$post_type = get_post_type( $post_id );
+		if ( ! $post_type ) {
+			return;
+		}
+
+		// Translations get the value of their original, so only changes on an original are synced.
+		$original_id = (int) apply_filters( 'wpml_original_element_id', null, $post_id, 'post_' . $post_type );
+		if ( $original_id !== (int) $post_id ) {
+			return;
+		}
+
+		$syncing = true;
+		try {
+			do_action( 'wpml_sync_custom_field', $post_id, $meta_key );
+		} finally {
+			$syncing = false;
+		}
 	}
 
 	/**

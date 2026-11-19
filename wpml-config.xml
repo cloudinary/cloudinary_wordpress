@@ -2,6 +2,7 @@
 	<custom-fields>
 		<custom-field action="copy">cloudinary_apply_type_terms</custom-field>
 		<custom-field action="copy">cloudinary_transformations_terms</custom-field>
+		<custom-field action="copy">_cloudinary_featured_overwrite</custom-field>
 	</custom-fields>
 	<custom-term-fields>
 		<custom-term-field action="copy">cloudinary_transformations_image_freeform</custom-term-field>
