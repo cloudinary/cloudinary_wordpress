@@ -65,6 +65,7 @@ class Analytics {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_script_data' ) );
 		add_action( 'admin_init', array( $this, 'maybe_send_smoke_event' ) );
 		add_action( 'admin_init', array( $this, 'maybe_send_pending_activation' ) );
+		add_action( 'admin_init', array( $this, 'maybe_send_feature_snapshot' ) );
 		add_action( 'cloudinary_uploaded_asset', array( $this, 'maybe_first_api_consumption' ), 10, 2 );
 	}
 
@@ -74,6 +75,182 @@ class Analytics {
 	const PENDING_ACTIVATION = '_cloudinary_pending_activation';
 	const LAST_ACTIVE        = '_cloudinary_last_active';
 	const FIRST_API_FLAG     = '_cloudinary_first_api_emitted';
+
+	/**
+	 * Option key marking the feature-config snapshot as sent (per cloud_name).
+	 */
+	const FEATURE_SNAPSHOT_FLAG = '_cloudinary_feature_snapshot_emitted';
+
+	/**
+	 * Allowlist of feature settings whose values may be emitted, per settings
+	 * page, mapped to how each value is normalised before it leaves the site.
+	 *
+	 * Anything not listed here is never sent as a value. Free-text fields are
+	 * reduced to a presence boolean, since they can hold public IDs, overlay
+	 * text or URLs.
+	 *
+	 * - bool:       `on`/`off` toggle → true/false.
+	 * - int:        numeric field → int.
+	 * - string:     select/radio enum → string.
+	 * - css_length: free-text CSS length → the length, or dropped when it is
+	 *               anything else.
+	 * - presence:   free text → whether it is non-empty.
+	 * - crops:      per-size crop map → number of sizes with a custom crop.
+	 */
+	const FEATURE_SETTINGS = array(
+		'image_settings' => array(
+			'image_delivery'     => 'bool',
+			'image_optimization' => 'bool',
+			'image_format'       => 'string',
+			'image_quality'      => 'string',
+			'image_freeform'     => 'presence',
+			'svg_support'        => 'bool',
+			'crop_sizes'         => 'crops',
+		),
+		'lazy_loading'   => array(
+			'use_lazy_load'    => 'bool',
+			'lazy_threshold'   => 'css_length',
+			'lazy_placeholder' => 'string',
+			'lazy_animate'     => 'bool',
+			'dpr'              => 'string',
+		),
+		'responsive'     => array(
+			'enable_breakpoints' => 'bool',
+			'pixel_step'         => 'int',
+			'breakpoints'        => 'int',
+			'max_width'          => 'int',
+			'min_width'          => 'int',
+		),
+		'video_settings' => array(
+			'video_delivery'          => 'bool',
+			'video_player'            => 'string',
+			'adaptive_streaming'      => 'bool',
+			'adaptive_streaming_mode' => 'string',
+			'video_controls'          => 'bool',
+			'video_loop'              => 'bool',
+			'video_autoplay_mode'     => 'string',
+			'video_optimization'      => 'bool',
+			'video_format'            => 'string',
+			'video_quality'           => 'string',
+			'video_freeform'          => 'presence',
+		),
+	);
+
+	/**
+	 * Normalises a feature setting value for emission.
+	 *
+	 * @param string $page  The settings page slug the setting belongs to.
+	 * @param string $key   The setting slug.
+	 * @param mixed  $value The raw setting value.
+	 *
+	 * @return bool|int|string|null The normalised value, or null when the
+	 *                              setting is not allowlisted for that page or
+	 *                              its value is missing or unusable.
+	 */
+	public function normalize_feature_value( $page, $key, $value ) {
+		if ( ! isset( self::FEATURE_SETTINGS[ $page ][ $key ] ) || null === $value ) {
+			return null;
+		}
+
+		switch ( self::FEATURE_SETTINGS[ $page ][ $key ] ) {
+			case 'bool':
+				return 'on' === $value || true === $value;
+			case 'int':
+				return is_numeric( $value ) ? (int) $value : null;
+			case 'css_length':
+				$value = is_string( $value ) ? trim( $value ) : '';
+
+				return preg_match( '/^\d+(\.\d+)?(px|%|r?em|vh|vw)?$/', $value ) ? $value : null;
+			case 'presence':
+				return is_string( $value ) && '' !== trim( $value );
+			case 'crops':
+				// Each size maps to '' (default crop), '--' (crop disabled) or
+				// a custom transformation string.
+				if ( ! is_array( $value ) ) {
+					return 0;
+				}
+
+				return count(
+					array_filter(
+						$value,
+						static function ( $crop ) {
+							return is_string( $crop ) && '' !== trim( $crop ) && '--' !== $crop;
+						}
+					)
+				);
+			default:
+				return is_scalar( $value ) ? sanitize_text_field( (string) $value ) : null;
+		}
+	}
+
+	/**
+	 * Emits the one-time `feature_config_snapshot` adoption baseline.
+	 *
+	 * Captures the full state of the delivery features, including those left
+	 * at their defaults, which `settings_saved` never reports. Sent on the
+	 * first admin page load by an administrator once the site is connected,
+	 * then suppressed per cloud_name. That covers wizard setups, sites
+	 * connected through the `CLOUDINARY_CONNECTION_STRING` constant, existing
+	 * installs upgrading to this version, and account switches.
+	 *
+	 * @return void
+	 */
+	public function maybe_send_feature_snapshot() {
+		// `admin_init` also runs for admin-ajax requests, including logged-out
+		// ones, and for non-admin users visiting their profile.
+		if ( wp_doing_ajax() || ! Utils::user_can( 'analytics', 'manage_options' ) || ! $this->is_enabled() ) {
+			return;
+		}
+
+		$connect = $this->plugin->get_component( 'connect' );
+		if ( ! $connect || ! $connect->is_connected() ) {
+			return;
+		}
+
+		$cloud = (string) $connect->get_cloud_name();
+		if ( '' === $cloud ) {
+			return;
+		}
+
+		// Autoloaded, so this check costs no query on later admin loads.
+		$sent = get_option( self::FEATURE_SNAPSHOT_FLAG );
+		if ( $sent === $cloud ) {
+			return;
+		}
+
+		if ( false === $sent ) {
+			// Only one of several concurrent first requests sends: add_option()
+			// upserts, and a request writing the same cloud name as an earlier
+			// one changes no row, so add_option() returns false for it.
+			if ( ! add_option( self::FEATURE_SNAPSHOT_FLAG, $cloud, '', true ) ) {
+				return;
+			}
+		} else {
+			// Account switched.
+			update_option( self::FEATURE_SNAPSHOT_FLAG, $cloud, true );
+		}
+
+		$this->track( 'feature_config_snapshot', 'features', null, $this->get_feature_snapshot() );
+	}
+
+	/**
+	 * Reads the current, normalised value of every allowlisted feature setting.
+	 *
+	 * @return array
+	 */
+	public function get_feature_snapshot() {
+		$snapshot = array();
+		foreach ( self::FEATURE_SETTINGS as $page => $settings ) {
+			foreach ( array_keys( $settings ) as $key ) {
+				$value = $this->normalize_feature_value( $page, $key, $this->plugin->settings->get_value( $key ) );
+				if ( null !== $value ) {
+					$snapshot[ $key ] = $value;
+				}
+			}
+		}
+
+		return $snapshot;
+	}
 
 	/**
 	 * Records the activation type on plugin activation (funnel step 1).
