@@ -236,7 +236,7 @@ $settings = array(
 		array(
 			'type'       => 'crops',
 			'slug'       => 'crop_sizes',
-			'title'      => __( 'Crop and Gravity control (beta)', 'cloudinary' ),
+			'title'      => __( 'Crop and Gravity control', 'cloudinary' ),
 			'attributes' => array(
 				'wrap' => array(
 					'style' => 'max-width: 1000px;',
