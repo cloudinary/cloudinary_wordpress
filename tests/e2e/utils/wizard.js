@@ -10,9 +10,13 @@
  * latter routes through `got` → `api.wordpress.org` at startup and
  * times out on macOS due to an IPv6 resolution issue. `docker exec`
  * goes straight to the running container.
+ *
+ * When WP_E2E_RUNTIME=playground, the site runs in WordPress Playground
+ * (tests/e2e/playground/server.mjs) and there is no container. Commands go to
+ * that server's WP-CLI bridge instead; see runPlaygroundCli().
  */
 
-const { execSync } = require( 'child_process' );
+const { execFileSync, execSync } = require( 'child_process' );
 const fs = require( 'fs' );
 const os = require( 'os' );
 const path = require( 'path' );
@@ -21,7 +25,101 @@ const CONNECT_OPTION = 'cloudinary_connect';
 const SIGNATURE_OPTION = 'cloudinary_connection_signature';
 const STATUS_OPTION = 'cloudinary_status';
 
+const IS_PLAYGROUND = process.env.WP_E2E_RUNTIME === 'playground';
+
+const PLAYGROUND_CLIENT = path.join(
+	__dirname,
+	'../playground/wp-cli-client.js'
+);
+
 let cachedCliContainer = null;
+
+/**
+ * Splits a shell command line into arguments, the way a POSIX shell would for
+ * the quoting the specs use: single quotes are literal, double quotes allow
+ * backslash escapes, and whitespace outside quotes separates arguments.
+ *
+ * Callers build arguments for `docker exec` through a shell, so they quote
+ * values such as `'{"plan":"free"}'`. Splitting the joined command line again
+ * gives Playground the same argv the shell would have produced.
+ *
+ * @param {string} line Command line.
+ * @return {string[]} Arguments.
+ */
+function splitShellWords( line ) {
+	const words = [];
+	let current = '';
+	let inWord = false;
+	let quote = null;
+
+	for ( let i = 0; i < line.length; i++ ) {
+		const char = line[ i ];
+
+		if ( quote === "'" ) {
+			if ( char === "'" ) {
+				quote = null;
+			} else {
+				current += char;
+			}
+		} else if ( quote === '"' ) {
+			if ( char === '"' ) {
+				quote = null;
+			} else if ( char === '\\' && /["\\$`]/.test( line[ i + 1 ] ) ) {
+				current += line[ ++i ];
+			} else {
+				current += char;
+			}
+		} else if ( char === "'" || char === '"' ) {
+			quote = char;
+			inWord = true;
+		} else if ( char === '\\' && i + 1 < line.length ) {
+			current += line[ ++i ];
+			inWord = true;
+		} else if ( /\s/.test( char ) ) {
+			if ( inWord ) {
+				words.push( current );
+				current = '';
+				inWord = false;
+			}
+		} else {
+			current += char;
+			inWord = true;
+		}
+	}
+
+	if ( inWord ) {
+		words.push( current );
+	}
+
+	return words;
+}
+
+/**
+ * Runs a WP-CLI command through the Playground server's WP-CLI bridge.
+ *
+ * The bridge client runs as a child process so this stays synchronous, like
+ * the `docker exec` path. A failed command throws, as execSync does.
+ *
+ * @param {string[]} args       Shell-quoted WP-CLI arguments after `wp`.
+ * @param {string}   [evalFile] PHP source to run with `wp eval-file`.
+ * @return {string} stdout, trimmed.
+ */
+function runPlaygroundCli( args, evalFile ) {
+	const request = {
+		args: splitShellWords( args.join( ' ' ) ),
+		worker: process.env.CLD_E2E_WORKER,
+		evalFile,
+	};
+
+	return execFileSync( process.execPath, [ PLAYGROUND_CLIENT ], {
+		input: JSON.stringify( request ),
+		encoding: 'utf8',
+		stdio: [ 'pipe', 'pipe', 'pipe' ],
+		// Same reason as the docker path in cloudinary-video-delivery.spec.js:
+		// a synchronous call cannot be interrupted by Playwright's timeout.
+		timeout: 120_000,
+	} ).trim();
+}
 
 /**
  * Find the wp-env CLI container name dynamically.
@@ -79,6 +177,10 @@ function workerEnvFlags() {
  * @return {string}        stdout, trimmed.
  */
 function wpCli( args ) {
+	if ( IS_PLAYGROUND ) {
+		return runPlaygroundCli( args );
+	}
+
 	const container = getCliContainer();
 	const cmd = [
 		'docker',
@@ -108,6 +210,13 @@ function wpCli( args ) {
  * @return {string} stdout, trimmed.
  */
 function wpEvalFile( phpCode ) {
+	if ( IS_PLAYGROUND ) {
+		return runPlaygroundCli(
+			[ 'eval-file' ],
+			`<?php\nnamespace Cloudinary;\n${ phpCode }\n`
+		);
+	}
+
 	const container = getCliContainer();
 	const localPath = path.join(
 		os.tmpdir(),

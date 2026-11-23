@@ -171,6 +171,20 @@ The suite runs against the HTTPS tests site. Start it through the npm scripts, w
 WP_BASE_URL=http://localhost:8889 npm run test:e2e
 ```
 
+### Running the tests without Docker (WordPress Playground)
+
+```bash
+npm run test:e2e:playground
+```
+
+This starts the site in [WordPress Playground](https://wordpress.github.io/wordpress-playground/) (PHP compiled to WebAssembly, SQLite instead of MariaDB), runs the suite against it on `http://localhost:8889`, and stops it. The parallel and `@serial` passes each get a fresh site; see `tests/e2e/playground/run-e2e.sh` for why. It needs no Docker and no `npm run env:start`. Stop wp-env first, because both use port 8889. WordPress core, the PHP version and the `wp-config.php` constants come from `.wp-env.ci.json`. Pass Playwright arguments to run a part of the suite:
+
+```bash
+npm run test:e2e:playground -- tests/e2e/plugin.spec.js
+```
+
+The specs call WP-CLI through `tests/e2e/utils/wizard.js`. With Playground, that helper sends the commands to a small bridge in `tests/e2e/playground/server.mjs` instead of `docker exec`. The Playground log is in `artifacts/playground.log`.
+
 ### Wizard test credentials
 
 `tests/e2e/wizard-setup.spec.js` exercises the live Cloudinary connection flow, so it needs a real connection string. Provide one of two ways:

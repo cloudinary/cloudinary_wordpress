@@ -190,6 +190,15 @@ test.describe( 'Cloudinary Gallery block delivery', { tag: '@serial' }, () => {
 	} ) => {
 		await admin.editPost( created.postId );
 
+		// editPost() returns before the editor has parsed the post content,
+		// so wait for the block to reach the store before reading it.
+		await page.waitForFunction( () =>
+			window.wp?.data
+				?.select( 'core/block-editor' )
+				.getBlocks()
+				.some( ( b ) => b.name === 'cloudinary/gallery' )
+		);
+
 		// Select the block through the data store. Clicking it in the canvas
 		// would hit the widget's own buttons inside the block.
 		const clientId = await page.evaluate( () => {

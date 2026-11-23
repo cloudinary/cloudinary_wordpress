@@ -65,6 +65,13 @@ function setVideoPlayer( value ) {
 		'update_option("cloudinary_media_display", array_merge((array) get_option("cloudinary_media_display", array()), array("video_player" => "' +
 		value +
 		'")));';
+
+	// Playground has no container; the helper applies its own timeout.
+	if ( process.env.WP_E2E_RUNTIME === 'playground' ) {
+		wpCli( [ 'eval', `'${ php }'` ] );
+		return;
+	}
+
 	const cmd = [
 		'docker',
 		'exec',
