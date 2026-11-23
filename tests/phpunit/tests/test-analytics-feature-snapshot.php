@@ -330,12 +330,20 @@ class Test_Analytics_Feature_Snapshot extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_only_the_request_that_adds_the_flag_sends() {
-		// Simulates a concurrent request having added the flag after this one
-		// read it: the add_option() gate must fail and nothing be sent.
-		add_filter( 'pre_option_' . Analytics::FEATURE_SNAPSHOT_FLAG, '__return_false' );
+		// A concurrent request has stored the flag, but this one's option
+		// caches were loaded before that: get_option() sees no flag, and
+		// add_option() skips its own existence check, so its upsert hits the
+		// existing row. The upsert must change nothing and nothing be sent.
 		add_option( Analytics::FEATURE_SNAPSHOT_FLAG, 'first-cloud', '', true );
+		$alloptions = wp_load_alloptions();
+		unset( $alloptions[ Analytics::FEATURE_SNAPSHOT_FLAG ] );
+		wp_cache_set( 'alloptions', $alloptions, 'options' );
+		wp_cache_set( 'notoptions', array( Analytics::FEATURE_SNAPSHOT_FLAG => true ), 'options' );
+
+		$this->assertFalse( get_option( Analytics::FEATURE_SNAPSHOT_FLAG ) );
 		$this->analytics->maybe_send_feature_snapshot();
-		remove_filter( 'pre_option_' . Analytics::FEATURE_SNAPSHOT_FLAG, '__return_false' );
+		wp_cache_delete( 'alloptions', 'options' );
+		wp_cache_delete( 'notoptions', 'options' );
 
 		$this->assertCount( 0, $this->snapshots() );
 	}

@@ -91,18 +91,21 @@ class Analytics {
 	 *
 	 * - bool:       `on`/`off` toggle → true/false.
 	 * - int:        numeric field → int.
-	 * - string:     select/radio enum → string.
-	 * - css_length: free-text CSS length → the length, or dropped when it is
-	 *               anything else.
+	 * - enum:       select/radio → the value when it is one of the setting's
+	 *               own options, `other` when it isn't.
+	 * - css_length: free-text CSS length → the length, lowercased, or dropped
+	 *               when it is anything else.
 	 * - presence:   free text → whether it is non-empty.
 	 * - crops:      per-size crop map → number of sizes with a custom crop.
+	 * - derived:    not sent as stored; get_feature_snapshot() works the value
+	 *               out from other settings.
 	 */
 	const FEATURE_SETTINGS = array(
 		'image_settings' => array(
 			'image_delivery'     => 'bool',
 			'image_optimization' => 'bool',
-			'image_format'       => 'string',
-			'image_quality'      => 'string',
+			'image_format'       => 'enum',
+			'image_quality'      => 'enum',
 			'image_freeform'     => 'presence',
 			'svg_support'        => 'bool',
 			'crop_sizes'         => 'crops',
@@ -110,28 +113,28 @@ class Analytics {
 		'lazy_loading'   => array(
 			'use_lazy_load'    => 'bool',
 			'lazy_threshold'   => 'css_length',
-			'lazy_placeholder' => 'string',
+			'lazy_placeholder' => 'enum',
 			'lazy_animate'     => 'bool',
-			'dpr'              => 'string',
+			'dpr'              => 'enum',
 		),
 		'responsive'     => array(
 			'enable_breakpoints' => 'bool',
 			'pixel_step'         => 'int',
-			'breakpoints'        => 'int',
+			'breakpoints'        => 'derived',
 			'max_width'          => 'int',
 			'min_width'          => 'int',
 		),
 		'video_settings' => array(
 			'video_delivery'          => 'bool',
-			'video_player'            => 'string',
+			'video_player'            => 'enum',
 			'adaptive_streaming'      => 'bool',
-			'adaptive_streaming_mode' => 'string',
+			'adaptive_streaming_mode' => 'enum',
 			'video_controls'          => 'bool',
 			'video_loop'              => 'bool',
-			'video_autoplay_mode'     => 'string',
+			'video_autoplay_mode'     => 'enum',
 			'video_optimization'      => 'bool',
-			'video_format'            => 'string',
-			'video_quality'           => 'string',
+			'video_format'            => 'enum',
+			'video_quality'           => 'enum',
 			'video_freeform'          => 'presence',
 		),
 	);
@@ -160,6 +163,8 @@ class Analytics {
 			case 'css_length':
 				$value = is_string( $value ) ? trim( $value ) : '';
 
+				$value = strtolower( $value );
+
 				return preg_match( '/^\d+(\.\d+)?(px|%|r?em|vh|vw)?$/', $value ) ? $value : null;
 			case 'presence':
 				return is_string( $value ) && '' !== trim( $value );
@@ -178,8 +183,17 @@ class Analytics {
 						}
 					)
 				);
+			case 'enum':
+				// Select and radio values are only sanitised as text, and
+				// filters can return anything, so only known options are sent.
+				if ( ! is_scalar( $value ) ) {
+					return null;
+				}
+				$options = $this->plugin->settings->get_setting( $key )->get_param( 'options' );
+
+				return is_array( $options ) && array_key_exists( (string) $value, $options ) ? (string) $value : 'other';
 			default:
-				return is_scalar( $value ) ? sanitize_text_field( (string) $value ) : null;
+				return null;
 		}
 	}
 
@@ -189,9 +203,11 @@ class Analytics {
 	 * Captures the full state of the delivery features, including those left
 	 * at their defaults, for sites that never save their settings. Sent on the
 	 * first admin page load by an administrator once the site is connected,
-	 * then suppressed per cloud_name. That covers wizard setups, sites
-	 * connected through the `CLOUDINARY_CONNECTION_STRING` constant, existing
-	 * installs upgrading to this version, and account switches.
+	 * then again whenever the connected cloud_name changes (only the last one
+	 * is kept, so switching A → B → A sends three). That covers wizard
+	 * setups, sites connected through the `CLOUDINARY_CONNECTION_STRING`
+	 * constant, existing installs upgrading to this version, and account
+	 * switches.
 	 *
 	 * The `trigger` param tells the two cases apart:
 	 *
@@ -200,6 +216,11 @@ class Analytics {
 	 *              account). The flag holds an empty string until then.
 	 * - `upgrade`: the site was already connected the first time a version
 	 *              that sends the snapshot ran, so the flag was never set.
+	 *
+	 * A site connected through the constant before any admin page loads is
+	 * only recognised as a setup on a fresh install. A reinstall after the
+	 * uninstall clean-up (which keeps the plugin's DB version) and subsites of
+	 * a network activation report `upgrade` instead.
 	 *
 	 * @return void
 	 */

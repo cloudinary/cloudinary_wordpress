@@ -487,7 +487,7 @@ class Admin {
 				$this->add_admin_notice( 'error_notice', __( 'Settings updated successfully', 'cloudinary' ), 'success' );
 
 				$analytics = $this->plugin->get_component( 'analytics' );
-				if ( $analytics ) {
+				if ( $analytics && $analytics->is_enabled() ) {
 					// The full feature configuration as it stands after the
 					// save, flat like `feature_config_snapshot`, so every save
 					// is a baseline and the changed keys show what was

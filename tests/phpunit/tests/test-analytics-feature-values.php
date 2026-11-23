@@ -79,17 +79,41 @@ class Test_Analytics_Feature_Values extends WP_UnitTestCase {
 	 */
 	public function test_numbers_become_ints() {
 		$this->assertSame( 200, $this->analytics->normalize_feature_value( 'responsive', 'pixel_step', '200' ) );
-		$this->assertNull( $this->analytics->normalize_feature_value( 'responsive', 'breakpoints', '' ) );
+		$this->assertNull( $this->analytics->normalize_feature_value( 'responsive', 'pixel_step', '' ) );
 	}
 
 	/**
-	 * Enum values pass through as strings.
+	 * Select and radio values pass through when they are one of the
+	 * setting's options.
 	 *
 	 * @return void
 	 */
-	public function test_enums_stay_strings() {
+	public function test_known_options_stay_strings() {
 		$this->assertSame( 'avif', $this->analytics->normalize_feature_value( 'image_settings', 'image_format', 'avif' ) );
 		$this->assertSame( 'auto:good', $this->analytics->normalize_feature_value( 'image_settings', 'image_quality', 'auto:good' ) );
+		$this->assertSame( '80', $this->analytics->normalize_feature_value( 'image_settings', 'image_quality', 80 ) );
+		$this->assertSame( 'on-scroll', $this->analytics->normalize_feature_value( 'video_settings', 'video_autoplay_mode', 'on-scroll' ) );
+	}
+
+	/**
+	 * Select and radio values that aren't one of the setting's options are
+	 * reported as `other`, so stored free text never leaves the site.
+	 *
+	 * @return void
+	 */
+	public function test_unknown_options_become_other() {
+		$this->assertSame( 'other', $this->analytics->normalize_feature_value( 'image_settings', 'image_quality', "Jane's shop" ) );
+		$this->assertSame( 'other', $this->analytics->normalize_feature_value( 'lazy_loading', 'dpr', '3X' ) );
+		$this->assertNull( $this->analytics->normalize_feature_value( 'image_settings', 'image_format', array( 'avif' ) ) );
+	}
+
+	/**
+	 * "Max images" is never sent as stored.
+	 *
+	 * @return void
+	 */
+	public function test_derived_settings_are_not_normalised() {
+		$this->assertNull( $this->analytics->normalize_feature_value( 'responsive', 'breakpoints', '12' ) );
 	}
 
 	/**
@@ -101,6 +125,7 @@ class Test_Analytics_Feature_Values extends WP_UnitTestCase {
 		$this->assertSame( '100px', $this->analytics->normalize_feature_value( 'lazy_loading', 'lazy_threshold', ' 100px ' ) );
 		$this->assertSame( '1.5em', $this->analytics->normalize_feature_value( 'lazy_loading', 'lazy_threshold', '1.5em' ) );
 		$this->assertSame( '20%', $this->analytics->normalize_feature_value( 'lazy_loading', 'lazy_threshold', '20%' ) );
+		$this->assertSame( '100px', $this->analytics->normalize_feature_value( 'lazy_loading', 'lazy_threshold', '100PX' ) );
 		$this->assertNull( $this->analytics->normalize_feature_value( 'lazy_loading', 'lazy_threshold', 'jane@example.com' ) );
 		$this->assertNull( $this->analytics->normalize_feature_value( 'lazy_loading', 'lazy_threshold', '' ) );
 	}
