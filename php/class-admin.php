@@ -488,18 +488,21 @@ class Admin {
 
 				$analytics = $this->plugin->get_component( 'analytics' );
 				if ( $analytics && $analytics->is_enabled() ) {
-					// The full feature configuration as it stands after the
-					// save, flat like `feature_config_snapshot`, so every save
-					// is a baseline and the changed keys show what was
-					// deliberately overridden. Only allowlisted settings are
-					// included: secrets and free text never leave the site.
-					$params = array_merge(
-						$analytics->get_feature_snapshot(),
-						array(
-							'page'         => $submission,
-							'changed_keys' => $changed_keys,
-						)
+					$params = array(
+						'page'         => $submission,
+						'changed_keys' => $changed_keys,
 					);
+
+					// Saves of a feature page carry the full feature
+					// configuration as it stands after the save, flat like
+					// `feature_config_snapshot`, so every such save is a
+					// baseline and the changed keys show what was deliberately
+					// overridden. Other pages can't change it, so it is left
+					// out. Only allowlisted settings are included: secrets and
+					// free text never leave the site.
+					if ( isset( Analytics::FEATURE_SETTINGS[ $submission ] ) ) {
+						$params = array_merge( $analytics->get_feature_snapshot(), $params );
+					}
 
 					$analytics->track( 'settings_saved', 'settings', null, $params );
 

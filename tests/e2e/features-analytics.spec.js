@@ -80,6 +80,16 @@ test.describe( 'Extensions & gallery analytics', () => {
 		expect( events.length ).toBe( 1 );
 		expect( events[ 0 ].layout ).toBe( 'expand' );
 		expect( events[ 0 ].media_count ).toBe( 2 );
+
+		// The gallery page can't change the feature configuration, so its
+		// settings_saved event doesn't carry it.
+		const saved = findAnalyticsEvents(
+			readAnalyticsEvents(),
+			'settings_saved'
+		);
+		expect( saved.length ).toBe( 1 );
+		expect( saved[ 0 ].page ).toBe( 'gallery' );
+		expect( saved[ 0 ] ).not.toHaveProperty( 'use_lazy_load' );
 	} );
 } );
 

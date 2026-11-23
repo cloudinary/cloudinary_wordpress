@@ -220,7 +220,10 @@ class Analytics {
 	 * A site connected through the constant before any admin page loads is
 	 * only recognised as a setup on a fresh install. A reinstall after the
 	 * uninstall clean-up (which keeps the plugin's DB version) and subsites of
-	 * a network activation report `upgrade` instead.
+	 * a network activation report `upgrade` instead. So can a site whose
+	 * unconnected admin load writes the "not set up" marker while another
+	 * admin load, already connected, is claiming the send: that request
+	 * cached the flag as missing, so its add_option() overwrites the marker.
 	 *
 	 * @return void
 	 */
@@ -231,7 +234,10 @@ class Analytics {
 			return;
 		}
 
-		// Autoloaded, so this check costs no query on later admin loads.
+		// Autoloaded, so once the flag is stored this check costs no query.
+		// It isn't stored while a connected site has analytics disabled, so
+		// the snapshot is still sent with the right trigger once they are
+		// enabled: each admin load then runs one option query.
 		$sent = get_option( self::FEATURE_SNAPSHOT_FLAG );
 
 		$connect = $this->plugin->get_component( 'connect' );

@@ -182,18 +182,21 @@ class Test_Analytics_Feature_Snapshot extends WP_UnitTestCase {
 			'pixel_step'  => 200,
 			'breakpoints' => 42,
 		);
-		foreach ( $values as $key => $value ) {
-			$original[ $key ] = $settings->get_value( $key );
-			$settings->get_setting( $key )->set_value( $value );
-		}
+		try {
+			foreach ( $values as $key => $value ) {
+				$original[ $key ] = $settings->get_value( $key );
+				$settings->get_setting( $key )->set_value( $value );
+			}
 
-		$snapshot = $this->analytics->get_feature_snapshot();
+			$snapshot = $this->analytics->get_feature_snapshot();
 
-		$settings->get_setting( 'pixel_step' )->set_value( 500 );
-		$coarser = $this->analytics->get_breakpoint_count();
-
-		foreach ( $original as $key => $value ) {
-			$settings->get_setting( $key )->set_value( $value );
+			$settings->get_setting( 'pixel_step' )->set_value( 500 );
+			$coarser = $this->analytics->get_breakpoint_count();
+		} finally {
+			// The settings live on the plugin singleton, shared by every test.
+			foreach ( $original as $key => $value ) {
+				$settings->get_setting( $key )->set_value( $value );
+			}
 		}
 
 		// 2048, 1848, … 248.
