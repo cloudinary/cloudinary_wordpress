@@ -154,11 +154,10 @@ require ${ JSON.stringify( WP_CLI_PHAR ) };
 		typeof response.text === 'string'
 			? response.text
 			: new TextDecoder().decode( response.bytes ?? new Uint8Array() );
+	// Not logged here: the arguments and output can contain the Cloudinary
+	// connection string, and CI uploads the server log as an artifact. The
+	// caller gets stderr and shows it when a command fails.
 	const stderr = response.errors || '';
-
-	if ( stderr ) {
-		console.error( `wp ${ args.join( ' ' ) }:\n${ stderr }` );
-	}
 
 	return {
 		exitCode: response.exitCode ?? 0,

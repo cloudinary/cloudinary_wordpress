@@ -5,14 +5,16 @@
 # WP-CLI bridge answers, runs Playwright, then stops the server. The
 # Playground log is written to artifacts/playground.log.
 #
-# Without arguments, runs the same two passes as `npm run test:e2e`, each
-# against a fresh site:
+# Without arguments, runs the passes of `npm run test:e2e`, each against a
+# fresh site:
 #
-# - The parallel pass with 6 PHP workers, for the 3 Playwright workers.
-# - The @serial pass with 1 PHP worker. These specs check local files after
-#   a sync, and with more than one worker a deleted file can still look
-#   present to another worker (see the `workers` comment in server.mjs).
-#   Playwright runs this pass with 1 worker anyway.
+# - The parallel pass, 6 PHP workers.
+# - The @serial pass without the storage-modes spec, 6 PHP workers.
+# - The storage-modes spec, 1 PHP worker. It checks local files after a
+#   sync, and with more than one worker a deleted file can still look present
+#   to another worker (see the `workers` comment in server.mjs). Other specs
+#   stay on 6 workers, because with 1 the block editor saves too slowly on CI
+#   runners.
 #
 # With arguments, starts one site with 1 PHP worker and passes the arguments
 # to Playwright, e.g. a single spec file.
@@ -79,16 +81,23 @@ if [ "$#" -gt 0 ]; then
 	exit
 fi
 
-# Unlike `npm run test:e2e`, run the serial pass even when the parallel pass
-# fails, so one CI run reports every failure. Exit non-zero if either failed.
+STORAGE_SPEC="tests/e2e/cloudinary-storage-modes.spec.js"
+
+# Unlike `npm run test:e2e`, run every pass even when one fails, so one CI
+# run reports every failure. Exit non-zero if any failed.
 status=0
 
 start_server 6
 npm run --silent test:e2e:parallel || status=1
 stop_server
 
+start_server 6
+./.wp-env/scripts/run-e2e.sh --grep @serial --workers=1 \
+	--grep-invert "Cloudinary storage modes" || status=1
+stop_server
+
 start_server 1
-npm run --silent test:e2e:serial || status=1
+./.wp-env/scripts/run-e2e.sh "$STORAGE_SPEC" --workers=1 || status=1
 stop_server
 
 exit "$status"
