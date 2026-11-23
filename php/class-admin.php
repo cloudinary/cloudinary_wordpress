@@ -488,24 +488,18 @@ class Admin {
 
 				$analytics = $this->plugin->get_component( 'analytics' );
 				if ( $analytics ) {
-					$params = array(
-						'page'         => $submission,
-						'changed_keys' => $changed_keys,
+					// The full feature configuration as it stands after the
+					// save, flat like `feature_config_snapshot`, so every save
+					// is a baseline and the changed keys show what was
+					// deliberately overridden. Only allowlisted settings are
+					// included: secrets and free text never leave the site.
+					$params = array_merge(
+						$analytics->get_feature_snapshot(),
+						array(
+							'page'         => $submission,
+							'changed_keys' => $changed_keys,
+						)
 					);
-
-					// Values only for allowlisted feature settings; secrets
-					// and free text never leave the site. Read back after the
-					// save so the value reflects any save filters.
-					$feature_values = array();
-					foreach ( $changed_keys as $key ) {
-						$normalized = $analytics->normalize_feature_value( $submission, $key, $this->settings->get_value( $key ) );
-						if ( null !== $normalized ) {
-							$feature_values[ $key ] = $normalized;
-						}
-					}
-					if ( ! empty( $feature_values ) ) {
-						$params['changed_values'] = $feature_values;
-					}
 
 					$analytics->track( 'settings_saved', 'settings', null, $params );
 

@@ -187,7 +187,7 @@ class Analytics {
 	 * Emits the one-time `feature_config_snapshot` adoption baseline.
 	 *
 	 * Captures the full state of the delivery features, including those left
-	 * at their defaults, which `settings_saved` never reports. Sent on the
+	 * at their defaults, for sites that never save their settings. Sent on the
 	 * first admin page load by an administrator once the site is connected,
 	 * then suppressed per cloud_name. That covers wizard setups, sites
 	 * connected through the `CLOUDINARY_CONNECTION_STRING` constant, existing

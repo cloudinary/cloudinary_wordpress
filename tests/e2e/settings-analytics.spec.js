@@ -79,9 +79,11 @@ test.describe( 'Settings & navigation analytics', () => {
 		expect( savedEvents.length ).toBe( 1 );
 		expect( savedEvents[ 0 ].page ).toBe( 'image_settings' );
 		expect( savedEvents[ 0 ].changed_keys ).toContain( 'image_quality' );
-		expect( savedEvents[ 0 ].changed_values.image_quality ).toBe(
-			nextValue
-		);
+		expect( savedEvents[ 0 ].image_quality ).toBe( nextValue );
+		// The whole feature configuration is sent, not just this page's.
+		expect( typeof savedEvents[ 0 ].use_lazy_load ).toBe( 'boolean' );
+		expect( typeof savedEvents[ 0 ].breakpoints ).toBe( 'number' );
+		expect( savedEvents[ 0 ] ).not.toHaveProperty( 'changed_values' );
 	} );
 
 	// One feature page each, flipping a field no other spec writes to, so
@@ -104,8 +106,8 @@ test.describe( 'Settings & navigation analytics', () => {
 		{
 			page: 'responsive',
 			tag: 'input',
-			field: 'breakpoints',
-			values: [ '10', '12' ],
+			field: 'pixel_step',
+			values: [ '200', '250' ],
 			expected: ( value ) => Number( value ),
 		},
 	] ) {
@@ -139,9 +141,8 @@ test.describe( 'Settings & navigation analytics', () => {
 			);
 			expect( savedEvents.length ).toBe( 1 );
 			expect( savedEvents[ 0 ].page ).toBe( slug );
-			expect( savedEvents[ 0 ].changed_values[ field ] ).toBe(
-				expected( nextValue )
-			);
+			expect( savedEvents[ 0 ].changed_keys ).toContain( field );
+			expect( savedEvents[ 0 ][ field ] ).toBe( expected( nextValue ) );
 		} );
 	}
 
