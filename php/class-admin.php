@@ -487,16 +487,24 @@ class Admin {
 				$this->add_admin_notice( 'error_notice', __( 'Settings updated successfully', 'cloudinary' ), 'success' );
 
 				$analytics = $this->plugin->get_component( 'analytics' );
-				if ( $analytics ) {
-					$analytics->track(
-						'settings_saved',
-						'settings',
-						null,
-						array(
-							'page'         => $submission,
-							'changed_keys' => $changed_keys,
-						)
+				if ( $analytics && $analytics->is_enabled() ) {
+					$params = array(
+						'page'         => $submission,
+						'changed_keys' => $changed_keys,
 					);
+
+					// Saves of a feature page carry the full feature
+					// configuration as it stands after the save, flat like
+					// `feature_config_snapshot`, so every such save is a
+					// baseline and the changed keys show what was deliberately
+					// overridden. Other pages can't change it, so it is left
+					// out. Only allowlisted settings are included: secrets and
+					// free text never leave the site.
+					if ( isset( Analytics::FEATURE_SETTINGS[ $submission ] ) ) {
+						$params = array_merge( $analytics->get_feature_snapshot(), $params );
+					}
+
+					$analytics->track( 'settings_saved', 'settings', null, $params );
 
 					if ( 'gallery' === $submission ) {
 						$this->track_gallery_configured( $analytics, $data );
