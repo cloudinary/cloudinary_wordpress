@@ -29,6 +29,33 @@ function parseCloudName( cloudinaryUrl ) {
 }
 
 /**
+ * Add custom domain parameters to a connection string.
+ *
+ * @param {string}  cloudinaryUrl        The `cloudinary://` connection string.
+ * @param {Object}  options
+ * @param {string}  [options.cname]      Custom delivery domain.
+ * @param {boolean} [options.privateCdn] Set to false to keep the cloud name
+ *                                       in the delivery path.
+ * @return {string} The connection string with the parameters added.
+ */
+function withConnectionParams( cloudinaryUrl, { cname, privateCdn } ) {
+	const params = new URLSearchParams();
+	if ( cname ) {
+		params.set( 'cname', cname );
+	}
+	if ( false === privateCdn ) {
+		params.set( 'private_cdn', 'false' );
+	}
+	const query = params.toString();
+	if ( ! query ) {
+		return cloudinaryUrl;
+	}
+	return `${ cloudinaryUrl }${
+		cloudinaryUrl.includes( '?' ) ? '&' : '?'
+	}${ query }`;
+}
+
+/**
  * Set the plugin's `cloudinary_connect` option directly so the plugin
  * is "connected" for the duration of the spec.
  *
@@ -36,10 +63,21 @@ function parseCloudName( cloudinaryUrl ) {
  * NOT pre-populate `cloudinary_connection_signature` or
  * `cloudinary_status`; the plugin will populate those on first need.
  *
+ * With `cname`, the custom domain is added to the connection string the
+ * same way a user adds it in the settings. The plugin only checks that it
+ * looks like a domain and never resolves it, so a fake domain works.
+ *
+ * @param {Object}  [options]
+ * @param {string}  [options.cname]      Custom delivery domain.
+ * @param {boolean} [options.privateCdn] Set to false to keep the cloud name
+ *                                       in the delivery path.
  * @return {{ cloudName: string }} The cloud name extracted from the URL.
  */
-function ensureCloudinaryConnected() {
-	const cloudinaryUrl = getCloudinaryUrlFromEnv();
+function ensureCloudinaryConnected( options = {} ) {
+	const cloudinaryUrl = withConnectionParams(
+		getCloudinaryUrlFromEnv(),
+		options
+	);
 	const cloudName = parseCloudName( cloudinaryUrl );
 
 	// Build the JSON payload the plugin expects.
@@ -55,6 +93,18 @@ function ensureCloudinaryConnected() {
 		`'${ payload }'`,
 		'--format=json',
 	] );
+
+	// The plugin tests a changed connection string against the API before
+	// it saves it, and keeps the old one when the test fails. Fail here
+	// rather than let a spec run against the wrong connection.
+	const saved = JSON.parse(
+		wpCli( [ 'option', 'get', 'cloudinary_connect', '--format=json' ] )
+	);
+	if ( saved?.cloudinary_url !== cloudinaryUrl ) {
+		throw new Error(
+			'The plugin did not save the new Cloudinary connection string. Check that CLOUDINARY_E2E_URL is valid.'
+		);
+	}
 
 	return { cloudName };
 }

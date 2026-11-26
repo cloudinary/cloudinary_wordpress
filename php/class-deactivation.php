@@ -630,6 +630,8 @@ class Deactivation {
 				'_cld_disable_http_upload',
 				Report::REPORT_KEY,
 				Media::GLOBAL_VIDEO_TRANSFORMATIONS,
+				Analytics::FIRST_API_FLAG,
+				Analytics::FEATURE_SNAPSHOT_FLAG,
 				self::CLEANING_KEY,
 			)
 		);

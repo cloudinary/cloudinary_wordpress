@@ -183,16 +183,14 @@ class Gallery extends Settings_Component {
 			return;
 		}
 
-		wp_enqueue_script(
-			self::GALLERY_LIBRARY_HANDLE,
-			CLOUDINARY_ENDPOINTS_GALLERY,
-			array(),
-			$this->plugin->version,
-			true
-		);
+		$this->enqueue_library_script();
 
-		$json_config = wp_json_encode( $this->get_config() );
-		wp_add_inline_script( self::GALLERY_LIBRARY_HANDLE, "var CLD_GALLERY_CONFIG = {$json_config};" );
+		// Add the config once, even if the library was already enqueued
+		// without it (e.g. for the editor canvas on `enqueue_block_assets`).
+		if ( ! $this->has_inline_config() ) {
+			$json_config = wp_json_encode( $this->get_config() );
+			wp_add_inline_script( self::GALLERY_LIBRARY_HANDLE, "var CLD_GALLERY_CONFIG = {$json_config};" );
+		}
 
 		wp_enqueue_script(
 			'cloudinary-gallery-init',
@@ -201,6 +199,53 @@ class Gallery extends Settings_Component {
 			$this->plugin->version,
 			true
 		);
+	}
+
+	/**
+	 * Enqueue the Product Gallery library script.
+	 */
+	private function enqueue_library_script() {
+		wp_enqueue_script(
+			self::GALLERY_LIBRARY_HANDLE,
+			CLOUDINARY_ENDPOINTS_GALLERY,
+			array(),
+			$this->plugin->version,
+			true
+		);
+	}
+
+	/**
+	 * Check whether the gallery config has been added to the library script.
+	 *
+	 * @return bool
+	 */
+	private function has_inline_config() {
+		$inline = wp_scripts()->get_data( self::GALLERY_LIBRARY_HANDLE, 'after' );
+
+		return is_array( $inline ) && false !== strpos( implode( '', $inline ), 'var CLD_GALLERY_CONFIG' );
+	}
+
+	/**
+	 * Get the delivery settings of the connected account for rendering galleries.
+	 *
+	 * Used both on the front end and for the block editor preview, so that
+	 * both render with the same cloud name and custom domain settings.
+	 *
+	 * @return array
+	 */
+	protected function get_delivery_config() {
+		$config = array(
+			'cloudName' => $this->plugin->components['connect']->get_cloud_name(),
+		);
+
+		$credentials = $this->plugin->components['connect']->get_credentials();
+
+		if ( ! empty( $credentials['cname'] ) ) {
+			$config['secureDistribution'] = $credentials['cname'];
+			$config['privateCdn']         = true;
+		}
+
+		return $config;
 	}
 
 	/**
@@ -285,10 +330,13 @@ class Gallery extends Settings_Component {
 		);
 
 		wp_add_inline_script( 'cloudinary-gallery-block-js', 'var CLD_REST_ENDPOINT = "/' . REST_API::BASE . '";', 'before' );
+
+		$delivery_config = wp_json_encode( $this->get_delivery_config() );
+		wp_add_inline_script( 'cloudinary-gallery-block-js', "var CLD_GALLERY_DELIVERY = {$delivery_config};", 'before' );
 	}
 
 	/**
-	 * Enqueue the gallery block editor styles.
+	 * Enqueue the gallery block editor styles and the gallery library for the editor canvas.
 	 *
 	 * Registered on `enqueue_block_assets` so the styles are injected into the
 	 * iframed block editor correctly. As of WordPress 7.1 the post editor is
@@ -298,6 +346,15 @@ class Gallery extends Settings_Component {
 	public function block_editor_styles() {
 		if ( ! is_admin() ) {
 			return;
+		}
+
+		// The gallery block preview is rendered inside the editor canvas, which
+		// is an iframe in the iframed block editor. The Product Gallery library
+		// must be loaded in that document too, since the widget looks up its
+		// container in its own document and validates its config against its
+		// own frame's globals.
+		if ( $this->maybe_enqueue_scripts() ) {
+			$this->enqueue_library_script();
 		}
 
 		wp_enqueue_style(
@@ -496,6 +553,8 @@ class Gallery extends Settings_Component {
 
 		$attributes['mediaAssets'] = array();
 		foreach ( $attributes['selectedImages'] as $attachment ) {
+			$attachment = $this->contextualize_asset( $attachment );
+
 			// Since the gallery widget uses public ID's, if an attachment is deleted, it can still remain working in a gallery.
 			if ( ! wp_get_attachment_url( $attachment['attachmentId'] ) ) {
 				continue;
@@ -513,14 +572,7 @@ class Gallery extends Settings_Component {
 			$attributes['mediaAssets'][] = $attachment;
 		}
 
-		$attributes['cloudName'] = $this->plugin->components['connect']->get_cloud_name();
-
-		$credentials = $this->plugin->components['connect']->get_credentials();
-
-		if ( ! empty( $credentials['cname'] ) ) {
-			$attributes['secureDistribution'] = $credentials['cname'];
-			$attributes['privateCdn']         = true;
-		}
+		$attributes = array_merge( $attributes, $this->get_delivery_config() );
 
 		if ( ! empty( $attributes['customSettings'] ) ) {
 			if ( is_string( $attributes['customSettings'] ) && ! is_admin() ) {
@@ -547,6 +599,46 @@ class Gallery extends Settings_Component {
 		<?php
 
 		return $content . ob_get_clean();
+	}
+
+	/**
+	 * Swap a gallery asset for its contextualized attachment (e.g. the translation of the
+	 * attachment for the current language), so that the gallery delivers the same asset
+	 * WordPress would deliver in that context.
+	 *
+	 * The asset is left untouched when there is no contextualized attachment, or when it can't
+	 * be delivered from Cloudinary yet. That follows the same rule as the rest of the delivery
+	 * (Media::cloudinary_id()), which also queues the attachment for sync when needed.
+	 *
+	 * @param array $attachment The gallery asset, as stored in the block attributes.
+	 *
+	 * @return array
+	 */
+	protected function contextualize_asset( $attachment ) {
+		if ( empty( $attachment['attachmentId'] ) ) {
+			return $attachment;
+		}
+
+		$attachment_id = (int) $attachment['attachmentId'];
+
+		/** This filter is documented in php/class-delivery.php */
+		$contextualized_id = (int) apply_filters( 'cloudinary_contextualized_post_id', $attachment_id );
+
+		if ( empty( $contextualized_id ) || $contextualized_id === $attachment_id ) {
+			return $attachment;
+		}
+
+		if ( empty( $this->media->cloudinary_id( $contextualized_id ) ) ) {
+			return $attachment;
+		}
+
+		$attachment['attachmentId'] = $contextualized_id;
+		$attachment['publicId']     = $this->media->get_public_id( $contextualized_id, true );
+
+		// The stored transformations belong to the original attachment; they get rebuilt for the new one.
+		unset( $attachment['transformation'] );
+
+		return $attachment;
 	}
 
 	/**
@@ -593,11 +685,6 @@ class Gallery extends Settings_Component {
 			) {
 				$can = true;
 			}
-		}
-
-		// Bail enqueuing the script several times.
-		if ( wp_script_is( self::GALLERY_LIBRARY_HANDLE ) ) {
-			$can = false;
 		}
 
 		/**

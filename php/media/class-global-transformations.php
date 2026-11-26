@@ -368,7 +368,7 @@ class Global_Transformations {
 		$terms = array();
 		if ( ! empty( $items ) ) {
 			$items = array_map(
-				function ( $item ) {
+				function ( $item ) use ( $post_id ) {
 					// Get the id.
 					if ( false !== strpos( $item, ':' ) ) {
 						$parts = explode( ':', $item );
@@ -382,11 +382,30 @@ class Global_Transformations {
 						return null;
 					}
 
-					// Return if term is valid.
 					if ( $term instanceof \WP_Term ) {
+						/**
+						 * Filter a term of the post's term transformations ordering.
+						 *
+						 * Allows mapping a stored term to the one that applies in the post's context, e.g. its
+						 * translation in the post's language when the ordering was copied from another post.
+						 *
+						 * @hook  cloudinary_contextualized_term
+						 * @since 3.3.10
+						 *
+						 * @param \WP_Term|null $term    The term to use, initially the stored term. Null keeps the stored term.
+						 * @param int           $post_id The post ID.
+						 *
+						 * @return \WP_Term|null
+						 */
+						$contextualized_term = apply_filters( 'cloudinary_contextualized_term', $term, $post_id );
+
+						if ( $contextualized_term instanceof \WP_Term ) {
+							$term = $contextualized_term;
+						}
+
 						return array(
 							'term'  => $term,
-							'value' => $item,
+							'value' => $term->taxonomy . ':' . $term->term_id,
 						);
 					}
 
@@ -715,7 +734,9 @@ class Global_Transformations {
 				add_action( $taxonomy . '_add_form_fields', array( $global, 'add_taxonomy_fields' ) );
 				add_action( $taxonomy . '_edit_form_fields', array( $global, 'edit_taxonomy_fields' ) );
 				add_action( 'create_' . $taxonomy, array( $global, 'save_taxonomy_custom_meta' ) );
-				add_action( 'edited_' . $taxonomy, array( $global, 'save_taxonomy_custom_meta' ) );
+				// Save on edit, before the edited_term and saved_term hooks, so plugins syncing term meta
+				// on those hooks (e.g. WPML copying it to translations) get the new values.
+				add_action( 'edit_' . $taxonomy, array( $global, 'save_taxonomy_custom_meta' ) );
 			},
 			$taxonomies
 		);

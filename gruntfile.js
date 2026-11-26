@@ -38,6 +38,7 @@ module.exports = function ( grunt ) {
 					'ui-definitions/**',
 					'*.php',
 					'readme.txt',
+					'wpml-config.xml',
 					'!**/src/**',
 				],
 				dest: '<%= dist_dir %>',
