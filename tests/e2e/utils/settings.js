@@ -62,6 +62,7 @@ function readSettings( slugs ) {
 }
 
 module.exports = {
+	phpJson,
 	readSettings,
 	saveSettings,
 };

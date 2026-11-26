@@ -6,7 +6,7 @@ const { test, expect } = require( './fixtures' );
 /**
  * Internal dependencies
  */
-const { wpEvalFile } = require( './utils/wizard' );
+const { wpCli, wpEvalFile } = require( './utils/wizard' );
 const { fakeCloudinaryConnected } = require( './utils/connection' );
 const {
 	clearAnalyticsEvents,
@@ -80,5 +80,50 @@ test.describe( 'Extensions & gallery analytics', () => {
 		expect( events.length ).toBe( 1 );
 		expect( events[ 0 ].layout ).toBe( 'expand' );
 		expect( events[ 0 ].media_count ).toBe( 2 );
+
+		// The gallery page can't change the feature configuration, so its
+		// settings_saved event doesn't carry it.
+		const saved = findAnalyticsEvents(
+			readAnalyticsEvents(),
+			'settings_saved'
+		);
+		expect( saved.length ).toBe( 1 );
+		expect( saved[ 0 ].page ).toBe( 'gallery' );
+		expect( saved[ 0 ] ).not.toHaveProperty( 'use_lazy_load' );
+	} );
+} );
+
+// @serial: the snapshot's one-time flag is shared by the whole site, so a
+// parallel worker's admin load could send it into that worker's log instead.
+// The sending rules are covered by PHPUnit; this checks the admin wiring.
+test.describe( 'Feature config snapshot', { tag: '@serial' }, () => {
+	test.beforeEach( () => {
+		fakeCloudinaryConnected();
+		// Earlier admin loads already sent the snapshot for this cloud_name,
+		// so reset the one-time flag to simulate a fresh setup.
+		wpCli( [ 'option', 'delete', '_cloudinary_feature_snapshot_emitted' ] );
+		clearAnalyticsEvents();
+	} );
+
+	test( 'the first admin load once connected emits feature_config_snapshot once', async ( {
+		admin,
+	} ) => {
+		await admin.visitAdminPage( 'admin.php', 'page=cloudinary' );
+		await admin.visitAdminPage( 'admin.php', 'page=cloudinary' );
+
+		const events = findAnalyticsEvents(
+			readAnalyticsEvents(),
+			'feature_config_snapshot'
+		);
+		expect( events.length ).toBe( 1 );
+		expect( events[ 0 ].event_category ).toBe( 'features' );
+		// The flag was deleted while the site was connected, as on a site
+		// that was already set up before upgrading.
+		expect( events[ 0 ].trigger ).toBe( 'upgrade' );
+
+		// Default values are reported even though they were never saved.
+		expect( typeof events[ 0 ].use_lazy_load ).toBe( 'boolean' );
+		expect( typeof events[ 0 ].pixel_step ).toBe( 'number' );
+		expect( typeof events[ 0 ].image_format ).toBe( 'string' );
 	} );
 } );

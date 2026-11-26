@@ -464,16 +464,16 @@
         },
         {
             "name": "php-stubs/woocommerce-stubs",
-            "version": "v11.2.0",
+            "version": "v11.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-stubs/woocommerce-stubs.git",
-                "reference": "fb590c1c2a26c47aa5da2c6c51a707130e8a389c"
+                "reference": "a897f9ad0552482e9d50d3937daab20dfb97265c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-stubs/woocommerce-stubs/zipball/fb590c1c2a26c47aa5da2c6c51a707130e8a389c",
-                "reference": "fb590c1c2a26c47aa5da2c6c51a707130e8a389c",
+                "url": "https://api.github.com/repos/php-stubs/woocommerce-stubs/zipball/a897f9ad0552482e9d50d3937daab20dfb97265c",
+                "reference": "a897f9ad0552482e9d50d3937daab20dfb97265c",
                 "shasum": ""
             },
             "require": {
@@ -502,9 +502,9 @@
             ],
             "support": {
                 "issues": "https://github.com/php-stubs/woocommerce-stubs/issues",
-                "source": "https://github.com/php-stubs/woocommerce-stubs/tree/v11.2.0"
+                "source": "https://github.com/php-stubs/woocommerce-stubs/tree/v11.3.0"
             },
-            "time": "2026-10-07T19:02:59+00:00"
+            "time": "2026-11-12T00:45:07+00:00"
         },
         {
             "name": "php-stubs/wordpress-stubs",
@@ -992,11 +992,11 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "2.3.2",
+            "version": "2.3.6",
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/18bc23a0682f08591529377d271b5c4dfe9ed1dd",
-                "reference": "18bc23a0682f08591529377d271b5c4dfe9ed1dd",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/00cedebb76cc82c1592414fa4f616cefdccda16f",
+                "reference": "00cedebb76cc82c1592414fa4f616cefdccda16f",
                 "shasum": ""
             },
             "require": {
@@ -1052,7 +1052,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-10-24T11:36:00+00:00"
+            "time": "2026-11-15T19:58:26+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",
